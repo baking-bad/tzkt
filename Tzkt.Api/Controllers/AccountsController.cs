@@ -5,7 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-
+using NSwag.Annotations;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -170,20 +170,19 @@ namespace Tzkt.Api.Controllers
         /// Returns an account with the specified address.
         /// </remarks>
         /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <param name="metadata">Include or not account metadata</param>
+        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<ActionResult<Account>> GetByAddress(
             [Required][Address] string address,
-            bool metadata = false)
+            bool legacy = true)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("metadata", metadata));  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.Get(address, metadata);
+            var res = await Accounts.Get(address, legacy);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -459,23 +458,16 @@ namespace Tzkt.Api.Controllers
             return this.Bytes(cached);
         }
 
-        /// <summary>
-        /// Get account metadata
-        /// </summary>
-        /// <remarks>
-        /// Returns metadata of the specified account (alias, logo, website, contacts, etc).
-        /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
-        /// <returns></returns>
+        [OpenApiIgnore]
         [HttpGet("{address}/metadata")]
-        public async Task<ActionResult<ProfileMetadata>> GetMetadata([Required][Address] string address)
+        public async Task<ActionResult<RawJson>> GetMetadata([Required][Address] string address)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetMetadata(address);
+            var res = await Accounts.GetProfileInfo(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

@@ -33,7 +33,7 @@ namespace Tzkt.Data.Models
 
             // shadow property
             modelBuilder.Entity<Proposal>()
-                .Property<string>("Metadata")
+                .Property<string>("Extras")
                 .HasColumnType("jsonb");
             #endregion
 

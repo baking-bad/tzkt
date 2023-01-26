@@ -1,13 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+﻿using System.Data;
 using Dapper;
 using Npgsql;
 using Tzkt.Api.Services.Cache;
@@ -20,13 +11,14 @@ namespace Tzkt.Api.Services.Sync
         #region static
         const string SyncStateChanged = "sync_state_changed";
         const string StateHashChanged = "state_hash_changed";
-        const string StateMetadataChanged = "state_metadata_changed";
+        const string StateExtrasChanged = "state_extras_changed";
+        const string AccountExtrasChanged = "account_extras_changed";
         const string AccountMetadataChanged = "account_metadata_changed";
-        const string ProposalMetadataChanged = "proposal_metadata_changed";
-        const string ProtocolMetadataChanged = "protocol_metadata_changed";
-        const string SoftwareMetadataChanged = "software_metadata_changed";
-        const string ConstantMetadataChanged = "constant_metadata_changed";
-        const string BlockMetadataChanged = "block_metadata_changed";
+        const string ProposalExtrasChanged = "proposal_extras_changed";
+        const string ProtocolExtrasChanged = "protocol_extras_changed";
+        const string SoftwareExtrasChanged = "software_extras_changed";
+        const string ConstantExtrasChanged = "constant_extras_changed";
+        const string BlockExtrasChanged = "block_extras_changed";
         #endregion
 
         readonly string ConnectionString;
@@ -97,13 +89,14 @@ namespace Tzkt.Api.Services.Sync
                             await db.ExecuteAsync($@"
                                 LISTEN {SyncStateChanged};
                                 LISTEN {StateHashChanged};
+                                LISTEN {AccountExtrasChanged};
                                 LISTEN {AccountMetadataChanged};
-                                LISTEN {SoftwareMetadataChanged};");
-                                //LISTEN {ConstantMetadataChanged};
-                                //LISTEN {StateMetadataChanged};
-                                //LISTEN {ProposalMetadataChanged};
-                                //LISTEN {ProtocolMetadataChanged};
-                                //LISTEN {BlockMetadataChanged};
+                                LISTEN {SoftwareExtrasChanged};");
+                                //LISTEN {ConstantExtrasChanged};
+                                //LISTEN {StateExtrasChanged};
+                                //LISTEN {ProposalExtrasChanged};
+                                //LISTEN {ProtocolExtrasChanged};
+                                //LISTEN {BlockExtrasChanged};
                             Logger.LogInformation("Db listener connected");
                         }
                         await db.WaitAsync(cancellationToken);
@@ -172,7 +165,7 @@ namespace Tzkt.Api.Services.Sync
             }
             else
             {
-                NotifyMetadata(e.Channel, e.Payload);
+                NotifyExtras(e.Channel, e.Payload);
             }
         }
 
@@ -254,16 +247,16 @@ namespace Tzkt.Api.Services.Sync
             }
         }
 
-        void NotifyMetadata(string channel, string payload)
+        void NotifyExtras(string channel, string payload)
         {
             try
             {
-                Logger.LogDebug("Processing metadata notification...");
+                Logger.LogDebug("Processing extras notification...");
 
                 var divider = payload.IndexOf(':');
                 if (divider == -1)
                 {
-                    Logger.LogError("Invalid metadata notification payload");
+                    Logger.LogError("Invalid extras notification payload");
                     return;
                 }
 
@@ -273,32 +266,35 @@ namespace Tzkt.Api.Services.Sync
 
                 switch (channel)
                 {
-                    //case StateMetadataChanged:
+                    //case StateExtrasChanged:
                     //    break;
+                    case AccountExtrasChanged:
+                        Accounts.OnExtrasUpdate(key, value);
+                        Aliases.OnExtrasUpdate(key, value);
+                        break;
                     case AccountMetadataChanged:
-                        Accounts.UpdateMetadata(key, value);
-                        Aliases.UpdateMetadata(key, value);
+                        Accounts.OnMetadataUpdate(key);
                         break;
-                    //case ProposalMetadataChanged:
+                    //case ProposalExtrasChanged:
                     //    break;
-                    //case ProtocolMetadataChanged:
+                    //case ProtocolExtrasChanged:
                     //    break;
-                    case SoftwareMetadataChanged:
-                        Software.UpdateMetadata(key);
+                    case SoftwareExtrasChanged:
+                        Software.OnExtrasUpdate(key);
                         break;
-                    //case ConstantMetadataChanged:
+                    //case ConstantExtrasChanged:
                     //    break;
-                    //case BlockMetadataChanged:
+                    //case BlockExtrasChanged:
                     //    break;
                     default:
                         break;
                 }
 
-                Logger.LogDebug("Metadata notification processed");
+                Logger.LogDebug("Extras notification processed");
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Failed to process metadata notification");
+                Logger.LogError(ex, "Failed to process extras notification");
             }
         }
     }

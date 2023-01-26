@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Netezos.Encoding;
@@ -183,16 +179,17 @@ namespace Tzkt.Api.Controllers
         /// Returns a contract account with the specified address.
         /// </remarks>
         /// <param name="address">Contract address (starting with KT)</param>
+        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing to switch to new functionality smoothly.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<ActionResult<Contract>> GetByAddress([Required][KTAddress] string address)
+        public async Task<ActionResult<Contract>> GetByAddress([Required][KTAddress] string address, bool legacy = true)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetContract(address);
+            var res = await Accounts.GetContract(address, legacy);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

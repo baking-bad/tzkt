@@ -12,6 +12,8 @@
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
 
+        public string Metadata { get; set; }
+
         public string KindString => ContractKinds.ToString(Kind);
     }
 }

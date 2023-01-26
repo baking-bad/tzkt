@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -38,8 +39,14 @@ namespace Tzkt.Api.Models
         public int BlocksCount { get; set; }
 
         /// <summary>
-        /// Offchain metadata
+        /// Off-chain extras
         /// </summary>
-        public RawJson Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata => Extras;
     }
 }

@@ -40,9 +40,14 @@ namespace Tzkt.Api.Models
         public ProtocolConstants Constants { get; set; }
 
         /// <summary>
-        /// Offchain metadata
+        /// Off-chain extras
         /// </summary>
-        [JsonSchemaType(typeof(ProtocolMetadata), IsNullable = true)]
-        public RawJson Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata => Extras;
     }
 }

@@ -38,6 +38,9 @@ builder.Services.AddHostedService<Observer>();
 if (builder.Configuration.GetDomainsConfig().Enabled)
     builder.Services.AddHostedService<DomainsService>();
 
+if (builder.Configuration.GetContractMetadataConfig().Enabled)
+    builder.Services.AddHostedService<ContractMetadata>();
+
 if (builder.Configuration.GetTokenMetadataConfig().Enabled)
     builder.Services.AddHostedService<TokenMetadata>();
 

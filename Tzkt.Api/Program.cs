@@ -65,7 +65,7 @@ builder.Services.AddTransient<StatisticsRepository>();
 builder.Services.AddTransient<SoftwareRepository>();
 builder.Services.AddTransient<BigMapsRepository>();
 builder.Services.AddTransient<TokensRepository>();
-builder.Services.AddTransient<MetadataRepository>();
+builder.Services.AddTransient<ExtrasRepository>();
 builder.Services.AddTransient<ConstantsRepository>();
 builder.Services.AddTransient<ContractEventsRepository>();
 builder.Services.AddTransient<DomainsRepository>();
@@ -162,7 +162,6 @@ builder.Services.AddMetricsTrackingMiddleware(builder.Configuration, options =>
 #endregion
 
 #region dapper
-SqlMapper.AddTypeHandler(new ProfileMetadataTypeHandler());
 SqlMapper.AddTypeHandler(new JsonElementTypeHandler());
 SqlMapper.AddTypeHandler(new RawJsonTypeHandler());
 #endregion

@@ -117,7 +117,7 @@ namespace Tzkt.Data.Models
             #region props
             // shadow property
             modelBuilder.Entity<AppState>()
-                .Property<string>("Metadata")
+                .Property<string>("Extras")
                 .HasColumnType("jsonb");
             #endregion
 

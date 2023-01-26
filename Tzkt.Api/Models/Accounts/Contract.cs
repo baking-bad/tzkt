@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -170,8 +171,15 @@ namespace Tzkt.Api.Models
         public int CodeHash { get; set; }
 
         /// <summary>
-        /// Metadata of the contract (alias, logo, website, contacts, etc)
+        /// TZIP-16 metadata (with `?legacy=true` this field will contain tzkt profile info)
         /// </summary>
-        public ProfileMetadata Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Metadata { get; set; }
+
+        /// <summary>
+        /// Off-chain extras
+        /// </summary>
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
     }
 }

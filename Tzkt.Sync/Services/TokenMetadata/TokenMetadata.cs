@@ -191,7 +191,7 @@ namespace Tzkt.Sync.Services
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             var row = await conn.QueryFirstAsync(@"
-                SELECT ""Metadata""->'tokenMetadata' as state, ""OperationCounter"", ""Level""
+                SELECT ""Extras""->'tokenMetadata' as state, ""OperationCounter"", ""Level""
                 FROM ""AppState""
                 WHERE ""Id"" = -1
                 LIMIT 1");
@@ -252,7 +252,7 @@ namespace Tzkt.Sync.Services
             using var conn = new NpgsqlConnection(ConnectionString);
             await conn.ExecuteAsync($@"
                 UPDATE ""AppState""
-                SET ""Metadata"" = jsonb_set(COALESCE(""Metadata"", '{{}}'), '{{tokenMetadata}}', '{json}')");
+                SET ""Extras"" = jsonb_set(COALESCE(""Extras"", '{{}}'), '{{tokenMetadata}}', '{json}')");
         }
 
         static async Task<Dictionary<string, int>> GetContractIds(NpgsqlConnection conn, List<string> addresses)

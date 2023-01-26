@@ -10,7 +10,7 @@ namespace Tzkt.Api.Repositories
 {
     public partial class AccountRepository : DbConnection
     {
-        public async Task<Contract> GetContract(string address)
+        public async Task<Contract> GetContract(string address, bool legacy)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract)
@@ -71,6 +71,8 @@ namespace Tzkt.Api.Repositories
                 EventsCount = contract.EventsCount,
                 TypeHash = contract.TypeHash,
                 CodeHash = contract.CodeHash,
+                Metadata = legacy ? contract.Profile : contract.Metadata,
+                Extras = legacy ? null : contract.Extras
             };
         }
 

@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class Alias
     {
         /// <summary>
-        /// Account alias name (offchain metadata).
+        /// Account alias name (off-chain data).
         /// </summary>
         [JsonPropertyName("alias")]
         public string Name { get; set; }

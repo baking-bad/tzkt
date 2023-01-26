@@ -98,6 +98,11 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Account>()
                 .Property<string>("Metadata")
                 .HasColumnType("jsonb");
+
+            // shadow property
+            modelBuilder.Entity<Account>()
+                .Property<string>("Extras")
+                .HasColumnType("jsonb");
             #endregion
 
             #region indexes
@@ -121,6 +126,12 @@ namespace Tzkt.Data.Models
             // shadow property
             modelBuilder.Entity<Account>()
                 .HasIndex("Metadata")
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
+
+            // shadow property
+            modelBuilder.Entity<Account>()
+                .HasIndex("Extras")
                 .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
             #endregion

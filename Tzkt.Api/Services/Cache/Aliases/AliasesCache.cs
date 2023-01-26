@@ -12,7 +12,7 @@ namespace Tzkt.Api.Services.Cache
     {
         #region static
         const string SelectQuery = @"
-        SELECT ""Address"", ""Metadata""#>>'{profile,alias}' AS ""Name""
+        SELECT ""Address"", ""Extras""#>>'{profile,alias}' AS ""Name""
         FROM   ""Accounts""";
         #endregion
 
@@ -23,7 +23,7 @@ namespace Tzkt.Api.Services.Cache
         {
             using var db = GetConnection();
             Aliases = db.Query<Alias>(
-                $@"{SelectQuery} WHERE ""Metadata""@>'{{""profile"":{{}}}}' AND ""Metadata""#>>'{{profile,alias}}' IS NOT NULL")
+                $@"{SelectQuery} WHERE ""Extras""@>'{{""profile"":{{}}}}' AND ""Extras""#>>'{{profile,alias}}' IS NOT NULL")
                 .ToList();
 
             logger.LogInformation("Loaded {cnt} aliases", Aliases.Count);
@@ -32,7 +32,7 @@ namespace Tzkt.Api.Services.Cache
                 AddTrigrams(alias);
         }
 
-        public void UpdateMetadata(string address, string json)
+        public void OnExtrasUpdate(string address, string json)
         {
             string name = null;
             if (json != null)

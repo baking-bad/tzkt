@@ -57,7 +57,7 @@ namespace Tzkt.Api.Repositories
                 Upvotes = row.Upvotes,
                 VotingPower = row.VotingPower,
                 Status = ProposalStatuses.ToString(row.Status),
-                Metadata = row.Metadata
+                Extras = row.Extras
             };
         }
 
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Repositories
                 Upvotes = row.Upvotes,
                 VotingPower = row.VotingPower,
                 Status = ProposalStatuses.ToString(row.Status),
-                Metadata = row.Metadata
+                Extras = row.Extras
             });
         }
 
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Repositories
                     case "upvotes": columns.Add(@"""Upvotes"""); break;
                     case "votingPower": columns.Add(@"""VotingPower"""); break;
                     case "status": columns.Add(@"""Status"""); break;
-                    case "metadata": columns.Add(@"""Metadata"""); break;
+                    case "extras": columns.Add(@"""Extras"""); break;
                 }
             }
 
@@ -177,9 +177,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = ProposalStatuses.ToString(row.Status);
                         break;
-                    case "metadata":
+                    case "extras":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Metadata;
+                            result[j++][i] = (RawJson)row.Extras;
                         break;
                 }
             }
@@ -207,7 +207,7 @@ namespace Tzkt.Api.Repositories
                 case "upvotes": columns.Add(@"""Upvotes"""); break;
                 case "votingPower": columns.Add(@"""VotingPower"""); break;
                 case "status": columns.Add(@"""Status"""); break;
-                case "metadata": columns.Add(@"""Metadata"""); break;
+                case "extras": columns.Add(@"""Extras"""); break;
             }
 
             if (columns.Count == 0)
@@ -260,9 +260,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = ProposalStatuses.ToString(row.Status);
                     break;
-                case "metadata":
+                case "extras":
                     foreach (var row in rows)
-                        result[j++] = (RawJson)row.Metadata;
+                        result[j++] = (RawJson)row.Extras;
                     break;
             }
 

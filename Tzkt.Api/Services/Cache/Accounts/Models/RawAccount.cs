@@ -43,13 +43,13 @@ namespace Tzkt.Api.Services.Cache
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
-        public ProfileMetadata Metadata { get; set; }
+        public string Extras { get; set; }
 
-        public string Alias => Metadata?.Alias;
-
+        public string Alias { get; set; }
+        public string Profile { get; set; }
         public Alias Info => new()
         {
-            Name = Metadata?.Alias,
+            Name = Alias,
             Address = Address
         };
     }

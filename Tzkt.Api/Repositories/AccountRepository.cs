@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -13,7 +7,7 @@ namespace Tzkt.Api.Repositories
     public partial class AccountRepository : DbConnection
     {
         #region static
-        const string AliasQuery = @"""Metadata""#>>'{profile,alias}' as ""Alias""";
+        const string AliasQuery = @"""Extras""#>>'{profile,alias}' as ""Alias""";
         #endregion
 
         readonly AccountsCache Accounts;
@@ -36,7 +30,7 @@ namespace Tzkt.Api.Repositories
             return Accounts.GetAsync(address);
         }
 
-        public async Task<Account> Get(string address, bool metadata)
+        public async Task<Account> Get(string address, bool legacy)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount == null)
@@ -111,7 +105,8 @@ namespace Tzkt.Api.Repositories
                         NumSetDepositsLimits = delegat.SetDepositsLimitsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
-                        Metadata = metadata ? delegat.Metadata : null,
+                        Metadata = legacy ? delegat.Profile : null,
+                        Extras = legacy ? null : delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
                     #endregion
@@ -166,7 +161,8 @@ namespace Tzkt.Api.Repositories
                         NumSetDepositsLimits = user.SetDepositsLimitsCount,
                         NumMigrations = user.MigrationsCount,
                         NumTransactions = user.TransactionsCount,
-                        Metadata = metadata ? user.Metadata : null
+                        Metadata = legacy ? user.Profile : null,
+                        Extras = legacy ? null : user.Extras
                     };
                     #endregion
                 case RawContract contract:
@@ -226,7 +222,8 @@ namespace Tzkt.Api.Repositories
                         EventsCount = contract.EventsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
-                        Metadata = metadata ? contract.Metadata : null
+                        Metadata = legacy ? contract.Profile : contract.Metadata,
+                        Extras = legacy ? null : contract.Extras
                     };
                 #endregion
                 case RawRollup rollup:
@@ -255,7 +252,8 @@ namespace Tzkt.Api.Repositories
                         TokenBalancesCount = rollup.TokenBalancesCount,
                         TokenTransfersCount = rollup.TokenTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
-                        Metadata = metadata ? rollup.Metadata : null
+                        Metadata = legacy ? rollup.Profile : null,
+                        Extras = legacy ? null : rollup.Extras
                     };
                 #endregion
                 case RawAccount ghost:
@@ -272,7 +270,8 @@ namespace Tzkt.Api.Repositories
                         FirstActivityTime = Time[ghost.FirstLevel],
                         LastActivity = ghost.LastLevel,
                         LastActivityTime = Time[ghost.LastLevel],
-                        Metadata = metadata ? ghost.Metadata : null
+                        Metadata = legacy ? ghost.Profile : null,
+                        Extras = legacy ? null : ghost.Extras
                     };
                 #endregion
                 default:
@@ -1992,10 +1991,10 @@ namespace Tzkt.Api.Repositories
                 : result.OrderByDescending(x => x.Id).Take(limit);
         }
 
-        public async Task<ProfileMetadata> GetMetadata(string address)
+        public async Task<RawJson> GetProfileInfo(string address)
         {
             var account = await Accounts.GetAsync(address);
-            return account?.Metadata;
+            return account?.Profile;
         }
     }
 }

@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using System.Data;
+using System.Text.Json;
 using Dapper;
 using Tzkt.Api.Models;
 
@@ -13,7 +8,12 @@ namespace Tzkt.Api.Services.Cache
     public class AccountsCache : DbConnection
     {
         #region static
-        const string SelectQuery = @"SELECT * FROM ""Accounts""";
+        const string SelectQuery = """
+            SELECT  *,
+                    "Extras"#>>'{profile,alias}' as "Alias",
+                    "Extras"->'profile' as "Profile"
+            FROM    "Accounts"
+            """;
         #endregion
         
         readonly object Crit = new();
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug("Updated {cnt} accounts since block {level}", cnt, from);
         }
 
-        #region metadata
+        #region extras
         public Alias GetAlias(int id)
         {
             // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
@@ -135,10 +135,32 @@ namespace Tzkt.Api.Services.Cache
             return (await GetAsync(id)).Info;
         }
 
-        public void UpdateMetadata(string address, string json)
+        public void OnExtrasUpdate(string address, string json)
         {
             if (TryGetSafe(address, out var account))
-                account.Metadata = AccountMetadata.Parse(json)?.Profile;
+            {
+                account.Extras = json;
+                #region deprecated
+                if (json != null)
+                {
+                    using var doc = JsonDocument.Parse(json);
+                    if (doc.RootElement.TryGetProperty("profile", out var profile) && profile.TryGetProperty("alias", out var alias))
+                    {
+                        account.Profile = JsonSerializer.Serialize(profile);
+                        account.Alias = alias.GetString();
+                        return;
+                    }
+                }
+                account.Profile = null;
+                account.Alias = null;
+                #endregion
+            }
+        }
+
+        public void OnMetadataUpdate(string address)
+        {
+            if (TryGetSafe(address, out var account))
+                Remove(account);
         }
         #endregion
 
@@ -281,6 +303,16 @@ namespace Tzkt.Api.Services.Cache
                 AccountsByAddress[account.Address] = account;
             }
             Logger.LogDebug("Account {address} cached", account.Address);
+        }
+
+        void Remove(RawAccount account)
+        {
+            lock (Crit)
+            {
+                AccountsById.Remove(account.Id);
+                AccountsByAddress.Remove(account.Address);
+            }
+            Logger.LogDebug("Account {address} removed from cache", account.Address);
         }
     }
 }

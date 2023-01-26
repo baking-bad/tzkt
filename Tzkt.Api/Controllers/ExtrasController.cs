@@ -1,12 +1,8 @@
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Repositories;
 
@@ -14,21 +10,21 @@ namespace Tzkt.Api.Controllers
 {
     [OpenApiIgnore]
     [ApiController]
-    [Route("v1/metadata")]
-    public class MetadataController : ControllerBase
+    [Route("v1/extras")]
+    public class ExtrasController : ControllerBase
     {
-        readonly MetadataRepository Metadata;
+        readonly ExtrasRepository Extras;
         readonly IAuthService Auth;
 
-        public MetadataController(MetadataRepository metadata, IAuthService auth)
+        public ExtrasController(ExtrasRepository extras, IAuthService auth)
         {
-            Metadata = metadata;
+            Extras = extras;
             Auth = auth;
         }
 
         #region state
         [HttpGet("state")]
-        public async Task<ActionResult<RawJson>> GetStateMetadata(
+        public async Task<ActionResult<RawJson>> GetStateExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -38,15 +34,15 @@ namespace Tzkt.Api.Controllers
                 Section = section,
                 Access = Access.Read
             };
-            
+
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetStateMetadata(section));
+            return Ok(await Extras.GetStateExtras(section));
         }
 
         [HttpPost("state")]
-        public async Task<ActionResult<MetadataUpdate>> UpdateStateMetadata(
+        public async Task<ActionResult<ExtrasUpdate>> UpdateStateExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -58,14 +54,14 @@ namespace Tzkt.Api.Controllers
                     Section = section,
                     Access = Access.Write
                 };
-                
+
                 var body = await Request.Body.ReadAsStringAsync();
 
-                if (!Auth.TryAuthenticate(headers, rights,body, out var error))
+                if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<MetadataUpdate>(body);
-                return Ok(await Metadata.UpdateStateMetadata(metadata, section));
+                var extras = JsonSerializer.Deserialize<ExtrasUpdate>(body);
+                return Ok(await Extras.UpdateStateExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -76,7 +72,7 @@ namespace Tzkt.Api.Controllers
 
         #region accounts
         [HttpGet("accounts/{address}")]
-        public async Task<ActionResult<RawJson>> GetAccountMetadata(
+        public async Task<ActionResult<RawJson>> GetAccountExtras(
             [FromHeader] AuthHeaders headers,
             [Address] string address,
             string section = null)
@@ -91,13 +87,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetAccountMetadata(address, section));
+            return Ok(await Extras.GetAccountExtras(address, section));
         }
 
         [HttpGet("accounts")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetAccountMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> GetAccountExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -108,15 +104,15 @@ namespace Tzkt.Api.Controllers
                 Section = section,
                 Access = Access.Read
             };
-            
+
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetAccountMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetAccountExtras(extras, offset, limit, section));
         }
 
         [HttpPost("accounts")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateAccountMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> UpdateAccountExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -134,11 +130,11 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$")))
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|KT1|txr1)[0-9A-Za-z]{33}$")))
                     return new BadRequest("body", "Invalid account address");
 
-                return Ok(await Metadata.UpdateAccountMetadata(metadata, section));
+                return Ok(await Extras.UpdateAccountExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -149,7 +145,7 @@ namespace Tzkt.Api.Controllers
 
         #region proposals
         [HttpGet("proposals/{hash}")]
-        public async Task<ActionResult<RawJson>> GetProposalMetadata(
+        public async Task<ActionResult<RawJson>> GetProposalExtras(
             [FromHeader] AuthHeaders headers,
             [ProtocolHash] string hash,
             string section = null)
@@ -164,13 +160,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProposalMetadata(hash, section));
+            return Ok(await Extras.GetProposalExtras(hash, section));
         }
 
         [HttpGet("proposals")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProposalMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> GetProposalExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -185,11 +181,11 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProposalMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetProposalExtras(extras, offset, limit, section));
         }
 
         [HttpPost("proposals")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateProposalMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> UpdateProposalExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -207,11 +203,11 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid proposal hash");
 
-                return Ok(await Metadata.UpdateProposalMetadata(metadata, section));
+                return Ok(await Extras.UpdateProposalExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -222,7 +218,7 @@ namespace Tzkt.Api.Controllers
 
         #region protocols
         [HttpGet("protocols/{hash}")]
-        public async Task<ActionResult<RawJson>> GetProtocolMetadata(
+        public async Task<ActionResult<RawJson>> GetProtocolExtras(
             [FromHeader] AuthHeaders headers,
             [ProtocolHash] string hash,
             string section = null)
@@ -237,13 +233,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProtocolMetadata(hash, section));
+            return Ok(await Extras.GetProtocolExtras(hash, section));
         }
 
         [HttpGet("protocols")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetProtocolMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> GetProtocolExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -258,11 +254,11 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetProtocolMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetProtocolExtras(extras, offset, limit, section));
         }
 
         [HttpPost("protocols")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateProtocolMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> UpdateProtocolExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -280,11 +276,11 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid protocol hash");
 
-                return Ok(await Metadata.UpdateProtocolMetadata(metadata, section));
+                return Ok(await Extras.UpdateProtocolExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -295,7 +291,7 @@ namespace Tzkt.Api.Controllers
 
         #region software
         [HttpGet("software/{shortHash}")]
-        public async Task<ActionResult<RawJson>> GetSoftwareMetadata(
+        public async Task<ActionResult<RawJson>> GetSoftwareExtras(
             [FromHeader] AuthHeaders headers,
             [Hex(8)] string shortHash,
             string section = null)
@@ -310,13 +306,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetSoftwareMetadata(shortHash, section));
+            return Ok(await Extras.GetSoftwareExtras(shortHash, section));
         }
 
         [HttpGet("software")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetSoftwareMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> GetSoftwareExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -331,11 +327,11 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetSoftwareMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetSoftwareExtras(extras, offset, limit, section));
         }
 
         [HttpPost("software")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateSoftwareMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> UpdateSoftwareExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -352,11 +348,11 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
                     return BadRequest("Invalid software short hash");
 
-                return Ok(await Metadata.UpdateSoftwareMetadata(metadata, section));
+                return Ok(await Extras.UpdateSoftwareExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -367,7 +363,7 @@ namespace Tzkt.Api.Controllers
 
         #region constants
         [HttpGet("constants/{address}")]
-        public async Task<ActionResult<RawJson>> GetConstantMetadata(
+        public async Task<ActionResult<RawJson>> GetConstantExtras(
             [FromHeader] AuthHeaders headers,
             [ExpressionHash] string address,
             string section = null)
@@ -382,13 +378,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetConstantMetadata(address, section));
+            return Ok(await Extras.GetConstantExtras(address, section));
         }
 
         [HttpGet("constants")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> GetConstantMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> GetConstantExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -403,11 +399,11 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetConstantMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetConstantExtras(extras, offset, limit, section));
         }
 
         [HttpPost("constants")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<string>>>> UpdateConstantMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<string>>>> UpdateConstantExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -424,11 +420,11 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights,body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<string>>>(body);
-                if (metadata.Any(x => !Regex.IsMatch(x.Key, "^expr[0-9A-Za-z]{50}$")))
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^expr[0-9A-Za-z]{50}$")))
                     return BadRequest("Invalid expression hash");
 
-                return Ok(await Metadata.UpdateConstantMetadata(metadata, section));
+                return Ok(await Extras.UpdateConstantExtras(extras, section));
             }
             catch (JsonException)
             {
@@ -439,7 +435,7 @@ namespace Tzkt.Api.Controllers
 
         #region blocks
         [HttpGet("blocks/{level:int}")]
-        public async Task<ActionResult<RawJson>> GetBlockMetadata(
+        public async Task<ActionResult<RawJson>> GetBlockExtras(
             [FromHeader] AuthHeaders headers,
             [Min(0)] int level,
             string section = null)
@@ -454,13 +450,13 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetBlockMetadata(level, section));
+            return Ok(await Extras.GetBlockExtras(level, section));
         }
 
         [HttpGet("blocks")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> GetBlockMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<int>>>> GetBlockExtras(
             [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
+            JsonParameter extras,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             string section = null)
@@ -475,11 +471,11 @@ namespace Tzkt.Api.Controllers
             if (!Auth.TryAuthenticate(headers, rights, out var error))
                 return Unauthorized(error);
 
-            return Ok(await Metadata.GetBlockMetadata(metadata, offset, limit, section));
+            return Ok(await Extras.GetBlockExtras(extras, offset, limit, section));
         }
 
         [HttpPost("blocks")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> UpdateBlockMetadata(
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<int>>>> UpdateBlockExtras(
             [FromHeader] AuthHeaders headers,
             string section = null)
         {
@@ -496,77 +492,8 @@ namespace Tzkt.Api.Controllers
                 if (!Auth.TryAuthenticate(headers, rights, body, out var error))
                     return Unauthorized(error);
 
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
-                return Ok(await Metadata.UpdateBlockMetadata(metadata, section));
-            }
-            catch (JsonException)
-            {
-                return new BadRequest("body", "Invalid json");
-            }
-        }
-        #endregion
-
-        #region tokens
-        [HttpGet("tokens/{id:int}")]
-        public async Task<ActionResult<RawJson>> GetTokenMetadata(
-            [FromHeader] AuthHeaders headers,
-            [Min(0)] int id,
-            string section = null)
-        {
-            var rights = new AccessRights()
-            {
-                Table = "Tokens",
-                Section = section,
-                Access = Access.Read
-            };
-            
-            if (!Auth.TryAuthenticate(headers, rights, out var error))
-                return Unauthorized(error);
-
-            return Ok(await Metadata.GetTokenMetadata(id, section));
-        }
-
-        [HttpGet("tokens")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> GetTokenMetadata(
-            [FromHeader] AuthHeaders headers,
-            JsonParameter metadata,
-            [Min(0)] int offset = 0,
-            [Range(0, 10000)] int limit = 100,
-            string section = null)
-        {
-            var rights = new AccessRights()
-            {
-                Table = "Tokens",
-                Section = section,
-                Access = Access.Read
-            };
-            
-            if (!Auth.TryAuthenticate(headers, rights, out var error))
-                return Unauthorized(error);
-
-            return Ok(await Metadata.GetTokenMetadata(metadata, offset, limit, section));
-        }
-
-        [HttpPost("tokens")]
-        public async Task<ActionResult<IEnumerable<MetadataUpdate<int>>>> UpdateTokenMetadata(
-            [FromHeader] AuthHeaders headers,
-            string section = null)
-        {
-            try
-            {
-                var rights = new AccessRights()
-                {
-                    Table = "Tokens",
-                    Section = section,
-                    Access = Access.Write
-                };
-                
-                var body = await Request.Body.ReadAsStringAsync();
-                if (!Auth.TryAuthenticate(headers, rights, body, out var error))
-                    return Unauthorized(error);
-
-                var metadata = JsonSerializer.Deserialize<List<MetadataUpdate<int>>>(body);
-                return Ok(await Metadata.UpdateTokenMetadata(metadata, section));
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<int>>>(body);
+                return Ok(await Extras.UpdateBlockExtras(extras, section));
             }
             catch (JsonException)
             {

@@ -13,8 +13,8 @@ namespace Tzkt.Api.Services.Cache
         #region static
         const string SelectQuery = @"
         SELECT  ""Id"", ""FirstLevel"",
-                ""Metadata""->>'version' as ""Version"",
-                ""Metadata""->>'commitDate' as ""CommitDate""
+                ""Extras""->>'version' as ""Version"",
+                ""Extras""->>'commitDate' as ""CommitDate""
         FROM    ""Software""";
         #endregion
 
@@ -56,7 +56,7 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug("Loaded {cnt} software", Software.Count);
         }
 
-        public void UpdateMetadata(string shortHash)
+        public void OnExtrasUpdate(string shortHash)
         {
             lock (this)
             {

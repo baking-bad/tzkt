@@ -1,4 +1,5 @@
 ﻿using System;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -311,9 +312,10 @@ namespace Tzkt.Api.Models
         public DateTime LastActivityTime { get; set; }
 
         /// <summary>
-        /// Metadata of the delegate (alias, logo, website, contacts, etc)
+        /// Off-chain extras
         /// </summary>
-        public ProfileMetadata Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
 
         /// <summary>
         /// Last seen baker's software
@@ -335,6 +337,11 @@ namespace Tzkt.Api.Models
         /// [DEPRECATED]
         /// </summary>
         public long FrozenFees => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata { get; set; }
         #endregion
     }
 }

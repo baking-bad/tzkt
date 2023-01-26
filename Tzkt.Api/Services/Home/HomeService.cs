@@ -1,15 +1,6 @@
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Dapper;
 using Dynamic.Json;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -497,7 +488,7 @@ namespace Tzkt.Api.Services
                 ActiveAccounts = await db.ExecuteScalarAsync<int>(
                     $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),
                 PublicAccounts = await db.ExecuteScalarAsync<int>(
-                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""Metadata"" @> '{{""profile"":{{}}}}'"),
+                    $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""Extras"" @> '{{""profile"":{{}}}}'"),
                 TotalContracts = await AccountsRepo.GetContractsCount(new ContractKindParameter
                 {
                     In = new List<int> { 1, 2 },
@@ -511,7 +502,7 @@ namespace Tzkt.Api.Services
             var period = epoch.Periods.Last();
             var proposals = epoch.Proposals.OrderByDescending(x => x.VotingPower).ToList();
             var proposal = proposals.FirstOrDefault();
-            var proposalMeta = proposal?.Metadata == null ? null : DJson.Parse(proposal.Metadata);
+            var proposalExtras = proposal?.Extras == null ? null : DJson.Parse(proposal.Extras);
             
             if (period.Kind == PeriodKinds.Proposal)
             {
@@ -523,7 +514,7 @@ namespace Tzkt.Api.Services
                     Proposals = proposals.Select(x => new ProposalData
                     {
                         Hash = x.Hash,
-                        Metadata = x.Metadata,
+                        Extras = x.Extras,
                         VotingPower = x.VotingPower,
                         VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / (long)period.TotalVotingPower!, 2)
                     }).ToList(),
@@ -538,7 +529,7 @@ namespace Tzkt.Api.Services
             {
                 Epoch = period.Epoch,
                 Proposal = proposal.Hash,
-                Protocol = proposalMeta?.alias,
+                Protocol = proposalExtras?.alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,
                 EpochStartTime = Times[epoch.FirstLevel],

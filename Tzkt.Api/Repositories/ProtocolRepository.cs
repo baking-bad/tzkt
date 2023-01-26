@@ -85,7 +85,7 @@ namespace Tzkt.Api.Repositories
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
                     Dictator = row.Dictator
                 },
-                Metadata = row.Metadata
+                Extras = row.Extras
             };
         }
 
@@ -152,7 +152,7 @@ namespace Tzkt.Api.Repositories
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
                     Dictator = row.Dictator
                 },
-                Metadata = row.Metadata
+                Extras = row.Extras
             };
         }
 
@@ -219,7 +219,7 @@ namespace Tzkt.Api.Repositories
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
                     Dictator = row.Dictator
                 },
-                Metadata = row.Metadata
+                Extras = row.Extras
             };
         }
 
@@ -287,7 +287,7 @@ namespace Tzkt.Api.Repositories
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
                     Dictator = row.Dictator
                 },
-                Metadata = row.Metadata
+                Extras = row.Extras
             });
         }
     }

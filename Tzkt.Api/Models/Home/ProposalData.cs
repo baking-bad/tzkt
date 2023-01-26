@@ -3,9 +3,9 @@ namespace Tzkt.Api.Models
     public class ProposalData
     {
         public string Hash { get; set; }
-        public RawJson Metadata { get; set; }
         public long VotingPower { get; set; }
         public double VotingPowerPercentage { get; set; }
+        public RawJson Extras { get; set; }
 
         #region deprecated
         /// <summary>
@@ -17,6 +17,11 @@ namespace Tzkt.Api.Models
         /// [DEPRECATED]
         /// </summary>
         public double RollsPercentage => VotingPowerPercentage;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata => Extras;
         #endregion
     }
 }

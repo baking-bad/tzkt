@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
             var sql = @"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Extras"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b 
@@ -72,7 +72,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = @"
                 SELECT      o.""Id"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
-                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Extras"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Proposals"" as proposal
@@ -128,7 +128,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"
                 SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""OpHash"", o.""SenderId"", o.""VotingPower"", o.""Duplicated"", o.""Epoch"", o.""Period"",
                             b.""Hash"",
-                            proposal.""Hash"" as ""ProposalHash"", proposal.""Metadata"" ->> 'alias' as ""ProposalAlias"",
+                            proposal.""Hash"" as ""ProposalHash"", proposal.""Extras"" ->> 'alias' as ""ProposalAlias"",
                             period.""Kind"", period.""FirstLevel"", period.""LastLevel""
                 FROM        ""ProposalOps"" as o
                 INNER JOIN  ""Blocks"" as b ON b.""Level"" = o.""Level""
@@ -204,7 +204,7 @@ namespace Tzkt.Api.Repositories
                     case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                     case "proposal":
                         columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
-                        columns.Add(@"proposal.""Metadata"" ->> 'alias' as ""ProposalAlias""");
+                        columns.Add(@"proposal.""Extras"" ->> 'alias' as ""ProposalAlias""");
                         joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                         break;
                     case "period":
@@ -342,7 +342,7 @@ namespace Tzkt.Api.Repositories
                 case "duplicated": columns.Add(@"o.""Duplicated"""); break;
                 case "proposal":
                     columns.Add(@"proposal.""Hash"" as ""ProposalHash""");
-                    columns.Add(@"proposal.""Metadata"" ->> 'alias' as ""ProposalAlias""");
+                    columns.Add(@"proposal.""Extras"" ->> 'alias' as ""ProposalAlias""");
                     joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
                     break;
                 case "period":

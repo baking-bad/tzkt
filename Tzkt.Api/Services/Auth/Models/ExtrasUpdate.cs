@@ -2,15 +2,15 @@ using System.Text.Json.Serialization;
 
 namespace Tzkt.Api.Services.Auth
 {
-    public class MetadataUpdate<T> : MetadataUpdate
+    public class ExtrasUpdate<T> : ExtrasUpdate
     {
         [JsonPropertyName("key")]
         public T Key { get; set; }
     }
 
-    public class MetadataUpdate
+    public class ExtrasUpdate
     {
-        [JsonPropertyName("metadata")]
-        public RawJson Metadata { get; set; }
+        [JsonPropertyName("extras")]
+        public RawJson Extras { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -40,8 +41,14 @@ namespace Tzkt.Api.Models
         public DateTime CreationTime { get; set; }
 
         /// <summary>
-        /// Offchain metadata
+        /// Off-chain extras
         /// </summary>
-        public RawJson Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata => Extras;
     }
 }

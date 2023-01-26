@@ -49,16 +49,21 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
 
         /// <summary>
-        /// Offchain metadata
+        /// Off-chain extras
         /// </summary>
-        [JsonSchemaType(typeof(ProposalMetadata), IsNullable = true)]
-        public RawJson Metadata { get; set; }
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
 
         #region deprecated
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
         public int Rolls => (int)(VotingPower / 6_000_000_000);
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public RawJson Metadata => Extras;
         #endregion
     }
 }

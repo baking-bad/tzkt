@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 LastTime = Time[row.LastLevel],
                 ShortHash = row.ShortHash,
-                Metadata = row.Metadata
+                Extras = row.Extras
             });
         }
 
@@ -64,7 +64,7 @@ namespace Tzkt.Api.Repositories
                     case "lastLevel": columns.Add(@"""LastLevel"""); break;
                     case "lastTime": columns.Add(@"""LastLevel"""); break;
                     case "shortHash": columns.Add(@"""ShortHash"""); break;
-                    case "metadata": columns.Add(@"""Metadata"""); break;
+                    case "extras": columns.Add(@"""Extras"""); break;
                 }
             }
 
@@ -115,9 +115,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ShortHash;
                         break;
-                    case "metadata":
+                    case "extras":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Metadata;
+                            result[j++][i] = (RawJson)row.Extras;
                         break;
                 }
             }
@@ -136,7 +136,7 @@ namespace Tzkt.Api.Repositories
                 case "lastLevel": columns.Add(@"""LastLevel"""); break;
                 case "lastTime": columns.Add(@"""LastLevel"""); break;
                 case "shortHash": columns.Add(@"""ShortHash"""); break;
-                case "metadata": columns.Add(@"""Metadata"""); break;
+                case "extras": columns.Add(@"""Extras"""); break;
             }
 
             if (columns.Count == 0)
@@ -183,9 +183,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.ShortHash;
                     break;
-                case "metadata":
+                case "extras":
                     foreach (var row in rows)
-                        result[j++] = (RawJson)row.Metadata;
+                        result[j++] = (RawJson)row.Extras;
                     break;
             }
 

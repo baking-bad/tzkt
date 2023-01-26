@@ -3,11 +3,10 @@
 TzKT Explorer provides free REST API and WebSocket API for accessing detailed Tezos blockchain data and helps developers build more services and applications on top of Tezos.
 TzKT is an open-source project, so you can easily clone and build it and use it as a self-hosted service to avoid any risks of depending on third-party services.
 
-TzKT API is available for the following Tezos networks with the following base URLs:
+TzKT API is available for the following Tezos networks with the following base URLs: 
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io)) 
 - Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
-- Kathmandunet: `https://api.kathmandunet.tzkt.io/` ([view docs](https://api.kathmandunet.tzkt.io))
 - Limanet: `https://api.limanet.tzkt.io/` ([view docs](https://api.limanet.tzkt.io))
 
 We also provide a staging environment for testing newest features and pre-updating client applications before deploying to production:
