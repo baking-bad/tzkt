@@ -1,12 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Data;
 using Dapper;
 using Netezos.Contracts;
 using Netezos.Encoding;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Api.Utils;
@@ -962,6 +957,24 @@ namespace Tzkt.Api.Repositories
                     })
                     .ToList()
             };
+        }
+        
+        public async Task<MichelinePrim> GetViewMicheline(string address, string name)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawContract contract) return null;
+            
+            using var db = GetConnection();
+            var row = await db.QueryFirstOrDefaultAsync("""
+                SELECT "Views"
+                FROM "Scripts"
+                WHERE "ContractId" = @id
+                AND "Current" = true
+                """, new { id = contract.Id });
+            
+            return row?.Views == null ? null : ((byte[][])row.Views)
+                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .FirstOrDefault(x => (x.Args[0] as MichelineString)?.Value == name);
         }
 
         public async Task<IMicheline> BuildEntrypointParameters(string address, string name, object value)
