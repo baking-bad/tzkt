@@ -6,13 +6,20 @@ namespace Tzkt.Api.Services
     public sealed class RpcHelpers : IDisposable
     {
         readonly TezosRpc Rpc;
-        
         string ChainId;
 
         public RpcHelpers(IConfiguration config)
         {
             var _config = config.GetRpcHelpersConfig();
             Rpc = _config.Enabled ? new TezosRpc(_config.Endpoint, _config.Timeout) : null;
+        }
+
+        public async Task<string> GetChainId()
+        {
+            if (Rpc == null)
+                throw new InvalidOperationException("RpcHelpers disabled");
+
+            return ChainId ??= await Rpc.GetAsync<string>("chains/main/chain_id");
         }
 
         public async Task<string> Inject(string content, bool async)
@@ -31,10 +38,6 @@ namespace Tzkt.Api.Services
             return (await Rpc.Blocks.Head.Helpers.Scripts.RunScriptView.PostAsync(contract, view, input, await GetChainId())).data;
         }
 
-        async Task<string> GetChainId()
-        {
-            return ChainId ??= await Rpc.GetAsync<string>("chains/main/chain_id");
-        }
         public void Dispose() => Rpc?.Dispose();
     }
 }

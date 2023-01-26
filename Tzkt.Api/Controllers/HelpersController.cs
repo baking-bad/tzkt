@@ -42,7 +42,7 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest(nameof(bytes), ex.Message);
             }
         }
-        
+
         /// <summary>
         /// Run script view
         /// </summary>
@@ -50,8 +50,8 @@ namespace Tzkt.Api.Controllers
         /// Simulate a call to a michelson view
         /// </remarks>
         /// <param name="contract">Contract address</param>
-        /// <param name="name">Called view</param>
-        /// <param name="input">Input(micheline michelson expression)/param>
+        /// <param name="name">View name</param>
+        /// <param name="input">Input to be passed to the contract view (in human-readable format, see "Json schema" on tzkt.io)</param>
         /// <returns></returns>
         [HttpPost("view/{contract}/{name}")]
         public async Task<ActionResult> PostRunScriptView(            
@@ -61,17 +61,19 @@ namespace Tzkt.Api.Controllers
         {
             try
             {
-                var schema = await Accounts.GetViewSchema(contract, name);
-                if (schema == null)
-                    return Ok(null);
+                var view = await Accounts.GetViewMicheline(contract, name);
+                if (view == null) return new BadRequest(nameof(contract), "View not found");
 
-                var inputType = Schema.Create(schema.Args[1] as MichelinePrim);
-                var res = await Rpc.RunScriptView(contract, name, inputType.Optimize(inputType.MapObject(input, true)));
-                return Ok(Schema.Create(schema.Args[2] as MichelinePrim).Humanize(res));
+                var inputSchema = Schema.Create(view.Args[1] as MichelinePrim);
+                var outputSchema = Schema.Create(view.Args[2] as MichelinePrim);
+
+                var res = await Rpc.RunScriptView(contract, name, inputSchema.MapObject(input, true));
+
+                return Ok((RawJson)outputSchema.Humanize(res));
             }
             catch (Exception ex)
             {
-                return new BadRequest(nameof(contract), ex.Message);
+                return new BadRequest(nameof(input), ex.Message);
             }
         }
     }

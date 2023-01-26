@@ -1,9 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Dynamic.Json;
-using Tzkt.Api.Services.Cache;
+﻿using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Services
 {
@@ -33,9 +28,10 @@ namespace Tzkt.Api.Services
             
             try
             {
-                string chainId = await DJson.GetAsync($"{config.Endpoint.TrimEnd('/')}/chains/main/chain_id");
+                var helpers = services.GetRequiredService<RpcHelpers>();
+                var state = services.GetRequiredService<StateCache>();
 
-                if (chainId != services.GetRequiredService<StateCache>().Current.ChainId)
+                if (await helpers.GetChainId() != state.Current.ChainId)
                     throw new ConfigurationException("RpcHelpers.Endpoint refers to the node with different chain_id");
             }
             catch (ConfigurationException)
