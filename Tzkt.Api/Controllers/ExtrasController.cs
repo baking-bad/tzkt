@@ -11,6 +11,7 @@ namespace Tzkt.Api.Controllers
     [OpenApiIgnore]
     [ApiController]
     [Route("v1/extras")]
+    [Route("v1/metadata")] // [DEPRECATED]
     public class ExtrasController : ControllerBase
     {
         readonly ExtrasRepository Extras;

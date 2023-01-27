@@ -12,5 +12,10 @@ namespace Tzkt.Api.Services.Auth
     {
         [JsonPropertyName("extras")]
         public RawJson Extras { get; set; }
+
+        #region deprecated
+        [JsonPropertyName("metadata")]
+        public RawJson Metadata => Extras;
+        #endregion
     }
 }
