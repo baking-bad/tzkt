@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -21,6 +16,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             base.SetParameters(protocol, parameters);
             protocol.TokensPerRoll = parameters["minimal_stake"]?.Value<long>() ?? 6_000_000L;
         }
+
+        protected override void UpgradeParameters(Protocol protocol, Protocol prev) { }
 
         protected override async Task MigrateContext(AppState state)
         {

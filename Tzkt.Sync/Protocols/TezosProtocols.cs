@@ -1,8 +1,4 @@
-﻿using System;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-using Tzkt.Sync.Protocols;
+﻿using Tzkt.Sync.Protocols;
 
 namespace Tzkt.Sync
 {
@@ -34,6 +30,7 @@ namespace Tzkt.Sync
             services.AddScoped<Proto13Handler>();
             services.AddScoped<Proto14Handler>();
             services.AddScoped<Proto15Handler>();
+            services.AddScoped<Proto16Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -85,6 +82,7 @@ namespace Tzkt.Sync
                 "PtJakart2xVj7pYXJBXrqHgd82rdkLey5ZeeGwDgPp9rhQUbSqY" => services.GetRequiredService<Proto13Handler>(),
                 "PtKathmankSpLLDALzWw7CGD2j2MtyveTwboEYokqUCP4a1LxMg" => services.GetRequiredService<Proto14Handler>(),
                 "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW" => services.GetRequiredService<Proto15Handler>(),
+                "PtMumbaiiFFEGbew1rRjzSPyzRbA51Tm3RVZL5suHPxSZYDhCEc" => services.GetRequiredService<Proto16Handler>(),
                 _ => null,
             };
         }
