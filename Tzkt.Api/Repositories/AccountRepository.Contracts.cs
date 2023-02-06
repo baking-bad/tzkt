@@ -933,7 +933,6 @@ namespace Tzkt.Api.Repositories
             {
                 StorageSchema = storage.GetJsonSchema(),
                 Entrypoints = param.Entrypoints
-                    .Where(x => param.IsEntrypointUseful(x.Key))
                     .Select(x => new EntrypointInterface
                     {
                         Name = x.Key,
