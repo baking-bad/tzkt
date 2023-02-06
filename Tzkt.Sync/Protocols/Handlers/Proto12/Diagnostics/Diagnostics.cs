@@ -64,7 +64,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                         throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
 
                     if (bakerCycle.MissedEndorsements != remote.RequiredInt64("missed_slots"))
-                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                    {
+                        var proto = await Cache.Protocols.GetAsync(state.Protocol);
+                        if (bakerCycle.Cycle != proto.FirstCycle)
+                            throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                    }
                 }
                 else
                 {
