@@ -184,6 +184,14 @@ namespace Tzkt.Sync.Protocols.Proto16
                             case "tx_rollup_rejection": await ValidateTxRollupRejection(content); break; 
                             case "tx_rollup_dispatch_tickets": await ValidateTxRollupDispatchTickets(content); break; 
                             case "transfer_ticket": await ValidateTransferTicket(content); break; 
+                            case "smart_rollup_add_messages": await ValidateSmartRollupAddMessages(content); break; 
+                            case "smart_rollup_cement": await ValidateSmartRollupCement(content); break; 
+                            case "smart_rollup_execute_outbox_message": await ValidateSmartRollupExecute(content); break; 
+                            case "smart_rollup_originate": await ValidateSmartRollupOriginate(content); break; 
+                            case "smart_rollup_publish": await ValidateSmartRollupPublish(content); break; 
+                            case "smart_rollup_recover_bond": await ValidateSmartRollupRecoverBond(content); break; 
+                            case "smart_rollup_refute": await ValidateSmartRollupRefute(content); break; 
+                            case "smart_rollup_timeout": await ValidateSmartRollupTimeout(content); break; 
                             default:
                                 throw new ValidationException("invalid operation content kind");
                         }
@@ -713,6 +721,115 @@ namespace Tzkt.Sync.Protocols.Proto16
                 content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
                 source,
                 content.RequiredInt64("fee"));
+        }
+
+        protected virtual async Task ValidateSmartRollupAddMessages(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            var applied = result.RequiredString("status") == "applied";
+
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.EnumerateArray(),
+                    source,
+                    null,
+                    0,
+                    0,
+                    0);
+        }
+
+        protected virtual Task ValidateSmartRollupCement(JsonElement content)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task ValidateSmartRollupExecute(JsonElement content)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual async Task ValidateSmartRollupOriginate(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            var applied = result.RequiredString("status") == "applied";
+
+            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
+                ValidateTransferBalanceUpdates(
+                    resultUpdates.EnumerateArray(),
+                    source,
+                    null,
+                    0,
+                    (result.OptionalInt32("size") ?? 0) * Protocol.ByteCost,
+                    0);
+        }
+
+        protected virtual async Task ValidateSmartRollupPublish(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+
+            var result = content.Required("metadata").Required("operation_result");
+            if (result.TryGetProperty("balance_updates", out var updates) && updates.Count() != 0)
+            {
+                if (updates.Count() != 2)
+                    throw new ValidationException("unexpected number of smart rollup bonds balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "contract" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid smart rollup bonds balance updates");
+
+                if (!updates.EnumerateArray().Any(x =>
+                    x.RequiredString("kind") == "freezer" &&
+                    x.RequiredString("category") == "bonds" &&
+                    x.RequiredString("contract") == source))
+                    throw new ValidationException("invalid smart rollup bonds balance updates");
+
+                if (updates[0].RequiredInt64("change") != -updates[1].RequiredInt64("change"))
+                    throw new ValidationException("inconsistent change of smart rollup bonds balance updates");
+            }
+        }
+
+        protected virtual Task ValidateSmartRollupRecoverBond(JsonElement content)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task ValidateSmartRollupRefute(JsonElement content)
+        {
+            throw new NotImplementedException();
+        }
+
+        protected virtual Task ValidateSmartRollupTimeout(JsonElement content)
+        {
+            throw new NotImplementedException();
         }
 
         protected virtual void ValidateFeeBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, long fee)

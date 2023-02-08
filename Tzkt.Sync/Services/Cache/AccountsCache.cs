@@ -134,6 +134,7 @@ namespace Tzkt.Sync.Services.Cache
                     AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
                     AccountType.Contract => await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
                     AccountType.Rollup => await Db.Rollups.FirstOrDefaultAsync(x => x.Address == address),
+                    AccountType.SmartRollup => await Db.SmartRollups.FirstOrDefaultAsync(x => x.Address == address),
                     _ => await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
                 };
 

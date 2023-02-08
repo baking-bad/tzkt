@@ -475,7 +475,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 UpdateConsensusKeyCount = user.UpdateConsensusKeyCount,
                 DrainDelegateCount = user.DrainDelegateCount,
                 RollupBonds = user.RollupBonds,
-                RollupsCount = user.RollupsCount
+                RollupsCount = user.RollupsCount,
+                SmartRollupBonds = user.SmartRollupBonds,
+                SmartRollupsCount = user.SmartRollupsCount,
+                SmartRollupAddMessagesCount = user.SmartRollupAddMessagesCount,
+                SmartRollupCementCount = user.SmartRollupCementCount,
+                SmartRollupExecuteCount = user.SmartRollupExecuteCount,
+                SmartRollupOriginateCount = user.SmartRollupOriginateCount,
+                SmartRollupPublishCount = user.SmartRollupPublishCount,
+                SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
+                SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                SmartRollupTimeoutCount = user.SmartRollupTimeoutCount
             };
 
             #region update relations
@@ -631,6 +641,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                             touched.Add((op, entry.State));
                         }
                         break;
+                    case SmartRollupAddMessagesOperation:
+                    case SmartRollupCementOperation:
+                    case SmartRollupExecuteOperation:
+                    case SmartRollupOriginateOperation:
+                    case SmartRollupPublishOperation:
+                    case SmartRollupRecoverBondOperation:
+                    case SmartRollupRefuteOperation:
+                    case SmartRollupTimeoutOperation:
+                        var managerOp = entry.Entity as ManagerOperation;
+                        if (managerOp.Sender?.Id == user.Id)
+                        {
+                            managerOp.Sender = delegat;
+                            touched.Add((managerOp, entry.State));
+                        }
+                        break;
                     case Contract contract:
                         if (contract.WeirdDelegate?.Id == user.Id || contract.Creator?.Id == user.Id || contract.Manager?.Id == user.Id)
                         {
@@ -707,7 +732,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
                 DrainDelegateCount = delegat.DrainDelegateCount,
                 RollupBonds = delegat.RollupBonds,
-                RollupsCount = delegat.RollupsCount
+                RollupsCount = delegat.RollupsCount,
+                SmartRollupBonds = delegat.SmartRollupBonds,
+                SmartRollupsCount = delegat.SmartRollupsCount,
+                SmartRollupAddMessagesCount = delegat.SmartRollupAddMessagesCount,
+                SmartRollupCementCount = delegat.SmartRollupCementCount,
+                SmartRollupExecuteCount = delegat.SmartRollupExecuteCount,
+                SmartRollupOriginateCount = delegat.SmartRollupOriginateCount,
+                SmartRollupPublishCount = delegat.SmartRollupPublishCount,
+                SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
+                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                SmartRollupTimeoutCount = delegat.SmartRollupTimeoutCount
             };
 
             #region update relations
@@ -870,6 +905,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                         {
                             op.Sender = user;
                             touched.Add((op, entry.State));
+                        }
+                        break;
+                    case SmartRollupAddMessagesOperation:
+                    case SmartRollupCementOperation:
+                    case SmartRollupExecuteOperation:
+                    case SmartRollupOriginateOperation:
+                    case SmartRollupPublishOperation:
+                    case SmartRollupRecoverBondOperation:
+                    case SmartRollupRefuteOperation:
+                    case SmartRollupTimeoutOperation:
+                        var managerOp = entry.Entity as ManagerOperation;
+                        if (managerOp.Sender?.Id == delegat.Id)
+                        {
+                            managerOp.Sender = user;
+                            touched.Add((managerOp, entry.State));
                         }
                         break;
                     case Contract contract:

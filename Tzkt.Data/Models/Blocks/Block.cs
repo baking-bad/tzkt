@@ -89,6 +89,15 @@ namespace Tzkt.Data.Models
 
         public List<MigrationOperation> Migrations { get; set; }
         public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }
+
+        public List<SmartRollupAddMessagesOperation> SmartRollupAddMessagesOps { get; set; }
+        public List<SmartRollupCementOperation> SmartRollupCementOps { get; set; }
+        public List<SmartRollupExecuteOperation> SmartRollupExecuteOps { get; set; }
+        public List<SmartRollupOriginateOperation> SmartRollupOriginateOps { get; set; }
+        public List<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
+        public List<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
+        public List<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
+        public List<SmartRollupTimeoutOperation> SmartRollupTimeoutOps { get; set; }
         #endregion
     }
 

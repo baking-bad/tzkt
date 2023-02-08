@@ -331,6 +331,10 @@ namespace Tzkt.Sync
                         rollup.Delegate = null;
                         rollup.FirstBlock = null;
                         break;
+                    case SmartRollup smartRollup:
+                        smartRollup.Delegate = null;
+                        smartRollup.FirstBlock = null;
+                        break;
                     case Account account:
                         account.Delegate = null;
                         account.FirstBlock = null;
@@ -371,6 +375,14 @@ namespace Tzkt.Sync
                         b.VdfRevelationOps = null;
                         b.UpdateConsensusKeyOps = null;
                         b.DrainDelegateOps = null;
+                        b.SmartRollupAddMessagesOps = null;
+                        b.SmartRollupCementOps = null;
+                        b.SmartRollupExecuteOps = null;
+                        b.SmartRollupOriginateOps = null;
+                        b.SmartRollupPublishOps = null;
+                        b.SmartRollupRecoverBondOps = null;
+                        b.SmartRollupRefuteOps = null;
+                        b.SmartRollupTimeoutOps = null;
                         break;
                 }
             }

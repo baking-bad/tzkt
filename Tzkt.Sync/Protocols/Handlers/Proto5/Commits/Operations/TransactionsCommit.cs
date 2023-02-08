@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 
 using Tzkt.Data.Models;
@@ -46,6 +41,27 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var schema = contract.Kind > ContractKind.DelegatorContract
                     ? (await Cache.Schemas.GetAsync(contract))
                     : Script.ManagerTz;
+
+                try
+                {
+                    var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
+
+                    transaction.Entrypoint = normEp;
+                    transaction.RawParameters = schema.OptimizeParameter(normEp, normParam).ToBytes();
+                    transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Entrypoint ??= rawEp;
+                    transaction.RawParameters ??= rawParam.ToBytes();
+
+                    if (transaction.Status == OperationStatus.Applied)
+                        Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
+                }
+            }
+            else if (transaction.Target is SmartRollup smartRollup)
+            {
+                var schema = await Cache.Schemas.GetAsync(smartRollup);
 
                 try
                 {

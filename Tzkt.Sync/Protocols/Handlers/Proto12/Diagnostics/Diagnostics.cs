@@ -100,6 +100,6 @@ namespace Tzkt.Sync.Protocols.Proto12
         }
 
         protected virtual bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>
-            remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.RollupBonds;
+            remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.RollupBonds + delegat.SmartRollupBonds;
     }
 }
