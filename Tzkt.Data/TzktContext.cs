@@ -17,6 +17,7 @@ namespace Tzkt.Data
         public DbSet<Delegate> Delegates { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Rollup> Rollups { get; set; }
+        public DbSet<SmartRollup> SmartRollups { get; set; }
         #endregion
 
         #region blocks
@@ -61,6 +62,15 @@ namespace Tzkt.Data
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
 
+        public DbSet<SmartRollupAddMessagesOperation> SmartRollupAddMessagesOps { get; set; }
+        public DbSet<SmartRollupCementOperation> SmartRollupCementOps { get; set; }
+        public DbSet<SmartRollupExecuteOperation> SmartRollupExecuteOps { get; set; }
+        public DbSet<SmartRollupOriginateOperation> SmartRollupOriginateOps { get; set; }
+        public DbSet<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
+        public DbSet<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
+        public DbSet<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
+        public DbSet<SmartRollupTimeoutOperation> SmartRollupTimeoutOps { get; set; }
+        
         public DbSet<ContractEvent> Events { get; set; }
         #endregion
 
@@ -120,6 +130,7 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegateModel();
             modelBuilder.BuildUserModel();
             modelBuilder.BuildRollupModel();
+            modelBuilder.BuildSmartRollupModel();
             #endregion
 
             #region block
@@ -163,6 +174,15 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+
+            modelBuilder.BuildSmartRollupAddMessagesOperationModel();
+            modelBuilder.BuildSmartRollupCementOperationModel();
+            modelBuilder.BuildSmartRollupExecuteOperationModel();
+            modelBuilder.BuildSmartRollupOriginateOperationModel();
+            modelBuilder.BuildSmartRollupPublishOperationModel();
+            modelBuilder.BuildSmartRollupRecoverBondOperationModel();
+            modelBuilder.BuildSmartRollupRefuteOperationModel();
+            modelBuilder.BuildSmartRollupTimeoutOperationModel();
 
             modelBuilder.BuildContractEventModel();
             #endregion

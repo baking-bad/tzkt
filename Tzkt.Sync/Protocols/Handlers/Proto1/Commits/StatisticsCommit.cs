@@ -25,7 +25,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
                 TotalFrozen = prev.TotalFrozen,
-                TotalRollupBonds = prev.TotalRollupBonds
+                TotalRollupBonds = prev.TotalRollupBonds,
+                TotalSmartRollupBonds = prev.TotalSmartRollupBonds
             };
 
             if (block.Activations != null)

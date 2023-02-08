@@ -244,6 +244,30 @@ namespace Tzkt.Sync.Protocols
                                 }
                             }
                             break;
+                        case "smart_rollup_add_messages":
+                            await new SmartRollupAddMessagesCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_cement":
+                            await new SmartRollupCementCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_execute_outbox_message":
+                            await new SmartRollupExecuteCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_originate":
+                            await new SmartRollupOriginateCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_publish":
+                            await new SmartRollupPublishCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_recover_bond":
+                            await new SmartRollupRecoverBondCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_refute":
+                            await new SmartRollupRefuteCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
+                        case "smart_rollup_timeout":
+                            await new SmartRollupTimeoutCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not expected in operations[3]");
                     }
@@ -390,6 +414,30 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Migrations))
                 await Db.Entry(currBlock).Collection(x => x.Migrations).LoadAsync();
 
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupAddMessages))
+                operations.AddRange(await Db.SmartRollupAddMessagesOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupCement))
+                operations.AddRange(await Db.SmartRollupCementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupExecute))
+                operations.AddRange(await Db.SmartRollupExecuteOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupOriginate))
+                operations.AddRange(await Db.SmartRollupOriginateOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupPublish))
+                operations.AddRange(await Db.SmartRollupPublishOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupRecoverBond))
+                operations.AddRange(await Db.SmartRollupRecoverBondOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupRefute))
+                operations.AddRange(await Db.SmartRollupRefuteOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupTimeout))
+                operations.AddRange(await Db.SmartRollupTimeoutOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
             {
                 await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
@@ -507,6 +555,30 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case TransferTicketOperation transferTicket:
                         await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
+                        break;
+                    case SmartRollupAddMessagesOperation op:
+                        await new SmartRollupAddMessagesCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupCementOperation op:
+                        await new SmartRollupCementCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupExecuteOperation op:
+                        await new SmartRollupExecuteCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupOriginateOperation op:
+                        await new SmartRollupOriginateCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupPublishOperation op:
+                        await new SmartRollupPublishCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupRecoverBondOperation op:
+                        await new SmartRollupRecoverBondCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupRefuteOperation op:
+                        await new SmartRollupRefuteCommit(this).Revert(currBlock, op);
+                        break;
+                    case SmartRollupTimeoutOperation op:
+                        await new SmartRollupTimeoutCommit(this).Revert(currBlock, op);
                         break;
                     default:
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");

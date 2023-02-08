@@ -24,7 +24,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
                 TotalFrozen = prev.TotalFrozen,
-                TotalRollupBonds = prev.TotalRollupBonds
+                TotalRollupBonds = prev.TotalRollupBonds,
+                TotalSmartRollupBonds = prev.TotalSmartRollupBonds
             };
 
             statistics.TotalFrozen += freezerChange;
@@ -184,6 +185,45 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var ops = block.UpdateConsensusKeyOps.Where(x => x.Status == OperationStatus.Applied);
                 if (ops.Any())
                     statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.SmartRollupCementOps != null)
+            {
+                throw new NotImplementedException();
+            }
+
+            if (block.SmartRollupExecuteOps != null)
+            {
+                throw new NotImplementedException();
+            }
+
+            if (block.SmartRollupOriginateOps != null)
+            {
+                var ops = block.SmartRollupOriginateOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
+            }
+
+            if (block.SmartRollupPublishOps != null)
+            {
+                var ops = block.SmartRollupPublishOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalSmartRollupBonds += ops.Sum(x => x.Bond);
+            }
+
+            if (block.SmartRollupRecoverBondOps != null)
+            {
+                throw new NotImplementedException();
+            }
+
+            if (block.SmartRollupRefuteOps != null)
+            {
+                throw new NotImplementedException();
+            }
+
+            if (block.SmartRollupTimeoutOps != null)
+            {
+                throw new NotImplementedException();
             }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))

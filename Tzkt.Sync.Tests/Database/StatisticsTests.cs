@@ -52,6 +52,14 @@ namespace Tzkt.Sync.Tests.Database
             totalBurned += await db.TxRollupReturnBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.TxRollupSubmitBatchOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.UpdateConsensusKeyOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupAddMessagesOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupCementOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupExecuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupOriginateOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupPublishOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupRecoverBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupRefuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupTimeoutOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
 
             if (stats.TotalBurned != totalBurned)
                 throw new Exception("Invalid Statistics.TotalBurned");
@@ -71,6 +79,12 @@ namespace Tzkt.Sync.Tests.Database
 
             if (stats.TotalRollupBonds != totalRollupBonds || stats.TotalRollupBonds != totalRollupBonds2)
                 throw new Exception("Invalid Statistics.TotalRollupBonds");
+
+            var totalSmartRollupBonds = await db.Accounts.Where(x => x.Type != AccountType.SmartRollup).SumAsync(x => x.SmartRollupBonds);
+            var totalSmartRollupBonds2 = await db.Accounts.Where(x => x.Type == AccountType.SmartRollup).SumAsync(x => x.SmartRollupBonds);
+
+            if (stats.TotalSmartRollupBonds != totalSmartRollupBonds || stats.TotalSmartRollupBonds != totalSmartRollupBonds2)
+                throw new Exception("Invalid Statistics.TotalSmartRollupBonds");
 
             var totalBalances = await db.Accounts.SumAsync(x => x.Balance);
             var totalBalancesStats = stats.TotalBootstrapped + stats.TotalActivated + stats.TotalCreated - stats.TotalBurned;

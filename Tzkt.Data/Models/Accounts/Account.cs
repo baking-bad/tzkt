@@ -14,10 +14,12 @@ namespace Tzkt.Data.Models
 
         public long Balance { get; set; }
         public long RollupBonds { get; set; }
+        public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
+        public int SmartRollupsCount { get; set; }
         public int ActiveTokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
@@ -43,6 +45,15 @@ namespace Tzkt.Data.Models
 
         public int MigrationsCount { get; set; }
 
+        public int SmartRollupAddMessagesCount { get; set; }
+        public int SmartRollupCementCount { get; set; }
+        public int SmartRollupExecuteCount { get; set; }
+        public int SmartRollupOriginateCount { get; set; }
+        public int SmartRollupPublishCount { get; set; }
+        public int SmartRollupRecoverBondCount { get; set; }
+        public int SmartRollupRefuteCount { get; set; }
+        public int SmartRollupTimeoutCount { get; set; }
+
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
@@ -64,7 +75,8 @@ namespace Tzkt.Data.Models
         Delegate,
         Contract,
         Ghost,
-        Rollup
+        Rollup,
+        SmartRollup
     }
 
     public static class AccountModel
@@ -83,7 +95,8 @@ namespace Tzkt.Data.Models
                 .HasValue<Delegate>(AccountType.Delegate)
                 .HasValue<Contract>(AccountType.Contract)
                 .HasValue<Account>(AccountType.Ghost)
-                .HasValue<Rollup>(AccountType.Rollup);
+                .HasValue<Rollup>(AccountType.Rollup)
+                .HasValue<SmartRollup>(AccountType.SmartRollup);
 
             modelBuilder.Entity<Account>()
                 .Property(x => x.Type)

@@ -69,7 +69,15 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
                 state.UpdateConsensusKeyOpsCount +
-                state.VdfRevelationOpsCount;
+                state.VdfRevelationOpsCount +
+                state.SmartRollupAddMessagesOpsCount + 
+                state.SmartRollupCementOpsCount +
+                state.SmartRollupExecuteOpsCount +
+                state.SmartRollupOriginateOpsCount +
+                state.SmartRollupPublishOpsCount +
+                state.SmartRollupRecoverBondOpsCount +
+                state.SmartRollupRefuteOpsCount +
+                state.SmartRollupTimeoutOpsCount;
 
             if (state.OperationCounter != opsCount)
                 throw new Exception("Invalid AppState.OperationCounter");
@@ -90,7 +98,15 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupRemoveCommitmentOpsCount +
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount;
+                state.UpdateConsensusKeyOpsCount +
+                state.SmartRollupAddMessagesOpsCount +
+                state.SmartRollupCementOpsCount +
+                state.SmartRollupExecuteOpsCount +
+                state.SmartRollupOriginateOpsCount +
+                state.SmartRollupPublishOpsCount +
+                state.SmartRollupRecoverBondOpsCount +
+                state.SmartRollupRefuteOpsCount +
+                state.SmartRollupTimeoutOpsCount;
 
             if (state.ManagerCounter != managerOpsCount)
                 throw new Exception("Invalid AppState.ManagerCounter");
@@ -240,6 +256,30 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.EventsCount != await db.Events.CountAsync())
                 throw new Exception("Invalid AppState.EventsCount");
+
+            if (state.SmartRollupAddMessagesOpsCount != await db.SmartRollupAddMessagesOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupAddMessagesOpsCount");
+
+            if (state.SmartRollupCementOpsCount != await db.SmartRollupCementOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupCementOpsCount");
+
+            if (state.SmartRollupExecuteOpsCount != await db.SmartRollupExecuteOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupExecuteOpsCount");
+
+            if (state.SmartRollupOriginateOpsCount != await db.SmartRollupOriginateOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupOriginateOpsCount");
+
+            if (state.SmartRollupPublishOpsCount != await db.SmartRollupPublishOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupPublishOpsCount");
+
+            if (state.SmartRollupRecoverBondOpsCount != await db.SmartRollupRecoverBondOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupRecoverBondOpsCount");
+
+            if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
+
+            if (state.SmartRollupTimeoutOpsCount != await db.SmartRollupTimeoutOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupTimeoutOpsCount");
             #endregion
 
             #region quotes

@@ -21,6 +21,7 @@ namespace Tzkt.Data.Models
 
         public long TotalFrozen { get; set; }
         public long TotalRollupBonds { get; set; }
+        public long TotalSmartRollupBonds { get; set; }
         #endregion
     }
 

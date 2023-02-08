@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
-
+using Netezos.Encoding;
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Services.Cache
 {
@@ -34,6 +31,12 @@ namespace Tzkt.Sync.Services.Cache
             CachedById[contract.Id] = schema;
         }
 
+        public void Add(SmartRollup smartRollup, ContractScript schema)
+        {
+            CheckSpace();
+            CachedById[smartRollup.Id] = schema;
+        }
+
         public async Task<ContractScript> GetAsync(Contract contract)
         {
             if (contract == null) return null;
@@ -49,9 +52,39 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
+        public async Task<ContractScript> GetAsync(SmartRollup smartRollup)
+        {
+            if (smartRollup == null) return null;
+
+            if (!CachedById.TryGetValue(smartRollup.Id, out var item))
+            {
+                var bytes = (await Db.SmartRollupOriginateOps.SingleOrDefaultAsync(x => x.SmartRollupId == smartRollup.Id && x.Status == OperationStatus.Applied))?.ParameterType
+                    ?? throw new Exception($"Origination of smart rollup #{smartRollup.Id} doesn't exist");
+                var parameter = new MichelinePrim
+                {
+                    Prim = PrimType.parameter,
+                    Args = new(1) { Micheline.FromBytes(bytes) }
+                };
+                var storage = new MichelinePrim
+                {
+                    Prim = PrimType.storage,
+                    Args = new(1) { new MichelinePrim { Prim = PrimType.never } }
+                };
+                item = new ContractScript(parameter, storage);
+                Add(smartRollup, item);
+            }
+
+            return item;
+        }
+
         public void Remove(Contract contract)
         {
             CachedById.Remove(contract.Id);
+        }
+
+        public void Remove(SmartRollup smartRollup)
+        {
+            CachedById.Remove(smartRollup.Id);
         }
 
         void CheckSpace()
