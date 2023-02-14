@@ -110,6 +110,10 @@ namespace Tzkt.Data
         public DbSet<TokenTransfer> TokenTransfers { get; set; }
         #endregion
 
+        #region rollups
+        public DbSet<SmartRollupCommitment> SmartRollupCommitments { get; set; }
+        #endregion
+
         #region plugins
         public DbSet<Quote> Quotes { get; set; }
         public DbSet<Domain> Domains { get; set; }
@@ -221,6 +225,10 @@ namespace Tzkt.Data
             modelBuilder.BuildTokenModel();
             modelBuilder.BuildTokenBalanceModel();
             modelBuilder.BuildTokenTransferModel();
+            #endregion
+
+            #region rollups
+            modelBuilder.BuildSmartRollupCommitmentModel();
             #endregion
 
             #region plugins

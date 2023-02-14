@@ -128,6 +128,9 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.EventCounter != await db.Events.CountAsync())
                 throw new Exception("Invalid AppState.EventCounter");
+
+            if (state.SmartRollupCommitmentCounter != await db.SmartRollupCommitments.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupCommitmentCounter");
             #endregion
 
             #region counts

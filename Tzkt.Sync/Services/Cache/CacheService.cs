@@ -1,7 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.Extensions.DependencyInjection;
-
-using Tzkt.Data;
+﻿using Tzkt.Data;
 using Tzkt.Sync.Services.Cache;
 
 namespace Tzkt.Sync.Services
@@ -24,6 +21,7 @@ namespace Tzkt.Sync.Services
         public BigMapKeysCache BigMapKeys { get; private set; }
         public TokensCache Tokens { get; private set; }
         public TokenBalancesCache TokenBalances { get; private set; }
+        public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -43,6 +41,7 @@ namespace Tzkt.Sync.Services
             BigMapKeys = new(db);
             Tokens = new(db);
             TokenBalances = new(db);
+            SmartRollupCommitments = new(db);
         }
 
         public async Task ResetAsync()
@@ -61,6 +60,7 @@ namespace Tzkt.Sync.Services
             BigMapKeys.Reset();
             Tokens.Reset();
             TokenBalances.Reset();
+            SmartRollupCommitments.Reset();
 
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
@@ -70,6 +70,7 @@ namespace Tzkt.Sync.Services
         {
             Tokens.Trim();
             TokenBalances.Trim();
+            SmartRollupCommitments.Trim();
         }
     }
 

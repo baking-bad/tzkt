@@ -6,20 +6,8 @@ namespace Tzkt.Data.Models
     public class SmartRollupPublishOperation : ManagerOperation
     {
         public int? SmartRollupId { get; set; }
+        public int? CommitmentId { get; set; }
         public long Bond { get; set; }
-        public string Commitment { get; set; }
-        public string Predecessor { get; set; }
-        public string State { get; set; }
-        public int InboxLevel { get; set; }
-        public long Ticks { get; set; }
-        public SmartRollupCommitmentStatus CommitmentStatus { get; set; }
-    }
-
-    public enum SmartRollupCommitmentStatus
-    {
-        Pending,
-        Cemented,
-        Refuted
     }
 
     public static class SmartRollupPublishOperationModel
@@ -53,7 +41,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SmartRollupId);
 
             modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasIndex(x => new { x.CommitmentStatus, x.SmartRollupId });
+                .HasIndex(x => x.CommitmentId);
             #endregion
 
             #region relations
