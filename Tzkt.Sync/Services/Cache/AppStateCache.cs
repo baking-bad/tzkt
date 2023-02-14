@@ -123,6 +123,16 @@ namespace Tzkt.Sync.Services.Cache
             AppState.EventCounter -= count;
         }
 
+        public int NextSmartRollupCommitmentId()
+        {
+            return ++AppState.SmartRollupCommitmentCounter;
+        }
+
+        public void ReleaseSmartRollupCommitmentId()
+        {
+            AppState.SmartRollupCommitmentCounter--;
+        }
+
         public int NextStorageId()
         {
             return ++AppState.StorageCounter;
