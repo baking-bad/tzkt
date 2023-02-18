@@ -822,9 +822,17 @@ namespace Tzkt.Sync.Protocols.Proto16
             throw new NotImplementedException();
         }
 
-        protected virtual Task ValidateSmartRollupRefute(JsonElement content)
+        protected virtual async Task ValidateSmartRollupRefute(JsonElement content)
         {
-            throw new NotImplementedException();
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
         }
 
         protected virtual Task ValidateSmartRollupTimeout(JsonElement content)

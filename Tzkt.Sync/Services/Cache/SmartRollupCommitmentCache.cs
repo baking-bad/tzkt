@@ -58,7 +58,6 @@ namespace Tzkt.Sync.Services.Cache
                     ?? throw new Exception($"Smart rollup commitment #{id} doesn't exist");
                 Add(item);
             }
-
             return item;
         }
 
@@ -66,12 +65,13 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (!CachedByKey.TryGetValue((hash, smartRollupId), out var item))
             {
-                // throw if there are more than one, because not sure how to choose then
-                item = await Db.SmartRollupCommitments.SingleOrDefaultAsync(x => x.Hash == hash && x.SmartRollupId == smartRollupId)
+                item = await Db.SmartRollupCommitments
+                    .Where(x => x.Hash == hash && x.SmartRollupId == smartRollupId)
+                    .OrderByDescending(x => x.Id)
+                    .FirstOrDefaultAsync()
                     ?? throw new Exception($"Smart rollup commitment ({hash}, {smartRollupId}) doesn't exist");
                 Add(item);
             }
-
             return item;
         }
 
@@ -79,11 +79,12 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (!CachedByKey.TryGetValue((hash, smartRollupId), out var item))
             {
-                // throw if there are more than one, because not sure how to choose then
-                item = await Db.SmartRollupCommitments.SingleOrDefaultAsync(x => x.Hash == hash && x.SmartRollupId == smartRollupId);
+                item = await Db.SmartRollupCommitments
+                    .Where(x => x.Hash == hash && x.SmartRollupId == smartRollupId)
+                    .OrderByDescending(x => x.Id)
+                    .FirstOrDefaultAsync();
                 if (item != null) Add(item);
             }
-
             return item;
         }
     }

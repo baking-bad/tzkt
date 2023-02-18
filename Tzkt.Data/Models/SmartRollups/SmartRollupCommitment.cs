@@ -5,9 +5,9 @@ namespace Tzkt.Data.Models
     public class SmartRollupCommitment
     {
         public int Id { get; set; }
-        public int PredecessorId { get; set; }
         public int SmartRollupId { get; set; }
         public int InitiatorId { get; set; }
+        public int? PredecessorId { get; set; }
 
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
@@ -19,6 +19,9 @@ namespace Tzkt.Data.Models
 
         public int Publications { get; set; }
         public int Successors { get; set; }
+        public int? ActiveGames { get; set; }
+        public int? LostGames { get; set; }
+        public int? WonGames { get; set; }
     }
 
     public static class SmartRollupCommitmentModel

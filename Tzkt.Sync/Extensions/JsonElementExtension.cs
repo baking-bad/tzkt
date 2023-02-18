@@ -12,6 +12,12 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required property {name}");
         }
 
+        public static JsonElement? Optional(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var res) ? res
+                : null;
+        }
+
         public static int Count(this JsonElement el)
         {
             return el.EnumerateArray().Count();

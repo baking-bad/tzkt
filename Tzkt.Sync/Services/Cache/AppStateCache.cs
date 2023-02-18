@@ -133,6 +133,16 @@ namespace Tzkt.Sync.Services.Cache
             AppState.SmartRollupCommitmentCounter--;
         }
 
+        public int NextRefutationGameId()
+        {
+            return ++AppState.RefutationGameCounter;
+        }
+
+        public void ReleaseRefutationGameId()
+        {
+            AppState.RefutationGameCounter--;
+        }
+
         public int NextStorageId()
         {
             return ++AppState.StorageCounter;

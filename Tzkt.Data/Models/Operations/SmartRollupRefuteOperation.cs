@@ -6,6 +6,25 @@ namespace Tzkt.Data.Models
     public class SmartRollupRefuteOperation : ManagerOperation
     {
         public int? SmartRollupId { get; set; }
+        public int? GameId { get; set; }
+        public RefutationMove Move { get; set; }
+        public RefutationGameStatus GameStatus { get; set; }
+    }
+
+    public enum RefutationMove
+    {
+        Start,
+        Dissection,
+        Proof,
+        Timeout
+    }
+
+    public enum RefutationGameStatus
+    {
+        None,
+        Ongoing,
+        Loser,
+        Draw
     }
 
     public static class SmartRollupRefuteOperationModel
@@ -37,6 +56,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<SmartRollupRefuteOperation>()
                 .HasIndex(x => x.SmartRollupId);
+
+            modelBuilder.Entity<SmartRollupRefuteOperation>()
+                .HasIndex(x => x.GameId);
             #endregion
 
             #region relations
