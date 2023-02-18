@@ -47,6 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
+                        Genesis = result.RequiredString("genesis_commitment_hash"),
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
                         TokenTransfersCount = ghost.TokenTransfersCount
@@ -67,7 +68,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                         CreatorId = sender.Id,
                         Staked = false,
                         Type = AccountType.SmartRollup,
-                        PvmKind = pvmKind
+                        PvmKind = pvmKind,
+                        Genesis = result.RequiredString("genesis_commitment_hash")
                     };
                     Db.SmartRollups.Add(smartRollup);
                 }

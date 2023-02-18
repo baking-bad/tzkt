@@ -216,10 +216,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 throw new NotImplementedException();
             }
 
-            if (block.SmartRollupRefuteOps != null)
-            {
-                throw new NotImplementedException();
-            }
+            //if (block.SmartRollupRefuteOps != null)
+            //{
+            //}
 
             if (block.SmartRollupTimeoutOps != null)
             {

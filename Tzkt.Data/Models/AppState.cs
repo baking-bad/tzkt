@@ -35,6 +35,7 @@ namespace Tzkt.Data.Models
         public int ScriptCounter { get; set; }
         public int EventCounter { get; set; }
         public int SmartRollupCommitmentCounter { get; set; }
+        public int RefutationGameCounter { get; set; }
         #endregion
 
         #region entities count

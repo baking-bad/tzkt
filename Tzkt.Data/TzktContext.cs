@@ -112,6 +112,7 @@ namespace Tzkt.Data
 
         #region rollups
         public DbSet<SmartRollupCommitment> SmartRollupCommitments { get; set; }
+        public DbSet<RefutationGame> RefutationGames { get; set; }
         #endregion
 
         #region plugins
@@ -229,6 +230,7 @@ namespace Tzkt.Data
 
             #region rollups
             modelBuilder.BuildSmartRollupCommitmentModel();
+            modelBuilder.BuildRefutationGameModel();
             #endregion
 
             #region plugins
