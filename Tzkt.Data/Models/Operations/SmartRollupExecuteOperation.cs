@@ -6,6 +6,7 @@ namespace Tzkt.Data.Models
     public class SmartRollupExecuteOperation : ManagerOperation
     {
         public int? SmartRollupId { get; set; }
+        public int? CommitmentId { get; set; }
     }
 
     public static class SmartRollupExecuteOperationModel
@@ -37,6 +38,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<SmartRollupExecuteOperation>()
                 .HasIndex(x => x.SmartRollupId);
+
+            modelBuilder.Entity<SmartRollupExecuteOperation>()
+                .HasIndex(x => x.CommitmentId);
             #endregion
 
             #region relations

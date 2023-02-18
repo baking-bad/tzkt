@@ -124,8 +124,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                     var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(initiatorCommitmentHash, rollup.Id);
                     var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(opponentCommitmentHash, rollup.Id);
 
-                    Db.TryAttach(initiatorCommitment);
-                    Db.TryAttach(opponentCommitment);
                     Db.TryAttach(opponent);
 
                     var game = new RefutationGame
@@ -154,9 +152,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup.RefutationGamesCount++;
 
                     rollup.ActiveGames++;
-
-                    initiatorCommitment.ActiveGames = (initiatorCommitment.ActiveGames ?? 0) + 1;
-                    opponentCommitment.ActiveGames = (opponentCommitment.ActiveGames ?? 0) + 1;
                 }
             }
             else
@@ -174,19 +169,15 @@ namespace Tzkt.Sync.Protocols.Proto16
                     {
                         var initiator = await Cache.Accounts.GetAsync(game.InitiatorId);
                         var initiatorBaker = Cache.Accounts.GetDelegate(initiator.DelegateId) ?? (initiator as Data.Models.Delegate);
-                        var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(game.InitiatorCommitmentId);
                         
                         var opponent = await Cache.Accounts.GetAsync(game.OpponentId);
                         var opponentBaker = Cache.Accounts.GetDelegate(opponent.DelegateId) ?? (opponent as Data.Models.Delegate);
-                        var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(game.OpponentCommitmentId);
 
                         Db.TryAttach(initiator);
                         Db.TryAttach(initiatorBaker);
-                        Db.TryAttach(initiatorCommitment);
                         
                         Db.TryAttach(opponent);
                         Db.TryAttach(opponentBaker);
-                        Db.TryAttach(opponentCommitment);
 
                         var updates = result.RequiredArray("balance_updates").EnumerateArray()
                             .Where(x => x.RequiredString("kind") == "freezer" || x.RequiredString("kind") == "contract");
@@ -204,39 +195,38 @@ namespace Tzkt.Sync.Protocols.Proto16
                         if (initiatorChange > 0)
                         {
                             game.InitiatorReward = initiatorChange;
-                            initiatorCommitment.WonGames = (initiatorCommitment.WonGames ?? 0) + 1;
                         }
                         else
                         {
                             game.InitiatorLoss = -initiatorChange;
                             initiator.SmartRollupBonds += initiatorChange;
-                            initiatorCommitment.LostGames = (initiatorCommitment.LostGames ?? 0) + 1;
                         }
 
                         if (opponentChange > 0)
                         {
                             game.OpponentReward = opponentChange;
-                            opponentCommitment.WonGames = (opponentCommitment.WonGames ?? 0) + 1;
                         }
                         else
                         {
                             game.OpponentLoss = -opponentChange;
                             opponent.SmartRollupBonds += opponentChange;
-                            opponentCommitment.LostGames = (opponentCommitment.LostGames ?? 0) + 1;
                         }
 
                         initiator.Balance += initiatorChange;
-                        initiatorBaker.StakingBalance += initiatorChange;
-                        if (initiatorBaker.Id != initiator.Id)
-                            initiatorBaker.DelegatedBalance += initiatorChange;
+                        if (initiatorBaker != null)
+                        {
+                            initiatorBaker.StakingBalance += initiatorChange;
+                            if (initiatorBaker.Id != initiator.Id)
+                                initiatorBaker.DelegatedBalance += initiatorChange;
+                        }
 
                         opponent.Balance += opponentChange;
-                        opponentBaker.StakingBalance += opponentChange;
-                        if (opponentBaker.Id != opponent.Id)
-                            opponentBaker.DelegatedBalance += opponentChange;
-
-                        initiatorCommitment.ActiveGames--;
-                        opponentCommitment.ActiveGames--;
+                        if (opponentBaker != null)
+                        {
+                            opponentBaker.StakingBalance += opponentChange;
+                            if (opponentBaker.Id != opponent.Id)
+                                opponentBaker.DelegatedBalance += opponentChange;
+                        }
 
                         rollup.ActiveGames--;
                     }
@@ -291,11 +281,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     var game = await Cache.RefutationGames.GetAsync((int)operation.GameId);
                     var opponent = await Cache.Accounts.GetAsync(game.OpponentId);
-                    var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(game.InitiatorCommitmentId);
-                    var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(game.OpponentCommitmentId);
-
-                    Db.TryAttach(initiatorCommitment);
-                    Db.TryAttach(opponentCommitment);
                     Db.TryAttach(opponent);
 
                     Cache.AppState.ReleaseRefutationGameId();
@@ -307,9 +292,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup.RefutationGamesCount--;
 
                     rollup.ActiveGames--;
-
-                    initiatorCommitment.ActiveGames--;
-                    opponentCommitment.ActiveGames--;
                 }
             }
             else
@@ -331,19 +313,15 @@ namespace Tzkt.Sync.Protocols.Proto16
                     {
                         var initiator = await Cache.Accounts.GetAsync(game.InitiatorId);
                         var initiatorBaker = Cache.Accounts.GetDelegate(initiator.DelegateId) ?? (initiator as Data.Models.Delegate);
-                        var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(game.InitiatorCommitmentId);
 
                         var opponent = await Cache.Accounts.GetAsync(game.OpponentId);
                         var opponentBaker = Cache.Accounts.GetDelegate(opponent.DelegateId) ?? (opponent as Data.Models.Delegate);
-                        var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(game.OpponentCommitmentId);
 
                         Db.TryAttach(initiator);
                         Db.TryAttach(initiatorBaker);
-                        Db.TryAttach(initiatorCommitment);
 
                         Db.TryAttach(opponent);
                         Db.TryAttach(opponentBaker);
-                        Db.TryAttach(opponentCommitment);
 
                         var initiatorChange = game.InitiatorReward ?? -game.InitiatorLoss ?? 0;
                         var opponentChange = game.OpponentReward ?? -game.OpponentLoss ?? 0;
@@ -351,39 +329,38 @@ namespace Tzkt.Sync.Protocols.Proto16
                         if (initiatorChange > 0)
                         {
                             game.InitiatorReward = null;
-                            initiatorCommitment.WonGames--;
                         }
                         else
                         {
                             game.InitiatorLoss = null;
                             initiator.SmartRollupBonds -= initiatorChange;
-                            initiatorCommitment.LostGames--;
                         }
 
                         if (opponentChange > 0)
                         {
                             game.OpponentReward = null;
-                            opponentCommitment.WonGames--;
                         }
                         else
                         {
                             game.OpponentLoss = null;
                             opponent.SmartRollupBonds -= opponentChange;
-                            opponentCommitment.LostGames--;
                         }
 
                         initiator.Balance -= initiatorChange;
-                        initiatorBaker.StakingBalance -= initiatorChange;
-                        if (initiatorBaker.Id != initiator.Id)
-                            initiatorBaker.DelegatedBalance -= initiatorChange;
+                        if (initiatorBaker != null)
+                        {
+                            initiatorBaker.StakingBalance -= initiatorChange;
+                            if (initiatorBaker.Id != initiator.Id)
+                                initiatorBaker.DelegatedBalance -= initiatorChange;
+                        }
 
                         opponent.Balance -= opponentChange;
-                        opponentBaker.StakingBalance -= opponentChange;
-                        if (opponentBaker.Id != opponent.Id)
-                            opponentBaker.DelegatedBalance -= opponentChange;
-
-                        initiatorCommitment.ActiveGames++;
-                        opponentCommitment.ActiveGames++;
+                        if (opponentBaker != null)
+                        {
+                            opponentBaker.StakingBalance -= opponentChange;
+                            if (opponentBaker.Id != opponent.Id)
+                                opponentBaker.DelegatedBalance -= opponentChange;
+                        }
 
                         rollup.ActiveGames++;
                     }

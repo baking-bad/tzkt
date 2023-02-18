@@ -69,7 +69,6 @@ namespace Tzkt.Data
         public DbSet<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
         public DbSet<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
         public DbSet<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
-        public DbSet<SmartRollupTimeoutOperation> SmartRollupTimeoutOps { get; set; }
         
         public DbSet<ContractEvent> Events { get; set; }
         #endregion
@@ -187,7 +186,6 @@ namespace Tzkt.Data
             modelBuilder.BuildSmartRollupPublishOperationModel();
             modelBuilder.BuildSmartRollupRecoverBondOperationModel();
             modelBuilder.BuildSmartRollupRefuteOperationModel();
-            modelBuilder.BuildSmartRollupTimeoutOperationModel();
 
             modelBuilder.BuildContractEventModel();
             #endregion

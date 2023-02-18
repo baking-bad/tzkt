@@ -76,8 +76,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.SmartRollupOriginateOpsCount +
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
-                state.SmartRollupRefuteOpsCount +
-                state.SmartRollupTimeoutOpsCount;
+                state.SmartRollupRefuteOpsCount;
 
             if (state.OperationCounter != opsCount)
                 throw new Exception("Invalid AppState.OperationCounter");
@@ -105,8 +104,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.SmartRollupOriginateOpsCount +
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
-                state.SmartRollupRefuteOpsCount +
-                state.SmartRollupTimeoutOpsCount;
+                state.SmartRollupRefuteOpsCount;
 
             if (state.ManagerCounter != managerOpsCount)
                 throw new Exception("Invalid AppState.ManagerCounter");
@@ -283,9 +281,6 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
                 throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
-
-            if (state.SmartRollupTimeoutOpsCount != await db.SmartRollupTimeoutOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupTimeoutOpsCount");
             #endregion
 
             #region quotes

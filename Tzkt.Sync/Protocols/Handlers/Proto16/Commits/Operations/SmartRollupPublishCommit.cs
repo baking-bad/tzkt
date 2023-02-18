@@ -89,7 +89,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 sender.SmartRollupBonds += operation.Bond;
                 smartRollup.SmartRollupBonds += operation.Bond;
-                smartRollup.PendingCommitments++;
+                smartRollup.TotalCommitments++;
 
                 var commitmentHash = result.RequiredString("staked_hash");
                 var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(commitmentHash, smartRollup.Id);
@@ -109,9 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Hash = commitmentHash,
                         Publications = 1,
                         Successors = 0,
-                        ActiveGames = null,
-                        LostGames = null,
-                        WonGames = null
+                        Cemented = false
                     };
                     Cache.SmartRollupCommitments.Add(commitment);
                     Db.SmartRollupCommitments.Add(commitment);
@@ -170,7 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 sender.RollupBonds -= operation.Bond;
                 smartRollup.RollupBonds -= operation.Bond;
-                smartRollup.PendingCommitments--;
+                smartRollup.TotalCommitments--;
 
                 var commitment = await Cache.SmartRollupCommitments.GetAsync((int)operation.CommitmentId);
                 Db.TryAttach(commitment);
