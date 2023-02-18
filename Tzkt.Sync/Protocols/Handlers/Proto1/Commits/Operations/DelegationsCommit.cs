@@ -138,7 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.DelegationOps.Add(delegation);
         }
 
-        public virtual async Task ApplyInternal(Block block, TransactionOperation parent, JsonElement content)
+        public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
@@ -181,8 +181,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var parentTx = parent;
-            var parentSender = parentTx.Sender;
+            var parentSender = parent.Sender;
 
             Db.TryAttach(sender);
             Db.TryAttach(parentSender);
@@ -191,8 +190,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
-            parentTx.InternalDelegations = (short?)((parentTx.InternalDelegations ?? 0) + 1);
+            if (parent is TransactionOperation parentTx)
+            {
+                parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+                parentTx.InternalDelegations = (short?)((parentTx.InternalDelegations ?? 0) + 1);
+            }
 
             sender.DelegationsCount++;
             if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;
@@ -484,8 +486,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginateCount = user.SmartRollupOriginateCount,
                 SmartRollupPublishCount = user.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = user.SmartRollupRefuteCount,
-                SmartRollupTimeoutCount = user.SmartRollupTimeoutCount
+                SmartRollupRefuteCount = user.SmartRollupRefuteCount
             };
 
             #region update relations
@@ -648,7 +649,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case SmartRollupPublishOperation:
                     case SmartRollupRecoverBondOperation:
                     case SmartRollupRefuteOperation:
-                    case SmartRollupTimeoutOperation:
                         var managerOp = entry.Entity as ManagerOperation;
                         if (managerOp.Sender?.Id == user.Id)
                         {
@@ -741,8 +741,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginateCount = delegat.SmartRollupOriginateCount,
                 SmartRollupPublishCount = delegat.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
-                SmartRollupTimeoutCount = delegat.SmartRollupTimeoutCount
+                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount
             };
 
             #region update relations
@@ -914,7 +913,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case SmartRollupPublishOperation:
                     case SmartRollupRecoverBondOperation:
                     case SmartRollupRefuteOperation:
-                    case SmartRollupTimeoutOperation:
                         var managerOp = entry.Entity as ManagerOperation;
                         if (managerOp.Sender?.Id == delegat.Id)
                         {

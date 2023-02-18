@@ -251,7 +251,37 @@ namespace Tzkt.Sync.Protocols
                             await new SmartRollupCementCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "smart_rollup_execute_outbox_message":
-                            await new SmartRollupExecuteCommit(this).Apply(blockCommit.Block, operation, content);
+                            var parent2 = new SmartRollupExecuteCommit(this);
+                            await parent2.Apply(blockCommit.Block, operation, content);
+                            if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult2))
+                            {
+                                foreach (var internalContent in internalResult2.EnumerateArray())
+                                {
+                                    switch (internalContent.RequiredString("kind"))
+                                    {
+                                        case "delegation":
+                                            await new DelegationsCommit(this).ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
+                                            break;
+                                        case "origination":
+                                            var internalOrig = new OriginationsCommit(this);
+                                            await internalOrig.ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
+                                            if (internalOrig.BigMapDiffs != null)
+                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Origination.Contract, internalOrig.BigMapDiffs);
+                                            break;
+                                        case "transaction":
+                                            var internalTx = new TransactionsCommit(this);
+                                            await internalTx.ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
+                                            if (internalTx.BigMapDiffs != null)
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                            break;
+                                        case "event":
+                                            await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
+                                            break;
+                                        default:
+                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
+                                    }
+                                }
+                            }
                             break;
                         case "smart_rollup_originate":
                             await new SmartRollupOriginateCommit(this).Apply(blockCommit.Block, operation, content);
@@ -435,9 +465,6 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.SmartRollupRefute))
                 operations.AddRange(await Db.SmartRollupRefuteOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
-            if (currBlock.Operations.HasFlag(Operations.SmartRollupTimeout))
-                operations.AddRange(await Db.SmartRollupTimeoutOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
             if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
             {
                 await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
@@ -576,9 +603,6 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case SmartRollupRefuteOperation op:
                         await new SmartRollupRefuteCommit(this).Revert(currBlock, op);
-                        break;
-                    case SmartRollupTimeoutOperation op:
-                        await new SmartRollupTimeoutCommit(this).Revert(currBlock, op);
                         break;
                     default:
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");

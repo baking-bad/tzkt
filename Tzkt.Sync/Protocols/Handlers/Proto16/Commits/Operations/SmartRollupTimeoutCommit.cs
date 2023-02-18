@@ -13,11 +13,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var smartRollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
+            var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
 
             var result = content.Required("metadata").Required("operation_result");
 
-            var operation = new SmartRollupTimeoutOperation
+            var operation = new SmartRollupRefuteOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Block = block,
@@ -30,7 +30,24 @@ namespace Tzkt.Sync.Protocols.Proto16
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
                 Sender = sender,
-                SmartRollupId = smartRollup?.Id,
+                SmartRollupId = rollup?.Id,
+                Move = RefutationMove.Timeout,
+                GameStatus = result.Optional("game_status") switch
+                {
+                    null => RefutationGameStatus.None,
+                    JsonElement el when el.ValueKind == JsonValueKind.String => el.GetString() switch
+                    {
+                        "ongoing" => RefutationGameStatus.Ongoing,
+                        _ => throw new NotImplementedException("Unknown refutation game status")
+                    },
+                    JsonElement el when el.ValueKind == JsonValueKind.Object => el.Required("result").RequiredString("kind") switch
+                    {
+                        "loser" => RefutationGameStatus.Loser,
+                        "draw" => RefutationGameStatus.Draw,
+                        _ => throw new NotImplementedException("Unknown refutation game result kind")
+                    },
+                    _ => throw new NotImplementedException("Unknown refutation game status")
+                },
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -53,10 +70,10 @@ namespace Tzkt.Sync.Protocols.Proto16
             var blockBaker = block.Proposer;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(block.Proposer);
+            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(senderDelegate);
+            Db.TryAttach(rollup);
             #endregion
 
             #region apply operation
@@ -70,79 +87,97 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.Balance += operation.BakerFee;
             blockBaker.StakingBalance += operation.BakerFee;
 
-            sender.SmartRollupTimeoutCount++;
-            if (smartRollup != null) smartRollup.SmartRollupTimeoutCount++;
+            sender.SmartRollupRefuteCount++;
+            if (rollup != null) rollup.SmartRollupRefuteCount++;
 
-            block.Operations |= Operations.SmartRollupTimeout;
+            block.Operations |= Operations.SmartRollupRefute;
             block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
-            Cache.AppState.Get().SmartRollupTimeoutOpsCount++;
+            Cache.AppState.Get().SmartRollupRefuteOpsCount++;
             #endregion
 
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
+                var alice = await Cache.Accounts.GetAsync(content.Required("stakers").RequiredString("alice"));
+                var bob = await Cache.Accounts.GetAsync(content.Required("stakers").RequiredString("bob"));
+                var game = await Cache.RefutationGames.GetAsync(rollup.Id, alice.Id, bob.Id);
+
+                Db.TryAttach(game);
+                game.LastLevel = operation.Level;
+                game.LastMoveId = operation.Id;
+
+                var initiator = await Cache.Accounts.GetAsync(game.InitiatorId);
+                var initiatorBaker = Cache.Accounts.GetDelegate(initiator.DelegateId) ?? (initiator as Data.Models.Delegate);
+
+                var opponent = await Cache.Accounts.GetAsync(game.OpponentId);
+                var opponentBaker = Cache.Accounts.GetDelegate(opponent.DelegateId) ?? (opponent as Data.Models.Delegate);
+
+                Db.TryAttach(initiator);
+                Db.TryAttach(initiatorBaker);
+
+                Db.TryAttach(opponent);
+                Db.TryAttach(opponentBaker);
+
+                var updates = result.RequiredArray("balance_updates").EnumerateArray()
+                    .Where(x => x.RequiredString("kind") == "freezer" || x.RequiredString("kind") == "contract");
+
+                var initiatorUpdate = updates.FirstOrDefault(x => x.RequiredString("contract") == initiator.Address);
+                var opponentUpdate = updates.FirstOrDefault(x => x.RequiredString("contract") == opponent.Address);
+
+                var initiatorChange = initiatorUpdate.ValueKind != JsonValueKind.Undefined
+                    ? initiatorUpdate.RequiredInt64("change")
+                    : 0;
+                var opponentChange = opponentUpdate.ValueKind != JsonValueKind.Undefined
+                    ? opponentUpdate.RequiredInt64("change")
+                    : 0;
+
+                if (initiatorChange > 0)
+                {
+                    game.InitiatorReward = initiatorChange;
+                }
+                else
+                {
+                    game.InitiatorLoss = -initiatorChange;
+                    initiator.SmartRollupBonds += initiatorChange;
+                }
+
+                if (opponentChange > 0)
+                {
+                    game.OpponentReward = opponentChange;
+                }
+                else
+                {
+                    game.OpponentLoss = -opponentChange;
+                    opponent.SmartRollupBonds += opponentChange;
+                }
+
+                initiator.Balance += initiatorChange;
+                if (initiatorBaker != null)
+                {
+                    initiatorBaker.StakingBalance += initiatorChange;
+                    if (initiatorBaker.Id != initiator.Id)
+                        initiatorBaker.DelegatedBalance += initiatorChange;
+                }
+
+                opponent.Balance += opponentChange;
+                if (opponentBaker != null)
+                {
+                    opponentBaker.StakingBalance += opponentChange;
+                    if (opponentBaker.Id != opponent.Id)
+                        opponentBaker.DelegatedBalance += opponentChange;
+                }
+
+                rollup.ActiveGames--;
+
+                operation.GameId = game.Id;
             }
             #endregion
 
             Proto.Manager.Set(operation.Sender);
-            Db.SmartRollupTimeoutOps.Add(operation);
-        }
-
-        public virtual async Task Revert(Block block, SmartRollupTimeoutOperation operation)
-        {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender ??= await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
-            #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var smartRollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
-
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            Db.TryAttach(smartRollup);
-            #endregion
-
-            #region revert result
-            if (operation.Status == OperationStatus.Applied)
-            {
-            }
-            #endregion
-
-            #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
-
-            sender.SmartRollupTimeoutCount--;
-            if (smartRollup != null) smartRollup.SmartRollupTimeoutCount--;
-
-            sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
-
-            Cache.AppState.Get().SmartRollupTimeoutOpsCount--;
-            #endregion
-
-            Db.SmartRollupTimeoutOps.Remove(operation);
-            Cache.AppState.ReleaseManagerCounter();
-            Cache.AppState.ReleaseOperationId();
+            Db.SmartRollupRefuteOps.Add(operation);
         }
     }
 }

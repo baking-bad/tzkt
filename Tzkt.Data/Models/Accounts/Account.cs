@@ -52,7 +52,6 @@ namespace Tzkt.Data.Models
         public int SmartRollupPublishCount { get; set; }
         public int SmartRollupRecoverBondCount { get; set; }
         public int SmartRollupRefuteCount { get; set; }
-        public int SmartRollupTimeoutCount { get; set; }
 
         public int RefutationGamesCount { get; set; }
 

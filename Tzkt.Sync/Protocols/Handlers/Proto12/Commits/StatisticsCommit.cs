@@ -187,14 +187,15 @@ namespace Tzkt.Sync.Protocols.Proto12
                     statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
             }
 
-            if (block.SmartRollupCementOps != null)
-            {
-                throw new NotImplementedException();
-            }
+            //if (block.SmartRollupCementOps != null)
+            //{
+            //}
 
             if (block.SmartRollupExecuteOps != null)
             {
-                throw new NotImplementedException();
+                var ops = block.SmartRollupExecuteOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalBurned += ops.Sum(x => x.StorageFee ?? 0);
             }
 
             if (block.SmartRollupOriginateOps != null)
@@ -211,19 +212,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     statistics.TotalSmartRollupBonds += ops.Sum(x => x.Bond);
             }
 
-            if (block.SmartRollupRecoverBondOps != null)
-            {
-                throw new NotImplementedException();
-            }
+            //if (block.SmartRollupRecoverBondOps != null)
+            //{
+            //}
 
             //if (block.SmartRollupRefuteOps != null)
             //{
             //}
-
-            if (block.SmartRollupTimeoutOps != null)
-            {
-                throw new NotImplementedException();
-            }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 statistics.Cycle = block.Cycle;

@@ -6,6 +6,8 @@ namespace Tzkt.Sync.Protocols.Proto16
 {
     class SmartRollupExecuteCommit : ProtocolCommit
     {
+        public SmartRollupExecuteOperation Operation { get; private set; }
+
         public SmartRollupExecuteCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
@@ -13,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var smartRollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
+            var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -30,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
                 Sender = sender,
-                SmartRollupId = smartRollup?.Id,
+                SmartRollupId = rollup?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -43,8 +45,10 @@ namespace Tzkt.Sync.Protocols.Proto16
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                StorageUsed = 0,
-                StorageFee = null,
+                StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
+                StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
+                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    : null,
                 AllocationFee = null
             };
             #endregion
@@ -56,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(rollup);
             #endregion
 
             #region apply operation
@@ -71,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.SmartRollupExecuteCount++;
-            if (smartRollup != null) smartRollup.SmartRollupExecuteCount++;
+            if (rollup != null) rollup.SmartRollupExecuteCount++;
 
             block.Operations |= Operations.SmartRollupExecute;
             block.Fees += operation.BakerFee;
@@ -84,11 +88,28 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
+                var burned = operation.StorageFee ?? 0;
+                Proto.Manager.Burn(burned);
+
+                sender.Balance -= burned;
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance -= burned;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance -= burned;
+                }
+
+                var commitment = await Cache.SmartRollupCommitments.GetAsync(content.RequiredString("cemented_commitment"), rollup.Id);
+                Db.TryAttach(commitment);
+                commitment.Executed = true;
+
+                operation.CommitmentId = commitment.Id;
             }
             #endregion
 
             Proto.Manager.Set(operation.Sender);
             Db.SmartRollupExecuteOps.Add(operation);
+            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, SmartRollupExecuteOperation operation)
@@ -106,17 +127,30 @@ namespace Tzkt.Sync.Protocols.Proto16
             var blockBaker = block.Proposer;
             var sender = operation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var smartRollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(rollup);
             #endregion
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
+                var spent = operation.StorageFee ?? 0;
+
+                sender.Balance += spent;
+                if (senderDelegate != null)
+                {
+                    senderDelegate.StakingBalance += spent;
+                    if (senderDelegate.Id != sender.Id)
+                        senderDelegate.DelegatedBalance += spent;
+                }
+
+                var commitment = await Cache.SmartRollupCommitments.GetAsync((int)operation.CommitmentId);
+                Db.TryAttach(commitment);
+                commitment.Executed = false;
             }
             #endregion
 
@@ -132,7 +166,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.StakingBalance -= operation.BakerFee;
 
             sender.SmartRollupExecuteCount--;
-            if (smartRollup != null) smartRollup.SmartRollupExecuteCount--;
+            if (rollup != null) rollup.SmartRollupExecuteCount--;
 
             sender.Counter = operation.Counter - 1;
             (sender as User).Revealed = true;

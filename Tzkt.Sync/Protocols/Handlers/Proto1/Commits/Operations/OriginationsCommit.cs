@@ -215,7 +215,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Origination = origination;
         }
 
-        public virtual async Task ApplyInternal(Block block, TransactionOperation parent, JsonElement content)
+        public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
@@ -329,8 +329,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var parentTx = parent;
-            var parentSender = parentTx.Sender;
+            var parentSender = parent.Sender;
             var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
 
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
@@ -338,7 +337,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var contractDelegate = origination.Delegate;
             var contractManager = origination.Manager;
 
-            //Db.TryAttach(parentTx);
             //Db.TryAttach(parentSender);
             //Db.TryAttach(parentDelegate);
 
@@ -351,8 +349,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
-            parentTx.InternalOriginations = (short?)((parentTx.InternalOriginations ?? 0) + 1);
+            if (parent is TransactionOperation parentTx)
+            {
+                parentTx.InternalOperations = (short?)((parentTx.InternalOperations ?? 0) + 1);
+                parentTx.InternalOriginations = (short?)((parentTx.InternalOriginations ?? 0) + 1);
+            }
 
             sender.OriginationsCount++;
             if (contractManager != null && contractManager != sender) contractManager.OriginationsCount++;

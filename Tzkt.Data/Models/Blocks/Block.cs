@@ -97,7 +97,6 @@ namespace Tzkt.Data.Models
         public List<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
         public List<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
         public List<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
-        public List<SmartRollupTimeoutOperation> SmartRollupTimeoutOps { get; set; }
         #endregion
     }
 

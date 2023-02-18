@@ -382,7 +382,6 @@ namespace Tzkt.Sync
                         b.SmartRollupPublishOps = null;
                         b.SmartRollupRecoverBondOps = null;
                         b.SmartRollupRefuteOps = null;
-                        b.SmartRollupTimeoutOps = null;
                         break;
                 }
             }
