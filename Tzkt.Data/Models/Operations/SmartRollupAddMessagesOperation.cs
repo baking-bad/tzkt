@@ -5,7 +5,7 @@ namespace Tzkt.Data.Models
 {
     public class SmartRollupAddMessagesOperation : ManagerOperation
     {
-        //public byte[][] Messages { get; set; }
+        public int MessagesCount { get; set; }
     }
 
     public static class SmartRollupAddMessagesOperationModel

@@ -144,6 +144,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
                 }
+
+                if (transaction.Target is SmartRollup)
+                    Proto.Inbox.Push(transaction.Id);
             }
             #endregion
 
@@ -285,6 +288,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
                 }
+
+                if (transaction.Target is SmartRollup)
+                    Proto.Inbox.Push(transaction.Id);
             }
             #endregion
 

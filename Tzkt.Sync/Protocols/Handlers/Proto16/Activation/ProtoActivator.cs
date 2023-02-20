@@ -33,6 +33,21 @@ namespace Tzkt.Sync.Protocols.Proto16
             protocol.LBSubsidy = totalReward / 16;
         }
 
+        protected override async Task ActivateContext(AppState state)
+        {
+            await base.ActivateContext(state);
+            new InboxCommit(Proto).Init(Cache.Blocks.Current());
+        }
+
+        protected override async Task DeactivateContext(AppState state)
+        {
+            await base.DeactivateContext(state);
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "InboxMessages"
+                """);
+            Cache.AppState.Get().InboxMessageCounter = 0;
+        }
+
         protected override async Task MigrateContext(AppState state)
         {
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
@@ -46,6 +61,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
             Cache.Periods.Reset();
+
+            new InboxCommit(Proto).Init(Cache.Blocks.Current());
         }
 
         protected override Task RevertContext(AppState state)

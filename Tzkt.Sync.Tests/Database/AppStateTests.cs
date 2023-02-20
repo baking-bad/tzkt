@@ -132,6 +132,9 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.RefutationGameCounter != await db.RefutationGames.CountAsync())
                 throw new Exception("Invalid AppState.RefutationGameCounter");
+
+            if (state.InboxMessageCounter != await db.InboxMessages.CountAsync())
+                throw new Exception("Invalid AppState.InboxMessageCounter");
             #endregion
 
             #region counts

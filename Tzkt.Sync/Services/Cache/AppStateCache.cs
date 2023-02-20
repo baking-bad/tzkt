@@ -1,7 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -141,6 +138,16 @@ namespace Tzkt.Sync.Services.Cache
         public void ReleaseRefutationGameId()
         {
             AppState.RefutationGameCounter--;
+        }
+
+        public int NextInboxMessageId()
+        {
+            return ++AppState.InboxMessageCounter;
+        }
+
+        public void ReleaseInboxMessageId(int count)
+        {
+            AppState.InboxMessageCounter -= count;
         }
 
         public int NextStorageId()

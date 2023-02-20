@@ -23,7 +23,8 @@ namespace Tzkt.Sync
         public readonly ILogger Logger;
         public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
-        
+        public readonly InboxContext Inbox;
+
         public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger, IMetrics metrics)
         {
             Node = node;
@@ -35,6 +36,7 @@ namespace Tzkt.Sync
             Logger = logger;
             Metrics = metrics;
             Manager = new(this);
+            Inbox = new();
         }
 
         public virtual async Task<AppState> CommitBlock(int head)
