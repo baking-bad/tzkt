@@ -36,6 +36,7 @@ namespace Tzkt.Data.Models
         public int EventCounter { get; set; }
         public int SmartRollupCommitmentCounter { get; set; }
         public int RefutationGameCounter { get; set; }
+        public int InboxMessageCounter { get; set; }
         #endregion
 
         #region entities count

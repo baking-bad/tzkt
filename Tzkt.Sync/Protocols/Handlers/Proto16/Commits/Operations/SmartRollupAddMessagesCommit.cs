@@ -1,5 +1,5 @@
-﻿using Netezos.Encoding;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
                 Sender = sender,
-                //Messages = content.RequiredArray("message").EnumerateArray().Select(x => Hex.Parse(x.RequiredString())).ToArray(),
+                MessagesCount = 0,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -82,6 +82,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
+                foreach (var message in content.RequiredArray("message").EnumerateArray())
+                {
+                    Proto.Inbox.Push(operation.Id, Hex.Parse(message.RequiredString()));
+                    operation.MessagesCount++;
+                }
             }
             #endregion
 

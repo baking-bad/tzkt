@@ -306,6 +306,8 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            new InboxCommit(this).Apply(blockCommit.Block);
+
             await bigMapCommit.Apply();
             await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
@@ -485,6 +487,7 @@ namespace Tzkt.Sync.Protocols
             await new TokensCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
             await new ContractEventCommit(this).Revert(currBlock);
+            await new InboxCommit(this).Revert(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {
