@@ -61,30 +61,48 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public async Task<SmartRollupCommitment> GetAsync(string hash, int smartRollupId)
+        public async Task<SmartRollupCommitment> GetAsync(string hash, int rollupId)
         {
-            if (!CachedByKey.TryGetValue((hash, smartRollupId), out var item))
+            if (!CachedByKey.TryGetValue((hash, rollupId), out var item))
             {
                 item = await Db.SmartRollupCommitments
-                    .Where(x => x.Hash == hash && x.SmartRollupId == smartRollupId)
+                    .Where(x => x.Hash == hash && x.SmartRollupId == rollupId)
                     .OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync()
-                    ?? throw new Exception($"Smart rollup commitment ({hash}, {smartRollupId}) doesn't exist");
+                    ?? throw new Exception($"Smart rollup commitment ({hash}, {rollupId}) doesn't exist");
                 Add(item);
             }
             return item;
         }
 
-        public async Task<SmartRollupCommitment> GetOrDefaultAsync(string hash, int smartRollupId)
+        public async Task<SmartRollupCommitment> GetOrDefaultAsync(int? id)
         {
-            if (!CachedByKey.TryGetValue((hash, smartRollupId), out var item))
+            if (id is not int _id)
+                return null;
+
+            if (!CachedById.TryGetValue(_id, out var item))
+            {
+                item = await Db.SmartRollupCommitments.SingleOrDefaultAsync(x => x.Id == _id)
+                    ?? throw new Exception($"Smart rollup commitment #{_id} doesn't exist");
+                Add(item);
+            }
+            return item;
+        }
+
+        public async Task<SmartRollupCommitment> GetOrDefaultAsync(string hash, int? rollupId)
+        {
+            if (hash is not string _hash || rollupId is not int _rollupId)
+                return null;
+
+            if (!CachedByKey.TryGetValue((_hash, _rollupId), out var item))
             {
                 item = await Db.SmartRollupCommitments
-                    .Where(x => x.Hash == hash && x.SmartRollupId == smartRollupId)
+                    .Where(x => x.Hash == _hash && x.SmartRollupId == _rollupId)
                     .OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync();
                 if (item != null) Add(item);
             }
+            
             return item;
         }
     }

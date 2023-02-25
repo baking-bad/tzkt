@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
+            var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var staker = await Cache.Accounts.GetAsync(content.RequiredString("staker"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 SenderId = sender.Id,
                 Sender = sender,
                 SmartRollupId = rollup?.Id,
-                StakerId = staker.Id,
+                StakerId = staker?.Id,
                 Bond = bond.ValueKind == JsonValueKind.Undefined ? 0 : bond.RequiredInt64("change"),
                 Status = result.RequiredString("status") switch
                 {
@@ -78,7 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.SmartRollupRecoverBondCount++;
             if (rollup != null) rollup.SmartRollupRecoverBondCount++;
-            if (staker.Id != sender.Id) staker.SmartRollupRecoverBondCount++;
+            if (staker != null && staker.Id != sender.Id) staker.SmartRollupRecoverBondCount++;
 
             block.Operations |= Operations.SmartRollupRecoverBond;
             block.Fees += operation.BakerFee;
@@ -146,7 +146,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.SmartRollupRecoverBondCount--;
             if (rollup != null) rollup.SmartRollupRecoverBondCount--;
-            if (staker.Id != sender.Id) staker.SmartRollupRecoverBondCount--;
+            if (staker != null && staker.Id != sender.Id) staker.SmartRollupRecoverBondCount--;
 
             sender.Counter = operation.Counter - 1;
             (sender as User).Revealed = true;

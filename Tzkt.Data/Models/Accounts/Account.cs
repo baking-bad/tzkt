@@ -54,6 +54,7 @@ namespace Tzkt.Data.Models
         public int SmartRollupRefuteCount { get; set; }
 
         public int RefutationGamesCount { get; set; }
+        public int ActiveRefutationGamesCount { get; set; }
 
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }

@@ -8,12 +8,12 @@ namespace Tzkt.Data.Models
         [Column("CreatorId")]
         public int CreatorId { get; set; }
         public PvmKind PvmKind { get; set; }
-        public string Genesis { get; set; }
-        public string Commitment { get; set; }
+        public string GenesisCommitment { get; set; }
+        public string LastCommitment { get; set; }
         public int InboxLevel { get; set; }
-        public int TotalCommitments { get; set; }
+        public int PublishedCommitments { get; set; }
         public int CementedCommitments { get; set; }
-        public int ActiveGames { get; set; }
+        public int PendingCommitments { get; set; }
     }
 
     public enum PvmKind

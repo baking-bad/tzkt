@@ -15,6 +15,10 @@ namespace Tzkt.Sync.Protocols.Proto16
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
 
+            var aliceId = await Cache.Accounts.GetIdOrDefaultAsync(content.Required("stakers").RequiredString("alice"));
+            var bobId = await Cache.Accounts.GetIdOrDefaultAsync(content.Required("stakers").RequiredString("bob"));
+            var game = await Cache.RefutationGames.GetOrDefaultAsync(rollup?.Id, aliceId, bobId);
+
             var result = content.Required("metadata").Required("operation_result");
 
             var operation = new SmartRollupRefuteOperation
@@ -31,6 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 SenderId = sender.Id,
                 Sender = sender,
                 SmartRollupId = rollup?.Id,
+                GameId = game?.Id,
                 Move = RefutationMove.Timeout,
                 GameStatus = result.Optional("game_status") switch
                 {
@@ -74,6 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
+            Db.TryAttach(game);
             #endregion
 
             #region apply operation
@@ -95,18 +101,15 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.Counter = operation.Counter;
 
+            if (game != null)
+                game.LastLevel = operation.Level;
+
             Cache.AppState.Get().SmartRollupRefuteOpsCount++;
             #endregion
 
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                var alice = await Cache.Accounts.GetAsync(content.Required("stakers").RequiredString("alice"));
-                var bob = await Cache.Accounts.GetAsync(content.Required("stakers").RequiredString("bob"));
-                var game = await Cache.RefutationGames.GetAsync(rollup.Id, alice.Id, bob.Id);
-
-                Db.TryAttach(game);
-                game.LastLevel = operation.Level;
                 game.LastMoveId = operation.Id;
 
                 var initiator = await Cache.Accounts.GetAsync(game.InitiatorId);
@@ -142,6 +145,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     game.InitiatorLoss = -initiatorChange;
                     initiator.SmartRollupBonds += initiatorChange;
+                    rollup.SmartRollupBonds += initiatorChange;
                 }
 
                 if (opponentChange > 0)
@@ -152,6 +156,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     game.OpponentLoss = -opponentChange;
                     opponent.SmartRollupBonds += opponentChange;
+                    rollup.SmartRollupBonds += opponentChange;
                 }
 
                 initiator.Balance += initiatorChange;
@@ -170,9 +175,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                         opponentBaker.DelegatedBalance += opponentChange;
                 }
 
-                rollup.ActiveGames--;
-
-                operation.GameId = game.Id;
+                initiator.ActiveRefutationGamesCount--;
+                opponent.ActiveRefutationGamesCount--;
+                rollup.ActiveRefutationGamesCount--;
             }
             #endregion
 

@@ -198,6 +198,38 @@ namespace Tzkt.Sync.Services.Cache
             return account;
         }
 
+        public async Task<int?> GetIdOrDefaultAsync(string address)
+        {
+            if (string.IsNullOrEmpty(address))
+                return null;
+
+            if (!CachedByAddress.TryGetValue(address, out var account))
+            {
+                account = await Db.Accounts
+                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync();
+            }
+
+            return account?.Id;
+        }
+
+        public async Task<SmartRollup> GetSmartRollupOrDefaultAsync(string address)
+        {
+            if (string.IsNullOrEmpty(address))
+                return null;
+
+            if (!CachedByAddress.TryGetValue(address, out var account))
+            {
+                account = await Db.Accounts
+                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FirstOrDefaultAsync();
+                if (account != null) Add(account);
+            }
+
+            return account as SmartRollup;
+        }
+
         public bool DelegateExists(int id)
         {
             return CachedById.TryGetValue(id, out var account) && account is Data.Models.Delegate;

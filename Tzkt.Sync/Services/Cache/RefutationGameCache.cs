@@ -63,32 +63,37 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public async Task<RefutationGame> GetAsync(int smartRollupId, int initiatorId, int opponentId)
+        public async Task<RefutationGame> GetAsync(int rollupId, int initiatorId, int opponentId)
         {
             var (aliceId, bobId) = Order(initiatorId, opponentId);
-            if (!CachedByKey.TryGetValue((smartRollupId, aliceId, bobId), out var item))
+            if (!CachedByKey.TryGetValue((rollupId, aliceId, bobId), out var item))
             {
                 item = await Db.RefutationGames
                     .Where(x =>
-                        x.SmartRollupId == smartRollupId &&
+                        x.SmartRollupId == rollupId &&
                         (x.InitiatorId == initiatorId && x.OpponentId == opponentId || x.InitiatorId == opponentId && x.OpponentId == initiatorId))
                     .OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync()
-                    ?? throw new Exception($"Refutation game ({smartRollupId}, {initiatorId}, {opponentId}) doesn't exist");
+                    ?? throw new Exception($"Refutation game ({rollupId}, {initiatorId}, {opponentId}) doesn't exist");
                 Add(item);
             }
             return item;
         }
 
-        public async Task<RefutationGame> GetOrDefaultAsync(int smartRollupId, int initiatorId, int opponentId)
+        public async Task<RefutationGame> GetOrDefaultAsync(int? rollupId, int? initiatorId, int? opponentId)
         {
-            var (aliceId, bobId) = Order(initiatorId, opponentId);
-            if (!CachedByKey.TryGetValue((smartRollupId, aliceId, bobId), out var item))
+            if (rollupId is not int _rollupId ||
+                initiatorId is not int _initiatorId ||
+                opponentId is not int _opponentId)
+                return null;
+
+            var (aliceId, bobId) = Order(_initiatorId, _opponentId);
+            if (!CachedByKey.TryGetValue((_rollupId, aliceId, bobId), out var item))
             {
                 item = await Db.RefutationGames
                     .Where(x =>
-                        x.SmartRollupId == smartRollupId &&
-                        (x.InitiatorId == initiatorId && x.OpponentId == opponentId || x.InitiatorId == opponentId && x.OpponentId == initiatorId))
+                        x.SmartRollupId == _rollupId &&
+                        (x.InitiatorId == _initiatorId && x.OpponentId == _opponentId || x.InitiatorId == _opponentId && x.OpponentId == _initiatorId))
                     .OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync();
                 if (item != null) Add(item);

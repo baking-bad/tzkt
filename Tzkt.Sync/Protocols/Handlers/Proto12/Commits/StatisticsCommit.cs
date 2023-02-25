@@ -212,13 +212,25 @@ namespace Tzkt.Sync.Protocols.Proto12
                     statistics.TotalSmartRollupBonds += ops.Sum(x => x.Bond);
             }
 
-            //if (block.SmartRollupRecoverBondOps != null)
-            //{
-            //}
+            if (block.SmartRollupRecoverBondOps != null)
+            {
+                var ops = block.SmartRollupRecoverBondOps.Where(x => x.Status == OperationStatus.Applied);
+                if (ops.Any())
+                    statistics.TotalSmartRollupBonds -= ops.Sum(x => x.Bond);
+            }
 
-            //if (block.SmartRollupRefuteOps != null)
-            //{
-            //}
+            if (block.SmartRollupRefuteOps != null)
+            {
+                var ops = block.SmartRollupRefuteOps.Where(x => x.Status == OperationStatus.Applied && x.GameStatus != RefutationGameStatus.Ongoing);
+                foreach (var op in ops)
+                {
+                    var game = await Cache.RefutationGames.GetAsync((int)op.GameId);
+                    var totalLoss = game.InitiatorLoss ?? 0 + game.OpponentLoss ?? 0;
+                    var totalReward = game.InitiatorReward ?? 0 + game.OpponentReward ?? 0;
+                    statistics.TotalSmartRollupBonds -= totalLoss;
+                    statistics.TotalBurned += totalLoss - totalReward;
+                }
+            }
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
                 statistics.Cycle = block.Cycle;

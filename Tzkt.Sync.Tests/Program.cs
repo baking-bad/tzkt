@@ -4,6 +4,9 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using App.Metrics;
+using App.Metrics.Extensions.Configuration;
+using App.Metrics.Formatters.Prometheus;
 using Netezos.Rpc;
 using Tzkt.Data;
 using Tzkt.Sync.Services;
@@ -39,6 +42,19 @@ namespace Tzkt.Sync.Tests
             builder.Services.AddTezosProtocols();
             builder.Services.AddSingleton<IQuoteProvider, DefaultQuotesProvider>();
             builder.Services.AddScoped<QuotesService>();
+
+            builder.Services.AddMetrics(options =>
+            {
+                options.Configuration.ReadFrom(builder.Configuration);
+                options.OutputMetrics.AsPrometheusPlainText();
+                options.OutputMetrics.AsPrometheusProtobuf();
+            });
+
+            builder.Services.AddMetricsEndpoints(builder.Configuration, options =>
+            {
+                options.MetricsEndpointOutputFormatter = new MetricsPrometheusProtobufOutputFormatter();
+                options.MetricsTextEndpointOutputFormatter = new MetricsPrometheusTextOutputFormatter();
+            });
             #endregion
 
             var app = builder.Build();

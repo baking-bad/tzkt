@@ -15,7 +15,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
+            var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(content.RequiredString("cemented_commitment"), rollup?.Id);
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -33,6 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 SenderId = sender.Id,
                 Sender = sender,
                 SmartRollupId = rollup?.Id,
+                CommitmentId = commitment?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -61,6 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);
             Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region apply operation
@@ -82,6 +85,9 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.Counter = operation.Counter;
 
+            if (commitment != null)
+                commitment.LastLevel = operation.Level;
+
             Cache.AppState.Get().SmartRollupExecuteOpsCount++;
             #endregion
 
@@ -99,11 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         senderDelegate.DelegatedBalance -= burned;
                 }
 
-                var commitment = await Cache.SmartRollupCommitments.GetAsync(content.RequiredString("cemented_commitment"), rollup.Id);
-                Db.TryAttach(commitment);
                 commitment.Executed = true;
-
-                operation.CommitmentId = commitment.Id;
             }
             #endregion
 
@@ -128,11 +130,13 @@ namespace Tzkt.Sync.Protocols.Proto16
             var sender = operation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(operation.CommitmentId);
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region revert result
@@ -148,8 +152,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                         senderDelegate.DelegatedBalance += spent;
                 }
 
-                var commitment = await Cache.SmartRollupCommitments.GetAsync((int)operation.CommitmentId);
-                Db.TryAttach(commitment);
                 commitment.Executed = false;
             }
             #endregion
@@ -170,6 +172,8 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.Counter = operation.Counter - 1;
             (sender as User).Revealed = true;
+
+            // commitment.LastLevel is not reverted
 
             Cache.AppState.Get().SmartRollupExecuteOpsCount--;
             #endregion
