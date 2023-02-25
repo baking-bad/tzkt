@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -93,6 +94,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 staker.SmartRollupBonds -= operation.Bond;
                 rollup.SmartRollupBonds -= operation.Bond;
+
+                var bondOp = block.SmartRollupPublishOps?
+                    .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId)
+                    ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId);
+                bondOp.BondStatus = SmartRollupBondStatus.Returned;
             }
             #endregion
 
@@ -130,6 +136,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 staker.SmartRollupBonds += operation.Bond;
                 rollup.SmartRollupBonds += operation.Bond;
+
+                var bondOp = await Db.SmartRollupPublishOps
+                    .OrderByDescending(x => x.Id)
+                    .FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Returned && x.SenderId == operation.StakerId);
+                bondOp.BondStatus = SmartRollupBondStatus.Active;
             }
             #endregion
 
