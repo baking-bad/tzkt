@@ -198,6 +198,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.InitiatorLoss = -initiatorChange;
                             initiator.SmartRollupBonds += initiatorChange;
                             rollup.SmartRollupBonds += initiatorChange;
+
+                            var bondOp = block.SmartRollupPublishOps?
+                                .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == initiator.Id)
+                                ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == initiator.Id);
+                            bondOp.BondStatus = SmartRollupBondStatus.Lost;
                         }
 
                         if (opponentChange > 0)
@@ -209,6 +214,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.OpponentLoss = -opponentChange;
                             opponent.SmartRollupBonds += opponentChange;
                             rollup.SmartRollupBonds += opponentChange;
+
+                            var bondOp = block.SmartRollupPublishOps?
+                                .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == opponent.Id)
+                                ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == opponent.Id);
+                            bondOp.BondStatus = SmartRollupBondStatus.Lost;
                         }
 
                         initiator.Balance += initiatorChange;
@@ -322,6 +332,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.InitiatorLoss = null;
                             initiator.SmartRollupBonds -= initiatorChange;
                             rollup.SmartRollupBonds -= initiatorChange;
+
+                            var bondOp = await Db.SmartRollupPublishOps
+                                .OrderByDescending(x => x.Id)
+                                .FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Lost && x.SenderId == initiator.Id);
+                            bondOp.BondStatus = SmartRollupBondStatus.Active;
                         }
 
                         if (opponentChange > 0)
@@ -333,6 +348,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.OpponentLoss = null;
                             opponent.SmartRollupBonds -= opponentChange;
                             rollup.SmartRollupBonds -= opponentChange;
+
+                            var bondOp = await Db.SmartRollupPublishOps
+                                .OrderByDescending(x => x.Id)
+                                .FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Lost && x.SenderId == opponent.Id);
+                            bondOp.BondStatus = SmartRollupBondStatus.Active;
                         }
 
                         initiator.Balance -= initiatorChange;

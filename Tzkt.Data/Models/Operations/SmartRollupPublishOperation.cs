@@ -8,6 +8,14 @@ namespace Tzkt.Data.Models
         public int? SmartRollupId { get; set; }
         public int? CommitmentId { get; set; }
         public long Bond { get; set; }
+        public SmartRollupBondStatus? BondStatus { get; set; }
+    }
+
+    public enum SmartRollupBondStatus
+    {
+        Active,
+        Returned,
+        Lost
     }
 
     public static class SmartRollupPublishOperationModel
@@ -42,6 +50,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<SmartRollupPublishOperation>()
                 .HasIndex(x => x.CommitmentId);
+
+            modelBuilder.Entity<SmartRollupPublishOperation>()
+                .HasIndex(x => new { x.SmartRollupId, x.BondStatus, x.SenderId })
+                .HasFilter($@"""{nameof(SmartRollupPublishOperation.BondStatus)}"" IS NOT NULL");
             #endregion
 
             #region relations

@@ -94,8 +94,13 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.SmartRollupBonds += operation.Bond;
-                rollup.SmartRollupBonds += operation.Bond;
+                if (operation.Bond != 0)
+                {
+                    sender.SmartRollupBonds += operation.Bond;
+                    rollup.SmartRollupBonds += operation.Bond;
+
+                    operation.BondStatus = SmartRollupBondStatus.Active;
+                }
 
                 if (commitment == null)
                 {
