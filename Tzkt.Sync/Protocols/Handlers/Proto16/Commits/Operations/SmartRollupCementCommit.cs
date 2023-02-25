@@ -14,7 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
+            var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(content.RequiredString("commitment"), rollup?.Id);
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -32,6 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 SenderId = sender.Id,
                 Sender = sender,
                 SmartRollupId = rollup?.Id,
+                CommitmentId = commitment?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -58,6 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);
             Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region apply operation
@@ -79,22 +82,21 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.Counter = operation.Counter;
 
+            if (commitment != null)
+                commitment.LastLevel = operation.Level;
+
             Cache.AppState.Get().SmartRollupCementOpsCount++;
             #endregion
 
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                var commitment = await Cache.SmartRollupCommitments.GetAsync(content.RequiredString("commitment"), rollup.Id);
-                Db.TryAttach(commitment);
-                commitment.LastLevel = operation.Level;
-                commitment.Cemented = true;
-
                 rollup.InboxLevel = commitment.InboxLevel;
-                rollup.Commitment = commitment.Hash;
+                rollup.LastCommitment = commitment.Hash;
                 rollup.CementedCommitments++;
-
-                operation.CommitmentId = commitment.Id;
+                rollup.PendingCommitments--;
+                
+                commitment.Cemented = true;
             }
             #endregion
 
@@ -118,34 +120,30 @@ namespace Tzkt.Sync.Protocols.Proto16
             var sender = operation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(operation.CommitmentId);
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                var commitment = await Cache.SmartRollupCommitments.GetAsync((int)operation.CommitmentId);
-                var prevOp = await Db.SmartRollupPublishOps.AsNoTracking()
-                    .Where(x => x.Id < operation.Id && x.SmartRollupId == operation.SmartRollupId && x.Status == OperationStatus.Applied)
-                    .OrderByDescending(x => x.Id)
-                    .FirstOrDefaultAsync();
                 var prevCement = await Db.SmartRollupCementOps.AsNoTracking()
                     .Where(x => x.Id < operation.Id && x.SmartRollupId == operation.SmartRollupId && x.Status == OperationStatus.Applied)
                     .OrderByDescending(x => x.Id)
                     .FirstOrDefaultAsync();
-                var prevCementedCommitment = prevCement == null ? null : await Cache.SmartRollupCommitments.GetAsync((int)prevCement.CommitmentId);
-
-                Db.TryAttach(commitment);
-                commitment.LastLevel = prevOp.Level;
-                commitment.Cemented = false;
+                var prevCementedCommitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(prevCement?.CommitmentId);
 
                 rollup.InboxLevel = prevCementedCommitment?.InboxLevel ?? 0;
-                rollup.Commitment = prevCementedCommitment?.Hash ?? rollup.Genesis;
+                rollup.LastCommitment = prevCementedCommitment?.Hash ?? rollup.GenesisCommitment;
                 rollup.CementedCommitments--;
+                rollup.PendingCommitments++;
+
+                commitment.Cemented = false;
             }
             #endregion
 
@@ -165,6 +163,8 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             sender.Counter = operation.Counter - 1;
             (sender as User).Revealed = true;
+
+            // commitment.LastLevel is not reverted
 
             Cache.AppState.Get().SmartRollupCementOpsCount--;
             #endregion

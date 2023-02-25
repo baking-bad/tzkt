@@ -28,14 +28,14 @@ namespace Tzkt.Sync.Protocols.Proto16
             };
             var result = content.Required("metadata").Required("operation_result");
 
-            SmartRollup smartRollup = null;
+            SmartRollup rollup = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredString("address");
                 var ghost = await Cache.Accounts.GetAsync(address);
                 if (ghost != null)
                 {
-                    smartRollup = new()
+                    rollup = new()
                     {
                         Id = ghost.Id,
                         FirstLevel = ghost.FirstLevel,
@@ -47,18 +47,23 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
-                        Genesis = result.RequiredString("genesis_commitment_hash"),
-                        Commitment = result.RequiredString("genesis_commitment_hash"),
+                        GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
+                        LastCommitment = result.RequiredString("genesis_commitment_hash"),
+                        InboxLevel = 0,
+                        PublishedCommitments = 0,
+                        CementedCommitments = 0,
+                        PendingCommitments = 0,
+                        SmartRollupBonds = 0,
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
                         TokenTransfersCount = ghost.TokenTransfersCount
                     };
                     Db.Entry(ghost).State = EntityState.Detached;
-                    Db.Entry(smartRollup).State = EntityState.Modified;
+                    Db.Entry(rollup).State = EntityState.Modified;
                 }
                 else
                 {
-                    smartRollup = new()
+                    rollup = new()
                     {
                         Id = Cache.AppState.NextAccountId(),
                         FirstLevel = block.Level,
@@ -70,12 +75,17 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
-                        Genesis = result.RequiredString("genesis_commitment_hash"),
-                        Commitment = result.RequiredString("genesis_commitment_hash")
+                        GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
+                        LastCommitment = result.RequiredString("genesis_commitment_hash"),
+                        InboxLevel = 0,
+                        PublishedCommitments = 0,
+                        CementedCommitments = 0,
+                        PendingCommitments = 0,
+                        SmartRollupBonds = 0
                     };
-                    Db.SmartRollups.Add(smartRollup);
+                    Db.SmartRollups.Add(rollup);
                 }
-                Cache.Accounts.Add(smartRollup);
+                Cache.Accounts.Add(rollup);
             }
 
             var operation = new SmartRollupOriginateOperation
@@ -95,7 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Kernel = Hex.Parse(content.RequiredString("kernel")),
                 OriginationProof = Hex.Parse(content.RequiredString("origination_proof")),
                 GenesisCommitment = result.OptionalString("genesis_commitment_hash"),
-                SmartRollupId = smartRollup?.Id,
+                SmartRollupId = rollup?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -142,7 +152,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.SmartRollupOriginateCount++;
-            if (smartRollup != null) smartRollup.SmartRollupOriginateCount++;
+            if (rollup != null) rollup.SmartRollupOriginateCount++;
 
             block.Operations |= Operations.SmartRollupOriginate;
             block.Fees += operation.BakerFee;
@@ -189,12 +199,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             var blockBaker = block.Proposer;
             var sender = operation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var smartRollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(rollup);
             #endregion
 
             #region revert result
@@ -212,32 +222,32 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 sender.SmartRollupsCount--;
 
-                if (smartRollup.TokenTransfersCount == 0)
+                if (rollup.TokenTransfersCount == 0)
                 {
-                    Db.SmartRollups.Remove(smartRollup);
-                    Cache.Accounts.Remove(smartRollup);
+                    Db.SmartRollups.Remove(rollup);
+                    Cache.Accounts.Remove(rollup);
                 }
                 else
                 {
                     var ghost = new Account
                     {
-                        Id = smartRollup.Id,
-                        Address = smartRollup.Address,
-                        FirstBlock = smartRollup.FirstBlock,
-                        FirstLevel = smartRollup.FirstLevel,
-                        LastLevel = smartRollup.LastLevel,
-                        ActiveTokensCount = smartRollup.ActiveTokensCount,
-                        TokenBalancesCount = smartRollup.TokenBalancesCount,
-                        TokenTransfersCount = smartRollup.TokenTransfersCount,
+                        Id = rollup.Id,
+                        Address = rollup.Address,
+                        FirstBlock = rollup.FirstBlock,
+                        FirstLevel = rollup.FirstLevel,
+                        LastLevel = rollup.LastLevel,
+                        ActiveTokensCount = rollup.ActiveTokensCount,
+                        TokenBalancesCount = rollup.TokenBalancesCount,
+                        TokenTransfersCount = rollup.TokenTransfersCount,
                         Type = AccountType.Ghost,
                     };
 
-                    Db.Entry(smartRollup).State = EntityState.Detached;
+                    Db.Entry(rollup).State = EntityState.Detached;
                     Db.Entry(ghost).State = EntityState.Modified;
                     Cache.Accounts.Add(ghost);
                 }
 
-                Cache.Schemas.Remove(smartRollup);
+                Cache.Schemas.Remove(rollup);
             }
             #endregion
 

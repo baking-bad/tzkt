@@ -59,6 +59,7 @@ namespace Tzkt.Sync.Tests.Database
             totalBurned += await db.SmartRollupPublishOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.SmartRollupRecoverBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.SmartRollupRefuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));
 
             if (stats.TotalBurned != totalBurned)
                 throw new Exception("Invalid Statistics.TotalBurned");

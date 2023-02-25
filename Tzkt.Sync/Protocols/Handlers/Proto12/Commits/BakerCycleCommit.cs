@@ -36,12 +36,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             else
             {
                 var set = new HashSet<int>();
-                var bakerRound = currentRights
-                    .Where(x => x.Type == BakingRightType.Baking)
-                    .OrderBy(x => x.Round)
-                    .First(x => x.Status == BakingRightStatus.Realized)
-                    .Round;
-
                 foreach (var br in currentRights.Where(x => x.Type == BakingRightType.Baking).OrderBy(x => x.Round))
                 {
                     if (set.Add(br.BakerId))
@@ -69,7 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                             bakerCycle.BlockRewards += block.Reward;
                             bakerCycle.BlockFees += block.Fees;
                         }
-                        else if (br.Round < bakerRound)
+                        else if (br.Round < block.PayloadRound)
                         {
                             bakerCycle.MissedBlockRewards += block.Reward;
                             bakerCycle.MissedBlockFees += block.Fees;

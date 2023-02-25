@@ -31,7 +31,11 @@ namespace Tzkt.Sync.Tests.Database
                 throw new Exception("Invalid AppState.Hash");
 
             if (state.VotingPeriod != block.metadata.voting_period_info.voting_period.index)
-                throw new Exception("Invalid AppState.VotingPeriod");
+            {
+                var votingPeriod = await db.VotingPeriods.SingleAsync(x => x.Index == state.VotingPeriod);
+                if (state.Level != votingPeriod.FirstLevel - 1 || state.VotingPeriod != block.metadata.voting_period_info.voting_period.index + 1)
+                    throw new Exception("Invalid AppState.VotingPeriod");
+            }
             #endregion
 
             #region counters

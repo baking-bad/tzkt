@@ -90,7 +90,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     cr.Status = BakingRightStatus.Missed;
 
                 CurrentRights.First(x => x.Round == block.PayloadRound).Status = BakingRightStatus.Realized;
-                if (block.ProducerId != block.ProposerId)
+                if (block.PayloadRound != block.BlockRound)
                     CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
 
                 if (block.Endorsements != null)

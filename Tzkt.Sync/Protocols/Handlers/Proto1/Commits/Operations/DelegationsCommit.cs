@@ -486,7 +486,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginateCount = user.SmartRollupOriginateCount,
                 SmartRollupPublishCount = user.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = user.SmartRollupRefuteCount
+                SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                RefutationGamesCount = user.RefutationGamesCount,
+                ActiveRefutationGamesCount = user.ActiveRefutationGamesCount
             };
 
             #region update relations
@@ -741,7 +743,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginateCount = delegat.SmartRollupOriginateCount,
                 SmartRollupPublishCount = delegat.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount
+                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                RefutationGamesCount = delegat.RefutationGamesCount,
+                ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount
             };
 
             #region update relations

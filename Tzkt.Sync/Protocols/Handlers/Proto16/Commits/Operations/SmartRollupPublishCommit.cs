@@ -11,13 +11,15 @@ namespace Tzkt.Sync.Protocols.Proto16
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var smartRollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
-
             var result = content.Required("metadata").Required("operation_result");
+            var commitmentHash = result.OptionalString("staked_hash");
             var bond = result.OptionalArray("balance_updates")?.EnumerateArray()
                 .FirstOrDefault(x => x.RequiredString("kind") == "contract") ?? default;
+
+            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(commitmentHash, rollup?.Id);
             
             var operation = new SmartRollupPublishOperation
             {
@@ -32,7 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
                 Sender = sender,
-                SmartRollupId = smartRollup?.Id,
+                SmartRollupId = rollup?.Id,
+                CommitmentId = commitment?.Id,
                 Bond = bond.ValueKind == JsonValueKind.Undefined ? 0 : -bond.RequiredInt64("change"),
                 Status = result.RequiredString("status") switch
                 {
@@ -59,7 +62,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region apply operation
@@ -74,12 +78,15 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.SmartRollupPublishCount++;
-            if (smartRollup != null) smartRollup.SmartRollupPublishCount++;
+            if (rollup != null) rollup.SmartRollupPublishCount++;
 
             block.Operations |= Operations.SmartRollupPublish;
             block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
+
+            if (commitment != null)
+                commitment.LastLevel = operation.Level;
 
             Cache.AppState.Get().SmartRollupPublishOpsCount++;
             #endregion
@@ -88,18 +95,15 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (operation.Status == OperationStatus.Applied)
             {
                 sender.SmartRollupBonds += operation.Bond;
-                smartRollup.SmartRollupBonds += operation.Bond;
-                smartRollup.TotalCommitments++;
+                rollup.SmartRollupBonds += operation.Bond;
 
-                var commitmentHash = result.RequiredString("staked_hash");
-                var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(commitmentHash, smartRollup.Id);
                 if (commitment == null)
                 {
                     var commitmentEl = content.Required("commitment");
                     commitment = new SmartRollupCommitment
                     {
                         Id = Cache.AppState.NextSmartRollupCommitmentId(),
-                        SmartRollupId = smartRollup.Id,
+                        SmartRollupId = rollup.Id,
                         InitiatorId = operation.SenderId,
                         FirstLevel = operation.Level,
                         LastLevel = operation.Level,
@@ -107,32 +111,32 @@ namespace Tzkt.Sync.Protocols.Proto16
                         State = commitmentEl.RequiredString("compressed_state"),
                         Ticks = commitmentEl.RequiredInt64("number_of_ticks"),
                         Hash = commitmentHash,
-                        Publications = 1,
+                        Publications = 0,
                         Successors = 0,
-                        Cemented = false
+                        Cemented = false,
+                        Executed = false
                     };
                     Cache.SmartRollupCommitments.Add(commitment);
                     Db.SmartRollupCommitments.Add(commitment);
 
                     var predecessorHash = commitmentEl.RequiredString("predecessor");
-                    if (predecessorHash != smartRollup.Genesis)
+                    if (predecessorHash != rollup.GenesisCommitment)
                     {
-                        var predecessor = await Cache.SmartRollupCommitments.GetAsync(predecessorHash, smartRollup.Id);
+                        var predecessor = await Cache.SmartRollupCommitments.GetAsync(predecessorHash, rollup.Id);
                         Db.TryAttach(predecessor);
                         predecessor.Successors++;
                         predecessor.LastLevel = operation.Level;
 
                         commitment.PredecessorId = predecessor.Id;
                     }
-                }
-                else
-                {
-                    Db.TryAttach(commitment);
-                    commitment.Publications++;
-                    commitment.LastLevel = operation.Level;
+
+                    rollup.PublishedCommitments++;
+                    rollup.PendingCommitments++;
+
+                    operation.CommitmentId = commitment.Id;
                 }
 
-                operation.CommitmentId = commitment.Id;
+                commitment.Publications++;
             }
             #endregion
 
@@ -155,40 +159,41 @@ namespace Tzkt.Sync.Protocols.Proto16
             var blockBaker = block.Proposer;
             var sender = operation.Sender;
             var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var smartRollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(operation.CommitmentId);
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
-            Db.TryAttach(smartRollup);
+            Db.TryAttach(rollup);
+            Db.TryAttach(commitment);
             #endregion
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.RollupBonds -= operation.Bond;
-                smartRollup.RollupBonds -= operation.Bond;
-                smartRollup.TotalCommitments--;
+                sender.SmartRollupBonds -= operation.Bond;
+                rollup.SmartRollupBonds -= operation.Bond;
 
-                var commitment = await Cache.SmartRollupCommitments.GetAsync((int)operation.CommitmentId);
-                Db.TryAttach(commitment);
-                commitment.Publications--;
-                // TODO: properly revert commitment.LastLevel
-
-                if (commitment.Publications == 0)
+                if (commitment.Publications == 1)
                 {
+                    rollup.PublishedCommitments--;
+                    rollup.PendingCommitments--;
+
                     if (commitment.PredecessorId != null)
                     {
                         var predecessor = await Cache.SmartRollupCommitments.GetAsync((int)commitment.PredecessorId);
                         Db.TryAttach(predecessor);
                         predecessor.Successors--;
-                        // TODO: properly revert predecessor.LastLevel
+                        // predecessor.LastLevel is not reverted
                     }
 
                     Cache.AppState.ReleaseSmartRollupCommitmentId();
                     Cache.SmartRollupCommitments.Remove(commitment);
                     Db.SmartRollupCommitments.Remove(commitment);
                 }
+
+                commitment.Publications--;
             }
             #endregion
 
@@ -204,10 +209,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             blockBaker.StakingBalance -= operation.BakerFee;
 
             sender.SmartRollupPublishCount--;
-            if (smartRollup != null) smartRollup.SmartRollupPublishCount--;
+            if (rollup != null) rollup.SmartRollupPublishCount--;
 
             sender.Counter = operation.Counter - 1;
             (sender as User).Revealed = true;
+
+            // commitment.LastLevel is not reverted
 
             Cache.AppState.Get().SmartRollupPublishOpsCount--;
             #endregion

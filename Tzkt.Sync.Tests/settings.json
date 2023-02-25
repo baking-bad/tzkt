@@ -18,8 +18,18 @@
   "HealthChecks": {
     "Enabled": false
   },
+  "ContractMetadata": {
+    "Enabled": false
+  },
   "TokenMetadata": {
     "Enabled": false
+  },
+  "MetricsOptions": {
+    "Enabled": false
+  },
+  "MetricEndpointsOptions": {
+    "MetricsEndpointEnabled": false,
+    "MetricsTextEndpointEnabled": false
   },
   "Logging": {
     "LogLevel": {
