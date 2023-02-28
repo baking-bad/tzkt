@@ -1,6 +1,9 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
+using Tzkt.Sync.Services.Cache;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
@@ -37,6 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 SmartRollupId = rollup?.Id,
                 CommitmentId = commitment?.Id,
                 Bond = bond.ValueKind == JsonValueKind.Undefined ? 0 : -bond.RequiredInt64("change"),
+                Flags = SmartRollupPublishFlags.None,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -116,10 +120,10 @@ namespace Tzkt.Sync.Protocols.Proto16
                         State = commitmentEl.RequiredString("compressed_state"),
                         Ticks = commitmentEl.RequiredInt64("number_of_ticks"),
                         Hash = commitmentHash,
-                        Publications = 0,
+                        Stakers = 1,
+                        ActiveStakers = 1,
                         Successors = 0,
-                        Cemented = false,
-                        Executed = false
+                        Status = SmartRollupCommitmentStatus.Pending
                     };
                     Cache.SmartRollupCommitments.Add(commitment);
                     Db.SmartRollupCommitments.Add(commitment);
@@ -135,13 +139,43 @@ namespace Tzkt.Sync.Protocols.Proto16
                         commitment.PredecessorId = predecessor.Id;
                     }
 
-                    rollup.PublishedCommitments++;
                     rollup.PendingCommitments++;
 
                     operation.CommitmentId = commitment.Id;
+                    operation.Flags = SmartRollupPublishFlags.AddStaker;
+                    Cache.SmartRollupStakes.Add(commitment);
                 }
+                else
+                {
+                    var stake = await Cache.SmartRollupStakes.GetAsync(commitment, sender.Id);
+                    if (stake == null)
+                    {
+                        commitment.Stakers++;
+                        commitment.ActiveStakers++;
+                        operation.Flags = SmartRollupPublishFlags.AddStaker;
+                        Cache.SmartRollupStakes.Set(commitment.Id, sender.Id, 1);
+                    }
+                    else if (stake == 0)
+                    {
+                        commitment.ActiveStakers++;
+                        operation.Flags = SmartRollupPublishFlags.ReactivateStaker;
+                        Cache.SmartRollupStakes.Set(commitment.Id, sender.Id, 1);
+                    }
+                    if (commitment.Status == SmartRollupCommitmentStatus.Refuted)
+                    {
+                        rollup.PendingCommitments++;
+                        rollup.RefutedCommitments--;
 
-                commitment.Publications++;
+                        commitment.Status = SmartRollupCommitmentStatus.Pending;
+                        if (commitment.Successors > 0)
+                        {
+                            var cnt = await UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, commitment, SmartRollupCommitmentStatus.Pending);
+                            rollup.PendingCommitments += cnt;
+                            rollup.OrphanCommitments -= cnt;
+                        }
+                        operation.Flags |= SmartRollupPublishFlags.ReactivateBranch;
+                    }
+                }
             }
             #endregion
 
@@ -180,9 +214,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 sender.SmartRollupBonds -= operation.Bond;
                 rollup.SmartRollupBonds -= operation.Bond;
 
-                if (commitment.Publications == 1)
+                if (commitment.Stakers == 1 && operation.Flags.HasFlag(SmartRollupPublishFlags.AddStaker))
                 {
-                    rollup.PublishedCommitments--;
                     rollup.PendingCommitments--;
 
                     if (commitment.PredecessorId != null)
@@ -194,11 +227,37 @@ namespace Tzkt.Sync.Protocols.Proto16
                     }
 
                     Cache.AppState.ReleaseSmartRollupCommitmentId();
+                    Cache.SmartRollupStakes.Remove(commitment.Id);
                     Cache.SmartRollupCommitments.Remove(commitment);
                     Db.SmartRollupCommitments.Remove(commitment);
                 }
+                else if (operation.Flags is SmartRollupPublishFlags change)
+                {
+                    if (change.HasFlag(SmartRollupPublishFlags.AddStaker))
+                    {
+                        commitment.Stakers--;
+                        commitment.ActiveStakers--;
+                        Cache.SmartRollupStakes.Remove(commitment.Id, operation.SenderId);
+                    }
+                    else if (change.HasFlag(SmartRollupPublishFlags.ReactivateStaker))
+                    {
+                        commitment.ActiveStakers--;
+                        Cache.SmartRollupStakes.Set(commitment.Id, operation.SenderId, 0);
+                    }
+                    if (change.HasFlag(SmartRollupPublishFlags.ReactivateBranch))
+                    {
+                        rollup.PendingCommitments--;
+                        rollup.RefutedCommitments++;
 
-                commitment.Publications--;
+                        commitment.Status = SmartRollupCommitmentStatus.Refuted;
+                        if (commitment.Successors > 0)
+                        {
+                            var cnt = await UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, commitment, SmartRollupCommitmentStatus.Orphan);
+                            rollup.PendingCommitments -= cnt;
+                            rollup.OrphanCommitments += cnt;
+                        }
+                    }
+                }
             }
             #endregion
 
@@ -227,6 +286,40 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.SmartRollupPublishOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
+        }
+
+        internal static async Task<int> UpdateSuccessorsStatus(
+            TzktContext db,
+            SmartRollupCommitmentCache cache,
+            SmartRollupCommitment commitment,
+            SmartRollupCommitmentStatus status)
+        {
+            var cnt = 0;
+            var stack = new Stack<SmartRollupCommitment>();
+            stack.Push(commitment);
+
+            while (stack.TryPop(out var c))
+            {
+                if (c.Successors > 0)
+                {
+                    var ids = await db.SmartRollupCommitments
+                        .AsNoTracking()
+                        .Where(x => x.PredecessorId == commitment.Id)
+                        .Select(x => x.Id)
+                        .ToListAsync();
+
+                    foreach (var id in ids)
+                    {
+                        var successor = await cache.GetAsync(id);
+                        db.TryAttach(successor);
+                        successor.Status = status;
+                        stack.Push(successor);
+                        cnt++;
+                    }
+                }
+            }
+
+            return cnt;
         }
     }
 }

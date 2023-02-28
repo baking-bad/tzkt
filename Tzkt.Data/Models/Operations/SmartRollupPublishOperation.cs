@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -9,6 +10,7 @@ namespace Tzkt.Data.Models
         public int? CommitmentId { get; set; }
         public long Bond { get; set; }
         public SmartRollupBondStatus? BondStatus { get; set; }
+        public SmartRollupPublishFlags Flags { get; set; }
     }
 
     public enum SmartRollupBondStatus
@@ -16,6 +18,15 @@ namespace Tzkt.Data.Models
         Active,
         Returned,
         Lost
+    }
+
+    [Flags]
+    public enum SmartRollupPublishFlags
+    {
+        None                = 0b_0000,
+        AddStaker           = 0b_0001,
+        ReactivateStaker    = 0b_0010,
+        ReactivateBranch    = 0b_0100
     }
 
     public static class SmartRollupPublishOperationModel

@@ -22,6 +22,7 @@ namespace Tzkt.Sync.Services
         public TokensCache Tokens { get; private set; }
         public TokenBalancesCache TokenBalances { get; private set; }
         public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
+        public SmartRollupStakesCache SmartRollupStakes { get; private set; }
         public RefutationGameCache RefutationGames { get; private set; }
 
         public CacheService(TzktContext db)
@@ -43,6 +44,7 @@ namespace Tzkt.Sync.Services
             Tokens = new(db);
             TokenBalances = new(db);
             SmartRollupCommitments = new(db);
+            SmartRollupStakes = new(db);
             RefutationGames = new(db);
         }
 
@@ -63,6 +65,7 @@ namespace Tzkt.Sync.Services
             Tokens.Reset();
             TokenBalances.Reset();
             SmartRollupCommitments.Reset();
+            SmartRollupStakes.Reset();
             RefutationGames.Reset();
 
             await AppState.ResetAsync();
@@ -74,6 +77,7 @@ namespace Tzkt.Sync.Services
             Tokens.Trim();
             TokenBalances.Trim();
             SmartRollupCommitments.Trim();
+            SmartRollupStakes.Trim();
             RefutationGames.Trim();
         }
     }

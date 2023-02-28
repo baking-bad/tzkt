@@ -50,9 +50,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                         GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
                         LastCommitment = result.RequiredString("genesis_commitment_hash"),
                         InboxLevel = 0,
-                        PublishedCommitments = 0,
+                        ExecutedCommitments = 0,
                         CementedCommitments = 0,
                         PendingCommitments = 0,
+                        RefutedCommitments = 0,
+                        OrphanCommitments = 0,
                         SmartRollupBonds = 0,
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
@@ -78,9 +80,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                         GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
                         LastCommitment = result.RequiredString("genesis_commitment_hash"),
                         InboxLevel = 0,
-                        PublishedCommitments = 0,
+                        ExecutedCommitments = 0,
                         CementedCommitments = 0,
                         PendingCommitments = 0,
+                        RefutedCommitments = 0,
+                        OrphanCommitments = 0,
                         SmartRollupBonds = 0
                     };
                     Db.SmartRollups.Add(rollup);

@@ -105,7 +105,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                         senderDelegate.DelegatedBalance -= burned;
                 }
 
-                commitment.Executed = true;
+                rollup.ExecutedCommitments++;
+
+                commitment.Status = SmartRollupCommitmentStatus.Executed;
             }
             #endregion
 
@@ -152,7 +154,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                         senderDelegate.DelegatedBalance += spent;
                 }
 
-                commitment.Executed = false;
+                rollup.ExecutedCommitments--;
+
+                commitment.Status = SmartRollupCommitmentStatus.Cemented;
             }
             #endregion
 

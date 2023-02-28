@@ -17,10 +17,19 @@ namespace Tzkt.Data.Models
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
-        public int Publications { get; set; }
+        public int Stakers { get; set; }
+        public int ActiveStakers { get; set; }
         public int Successors { get; set; }
-        public bool Cemented { get; set; }
-        public bool Executed { get; set; }
+        public SmartRollupCommitmentStatus Status { get; set; }
+    }
+
+    public enum SmartRollupCommitmentStatus
+    {
+        Orphan,
+        Refuted,
+        Pending,
+        Cemented,
+        Executed
     }
 
     public static class SmartRollupCommitmentModel

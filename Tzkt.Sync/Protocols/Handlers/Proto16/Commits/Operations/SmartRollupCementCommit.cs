@@ -96,7 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 rollup.CementedCommitments++;
                 rollup.PendingCommitments--;
                 
-                commitment.Cemented = true;
+                commitment.Status = SmartRollupCommitmentStatus.Cemented;
             }
             #endregion
 
@@ -143,7 +143,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 rollup.CementedCommitments--;
                 rollup.PendingCommitments++;
 
-                commitment.Cemented = false;
+                commitment.Status = SmartRollupCommitmentStatus.Pending;
             }
             #endregion
 

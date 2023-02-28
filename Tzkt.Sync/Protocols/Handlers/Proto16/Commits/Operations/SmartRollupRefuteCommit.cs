@@ -199,10 +199,31 @@ namespace Tzkt.Sync.Protocols.Proto16
                             initiator.SmartRollupBonds += initiatorChange;
                             rollup.SmartRollupBonds += initiatorChange;
 
-                            var bondOp = block.SmartRollupPublishOps?
-                                .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == initiator.Id)
-                                ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == initiator.Id);
+                            var bondOp = await GetBondOperation(rollup, initiator, block);
                             bondOp.BondStatus = SmartRollupBondStatus.Lost;
+
+                            foreach (var commitment in await GetFundedCommitments(rollup, initiator, bondOp, block))
+                            {
+                                commitment.ActiveStakers--;
+                                await Cache.SmartRollupStakes.SetAsync(commitment, initiator.Id, 0);
+                            }
+
+                            var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(game.InitiatorCommitmentId);
+                            if (initiatorCommitment.ActiveStakers == 0)
+                            {
+                                Db.TryAttach(initiatorCommitment);
+
+                                rollup.RefutedCommitments++;
+                                rollup.PendingCommitments--;
+
+                                initiatorCommitment.Status = SmartRollupCommitmentStatus.Refuted;
+                                if (initiatorCommitment.Successors > 0)
+                                {
+                                    var cnt = await SmartRollupPublishCommit.UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, initiatorCommitment, SmartRollupCommitmentStatus.Orphan);
+                                    rollup.OrphanCommitments += cnt;
+                                    rollup.PendingCommitments -= cnt;
+                                }
+                            }
                         }
 
                         if (opponentChange > 0)
@@ -215,10 +236,31 @@ namespace Tzkt.Sync.Protocols.Proto16
                             opponent.SmartRollupBonds += opponentChange;
                             rollup.SmartRollupBonds += opponentChange;
 
-                            var bondOp = block.SmartRollupPublishOps?
-                                .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == opponent.Id)
-                                ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == opponent.Id);
+                            var bondOp = await GetBondOperation(rollup, opponent, block);
                             bondOp.BondStatus = SmartRollupBondStatus.Lost;
+
+                            foreach (var commitment in await GetFundedCommitments(rollup, opponent, bondOp, block))
+                            {
+                                commitment.ActiveStakers--;
+                                await Cache.SmartRollupStakes.SetAsync(commitment, opponent.Id, 0);
+                            }
+
+                            var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(game.OpponentCommitmentId);
+                            if (opponentCommitment.ActiveStakers == 0)
+                            {
+                                Db.TryAttach(opponentCommitment);
+
+                                rollup.RefutedCommitments++;
+                                rollup.PendingCommitments--;
+
+                                opponentCommitment.Status = SmartRollupCommitmentStatus.Refuted;
+                                if (opponentCommitment.Successors > 0)
+                                {
+                                    var cnt = await SmartRollupPublishCommit.UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, opponentCommitment, SmartRollupCommitmentStatus.Orphan);
+                                    rollup.OrphanCommitments += cnt;
+                                    rollup.PendingCommitments -= cnt;
+                                }
+                            }
                         }
 
                         initiator.Balance += initiatorChange;
@@ -333,10 +375,31 @@ namespace Tzkt.Sync.Protocols.Proto16
                             initiator.SmartRollupBonds -= initiatorChange;
                             rollup.SmartRollupBonds -= initiatorChange;
 
-                            var bondOp = await Db.SmartRollupPublishOps
-                                .OrderByDescending(x => x.Id)
-                                .FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Lost && x.SenderId == initiator.Id);
+                            var bondOp = await GetBondOperation(rollup.Id, initiator.Id);
                             bondOp.BondStatus = SmartRollupBondStatus.Active;
+
+                            foreach (var commitment in await GetFundedCommitments(rollup, initiator.Id, bondOp.Id, operation.Id))
+                            {
+                                commitment.ActiveStakers++;
+                                Cache.SmartRollupStakes.Set(commitment.Id, initiator.Id, 1);
+                            }
+
+                            var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(game.InitiatorCommitmentId);
+                            if (initiatorCommitment.ActiveStakers == 1)
+                            {
+                                Db.TryAttach(initiatorCommitment);
+
+                                rollup.RefutedCommitments--;
+                                rollup.PendingCommitments++;
+
+                                initiatorCommitment.Status = SmartRollupCommitmentStatus.Pending;
+                                if (initiatorCommitment.Successors > 0)
+                                {
+                                    var cnt = await SmartRollupPublishCommit.UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, initiatorCommitment, SmartRollupCommitmentStatus.Pending);
+                                    rollup.OrphanCommitments -= cnt;
+                                    rollup.PendingCommitments += cnt;
+                                }
+                            }
                         }
 
                         if (opponentChange > 0)
@@ -349,10 +412,31 @@ namespace Tzkt.Sync.Protocols.Proto16
                             opponent.SmartRollupBonds -= opponentChange;
                             rollup.SmartRollupBonds -= opponentChange;
 
-                            var bondOp = await Db.SmartRollupPublishOps
-                                .OrderByDescending(x => x.Id)
-                                .FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Lost && x.SenderId == opponent.Id);
+                            var bondOp = await GetBondOperation(rollup.Id, opponent.Id);
                             bondOp.BondStatus = SmartRollupBondStatus.Active;
+
+                            foreach (var commitment in await GetFundedCommitments(rollup, opponent.Id, bondOp.Id, operation.Id))
+                            {
+                                commitment.ActiveStakers++;
+                                Cache.SmartRollupStakes.Set(commitment.Id, opponent.Id, 1);
+                            }
+
+                            var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(game.OpponentCommitmentId);
+                            if (opponentCommitment.ActiveStakers == 1)
+                            {
+                                Db.TryAttach(opponentCommitment);
+
+                                rollup.RefutedCommitments--;
+                                rollup.PendingCommitments++;
+
+                                opponentCommitment.Status = SmartRollupCommitmentStatus.Pending;
+                                if (opponentCommitment.Successors > 0)
+                                {
+                                    var cnt = await SmartRollupPublishCommit.UpdateSuccessorsStatus(Db, Cache.SmartRollupCommitments, opponentCommitment, SmartRollupCommitmentStatus.Pending);
+                                    rollup.OrphanCommitments -= cnt;
+                                    rollup.PendingCommitments += cnt;
+                                }
+                            }
                         }
 
                         initiator.Balance -= initiatorChange;
@@ -404,6 +488,96 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.SmartRollupRefuteOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
+        }
+
+        async Task<SmartRollupPublishOperation> GetBondOperation(SmartRollup rollup, Account staker, Block block)
+        {
+            return block.SmartRollupPublishOps?
+                .FirstOrDefault(x => 
+                    x.SmartRollupId == rollup.Id &&
+                    x.BondStatus == SmartRollupBondStatus.Active &&
+                    x.SenderId == staker.Id)
+                ?? await Db.SmartRollupPublishOps.FirstAsync(x =>
+                    x.SmartRollupId == rollup.Id &&
+                    x.BondStatus == SmartRollupBondStatus.Active &&
+                    x.SenderId == staker.Id);
+
+        }
+
+        async Task<SmartRollupPublishOperation> GetBondOperation(int rollupId, int stakerId)
+        {
+            return await Db.SmartRollupPublishOps
+                .OrderByDescending(x => x.Id)
+                .FirstAsync(x =>
+                    x.SmartRollupId == rollupId &&
+                    x.BondStatus == SmartRollupBondStatus.Lost &&
+                    x.SenderId == stakerId);
+        }
+
+        async Task<List<SmartRollupCommitment>> GetFundedCommitments(SmartRollup rollup, Account staker, SmartRollupPublishOperation bondOp, Block block)
+        {
+            var ids = (await Db.SmartRollupPublishOps.AsNoTracking()
+                .Join(Db.SmartRollupCommitments, o => o.CommitmentId, c => c.Id, (o, c) => new { o, c })
+                .Where(x =>
+                    x.o.Id >= bondOp.Id &&
+                    x.o.SenderId == staker.Id &&
+                    x.o.SmartRollupId == rollup.Id &&
+                    x.o.Status == OperationStatus.Applied &&
+                    x.c.InboxLevel > rollup.InboxLevel)
+                .Select(x => (int)x.o.CommitmentId)
+                .ToListAsync())
+                .ToHashSet();
+
+            if (block.SmartRollupPublishOps != null)
+            {
+                foreach (var op in block.SmartRollupPublishOps)
+                {
+                    if (op.Id >= bondOp.Id &&
+                        op.SenderId == staker.Id &&
+                        op.SmartRollupId == rollup.Id &&
+                        op.Status == OperationStatus.Applied &&
+                        (await Cache.SmartRollupCommitments.GetAsync((int)op.CommitmentId)).InboxLevel > rollup.InboxLevel)
+                    {
+                        ids.Add((int)op.CommitmentId);
+                    }
+                }
+            }
+
+            var res = new List<SmartRollupCommitment>(ids.Count);
+            foreach (var id in ids)
+            {
+                var commitment = await Cache.SmartRollupCommitments.GetAsync(id);
+                Db.TryAttach(commitment);
+                res.Add(commitment);
+            }
+            
+            return res;
+        }
+
+        async Task<List<SmartRollupCommitment>> GetFundedCommitments(SmartRollup rollup, int stakerId, long fromId, long toId)
+        {
+            var ids = (await Db.SmartRollupPublishOps.AsNoTracking()
+                .Join(Db.SmartRollupCommitments, o => o.CommitmentId, c => c.Id, (o, c) => new { o, c })
+                .Where(x =>
+                    x.o.Id >= fromId &&
+                    x.o.Id < toId &&
+                    x.o.SenderId == stakerId &&
+                    x.o.SmartRollupId == rollup.Id &&
+                    x.o.Status == OperationStatus.Applied &&
+                    x.c.InboxLevel > rollup.InboxLevel)
+                .Select(x => (int)x.o.CommitmentId)
+                .ToListAsync())
+                .ToHashSet();
+
+            var res = new List<SmartRollupCommitment>(ids.Count);
+            foreach (var id in ids)
+            {
+                var commitment = await Cache.SmartRollupCommitments.GetAsync(id);
+                Db.TryAttach(commitment);
+                res.Add(commitment);
+            }
+
+            return res;
         }
     }
 }
