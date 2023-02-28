@@ -11,9 +11,11 @@ namespace Tzkt.Data.Models
         public string GenesisCommitment { get; set; }
         public string LastCommitment { get; set; }
         public int InboxLevel { get; set; }
-        public int PublishedCommitments { get; set; }
+        public int ExecutedCommitments { get; set; }
         public int CementedCommitments { get; set; }
         public int PendingCommitments { get; set; }
+        public int RefutedCommitments { get; set; }
+        public int OrphanCommitments { get; set; }
     }
 
     public enum PvmKind

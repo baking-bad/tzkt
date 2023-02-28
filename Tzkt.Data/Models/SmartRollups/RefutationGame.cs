@@ -35,6 +35,18 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SmartRollupId);
 
             modelBuilder.Entity<RefutationGame>()
+                .HasIndex(x => x.InitiatorId);
+
+            modelBuilder.Entity<RefutationGame>()
+                .HasIndex(x => x.InitiatorCommitmentId);
+
+            modelBuilder.Entity<RefutationGame>()
+                .HasIndex(x => x.OpponentId);
+
+            modelBuilder.Entity<RefutationGame>()
+                .HasIndex(x => x.OpponentCommitmentId);
+
+            modelBuilder.Entity<RefutationGame>()
                 .HasIndex(x => x.FirstLevel);
 
             modelBuilder.Entity<RefutationGame>()
