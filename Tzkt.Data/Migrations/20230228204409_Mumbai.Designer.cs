@@ -2333,6 +2333,21 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("RevelationReward")
                         .HasColumnType("bigint");
 
+                    b.Property<int>("SmartRollupChallengeWindow")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SmartRollupCommitmentPeriod")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SmartRollupOriginationSize")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("SmartRollupStakeAmount")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SmartRollupTimeoutPeriod")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TimeBetweenBlocks")
                         .HasColumnType("integer");
 

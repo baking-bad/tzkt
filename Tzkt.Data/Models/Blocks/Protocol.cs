@@ -74,6 +74,12 @@ namespace Tzkt.Data.Models
         public int TxRollupOriginationSize { get; set; }
         public long TxRollupCommitmentBond { get; set; }
 
+        public int SmartRollupOriginationSize { get; set; }
+        public long SmartRollupStakeAmount { get; set; }
+        public int SmartRollupChallengeWindow { get; set; }
+        public int SmartRollupCommitmentPeriod { get; set; }
+        public int SmartRollupTimeoutPeriod { get; set; }
+
         public string Dictator { get; set; }
 
         #region helpers

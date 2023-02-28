@@ -20,6 +20,41 @@ namespace Tzkt.Data.Migrations
                 defaultValue: 0L);
 
             migrationBuilder.AddColumn<int>(
+                name: "SmartRollupChallengeWindow",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
+                name: "SmartRollupCommitmentPeriod",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
+                name: "SmartRollupOriginationSize",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<long>(
+                name: "SmartRollupStakeAmount",
+                table: "Protocols",
+                type: "bigint",
+                nullable: false,
+                defaultValue: 0L);
+
+            migrationBuilder.AddColumn<int>(
+                name: "SmartRollupTimeoutPeriod",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
                 name: "InboxMessageCounter",
                 table: "AppState",
                 type: "integer",
@@ -855,6 +890,26 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "TotalSmartRollupBonds",
                 table: "Statistics");
+
+            migrationBuilder.DropColumn(
+                name: "SmartRollupChallengeWindow",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "SmartRollupCommitmentPeriod",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "SmartRollupOriginationSize",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "SmartRollupStakeAmount",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "SmartRollupTimeoutPeriod",
+                table: "Protocols");
 
             migrationBuilder.DropColumn(
                 name: "InboxMessageCounter",
