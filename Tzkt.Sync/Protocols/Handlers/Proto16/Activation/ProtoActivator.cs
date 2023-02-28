@@ -14,6 +14,11 @@ namespace Tzkt.Sync.Protocols.Proto16
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
+            protocol.SmartRollupOriginationSize = parameters["smart_rollup_origination_size"]?.Value<int>() ?? 6_314;
+            protocol.SmartRollupStakeAmount = long.Parse(parameters["smart_rollup_stake_amount"]?.Value<string>() ?? "10000000000");
+            protocol.SmartRollupChallengeWindow = parameters["smart_rollup_challenge_window_in_blocks"]?.Value<int>() ?? 80_640;
+            protocol.SmartRollupCommitmentPeriod = parameters["smart_rollup_commitment_period_in_blocks"]?.Value<int>() ?? 60;
+            protocol.SmartRollupTimeoutPeriod = parameters["smart_rollup_timeout_period_in_blocks"]?.Value<int>() ?? 40_320;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -31,6 +36,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             protocol.EndorsementReward0 = totalReward / 2 / protocol.EndorsersPerBlock;
             protocol.EndorsementReward1 = 0;
             protocol.LBSubsidy = totalReward / 16;
+
+            protocol.SmartRollupOriginationSize = 6_314;
+            protocol.SmartRollupStakeAmount = 10_000_000_000;
+            protocol.SmartRollupChallengeWindow = 80_640;
+            protocol.SmartRollupCommitmentPeriod = 60;
+            protocol.SmartRollupTimeoutPeriod = 40_320;
         }
 
         protected override async Task ActivateContext(AppState state)

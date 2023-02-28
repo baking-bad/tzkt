@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
@@ -120,7 +119,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 MinParticipationDenominator = prev.MinParticipationDenominator,
                 MinParticipationNumerator = prev.MinParticipationNumerator,
                 TxRollupCommitmentBond = prev.TxRollupCommitmentBond,
-                TxRollupOriginationSize = prev.TxRollupOriginationSize
+                TxRollupOriginationSize = prev.TxRollupOriginationSize,
+                Dictator = prev.Dictator,
+                SmartRollupChallengeWindow = prev.SmartRollupChallengeWindow,
+                SmartRollupCommitmentPeriod = prev.SmartRollupCommitmentPeriod,
+                SmartRollupOriginationSize = prev.SmartRollupOriginationSize,
+                SmartRollupStakeAmount = prev.SmartRollupStakeAmount,
+                SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
