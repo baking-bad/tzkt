@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using Tzkt.Api.Models;
@@ -40,7 +35,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="id">Filters by internal id.</param>
         /// <param name="address">Filters by address.</param>
-        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
+        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `rollup`, `smart_rollup`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="balance">Filters accounts by balance</param>
@@ -130,7 +125,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a number of accounts.
         /// </remarks>
-        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `ghost`).</param>
+        /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `rollup`, `smart_rollup`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
@@ -169,7 +164,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns an account with the specified address.
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address</param>
         /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
@@ -228,7 +223,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of accounts delegated to the specified account.
         /// </remarks>
         /// <param name="address">Account address (starting with tz)</param>
-        /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`, `ghost`).</param>
+        /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`, `rollup`, `smart_rollup`, `ghost`).</param>
         /// <param name="balance">Filters delegators by balance.</param>
         /// <param name="delegationLevel">Number of items to skip</param>
         /// <param name="sort">Sorts delegators by specified field. Supported fields: `delegationLevel` (default, desc), `balance`.</param>
@@ -274,7 +269,7 @@ namespace Tzkt.Api.Controllers
         /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
         /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address</param>
         /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
         /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
         /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,

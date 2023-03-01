@@ -39,9 +39,14 @@ namespace Tzkt.Api.Models
         public long Balance { get; set; }
 
         /// <summary>
-        /// Amount of rollup commitment bonds (micro tez)
+        /// Amount of tx rollup commitment bonds (micro tez)
         /// </summary>
         public long RollupBonds { get; set; }
+
+        /// <summary>
+        /// Amount of smart rollup commitment bonds (micro tez)
+        /// </summary>
+        public long SmartRollupBonds { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -72,6 +77,11 @@ namespace Tzkt.Api.Models
         /// Number of tx rollups, created (originated) by the account
         /// </summary>
         public int RollupsCount { get; set; }
+
+        /// <summary>
+        /// Number of smart rollups, created (originated) by the account
+        /// </summary>
+        public int SmartRollupsCount { get; set; }
 
         /// <summary>
         /// Number of account tokens with non-zero balances
@@ -184,6 +194,51 @@ namespace Tzkt.Api.Models
         /// Number of `drain_delegate` operations related to the acount
         /// </summary>
         public int DrainDelegateCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_add_messages` operations related to the acount
+        /// </summary>
+        public int SmartRollupAddMessagesCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_cement` operations related to the acount
+        /// </summary>
+        public int SmartRollupCementCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_execute_outbox_message` operations related to the acount
+        /// </summary>
+        public int SmartRollupExecuteCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_originate` operations related to the acount
+        /// </summary>
+        public int SmartRollupOriginateCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_publish` operations related to the acount
+        /// </summary>
+        public int SmartRollupPublishCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_recover_bond` operations related to the acount
+        /// </summary>
+        public int SmartRollupRecoverBondCount { get; set; }
+
+        /// <summary>
+        /// Number of `smart_rollup_refute` operations related to the acount
+        /// </summary>
+        public int SmartRollupRefuteCount { get; set; }
+
+        /// <summary>
+        /// Number of smart rollup refutation games related to the acount
+        /// </summary>
+        public int RefutationGamesCount { get; set; }
+
+        /// <summary>
+        /// Number of active smart rollup refutation games related to the acount
+        /// </summary>
+        public int ActiveRefutationGamesCount { get; set; }
 
         /// <summary>
         /// Block height of the first operation, related to the account

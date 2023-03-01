@@ -257,9 +257,11 @@ namespace Tzkt.Api.Services
                 TotalActivated = row.TotalActivated,
                 TotalFrozen = row.TotalFrozen,
                 TotalRollupBonds = row.TotalRollupBonds,
-                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished,
+                TotalSmartRollupBonds = row.TotalSmartRollupBonds,
+                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
+                            - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
-                                  - row.TotalBurned - row.TotalBanished - row.TotalFrozen,
+                                  - row.TotalBurned - row.TotalBanished - row.TotalFrozen - row.TotalRollupBonds - row.TotalSmartRollupBonds,
             };
         }
 
@@ -326,7 +328,7 @@ namespace Tzkt.Api.Services
                 StartTime = Times[firstLevel],
                 LastLevel = lastLevel,
                 EndTime = Times[lastLevel],
-                Progress = Math.Round(100.0 * (level - firstLevel) / cycleSize, 2)
+                Progress = Math.Round(100.0 * (level - firstLevel + 1) / cycleSize, 2)
             };
         }
 
@@ -373,6 +375,20 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupAddMessagesOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupCementOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""SmartRollupExecuteOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""SmartRollupOriginateOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupPublishOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRecoverBondOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRefuteOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
@@ -431,6 +447,20 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupAddMessagesOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupCementOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""SmartRollupExecuteOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""SmartRollupOriginateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupPublishOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRecoverBondOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRefuteOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(

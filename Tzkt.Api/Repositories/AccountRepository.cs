@@ -105,6 +105,17 @@ namespace Tzkt.Api.Repositories
                         NumSetDepositsLimits = delegat.SetDepositsLimitsCount,
                         NumMigrations = delegat.MigrationsCount,
                         NumTransactions = delegat.TransactionsCount,
+                        SmartRollupBonds = delegat.SmartRollupBonds,
+                        SmartRollupsCount = delegat.SmartRollupsCount,
+                        SmartRollupAddMessagesCount = delegat.SmartRollupAddMessagesCount,
+                        SmartRollupCementCount = delegat.SmartRollupCementCount,
+                        SmartRollupExecuteCount = delegat.SmartRollupExecuteCount,
+                        SmartRollupOriginateCount = delegat.SmartRollupOriginateCount,
+                        SmartRollupPublishCount = delegat.SmartRollupPublishCount,
+                        SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
+                        SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                        RefutationGamesCount = delegat.RefutationGamesCount,
+                        ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
                         Metadata = legacy ? delegat.Profile : null,
                         Extras = legacy ? null : delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
@@ -161,6 +172,17 @@ namespace Tzkt.Api.Repositories
                         NumSetDepositsLimits = user.SetDepositsLimitsCount,
                         NumMigrations = user.MigrationsCount,
                         NumTransactions = user.TransactionsCount,
+                        SmartRollupBonds = user.SmartRollupBonds,
+                        SmartRollupsCount = user.SmartRollupsCount,
+                        SmartRollupAddMessagesCount = user.SmartRollupAddMessagesCount,
+                        SmartRollupCementCount = user.SmartRollupCementCount,
+                        SmartRollupExecuteCount = user.SmartRollupExecuteCount,
+                        SmartRollupOriginateCount = user.SmartRollupOriginateCount,
+                        SmartRollupPublishCount = user.SmartRollupPublishCount,
+                        SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
+                        SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                        RefutationGamesCount = user.RefutationGamesCount,
+                        ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
                         Metadata = legacy ? user.Profile : null,
                         Extras = legacy ? null : user.Extras
                     };
@@ -253,6 +275,45 @@ namespace Tzkt.Api.Repositories
                         TokenTransfersCount = rollup.TokenTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
                         Metadata = legacy ? rollup.Profile : null,
+                        Extras = legacy ? null : rollup.Extras
+                    };
+                #endregion
+                case RawSmartRollup rollup:
+                    #region build smart rollup
+                    return new SmartRollup
+                    {
+                        Id = rollup.Id,
+                        Alias = rollup.Alias,
+                        Address = rollup.Address,
+                        Creator = await Accounts.GetAliasAsync(rollup.CreatorId),
+                        SmartRollupBonds = rollup.SmartRollupBonds,
+                        TransferTicketCount = rollup.TransferTicketCount,
+                        FirstActivity = rollup.FirstLevel,
+                        FirstActivityTime = Time[rollup.FirstLevel],
+                        LastActivity = rollup.LastLevel,
+                        LastActivityTime = Time[rollup.LastLevel],
+                        ActiveTokensCount = rollup.ActiveTokensCount,
+                        TokenBalancesCount = rollup.TokenBalancesCount,
+                        TokenTransfersCount = rollup.TokenTransfersCount,
+                        NumTransactions = rollup.TransactionsCount,
+                        SmartRollupAddMessagesCount = rollup.SmartRollupAddMessagesCount,
+                        SmartRollupCementCount = rollup.SmartRollupCementCount,
+                        SmartRollupExecuteCount = rollup.SmartRollupExecuteCount,
+                        SmartRollupOriginateCount = rollup.SmartRollupOriginateCount,
+                        SmartRollupPublishCount = rollup.SmartRollupPublishCount,
+                        SmartRollupRecoverBondCount = rollup.SmartRollupRecoverBondCount,
+                        SmartRollupRefuteCount = rollup.SmartRollupRefuteCount,
+                        RefutationGamesCount = rollup.RefutationGamesCount,
+                        ActiveRefutationGamesCount = rollup.ActiveRefutationGamesCount,
+                        CementedCommitments = rollup.CementedCommitments,
+                        ExecutedCommitments = rollup.ExecutedCommitments,
+                        GenesisCommitment = rollup.GenesisCommitment,
+                        InboxLevel = rollup.InboxLevel,
+                        LastCommitment = rollup.LastCommitment,
+                        OrphanCommitments = rollup.OrphanCommitments,
+                        PendingCommitments = rollup.PendingCommitments,
+                        RefutedCommitments = rollup.RefutedCommitments,
+                        PvmKind = PvmKinds.ToString(rollup.PvmKind),
                         Extras = legacy ? null : rollup.Extras
                     };
                 #endregion
@@ -383,7 +444,18 @@ namespace Tzkt.Api.Repositories
                             NumRegisterConstants = row.RegisterConstantsCount,
                             NumSetDepositsLimits = row.SetDepositsLimitsCount,
                             NumMigrations = row.MigrationsCount,
-                            NumTransactions = row.TransactionsCount
+                            NumTransactions = row.TransactionsCount,
+                            SmartRollupBonds = row.SmartRollupBonds,
+                            SmartRollupsCount = row.SmartRollupsCount,
+                            SmartRollupAddMessagesCount = row.SmartRollupAddMessagesCount,
+                            SmartRollupCementCount = row.SmartRollupCementCount,
+                            SmartRollupExecuteCount = row.SmartRollupExecuteCount,
+                            SmartRollupOriginateCount = row.SmartRollupOriginateCount,
+                            SmartRollupPublishCount = row.SmartRollupPublishCount,
+                            SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
+                            SmartRollupRefuteCount = row.SmartRollupRefuteCount,
+                            RefutationGamesCount = row.RefutationGamesCount,
+                            ActiveRefutationGamesCount = row.ActiveRefutationGamesCount
                         });
                         #endregion
                         break;
@@ -450,6 +522,17 @@ namespace Tzkt.Api.Repositories
                             NumSetDepositsLimits = row.SetDepositsLimitsCount,
                             NumMigrations = row.MigrationsCount,
                             NumTransactions = row.TransactionsCount,
+                            SmartRollupBonds = row.SmartRollupBonds,
+                            SmartRollupsCount = row.SmartRollupsCount,
+                            SmartRollupAddMessagesCount = row.SmartRollupAddMessagesCount,
+                            SmartRollupCementCount = row.SmartRollupCementCount,
+                            SmartRollupExecuteCount = row.SmartRollupExecuteCount,
+                            SmartRollupOriginateCount = row.SmartRollupOriginateCount,
+                            SmartRollupPublishCount = row.SmartRollupPublishCount,
+                            SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
+                            SmartRollupRefuteCount = row.SmartRollupRefuteCount,
+                            RefutationGamesCount = row.RefutationGamesCount,
+                            ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
                             Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                         });
                         #endregion
@@ -559,6 +642,45 @@ namespace Tzkt.Api.Repositories
                             NumTransactions = row.TransactionsCount
                         });
                         break;
+                    #endregion
+                    case 5:
+                        #region build smart rollup
+                        accounts.Add(new SmartRollup
+                        {
+                            Id = row.Id,
+                            Alias = row.Alias,
+                            Address = row.Address,
+                            Creator = await Accounts.GetAliasAsync(row.CreatorId),
+                            SmartRollupBonds = row.SmartRollupBonds,
+                            TransferTicketCount = row.TransferTicketCount,
+                            FirstActivity = row.FirstLevel,
+                            FirstActivityTime = Time[row.FirstLevel],
+                            LastActivity = row.LastLevel,
+                            LastActivityTime = Time[row.LastLevel],
+                            ActiveTokensCount = row.ActiveTokensCount,
+                            TokenBalancesCount = row.TokenBalancesCount,
+                            TokenTransfersCount = row.TokenTransfersCount,
+                            NumTransactions = row.TransactionsCount,
+                            SmartRollupAddMessagesCount = row.SmartRollupAddMessagesCount,
+                            SmartRollupCementCount = row.SmartRollupCementCount,
+                            SmartRollupExecuteCount = row.SmartRollupExecuteCount,
+                            SmartRollupOriginateCount = row.SmartRollupOriginateCount,
+                            SmartRollupPublishCount = row.SmartRollupPublishCount,
+                            SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
+                            SmartRollupRefuteCount = row.SmartRollupRefuteCount,
+                            RefutationGamesCount = row.RefutationGamesCount,
+                            ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
+                            CementedCommitments = row.CementedCommitments,
+                            ExecutedCommitments = row.ExecutedCommitments,
+                            GenesisCommitment = row.GenesisCommitment,
+                            InboxLevel = row.InboxLevel,
+                            LastCommitment = row.LastCommitment,
+                            OrphanCommitments = row.OrphanCommitments,
+                            PendingCommitments = row.PendingCommitments,
+                            RefutedCommitments = row.RefutedCommitments,
+                            PvmKind = PvmKinds.ToString((int)row.PvmKind)
+                        });
+                        break;
                         #endregion
                 }
             }
@@ -646,6 +768,17 @@ namespace Tzkt.Api.Repositories
                     case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
                     case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
                     case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
+                    case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
+                    case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
+                    case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
+                    case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
+                    case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
+                    case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
+                    case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
+                    case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
+                    case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
+                    case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
+                    case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -657,6 +790,16 @@ namespace Tzkt.Api.Repositories
                     case "manager": columns.Add(@"""ManagerId"""); break;
                     case "tokensCount": columns.Add(@"""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"""EventsCount"""); break;
+
+                    case "pvmKind": columns.Add(@"""PvmKind"""); break;
+                    case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
+                    case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
+                    case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
+                    case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
+                    case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
+                    case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
+                    case "refutedCommitments": columns.Add(@"""RefutedCommitments"""); break;
+                    case "orphanCommitments": columns.Add(@"""OrphanCommitments"""); break;
                 }
             }
 
@@ -938,6 +1081,50 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DrainDelegateCount;
                         break;
+                    case "smartRollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupBonds;
+                        break;
+                    case "smartRollupsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupsCount;
+                        break;
+                    case "smartRollupAddMessagesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupAddMessagesCount;
+                        break;
+                    case "smartRollupCementCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupCementCount;
+                        break;
+                    case "smartRollupExecuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupExecuteCount;
+                        break;
+                    case "smartRollupOriginateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupOriginateCount;
+                        break;
+                    case "smartRollupPublishCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupPublishCount;
+                        break;
+                    case "smartRollupRecoverBondCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRecoverBondCount;
+                        break;
+                    case "smartRollupRefuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRefuteCount;
+                        break;
+                    case "refutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RefutationGamesCount;
+                        break;
+                    case "activeRefutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveRefutationGamesCount;
+                        break;
                     case "delegate":
                         foreach (var row in rows)
                         {
@@ -996,6 +1183,42 @@ namespace Tzkt.Api.Repositories
                     case "eventsCount":
                         foreach (var row in rows)
                             result[j++][i] = row.EventsCount;
+                        break;
+                    case "pvmKind":
+                        foreach (var row in rows)
+                            result[j++][i] = PvmKinds.ToString((int)row.PvmKind);
+                        break;
+                    case "genesisCommitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.GenesisCommitment;
+                        break;
+                    case "lastCommitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastCommitment;
+                        break;
+                    case "inboxLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.InboxLevel;
+                        break;
+                    case "executedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExecutedCommitments;
+                        break;
+                    case "cementedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CementedCommitments;
+                        break;
+                    case "pendingCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.PendingCommitments;
+                        break;
+                    case "refutedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RefutedCommitments;
+                        break;
+                    case "orphanCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.OrphanCommitments;
                         break;
                 }
             }
@@ -1081,6 +1304,17 @@ namespace Tzkt.Api.Repositories
                 case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
                 case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
                 case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
+                case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
+                case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
+                case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
+                case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
+                case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
+                case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
+                case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
+                case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
+                case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
+                case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
+                case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1092,6 +1326,16 @@ namespace Tzkt.Api.Repositories
                 case "manager": columns.Add(@"""ManagerId"""); break;
                 case "tokensCount": columns.Add(@"""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"""EventsCount"""); break;
+
+                case "pvmKind": columns.Add(@"""PvmKind"""); break;
+                case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
+                case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
+                case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
+                case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
+                case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
+                case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
+                case "refutedCommitments": columns.Add(@"""RefutedCommitments"""); break;
+                case "orphanCommitments": columns.Add(@"""OrphanCommitments"""); break;
             }
 
             if (columns.Count == 0)
@@ -1369,6 +1613,50 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DrainDelegateCount;
                     break;
+                case "smartRollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupBonds;
+                    break;
+                case "smartRollupsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupsCount;
+                    break;
+                case "smartRollupAddMessagesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupAddMessagesCount;
+                    break;
+                case "smartRollupCementCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupCementCount;
+                    break;
+                case "smartRollupExecuteCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupExecuteCount;
+                    break;
+                case "smartRollupOriginateCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupOriginateCount;
+                    break;
+                case "smartRollupPublishCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupPublishCount;
+                    break;
+                case "smartRollupRecoverBondCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupRecoverBondCount;
+                    break;
+                case "smartRollupRefuteCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupRefuteCount;
+                    break;
+                case "refutationGamesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.RefutationGamesCount;
+                    break;
+                case "activeRefutationGamesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveRefutationGamesCount;
+                    break;
                 case "delegate":
                     foreach (var row in rows)
                     {
@@ -1427,6 +1715,42 @@ namespace Tzkt.Api.Repositories
                 case "eventsCount":
                     foreach (var row in rows)
                         result[j++] = row.EventsCount;
+                    break;
+                case "pvmKind":
+                    foreach (var row in rows)
+                        result[j++] = PvmKinds.ToString((int)row.PvmKind);
+                    break;
+                case "genesisCommitment":
+                    foreach (var row in rows)
+                        result[j++] = row.GenesisCommitment;
+                    break;
+                case "lastCommitment":
+                    foreach (var row in rows)
+                        result[j++] = row.LastCommitment;
+                    break;
+                case "inboxLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.InboxLevel;
+                    break;
+                case "executedCommitments":
+                    foreach (var row in rows)
+                        result[j++] = row.ExecutedCommitments;
+                    break;
+                case "cementedCommitments":
+                    foreach (var row in rows)
+                        result[j++] = row.CementedCommitments;
+                    break;
+                case "pendingCommitments":
+                    foreach (var row in rows)
+                        result[j++] = row.PendingCommitments;
+                    break;
+                case "refutedCommitments":
+                    foreach (var row in rows)
+                        result[j++] = row.RefutedCommitments;
+                    break;
+                case "orphanCommitments":
+                    foreach (var row in rows)
+                        result[j++] = row.OrphanCommitments;
                     break;
             }
 

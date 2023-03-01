@@ -181,6 +181,31 @@ namespace Tzkt.Api.Models
         public long TxRollupCommitmentBond { get; set; }
 
         /// <summary>
+        /// Initial storage size of an originated (created) smart rollup (bytes)
+        /// </summary>
+        public int SmartRollupOriginationSize { get; set; }
+
+        /// <summary>
+        /// Smart rollup commitment bond (mutez)
+        /// </summary>
+        public long SmartRollupStakeAmount { get; set; }
+
+        /// <summary>
+        /// Window (in blocks) when it's possible to refute pending commitment
+        /// </summary>
+        public int SmartRollupChallengeWindow { get; set; }
+
+        /// <summary>
+        /// Period (in blocks) for publishing commitments
+        /// </summary>
+        public int SmartRollupCommitmentPeriod { get; set; }
+
+        /// <summary>
+        /// Period (in blocks) when a refutation game player must make a turn
+        /// </summary>
+        public int SmartRollupTimeoutPeriod { get; set; }
+
+        /// <summary>
         /// Governance dictator
         /// </summary>
         public string Dictator { get; set; }

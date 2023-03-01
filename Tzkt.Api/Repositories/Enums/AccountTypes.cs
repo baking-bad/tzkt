@@ -10,6 +10,7 @@ namespace Tzkt.Api
         public const string Contract = "contract";
         public const string Ghost = "ghost";
         public const string Rollup = "rollup";
+        public const string SmartRollup = "smart_rollup";
         public const string Empty = "empty";
 
         public static bool TryParse(string value, out int res)
@@ -21,6 +22,7 @@ namespace Tzkt.Api
                 Contract => (int)AccountType.Contract,
                 Ghost => (int)AccountType.Ghost,
                 Rollup => (int)AccountType.Rollup,
+                SmartRollup => (int)AccountType.SmartRollup,
                 _ => -1
             };
             return res != -1;
@@ -33,6 +35,7 @@ namespace Tzkt.Api
             (int)AccountType.Contract => Contract,
             (int)AccountType.Ghost => Ghost,
             (int)AccountType.Rollup => Rollup,
+            (int)AccountType.SmartRollup => SmartRollup,
             _ => throw new Exception("invalid account type value")
         };
     }

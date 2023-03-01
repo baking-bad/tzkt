@@ -11,10 +11,12 @@ namespace Tzkt.Api.Services.Cache
 
         public long Balance { get; set; }
         public long RollupBonds { get; set; }
+        public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
+        public int SmartRollupsCount { get; set; }
         public int ActiveTokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
@@ -38,6 +40,17 @@ namespace Tzkt.Api.Services.Cache
         public int IncreasePaidStorageCount { get; set; }
         public int UpdateConsensusKeyCount { get; set; }
         public int DrainDelegateCount { get; set; }
+
+        public int SmartRollupAddMessagesCount { get; set; }
+        public int SmartRollupCementCount { get; set; }
+        public int SmartRollupExecuteCount { get; set; }
+        public int SmartRollupOriginateCount { get; set; }
+        public int SmartRollupPublishCount { get; set; }
+        public int SmartRollupRecoverBondCount { get; set; }
+        public int SmartRollupRefuteCount { get; set; }
+
+        public int RefutationGamesCount { get; set; }
+        public int ActiveRefutationGamesCount { get; set; }
 
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }

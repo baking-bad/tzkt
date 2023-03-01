@@ -83,6 +83,11 @@ namespace Tzkt.Api.Repositories
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    SmartRollupChallengeWindow= row.SmartRollupChallengeWindow,
+                    SmartRollupCommitmentPeriod= row.SmartRollupCommitmentPeriod,
+                    SmartRollupOriginationSize= row.SmartRollupOriginationSize,
+                    SmartRollupStakeAmount= row.SmartRollupStakeAmount,
+                    SmartRollupTimeoutPeriod= row.SmartRollupTimeoutPeriod,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -150,6 +155,11 @@ namespace Tzkt.Api.Repositories
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
+                    SmartRollupCommitmentPeriod = row.SmartRollupCommitmentPeriod,
+                    SmartRollupOriginationSize = row.SmartRollupOriginationSize,
+                    SmartRollupStakeAmount = row.SmartRollupStakeAmount,
+                    SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -217,6 +227,11 @@ namespace Tzkt.Api.Repositories
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
+                    SmartRollupCommitmentPeriod = row.SmartRollupCommitmentPeriod,
+                    SmartRollupOriginationSize = row.SmartRollupOriginationSize,
+                    SmartRollupStakeAmount = row.SmartRollupStakeAmount,
+                    SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -285,6 +300,11 @@ namespace Tzkt.Api.Repositories
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     TxRollupOriginationSize = row.TxRollupOriginationSize,
                     TxRollupCommitmentBond = row.TxRollupCommitmentBond,
+                    SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
+                    SmartRollupCommitmentPeriod = row.SmartRollupCommitmentPeriod,
+                    SmartRollupOriginationSize = row.SmartRollupOriginationSize,
+                    SmartRollupStakeAmount = row.SmartRollupStakeAmount,
+                    SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
