@@ -77,6 +77,17 @@ namespace Tzkt.Api.Repositories
                 NumSetDepositsLimits = delegat.SetDepositsLimitsCount,
                 NumMigrations = delegat.MigrationsCount,
                 NumTransactions = delegat.TransactionsCount,
+                SmartRollupBonds=delegat.SmartRollupBonds,
+                SmartRollupsCount=delegat.SmartRollupsCount,
+                SmartRollupAddMessagesCount=delegat.SmartRollupAddMessagesCount,
+                SmartRollupCementCount=delegat.SmartRollupCementCount,
+                SmartRollupExecuteCount=delegat.SmartRollupExecuteCount,
+                SmartRollupOriginateCount=delegat.SmartRollupOriginateCount,
+                SmartRollupPublishCount=delegat.SmartRollupPublishCount,
+                SmartRollupRecoverBondCount=delegat.SmartRollupRecoverBondCount,
+                SmartRollupRefuteCount=delegat.SmartRollupRefuteCount,
+                RefutationGamesCount= delegat.RefutationGamesCount,
+                ActiveRefutationGamesCount= delegat.ActiveRefutationGamesCount,
                 Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
             };
         }
@@ -178,6 +189,17 @@ namespace Tzkt.Api.Repositories
                     NumSetDepositsLimits = row.SetDepositsLimitsCount,
                     NumMigrations = row.MigrationsCount,
                     NumTransactions = row.TransactionsCount,
+                    SmartRollupBonds = row.SmartRollupBonds,
+                    SmartRollupsCount = row.SmartRollupsCount,
+                    SmartRollupAddMessagesCount = row.SmartRollupAddMessagesCount,
+                    SmartRollupCementCount = row.SmartRollupCementCount,
+                    SmartRollupExecuteCount = row.SmartRollupExecuteCount,
+                    SmartRollupOriginateCount = row.SmartRollupOriginateCount,
+                    SmartRollupPublishCount = row.SmartRollupPublishCount,
+                    SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
+                    SmartRollupRefuteCount = row.SmartRollupRefuteCount,
+                    RefutationGamesCount = row.RefutationGamesCount,
+                    ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
                     Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                 };
             });
@@ -257,6 +279,17 @@ namespace Tzkt.Api.Repositories
                     case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
                     case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
                     case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
+                    case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
+                    case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
+                    case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
+                    case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
+                    case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
+                    case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
+                    case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
+                    case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
+                    case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
+                    case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
+                    case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
                 }
             }
 
@@ -532,6 +565,50 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DrainDelegateCount;
                         break;
+                    case "smartRollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupBonds;
+                        break;
+                    case "smartRollupsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupsCount;
+                        break;
+                    case "smartRollupAddMessagesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupAddMessagesCount;
+                        break;
+                    case "smartRollupCementCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupCementCount;
+                        break;
+                    case "smartRollupExecuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupExecuteCount;
+                        break;
+                    case "smartRollupOriginateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupOriginateCount;
+                        break;
+                    case "smartRollupPublishCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupPublishCount;
+                        break;
+                    case "smartRollupRecoverBondCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRecoverBondCount;
+                        break;
+                    case "smartRollupRefuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRefuteCount;
+                        break;
+                    case "refutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RefutationGamesCount;
+                        break;
+                    case "activeRefutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveRefutationGamesCount;
+                        break;
                 }
             }
             
@@ -610,6 +687,17 @@ namespace Tzkt.Api.Repositories
                 case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
                 case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
                 case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
+                case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
+                case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
+                case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
+                case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
+                case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
+                case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
+                case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
+                case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
+                case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
+                case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
+                case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -880,6 +968,50 @@ namespace Tzkt.Api.Repositories
                 case "drainDelegateCount":
                     foreach (var row in rows)
                         result[j++] = row.DrainDelegateCount;
+                    break;
+                case "smartRollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupBonds;
+                    break;
+                case "smartRollupsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupsCount;
+                    break;
+                case "smartRollupAddMessagesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupAddMessagesCount;
+                    break;
+                case "smartRollupCementCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupCementCount;
+                    break;
+                case "smartRollupExecuteCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupExecuteCount;
+                    break;
+                case "smartRollupOriginateCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupOriginateCount;
+                    break;
+                case "smartRollupPublishCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupPublishCount;
+                    break;
+                case "smartRollupRecoverBondCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupRecoverBondCount;
+                    break;
+                case "smartRollupRefuteCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SmartRollupRefuteCount;
+                    break;
+                case "refutationGamesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.RefutationGamesCount;
+                    break;
+                case "activeRefutationGamesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveRefutationGamesCount;
                     break;
             }
 

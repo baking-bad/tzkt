@@ -74,6 +74,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long TotalRollupBonds { get; set; }
 
+        /// <summary>
+        /// Total amount of tokens locked as smart rollup bonds
+        /// </summary>
+        public long TotalSmartRollupBonds { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of the block at which the statistics has been calculated

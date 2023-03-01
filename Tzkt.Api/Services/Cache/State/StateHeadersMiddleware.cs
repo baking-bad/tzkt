@@ -1,6 +1,4 @@
 ﻿using System.Reflection;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
 
 namespace Tzkt.Api.Services.Cache
 {

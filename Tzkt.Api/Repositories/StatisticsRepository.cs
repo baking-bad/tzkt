@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -68,8 +62,11 @@ namespace Tzkt.Api.Repositories
                 TotalActivated = row.TotalActivated,
                 TotalFrozen = row.TotalFrozen,
                 TotalRollupBonds = row.TotalRollupBonds,
-                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished,
-                CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen,
+                TotalSmartRollupBonds = row.TotalSmartRollupBonds,
+                TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
+                            - row.TotalBurned - row.TotalBanished,
+                CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
+                                  - row.TotalBurned - row.TotalBanished - row.TotalFrozen - row.TotalRollupBonds - row.TotalSmartRollupBonds,
                 Quote = Quotes.Get(quote, row.Level),
             });
         }
@@ -103,6 +100,7 @@ namespace Tzkt.Api.Repositories
                     case "totalActivated": columns.Add(@"""TotalActivated"""); break;
                     case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
                     case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
+                    case "totalSmartRollupBonds": columns.Add(@"""TotalSmartRollupBonds"""); break;
                     case "totalSupply":
                         columns.Add(@"""TotalBootstrapped""");
                         columns.Add(@"""TotalCommitments""");
@@ -117,6 +115,8 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"""TotalBurned""");
                         columns.Add(@"""TotalBanished""");
                         columns.Add(@"""TotalFrozen""");
+                        columns.Add(@"""TotalRollupBonds""");
+                        columns.Add(@"""TotalSmartRollupBonds""");
                         break;
                     case "quote": columns.Add(@"""Level"""); break;
                 }
@@ -203,13 +203,19 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalRollupBonds;
                         break;
+                    case "totalSmartRollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalSmartRollupBonds;
+                        break;
                     case "totalSupply":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished;
+                            result[j++][i] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
+                                           - row.TotalBurned - row.TotalBanished;
                         break;
                     case "circulatingSupply":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen;
+                            result[j++][i] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
+                                           - row.TotalBurned - row.TotalBanished - row.TotalFrozen - row.TotalRollupBonds - row.TotalSmartRollupBonds;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -248,6 +254,7 @@ namespace Tzkt.Api.Repositories
                 case "totalActivated": columns.Add(@"""TotalActivated"""); break;
                 case "totalFrozen": columns.Add(@"""TotalFrozen"""); break;
                 case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
+                case "totalSmartRollupBonds": columns.Add(@"""TotalSmartRollupBonds"""); break;
                 case "totalSupply":
                     columns.Add(@"""TotalBootstrapped""");
                     columns.Add(@"""TotalCommitments""");
@@ -262,6 +269,8 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"""TotalBurned""");
                     columns.Add(@"""TotalBanished""");
                     columns.Add(@"""TotalFrozen""");
+                    columns.Add(@"""TotalRollupBonds""");
+                    columns.Add(@"""TotalSmartRollupBonds""");
                     break;
                 case "quote": columns.Add(@"""Level"""); break;
             }
@@ -344,13 +353,19 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TotalRollupBonds;
                     break;
+                case "totalSmartRollupBonds":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalSmartRollupBonds;
+                    break;
                 case "totalSupply":
                     foreach (var row in rows)
-                        result[j++] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated - row.TotalBurned - row.TotalBanished;
+                        result[j++] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
+                                    - row.TotalBurned - row.TotalBanished;
                     break;
                 case "circulatingSupply":
                     foreach (var row in rows)
-                        result[j++] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated - row.TotalBurned - row.TotalBanished - row.TotalFrozen;
+                        result[j++] = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
+                                    - row.TotalBurned - row.TotalBanished - row.TotalFrozen - row.TotalRollupBonds - row.TotalSmartRollupBonds;
                     break;
                 case "quote":
                     foreach (var row in rows)
