@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using System.Data;
 using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
@@ -43,6 +39,13 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.IncreasePaidStorageOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.UpdateConsensusKeyOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupAddMessagesOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupCementOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupExecuteOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupOriginateOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupPublishOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SmartRollupRefuteOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupFinalizeCommitmentOps), hash)
@@ -65,14 +68,6 @@ namespace Tzkt.Api.Repositories
             var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
             var reveals = GetReveals(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, format, quote);
-            var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
-            var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, quote);
-            var txRollupFinalizeCommitmentOps = GetTxRollupFinalizeCommitmentOps(hash, quote);
-            var txRollupOriginationOps = GetTxRollupOriginationOps(hash, quote);
-            var txRollupRejectionOps = GetTxRollupRejectionOps(hash, quote);
-            var txRollupRemoveCommitmentOps = GetTxRollupRemoveCommitmentOps(hash, quote);
-            var txRollupReturnBondOps = GetTxRollupReturnBondOps(hash, quote);
-            var txRollupSubmitBatchOps = GetTxRollupSubmitBatchOps(hash, quote);
 
             await Task.WhenAll(
                 delegations,
@@ -83,7 +78,18 @@ namespace Tzkt.Api.Repositories
                 setDepositsLimits,
                 increasePaidStorageOps,
                 updateConsensusKeyOps,
-                transferTicketOps,
+                transferTicketOps);
+
+            var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
+            var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, quote);
+            var txRollupFinalizeCommitmentOps = GetTxRollupFinalizeCommitmentOps(hash, quote);
+            var txRollupOriginationOps = GetTxRollupOriginationOps(hash, quote);
+            var txRollupRejectionOps = GetTxRollupRejectionOps(hash, quote);
+            var txRollupRemoveCommitmentOps = GetTxRollupRemoveCommitmentOps(hash, quote);
+            var txRollupReturnBondOps = GetTxRollupReturnBondOps(hash, quote);
+            var txRollupSubmitBatchOps = GetTxRollupSubmitBatchOps(hash, quote);
+
+            await Task.WhenAll(
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
                 txRollupFinalizeCommitmentOps,
@@ -92,6 +98,23 @@ namespace Tzkt.Api.Repositories
                 txRollupRemoveCommitmentOps,
                 txRollupReturnBondOps,
                 txRollupSubmitBatchOps);
+
+            var srAddMessages = GetSmartRollupAddMessagesOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var srCement = GetSmartRollupCementOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var srExecute = GetSmartRollupExecuteOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var srOriginate = GetSmartRollupOriginateOps(new() { hash = hash }, new() { limit = -1 }, quote, format);
+            var srPublish = GetSmartRollupPublishOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var srRefute = GetSmartRollupRefuteOps(new() { hash = hash }, new() { limit = -1 }, quote);
+
+            await Task.WhenAll(
+                srAddMessages,
+                srCement,
+                srExecute,
+                srOriginate,
+                srPublish,
+                srRecoverBond,
+                srRefute);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
@@ -109,7 +132,14 @@ namespace Tzkt.Api.Repositories
                 .Concat(txRollupRejectionOps.Result)
                 .Concat(txRollupRemoveCommitmentOps.Result)
                 .Concat(txRollupReturnBondOps.Result)
-                .Concat(txRollupSubmitBatchOps.Result);
+                .Concat(txRollupSubmitBatchOps.Result)
+                .Concat(srAddMessages.Result)
+                .Concat(srCement.Result)
+                .Concat(srExecute.Result)
+                .Concat(srOriginate.Result)
+                .Concat(srPublish.Result)
+                .Concat(srRecoverBond.Result)
+                .Concat(srRefute.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -169,20 +199,54 @@ namespace Tzkt.Api.Repositories
                 return vdfRevelation.Result;
             #endregion
 
-            return new List<Operation>(0);
+            return Enumerable.Empty<Operation>();
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
         {
-            var delegations = GetDelegations(hash, counter, quote);
-            var originations = GetOriginations(hash, counter, format, quote);
-            var transactions = GetTransactions(hash, counter, format, quote);
-            var reveals = GetReveals(hash, counter, quote);
-            var registerConstants = GetRegisterConstants(hash, counter, format, quote);
-            var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
             var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
-            var transferTicketOps = GetTransferTicketOps(hash, counter, format, quote);
+            var srAddMessages = GetSmartRollupAddMessagesOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var srCement = GetSmartRollupCementOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var srOriginate = GetSmartRollupOriginateOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote, format);
+            var srPublish = GetSmartRollupPublishOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var srRefute = GetSmartRollupRefuteOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+
+            await Task.WhenAll(
+                increasePaidStorageOps,
+                updateConsensusKeyOps,
+                srAddMessages,
+                srCement,
+                srOriginate,
+                srPublish,
+                srRecoverBond,
+                srRefute);
+
+            if (increasePaidStorageOps.Result.Any())
+                return increasePaidStorageOps.Result;
+
+            if (updateConsensusKeyOps.Result.Any())
+                return updateConsensusKeyOps.Result;
+
+            if (srAddMessages.Result.Any())
+                return srAddMessages.Result;
+
+            if (srCement.Result.Any())
+                return srCement.Result;
+
+            if (srOriginate.Result.Any())
+                return srOriginate.Result;
+
+            if (srPublish.Result.Any())
+                return srPublish.Result;
+
+            if (srRecoverBond.Result.Any())
+                return srRecoverBond.Result;
+
+            if (srRefute.Result.Any())
+                return srRefute.Result;
+
             var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);
             var txRollupFinalizeCommitmentOps = GetTxRollupFinalizeCommitmentOps(hash, counter, quote);
@@ -193,15 +257,6 @@ namespace Tzkt.Api.Repositories
             var txRollupSubmitBatchOps = GetTxRollupSubmitBatchOps(hash, counter, quote);
 
             await Task.WhenAll(
-                delegations,
-                originations,
-                transactions,
-                reveals,
-                registerConstants,
-                setDepositsLimits,
-                increasePaidStorageOps,
-                updateConsensusKeyOps,
-                transferTicketOps,
                 txRollupCommitOps,
                 txRollupDispatchTicketsOps,
                 txRollupFinalizeCommitmentOps,
@@ -211,54 +266,68 @@ namespace Tzkt.Api.Repositories
                 txRollupReturnBondOps,
                 txRollupSubmitBatchOps);
 
-            if (txRollupSubmitBatchOps.Result.Any())
-                return txRollupSubmitBatchOps.Result;
-
-            if (txRollupReturnBondOps.Result.Any())
-                return txRollupReturnBondOps.Result;
-
-            if (txRollupRemoveCommitmentOps.Result.Any())
-                return txRollupRemoveCommitmentOps.Result;
-
-            if (txRollupRejectionOps.Result.Any())
-                return txRollupRejectionOps.Result;
-
-            if (txRollupOriginationOps.Result.Any())
-                return txRollupOriginationOps.Result;
-
-            if (txRollupFinalizeCommitmentOps.Result.Any())
-                return txRollupFinalizeCommitmentOps.Result;
+            if (txRollupCommitOps.Result.Any())
+                return txRollupCommitOps.Result;
 
             if (txRollupDispatchTicketsOps.Result.Any())
                 return txRollupDispatchTicketsOps.Result;
 
-            if (txRollupCommitOps.Result.Any())
-                return txRollupCommitOps.Result;
+            if (txRollupFinalizeCommitmentOps.Result.Any())
+                return txRollupFinalizeCommitmentOps.Result;
 
-            if (increasePaidStorageOps.Result.Any())
-                return increasePaidStorageOps.Result;
+            if (txRollupOriginationOps.Result.Any())
+                return txRollupOriginationOps.Result;
 
-            if (updateConsensusKeyOps.Result.Any())
-                return updateConsensusKeyOps.Result;
+            if (txRollupRejectionOps.Result.Any())
+                return txRollupRejectionOps.Result;
 
-            if (setDepositsLimits.Result.Any())
-                return setDepositsLimits.Result;
+            if (txRollupRemoveCommitmentOps.Result.Any())
+                return txRollupRemoveCommitmentOps.Result;
 
-            if (registerConstants.Result.Any())
-                return registerConstants.Result;
+            if (txRollupReturnBondOps.Result.Any())
+                return txRollupReturnBondOps.Result;
+
+            if (txRollupSubmitBatchOps.Result.Any())
+                return txRollupSubmitBatchOps.Result;
+
+            var delegations = GetDelegations(hash, counter, quote);
+            var originations = GetOriginations(hash, counter, format, quote);
+            var transactions = GetTransactions(hash, counter, format, quote);
+            var reveals = GetReveals(hash, counter, quote);
+            var registerConstants = GetRegisterConstants(hash, counter, format, quote);
+            var setDepositsLimits = GetSetDepositsLimits(hash, counter, quote);
+            var transferTicketOps = GetTransferTicketOps(hash, counter, format, quote);
+            var srExecute = GetSmartRollupExecuteOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+
+            await Task.WhenAll(
+                delegations,
+                originations,
+                transactions,
+                reveals,
+                registerConstants,
+                setDepositsLimits,
+                transferTicketOps,
+                srExecute);
 
             if (reveals.Result.Any())
                 return reveals.Result;
 
+            if (registerConstants.Result.Any())
+                return registerConstants.Result;
+
+            if (setDepositsLimits.Result.Any())
+                return setDepositsLimits.Result;
+
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
                 .Concat(transactions.Result)
-                .Concat(transferTicketOps.Result);
+                .Concat(transferTicketOps.Result)
+                .Concat(srExecute.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
 
-            return new List<Operation>(0);
+            return Enumerable.Empty<Operation>();
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
@@ -267,7 +336,10 @@ namespace Tzkt.Api.Repositories
             var originations = GetOriginations(hash, counter, nonce, format, quote);
             var transactions = GetTransactions(hash, counter, nonce, format, quote);
 
-            await Task.WhenAll(delegations, originations, transactions);
+            await Task.WhenAll(
+                delegations,
+                originations,
+                transactions);
 
             if (delegations.Result.Any())
                 return delegations.Result;
@@ -278,7 +350,7 @@ namespace Tzkt.Api.Repositories
             if (transactions.Result.Any())
                 return transactions.Result;
 
-            return new List<Operation>(0);
+            return Enumerable.Empty<Operation>();
         }
     }
 }

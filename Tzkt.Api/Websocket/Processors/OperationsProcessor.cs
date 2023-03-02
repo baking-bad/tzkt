@@ -1,12 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
+﻿using Microsoft.AspNetCore.SignalR;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -208,6 +200,34 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetDrainDelegates(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DrainDelegateOperation>());
 
+                var srAddMessagesOps = TypeSubs.TryGetValue(Operations.SmartRollupAddMessages, out var srAddMessagesSubs)
+                    ? Repo.GetSmartRollupAddMessagesOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupAddMessagesOperation>());
+
+                var srCementOps = TypeSubs.TryGetValue(Operations.SmartRollupCement, out var srCementSubs)
+                    ? Repo.GetSmartRollupCementOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupCementOperation>());
+
+                var srExecuteOps = TypeSubs.TryGetValue(Operations.SmartRollupExecute, out var srExecuteSubs)
+                    ? Repo.GetSmartRollupExecuteOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupExecuteOperation>());
+
+                var srOriginateOps = TypeSubs.TryGetValue(Operations.SmartRollupOriginate, out var srOriginateSubs)
+                    ? Repo.GetSmartRollupOriginateOps(new() { level = level }, new() { limit = -1 }, symbols, MichelineFormat.Raw)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupOriginateOperation>());
+
+                var srPublishOps = TypeSubs.TryGetValue(Operations.SmartRollupPublish, out var srPublishSubs)
+                    ? Repo.GetSmartRollupPublishOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupPublishOperation>());
+
+                var srRecoverBondOps = TypeSubs.TryGetValue(Operations.SmartRollupRecoverBond, out var srRecoverBondSubs)
+                    ? Repo.GetSmartRollupRecoverBondOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupRecoverBondOperation>());
+
+                var srRefuteOps = TypeSubs.TryGetValue(Operations.SmartRollupRefute, out var srRefuteSubs)
+                    ? Repo.GetSmartRollupRefuteOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SmartRollupRefuteOperation>());
+
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -253,6 +273,13 @@ namespace Tzkt.Api.Websocket.Processors
                     increasePaidStorageOps,
                     updateConsensusKeyOps,
                     drainDelegateOps,
+                    srAddMessagesOps,
+                    srCementOps,
+                    srExecuteOps,
+                    srOriginateOps,
+                    srPublishOps,
+                    srRecoverBondOps,
+                    srRefuteOps,
                     migrations,
                     penalties,
                     baking,
@@ -808,6 +835,118 @@ namespace Tzkt.Api.Websocket.Processors
 
                             if (drainDelegateSubs.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
                                 Add(targetSubs.Subs, op);
+                        }
+                }
+
+                if (srAddMessagesOps.Result.Any())
+                {
+                    if (srAddMessagesSubs.Subs != null)
+                        AddRange(srAddMessagesSubs.Subs, srAddMessagesOps.Result);
+
+                    if (srAddMessagesSubs.AddressSubs != null)
+                        foreach (var op in srAddMessagesOps.Result)
+                        {
+                            if (srAddMessagesSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+                        }
+                }
+
+                if (srCementOps.Result.Any())
+                {
+                    if (srCementSubs.Subs != null)
+                        AddRange(srCementSubs.Subs, srCementOps.Result);
+
+                    if (srCementSubs.AddressSubs != null)
+                        foreach (var op in srCementOps.Result)
+                        {
+                            if (srCementSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srCementSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
+                        }
+                }
+
+                if (srExecuteOps.Result.Any())
+                {
+                    if (srExecuteSubs.Subs != null)
+                        AddRange(srExecuteSubs.Subs, srExecuteOps.Result);
+
+                    if (srExecuteSubs.AddressSubs != null)
+                        foreach (var op in srExecuteOps.Result)
+                        {
+                            if (srExecuteSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srExecuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
+                        }
+                }
+
+                if (srOriginateOps.Result.Any())
+                {
+                    if (srOriginateSubs.Subs != null)
+                        AddRange(srOriginateSubs.Subs, srOriginateOps.Result);
+
+                    if (srOriginateSubs.AddressSubs != null)
+                        foreach (var op in srOriginateOps.Result)
+                        {
+                            if (srOriginateSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srOriginateSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
+                        }
+                }
+
+                if (srPublishOps.Result.Any())
+                {
+                    if (srPublishSubs.Subs != null)
+                        AddRange(srPublishSubs.Subs, srPublishOps.Result);
+
+                    if (srPublishSubs.AddressSubs != null)
+                        foreach (var op in srPublishOps.Result)
+                        {
+                            if (srPublishSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srPublishSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
+                        }
+                }
+
+                if (srRecoverBondOps.Result.Any())
+                {
+                    if (srRecoverBondSubs.Subs != null)
+                        AddRange(srRecoverBondSubs.Subs, srRecoverBondOps.Result);
+
+                    if (srRecoverBondSubs.AddressSubs != null)
+                        foreach (var op in srRecoverBondOps.Result)
+                        {
+                            if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
+
+                            if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Staker.Address, out var stakerSubs))
+                                Add(stakerSubs.Subs, op);
+                        }
+                }
+
+                if (srRefuteOps.Result.Any())
+                {
+                    if (srRefuteSubs.Subs != null)
+                        AddRange(srRefuteSubs.Subs, srRefuteOps.Result);
+
+                    if (srRefuteSubs.AddressSubs != null)
+                        foreach (var op in srRefuteOps.Result)
+                        {
+                            if (srRefuteSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (srRefuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                                Add(rollupSubs.Subs, op);
                         }
                 }
 

@@ -358,6 +358,69 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetSr1Address(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^sr1[0-9A-Za-z]{33}$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup address.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSr1AddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^sr1[0-9A-Za-z]{33}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup address.");
+                            return false;
+                        }
+                        else
+                        {
+                            result.Add(rawValue);
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
         {
             result = null;
@@ -561,6 +624,67 @@ namespace Tzkt.Api
                         if (!Regex.IsMatch(rawValue, "^expr[0-9A-Za-z]{50}$"))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid expression hash.");
+                            return false;
+                        }
+
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetOpHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^o[0-9A-Za-z]{50}$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid operation hash.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetOpHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^o[0-9A-Za-z]{50}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid operation hash.");
                             return false;
                         }
 

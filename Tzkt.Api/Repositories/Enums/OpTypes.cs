@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Api
 {
@@ -38,6 +37,14 @@ namespace Tzkt.Api
 
         public const string IncreasePaidStorage = "increase_paid_storage";
         public const string UpdateConsensusKey = "update_consensus_key";
+
+        public const string SmartRollupAddMessages = "sr_add_messages";
+        public const string SmartRollupCement = "sr_cement";
+        public const string SmartRollupExecute = "sr_execute";
+        public const string SmartRollupOriginate = "sr_originate";
+        public const string SmartRollupPublish = "sr_publish";
+        public const string SmartRollupRecoverBond = "sr_recover_bond";
+        public const string SmartRollupRefute = "sr_refute";
 
         public const string Migration = "migration";
         public const string RevelationPenalty = "revelation_penalty";
@@ -81,6 +88,13 @@ namespace Tzkt.Api
                 case TransferTicket: res = Operations.TransferTicket; break;
                 case IncreasePaidStorage: res = Operations.IncreasePaidStorage; break;
                 case UpdateConsensusKey: res = Operations.UpdateConsensusKey; break;
+                case SmartRollupAddMessages: res = Operations.SmartRollupAddMessages; break;
+                case SmartRollupCement: res = Operations.SmartRollupCement; break;
+                case SmartRollupExecute: res = Operations.SmartRollupExecute; break;
+                case SmartRollupOriginate: res = Operations.SmartRollupOriginate; break;
+                case SmartRollupPublish: res = Operations.SmartRollupPublish; break;
+                case SmartRollupRecoverBond: res = Operations.SmartRollupRecoverBond; break;
+                case SmartRollupRefute: res = Operations.SmartRollupRefute; break;
                 default: return false;
             }
             return true;
@@ -114,7 +128,14 @@ namespace Tzkt.Api
             TxRollupReturnBond,
             TxRollupSubmitBatch,
             IncreasePaidStorage,
-            UpdateConsensusKey
+            UpdateConsensusKey,
+            SmartRollupAddMessages,
+            SmartRollupCement,
+            SmartRollupExecute,
+            SmartRollupOriginate,
+            SmartRollupPublish,
+            SmartRollupRecoverBond,
+            SmartRollupRefute
         };
     }
 }

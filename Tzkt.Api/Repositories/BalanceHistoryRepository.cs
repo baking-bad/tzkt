@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using System.Text;
 using Dapper;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -271,6 +265,14 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupSubmitBatchCount > 0) SumTxRollupSubmitBatchOps(union, from, to);
             if (account.TransferTicketCount > 0) SumTransferTicketOps(union, from, to);
             if (account.IncreasePaidStorageCount > 0) SumIncreasePaidStorageOps(union, from, to);
+            if (account.SmartRollupAddMessagesCount > 0) SumSrAddMessagesOps(union, from, to);
+            if (account.SmartRollupCementCount > 0) SumSrCementOps(union, from, to);
+            if (account.SmartRollupExecuteCount > 0) SumSrExecuteOps(union, from, to);
+            if (account.SmartRollupOriginateCount > 0) SumSrOriginateOps(union, from, to);
+            if (account.SmartRollupPublishCount > 0) SumSrPublishOps(union, from, to);
+            if (account.SmartRollupRecoverBondCount > 0) SumSrRecoverBondOps(union, from, to);
+            if (account.SmartRollupRefuteCount > 0) SumSrRefuteOps(union, from, to);
+            if (account.RefutationGamesCount > 0) SumSrGames(union, from, to);
 
             if (account is RawUser user)
             {
@@ -304,6 +306,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"SUM(""Received"") as ""Change"" ");
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"AND ""Received"" != 0 ");
 
             if (from > 0)
                 sql.Append($@"AND ""Level"" > {from} ");
@@ -353,6 +356,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"SUM(""Reward"") as ""Change"" ");
             sql.Append(@"FROM ""EndorsementOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");
+            sql.Append(@"AND ""Reward"" != 0 ");
 
             if (from > 0)
                 sql.Append($@"AND ""Level"" > {from} ");
@@ -932,6 +936,153 @@ namespace Tzkt.Api.Repositories
             #endregion
         }
 
+        void SumSrAddMessagesOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupAddMessagesOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrCementOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupCementOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrExecuteOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupExecuteOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrOriginateOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupOriginateOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrPublishOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupPublishOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrRecoverBondOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupRecoverBondOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrRefuteOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SmartRollupRefuteOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumSrGames(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region initiator
+            sql.Append(@"SUM(COALESCE(g.""InitiatorReward"", 0) - COALESCE(g.""InitiatorLoss"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""RefutationGames"" AS g ");
+            sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
+            sql.Append(@"WHERE g.""InitiatorId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND o.""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND o.""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region opponent
+            sql.Append(@"SUM(COALESCE(g.""OpponentReward"", 0) - COALESCE(g.""OpponentLoss"", 0)) as ""Change"" ");
+            sql.Append(@"FROM ""RefutationGames"" AS g ");
+            sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
+            sql.Append(@"WHERE g.""OpponentId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND o.""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND o.""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
         void SumRevelationPenalties(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -985,6 +1136,14 @@ namespace Tzkt.Api.Repositories
             if (account.TxRollupSubmitBatchCount > 0) UnionTxRollupSubmitBatchOps(union);
             if (account.TransferTicketCount > 0) UnionTransferTicketOps(union);
             if (account.IncreasePaidStorageCount > 0) UnionIncreasePaidStorageOps(union);
+            if (account.SmartRollupAddMessagesCount > 0) UnionSrAddMessagesOps(union);
+            if (account.SmartRollupCementCount > 0) UnionSrCementOps(union);
+            if (account.SmartRollupExecuteCount > 0) UnionSrExecuteOps(union);
+            if (account.SmartRollupOriginateCount > 0) UnionSrOriginateOps(union);
+            if (account.SmartRollupPublishCount > 0) UnionSrPublishOps(union);
+            if (account.SmartRollupRecoverBondCount > 0) UnionSrRecoverBondOps(union);
+            if (account.SmartRollupRefuteCount > 0) UnionSrRefuteOps(union);
+            if (account.RefutationGamesCount > 0) UnionSrGames(union);
 
             if (account is RawUser user)
             {
@@ -1020,6 +1179,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"AND ""Received"" != 0 ");
 
             sql.AppendLine();
         }
@@ -1060,6 +1220,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""EndorsementOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");
+            sql.Append(@"AND ""Reward"" != 0 ");
 
             sql.AppendLine();
         }
@@ -1524,6 +1685,128 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DrainDelegateOps"" ");
             sql.Append(@"WHERE ""TargetId"" = @account ");
+
+            sql.AppendLine();
+            #endregion
+        }
+
+        void UnionSrAddMessagesOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupAddMessagesOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrCementOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupCementOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrExecuteOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupExecuteOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrOriginateOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"" - COALESCE(""StorageFee"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupOriginateOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrPublishOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupPublishOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrRecoverBondOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupRecoverBondOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrRefuteOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SmartRollupRefuteOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionSrGames(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region initiator
+            sql.Append(@"o.""Level"" as ""Level"", ");
+            sql.Append(@"(COALESCE(g.""InitiatorReward"", 0) - COALESCE(g.""InitiatorLoss"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""RefutationGames"" AS g ");
+            sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
+            sql.Append(@"WHERE g.""InitiatorId"" = @account ");
+            sql.Append(@"AND (g.""InitiatorReward"" IS NOT NULL OR g.""InitiatorLoss"" IS NOT NULL) ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region opponent
+            sql.Append(@"o.""Level"" as ""Level"", ");
+            sql.Append(@"(COALESCE(g.""OpponentReward"", 0) - COALESCE(g.""OpponentLoss"", 0)) as ""Change"" ");
+
+            sql.Append(@"FROM ""RefutationGames"" AS g ");
+            sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
+            sql.Append(@"WHERE g.""OpponentId"" = @account ");
+            sql.Append(@"AND (g.""OpponentReward"" IS NOT NULL OR g.""OpponentLoss"" IS NOT NULL) ");
 
             sql.AppendLine();
             #endregion

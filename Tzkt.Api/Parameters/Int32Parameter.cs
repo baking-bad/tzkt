@@ -74,6 +74,10 @@ namespace Tzkt.Api
         /// </summary>
         public List<int> Ni { get; set; }
 
+        #region operators
+        public static implicit operator Int32Parameter(int value) => new() { Eq = value };
+        #endregion
+
         public string Normalize(string name)
         {
             var sb = new StringBuilder();

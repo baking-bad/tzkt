@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using NJsonSchema.Converters;
 using Newtonsoft.Json;
 
@@ -38,6 +37,13 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TxRollupSubmitBatchOperation))]
     [KnownType(typeof(IncreasePaidStorageOperation))]
     [KnownType(typeof(UpdateConsensusKeyOperation))]
+    [KnownType(typeof(SmartRollupAddMessagesOperation))]
+    [KnownType(typeof(SmartRollupCementOperation))]
+    [KnownType(typeof(SmartRollupExecuteOperation))]
+    [KnownType(typeof(SmartRollupOriginateOperation))]
+    [KnownType(typeof(SmartRollupPublishOperation))]
+    [KnownType(typeof(SmartRollupRecoverBondOperation))]
+    [KnownType(typeof(SmartRollupRefuteOperation))]
     public abstract class Operation
     {
         /// <summary>
@@ -152,6 +158,27 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(UpdateConsensusKeyOperation))
                 return OpTypes.UpdateConsensusKey;
+
+            if (type == typeof(SmartRollupAddMessagesOperation))
+                return OpTypes.SmartRollupAddMessages;
+
+            if (type == typeof(SmartRollupCementOperation))
+                return OpTypes.SmartRollupCement;
+
+            if (type == typeof(SmartRollupExecuteOperation))
+                return OpTypes.SmartRollupExecute;
+
+            if (type == typeof(SmartRollupOriginateOperation))
+                return OpTypes.SmartRollupOriginate;
+
+            if (type == typeof(SmartRollupPublishOperation))
+                return OpTypes.SmartRollupPublish;
+
+            if (type == typeof(SmartRollupRecoverBondOperation))
+                return OpTypes.SmartRollupRecoverBond;
+
+            if (type == typeof(SmartRollupRefuteOperation))
+                return OpTypes.SmartRollupRefute;
 
             return base.GetDiscriminatorValue(type);
         }
