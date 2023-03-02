@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (Cache.Count > Cache.Count)
+            if (Cache.Count > MaxItems)
             {
                 var toRemove = Cache.Keys
                     .OrderBy(x => x)

@@ -12,7 +12,7 @@ namespace Tzkt.Api
 
         public override bool Empty => base.Empty && rollup == null;
 
-        public override string Normalize(string prop)
+        public override string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("hash", hash), ("counter", counter), ("level", level),

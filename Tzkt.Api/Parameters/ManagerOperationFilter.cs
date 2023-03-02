@@ -57,7 +57,7 @@ namespace Tzkt.Api
             status == null &&
             sender == null;
 
-        public virtual string Normalize(string prop)
+        public virtual string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("hash", hash), ("counter", counter), ("level", level),

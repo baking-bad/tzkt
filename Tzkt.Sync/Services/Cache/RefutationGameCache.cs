@@ -38,7 +38,7 @@ namespace Tzkt.Sync.Services.Cache
             {
                 var toRemove = CachedByKey.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(MaxItems / 2)
+                    .Take(CachedByKey.Count - (int)(MaxItems * 0.75))
                     .ToList();
 
                 foreach (var item in toRemove)
