@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -4629,6 +4624,407 @@ namespace Tzkt.Api.Controllers
             var res = await Operations.GetUpdateConsensusKeysCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
+        }
+        #endregion
+
+        #region smart rollup add messages
+        /// <summary>
+        /// Get smart rollup add messages
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup add messages operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_add_messages")]
+        public async Task<ActionResult<IEnumerable<SmartRollupAddMessagesOperation>>> GetSmartRollupAddMessagesOps(
+            [FromQuery] ManagerOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupAddMessagesOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupAddMessagesOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup add messages count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup add messages operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_add_messages/count")]
+        public async Task<ActionResult<int>> GetSmartRollupAddMessagesOpsCount([FromQuery] ManagerOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupAddMessagesOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupAddMessagesOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup cement
+        /// <summary>
+        /// Get smart rollup cement
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup cement operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_cement")]
+        public async Task<ActionResult<IEnumerable<SmartRollupCementOperation>>> GetSmartRollupCementOps(
+            [FromQuery] SrOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupCementOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupCementOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup cement count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup cement operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_cement/count")]
+        public async Task<ActionResult<int>> GetSmartRollupCementOpsCount([FromQuery] SrOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupCementOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupCementOpsCount(filter));
+            
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup execute
+        /// <summary>
+        /// Get smart rollup execute
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup execute operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_execute")]
+        public async Task<ActionResult<IEnumerable<SmartRollupExecuteOperation>>> GetSmartRollupExecuteOps(
+            [FromQuery] SrOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupExecuteOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupExecuteOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup execute count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup execute operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_execute/count")]
+        public async Task<ActionResult<int>> GetSmartRollupExecuteOpsCount([FromQuery] SrOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupExecuteOpsCount);
+            
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupExecuteOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup originate
+        /// <summary>
+        /// Get smart rollup originate
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup originate operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <param name="micheline">Format of the parameter type value: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <returns></returns>
+        [HttpGet("sr_originate")]
+        public async Task<ActionResult<IEnumerable<SmartRollupOriginateOperation>>> GetSmartRollupOriginateOps(
+            [FromQuery] SrOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None,
+            [FromQuery] MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote), ("micheline", micheline));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupOriginateOps(filter, pagination, quote, micheline)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupOriginateOps(filter, pagination, selection, quote, micheline)
+                    });
+            
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup originate count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup originate operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_originate/count")]
+        public async Task<ActionResult<int>> GetSmartRollupOriginateOpsCount([FromQuery] SrOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupOriginateOpsCount);
+             
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupOriginateOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup publish
+        /// <summary>
+        /// Get smart rollup publish
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup publish operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_publish")]
+        public async Task<ActionResult<IEnumerable<SmartRollupPublishOperation>>> GetSmartRollupPublishOps(
+            [FromQuery] SrOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupPublishOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupPublishOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup publish count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup publish operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_publish/count")]
+        public async Task<ActionResult<int>> GetSmartRollupPublishOpsCount([FromQuery] SrOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupPublishOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupPublishOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup recover bond
+        /// <summary>
+        /// Get smart rollup recover bond
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup recover bond operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_recover_bond")]
+        public async Task<ActionResult<IEnumerable<SmartRollupRecoverBondOperation>>> GetSmartRollupRecoverBondOps(
+            [FromQuery] SrRecoverBondOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupRecoverBondOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupRecoverBondOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup recover bond count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup recover bond operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_recover_bond/count")]
+        public async Task<ActionResult<int>> GetSmartRollupRecoverBondOpsCount([FromQuery] SrRecoverBondOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupRecoverBondOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupRecoverBondOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region smart rollup refute
+        /// <summary>
+        /// Get smart rollup refute
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup refute operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("sr_refute")]
+        public async Task<ActionResult<IEnumerable<SmartRollupRefuteOperation>>> GetSmartRollupRefuteOps(
+            [FromQuery] SrOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSmartRollupRefuteOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSmartRollupRefuteOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup refute count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smart rollup refute operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("sr_refute/count")]
+        public async Task<ActionResult<int>> GetSmartRollupRefuteOpsCount([FromQuery] SrOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SmartRollupRefuteOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSmartRollupRefuteOpsCount(filter));
+
+            return this.Bytes(res);
         }
         #endregion
 

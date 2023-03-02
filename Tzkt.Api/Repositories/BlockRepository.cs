@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -609,6 +603,34 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetDrainDelegates(block, quote)
                 : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
+            var srAddMessageOps = operations.HasFlag(Data.Models.Operations.SmartRollupAddMessages)
+                ? Operations.GetSmartRollupAddMessagesOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
+
+            var srCementOps = operations.HasFlag(Data.Models.Operations.SmartRollupCement)
+                ? Operations.GetSmartRollupCementOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
+
+            var srExecuteOps = operations.HasFlag(Data.Models.Operations.SmartRollupExecute)
+                ? Operations.GetSmartRollupExecuteOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
+
+            var srOriginateOps = operations.HasFlag(Data.Models.Operations.SmartRollupOriginate)
+                ? Operations.GetSmartRollupOriginateOps(new() { level = block.Level }, new() { limit = -1 }, quote, format)
+                : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
+
+            var srPublishOps = operations.HasFlag(Data.Models.Operations.SmartRollupPublish)
+                ? Operations.GetSmartRollupPublishOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
+
+            var srRecoverBondOps = operations.HasFlag(Data.Models.Operations.SmartRollupRecoverBond)
+                ? Operations.GetSmartRollupRecoverBondOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
+
+            var srRefuteOps = operations.HasFlag(Data.Models.Operations.SmartRollupRefute)
+                ? Operations.GetSmartRollupRefuteOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -650,6 +672,13 @@ namespace Tzkt.Api.Repositories
                 increasePaidStorageOps,
                 updateConsensusKeyOps,
                 drainDelegateOps,
+                srAddMessageOps,
+                srCementOps,
+                srExecuteOps,
+                srOriginateOps,
+                srPublishOps,
+                srRecoverBondOps,
+                srRefuteOps,
                 migrations,
                 penalties,
                 endorsingRewards);
@@ -682,6 +711,13 @@ namespace Tzkt.Api.Repositories
             block.IncreasePaidStorageOps = increasePaidStorageOps.Result;
             block.UpdateConsensusKeyOps = updateConsensusKeyOps.Result;
             block.DrainDelegateOps = drainDelegateOps.Result;
+            block.SrAddMessagesOps = srAddMessageOps.Result;
+            block.SrCementOps = srCementOps.Result;
+            block.SrExecuteOps = srExecuteOps.Result;
+            block.SrOriginateOps = srOriginateOps.Result;
+            block.SrPublishOps = srPublishOps.Result;
+            block.SrRecoverBondOps = srRecoverBondOps.Result;
+            block.SrRefuteOps = srRefuteOps.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;

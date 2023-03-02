@@ -246,6 +246,41 @@ namespace Tzkt.Api.Models
         public IEnumerable<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
         /// <summary>
+        /// List of smart rollup add messages operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupAddMessagesOperation> SrAddMessagesOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup cement operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupCementOperation> SrCementOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup execute operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupExecuteOperation> SrExecuteOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup originate operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupOriginateOperation> SrOriginateOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup publish operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupPublishOperation> SrPublishOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup recover bond operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupRecoverBondOperation> SrRecoverBondOps { get; set; }
+
+        /// <summary>
+        /// List of smart rollup refute operations, included in the block
+        /// </summary>
+        public IEnumerable<SmartRollupRefuteOperation> SrRefuteOps { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }

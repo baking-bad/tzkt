@@ -274,7 +274,8 @@ namespace Tzkt.Api.Controllers
         /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
         /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
         /// `tx_rollup_finalize_commitment`, `tx_rollup_remove_commitment`, `tx_rollup_rejection`, `tx_rollup_dispatch_tickets`, `transfer_ticket`, `migration`,
-        /// `update_consensus_key`, `drain_delegate`, `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
+        /// `update_consensus_key`, `drain_delegate`, `sr_add_messages`, `sr_cement`, `sr_execute`, `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`,
+        /// `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
         /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
