@@ -4909,8 +4909,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("PublicKey")
-                        .HasMaxLength(55)
-                        .HasColumnType("character varying(55)");
+                        .HasColumnType("text");
 
                     b.Property<int>("RegisterConstantsCount")
                         .HasColumnType("integer");

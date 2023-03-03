@@ -124,6 +124,16 @@ namespace Tzkt.Data.Migrations
                 nullable: false,
                 defaultValue: 0);
 
+            migrationBuilder.AlterColumn<string>(
+                name: "PublicKey",
+                table: "Accounts",
+                type: "text",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "character varying(55)",
+                oldMaxLength: 55,
+                oldNullable: true);
+
             migrationBuilder.AddColumn<int>(
                 name: "ActiveRefutationGamesCount",
                 table: "Accounts",
@@ -1030,6 +1040,16 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "SmartRollupsCount",
                 table: "Accounts");
+
+            migrationBuilder.AlterColumn<string>(
+                name: "PublicKey",
+                table: "Accounts",
+                type: "character varying(55)",
+                maxLength: 55,
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "text",
+                oldNullable: true);
         }
     }
 }

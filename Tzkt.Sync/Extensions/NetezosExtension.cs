@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Netezos.Contracts;
+﻿using Netezos.Contracts;
 using Netezos.Encoding;
 
 namespace Tzkt.Sync
@@ -9,8 +8,10 @@ namespace Tzkt.Sync
         static readonly byte[] tz1 = new byte[] { 6, 161, 159 };
         static readonly byte[] tz2 = new byte[] { 6, 161, 161 };
         static readonly byte[] tz3 = new byte[] { 6, 161, 164 };
+        static readonly byte[] tz4 = new byte[] { 6, 161, 166 };
         static readonly byte[] KT1 = new byte[] { 2, 90, 121 };
         static readonly byte[] txr1 = new byte[] { 1, 128, 120, 31 };
+        static readonly byte[] sr1 = new byte[] { 6, 124, 117 };
 
         public static string ParseAddress(this IMicheline micheline)
         {
@@ -30,12 +31,23 @@ namespace Tzkt.Sync
             byte[] bytes;
             if (value[0] == 0)
             {
-                prefix = value[1] == 0 ? tz1 : value[1] == 1 ? tz2 : tz3;
+                prefix = value[1] switch
+                {
+                    0 => tz1,
+                    1 => tz2,
+                    2 => tz3,
+                    _ => tz4
+                };
                 bytes = value.GetBytes(2, 20);
             }
             else
             {
-                prefix = value[0] == 1 ? KT1 : txr1;
+                prefix = value[0] switch
+                {
+                    1 => KT1,
+                    2 => txr1,
+                    _ => sr1,
+                };
                 bytes = value.GetBytes(1, 20);
             }
             return Base58.Convert(bytes, prefix);
@@ -75,6 +87,11 @@ namespace Tzkt.Sync
                         res = Base58.Convert(value.GetBytes(2, 20), tz3);
                         return true;
                     }
+                    else if (value[1] == 3)
+                    {
+                        res = Base58.Convert(value.GetBytes(2, 20), tz4);
+                        return true;
+                    }
                 }
                 else if (value[0] == 1 && value[21] == 0)
                 {
@@ -84,6 +101,11 @@ namespace Tzkt.Sync
                 else if (value[0] == 2 && value[21] == 0)
                 {
                     res = Base58.Convert(value.GetBytes(1, 20), txr1);
+                    return true;
+                }
+                else if (value[0] == 3 && value[21] == 0)
+                {
+                    res = Base58.Convert(value.GetBytes(1, 20), sr1);
                     return true;
                 }
             }

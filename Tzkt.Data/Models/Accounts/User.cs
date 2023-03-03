@@ -13,13 +13,8 @@ namespace Tzkt.Data.Models
 
     public static class UserModel
     {
-        public static void BuildUserModel(this ModelBuilder modelBuilder)
+        public static void BuildUserModel(this ModelBuilder _)
         {
-            #region props
-            modelBuilder.Entity<User>()
-                .Property(x => x.PublicKey)
-                .HasMaxLength(55);
-            #endregion
         }
     }
 }
