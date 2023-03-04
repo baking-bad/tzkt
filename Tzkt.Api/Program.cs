@@ -69,6 +69,7 @@ builder.Services.AddTransient<ExtrasRepository>();
 builder.Services.AddTransient<ConstantsRepository>();
 builder.Services.AddTransient<ContractEventsRepository>();
 builder.Services.AddTransient<DomainsRepository>();
+builder.Services.AddTransient<SrCommitmentsRepository>();
 
 builder.Services.AddAuthService(builder.Configuration);
 builder.Services.AddSingleton<RpcHelpers>();

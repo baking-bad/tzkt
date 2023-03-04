@@ -36,9 +36,6 @@ namespace Tzkt.Api
         /// </summary>
         public JsonParameter metadata { get; set; }
 
-        [JsonIgnore]
-        public bool HasFilters => contract != null || tokenId != null || standard != null;
-
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",

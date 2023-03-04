@@ -313,6 +313,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, SrCommitmentStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($"{column} = {status.Eq}");
+
+            if (status.Ne != null)
+                AppendFilter($"{column} != {status.Ne}");
+
+            if (status.In != null)
+                AppendFilter($"{column} = ANY ({Param(status.In)})");
+
+            if (status.Ni != null && status.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(status.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, OperationStatusParameter status)
         {
             if (status == null) return this;
@@ -360,6 +379,25 @@ namespace Tzkt.Api
 
             if (hash.Ni != null && hash.Ni.Count > 0)
                 AppendFilter($@"NOT (""{column}"" = ANY ({Param(hash.Ni)}))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, Src1HashParameter hash)
+        {
+            if (hash == null) return this;
+
+            if (hash.Eq != null)
+                AppendFilter($"{column} = {Param(hash.Eq)}::character(54)");
+
+            if (hash.Ne != null)
+                AppendFilter($"{column} != {Param(hash.Ne)}::character(54)");
+
+            if (hash.In != null)
+                AppendFilter($"{column} = ANY ({Param(hash.In)})");
+
+            if (hash.Ni != null && hash.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(hash.Ni)}))");
 
             return this;
         }
