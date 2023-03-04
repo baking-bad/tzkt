@@ -696,6 +696,67 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetSrc1Hash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^src1[0-9A-Za-z]{50}$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup commitment hash.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSrc1HashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^src1[0-9A-Za-z]{50}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup commitment hash.");
+                            return false;
+                        }
+
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetContractKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
@@ -1071,6 +1132,66 @@ namespace Tzkt.Api
                         }
                         hasValue = true;
                         result.Add(kind);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSrCommitmentStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!SrCommitmentStatuses.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup commitment status.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSrCommitmentStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!SrCommitmentStatuses.TryParse(rawValue, out var status))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup commitment status.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(status);
                     }
                 }
             }

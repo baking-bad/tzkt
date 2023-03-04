@@ -15,7 +15,7 @@ namespace Tzkt.Api
         public SelectionParameter select { get; set; }
 
         [OpenApiIgnore]
-        public string[] Cols => select.Fields?.Select(x => x.Alias).ToArray();
+        public string[] Cols => select?.Fields?.Select(x => x.Alias).ToArray();
 
         #region operators
         public static implicit operator List<SelectionField>(Selection selection) => selection.select.Fields ?? selection.select.Values;
