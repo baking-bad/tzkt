@@ -72,9 +72,9 @@
         public Alias Rollup { get; set; }
 
         /// <summary>
-        /// Id of the cemented commitment
+        /// Cemented commitment
         /// </summary>
-        public int? CommitmentId { get; set; }
+        public SrCommitmentInfo Commitment { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors

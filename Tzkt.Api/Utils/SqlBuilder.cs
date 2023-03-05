@@ -345,6 +345,19 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, OperationStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($"{column} = {status.Eq}");
+
+            if (status.Ne != null)
+                AppendFilter($"{column} != {status.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, ExpressionParameter expression)
         {
             if (expression == null) return this;
@@ -379,6 +392,25 @@ namespace Tzkt.Api
 
             if (hash.Ni != null && hash.Ni.Count > 0)
                 AppendFilter($@"NOT (""{column}"" = ANY ({Param(hash.Ni)}))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, OpHashParameter hash)
+        {
+            if (hash == null) return this;
+
+            if (hash.Eq != null)
+                AppendFilter($"{column} = {Param(hash.Eq)}::character(51)");
+
+            if (hash.Ne != null)
+                AppendFilter($"{column} != {Param(hash.Ne)}::character(51)");
+
+            if (hash.In != null)
+                AppendFilter($"{column} = ANY ({Param(hash.In)})");
+
+            if (hash.Ni != null && hash.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(hash.Ni)}))");
 
             return this;
         }
@@ -547,6 +579,25 @@ namespace Tzkt.Api
 
             if (rollup.Ni != null)
                 AppendFilter($@"(""{column}"" IS NULL OR NOT (""{column}"" = ANY ({Param(rollup.Ni)})))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, SmartRollupParameter rollup)
+        {
+            if (rollup == null) return this;
+
+            if (rollup.Eq != null)
+                AppendFilter($"{column} = {rollup.Eq}");
+
+            if (rollup.Ne != null && rollup.Ne != -1)
+                AppendFilter($"({column} IS NULL OR {column} != {rollup.Ne})");
+
+            if (rollup.In != null)
+                AppendFilter($"{column} = ANY ({Param(rollup.In)})");
+
+            if (rollup.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(rollup.Ni)})))");
 
             return this;
         }

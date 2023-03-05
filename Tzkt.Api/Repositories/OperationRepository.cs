@@ -9,11 +9,13 @@ namespace Tzkt.Api.Repositories
     public partial class OperationRepository : DbConnection
     {
         readonly AccountsCache Accounts;
+        readonly TimeCache Times;
         readonly QuotesCache Quotes;
 
-        public OperationRepository(AccountsCache accounts, QuotesCache quotes, IConfiguration config) : base(config)
+        public OperationRepository(AccountsCache accounts, TimeCache times, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
+            Times = times;
             Quotes = quotes;
         }
 
