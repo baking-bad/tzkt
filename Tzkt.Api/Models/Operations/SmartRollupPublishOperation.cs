@@ -72,9 +72,9 @@
         public Alias Rollup { get; set; }
 
         /// <summary>
-        /// Id of the published commitment
+        /// Published commitment
         /// </summary>
-        public int? CommitmentId { get; set; }
+        public SrCommitmentInfo Commitment { get; set; }
 
         /// <summary>
         /// Amount of bonds locked (micro tez)

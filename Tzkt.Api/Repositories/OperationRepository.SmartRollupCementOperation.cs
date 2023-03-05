@@ -30,7 +30,31 @@ namespace Tzkt.Api.Repositories
 
         async Task<IEnumerable<dynamic>> QuerySmartRollupCementOps(SrOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
-            var select = "*";
+            var select = """
+                o."Id",
+                o."Level",
+                o."Timestamp",
+                o."OpHash",
+                o."SenderId",
+                o."Counter",
+                o."GasLimit",
+                o."GasUsed",
+                o."StorageLimit",
+                o."BakerFee",
+                o."Status",
+                o."SmartRollupId",
+                o."CommitmentId" as "cId",
+                o."Errors",
+                o."Level",
+
+                c."InitiatorId" as "cInitiatorId",
+                c."InboxLevel" as "cInboxLevel",
+                c."State" as "cState",
+                c."Hash" as "cHash",
+                c."Ticks" as "cTicks",
+                c."FirstLevel" as "cFirstLevel"
+            """;
+
             if (fields != null)
             {
                 var columns = new HashSet<string>(fields.Count);
@@ -50,7 +74,32 @@ namespace Tzkt.Api.Repositories
                         case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "rollup": columns.Add(@"o.""SmartRollupId"""); break;
-                        case "commitmentId": columns.Add(@"o.""CommitmentId"""); break;
+                        case "commitment":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"o.""CommitmentId"" as ""cId""");
+                                columns.Add(@"c.""InitiatorId"" as ""cInitiatorId""");
+                                columns.Add(@"c.""InboxLevel"" as ""cInboxLevel""");
+                                columns.Add(@"c.""State"" as ""cState""");
+                                columns.Add(@"c.""Hash"" as ""cHash""");
+                                columns.Add(@"c.""Ticks"" as ""cTicks""");
+                                columns.Add(@"c.""FirstLevel"" as ""cFirstLevel""");
+                            }
+                            else
+                            {
+                                switch (field.SubField().Field)
+                                {
+                                    case "id": columns.Add(@"o.""CommitmentId"" as ""cId"""); break;
+                                    case "initiator": columns.Add(@"c.""InitiatorId"" as ""cInitiatorId"""); break;
+                                    case "inboxLevel": columns.Add(@"c.""InboxLevel"" as ""cInboxLevel"""); break;
+                                    case "state": columns.Add(@"c.""State"" as ""cState"""); break;
+                                    case "hash": columns.Add(@"c.""Hash"" as ""cHash"""); break;
+                                    case "ticks": columns.Add(@"c.""Ticks"" as ""cTicks"""); break;
+                                    case "firstLevel": columns.Add(@"c.""FirstLevel"" as ""cFirstLevel"""); break;
+                                    case "firstTime": columns.Add(@"c.""FirstLevel"" as ""cFirstLevel"""); break;
+                                }
+                            }
+                            break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
                     }
@@ -62,16 +111,18 @@ namespace Tzkt.Api.Repositories
                 select = string.Join(',', columns);
             }
 
-            var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupCementOps"" as o")
-                .Filter("Id", filter.id)
-                .Filter("OpHash", filter.hash)
-                .Filter("Counter", filter.counter)
-                .Filter("Level", filter.level)
-                .Filter("Level", filter.timestamp)
-                .Filter("SenderId", filter.sender)
-                .Filter("Status", filter.status)
-                .Filter("SmartRollupId", filter.rollup)
-                .Take(pagination, x => (@"""Id""", @"""Id"""));
+            var sql = new SqlBuilder($@"
+                SELECT {select} FROM ""SmartRollupCementOps"" as o
+                LEFT JOIN ""SmartRollupCommitments"" AS c ON c.""Id"" = o.""CommitmentId""")
+                .FilterA(@"o.""Id""", filter.id)
+                .FilterA(@"o.""OpHash""", filter.hash)
+                .FilterA(@"o.""Counter""", filter.counter)
+                .FilterA(@"o.""Level""", filter.level)
+                .FilterA(@"o.""Level""", filter.timestamp)
+                .FilterA(@"o.""SenderId""", filter.sender)
+                .FilterA(@"o.""Status""", filter.status)
+                .FilterA(@"o.""SmartRollupId""", filter.rollup)
+                .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
             using var db = GetConnection();
             return await db.QueryAsync(sql.Query, sql.Params);
@@ -94,7 +145,17 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Rollup = Accounts.GetAlias(row.SmartRollupId),
-                CommitmentId = row.CommitmentId,
+                Commitment = row.cId == null ? null : new()
+                {
+                    Id = row.cId,
+                    Initiator = Accounts.GetAlias(row.cInitiatorId),
+                    InboxLevel = row.cInboxLevel,
+                    State = row.cState,
+                    Hash = row.cHash,
+                    Ticks = row.cTicks,
+                    FirstLevel = row.cFirstLevel,
+                    FirstTime = Times[row.cFirstLevel],
+                },
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -180,9 +241,59 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.SmartRollupId).Address;
                         break;
-                    case "commitmentId":
+                    case "commitment":
                         foreach (var row in rows)
-                            result[j++][i] = row.CommitmentId;
+                            result[j++][i] = row.cId == null ? null : new SrCommitmentInfo
+                            {
+                                Id = row.cId,
+                                Initiator = Accounts.GetAlias(row.cInitiatorId),
+                                InboxLevel = row.cInboxLevel,
+                                State = row.cState,
+                                Hash = row.cHash,
+                                Ticks = row.cTicks,
+                                FirstLevel = row.cFirstLevel,
+                                FirstTime = Times[row.cFirstLevel],
+                            };
+                        break;
+                    case "commitment.id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cId;
+                        break;
+                    case "commitment.initiator":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cInitiatorId == null ? null : Accounts.GetAlias(row.cInitiatorId);
+                        break;
+                    case "commitment.initiator.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cInitiatorId == null ? null : Accounts.GetAlias(row.cInitiatorId).Name;
+                        break;
+                    case "commitment.initiator.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cInitiatorId == null ? null : Accounts.GetAlias(row.cInitiatorId).Address;
+                        break;
+                    case "commitment.inboxLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cInboxLevel;
+                        break;
+                    case "commitment.state":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cState;
+                        break;
+                    case "commitment.hash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cHash;
+                        break;
+                    case "commitment.ticks":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cTicks;
+                        break;
+                    case "commitment.firstLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cFirstLevel;
+                        break;
+                    case "commitment.firstTime":
+                        foreach (var row in rows)
+                            result[j++][i] = row.cFirstLevel == null ? null : Times[row.cFirstLevel];
                         break;
                     case "errors":
                         foreach (var row in rows)
