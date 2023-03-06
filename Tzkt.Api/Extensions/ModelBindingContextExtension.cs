@@ -1079,6 +1079,126 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetRefutationMove(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!RefutationMoves.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid refutation game move.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetRefutationMoveList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!RefutationMoves.TryParse(rawValue, out var status))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid refutation game move.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(status);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetRefutationGameStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!RefutationGameStatuses.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid refutation game status.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetRefutationGameStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!RefutationGameStatuses.TryParse(rawValue, out var status))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid refutation game status.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(status);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetMigrationKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

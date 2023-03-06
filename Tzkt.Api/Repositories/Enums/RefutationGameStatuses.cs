@@ -30,5 +30,7 @@ namespace Tzkt.Api
             (int)RefutationGameStatus.Draw => Draw,
             _ => throw new Exception("invalid refutation game status value")
         };
+
+        public static bool IsEnd(int value) => value >= (int)RefutationGameStatus.Loser;
     }
 }

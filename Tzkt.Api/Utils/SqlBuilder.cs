@@ -313,6 +313,44 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, RefutationGameStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($"{column} = {status.Eq}");
+
+            if (status.Ne != null)
+                AppendFilter($"{column} != {status.Ne}");
+
+            if (status.In != null)
+                AppendFilter($"{column} = ANY ({Param(status.In)})");
+
+            if (status.Ni != null && status.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(status.Ni)}))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, RefutationMoveParameter move)
+        {
+            if (move == null) return this;
+
+            if (move.Eq != null)
+                AppendFilter($"{column} = {move.Eq}");
+
+            if (move.Ne != null)
+                AppendFilter($"{column} != {move.Ne}");
+
+            if (move.In != null)
+                AppendFilter($"{column} = ANY ({Param(move.In)})");
+
+            if (move.Ni != null && move.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(move.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder FilterA(string column, SrCommitmentStatusParameter status)
         {
             if (status == null) return this;

@@ -4985,7 +4985,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("sr_refute")]
         public async Task<ActionResult<IEnumerable<SmartRollupRefuteOperation>>> GetSmartRollupRefuteOps(
-            [FromQuery] SrOperationFilter filter,
+            [FromQuery] SrRefuteOperationFilter filter,
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection,
             [FromQuery] Symbols quote = Symbols.None)
@@ -5014,7 +5014,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("sr_refute/count")]
-        public async Task<ActionResult<int>> GetSmartRollupRefuteOpsCount([FromQuery] SrOperationFilter filter)
+        public async Task<ActionResult<int>> GetSmartRollupRefuteOpsCount([FromQuery] SrRefuteOperationFilter filter)
         {
             if (filter.Empty)
                 return Ok(State.Current.SmartRollupRefuteOpsCount);
