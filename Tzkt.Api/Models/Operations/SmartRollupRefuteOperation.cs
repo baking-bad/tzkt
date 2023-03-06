@@ -72,9 +72,9 @@
         public Alias Rollup { get; set; }
 
         /// <summary>
-        /// Id of the refutation game
+        /// Refutation game info
         /// </summary>
-        public int? GameId { get; set; }
+        public SrGameInfo Game { get; set; }
 
         /// <summary>
         /// Player's move (`start`, `dissection`, `proof`, `timeout`)

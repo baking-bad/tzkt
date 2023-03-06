@@ -118,8 +118,8 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("filter", filter), ("pagination", pagination), ("selection", selection));
 
-            //if (!ResponseCache.TryGet(query, out var res))
-                var res = ResponseCache.Set(query, selection.select == null
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
                     ? await SmartRollups.GetGames(filter, pagination)
                     : new SelectionResponse
                     {
