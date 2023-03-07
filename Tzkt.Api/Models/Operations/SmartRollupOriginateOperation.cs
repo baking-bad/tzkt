@@ -77,12 +77,32 @@
         public string Status { get; set; }
 
         /// <summary>
+        /// PVM kind (`arith` or `wasm`).
+        /// </summary>
+        public string PvmKind { get; set; }
+
+        /// <summary>
+        /// Kernel bytes (in base64).
+        /// </summary>
+        public byte[] Kernel { get; set; }
+
+        /// <summary>
+        /// Origination proof bytes (in base64).
+        /// </summary>
+        public byte[] OriginationProof { get; set; }
+
+        /// <summary>
         /// Smart rollup parameter type. Note: you can configure format by setting `micheline` query parameter.
         /// </summary>
         public object ParameterType { get; set; }
 
         /// <summary>
-        /// Originated smart rollup
+        /// Genesis commitment hash.
+        /// </summary>
+        public string GenesisCommitment { get; set; }
+
+        /// <summary>
+        /// Originated smart rollup.
         /// </summary>
         public Alias Rollup { get; set; }
 
