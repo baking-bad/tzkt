@@ -53,7 +53,11 @@ namespace Tzkt.Api.Repositories
                         case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                         case "storageFee": columns.Add(@"o.""StorageFee"""); break;
                         case "status": columns.Add(@"o.""Status"""); break;
+                        case "pvmKind": columns.Add(@"o.""PvmKind"""); break;
+                        case "kernel": columns.Add(@"o.""Kernel"""); break;
+                        case "originationProof": columns.Add(@"o.""OriginationProof"""); break;
                         case "parameterType": columns.Add(@"o.""ParameterType"""); break;
+                        case "genesisCommitment": columns.Add(@"o.""GenesisCommitment"""); break;
                         case "rollup": columns.Add(@"o.""SmartRollupId"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
@@ -99,6 +103,9 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee,
                 Status = OpStatuses.ToString(row.Status),
+                PvmKind = PvmKinds.ToString((int)row.PvmKind),
+                Kernel = row.Kernel,
+                OriginationProof = row.OriginationProof,
                 ParameterType = row.ParameterType is not byte[] bytes ? null : micheline switch
                 {
                     MichelineFormat.JsonString => Schema.Create(Micheline.FromBytes(bytes) as MichelinePrim).Humanize(),
@@ -106,6 +113,7 @@ namespace Tzkt.Api.Repositories
                     MichelineFormat.RawString => Micheline.ToJson(bytes),
                     _ => Micheline.FromBytes(bytes)
                 },
+                GenesisCommitment = row.GenesisCommitment,
                 Rollup = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -188,6 +196,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = OpStatuses.ToString(row.Status);
                         break;
+                    case "pvmKind":
+                        foreach (var row in rows)
+                            result[j++][i] = PvmKinds.ToString(row.PvmKind);
+                        break;
+                    case "kernel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Kernel;
+                        break;
+                    case "originationProof":
+                        foreach (var row in rows)
+                            result[j++][i] = row.OriginationProof;
+                        break;
                     case "parameterType":
                         foreach (var row in rows)
                             result[j++][i] = row.ParameterType is not byte[] bytes ? null : micheline switch
@@ -197,6 +217,10 @@ namespace Tzkt.Api.Repositories
                                 MichelineFormat.RawString => Micheline.ToJson(bytes),
                                 _ => Micheline.FromBytes(bytes)
                             };
+                        break;
+                    case "genesisCommitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.GenesisCommitment;
                         break;
                     case "rollup":
                         foreach (var row in rows)
