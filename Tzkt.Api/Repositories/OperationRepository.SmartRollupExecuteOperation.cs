@@ -150,7 +150,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee,
                 Status = OpStatuses.ToString(row.Status),
-                Rollup = Accounts.GetAlias(row.SmartRollupId),
+                Rollup = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId),
                 Commitment = row.cId == null ? null : new()
                 {
                     Id = row.cId,
@@ -245,15 +245,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "rollup":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId);
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId);
                         break;
                     case "rollup.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId).Name;
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId).Name;
                         break;
                     case "rollup.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId).Address;
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId).Address;
                         break;
                     case "commitment":
                         foreach (var row in rows)

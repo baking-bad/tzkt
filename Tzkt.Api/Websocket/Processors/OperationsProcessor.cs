@@ -654,10 +654,10 @@ namespace Tzkt.Api.Websocket.Processors
                             if (transferTicketSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (transferTicketSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
+                            if (op.Target != null && transferTicketSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
                                 Add(targetSubs.Subs, op);
 
-                            if (transferTicketSub.AddressSubs.TryGetValue(op.Ticketer.Address, out var ticketerSubs))
+                            if (op.Ticketer != null && transferTicketSub.AddressSubs.TryGetValue(op.Ticketer.Address, out var ticketerSubs))
                                 Add(ticketerSubs.Subs, op);
                         }
                 }
@@ -673,7 +673,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupCommitSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupCommitSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupCommitSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -689,7 +689,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupDispatchTicketsSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupDispatchTicketsSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupDispatchTicketsSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -705,7 +705,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupFinalizeCommitmentSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupFinalizeCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupFinalizeCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -721,7 +721,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupOriginationSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupOriginationSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupOriginationSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -737,10 +737,10 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Committer.Address, out var committerSubs))
+                            if (op.Committer != null && txRollupRejectionSub.AddressSubs.TryGetValue(op.Committer.Address, out var committerSubs))
                                 Add(committerSubs.Subs, op);
 
-                            if (txRollupRejectionSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupRejectionSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -756,7 +756,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupRemoveCommitmentSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupRemoveCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupRemoveCommitmentSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -772,7 +772,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupReturnBondSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupReturnBondSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupReturnBondSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -788,7 +788,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && txRollupSubmitBatchSub.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -804,7 +804,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs))
+                            if (op.Contract != null && increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs))
                                 Add(contractSubs.Subs, op);
                         }
                 }
@@ -862,7 +862,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srCementSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srCementSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srCementSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -878,7 +878,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srExecuteSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srExecuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srExecuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -894,7 +894,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srOriginateSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srOriginateSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srOriginateSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -910,7 +910,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srPublishSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srPublishSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srPublishSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
                         }
                 }
@@ -926,10 +926,10 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srRecoverBondSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
 
-                            if (srRecoverBondSubs.AddressSubs.TryGetValue(op.Staker.Address, out var stakerSubs))
+                            if (op.Staker != null && srRecoverBondSubs.AddressSubs.TryGetValue(op.Staker.Address, out var stakerSubs))
                                 Add(stakerSubs.Subs, op);
                         }
                 }
@@ -945,8 +945,14 @@ namespace Tzkt.Api.Websocket.Processors
                             if (srRefuteSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
                                 Add(senderSubs.Subs, op);
 
-                            if (srRefuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
+                            if (op.Rollup != null && srRefuteSubs.AddressSubs.TryGetValue(op.Rollup.Address, out var rollupSubs))
                                 Add(rollupSubs.Subs, op);
+
+                            if (op.Game != null && srRefuteSubs.AddressSubs.TryGetValue(op.Game.Initiator.Address, out var initiatorSubs))
+                                Add(initiatorSubs.Subs, op);
+
+                            if (op.Game != null && srRefuteSubs.AddressSubs.TryGetValue(op.Game.Opponent.Address, out var opponentSubs))
+                                Add(opponentSubs.Subs, op);
                         }
                 }
 

@@ -112,8 +112,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastLevel)
                 .FilterA(@"c.""LastLevel""", filter.lastTime)
                 .FilterA(@"c.""Status""", filter.status)
-                .FilterA(@"c.""PredecessorId""", filter.predecessor.id)
-                .FilterA(@"p.""Hash""", filter.predecessor.hash)
+                .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
+                .FilterA(@"p.""Hash""", filter.predecessor?.hash)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"c.""Id""", @"c.""Id"""),
@@ -145,8 +145,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastLevel)
                 .FilterA(@"c.""LastLevel""", filter.lastTime)
                 .FilterA(@"c.""Status""", filter.status)
-                .FilterA(@"c.""PredecessorId""", filter.predecessor.id)
-                .FilterA(@"p.""Hash""", filter.predecessor.hash);
+                .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
+                .FilterA(@"p.""Hash""", filter.predecessor?.hash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -485,11 +485,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"g.""Id""", filter.id)
                 .FilterA(@"g.""SmartRollupId""", filter.rollup)
                 .FilterA(@"g.""InitiatorId""", filter.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment.id)
-                .FilterA(@"ic.""Hash""", filter.initiatorCommitment.hash)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment?.id)
+                .FilterA(@"ic.""Hash""", filter.initiatorCommitment?.hash)
                 .FilterA(@"g.""OpponentId""", filter.opponent)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment.id)
-                .FilterA(@"oc.""Hash""", filter.opponentCommitment.hash)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment?.id)
+                .FilterA(@"oc.""Hash""", filter.opponentCommitment?.hash)
                 .FilterA(@"g.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"g.""FirstLevel""", filter.firstTime)
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
@@ -516,10 +516,10 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"g.""Id""", filter.id)
                 .FilterA(@"g.""SmartRollupId""", filter.rollup)
                 .FilterA(@"g.""InitiatorId""", filter.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment.id)
-                .FilterA(@"ic.""Hash""", filter.initiatorCommitment.hash)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment.id)
-                .FilterA(@"oc.""Hash""", filter.opponentCommitment.hash)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment?.id)
+                .FilterA(@"ic.""Hash""", filter.initiatorCommitment?.hash)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment?.id)
+                .FilterA(@"oc.""Hash""", filter.opponentCommitment?.hash)
                 .FilterA(@"g.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"g.""FirstLevel""", filter.firstTime)
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
