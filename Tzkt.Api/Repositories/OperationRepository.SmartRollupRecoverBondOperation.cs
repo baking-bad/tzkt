@@ -98,8 +98,8 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
-                Rollup = Accounts.GetAlias(row.SmartRollupId),
-                Staker = Accounts.GetAlias(row.StakerId),
+                Rollup = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId),
+                Staker = row.StakerId == null ? null : Accounts.GetAlias(row.StakerId),
                 Bond = row.Bond,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -176,27 +176,27 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "rollup":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId);
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId);
                         break;
                     case "rollup.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId).Name;
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId).Name;
                         break;
                     case "rollup.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.SmartRollupId).Address;
+                            result[j++][i] = row.SmartRollupId == null ? null : Accounts.GetAlias(row.SmartRollupId).Address;
                         break;
                     case "staker":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.StakerId);
+                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias(row.StakerId);
                         break;
                     case "staker.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.StakerId).Name;
+                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias(row.StakerId).Name;
                         break;
                     case "staker.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.StakerId).Address;
+                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias(row.StakerId).Address;
                         break;
                     case "bond":
                         foreach (var row in rows)
