@@ -14,7 +14,7 @@
             "NetXnHfVqm9iesp" => "ghostnet",
             "NetXi2ZagzEsXbZ" => "kathmandunet",
             "NetXizpkH94bocH" => "limanet",
-            "NetXQw6nWSnrJ5t" => "mumbainet",
+            "NetXgbcrNtXD2yA" => "mumbainet",
             _ => "private"
         };
     }

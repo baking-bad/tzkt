@@ -83,6 +83,7 @@ namespace Tzkt.Sync
                 "PtKathmankSpLLDALzWw7CGD2j2MtyveTwboEYokqUCP4a1LxMg" => services.GetRequiredService<Proto14Handler>(),
                 "PtLimaPtLMwfNinJi9rCfDPWea8dFgTZ1MeJ9f1m2SRic6ayiwW" => services.GetRequiredService<Proto15Handler>(),
                 "PtMumbaiiFFEGbew1rRjzSPyzRbA51Tm3RVZL5suHPxSZYDhCEc" => services.GetRequiredService<Proto16Handler>(),
+                "PtMumbai2TmsJHNGRkD8v8YDbtao7BLUC3wjASn1inAKLFCjaH1" => services.GetRequiredService<Proto16Handler>(),
                 _ => null,
             };
         }
