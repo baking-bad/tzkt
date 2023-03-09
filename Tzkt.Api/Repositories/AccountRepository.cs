@@ -309,6 +309,8 @@ namespace Tzkt.Api.Repositories
                         ExecutedCommitments = rollup.ExecutedCommitments,
                         GenesisCommitment = rollup.GenesisCommitment,
                         InboxLevel = rollup.InboxLevel,
+                        TotalStakers = rollup.TotalStakers,
+                        ActiveStakers = rollup.ActiveStakers,
                         LastCommitment = rollup.LastCommitment,
                         OrphanCommitments = rollup.OrphanCommitments,
                         PendingCommitments = rollup.PendingCommitments,
@@ -674,6 +676,8 @@ namespace Tzkt.Api.Repositories
                             ExecutedCommitments = row.ExecutedCommitments,
                             GenesisCommitment = row.GenesisCommitment,
                             InboxLevel = row.InboxLevel,
+                            TotalStakers = row.TotalStakers,
+                            ActiveStakers = row.ActiveStakers,
                             LastCommitment = row.LastCommitment,
                             OrphanCommitments = row.OrphanCommitments,
                             PendingCommitments = row.PendingCommitments,
@@ -795,6 +799,8 @@ namespace Tzkt.Api.Repositories
                     case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
                     case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
                     case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
+                    case "totalStakers": columns.Add(@"""TotalStakers"""); break;
+                    case "activeStakers": columns.Add(@"""ActiveStakers"""); break;
                     case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
                     case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
                     case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
@@ -1200,6 +1206,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.InboxLevel;
                         break;
+                    case "totalStakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalStakers;
+                        break;
+                    case "activeStakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveStakers;
+                        break;
                     case "executedCommitments":
                         foreach (var row in rows)
                             result[j++][i] = row.ExecutedCommitments;
@@ -1331,6 +1345,8 @@ namespace Tzkt.Api.Repositories
                 case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
                 case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
                 case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
+                case "totalStakers": columns.Add(@"""TotalStakers"""); break;
+                case "activeStakers": columns.Add(@"""ActiveStakers"""); break;
                 case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
                 case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
                 case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
@@ -1731,6 +1747,14 @@ namespace Tzkt.Api.Repositories
                 case "inboxLevel":
                     foreach (var row in rows)
                         result[j++] = row.InboxLevel;
+                    break;
+                case "totalStakers":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalStakers;
+                    break;
+                case "activeStakers":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveStakers;
                     break;
                 case "executedCommitments":
                     foreach (var row in rows)

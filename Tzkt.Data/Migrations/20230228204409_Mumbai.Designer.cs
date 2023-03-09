@@ -4876,6 +4876,9 @@ namespace Tzkt.Data.Migrations
                 {
                     b.HasBaseType("Tzkt.Data.Models.Account");
 
+                    b.Property<int>("ActiveStakers")
+                        .HasColumnType("integer");
+
                     b.Property<int>("CementedCommitments")
                         .HasColumnType("integer");
 
@@ -4906,6 +4909,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("RefutedCommitments")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TotalStakers")
                         .HasColumnType("integer");
 
                     b.HasIndex("CreatorId");

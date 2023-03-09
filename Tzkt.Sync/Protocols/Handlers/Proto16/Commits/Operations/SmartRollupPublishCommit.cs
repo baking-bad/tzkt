@@ -103,6 +103,22 @@ namespace Tzkt.Sync.Protocols.Proto16
                     sender.SmartRollupBonds += operation.Bond;
                     rollup.SmartRollupBonds += operation.Bond;
 
+                    var uniqueStakers = (await Db.SmartRollupPublishOps.AsNoTracking()
+                        .Where(x => x.SmartRollupId == rollup.Id && x.BondStatus != null)
+                        .Select(x => x.SenderId)
+                        .Distinct()
+                        .ToListAsync())
+                        .ToHashSet();
+
+                    if (block.SmartRollupPublishOps != null)
+                        foreach (var publish in block.SmartRollupPublishOps.Where(x => x.SmartRollupId == rollup.Id))
+                            uniqueStakers.Add(publish.SenderId);
+
+                    uniqueStakers.Add(operation.SenderId);
+
+                    rollup.TotalStakers = uniqueStakers.Count;
+                    rollup.ActiveStakers++;
+
                     operation.BondStatus = SmartRollupBondStatus.Active;
                 }
 
@@ -211,8 +227,20 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.SmartRollupBonds -= operation.Bond;
-                rollup.SmartRollupBonds -= operation.Bond;
+                if (operation.Bond != 0)
+                {
+                    sender.SmartRollupBonds -= operation.Bond;
+                    rollup.SmartRollupBonds -= operation.Bond;
+
+                    var uniqueStakers = await Db.SmartRollupPublishOps.AsNoTracking()
+                        .Where(x => x.SmartRollupId == rollup.Id && x.BondStatus != null && x.Id < operation.Id)
+                        .Select(x => x.SenderId)
+                        .Distinct()
+                        .CountAsync();
+
+                    rollup.TotalStakers = uniqueStakers;
+                    rollup.ActiveStakers--;
+                }
 
                 if (commitment.Stakers == 1 && operation.Flags.HasFlag(SmartRollupPublishFlags.AddStaker))
                 {
