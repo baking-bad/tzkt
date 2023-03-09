@@ -94,6 +94,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 staker.SmartRollupBonds -= operation.Bond;
                 rollup.SmartRollupBonds -= operation.Bond;
+                rollup.ActiveStakers--;
 
                 var bondOp = block.SmartRollupPublishOps?
                     .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId)
@@ -136,6 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 staker.SmartRollupBonds += operation.Bond;
                 rollup.SmartRollupBonds += operation.Bond;
+                rollup.ActiveStakers++;
 
                 var bondOp = await Db.SmartRollupPublishOps
                     .OrderByDescending(x => x.Id)

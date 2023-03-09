@@ -142,6 +142,12 @@ namespace Tzkt.Data.Migrations
                 defaultValue: 0);
 
             migrationBuilder.AddColumn<int>(
+                name: "ActiveStakers",
+                table: "Accounts",
+                type: "integer",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
                 name: "CementedCommitments",
                 table: "Accounts",
                 type: "integer",
@@ -264,6 +270,12 @@ namespace Tzkt.Data.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
+
+            migrationBuilder.AddColumn<int>(
+                name: "TotalStakers",
+                table: "Accounts",
+                type: "integer",
+                nullable: true);
 
             migrationBuilder.CreateTable(
                 name: "InboxMessages",
@@ -969,6 +981,10 @@ namespace Tzkt.Data.Migrations
                 table: "Accounts");
 
             migrationBuilder.DropColumn(
+                name: "ActiveStakers",
+                table: "Accounts");
+
+            migrationBuilder.DropColumn(
                 name: "CementedCommitments",
                 table: "Accounts");
 
@@ -1042,6 +1058,10 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropColumn(
                 name: "SmartRollupsCount",
+                table: "Accounts");
+
+            migrationBuilder.DropColumn(
+                name: "TotalStakers",
                 table: "Accounts");
 
             migrationBuilder.AlterColumn<string>(

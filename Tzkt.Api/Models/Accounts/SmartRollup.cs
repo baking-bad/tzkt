@@ -50,6 +50,16 @@ namespace Tzkt.Api.Models
         public int InboxLevel { get; set; }
 
         /// <summary>
+        /// Total number of stakers.
+        /// </summary>
+        public int TotalStakers { get; set; }
+
+        /// <summary>
+        /// Total number of active stakers.
+        /// </summary>
+        public int ActiveStakers { get; set; }
+
+        /// <summary>
         /// Number of commitments that were cemented and executed
         /// </summary>
         public int ExecutedCommitments { get; set; }

@@ -209,6 +209,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.InitiatorLoss = -initiatorChange;
                             initiator.SmartRollupBonds += initiatorChange;
                             rollup.SmartRollupBonds += initiatorChange;
+                            rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, initiator, block);
                             bondOp.BondStatus = SmartRollupBondStatus.Lost;
@@ -246,6 +247,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.OpponentLoss = -opponentChange;
                             opponent.SmartRollupBonds += opponentChange;
                             rollup.SmartRollupBonds += opponentChange;
+                            rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, opponent, block);
                             bondOp.BondStatus = SmartRollupBondStatus.Lost;
@@ -385,6 +387,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.InitiatorLoss = null;
                             initiator.SmartRollupBonds -= initiatorChange;
                             rollup.SmartRollupBonds -= initiatorChange;
+                            rollup.ActiveStakers++;
 
                             var bondOp = await GetBondOperation(rollup.Id, initiator.Id);
                             bondOp.BondStatus = SmartRollupBondStatus.Active;
@@ -422,6 +425,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                             game.OpponentLoss = null;
                             opponent.SmartRollupBonds -= opponentChange;
                             rollup.SmartRollupBonds -= opponentChange;
+                            rollup.ActiveStakers++;
 
                             var bondOp = await GetBondOperation(rollup.Id, opponent.Id);
                             bondOp.BondStatus = SmartRollupBondStatus.Active;
