@@ -3300,6 +3300,15 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Counter")
                         .HasColumnType("integer");
 
+                    b.Property<long?>("DissectionEnd")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("DissectionStart")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("DissectionSteps")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Errors")
                         .HasColumnType("text");
 

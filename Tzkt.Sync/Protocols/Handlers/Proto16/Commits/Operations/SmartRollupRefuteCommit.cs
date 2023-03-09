@@ -114,6 +114,17 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (game != null)
                 game.LastLevel = operation.Level;
 
+            if (operation.Move == RefutationMove.Dissection)
+            {
+                var steps = content.Required("refutation").RequiredArray("step").EnumerateArray();
+                if (steps.Any())
+                {
+                    operation.DissectionStart = steps.First().RequiredInt64("tick");
+                    operation.DissectionEnd = steps.Last().RequiredInt64("tick");
+                    operation.DissectionSteps = steps.Count();
+                }
+            }
+
             Cache.AppState.Get().SmartRollupRefuteOpsCount++;
             #endregion
 

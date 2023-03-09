@@ -65,6 +65,9 @@ namespace Tzkt.Api.Repositories
                 o."GameId" as "gId",
                 o."Move",
                 o."GameStatus",
+                o."DissectionStart",
+                o."DissectionEnd",
+                o."DissectionSteps",
                 o."Errors",
                 o."Level",
 
@@ -217,6 +220,9 @@ namespace Tzkt.Api.Repositories
                             break;
                         case "move": columns.Add(@"o.""Move"""); break;
                         case "gameStatus": columns.Add(@"o.""GameStatus"""); break;
+                        case "dissectionStart": columns.Add(@"o.""DissectionStart"""); break;
+                        case "dissectionEnd": columns.Add(@"o.""DissectionEnd"""); break;
+                        case "dissectionSteps": columns.Add(@"o.""DissectionSteps"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
                     }
@@ -313,6 +319,9 @@ namespace Tzkt.Api.Repositories
                 },
                 Move = RefutationMoves.ToString((int)row.Move),
                 GameStatus = RefutationGameStatuses.ToString((int)row.GameStatus),
+                DissectionStart = row.DissectionStart,
+                DissectionEnd = row.DissectionEnd,
+                DissectionSteps = row.DissectionSteps,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -592,6 +601,18 @@ namespace Tzkt.Api.Repositories
                     case "gameStatus":
                         foreach (var row in rows)
                             result[j++][i] = RefutationGameStatuses.ToString((int)row.GameStatus);
+                        break;
+                    case "dissectionStart":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DissectionStart;
+                        break;
+                    case "dissectionEnd":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DissectionEnd;
+                        break;
+                    case "dissectionSteps":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DissectionSteps;
                         break;
                     case "errors":
                         foreach (var row in rows)
