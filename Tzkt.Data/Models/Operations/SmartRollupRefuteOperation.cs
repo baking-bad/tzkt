@@ -9,6 +9,9 @@ namespace Tzkt.Data.Models
         public int? GameId { get; set; }
         public RefutationMove Move { get; set; }
         public RefutationGameStatus GameStatus { get; set; }
+        public long? DissectionStart { get; set; }
+        public long? DissectionEnd { get; set; }
+        public int? DissectionSteps { get; set; }
     }
 
     public enum RefutationMove

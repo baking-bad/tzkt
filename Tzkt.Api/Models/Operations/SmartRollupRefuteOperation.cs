@@ -87,6 +87,21 @@
         public string GameStatus { get; set; }
 
         /// <summary>
+        /// The first tick in the dissection range. This field is `null` if `move` is not `dissection.
+        /// </summary>
+        public long? DissectionStart { get; set; }
+
+        /// <summary>
+        /// The last tick in the dissection range. This field is `null` if `move` is not `dissection.
+        /// </summary>
+        public long? DissectionEnd { get; set; }
+
+        /// <summary>
+        /// Total ticks in the dissection range. This field is `null` if `move` is not `dissection`.
+        /// </summary>
+        public int? DissectionSteps { get; set; }
+
+        /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
         public List<OperationError> Errors { get; set; }
