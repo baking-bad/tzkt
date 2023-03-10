@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Dapper;
+using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -815,6 +816,217 @@ namespace Tzkt.Api.Repositories
                     case "opponentLoss":
                         foreach (var row in rows)
                             result[j++][i] = row.OpponentLoss;
+                        break;
+                }
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region inbox
+        async Task<IEnumerable<dynamic>> QueryInboxMessagesAsync(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField> fields = null)
+        {
+            var select = """
+                m."Id",
+                m."Level",
+                m."Type",
+                m."Payload",
+
+                p."Hash" as "pHash",
+                p."Timestamp" as "pTimestamp",
+                
+                t."InitiatorId" as "tInitiatorId",
+                t."SenderId" as "tSenderId",
+                t."TargetId" as "tTargetId",
+                t."Entrypoint" as "tEntrypoint",
+                t."RawParameters" as "tRawParameters",
+                t."JsonParameters" as "tJsonParameters"
+            """;
+
+            if (fields != null)
+            {
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "id": columns.Add(@"m.""Id"""); break;
+                        case "level": columns.Add(@"m.""Level"""); break;
+                        case "timestamp": columns.Add(@"m.""Level"""); break;
+                        case "type": columns.Add(@"m.""Type"""); break;
+                        case "payload": columns.Add(@"m.""Payload"""); break;
+
+                        case "predecessorHash": columns.Add(@"p.""Hash"" as ""pHash"""); break;
+                        case "predecessorTimestamp": columns.Add(@"p.""Timestamp"" as ""pTimestamp"""); break;
+
+                        case "initiator": columns.Add(@"t.""InitiatorId"" as ""tInitiatorId"""); break;
+                        case "sender": columns.Add(@"t.""SenderId"" as ""tSenderId"""); break;
+                        case "target": columns.Add(@"t.""TargetId"" as ""tTargetId"""); break;
+                        case "entrypoint": columns.Add(@"t.""Entrypoint"" as ""tEntrypoint"""); break;
+                        case "parameter":
+                            columns.Add(micheline < MichelineFormat.RawString
+                                ? @"t.""JsonParameters"" as ""tJsonParameters"""
+                                : @"t.""RawParameters"" as ""tRawParameters""");
+                            break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            var sql = new SqlBuilder($@"
+                SELECT {select} FROM ""InboxMessages"" as m
+                LEFT JOIN ""Blocks"" AS p ON p.""Level"" = m.""PredecessorLevel""
+                LEFT JOIN ""TransactionOps"" AS t ON t.""Id"" = m.""OperationId""")
+                .FilterA(@"m.""Id""", filter.id)
+                .FilterA(@"m.""Level""", filter.level)
+                .FilterA(@"m.""Level""", filter.timestamp)
+                .FilterA(@"m.""Type""", filter.type)
+                .Take(pagination, x => x switch
+                {
+                    "id" => (@"m.""Id""", @"m.""Id"""),
+                    "level" => (@"m.""Level""", @"m.""Level"""),
+                    _ => (@"m.""Id""", @"m.""Id""")
+                }, @"m.""Id""");
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
+        public async Task<int> GetInboxMessagesCount(SrMessageFilter filter)
+        {
+            var sql = new SqlBuilder(@"
+                SELECT COUNT(*) FROM ""InboxMessages"" as m")
+                .FilterA(@"m.""Id""", filter.id)
+                .FilterA(@"m.""Level""", filter.level)
+                .FilterA(@"m.""Level""", filter.timestamp)
+                .FilterA(@"m.""Type""", filter.type);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<SrMessage>> GetInboxMessages(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline)
+        {
+            var rows = await QueryInboxMessagesAsync(filter, pagination, micheline);
+            return rows.Select(row => new SrMessage
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = Times[(int)row.Level],
+                Type = SrMessageTypes.ToString((int)row.Type),
+                PredecessorHash = row.pHash,
+                PredecessorTimestamp = row.pTimestamp,
+                Initiator = row.tInitiatorId is int initiatorId ? Accounts.GetAlias(initiatorId) : null,
+                Sender = row.tSenderId is int senderId ? Accounts.GetAlias(senderId) : null,
+                Target = row.tTargetId is int targetId ? Accounts.GetAlias(targetId) : null,
+                Entrypoint = row.tEntrypoint,
+                Parameter = micheline switch
+                {
+                    MichelineFormat.Json => (RawJson)row.tJsonParameters,
+                    MichelineFormat.JsonString => row.tJsonParameters,
+                    MichelineFormat.Raw => row.tRawParameters == null ? null : (RawJson)Micheline.ToJson(row.tRawParameters),
+                    MichelineFormat.RawString => row.tRawParameters == null ? null : Micheline.ToJson(row.tRawParameters),
+                    _ => throw new Exception("Invalid MichelineFormat value")
+                },
+                Payload = row.Payload,
+            });
+        }
+
+        public async Task<object[][]> GetInboxMessages(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField> fields)
+        {
+            var rows = await QueryInboxMessagesAsync(filter, pagination, micheline, fields);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Count];
+
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
+            {
+                switch (fields[i].Full)
+                {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
+                    case "level":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Level;
+                        break;
+                    case "timestamp":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.Level];
+                        break;
+                    case "type":
+                        foreach (var row in rows)
+                            result[j++][i] = SrMessageTypes.ToString((int)row.Type);
+                        break;
+                    case "predecessorHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.pHash;
+                        break;
+                    case "predecessorTimestamp":
+                        foreach (var row in rows)
+                            result[j++][i] = row.pTimestamp;
+                        break;
+                    case "initiator":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tInitiatorId is int initiatorId ? Accounts.GetAlias(initiatorId) : null;
+                        break;
+                    case "initiator.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tInitiatorId is int initiatorId ? Accounts.GetAlias(initiatorId).Name : null;
+                        break;
+                    case "initiator.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tInitiatorId is int initiatorId ? Accounts.GetAlias(initiatorId).Address : null;
+                        break;
+                    case "sender":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tSenderId is int senderId ? Accounts.GetAlias(senderId) : null;
+                        break;
+                    case "sender.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tSenderId is int senderId ? Accounts.GetAlias(senderId).Name : null;
+                        break;
+                    case "sender.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tSenderId is int senderId ? Accounts.GetAlias(senderId).Address : null;
+                        break;
+                    case "target":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTargetId is int targetId ? Accounts.GetAlias(targetId) : null;
+                        break;
+                    case "target.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTargetId is int targetId ? Accounts.GetAlias(targetId).Name : null;
+                        break;
+                    case "target.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTargetId is int targetId ? Accounts.GetAlias(targetId).Address : null;
+                        break;
+                    case "entrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tEntrypoint;
+                        break;
+                    case "parameter":
+                        foreach (var row in rows)
+                            result[j++][i] = micheline switch
+                            {
+                                MichelineFormat.Json => (RawJson)row.tJsonParameters,
+                                MichelineFormat.JsonString => row.tJsonParameters,
+                                MichelineFormat.Raw => row.tRawParameters == null ? null : (RawJson)Micheline.ToJson(row.tRawParameters),
+                                MichelineFormat.RawString => row.tRawParameters == null ? null : Micheline.ToJson(row.tRawParameters),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
+                        break;
+                    case "payload":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Payload;
                         break;
                 }
             }

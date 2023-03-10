@@ -370,6 +370,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, SrMessageTypeParameter type)
+        {
+            if (type == null) return this;
+
+            if (type.Eq != null)
+                AppendFilter($"{column} = {type.Eq}");
+
+            if (type.Ne != null)
+                AppendFilter($"{column} != {type.Ne}");
+
+            if (type.In != null)
+                AppendFilter($"{column} = ANY ({Param(type.In)})");
+
+            if (type.Ni != null && type.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(type.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, OperationStatusParameter status)
         {
             if (status == null) return this;
