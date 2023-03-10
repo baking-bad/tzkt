@@ -1741,7 +1741,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OperationId");
 
-                    b.HasIndex("Type");
+                    b.HasIndex("Type", "Id");
 
                     b.ToTable("InboxMessages");
                 });

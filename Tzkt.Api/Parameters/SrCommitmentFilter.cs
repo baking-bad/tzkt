@@ -9,7 +9,7 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64Parameter id { get; set; }
+        public Int32Parameter id { get; set; }
 
         /// <summary>
         /// Filter by initiator (an account published the commitment first).  

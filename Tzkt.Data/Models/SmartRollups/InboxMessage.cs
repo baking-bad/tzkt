@@ -17,7 +17,7 @@ namespace Tzkt.Data.Models
         LevelStart,
         LevelInfo,
         LevelEnd,
-        Internal,
+        Transfer,
         External
     }
 
@@ -35,7 +35,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<InboxMessage>()
-                .HasIndex(x => x.Type);
+                .HasIndex(x => new { x.Type, x.Id });
 
             modelBuilder.Entity<InboxMessage>()
                 .HasIndex(x => x.OperationId);

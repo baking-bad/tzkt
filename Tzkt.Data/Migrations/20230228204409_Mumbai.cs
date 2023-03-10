@@ -653,9 +653,9 @@ namespace Tzkt.Data.Migrations
                 column: "OperationId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_InboxMessages_Type",
+                name: "IX_InboxMessages_Type_Id",
                 table: "InboxMessages",
-                column: "Type");
+                columns: new[] { "Type", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RefutationGames_FirstLevel",

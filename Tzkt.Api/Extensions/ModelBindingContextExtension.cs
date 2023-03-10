@@ -1319,6 +1319,66 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetSrMessageType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!SrMessageTypes.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid inbox message type.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetSrMessageTypeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!SrMessageTypes.TryParse(rawValue, out var status))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid inbox message type.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(status);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetOperationStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

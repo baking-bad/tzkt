@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                 if (payload == null)
                 {
-                    writer.Write((int)InboxMessageType.Internal, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((int)InboxMessageType.Transfer, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.WriteNull();
                     writer.Write(operationId, NpgsqlTypes.NpgsqlDbType.Bigint);
                     writer.WriteNull();
