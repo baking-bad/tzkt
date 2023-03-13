@@ -401,6 +401,129 @@ namespace Tzkt.Api.Repositories
         }
         #endregion
 
+        #region stakers
+        async Task<IEnumerable<dynamic>> QueryStakersAsync(RawSmartRollup rollup, SrStakerFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        {
+            var select = """
+                s."SenderId",
+                s."BondStatus",
+                s."Level"
+            """;
+
+            if (fields != null)
+            {
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "id": columns.Add(@"s.""SenderId"""); break;
+                        case "alias": columns.Add(@"s.""SenderId"""); break;
+                        case "address": columns.Add(@"s.""SenderId"""); break;
+                        case "bondStatus": columns.Add(@"s.""BondStatus"""); break;
+                        case "bondLevel": columns.Add(@"s.""Level"""); break;
+                        case "bondTime": columns.Add(@"s.""Level"""); break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            var sql = new SqlBuilder($"""
+                SELECT {select}
+                FROM (
+                    SELECT DISTINCT ON (("SmartRollupId", "SenderId"))
+                	    "SenderId",
+                	    "BondStatus",
+                	    "Level"
+                    FROM "SmartRollupPublishOps"
+                    WHERE "SmartRollupId" = {rollup.Id} AND "BondStatus" IS NOT NULL
+                    ORDER BY ("SmartRollupId", "SenderId") ASC, "Id" DESC
+                ) AS s
+                LEFT JOIN "Accounts" AS a ON a."Id" = s."SenderId"
+                """)
+                .FilterA(@"s.""SenderId""", filter.id)
+                .FilterA(@"a.""Address""", filter.address)
+                .FilterA(@"s.""BondStatus""", filter.bondStatus)
+                .Take(pagination, x => x switch
+                {
+                    "id" => (@"s.""SenderId""", @"s.""SenderId"""),
+                    "bondLevel" => (@"s.""Level""", @"s.""Level"""),
+                    _ => (@"s.""SenderId""", @"s.""SenderId""")
+                }, @"s.""SenderId""");
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<SrStaker>> GetStakers(string address, SrStakerFilter filter, Pagination pagination)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return Enumerable.Empty<SrStaker>();
+
+            var rows = await QueryStakersAsync(rollup, filter, pagination);
+            return rows.Select(row => new SrStaker
+            {
+                Id = row.SenderId,
+                Name = Accounts.GetAlias((int)row.SenderId).Name,
+                Address = Accounts.GetAlias((int)row.SenderId).Address,
+                BondStatus = SrBondStatuses.ToString((int)row.BondStatus),
+                BondLevel = row.Level,
+                BondTime = Times[(int)row.Level]
+            });
+        }
+
+        public async Task<object[][]> GetStakers(string address, SrStakerFilter filter, Pagination pagination, List<SelectionField> fields)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return Array.Empty<object[]>();
+
+            var rows = await QueryStakersAsync(rollup, filter, pagination);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Count];
+
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
+            {
+                switch (fields[i].Full)
+                {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SenderId;
+                        break;
+                    case "alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias((int)row.SenderId).Name;
+                        break;
+                    case "address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias((int)row.SenderId).Address;
+                        break;
+                    case "bondStatus":
+                        foreach (var row in rows)
+                            result[j++][i] = SrBondStatuses.ToString((int)row.BondStatus);
+                        break;
+                    case "bondLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Level;
+                        break;
+                    case "bondTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.Level];
+                        break;
+                }
+            }
+
+            return result;
+        }
+        #endregion
+
         #region commitments
         async Task<IEnumerable<dynamic>> QueryCommitmentsAsync(SrCommitmentFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {

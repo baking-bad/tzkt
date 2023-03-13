@@ -91,6 +91,39 @@ namespace Tzkt.Api.Controllers
 
             return this.Bytes(res);
         }
+
+        /// <summary>
+        /// Get smart rollup stakers
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollup stakers.
+        /// </remarks>
+        /// <param name="address">Smart rollup address</param>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <returns></returns>
+        [HttpGet("{address}/stakers")]
+        public async Task<ActionResult<IEnumerable<SrStaker>>> GetSmartRollupStakers(
+            [Address] string address,
+            [FromQuery] SrStakerFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await SmartRollups.GetStakers(address, filter, pagination)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await SmartRollups.GetStakers(address, filter, pagination, selection)
+                    });
+
+            return this.Bytes(res);
+        }
         #endregion
 
         #region commitments
