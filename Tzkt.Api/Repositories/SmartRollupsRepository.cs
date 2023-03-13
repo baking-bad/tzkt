@@ -17,6 +17,390 @@ namespace Tzkt.Api.Repositories
             Times = times;
         }
 
+        #region rollups
+        async Task<IEnumerable<dynamic>> QuerySmartRollupsAsync(SrFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        {
+            var select = """
+                r."Id",
+                r."Address",
+                r."Extras" #>> '{profile,alias}' as "Alias",
+                r."CreatorId",
+                r."PvmKind",
+                r."GenesisCommitment",
+                r."LastCommitment",
+                r."InboxLevel",
+                r."TotalStakers",
+                r."ActiveStakers",
+                r."ExecutedCommitments",
+                r."CementedCommitments",
+                r."PendingCommitments",
+                r."RefutedCommitments",
+                r."OrphanCommitments",
+                r."SmartRollupBonds",
+                r."ActiveTokensCount",
+                r."TokenBalancesCount",
+                r."TokenTransfersCount",
+                r."TransactionsCount",
+                r."TransferTicketCount",
+                r."SmartRollupCementCount",
+                r."SmartRollupExecuteCount",
+                r."SmartRollupOriginateCount",
+                r."SmartRollupPublishCount",
+                r."SmartRollupRecoverBondCount",
+                r."SmartRollupRefuteCount",
+                r."RefutationGamesCount",
+                r."ActiveRefutationGamesCount",
+                r."FirstLevel",
+                r."LastLevel"
+            """;
+
+            if (fields != null)
+            {
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "id": columns.Add(@"r.""Id"""); break;
+                        case "address": columns.Add(@"r.""Address"""); break;
+                        case "alias": columns.Add(@"r.""Extras"" #>> '{profile,alias}' as ""Alias"""); break;
+                        case "creator": columns.Add(@"r.""CreatorId"""); break;
+                        case "pvmKind": columns.Add(@"r.""PvmKind"""); break;
+                        case "genesisCommitment": columns.Add(@"r.""GenesisCommitment"""); break;
+                        case "lastCommitment": columns.Add(@"r.""LastCommitment"""); break;
+                        case "inboxLevel": columns.Add(@"r.""InboxLevel"""); break;
+                        case "totalStakers": columns.Add(@"r.""TotalStakers"""); break;
+                        case "activeStakers": columns.Add(@"r.""ActiveStakers"""); break;
+                        case "executedCommitments": columns.Add(@"r.""ExecutedCommitments"""); break;
+                        case "cementedCommitments": columns.Add(@"r.""CementedCommitments"""); break;
+                        case "pendingCommitments": columns.Add(@"r.""PendingCommitments"""); break;
+                        case "refutedCommitments": columns.Add(@"r.""RefutedCommitments"""); break;
+                        case "orphanCommitments": columns.Add(@"r.""OrphanCommitments"""); break;
+                        case "smartRollupBonds": columns.Add(@"r.""SmartRollupBonds"""); break;
+                        case "activeTokensCount": columns.Add(@"r.""ActiveTokensCount"""); break;
+                        case "tokenBalancesCount": columns.Add(@"r.""TokenBalancesCount"""); break;
+                        case "tokenTransfersCount": columns.Add(@"r.""TokenTransfersCount"""); break;
+                        case "numTransactions": columns.Add(@"r.""TransactionsCount"""); break;
+                        case "transferTicketCount": columns.Add(@"r.""TransferTicketCount"""); break;
+                        case "smartRollupCementCount": columns.Add(@"r.""SmartRollupCementCount"""); break;
+                        case "smartRollupExecuteCount": columns.Add(@"r.""SmartRollupExecuteCount"""); break;
+                        case "smartRollupOriginateCount": columns.Add(@"r.""SmartRollupOriginateCount"""); break;
+                        case "smartRollupPublishCount": columns.Add(@"r.""SmartRollupPublishCount"""); break;
+                        case "smartRollupRecoverBondCount": columns.Add(@"r.""SmartRollupRecoverBondCount"""); break;
+                        case "smartRollupRefuteCount": columns.Add(@"r.""SmartRollupRefuteCount"""); break;
+                        case "refutationGamesCount": columns.Add(@"r.""RefutationGamesCount"""); break;
+                        case "activeRefutationGamesCount": columns.Add(@"r.""ActiveRefutationGamesCount"""); break;
+                        case "firstActivity": columns.Add(@"r.""FirstLevel"""); break;
+                        case "firstActivityTime": columns.Add(@"r.""FirstLevel"""); break;
+                        case "lastActivity": columns.Add(@"r.""LastLevel"""); break;
+                        case "lastActivityTime": columns.Add(@"r.""LastLevel"""); break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            var sql = new SqlBuilder($@"
+                SELECT {select} FROM ""Accounts"" as r")
+                .FilterA(@"r.""Type""", (int)Data.Models.AccountType.SmartRollup)
+                .FilterA(@"r.""Id""", filter.id)
+                .FilterA(@"r.""Address""", filter.address)
+                .FilterA(@"r.""CreatorId""", filter.creator)
+                .FilterA(@"r.""FirstLevel""", filter.firstActivity)
+                .FilterA(@"r.""FirstLevel""", filter.firstActivityTime)
+                .FilterA(@"r.""LastLevel""", filter.lastActivity)
+                .FilterA(@"r.""LastLevel""", filter.lastActivityTime)
+                .Take(pagination, x => x switch
+                {
+                    "id" => (@"r.""Id""", @"r.""Id"""),
+                    "firstActivity" => (@"r.""FirstLevel""", @"r.""FirstLevel"""),
+                    "lastActivity" => (@"r.""LastLevel""", @"r.""LastLevel"""),
+                    "inboxLevel" => (@"r.""InboxLevel""", @"r.""InboxLevel"""),
+                    "totalStakers" => (@"r.""TotalStakers""", @"r.""TotalStakers"""),
+                    "activeStakers" => (@"r.""ActiveStakers""", @"r.""ActiveStakers"""),
+                    "executedCommitments" => (@"r.""ExecutedCommitments""", @"r.""ExecutedCommitments"""),
+                    "cementedCommitments" => (@"r.""CementedCommitments""", @"r.""CementedCommitments"""),
+                    "pendingCommitments" => (@"r.""PendingCommitments""", @"r.""PendingCommitments"""),
+                    "refutedCommitments" => (@"r.""RefutedCommitments""", @"r.""RefutedCommitments"""),
+                    "orphanCommitments" => (@"r.""OrphanCommitments""", @"r.""OrphanCommitments"""),
+                    "numTransactions" => (@"r.""TransactionsCount""", @"r.""TransactionsCount"""),
+                    _ => (@"r.""Id""", @"r.""Id""")
+                }, @"r.""Id""");
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
+        public async Task<int> GetSmartRollupsCount(SrFilter filter)
+        {
+            var sql = new SqlBuilder(@"
+                SELECT COUNT(*) FROM ""Accounts"" as r")
+                .FilterA(@"r.""Type""", (int)Data.Models.AccountType.SmartRollup)
+                .FilterA(@"r.""Id""", filter.id)
+                .FilterA(@"r.""Address""", filter.address)
+                .FilterA(@"r.""CreatorId""", filter.creator)
+                .FilterA(@"r.""FirstLevel""", filter.firstActivity)
+                .FilterA(@"r.""FirstLevel""", filter.firstActivityTime)
+                .FilterA(@"r.""LastLevel""", filter.lastActivity)
+                .FilterA(@"r.""LastLevel""", filter.lastActivityTime);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
+        public async Task<SmartRollup> GetSmartRollup(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return null;
+
+            return new SmartRollup()
+            {
+                Id = rollup.Id,
+                Address = rollup.Address,
+                Alias = rollup.Alias,
+                Creator = Accounts.GetAlias(rollup.CreatorId),
+                PvmKind = PvmKinds.ToString(rollup.PvmKind),
+                GenesisCommitment = rollup.GenesisCommitment,
+                LastCommitment = rollup.LastCommitment,
+                InboxLevel = rollup.InboxLevel,
+                TotalStakers = rollup.TotalStakers,
+                ActiveStakers = rollup.ActiveStakers,
+                ExecutedCommitments = rollup.ExecutedCommitments,
+                CementedCommitments = rollup.CementedCommitments,
+                PendingCommitments = rollup.PendingCommitments,
+                RefutedCommitments = rollup.RefutedCommitments,
+                OrphanCommitments = rollup.OrphanCommitments,
+                SmartRollupBonds = rollup.SmartRollupBonds,
+                ActiveTokensCount = rollup.ActiveTokensCount,
+                TokenBalancesCount = rollup.TokenBalancesCount,
+                TokenTransfersCount = rollup.TokenTransfersCount,
+                NumTransactions = rollup.TransactionsCount,
+                TransferTicketCount = rollup.TransferTicketCount,
+                SmartRollupCementCount = rollup.SmartRollupCementCount,
+                SmartRollupExecuteCount = rollup.SmartRollupExecuteCount,
+                SmartRollupOriginateCount = rollup.SmartRollupOriginateCount,
+                SmartRollupPublishCount = rollup.SmartRollupPublishCount,
+                SmartRollupRecoverBondCount = rollup.SmartRollupRecoverBondCount,
+                SmartRollupRefuteCount = rollup.SmartRollupRefuteCount,
+                RefutationGamesCount = rollup.RefutationGamesCount,
+                ActiveRefutationGamesCount = rollup.ActiveRefutationGamesCount,
+                FirstActivity = rollup.FirstLevel,
+                FirstActivityTime = Times[rollup.LastLevel],
+                LastActivity = rollup.FirstLevel,
+                LastActivityTime = Times[rollup.LastLevel],
+                Extras = rollup.Extras
+            };
+        }
+
+        public async Task<IEnumerable<SmartRollup>> GetSmartRollups(SrFilter filter, Pagination pagination)
+        {
+            var rows = await QuerySmartRollupsAsync(filter, pagination);
+            return rows.Select(row => new SmartRollup
+            {
+                Id = row.Id,
+                Address = row.Address,
+                Alias = row.Alias,
+                Creator = Accounts.GetAlias((int)row.CreatorId),
+                PvmKind = PvmKinds.ToString((int)row.PvmKind),
+                GenesisCommitment = row.GenesisCommitment,
+                LastCommitment = row.LastCommitment,
+                InboxLevel = row.InboxLevel,
+                TotalStakers = row.TotalStakers,
+                ActiveStakers = row.ActiveStakers,
+                ExecutedCommitments = row.ExecutedCommitments,
+                CementedCommitments = row.CementedCommitments,
+                PendingCommitments = row.PendingCommitments,
+                RefutedCommitments = row.RefutedCommitments,
+                OrphanCommitments = row.OrphanCommitments,
+                SmartRollupBonds = row.SmartRollupBonds,
+                ActiveTokensCount = row.ActiveTokensCount,
+                TokenBalancesCount = row.TokenBalancesCount,
+                TokenTransfersCount = row.TokenTransfersCount,
+                NumTransactions = row.TransactionsCount,
+                TransferTicketCount = row.TransferTicketCount,
+                SmartRollupCementCount = row.SmartRollupCementCount,
+                SmartRollupExecuteCount = row.SmartRollupExecuteCount,
+                SmartRollupOriginateCount = row.SmartRollupOriginateCount,
+                SmartRollupPublishCount = row.SmartRollupPublishCount,
+                SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
+                SmartRollupRefuteCount = row.SmartRollupRefuteCount,
+                RefutationGamesCount = row.RefutationGamesCount,
+                ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
+                FirstActivity = row.FirstLevel,
+                FirstActivityTime = Times[(int)row.LastLevel],
+                LastActivity = row.FirstLevel,
+                LastActivityTime = Times[(int)row.LastLevel],
+                Extras = row.Extras
+            });
+        }
+
+        public async Task<object[][]> GetSmartRollups(SrFilter filter, Pagination pagination, List<SelectionField> fields)
+        {
+            var rows = await QuerySmartRollupsAsync(filter, pagination, fields);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Count];
+
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
+            {
+                switch (fields[i].Full)
+                {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
+                    case "address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Address;
+                        break;
+                    case "alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Alias;
+                        break;
+                    case "creator":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias((int)row.CreatorId);
+                        break;
+                    case "creator.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias((int)row.CreatorId).Name;
+                        break;
+                    case "creator.address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias((int)row.CreatorId).Address;
+                        break;
+                    case "pvmKind":
+                        foreach (var row in rows)
+                            result[j++][i] = PvmKinds.ToString((int)row.PvmKind);
+                        break;
+                    case "genesisCommitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.GenesisCommitment;
+                        break;
+                    case "lastCommitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastCommitment;
+                        break;
+                    case "inboxLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.InboxLevel;
+                        break;
+                    case "totalStakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalStakers;
+                        break;
+                    case "activeStakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveStakers;
+                        break;
+                    case "executedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExecutedCommitments;
+                        break;
+                    case "cementedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CementedCommitments;
+                        break;
+                    case "pendingCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.PendingCommitments;
+                        break;
+                    case "refutedCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RefutedCommitments;
+                        break;
+                    case "orphanCommitments":
+                        foreach (var row in rows)
+                            result[j++][i] = row.OrphanCommitments;
+                        break;
+                    case "smartRollupBonds":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupBonds;
+                        break;
+                    case "activeTokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTokensCount;
+                        break;
+                    case "tokenBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenBalancesCount;
+                        break;
+                    case "tokenTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokenTransfersCount;
+                        break;
+                    case "numTransactions":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransactionsCount;
+                        break;
+                    case "transferTicketCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransferTicketCount;
+                        break;
+                    case "smartRollupCementCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupCementCount;
+                        break;
+                    case "smartRollupExecuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupExecuteCount;
+                        break;
+                    case "smartRollupOriginateCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupOriginateCount;
+                        break;
+                    case "smartRollupPublishCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupPublishCount;
+                        break;
+                    case "smartRollupRecoverBondCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRecoverBondCount;
+                        break;
+                    case "smartRollupRefuteCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SmartRollupRefuteCount;
+                        break;
+                    case "refutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RefutationGamesCount;
+                        break;
+                    case "activeRefutationGamesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveRefutationGamesCount;
+                        break;
+                    case "firstActivity":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FirstLevel;
+                        break;
+                    case "firstActivityTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.FirstLevel];
+                        break;
+                    case "lastActivity":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastLevel;
+                        break;
+                    case "lastActivityTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.LastLevel];
+                        break;
+                    case "extras":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Extras;
+                        break;
+                }
+            }
+
+            return result;
+        }
+        #endregion
+
         #region commitments
         async Task<IEnumerable<dynamic>> QueryCommitmentsAsync(SrCommitmentFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {

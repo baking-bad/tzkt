@@ -115,11 +115,6 @@ namespace Tzkt.Api.Models
         public int TransferTicketCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_add_messages` operations related to the acount
-        /// </summary>
-        public int SmartRollupAddMessagesCount { get; set; }
-
-        /// <summary>
         /// Number of `smart_rollup_cement` operations related to the acount
         /// </summary>
         public int SmartRollupCementCount { get; set; }

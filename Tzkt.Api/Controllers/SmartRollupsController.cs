@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -20,6 +21,77 @@ namespace Tzkt.Api.Controllers
             State = state;
             ResponseCache = responseCache;
         }
+
+        #region rollups
+        /// <summary>
+        /// Get smart rollups count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of smnart rollups.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("count")]
+        public async Task<ActionResult<int>> GetSmartRollupsCount([FromQuery] SrFilter filter)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await SmartRollups.GetSmartRollupsCount(filter));
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollups
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of smart rollups.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <returns></returns>
+        [HttpGet("")]
+        public async Task<ActionResult<IEnumerable<SmartRollup>>> GetSmartRollups(
+            [FromQuery] SrFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await SmartRollups.GetSmartRollups(filter, pagination)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await SmartRollups.GetSmartRollups(filter, pagination, selection)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get smart rollup by address
+        /// </summary>
+        /// <remarks>
+        /// Returns a smart rollup with the specified address.
+        /// </remarks>
+        /// <param name="address">Smart rollup address</param>
+        /// <returns></returns>
+        [HttpGet("{address}")]
+        public async Task<ActionResult<SmartRollup>> GetSmartRollup([Address] string address)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await SmartRollups.GetSmartRollup(address));
+
+            return this.Bytes(res);
+        }
+        #endregion
 
         #region commitments
         /// <summary>
