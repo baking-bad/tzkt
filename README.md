@@ -260,6 +260,9 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Limanet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_limanet.backup
    - RPC node: https://rpc.tzkt.io/limanet/
+ - Mumbainet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_mumbainet.backup
+   - RPC node: https://rpc.tzkt.io/mumbainet/
 
 ### Testnets & docker
 

@@ -115,42 +115,42 @@ namespace Tzkt.Api.Models
         public int TransferTicketCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_cement` operations related to the acount
+        /// Number of `smart_rollup_cement` operations related to the account
         /// </summary>
         public int SmartRollupCementCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_execute_outbox_message` operations related to the acount
+        /// Number of `smart_rollup_execute_outbox_message` operations related to the account
         /// </summary>
         public int SmartRollupExecuteCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_originate` operations related to the acount
+        /// Number of `smart_rollup_originate` operations related to the account
         /// </summary>
         public int SmartRollupOriginateCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_publish` operations related to the acount
+        /// Number of `smart_rollup_publish` operations related to the account
         /// </summary>
         public int SmartRollupPublishCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_recover_bond` operations related to the acount
+        /// Number of `smart_rollup_recover_bond` operations related to the account
         /// </summary>
         public int SmartRollupRecoverBondCount { get; set; }
 
         /// <summary>
-        /// Number of `smart_rollup_refute` operations related to the acount
+        /// Number of `smart_rollup_refute` operations related to the account
         /// </summary>
         public int SmartRollupRefuteCount { get; set; }
 
         /// <summary>
-        /// Number of smart rollup refutation games related to the acount
+        /// Number of smart rollup refutation games related to the account
         /// </summary>
         public int RefutationGamesCount { get; set; }
 
         /// <summary>
-        /// Number of active smart rollup refutation games related to the acount
+        /// Number of active smart rollup refutation games related to the account
         /// </summary>
         public int ActiveRefutationGamesCount { get; set; }
 

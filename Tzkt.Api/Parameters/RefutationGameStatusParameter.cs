@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(RefutationGameStatusBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "none,ongiong,loser,draw")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "none,ongoing,loser,draw")]
     public class RefutationGameStatusParameter : INormalizable
     {
         /// <summary>

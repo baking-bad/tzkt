@@ -1618,7 +1618,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of drain delegate operations.
         /// </remarks>
-        /// <param name="anyof">Filtersby any of the specified fields. Example: `anyof.delegate.target=tz1...` will return operations where `delegate` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.delegate.target=tz1...` will return operations where `delegate` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="delegate">Filters by drained baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters by target. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters by level.</param>
@@ -2229,7 +2229,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
-        /// <param name="amount">Filters transactions by amount (microtez).</param>
+        /// <param name="amount">Filters transactions by amount (micro tez).</param>
         /// <param name="id">Filters transactions by id.</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
@@ -2482,7 +2482,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="initiator">Filters transactions by initiator. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="sender">Filters transactions by sender. Allowed fields for `.eqx` mode: `target`.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: `sender`, `initiator`.</param>
-        /// <param name="amount">Filters transactions by amount (microtez).</param>
+        /// <param name="amount">Filters transactions by amount (micro tez).</param>
         /// <param name="level">Filters transactions by level.</param>
         /// <param name="timestamp">Filters transactions by timestamp.</param>
         /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>

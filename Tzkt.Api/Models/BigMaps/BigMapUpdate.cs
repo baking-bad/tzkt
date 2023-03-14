@@ -49,17 +49,17 @@ namespace Tzkt.Api.Models
         public BigMapKeyShort Content { get; set; }
 
         [JsonIgnore]
-        public BigMapTag _Tags { get; set; }
+        public BigMapTag TagFlags { get; set; }
 
         public IEnumerable<BigMapTag> EnumerateTags()
         {
-            if (_Tags >= BigMapTag.Metadata)
+            if (TagFlags >= BigMapTag.Metadata)
             {
-                if ((_Tags & BigMapTag.Metadata) != 0)
+                if ((TagFlags & BigMapTag.Metadata) != 0)
                     yield return BigMapTag.Metadata;
-                else if ((_Tags & BigMapTag.TokenMetadata) != 0)
+                else if ((TagFlags & BigMapTag.TokenMetadata) != 0)
                     yield return BigMapTag.TokenMetadata;
-                else if ((_Tags & BigMapTag.Ledger) != 0)
+                else if ((TagFlags & BigMapTag.Ledger) != 0)
                     yield return BigMapTag.Ledger;
             }
         }

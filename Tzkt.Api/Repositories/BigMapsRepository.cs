@@ -1008,7 +1008,7 @@ namespace Tzkt.Api.Repositories
                     Timestamp = Times[row.Level],
                     Contract = Accounts.GetAlias(bigmap.ContractId),
                     Path = bigmap.StoragePath,
-                    _Tags = (Data.Models.BigMapTag)bigmap.Tags,
+                    TagFlags = (Data.Models.BigMapTag)bigmap.Tags,
                     Content = key == null ? null : new BigMapKeyShort
                     {
                         Hash = key.KeyHash,
@@ -1088,7 +1088,7 @@ namespace Tzkt.Api.Repositories
                     Timestamp = Times[row.Level],
                     Contract = Accounts.GetAlias(row.ContractId),
                     Path = row.StoragePath,
-                    _Tags = (Data.Models.BigMapTag)row.Tags,
+                    TagFlags = (Data.Models.BigMapTag)row.Tags,
                     Content = key == null ? null : new BigMapKeyShort
                     {
                         Hash = key.KeyHash,
@@ -1195,7 +1195,7 @@ namespace Tzkt.Api.Repositories
                 ValueType = (int)format < 2
                     ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
                     : (RawJson)Micheline.ToJson(row.ValueType),
-                _Tags = (Data.Models.BigMapTag)row.Tags
+                TagFlags = (Data.Models.BigMapTag)row.Tags
             };
         }
 

@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     {
         /// <summary>
         /// Type of an error, `Expression_already_registered` - an operation tried to register
-        /// an already existing global consant
+        /// an already existing global constant
         /// https://tezos.gitlab.io/api/errors.html - full list of errors
         /// </summary>
         [JsonPropertyName("type")]

@@ -18,7 +18,7 @@ namespace Tzkt.Api
         public AddressParameter address { get; set; }
 
         /// <summary>
-        /// Filter by staker's bond status (`active`, `returned`, or `lost`).  
+        /// Filter by staker bond status (`active`, `returned`, or `lost`).  
         /// Click on the parameter to expand more details.
         /// </summary>
         public SrBondStatusParameter bondStatus { get; set; }

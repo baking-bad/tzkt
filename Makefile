@@ -89,24 +89,24 @@ lima-stop:
 lima-db-start:
 	docker-compose -f docker-compose.lima.yml up -d lima-db
 
-kathmandu-init:
-	docker-compose -f docker-compose.kathmandu.yml up   -d kathmandu-db
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt update
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt install -y wget
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db wget "https://snapshots.tzkt.io/tzkt_v1.11_kathmandunet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db rm tzkt_db.backup
-	docker-compose -f docker-compose.kathmandu.yml exec -T kathmandu-db apt autoremove --purge -y wget
+mumbai-init:
+	docker-compose -f docker-compose.mumbai.yml up   -d mumbai-db
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt update
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt install -y wget
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db wget "https://snapshots.tzkt.io/tzkt_v1.12_mumbainet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db rm tzkt_db.backup
+	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-kathmandu-start:
-	docker-compose -f docker-compose.kathmandu.yml up -d
+mumbai-start:
+	docker-compose -f docker-compose.mumbai.yml up -d
 
-kathmandu-stop:
-	docker-compose -f docker-compose.kathmandu.yml down
+mumbai-stop:
+	docker-compose -f docker-compose.mumbai.yml down
 
-kathmandu-db-start:
-	docker-compose -f docker-compose.kathmandu.yml up -d kathmandu-db
+mumbai-db-start:
+	docker-compose -f docker-compose.mumbai.yml up -d mumbai-db
