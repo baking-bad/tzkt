@@ -1,14 +1,8 @@
-﻿using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using Microsoft.AspNetCore.Builder;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Tzkt.Api.Swagger
+﻿namespace Tzkt.Api.Swagger
 {
     public static class Swagger
     {
-        const string Version = "1.11.1";
+        const string Version = "1.12.0";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
