@@ -29,7 +29,7 @@ namespace Tzkt.Api
         public SrCommitmentInfoFilter initiatorCommitment { get; set; }
 
         /// <summary>
-        /// Filter by opponent (who was acused in publishing a wrong commitment).  
+        /// Filter by opponent (who was accused in publishing a wrong commitment).  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AccountParameter opponent { get; set; }

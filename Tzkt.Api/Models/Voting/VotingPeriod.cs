@@ -44,7 +44,6 @@ namespace Tzkt.Api.Models
         /// `testing` - If the proposal is approved in the Exploration Period, the testing (or 'cooldown') period begins and bakers start testing the new protocol
         /// `promotion` - delegates can cast one vote to promote or not the tested proposal using the ballot operation
         /// `adoption` - after the proposal is actually accepted, the ecosystem has some time to prepare to the upgrade
-        /// Learn more: https://tezos.gitlab.io/whitedoc/voting.html
         /// </summary>
         public string Kind { get; set; }
 

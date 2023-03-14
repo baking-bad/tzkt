@@ -27,7 +27,7 @@ namespace Tzkt.Api.Controllers
         /// Get smart rollups count
         /// </summary>
         /// <remarks>
-        /// Returns a total number of smnart rollups.
+        /// Returns a total number of smart rollups.
         /// </remarks>
         /// <param name="filter">Filter</param>
         /// <returns></returns>
@@ -128,7 +128,7 @@ namespace Tzkt.Api.Controllers
 
         #region commitments
         /// <summary>
-        /// Get smart rollup commitments
+        /// Get smart rollup commitments count
         /// </summary>
         /// <remarks>
         /// Returns a total number of smart rollup commitments.
@@ -183,7 +183,7 @@ namespace Tzkt.Api.Controllers
 
         #region games
         /// <summary>
-        /// Get smart rollup games
+        /// Get smart rollup games count
         /// </summary>
         /// <remarks>
         /// Returns a total number of smart rollup refutation games.
@@ -241,7 +241,7 @@ namespace Tzkt.Api.Controllers
         /// Get inbox messages count
         /// </summary>
         /// <remarks>
-        /// Returns a total number of smnart rollup inbox messages.
+        /// Returns a total number of smart rollup inbox messages.
         /// </remarks>
         /// <param name="filter">Filter</param>
         /// <returns></returns>

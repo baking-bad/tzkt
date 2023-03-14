@@ -122,7 +122,7 @@ init();
 
 ## Python simple client
 
-Install SignalR package via pypi:
+Install SignalR package via `pypi`:
 
 ````sh
 > pip install signalrcore

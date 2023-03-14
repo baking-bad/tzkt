@@ -60,7 +60,7 @@ namespace Tzkt.Api
         public TimestampParameter lastTime { get; set; }
 
         /// <summary>
-        /// Filter by commitment status (`pending`, `cemented`, `exxecuted`, `refuted`, or `orphan`).  
+        /// Filter by commitment status (`pending`, `cemented`, `executed`, `refuted`, or `orphan`).  
         /// Click on the parameter to expand more details.
         /// </summary>
         public SrCommitmentStatusParameter status { get; set; }

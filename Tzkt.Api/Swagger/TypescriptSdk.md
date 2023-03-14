@@ -1,9 +1,9 @@
 TzKT API is accompanied by a Typescript SDK you can use both on the client side and on the backend.  
-It offers fully typed reponse models and a convenient query builder with autocompletion. Also it is designed to be tree-shakeable and to introduce a minimal overhead to the bundle size.
+It offers fully typed response models and a convenient query builder with autocompletion. Also it is designed to support tree-shaking and to introduce a minimal overhead to the bundle size.
 
 Check out the following resources:
 * [SDK reference](https://sdk.tzkt.io/)
-* [Github repo](https://github.com/tzkt/api-sdk-ts)
+* [GitHub repo](https://github.com/tzkt/api-sdk-ts)
 
 ## Installation
 

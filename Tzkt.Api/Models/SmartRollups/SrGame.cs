@@ -19,12 +19,12 @@
         public Alias Initiator { get; set; }
 
         /// <summary>
-        /// Initiator's verson of a valid commitment
+        /// Initiator's version of a valid commitment
         /// </summary>
         public SrCommitmentInfo InitiatorCommitment { get; set; }
 
         /// <summary>
-        /// Opponent, who was acused in publishing a wrong commitment.
+        /// Opponent, who was accused in publishing a wrong commitment.
         /// </summary>
         public Alias Opponent { get; set; }
 

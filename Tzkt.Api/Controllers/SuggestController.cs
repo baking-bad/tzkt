@@ -43,7 +43,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("proposals/{search}")]
-        public IEnumerable<object> GetProposals([Required] string search)
+        public IEnumerable<object> GetProposals([Required] string _)
         {
             // obsolete
             return Enumerable.Empty<object>();
@@ -59,7 +59,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("protocols/{search}")]
-        public IEnumerable<object> GetProtocols([Required] string search)
+        public IEnumerable<object> GetProtocols([Required] string _)
         {
             // obsolete
             return Enumerable.Empty<object>();

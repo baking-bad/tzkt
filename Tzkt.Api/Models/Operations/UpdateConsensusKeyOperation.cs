@@ -74,7 +74,7 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
         
         /// <summary>
-        /// Index of the cycle from which the conssensus key will be active
+        /// Index of the cycle from which the consensus key will be active
         /// </summary>
         public int ActivationCycle { get; set; }
         

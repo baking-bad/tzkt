@@ -133,7 +133,7 @@
         public long DoubleEndorsingLosses { get; set; }
 
         /// <summary>
-        /// Rewards for detecting double preendorsing (accusing someone of prevalidating two different blocks at the same level).
+        /// Rewards for detecting double preendorsing (accusing someone of pre-validating two different blocks at the same level).
         /// </summary>
         public long DoublePreendorsingRewards { get; set; }
 
