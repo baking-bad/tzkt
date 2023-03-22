@@ -409,7 +409,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "game":
                         foreach (var row in rows)
-                            result[j++][i] = row.gId == null ? null : new SrGame
+                            result[j++][i] = row.gId == null ? null : new SrGameInfo
                             {
                                 Id = row.gId,
                                 Initiator = Accounts.GetAlias(row.gInitiatorId),
