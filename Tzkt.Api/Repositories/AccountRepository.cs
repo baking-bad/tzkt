@@ -1792,6 +1792,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"
                 SELECT  ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"", ""FirstLevel"", {AliasQuery}
                 FROM ""Accounts""")
+                .Filter("Type", 2)
                 .Filter($@"(""CreatorId"" = {account.Id} OR ""ManagerId"" = {account.Id})")
                 .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
                 {
