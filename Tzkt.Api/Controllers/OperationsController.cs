@@ -4871,7 +4871,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("sr_publish")]
         public async Task<ActionResult<IEnumerable<SmartRollupPublishOperation>>> GetSmartRollupPublishOps(
-            [FromQuery] SrOperationFilter filter,
+            [FromQuery] SrPublishOperationFilter filter,
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection,
             [FromQuery] Symbols quote = Symbols.None)
@@ -4900,7 +4900,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("sr_publish/count")]
-        public async Task<ActionResult<int>> GetSmartRollupPublishOpsCount([FromQuery] SrOperationFilter filter)
+        public async Task<ActionResult<int>> GetSmartRollupPublishOpsCount([FromQuery] SrPublishOperationFilter filter)
         {
             if (filter.Empty)
                 return Ok(State.Current.SmartRollupPublishOpsCount);

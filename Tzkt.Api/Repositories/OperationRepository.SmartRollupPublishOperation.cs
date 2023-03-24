@@ -12,23 +12,27 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupPublishOps), hash);
         }
 
-        public async Task<int> GetSmartRollupPublishOpsCount(SrOperationFilter filter)
+        public async Task<int> GetSmartRollupPublishOpsCount(SrPublishOperationFilter filter)
         {
-            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupPublishOps""")
-                .Filter("Id", filter.id)
-                .Filter("OpHash", filter.hash)
-                .Filter("Counter", filter.counter)
-                .Filter("Level", filter.level)
-                .Filter("Level", filter.timestamp)
-                .Filter("SenderId", filter.sender)
-                .Filter("Status", filter.status)
-                .Filter("SmartRollupId", filter.rollup);
+            var sql = new SqlBuilder(@"
+                SELECT COUNT(*) FROM ""SmartRollupPublishOps"" as o
+                LEFT JOIN ""SmartRollupCommitments"" AS c ON c.""Id"" = o.""CommitmentId""")
+                .FilterA(@"o.""Id""", filter.id)
+                .FilterA(@"o.""OpHash""", filter.hash)
+                .FilterA(@"o.""Counter""", filter.counter)
+                .FilterA(@"o.""Level""", filter.level)
+                .FilterA(@"o.""Level""", filter.timestamp)
+                .FilterA(@"o.""SenderId""", filter.sender)
+                .FilterA(@"o.""Status""", filter.status)
+                .FilterA(@"o.""SmartRollupId""", filter.rollup)
+                .FilterA(@"o.""CommitmentId""", filter.commitment?.id)
+                .FilterA(@"c.""Hash""", filter.commitment?.hash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QuerySmartRollupPublishOps(SrOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = """
                 o."Id",
@@ -124,13 +128,15 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderId""", filter.sender)
                 .FilterA(@"o.""Status""", filter.status)
                 .FilterA(@"o.""SmartRollupId""", filter.rollup)
+                .FilterA(@"o.""CommitmentId""", filter.commitment?.id)
+                .FilterA(@"c.""Hash""", filter.commitment?.hash)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
             using var db = GetConnection();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<SmartRollupPublishOperation>> GetSmartRollupPublishOps(SrOperationFilter filter, Pagination pagination, Symbols quote)
+        public async Task<IEnumerable<SmartRollupPublishOperation>> GetSmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, Symbols quote)
         {
             var rows = await QuerySmartRollupPublishOps(filter, pagination);
             return rows.Select(row => new SmartRollupPublishOperation
@@ -164,7 +170,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollupPublishOps(SrOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object[][]> GetSmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QuerySmartRollupPublishOps(filter, pagination, fields);
 
