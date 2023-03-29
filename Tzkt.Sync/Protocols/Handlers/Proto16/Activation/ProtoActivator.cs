@@ -42,6 +42,9 @@ namespace Tzkt.Sync.Protocols.Proto16
             protocol.SmartRollupChallengeWindow = 80_640;
             protocol.SmartRollupCommitmentPeriod = 60;
             protocol.SmartRollupTimeoutPeriod = 40_320;
+
+            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
+            protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
         }
 
         protected override async Task ActivateContext(AppState state)
