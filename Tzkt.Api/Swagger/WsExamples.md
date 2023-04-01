@@ -122,47 +122,55 @@ init();
 
 ## Python simple client
 
-Install SignalR package via `pypi`:
+Install pysignalr package via `pypi`:
 
 ````sh
-> pip install signalrcore
+> pip install pysignalr
 ````
 
-See more details [here](https://github.com/mandrewcito/signalrcore#signalr-core-client).
+See more details [here](https://github.com/baking-bad/pysignalr).
 
 ````python
-from signalrcore.hub_connection_builder import HubConnectionBuilder
-from time import sleep
-from pprint import pprint
+import asyncio
+from contextlib import suppress
+from typing import Any
+from typing import Dict
+from typing import List
 
-connection = HubConnectionBuilder()\
-    .with_url('https://api.tzkt.io/v1/ws')\
-    .with_automatic_reconnect({
-        "type": "interval",
-        "keep_alive_interval": 10,
-        "intervals": [1, 3, 5, 6, 7, 87, 3]
-    })\
-    .build()
-  
-def init():
-    print("connection established, subscribing to blocks and operations")
-    connection.send('SubscribeToHead', [])
-    connection.send('SubscribeToOperations', 
-                    [{'address': 'KT1RJ6PbjHpwc3M5rw5s2Nbmefwbuwbdxton', 
-                      'types': 'transaction'}])
+from pysignalr.client import SignalRClient
+from pysignalr.messages import CompletionMessage
 
-connection.on_open(init)
-connection.on("head", pprint)
-connection.on("operations", pprint)
 
-connection.start()
+async def on_open() -> None:
+    print('Connected to the server')
 
-try:
-    while True:
-        sleep(1)
-except KeyboardInterrupt:
-    pass
-finally:
-    print('shutting down...')
-    connection.stop()
+
+async def on_close() -> None:
+    print('Disconnected from the server')
+
+
+async def on_message(message: List[Dict[str, Any]]) -> None:
+    print(f'Received message: {message}')
+
+
+async def on_error(message: CompletionMessage) -> None:
+    print(f'Received error: {message.error}')
+
+
+async def main() -> None:
+    client = SignalRClient('https://api.tzkt.io/v1/events')
+
+    client.on_open(on_open)
+    client.on_close(on_close)
+    client.on_error(on_error)
+    client.on('operations', on_message)
+
+    await asyncio.gather(
+        client.run(),
+        client.send('SubscribeToOperations', [{}]),
+    )
+
+
+with suppress(KeyboardInterrupt, asyncio.CancelledError):
+    asyncio.run(main())
 ````
