@@ -158,7 +158,7 @@ async def on_error(message: CompletionMessage) -> None:
 
 
 async def main() -> None:
-    client = SignalRClient('https://api.tzkt.io/v1/events')
+    client = SignalRClient('https://api.tzkt.io/v1/ws')
 
     client.on_open(on_open)
     client.on_close(on_close)
