@@ -21,6 +21,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
+        public override string Version => "ithaca_012";
 
         public Proto12Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto12Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

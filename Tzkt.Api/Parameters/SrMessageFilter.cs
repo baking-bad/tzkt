@@ -24,7 +24,7 @@ namespace Tzkt.Api
         public TimestampParameter timestamp { get; set; }
 
         /// <summary>
-        /// Filter by inbox message type (`level_start`, `level_info`, `level_end`, `transfer`, `external`).  
+        /// Filter by inbox message type (`level_start`, `level_info`, `level_end`, `transfer`, `external`, `migration`).  
         /// Click on the parameter to expand more details.
         /// </summary>
         public SrMessageTypeParameter type { get; set; }

@@ -20,7 +20,7 @@
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// Type of the message (`level_start`, `level_info`, `level_end`, `transfer`, `external`).
+        /// Type of the message (`level_start`, `level_info`, `level_end`, `transfer`, `external`, `migration`).
         /// </summary>
         public string Type { get; set; }
 
@@ -63,5 +63,10 @@
         /// For `external` messages only. Payload bytes (in base64).
         /// </summary>
         public byte[] Payload { get; set; }
+
+        /// <summary>
+        /// For `migration` messages only. Version of the new protocol (e.g. 'nairobi_017').
+        /// </summary>
+        public string Protocol { get; set; }
     }
 }

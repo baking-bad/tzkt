@@ -9,6 +9,7 @@ namespace Tzkt.Api
         public const string LevelEnd = "level_end";
         public const string Transfer = "transfer";
         public const string External = "external";
+        public const string Migration = "migration";
 
         public static bool TryParse(string value, out int res)
         {
@@ -19,6 +20,7 @@ namespace Tzkt.Api
                 LevelEnd => (int)InboxMessageType.LevelEnd,
                 Transfer => (int)InboxMessageType.Transfer,
                 External => (int)InboxMessageType.External,
+                Migration => (int)InboxMessageType.Migration,
                 _ => -1
             };
             return res != -1;
@@ -31,6 +33,7 @@ namespace Tzkt.Api
             (int)InboxMessageType.LevelEnd => LevelEnd,
             (int)InboxMessageType.Transfer => Transfer,
             (int)InboxMessageType.External => External,
+            (int)InboxMessageType.Migration => Migration,
             _ => throw new Exception("invalid inbox message type")
         };
     }

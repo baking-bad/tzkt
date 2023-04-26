@@ -21,6 +21,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
+        public override string Version => "hangzhou_011";
 
         public Proto11Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto11Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

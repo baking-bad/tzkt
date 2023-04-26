@@ -13,6 +13,7 @@ namespace Tzkt.Sync
         public abstract IDiagnostics Diagnostics { get; }
         public abstract IValidator Validator { get; }
         public abstract IRpc Rpc { get; }
+        public abstract string Version { get; }
 
         public readonly TezosNode Node;
         public readonly TzktContext Db;

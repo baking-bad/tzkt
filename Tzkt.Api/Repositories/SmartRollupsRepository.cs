@@ -1339,6 +1339,7 @@ namespace Tzkt.Api.Repositories
                 m."Level",
                 m."Type",
                 m."Payload",
+                m."Protocol",
 
                 p."Hash" as "pHash",
                 p."Timestamp" as "pTimestamp",
@@ -1363,6 +1364,7 @@ namespace Tzkt.Api.Repositories
                         case "timestamp": columns.Add(@"m.""Level"""); break;
                         case "type": columns.Add(@"m.""Type"""); break;
                         case "payload": columns.Add(@"m.""Payload"""); break;
+                        case "protocol": columns.Add(@"m.""Protocol"""); break;
 
                         case "predecessorHash": columns.Add(@"p.""Hash"" as ""pHash"""); break;
                         case "predecessorTimestamp": columns.Add(@"p.""Timestamp"" as ""pTimestamp"""); break;
@@ -1441,6 +1443,7 @@ namespace Tzkt.Api.Repositories
                     _ => throw new Exception("Invalid MichelineFormat value")
                 },
                 Payload = row.Payload,
+                Protocol = row.Protocol
             });
         }
 
@@ -1534,6 +1537,10 @@ namespace Tzkt.Api.Repositories
                     case "payload":
                         foreach (var row in rows)
                             result[j++][i] = row.Payload;
+                        break;
+                    case "protocol":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Protocol;
                         break;
                 }
             }

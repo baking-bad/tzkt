@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport("""
-                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload")
+                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)
                 """);
 
@@ -20,6 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelStart, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
@@ -31,11 +32,15 @@ namespace Tzkt.Sync.Protocols.Proto16
             writer.Write(block.Level - 1, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
+            writer.WriteNull();
+
+            WriteMigrationMessage(writer, block);
 
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelEnd, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
@@ -47,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport("""
-                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload")
+                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)
                 """);
             
@@ -55,6 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelStart, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
@@ -66,6 +72,10 @@ namespace Tzkt.Sync.Protocols.Proto16
             writer.Write(block.Level - 1, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
+            writer.WriteNull();
+
+            if (block.Events.HasFlag(BlockEvents.ProtocolBegin))
+                WriteMigrationMessage(writer, block);
 
             foreach (var (operationId, payload) in Proto.Inbox.Messages)
             {
@@ -86,12 +96,14 @@ namespace Tzkt.Sync.Protocols.Proto16
                     writer.Write(operationId, NpgsqlTypes.NpgsqlDbType.Bigint);
                     writer.Write(payload, NpgsqlTypes.NpgsqlDbType.Bytea);
                 }
+                writer.WriteNull();
             }
 
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelEnd, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
@@ -107,6 +119,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                 """);
 
             Cache.AppState.ReleaseInboxMessageId(cnt);
+        }
+
+        protected virtual void WriteMigrationMessage(NpgsqlBinaryImporter writer, Block block)
+        {
+            // migration messages were added in Proto17
         }
     }
 }

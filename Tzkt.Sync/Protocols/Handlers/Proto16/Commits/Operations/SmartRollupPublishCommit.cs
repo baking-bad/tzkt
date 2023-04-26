@@ -332,7 +332,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     var ids = await db.SmartRollupCommitments
                         .AsNoTracking()
-                        .Where(x => x.PredecessorId == commitment.Id)
+                        .Where(x => x.PredecessorId == c.Id)
                         .Select(x => x.Id)
                         .ToListAsync();
 

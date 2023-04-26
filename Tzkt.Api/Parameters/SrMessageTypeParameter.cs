@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(SrMessageTypeBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "level_start,level_info,level_end,transfer,external")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "level_start,level_info,level_end,transfer,external,migration")]
     public class SrMessageTypeParameter : INormalizable
     {
         /// <summary>

@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
         public int? PredecessorLevel { get; set; } // only for LevelInfo
         public long? OperationId { get; set; } // only for Internal and External
         public byte[] Payload { get; set; } // only for External
+        public string Protocol { get; set; } // only for Migration
     }
 
     public enum InboxMessageType
@@ -18,7 +19,8 @@ namespace Tzkt.Data.Models
         LevelInfo,
         LevelEnd,
         Transfer,
-        External
+        External,
+        Migration
     }
 
     public static class InboxMessageModel

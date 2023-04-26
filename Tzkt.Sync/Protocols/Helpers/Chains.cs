@@ -15,6 +15,7 @@
             "NetXi2ZagzEsXbZ" => "kathmandunet",
             "NetXizpkH94bocH" => "limanet",
             "NetXgbcrNtXD2yA" => "mumbainet",
+            "NetXyuzvDo2Ugzb" => "nairobinet",
             _ => "private"
         };
     }

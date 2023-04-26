@@ -1732,6 +1732,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("PredecessorLevel")
                         .HasColumnType("integer");
 
+                    b.Property<string>("Protocol")
+                        .HasColumnType("text");
+
                     b.Property<int>("Type")
                         .HasColumnType("integer");
 

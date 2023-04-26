@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
-            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(content.RequiredString("commitment"), rollup?.Id);
+            var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(GetCommitment(content), rollup?.Id);
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -173,5 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
         }
+
+        protected virtual string GetCommitment(JsonElement content) => content.RequiredString("commitment");
     }
 }
