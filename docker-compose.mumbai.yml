@@ -12,7 +12,7 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
-      - 127.0.0.1:5434:5432
+      - 127.0.0.1:5435:5432
 
   mumbai-api:
     container_name: mumbai-api
