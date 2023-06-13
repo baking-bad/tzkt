@@ -2,7 +2,7 @@
 {
     public static class Swagger
     {
-        const string Version = "1.12.0";
+        const string Version = "1.12.1";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
@@ -20,8 +20,8 @@
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
                         Name = "Baking Bad Team",
-                        Email = "hello@baking-bad.org",
-                        Url = "https://baking-bad.org/docs"
+                        Email = "hello@bakingbad.dev",
+                        Url = "https://bakingbad.dev"
                     };
                     document.Info.Description = File.Exists("Swagger/Description.md")
                         ? File.ReadAllText("Swagger/Description.md")

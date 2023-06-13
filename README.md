@@ -2,7 +2,7 @@
 [![Made With](https://img.shields.io/badge/made%20with-C%23-success.svg?)](https://docs.microsoft.com/en-gb/dotnet/csharp/language-reference/)
 [![License: MIT](https://img.shields.io/github/license/baking-bad/netezos.svg)](https://opensource.org/licenses/MIT)
 
-TzKT is the most advanced [Tezos](https://tezos.com/) blockchain indexer with powerful API created by the [Baking Bad](https://baking-bad.org/docs) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
+TzKT is the most advanced [Tezos](https://tezos.com/) blockchain indexer with powerful API created by the [Baking Bad](https://bakingbad.dev) team with huge support from the [Tezos Foundation](https://tezos.foundation/).
 
 The indexer fetches raw data from the Tezos blockchain, processes it, and saves it to its database to provide efficient access to the blockchain data. Using indexers is necessary part for most blockchain-related applications, because indexers expose much more data and cover much more use-cases than native node RPC, for example getting operations by hash, or operations related to particular accounts and smart contracts, or created NFTs, or token balances, or baking rewards, etc.
 
@@ -19,7 +19,7 @@ The indexer fetches raw data from the Tezos blockchain, processes it, and saves 
 - **Validation and diagnostics.** TzKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data because of invalid response from the node. Also, the indexer performs self-diagnostics after each block, which guarantees the correctness of its state after committing new data.
 - **Flexibility and scalability.** TzKT is split into 3 components: indexer, database, and API, which enables quite efficient horizontal scalability ([see example](https://baking-bad.org/blog/2019/12/03/tezos-explorer-tzkt-2-overview-of-architecture-and-core-components/#general-picture)). This also enables flexible optimization, because you can optimize each component separately and according to your needs.
 - **PostgreSQL.** TzKT uses the world's most advanced open source database, that gives a lot of possibilities such as removing unused indexes to reduce storage usage or adding specific indexes to increase performance of specific queries. You can configure replication, clustering, partitioning and much more. You can use a lot of plugins to enable cool features like GraphQL. This is a really powerful database.
-- **Friendly support.** We are always happy to help and open for discussions and feature requests. Feel free to [contact us](https://baking-bad.org/docs#contacts).
+- **Friendly support.** We are always happy to help and open for discussions and feature requests. Feel free to [contact us](https://bakingbad.dev).
 
 ## Installation (docker)
 
@@ -257,12 +257,12 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Ghostnet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Limanet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.11_limanet.backup
-   - RPC node: https://rpc.tzkt.io/limanet/
  - Mumbainet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_mumbainet.backup
    - RPC node: https://rpc.tzkt.io/mumbainet/
+ - Nairobinet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_nairobinet.backup
+   - RPC node: https://rpc.tzkt.io/nairobinet/
 
 ### Testnets & docker
 
@@ -284,6 +284,6 @@ Feel free to contact us via:
 - Telegram: https://t.me/baking_bad_chat
 - Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
 - Twitter: https://twitter.com/TezosBakingBad
-- Email: hello@baking-bad.org
+- Email: hello@bakingbad.dev
 
 Cheers! 🍺
