@@ -119,6 +119,47 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get bigmap keys
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of all bigmap keys.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="micheline">Format of the `key` and `value` fields: `0` - JSON, `2` - Micheline</param>
+        /// <returns></returns>
+        [HttpGet("keys")]
+        public async Task<ActionResult<IEnumerable<BigMapKeyFull>>> GetBigMapKeys(
+            [FromQuery] BigMapKeyFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            MichelineFormat micheline = MichelineFormat.Json)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("micheline", micheline));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (selection.select == null)
+            {
+                res = await BigMaps.GetBigMapKeys(filter, pagination, micheline);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await BigMaps.GetBigMapKeys(filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
+                };
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get bigmap updates
         /// </summary>
         /// <remarks>

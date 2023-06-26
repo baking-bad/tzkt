@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
@@ -357,6 +358,197 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = BigMapTags.ToList((Data.Models.BigMapTag)row.Tags);
                     break;
+            }
+
+            return result;
+        }
+        #endregion
+
+        #region all bigmap keys
+        async Task<IEnumerable<dynamic>> QueryBigMapKeysAsync(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        {
+            var select = "*";
+            if (fields != null)
+            {
+                var counter = 0;
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "id": columns.Add(@"""Id"""); break;
+                        case "bigmap": columns.Add(@"""BigMapPtr"""); break;
+                        case "active": columns.Add(@"""Active"""); break;
+                        case "hash": columns.Add(@"""KeyHash"""); break;
+                        case "key":
+                            if (field.Path == null)
+                            {
+                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonKey""" : @"""RawKey""");
+                            }
+                            else if (format <= MichelineFormat.JsonString)
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""JsonKey"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"NULL as {field.Column}");
+                            }
+                            break;
+                        case "value":
+                            if (field.Path == null)
+                            {
+                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonValue""" : @"""RawValue""");
+                            }
+                            else if (format <= MichelineFormat.JsonString)
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""JsonValue"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"NULL as {field.Column}");
+                            }
+                            break;
+                        case "firstLevel": columns.Add(@"""FirstLevel"""); break;
+                        case "firstTime": columns.Add(@"""FirstLevel"""); break;
+                        case "lastLevel": columns.Add(@"""LastLevel"""); break;
+                        case "lastTime": columns.Add(@"""LastLevel"""); break;
+                        case "updates": columns.Add(@"""Updates"""); break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            static (string, string) DeepSort(string field)
+            {
+                if (Regex.IsMatch(field, @"^key(\.[\w]+)+$"))
+                {
+                    var col = $@"""JsonKey""#>'{{{field[4..].Replace('.', ',')}}}'";
+                    return (col, col);
+                }
+                else if (Regex.IsMatch(field, @"^value(\.[\w]+)+$"))
+                {
+                    var col = $@"""JsonValue""#>'{{{field[6..].Replace('.', ',')}}}'";
+                    return (col, col);
+                }
+                return (@"""Id""", @"""Id""");
+            }
+
+            var sql = new SqlBuilder($@"SELECT {select} FROM ""BigMapKeys""")
+                .Filter("Id", filter.id)
+                .Filter("BigMapPtr", filter.bigmap)
+                .Filter("Active", filter.active)
+                .Filter("KeyHash", filter.hash)
+                .Filter("JsonKey", filter.key)
+                .Filter("JsonValue", filter.value)
+                .Filter("FirstLevel", filter.firstLevel)
+                .Filter("FirstLevel", filter.firstTime)
+                .Filter("LastLevel", filter.lastLevel)
+                .Filter("LastLevel", filter.lastTime)
+                .Filter("Updates", filter.updates)
+                .Take(pagination, x => x switch
+                {
+                    "id" => (@"""Id""", @"""Id"""),
+                    "firstLevel" => (@"""Id""", @"""FirstLevel"""),
+                    "lastLevel" => (@"""LastLevel""", @"""LastLevel"""),
+                    "updates" => (@"""Updates""", @"""Updates"""),
+                    "key" => (@"""JsonKey""", @"""JsonKey"""),
+                    "value" => (@"""JsonValue""", @"""JsonValue"""),
+                    _ => DeepSort(x)
+                });
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<BigMapKeyFull>> GetBigMapKeys(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format)
+        {
+            var rows = await QueryBigMapKeysAsync(filter, pagination, format);
+            return rows.Select(row => new BigMapKeyFull
+            {
+                Id = row.Id,
+                Bigmap = row.BigMapPtr,
+                Active = row.Active,
+                Hash = row.KeyHash,
+                Key = FormatKey(row, format),
+                Value = FormatValue(row, format),
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[(int)row.FirstLevel],
+                LastLevel = row.LastLevel,
+                LastTime = Times[(int)row.LastLevel],
+                Updates = row.Updates
+            });
+        }
+
+        public async Task<object[][]> GetBigMapKeys(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        {
+            var rows = await QueryBigMapKeysAsync(filter, pagination, format, fields);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Count];
+
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
+            {
+                switch (fields[i].Full)
+                {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
+                    case "bigmap":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BigMapPtr;
+                        break;
+                    case "active":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Active;
+                        break;
+                    case "hash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.KeyHash;
+                        break;
+                    case "firstLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FirstLevel;
+                        break;
+                    case "firstTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.FirstLevel];
+                        break;
+                    case "lastLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LastLevel;
+                        break;
+                    case "lastTime":
+                        foreach (var row in rows)
+                            result[j++][i] = Times[(int)row.LastLevel];
+                        break;
+                    case "updates":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Updates;
+                        break;
+                    case "key":
+                        foreach (var row in rows)
+                            result[j++][i] = FormatKey(row, format);
+                        break;
+                    case "value":
+                        foreach (var row in rows)
+                            result[j++][i] = FormatValue(row, format);
+                        break;
+                    default:
+                        if (fields[i].Field == "key" || fields[i].Field == "value")
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                        break;
+                }
             }
 
             return result;
