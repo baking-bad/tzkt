@@ -2319,8 +2319,16 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
-                    var contractTransactions = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = contract.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                    var contractTransactions1 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction) && contract.Kind == 0
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator" }, Eq = contract.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var contractTransactions2 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "sender" }, Eq = contract.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var contractTransactions3 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "target" }, Eq = contract.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2342,7 +2350,9 @@ namespace Tzkt.Api.Repositories
                     await Task.WhenAll(
                         contractDelegations,
                         contractOriginations,
-                        contractTransactions,
+                        contractTransactions1,
+                        contractTransactions2,
+                        contractTransactions3,
                         contractReveals,
                         contractTransferTicketOps,
                         contractIncreasePaidStorageOps,
@@ -2350,7 +2360,7 @@ namespace Tzkt.Api.Repositories
 
                     result.AddRange(contractDelegations.Result);
                     result.AddRange(contractOriginations.Result);
-                    result.AddRange(contractTransactions.Result);
+                    result.AddRange(contractTransactions1.Result.Concat(contractTransactions2.Result).Concat(contractTransactions3.Result).DistinctBy(x => x.Id));
                     result.AddRange(contractReveals.Result);
                     result.AddRange(contractTransferTicketOps.Result);
                     result.AddRange(contractIncreasePaidStorageOps.Result);
