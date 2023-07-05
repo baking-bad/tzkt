@@ -36,116 +36,36 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of contract accounts.
         /// </remarks>
-        /// <param name="address">Filters by address</param>
-        /// <param name="kind">Contract kind to filter by (`delegator_contract`, `smart_contract`, or `asset`)</param>
-        /// <param name="tzips">Filters by tzips (`fa1`, `fa12`, or `fa2`)</param>
-        /// <param name="creator">Filters contracts by creator. Allowed fields for `.eqx` mode: `manager`, `delegate`.</param>
-        /// <param name="manager">Filters contracts by manager. Allowed fields for `.eqx` mode: `creator`, `delegate`.</param>
-        /// <param name="delegate">Filters contracts by delegate. Allowed fields for `.eqx` mode: `manager`, `creator`.</param>
-        /// <param name="balance">Filters contracts by balance</param>
-        /// <param name="lastActivity">Filters contracts by last activity level (where the contract was updated)</param>
-        /// <param name="typeHash">Filters contracts by 32-bit hash of contract parameter and storage types (helpful for searching similar contracts)</param>
-        /// <param name="codeHash">Filters contracts by 32-bit hash of contract code (helpful for searching same contracts)</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
-        /// <param name="offset">Specifies which or how many items should be skipped</param>
-        /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="includeStorage">Specifies whether to include contract storage into response.</param>
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Contract>>> Get(
-            AddressParameter address,
-            ContractKindParameter kind,
-            ContractTagsParameter tzips,
-            AccountParameter creator,
-            AccountParameter manager,
-            AccountParameter @delegate,
-            Int64Parameter balance,
-            Int32Parameter lastActivity,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
+            [FromQuery] ContractFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
             bool includeStorage = false)
         {
-            #region validates
-            if (creator != null)
-            {
-                if (creator.Eqx != null && creator.Eqx != "manager" && creator.Eqx != "delegate")
-                    return new BadRequest($"{nameof(creator)}.eqx", "The 'creator' field can be compared with the 'manager' or 'delegate' field only.");
-
-                if (creator.Nex != null && creator.Nex != "manager" && creator.Nex != "delegate")
-                    return new BadRequest($"{nameof(creator)}.nex", "The 'creator' field can be compared with the 'manager' or 'delegate' field only.");
-
-                if (creator.Eq == -1 || creator.In?.Count == 0 && !creator.InHasNull)
-                    return Ok(Enumerable.Empty<Contract>());
-            }
-
-            if (manager != null)
-            {
-                if (manager.Eqx != null && manager.Eqx != "creator" && manager.Eqx != "delegate")
-                    return new BadRequest($"{nameof(manager)}.eqx", "The 'manager' field can be compared with the 'creator' or 'delegate' field only.");
-
-                if (manager.Nex != null && manager.Nex != "creator" && manager.Nex != "delegate")
-                    return new BadRequest($"{nameof(manager)}.nex", "The 'manager' field can be compared with the 'creator' or 'delegate' field only.");
-
-                if (manager.Eq == -1 || manager.In?.Count == 0 && !manager.InHasNull)
-                    return Ok(Enumerable.Empty<Contract>());
-            }
-
-            if (@delegate != null)
-            {
-                if (@delegate.Eqx != null && @delegate.Eqx != "creator" && @delegate.Eqx != "manager")
-                    return new BadRequest($"{nameof(@delegate)}.eqx", "The 'delegate' field can be compared with the 'creator' or 'manager' field only.");
-
-                if (@delegate.Nex != null && @delegate.Nex != "creator" && @delegate.Nex != "manager")
-                    return new BadRequest($"{nameof(@delegate)}.nex", "The 'delegate' field can be compared with the 'creator' or 'manager' field only.");
-
-                if (@delegate.Eq == -1 || @delegate.In?.Count == 0 && !@delegate.InHasNull)
-                    return Ok(Enumerable.Empty<Contract>());
-            }
-
-            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
-            #endregion
-
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("address", address), ("kind", kind), ("tzips", tzips), ("creator", creator), ("manager", manager), ("@delegate", @delegate),
-                ("balance", balance), ("lastActivity", lastActivity), ("typeHash", typeHash), ("codeHash", codeHash),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
             object res;
-            if (select == null)
+            if (selection.select == null)
             {
-                res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(includeStorage, filter, pagination);
             }
             else
             {
-                if (select.Values != null)
+                res = new SelectionResponse
                 {
-                    if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values[0], includeStorage);
-                    else
-                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Values, includeStorage);
-                }
-                else
-                {
-                    if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
-                    else
-                    {
-                        res = new SelectionResponse
-                        {
-                            Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(address, kind, tzips, creator, manager, @delegate, balance, lastActivity, typeHash, codeHash, sort, offset, limit, select.Fields, includeStorage)
-                        };
-                    }
-                }
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Accounts.GetContracts(includeStorage, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                };
             }
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
@@ -157,17 +77,17 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a number of contract accounts.
         /// </remarks>
-        /// <param name="kind">Contract kind to filter by (`delegator_contract` or `smart_contract`)</param>
+        /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public async Task<ActionResult<int>> GetCount(ContractKindParameter kind)
+        public async Task<ActionResult<int>> GetCount([FromQuery] ContractFilter filter)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("kind", kind));
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetContractsCount(kind);
+            var res = await Accounts.GetContractsCount(filter);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -202,26 +122,17 @@ namespace Tzkt.Api.Controllers
         /// Note, contract scripts are compared by 32-bit hash, so in very rare cases there may be collisions.
         /// </remarks>
         /// <param name="address">Contract address (starting with KT)</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
-        /// <param name="offset">Specifies which or how many items should be skipped</param>
-        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
         /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
         /// <returns></returns>
         [HttpGet("{address}/same")]
         public async Task<ActionResult<IEnumerable<Contract>>> GetSame(
             [Required][KTAddress] string address,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
             bool includeStorage = false)
         {
-            #region validates
-            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
-            #endregion
-
             var rawAcc = await Accounts.GetRawAsync(address);
             if (rawAcc is not RawContract contract)
                 return Ok(Enumerable.Empty<Contract>());
@@ -229,38 +140,23 @@ namespace Tzkt.Api.Controllers
             var codeHash = new Int32Parameter { Eq = contract.CodeHash };
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+                ("selection", selection), ("pagination", pagination), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
             object res;
-            if (select == null)
+            if (selection.select == null)
             {
-                res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(includeStorage, new ContractFilter { codeHash = codeHash }, pagination);
             }
             else
             {
-                if (select.Values != null)
+                res = new SelectionResponse
                 {
-                    if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values[0], includeStorage);
-                    else
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Values, includeStorage);
-                }
-                else
-                {
-                    if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields[0], includeStorage);
-                    else
-                    {
-                        res = new SelectionResponse
-                        {
-                            Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, null, null, codeHash, sort, offset, limit, select.Fields, includeStorage)
-                        };
-                    }
-                }
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { codeHash = codeHash }, pagination, selection.select.Fields ?? selection.select.Values)
+                };
             }
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
@@ -274,26 +170,17 @@ namespace Tzkt.Api.Controllers
         /// Note, contract parameter and storage types are compared by 32-bit hash, so in very rare cases there may be collisions.
         /// </remarks>
         /// <param name="address">Contract address (starting with KT)</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default), `balance`, `firstActivity`, `lastActivity`, `numTransactions`.</param>
-        /// <param name="offset">Specifies which or how many items should be skipped</param>
-        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
         /// <param name="includeStorage">Specifies whether to include contract storage value in response.</param>
         /// <returns></returns>
         [HttpGet("{address}/similar")]
         public async Task<ActionResult<IEnumerable<Contract>>> GetSimilar(
             [Required][KTAddress] string address,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
-            [Range(0, 10000)] int limit = 100,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
             bool includeStorage = false)
         {
-            #region validates
-            if (sort != null && !sort.Validate("id", "balance", "firstActivity", "lastActivity", "numTransactions"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
-            #endregion
-
             var rawAcc = await Accounts.GetRawAsync(address);
             if (rawAcc is not RawContract contract)
                 return Ok(Enumerable.Empty<Contract>());
@@ -301,39 +188,23 @@ namespace Tzkt.Api.Controllers
             var typeHash = new Int32Parameter { Eq = contract.TypeHash };
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("includeStorage", includeStorage));
+                ("selection", selection), ("pagination", pagination), ("includeStorage", includeStorage));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
             object res;
-            if (select == null)
+            if (selection.select == null)
             {
-                res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, includeStorage);
+                res = await Accounts.GetContracts(includeStorage, new ContractFilter { typeHash = typeHash }, pagination);
             }
             else
             {
-                if (select.Values != null)
+                res = new SelectionResponse
                 {
-                    if (select.Values.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values[0], includeStorage);
-                    else
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Values, includeStorage);
-                }
-                else
-                {
-                    if (select.Fields.Length == 1)
-                        res = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null, sort, offset, limit, select.Fields[0], includeStorage);
-                    else
-                    {
-                        res = new SelectionResponse
-                        {
-                            Cols = select.Fields,
-                            Rows = await Accounts.GetContracts(null, null, null, null, null, null, null, null, typeHash, null,
-                                sort, offset, limit, select.Fields, includeStorage)
-                        };
-                    }
-                }
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { typeHash = typeHash }, pagination, selection.select.Fields ?? selection.select.Values)
+                };
             }
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);

@@ -10,6 +10,108 @@ namespace Tzkt.Api.Repositories
 {
     public partial class AccountRepository : DbConnection
     {
+        async Task<IEnumerable<dynamic>> QueryContractsAsync(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        {
+            var select = $@"
+                c.*,
+                c.""Extras""#>>'{{profile,alias}}' as ""Alias""";
+
+            if (includeStorage)
+                select += @",
+                s.""JsonValue"" as ""Storage""";
+
+            if (fields != null)
+            {
+                var counter = 0;
+                var columns = new HashSet<string>(fields.Count);
+                foreach (var field in fields)
+                {
+                    switch (field.Field)
+                    {
+                        case "id": columns.Add(@"c.""Id"""); break;
+                        case "type": columns.Add(@"c.""Type"""); break;
+                        case "address": columns.Add(@"c.""Address"""); break;
+                        case "kind": columns.Add(@"c.""Kind"""); break;
+                        case "tzips": columns.Add(@"c.""Tags"""); break;
+                        case "alias": columns.Add(@"c.""Extras""#>>'{profile,alias}' as ""Alias"""); break;
+                        case "balance": columns.Add(@"c.""Balance"""); break;
+                        case "creator": columns.Add(@"c.""CreatorId"""); break;
+                        case "manager": columns.Add(@"c.""ManagerId"""); break;
+                        case "delegate": columns.Add(@"c.""DelegateId"""); break;
+                        case "delegationLevel": columns.Add(@"c.""DelegationLevel"""); columns.Add(@"c.""DelegateId"""); break;
+                        case "delegationTime": columns.Add(@"c.""DelegationLevel"""); columns.Add(@"c.""DelegateId"""); break;
+                        case "numContracts": columns.Add(@"c.""ContractsCount"""); break;
+                        case "activeTokensCount": columns.Add(@"c.""ActiveTokensCount"""); break;
+                        case "tokensCount": columns.Add(@"c.""TokensCount"""); break;
+                        case "tokenBalancesCount": columns.Add(@"c.""TokenBalancesCount"""); break;
+                        case "tokenTransfersCount": columns.Add(@"c.""TokenTransfersCount"""); break;
+                        case "numDelegations": columns.Add(@"c.""DelegationsCount"""); break;
+                        case "numOriginations": columns.Add(@"c.""OriginationsCount"""); break;
+                        case "numTransactions": columns.Add(@"c.""TransactionsCount"""); break;
+                        case "numReveals": columns.Add(@"c.""RevealsCount"""); break;
+                        case "numMigrations": columns.Add(@"c.""MigrationsCount"""); break;
+                        case "transferTicketCount": columns.Add(@"c.""TransferTicketCount"""); break;
+                        case "increasePaidStorageCount": columns.Add(@"c.""IncreasePaidStorageCount"""); break;
+                        case "eventsCount": columns.Add(@"c.""EventsCount"""); break;
+                        case "firstActivity": columns.Add(@"c.""FirstLevel"""); break;
+                        case "firstActivityTime": columns.Add(@"c.""FirstLevel"""); break;
+                        case "lastActivity": columns.Add(@"c.""LastLevel"""); break;
+                        case "lastActivityTime": columns.Add(@"c.""LastLevel"""); break;
+                        case "typeHash": columns.Add(@"c.""TypeHash"""); break;
+                        case "codeHash": columns.Add(@"c.""CodeHash"""); break;
+                        case "storage" when includeStorage:
+                            if (field.Path == null)
+                            {   
+                                columns.Add(@"c.""Kind""");
+                                columns.Add(@"c.""ManagerId""");
+                                columns.Add(@"s.""JsonValue"" as ""Storage""");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"s.""JsonValue"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            break;
+                    }
+                }
+
+                if (columns.Count == 0)
+                    return Enumerable.Empty<dynamic>();
+
+                select = string.Join(',', columns);
+            }
+
+            var sql = new SqlBuilder($@"
+                SELECT {select} FROM ""Accounts"" as c
+                LEFT JOIN ""Storages"" AS s ON s.""ContractId"" = c.""Id"" AND s.""Current"" = true")
+                .FilterA(@"c.""Type""", 2)
+                .FilterA(@"c.""Id""", filter.id)
+                .FilterA(@"c.""Address""", filter.address)
+                .FilterA(@"c.""Kind""", filter.kind)
+                .FilterA(@"c.""Tags""", filter.tzips)
+                .FilterA(@"c.""Balance""", filter.balance)
+                .FilterA(@"c.""CreatorId""", filter.creator, x => x == "manager" ? @"c.""ManagerId""" : @"c.""DelegateId""")
+                .FilterA(@"c.""ManagerId""", filter.manager, x => x == "creator" ? @"c.""CreatorId""" : @"c.""DelegateId""")
+                .FilterA(@"c.""DelegateId""", filter.@delegate, x => x == "manager" ? @"c.""ManagerId""" : @"c.""CreatorId""")
+                .FilterA(@"c.""FirstLevel""", filter.firstActivity)
+                .FilterA(@"c.""FirstLevel""", filter.firstActivityTime)
+                .FilterA(@"c.""LastLevel""", filter.lastActivity)
+                .FilterA(@"c.""LastLevel""", filter.lastActivityTime)
+                .FilterA(@"c.""TypeHash""", filter.typeHash)
+                .FilterA(@"c.""CodeHash""", filter.codeHash)
+                .Take(pagination, x => x switch
+                {
+                    "balance" => (@"c.""Balance""", @"c.""Balance"""),
+                    "firstActivity" => (@"c.""FirstLevel""", @"c.""FirstLevel"""),
+                    "lastActivity" => (@"c.""LastLevel""", @"c.""LastLevel"""),
+                    "numTransactions" => (@"c.""TransactionsCount""", @"c.""TransactionsCount"""),
+                    _ => (@"c.""Id""", @"c.""Id""")
+                }, @"c.""Id""");
+
+            using var db = GetConnection();
+            return await db.QueryAsync(sql.Query, sql.Params);
+        }
+
         public async Task<Contract> GetContract(string address, bool legacy)
         {
             var rawAccount = await Accounts.GetAsync(address);
@@ -76,65 +178,33 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<int> GetContractsCount(ContractKindParameter kind)
+        public async Task<int> GetContractsCount(ContractFilter filter)
         {
-            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
-                .Filter("Type", 2)
-                .Filter("Kind", kind);
+            var sql = new SqlBuilder($@"
+                SELECT COUNT(*) FROM ""Accounts"" as c")
+                .FilterA(@"c.""Type""", 2)
+                .FilterA(@"c.""Id""", filter.id)
+                .FilterA(@"c.""Address""", filter.address)
+                .FilterA(@"c.""Kind""", filter.kind)
+                .FilterA(@"c.""Tags""", filter.tzips)
+                .FilterA(@"c.""Balance""", filter.balance)
+                .FilterA(@"c.""CreatorId""", filter.creator, x => x == "manager" ? @"c.""ManagerId""" : @"c.""DelegateId""")
+                .FilterA(@"c.""ManagerId""", filter.manager, x => x == "creator" ? @"c.""CreatorId""" : @"c.""DelegateId""")
+                .FilterA(@"c.""DelegateId""", filter.@delegate, x => x == "manager" ? @"c.""ManagerId""" : @"c.""CreatorId""")
+                .FilterA(@"c.""FirstLevel""", filter.firstActivity)
+                .FilterA(@"c.""FirstLevel""", filter.firstActivityTime)
+                .FilterA(@"c.""LastLevel""", filter.lastActivity)
+                .FilterA(@"c.""LastLevel""", filter.lastActivityTime)
+                .FilterA(@"c.""TypeHash""", filter.typeHash)
+                .FilterA(@"c.""CodeHash""", filter.codeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<Contract>> GetContracts(
-            AddressParameter address,
-            ContractKindParameter kind,
-            ContractTagsParameter tags,
-            AccountParameter creator,
-            AccountParameter manager,
-            AccountParameter @delegate,
-            Int64Parameter balance,
-            Int32Parameter lastActivity,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            SortParameter sort,
-            OffsetParameter offset,
-            int limit,
-            bool includeStorage)
+        public async Task<IEnumerable<Contract>> GetContracts(bool includeStorage, ContractFilter filter, Pagination pagination)
         {
-            var query = includeStorage
-                ? $@"
-                    SELECT      acc.*, {AliasQuery}, st.""JsonValue""
-                    FROM        ""Accounts"" AS acc
-                    LEFT JOIN   ""Storages"" AS st
-                           ON   st.""ContractId"" = acc.""Id"" AND st.""Current"" = true
-                "
-                : $@"SELECT *, {AliasQuery} FROM ""Accounts""";
-
-            var sql = new SqlBuilder(query)
-                .Filter("Address", address)
-                .Filter("Type", 2)
-                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
-                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
-                .Filter("Kind", kind)
-                .Filter("Tags", tags)
-                .Filter("Balance", balance)
-                .Filter("LastLevel", lastActivity)
-                .Filter("TypeHash", typeHash)
-                .Filter("CodeHash", codeHash)
-                .Take(sort, offset, limit, x => x switch
-                {
-                    "balance" => ("Balance", "Balance"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    _ => ("Id", "Id")
-                });
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
-
+            var rows = await QueryContractsAsync(includeStorage, filter, pagination);
             return rows.Select(row =>
             {
                 var creator = row.CreatorId == null ? null
@@ -192,121 +262,34 @@ namespace Tzkt.Api.Repositories
                     EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
-                    Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.JsonValue
+                    Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.Storage
                 };
             });
         }
 
-        public async Task<object[][]> GetContracts(
-            AddressParameter address,
-            ContractKindParameter kind,
-            ContractTagsParameter tags,
-            AccountParameter creator,
-            AccountParameter manager,
-            AccountParameter @delegate,
-            Int64Parameter balance,
-            Int32Parameter lastActivity,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            SortParameter sort,
-            OffsetParameter offset,
-            int limit,
-            string[] fields,
-            bool includeStorage)
+        public async Task<object[][]> GetContracts(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var columns = new HashSet<string>(fields.Length + 2);
-            var joins = new HashSet<string>(1);
-
-            foreach (var field in fields)
-            {
-                switch (field)
-                {
-                    case "id": columns.Add(@"acc.""Id"""); break;
-                    case "alias": columns.Add(AliasQuery); break;
-                    case "type": columns.Add(@"acc.""Type"""); break;
-                    case "kind": columns.Add(@"acc.""Kind"""); break;
-                    case "tzips": columns.Add(@"acc.""Tags"""); break;
-                    case "address": columns.Add(@"acc.""Address"""); break;
-                    case "balance": columns.Add(@"acc.""Balance"""); break;
-                    case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                    case "manager": columns.Add(@"acc.""ManagerId"""); break;
-                    case "delegate": columns.Add(@"acc.""DelegateId"""); break;
-                    case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
-                    case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
-                    case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
-                    case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
-                    case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
-                    case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
-                    case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
-                    case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
-                    case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
-                    case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
-                    case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
-                    case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
-                    case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
-                    case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
-                    case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
-                    case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
-                    case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
-                    case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
-                    case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
-                    case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
-                    case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
-                    case "storage" when includeStorage:
-                        columns.Add(@"acc.""Kind""");
-                        columns.Add(@"acc.""ManagerId""");
-                        columns.Add(@"st.""JsonValue""");
-                        joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
-                        break;
-                }
-            }
-
-            if (columns.Count == 0)
-                return Array.Empty<object[]>();
-
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
-                .Filter("Address", address)
-                .Filter("Type", 2)
-                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
-                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
-                .Filter("Kind", kind)
-                .Filter("Tags", tags)
-                .Filter("Balance", balance)
-                .Filter("LastLevel", lastActivity)
-                .Filter("TypeHash", typeHash)
-                .Filter("CodeHash", codeHash)
-                .Take(sort, offset, limit, x => x switch
-                {
-                    "balance" => ("Balance", "Balance"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    _ => ("Id", "Id")
-                }, "acc");
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            var rows = await QueryContractsAsync(includeStorage, filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object[fields.Count];
 
-            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
-                switch (fields[i])
+                switch (fields[i].Full)
                 {
                     case "id":
                         foreach (var row in rows)
                             result[j++][i] = row.Id;
                         break;
-                    case "alias":
-                        foreach (var row in rows)
-                            result[j++][i] = row.Alias;
-                        break;
                     case "type":
                         foreach (var row in rows)
                             result[j++][i] = AccountTypes.ToString(row.Type);
+                        break;
+                    case "address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Address;
                         break;
                     case "kind":
                         foreach (var row in rows)
@@ -316,9 +299,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
                         break;
-                    case "address":
+                    case "alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.Address;
+                            result[j++][i] = row.Alias;
                         break;
                     case "balance":
                         foreach (var row in rows)
@@ -335,6 +318,14 @@ namespace Tzkt.Api.Repositories
                             };
                         }
                         break;
+                    case "creator.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId).Alias;
+                        break;
+                    case "creator.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId).Address;
+                        break;
                     case "manager":
                         foreach (var row in rows)
                         {
@@ -347,6 +338,18 @@ namespace Tzkt.Api.Repositories
                             };
                         }
                         break;
+                    case "manager.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId).Alias;
+                        break;
+                    case "manager.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId).Address;
+                        break;
+                    case "manager.publicKey":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ManagerId == null ? null : ((RawUser)Accounts.Get((int)row.ManagerId)).PublicKey;
+                        break;
                     case "delegate":
                         foreach (var row in rows)
                         {
@@ -358,6 +361,18 @@ namespace Tzkt.Api.Repositories
                                 Active = delegat.Staked
                             };
                         }
+                        break;
+                    case "delegate.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Alias;
+                        break;
+                    case "delegate.address":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Address;
+                        break;
+                    case "delegate.active":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Staked;
                         break;
                     case "delegationLevel":
                         foreach (var row in rows)
@@ -374,6 +389,10 @@ namespace Tzkt.Api.Repositories
                     case "activeTokensCount":
                         foreach (var row in rows)
                             result[j++][i] = row.ActiveTokensCount;
+                        break;
+                    case "tokensCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TokensCount;
                         break;
                     case "tokenBalancesCount":
                         foreach (var row in rows)
@@ -410,10 +429,6 @@ namespace Tzkt.Api.Repositories
                     case "increasePaidStorageCount":
                         foreach (var row in rows)
                             result[j++][i] = row.IncreasePaidStorageCount;
-                        break; 
-                    case "tokensCount":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TokensCount;
                         break;
                     case "eventsCount":
                         foreach (var row in rows)
@@ -448,275 +463,20 @@ namespace Tzkt.Api.Repositories
                         {
                             if (row.Kind == 0)
                             {
-                                var _manager = Accounts.Get((int)row.ManagerId);
-                                result[j++][i] = _manager.Address;
+                                result[j++][i] = $"\"{Accounts.Get((int)row.ManagerId).Address}\"";
                             }
                             else
                             {
-                                result[j++][i] = (RawJson)row.JsonValue;
+                                result[j++][i] = (RawJson)row.Storage;
                             }
                         }
                         break;
+                    default:
+                        if (fields[i].Full.StartsWith("storage."))
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                        break;
                 }
-            }
-
-            return result;
-        }
-
-        public async Task<object[]> GetContracts(
-            AddressParameter address,
-            ContractKindParameter kind,
-            ContractTagsParameter tags,
-            AccountParameter creator,
-            AccountParameter manager,
-            AccountParameter @delegate,
-            Int64Parameter balance,
-            Int32Parameter lastActivity,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            SortParameter sort,
-            OffsetParameter offset,
-            int limit,
-            string field,
-            bool includeStorage)
-        {
-            var columns = new HashSet<string>(3);
-            var joins = new HashSet<string>(1);
-
-            switch (field)
-            {
-                case "id": columns.Add(@"acc.""Id"""); break;
-                case "alias": columns.Add(AliasQuery); break;
-                case "type": columns.Add(@"acc.""Type"""); break;
-                case "kind": columns.Add(@"acc.""Kind"""); break;
-                case "tzips": columns.Add(@"acc.""Tags"""); break;
-                case "address": columns.Add(@"acc.""Address"""); break;
-                case "balance": columns.Add(@"acc.""Balance"""); break;
-                case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                case "manager": columns.Add(@"acc.""ManagerId"""); break;
-                case "delegate": columns.Add(@"acc.""DelegateId"""); break;
-                case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
-                case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
-                case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
-                case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
-                case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
-                case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
-                case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
-                case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
-                case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
-                case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
-                case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
-                case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
-                case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
-                case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
-                case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
-                case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
-                case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
-                case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
-                case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
-                case "typeHash": columns.Add(@"acc.""TypeHash"""); break;
-                case "codeHash": columns.Add(@"acc.""CodeHash"""); break;
-                case "storage" when includeStorage:
-                    columns.Add(@"acc.""Kind""");
-                    columns.Add(@"acc.""ManagerId""");
-                    columns.Add(@"st.""JsonValue""");
-                    joins.Add(@"LEFT JOIN ""Storages"" as st ON st.""ContractId"" = acc.""Id"" AND st.""Current"" = true");
-                    break;
-            }
-
-            if (columns.Count == 0)
-                return Array.Empty<object>();
-
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts"" as acc {string.Join(' ', joins)}")
-                .Filter("Address", address)
-                .Filter("Type", 2)
-                .Filter("CreatorId", creator, x => x == "manager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", manager, x => x == "creator" ? "CreatorId" : "DelegateId")
-                .Filter("DelegateId", @delegate, x => x == "manager" ? "ManagerId" : "CreatorId")
-                .Filter("Kind", kind)
-                .Filter("Tags", tags)
-                .Filter("Balance", balance)
-                .Filter("LastLevel", lastActivity)
-                .Filter("TypeHash", typeHash)
-                .Filter("CodeHash", codeHash)
-                .Take(sort, offset, limit, x => x switch
-                {
-                    "balance" => ("Balance", "Balance"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    _ => ("Id", "Id")
-                }, "acc");
-
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
-
-            var result = new object[rows.Count()];
-            var j = 0;
-
-            switch (field)
-            {
-                case "id":
-                    foreach (var row in rows)
-                        result[j++] = row.Id;
-                    break;
-                case "alias":
-                    foreach (var row in rows)
-                        result[j++] = row.Alias;
-                    break;
-                case "type":
-                    foreach (var row in rows)
-                        result[j++] = AccountTypes.ToString(row.Type);
-                    break;
-                case "kind":
-                    foreach (var row in rows)
-                        result[j++] = ContractKinds.ToString(row.Kind);
-                    break;
-                case "tzips":
-                    foreach (var row in rows)
-                        result[j++] = ContractTags.ToList((Data.Models.ContractTags)row.Tags);
-                    break;
-                case "address":
-                    foreach (var row in rows)
-                        result[j++] = row.Address;
-                    break;
-                case "balance":
-                    foreach (var row in rows)
-                        result[j++] = row.Balance;
-                    break;
-                case "creator":
-                    foreach (var row in rows)
-                    {
-                        var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        result[j++] = _creator == null ? null : new CreatorInfo
-                        {
-                            Alias = _creator.Alias,
-                            Address = _creator.Address
-                        };
-                    }
-                    break;
-                case "manager":
-                    foreach (var row in rows)
-                    {
-                        var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                        result[j++] = _manager == null ? null : new ManagerInfo
-                        {
-                            Alias = _manager.Alias,
-                            Address = _manager.Address,
-                            PublicKey = _manager.PublicKey,
-                        };
-                    }
-                    break;
-                case "delegate":
-                    foreach (var row in rows)
-                    {
-                        var delegat = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId);
-                        result[j++] = delegat == null ? null : new DelegateInfo
-                        {
-                            Alias = delegat.Alias,
-                            Address = delegat.Address,
-                            Active = delegat.Staked
-                        };
-                    }
-                    break;
-                case "delegationLevel":
-                    foreach (var row in rows)
-                        result[j++] = row.DelegateId == null ? null : row.DelegationLevel;
-                    break;
-                case "delegationTime":
-                    foreach (var row in rows)
-                        result[j++] = row.DelegateId == null ? null : Time[row.DelegationLevel];
-                    break;
-                case "numContracts":
-                    foreach (var row in rows)
-                        result[j++] = row.ContractsCount;
-                    break;
-                case "activeTokensCount":
-                    foreach (var row in rows)
-                        result[j++] = row.ActiveTokensCount;
-                    break;
-                case "tokenBalancesCount":
-                    foreach (var row in rows)
-                        result[j++] = row.TokenBalancesCount;
-                    break;
-                case "tokenTransfersCount":
-                    foreach (var row in rows)
-                        result[j++] = row.TokenTransfersCount;
-                    break;
-                case "numDelegations":
-                    foreach (var row in rows)
-                        result[j++] = row.DelegationsCount;
-                    break;
-                case "numOriginations":
-                    foreach (var row in rows)
-                        result[j++] = row.OriginationsCount;
-                    break;
-                case "numTransactions":
-                    foreach (var row in rows)
-                        result[j++] = row.TransactionsCount;
-                    break;
-                case "numReveals":
-                    foreach (var row in rows)
-                        result[j++] = row.RevealsCount;
-                    break;
-                case "numMigrations":
-                    foreach (var row in rows)
-                        result[j++] = row.MigrationsCount;
-                    break;
-                case "transferTicketCount":
-                    foreach (var row in rows)
-                        result[j++] = row.TransferTicketCount;
-                    break;
-                case "increasePaidStorageCount":
-                    foreach (var row in rows)
-                        result[j++] = row.IncreasePaidStorageCount;
-                    break; 
-                case "tokensCount":
-                    foreach (var row in rows)
-                        result[j++] = row.TokensCount;
-                    break;
-                case "eventsCount":
-                    foreach (var row in rows)
-                        result[j++] = row.EventsCount;
-                    break;
-                case "firstActivity":
-                    foreach (var row in rows)
-                        result[j++] = row.FirstLevel;
-                    break;
-                case "firstActivityTime":
-                    foreach (var row in rows)
-                        result[j++] = Time[row.FirstLevel];
-                    break;
-                case "lastActivity":
-                    foreach (var row in rows)
-                        result[j++] = row.LastLevel;
-                    break;
-                case "lastActivityTime":
-                    foreach (var row in rows)
-                        result[j++] = Time[row.LastLevel];
-                    break;
-                case "typeHash":
-                    foreach (var row in rows)
-                        result[j++] = row.TypeHash;
-                    break;
-                case "codeHash":
-                    foreach (var row in rows)
-                        result[j++] = row.CodeHash;
-                    break;
-                case "storage":
-                    foreach (var row in rows)
-                    {
-                        if (row.Kind == 0)
-                        {
-                            var _manager = Accounts.Get((int)row.ManagerId);
-                            result[j++] = _manager.Address;
-                        }
-                        else
-                        {
-                            result[j++] = (RawJson)row.JsonValue;
-                        }
-                    }
-                    break;
             }
 
             return result;
