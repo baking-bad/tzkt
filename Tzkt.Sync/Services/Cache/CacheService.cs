@@ -20,6 +20,7 @@ namespace Tzkt.Sync.Services
         public BigMapsCache BigMaps { get; private set; }
         public BigMapKeysCache BigMapKeys { get; private set; }
         public TokensCache Tokens { get; private set; }
+        public TicketsCache Tickets { get; private set; }
         public TokenBalancesCache TokenBalances { get; private set; }
         public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
         public SmartRollupStakesCache SmartRollupStakes { get; private set; }
