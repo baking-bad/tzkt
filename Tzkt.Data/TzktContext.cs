@@ -109,6 +109,10 @@ namespace Tzkt.Data
         public DbSet<TokenTransfer> TokenTransfers { get; set; }
         #endregion
 
+        #region tickets
+        public DbSet<Ticket> Tickets { get; set; }
+        #endregion
+
         #region rollups
         public DbSet<SmartRollupCommitment> SmartRollupCommitments { get; set; }
         public DbSet<RefutationGame> RefutationGames { get; set; }

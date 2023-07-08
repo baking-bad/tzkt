@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tzkt.Data.Models.Base;
@@ -15,6 +16,11 @@ namespace Tzkt.Data.Models
         public byte[] RawContent { get; set; }
         public string JsonContent { get; set; }
         public string Entrypoint { get; set; }
+        
+        #region relations
+        [ForeignKey(nameof(TicketerId))]
+        public Account Ticketer { get; set; }
+        #endregion
     }
 
     public static class TransferTicketOperationModel
