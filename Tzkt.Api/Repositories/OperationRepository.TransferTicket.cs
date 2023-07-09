@@ -201,7 +201,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
                     "bakerFee" => ("BakerFee", "BakerFee"),
                     _ => ("Id", "Id")
@@ -321,7 +321,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
                     "bakerFee" => ("BakerFee", "BakerFee"),
                     _ => ("Id", "Id")
@@ -517,7 +517,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
                     "bakerFee" => ("BakerFee", "BakerFee"),
                     _ => ("Id", "Id")

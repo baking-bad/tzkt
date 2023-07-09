@@ -96,7 +96,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "accuserReward" => ("AccuserReward", "AccuserReward"),
                     "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
@@ -169,7 +169,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "accuserReward" => ("AccuserReward", "AccuserReward"),
                     "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
@@ -281,7 +281,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "accuserReward" => ("AccuserReward", "AccuserReward"),
                     "offenderLoss" => ("OffenderLoss", "OffenderLoss"),

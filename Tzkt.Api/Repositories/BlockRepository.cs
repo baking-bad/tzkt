@@ -129,7 +129,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
@@ -218,7 +218,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
@@ -370,7 +370,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BlockRound", blockRound)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),

@@ -64,7 +64,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     _ => ("Id", "Id")
                 });
 
@@ -121,7 +121,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     _ => ("Id", "Id")
                 });
 
@@ -213,7 +213,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
-                    "level" => ("Id", "Level"),
+                    "level" => ("Level", "Level"),
                     _ => ("Id", "Id")
                 });
 
