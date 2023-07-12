@@ -7,5 +7,6 @@ namespace Tzkt.Api.Models
         public double AvgRoi { get; set; }
         public double Inflation { get; set; }
         public int Bakers { get; set; }
+        public int FundedBakers { get; set; }
     }
 }

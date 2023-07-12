@@ -491,6 +491,14 @@ namespace Tzkt.Api.Services
             var total = await db.QueryFirstOrDefaultAsync(
                 $@"SELECT COUNT(*)::integer as bakers, COALESCE(SUM(""StakingBalance""), 0)::bigint AS staking FROM ""Accounts"" WHERE ""Type"" = 1 AND ""Staked"" = true");
 
+            var funded = await db.ExecuteScalarAsync<int>($"""
+                SELECT COUNT(*)
+                FROM "Accounts"
+                WHERE "Type" = 1
+                AND "Staked" = true
+                AND "StakingBalance" >= {protocol.TokensPerRoll}
+                """);
+
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.MaxBakingReward + protocol.MaxEndorsingReward; //microtez
             var totalRewardsPerYear = maxBlockReward * blocksPerYear;
@@ -503,7 +511,8 @@ namespace Tzkt.Api.Services
                 StakingPercentage = Math.Round(100.0 * total.staking / totalSupply, 2),
                 AvgRoi = Math.Round(100.0 * totalRewardsPerYear / total.staking, 2),
                 Inflation = Math.Round(100.0 * totalCreatedPerYear / totalSupply, 2),
-                Bakers = total.bakers
+                Bakers = total.bakers,
+                FundedBakers = funded
             };
         }
 
