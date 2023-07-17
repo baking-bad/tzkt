@@ -17,6 +17,8 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public TransactionOperation Transaction { get; private set; }
         public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
+        public IEnumerable<TicketUpdate> TicketUpdates { get; private set; }
+        public IEnumerable<TicketUpdate> TicketReceipt { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -145,6 +147,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await ProcessStorage(transaction, storage);
                 }
 
+                TicketUpdates = ParseTicketUpdates("ticket_updates", result);
+                
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
             }
@@ -288,6 +292,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
                 }
+                
+                TicketReceipt = ParseTicketUpdates("ticket_receipt", result);
 
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
@@ -685,6 +691,11 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual int GetConsumedGas(JsonElement result)
         {
             return result.OptionalInt32("consumed_gas") ?? 0;
+        }
+
+        protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(string property, JsonElement result)
+        {
+            return null;
         }
     }
 }
