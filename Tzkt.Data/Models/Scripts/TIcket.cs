@@ -8,7 +8,7 @@ namespace Tzkt.Data.Models
     public class Ticket
     {
         public long Id { get; set; }
-        public int ContractId { get; set; }
+        public int TicketerId { get; set; }
         public BigInteger TicketId { get; set; }
 
         public int FirstMinterId { get; set; }
@@ -25,6 +25,9 @@ namespace Tzkt.Data.Models
 
         public int? OwnerId { get; set; }
         public int? IndexedAt { get; set; }
+        
+        public int ContentHash { get; set; }
+        public int ContentTypeHash { get; set; }
     }
     
     public static class TicketModel
@@ -70,10 +73,10 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.ContractId);
+                .HasIndex(x => x.TicketerId);
 
             modelBuilder.Entity<Ticket>()
-                .HasIndex(x => new { x.ContractId, x.TicketId })
+                .HasIndex(x => new {ContractId = x.TicketerId, x.TicketId })
                 .IsUnique();
 
             modelBuilder.Entity<Ticket>()

@@ -3,37 +3,29 @@ using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
-namespace Tzkt.Sync.Protocols.Proto16
+namespace Tzkt.Sync.Protocols.Proto17
 {
     class TicketsCommit : ProtocolCommit
     {
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual async Task Apply(Block block)
+        readonly List<TicketUpdate> Updates = new();
+        
+        public virtual void Append(IEnumerable<TicketUpdate> updates)
         {
-            var ops = new Dictionary<TransferTicketOperation, (
-                bool Reset,
-                Contract Contract
+            Updates.AddRange(updates);
+        }
+        
+        public virtual async Task Apply()
+        {
+            if (Updates.Count == 0) return;
+            //TODO We need cache here;
 
-                )>();
-            
-            #region group updates
-            if (block.TransferTicketOps != null)
+            foreach (var update in Updates)
             {
-                
-                
-                foreach (var tx in block.TransferTicketOps)
-                {
-                    if (tx.Status != OperationStatus.Applied) continue;
-                    
-                    ops.Add(tx, (false, tx.Ticketer as Contract));
-                }
+                // var ticket = GetOrCreateTicket();
             }
-
             
-            #endregion
-            
-            if (ops.Count == 0) return;
 
         }
 
@@ -67,9 +59,9 @@ namespace Tzkt.Sync.Protocols.Proto16
             return account;
         }
         
-        Ticket GetOrCreateTicket(ContractOperation op, Contract contract, BigInteger ticketId)
+        Ticket GetOrCreateTicket(TicketUpdate update, ContractOperation op, Contract contract, int contentHash, int contentTypeHash)
         {
-            if (Cache.Tickets.TryGet(contract.Id, ticketId, out var ticket)) return ticket;
+            if (Cache.Tickets.TryGet(contract.Id, contentHash, contentTypeHash, out var ticket)) return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
@@ -77,14 +69,15 @@ namespace Tzkt.Sync.Protocols.Proto16
             ticket = new Ticket
             {
                 Id = Cache.AppState.NextSubId(op),
-                ContractId = contract.Id,
-                TicketId = ticketId,
+                TicketerId = contract.Id,
                 FirstMinterId = op.InitiatorId ?? op.SenderId,
                 FirstLevel = op.Level,
                 LastLevel = op.Level,
                 TotalBurned = BigInteger.Zero,
                 TotalMinted = BigInteger.Zero,
                 TotalSupply = BigInteger.Zero,
+                ContentHash = Script.GetHash(update.TicketToken.Content.ToBytes()),
+                ContentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes()),
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             };
             Db.Tickets.Add(ticket);
@@ -96,6 +89,13 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(op.Block);
             op.Block.Events |= BlockEvents.Tickets;
             return ticket;
+        }
+
+        public virtual async Task Revert(Block block)
+        {
+            //TODO Implement revert
+
+            throw new NotImplementedException("Revert for Tickets commit not implemented yet");
         }
     }
 }
