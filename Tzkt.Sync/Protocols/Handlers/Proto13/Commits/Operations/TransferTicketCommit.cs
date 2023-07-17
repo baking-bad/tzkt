@@ -13,6 +13,8 @@ namespace Tzkt.Sync.Protocols.Proto13
     class TransferTicketCommit : ProtocolCommit
     {
         public TransferTicketOperation Operation { get; private set; }
+        public IEnumerable<TicketUpdate> TicketUpdates { get; private set; }
+
 
         public TransferTicketCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -120,6 +122,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                     if (senderDelegate.Id != sender.Id)
                         senderDelegate.DelegatedBalance -= burned;
                 }
+                
+                TicketUpdates = ParseTicketUpdates(result);
             }
             #endregion
 
@@ -194,6 +198,35 @@ namespace Tzkt.Sync.Protocols.Proto13
             Db.TransferTicketOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
+        }
+        
+        protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(JsonElement result)
+        {
+            if (!result.TryGetProperty("ticket_update", out var ticketUpdates))
+                return null;
+
+            return ticketUpdates.RequiredArray().EnumerateArray().Select(x => new TicketUpdate
+            {
+                TicketToken = x.TryGetProperty("ticket_token", out var ticketToken)
+                    ? new TicketToken
+                    {
+                        Ticketer = ticketToken.RequiredString("ticketer"),
+                        ContentType = ticketToken.TryGetProperty("content_type", out var contentType)
+                            ? Micheline.FromJson(contentType)
+                            : null,
+                        Content = ticketToken.TryGetProperty("content", out var content)
+                            ? Micheline.FromJson(content)
+                            : null,
+                    }
+                    : null,
+                Updates = x.TryGetProperty("updates", out var updates)
+                    ? updates.RequiredArray().EnumerateArray().Select(y => new Update
+                    {
+                        Account = y.RequiredString("account"),
+                        Amount = y.RequiredString("amount")
+                    })
+                    : null
+            });
         }
     }
 }

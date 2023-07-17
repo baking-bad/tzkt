@@ -131,6 +131,7 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             var bigMapCommit = new BigMapCommit(this);
+            var ticketsCommit = new TicketsCommit(this);
 
             #region operations 3
             foreach (var operation in operations[3].EnumerateArray())
@@ -169,6 +170,8 @@ namespace Tzkt.Sync.Protocols
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
                                 bigMapCommit.Append(parent.Transaction, parent.Transaction.Target as Contract, parent.BigMapDiffs);
+                            if (parent.TicketUpdates != null)
+                                ticketsCommit.Append(parent.TicketUpdates);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -190,6 +193,8 @@ namespace Tzkt.Sync.Protocols
                                             await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                            if (internalTx.TicketUpdates != null)
+                                                ticketsCommit.Append(internalTx.TicketUpdates);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
@@ -227,6 +232,8 @@ namespace Tzkt.Sync.Protocols
                         case "transfer_ticket":
                             var parent1 = new TransferTicketCommit(this);
                             await parent1.Apply(blockCommit.Block, operation, content);
+                            if (parent1.TicketUpdates != null)
+                                ticketsCommit.Append(parent1.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult1))
                             {
                                 foreach (var internalContent in internalResult1.EnumerateArray())
@@ -238,6 +245,8 @@ namespace Tzkt.Sync.Protocols
                                             await internalTx.ApplyInternal(blockCommit.Block, parent1.Operation, internalContent);
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                            if (internalTx.TicketUpdates != null)
+                                                ticketsCommit.Append(internalTx.TicketUpdates);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
@@ -310,6 +319,7 @@ namespace Tzkt.Sync.Protocols
             new InboxCommit(this).Apply(blockCommit.Block);
 
             await bigMapCommit.Apply();
+            await ticketsCommit.Apply();
             await new TokensCommit(this).Apply(blockCommit.Block, bigMapCommit.Updates);
 
             var brCommit = new BakingRightsCommit(this);
