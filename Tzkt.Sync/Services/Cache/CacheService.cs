@@ -20,8 +20,9 @@ namespace Tzkt.Sync.Services
         public BigMapsCache BigMaps { get; private set; }
         public BigMapKeysCache BigMapKeys { get; private set; }
         public TokensCache Tokens { get; private set; }
-        public TicketsCache Tickets { get; private set; }
         public TokenBalancesCache TokenBalances { get; private set; }
+        public TicketsCache Tickets { get; private set; }
+        public TicketBalancesCache TicketBalances { get; private set; }
         public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
         public SmartRollupStakesCache SmartRollupStakes { get; private set; }
         public RefutationGameCache RefutationGames { get; private set; }
@@ -44,6 +45,8 @@ namespace Tzkt.Sync.Services
             BigMapKeys = new(db);
             Tokens = new(db);
             TokenBalances = new(db);
+            Tickets = new(db);
+            TicketBalances = new(db);
             SmartRollupCommitments = new(db);
             SmartRollupStakes = new(db);
             RefutationGames = new(db);

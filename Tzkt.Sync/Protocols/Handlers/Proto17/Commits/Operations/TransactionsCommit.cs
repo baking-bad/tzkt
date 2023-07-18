@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto17
         
         protected override IEnumerable<TicketUpdate> ParseTicketUpdates(string property, JsonElement result)
         {
-            if (!result.TryGetProperty("ticket_receipt", out var ticketUpdates))
+            if (!result.TryGetProperty(property, out var ticketUpdates))
                 return null;
 
             return ticketUpdates.RequiredArray().EnumerateArray().Select(x => new TicketUpdate

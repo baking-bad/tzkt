@@ -9,11 +9,14 @@ namespace Tzkt.Sync.Protocols.Proto17
     {
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        readonly List<TicketUpdate> Updates = new();
+        readonly List<(ContractOperation op,TicketUpdate update)> Updates = new();
         
-        public virtual void Append(IEnumerable<TicketUpdate> updates)
+        public virtual void Append(ContractOperation op, IEnumerable<TicketUpdate> updates)
         {
-            Updates.AddRange(updates);
+            foreach (var update in updates)
+            {
+                Updates.Add((op, update));
+            }
         }
         
         public virtual async Task Apply()
@@ -21,9 +24,13 @@ namespace Tzkt.Sync.Protocols.Proto17
             if (Updates.Count == 0) return;
             //TODO We need cache here;
 
-            foreach (var update in Updates)
+            foreach (var (op, update) in Updates)
             {
-                // var ticket = GetOrCreateTicket();
+                var ticketer = await Cache.Accounts.GetAsync(update.TicketToken.Ticketer);
+                var contract = ticketer as Contract;
+                var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
+                var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
+                var ticket = GetOrCreateTicket(op, contract, contentHash, contentTypeHash);
             }
             
 
@@ -59,7 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             return account;
         }
         
-        Ticket GetOrCreateTicket(TicketUpdate update, ContractOperation op, Contract contract, int contentHash, int contentTypeHash)
+        Ticket GetOrCreateTicket(ContractOperation op, Contract contract, int contentHash, int contentTypeHash)
         {
             if (Cache.Tickets.TryGet(contract.Id, contentHash, contentTypeHash, out var ticket)) return ticket;
             
@@ -76,8 +83,8 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TotalBurned = BigInteger.Zero,
                 TotalMinted = BigInteger.Zero,
                 TotalSupply = BigInteger.Zero,
-                ContentHash = Script.GetHash(update.TicketToken.Content.ToBytes()),
-                ContentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes()),
+                ContentHash = contentHash,
+                ContentTypeHash = contentTypeHash,
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             };
             Db.Tickets.Add(ticket);
@@ -89,6 +96,152 @@ namespace Tzkt.Sync.Protocols.Proto17
             Db.TryAttach(op.Block);
             op.Block.Events |= BlockEvents.Tickets;
             return ticket;
+        }
+        
+        TicketBalance GetOrCreateTicketBalance(ContractOperation op, Ticket ticket, Account account)
+        {
+            if (!Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance))
+            {
+                var state = Cache.AppState.Get();
+                state.TicketBalancesCount++;
+
+                ticketBalance = new TicketBalance
+                {
+                    Id = Cache.AppState.NextSubId(op),
+                    AccountId = account.Id,
+                    TicketId = ticket.Id,
+                    TicketerId = ticket.TicketerId,
+                    FirstLevel = op.Level,
+                    LastLevel = op.Level,
+                    Balance = BigInteger.Zero,
+                    IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+                };
+                Db.TicketBalances.Add(ticketBalance);
+                Cache.TicketBalances.Add(ticketBalance);
+
+                Db.TryAttach(ticket);
+                ticket.BalancesCount++;
+
+                Db.TryAttach(account);
+                account.TicketBalancesCount++;
+                if (account.FirstLevel > op.Level)
+                {
+                    account.FirstLevel = op.Level;
+                    op.Block.Events |= BlockEvents.NewAccounts;
+                }
+            }
+            return ticketBalance;
+        }
+        
+        void TransferTickets(ContractOperation op, Contract contract, Ticket ticket,
+            Account from, TicketBalance fromBalance,
+            Account to, TicketBalance toBalance,
+            BigInteger amount)
+        {
+            op.TicketTransfers = (op.TicketTransfers ?? 0) + 1;
+
+            Db.TryAttach(from);
+            from.TicketTransfersCount++;
+
+            Db.TryAttach(to);
+            if (to != from) to.TicketTransfersCount++;
+
+            Db.TryAttach(fromBalance);
+            fromBalance.Balance -= amount;
+            fromBalance.TransfersCount++;
+            fromBalance.LastLevel = op.Level;
+
+            Db.TryAttach(toBalance);
+            toBalance.Balance += amount;
+            if (toBalance != fromBalance) toBalance.TransfersCount++;
+            toBalance.LastLevel = op.Level;
+
+            ticket.TransfersCount++;
+            if (amount != BigInteger.Zero && fromBalance.Id != toBalance.Id)
+            {
+                if (fromBalance.Balance == BigInteger.Zero)
+                {
+                    from.ActiveTicketsCount--;
+                    ticket.HoldersCount--;
+                }
+                if (toBalance.Balance == amount)
+                {
+                    to.ActiveTicketsCount++;
+                    ticket.HoldersCount++;
+                }
+                if (contract.Tags.HasFlag(ContractTags.Nft))
+                    ticket.OwnerId = to.Id;
+            }
+
+            var state = Cache.AppState.Get();
+            state.TicketTransfersCount++;
+
+            Db.TicketTransfers.Add(new TicketTransfer
+            {
+                Id = Cache.AppState.NextSubId(op),
+                Amount = amount,
+                FromId = from.Id,
+                ToId = to.Id,
+                Level = op.Level,
+                TicketId = ticket.Id,
+                TicketerId = ticket.TicketerId,
+                TransactionId = (op as TransactionOperation)?.Id,
+                OriginationId = (op as OriginationOperation)?.Id,
+                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+            });
+        }
+        
+        void MintOrBurnTickets(ContractOperation op, Contract contract, Ticket ticket,
+            Account account, TicketBalance balance,
+            BigInteger diff)
+        {
+            op.TicketTransfers = (op.TicketTransfers ?? 0) + 1;
+
+            Db.TryAttach(account);
+            account.TicketTransfersCount++;
+
+            Db.TryAttach(balance);
+            balance.Balance += diff;
+            balance.TransfersCount++;
+            balance.LastLevel = op.Level;
+
+            ticket.TransfersCount++;
+            if (balance.Balance == BigInteger.Zero)
+            {
+                account.ActiveTicketsCount--;
+                ticket.HoldersCount--;
+
+                if (contract.Tags.HasFlag(ContractTags.Nft))
+                    ticket.OwnerId = null;
+            }
+            if (balance.Balance == diff)
+            {
+                account.ActiveTicketsCount++;
+                ticket.HoldersCount++;
+
+                if (contract.Tags.HasFlag(ContractTags.Nft))
+                    ticket.OwnerId = account.Id;
+            }
+            if (diff > 0) ticket.TotalMinted += diff;
+            else ticket.TotalBurned += -diff;
+            ticket.TotalSupply += diff;
+
+            var state = Cache.AppState.Get();
+            state.TicketTransfersCount++;
+
+            Db.TicketTransfers.Add(new TicketTransfer
+            {
+                Id = Cache.AppState.NextSubId(op),
+                Amount = diff > BigInteger.Zero ? diff : -diff,
+                FromId = diff < BigInteger.Zero ? account.Id : null,
+                ToId = diff > BigInteger.Zero ? account.Id : null,
+                Level = op.Level,
+                TicketId = ticket.Id,
+                TicketerId = ticket.TicketerId,
+                TransactionId = (op as TransactionOperation)?.Id,
+                OriginationId = (op as OriginationOperation)?.Id,
+                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+            });
         }
 
         public virtual async Task Revert(Block block)
