@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -13,9 +14,11 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20230718133721_tickets")]
+    partial class tickets
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,9 +36,6 @@ namespace Tzkt.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ActiveRefutationGamesCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("ActiveTicketsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("ActiveTokensCount")
@@ -129,12 +129,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<bool>("Staked")
                         .HasColumnType("boolean");
-
-                    b.Property<int>("TicketBalancesCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TicketTransfersCount")
-                        .HasColumnType("integer");
 
                     b.Property<int>("TokenBalancesCount")
                         .HasColumnType("integer");
@@ -458,12 +452,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageCounter")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TicketBalancesCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TicketTransfersCount")
-                        .HasColumnType("integer");
-
                     b.Property<int>("TicketsCount")
                         .HasColumnType("integer");
 
@@ -592,8 +580,6 @@ namespace Tzkt.Data.Migrations
                             SmartRollupRecoverBondOpsCount = 0,
                             SmartRollupRefuteOpsCount = 0,
                             StorageCounter = 0,
-                            TicketBalancesCount = 0,
-                            TicketTransfersCount = 0,
                             TicketsCount = 0,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             TokenBalancesCount = 0,
@@ -2037,9 +2023,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("SubIds")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
@@ -3633,86 +3616,6 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Tickets");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.TicketBalance", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("AccountId")
-                        .HasColumnType("integer");
-
-                    b.Property<BigInteger>("Balance")
-                        .HasColumnType("numeric");
-
-                    b.Property<int>("FirstLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("IndexedAt")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("LastLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("TicketId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("TicketerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TransfersCount")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TicketBalances");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TicketTransfer", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<BigInteger>("Amount")
-                        .HasColumnType("numeric");
-
-                    b.Property<int?>("FromId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("IndexedAt")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<long?>("MigrationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long?>("OriginationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("TicketId")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("TicketerId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("ToId")
-                        .HasColumnType("integer");
-
-                    b.Property<long?>("TransactionId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TicketTransfers");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.Token", b =>
                 {
                     b.Property<long>("Id")
@@ -4028,9 +3931,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("TargetId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")

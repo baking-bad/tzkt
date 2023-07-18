@@ -23,6 +23,11 @@ namespace Tzkt.Data.Models
         public int ActiveTokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
+        
+        
+        public int ActiveTicketsCount { get; set; }
+        public int TicketBalancesCount { get; set; }
+        public int TicketTransfersCount { get; set; }
 
         public int DelegationsCount { get; set; }
         public int OriginationsCount { get; set; }
