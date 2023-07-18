@@ -111,6 +111,8 @@ namespace Tzkt.Data
 
         #region tickets
         public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketBalance> TicketBalances { get; set; }
+        public DbSet<TicketTransfer> TicketTransfers { get; set; }
         #endregion
 
         #region rollups
