@@ -24,7 +24,22 @@ namespace Tzkt.Api.Repositories
         #region tokens
         async Task<IEnumerable<dynamic>> QueryTokensAsync(TokenFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
-            var select = "*";
+            var select = @"
+                ""Id"",
+                ""ContractId"",
+                ""BalancesCount"",
+                ""HoldersCount"",
+                ""FirstMinterId"",
+                ""FirstLevel"",
+                ""LastLevel"",
+                ""Tags"",
+                ""TokenId"",
+                ""TotalBurned"",
+                ""TotalMinted"",
+                ""TotalSupply"",
+                ""TransfersCount"",
+                ""Metadata""";
+
             if (fields != null)
             {
                 var counter = 0;
