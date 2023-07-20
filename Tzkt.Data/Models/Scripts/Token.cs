@@ -52,6 +52,12 @@ namespace Tzkt.Data.Models
                 .Property<string>("Metadata")
                 .HasColumnType("jsonb");
 
+            // TODO: resolve issues with npgsql numeric-string mapping
+            //// shadow property
+            //modelBuilder.Entity<Token>()
+            //    .Property<string>("Value")
+            //    .HasColumnType("numeric");
+
             // TODO: switch to `numeric` type after migration to .NET 6
             var converter = new ValueConverter<BigInteger, string>(
                 x => x.ToString(),

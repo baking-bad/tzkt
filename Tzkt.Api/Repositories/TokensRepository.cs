@@ -261,6 +261,7 @@ namespace Tzkt.Api.Repositories
                 tb.""Id"",
                 tb.""AccountId"",
                 tb.""Balance"",
+                (tb.""Balance""::numeric * t.""Value""::numeric)::numeric(1000,0) as ""BalanceValue"",
                 tb.""FirstLevel"",
                 tb.""LastLevel"",
                 tb.""TransfersCount"",
@@ -281,6 +282,7 @@ namespace Tzkt.Api.Repositories
                         case "id": columns.Add(@"tb.""Id"""); break;
                         case "account": columns.Add(@"tb.""AccountId"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
+                        case "balanceValue": columns.Add(@"(tb.""Balance""::numeric * t.""Value""::numeric)::numeric(1000,0) as ""BalanceValue"""); break;
                         case "firstLevel": columns.Add(@"tb.""FirstLevel"""); break;
                         case "firstTime": columns.Add(@"tb.""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"tb.""LastLevel"""); break;
@@ -329,14 +331,14 @@ namespace Tzkt.Api.Repositories
                 select = string.Join(',', columns);
             }
 
-            static (string, string) TryMetaSort(string field)
+            static (string[], string) TryMetaSort(string field)
             {
                 if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
-                    return (col, col);
+                    return (new string[1] { col }, col);
                 }
-                return (@"tb.""Id""", @"tb.""Id""");
+                return (new string[1] { @"tb.""Id""" }, @"tb.""Id""");
             }
 
             var sql = new SqlBuilder($@"
@@ -357,12 +359,13 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"t.""Metadata""", filter.token.metadata)
                 .Take(pagination, x => x switch
                 {
-                    "id" => (@"tb.""Id""", @"tb.""Id"""),
-                    "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
-                    "transfersCount" => (@"tb.""TransfersCount""", @"tb.""TransfersCount"""),
-                    "firstLevel" => (@"tb.""Id""", @"tb.""FirstLevel"""),
-                    "lastLevel" => (@"tb.""LastLevel""", @"tb.""LastLevel"""),
-                    "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
+                    "id" => (new string[1] { @"tb.""Id""" }, @"tb.""Id"""),
+                    "balance" => (new string[1] { @"tb.""Balance""::numeric" }, @"tb.""Balance""::numeric"),
+                    "balanceValue" => (new string[2] { @"""BalanceValue""", @"tb.""Balance""::numeric" }, @"""BalanceValue"""),
+                    "transfersCount" => (new string[1] { @"tb.""TransfersCount""" }, @"tb.""TransfersCount"""),
+                    "firstLevel" => (new string[1] { @"tb.""Id""" }, @"tb.""FirstLevel"""),
+                    "lastLevel" => (new string[1] { @"tb.""LastLevel""" }, @"tb.""LastLevel"""),
+                    "token.metadata" => (new string[1] { @"t.""Metadata""" }, @"t.""Metadata"""),
                     _ => TryMetaSort(x)
                 }, @"tb.""Id""");
 
@@ -401,6 +404,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance,
+                BalanceValue = row.BalanceValue == 0M ? null : row.BalanceValue,
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
@@ -449,6 +453,10 @@ namespace Tzkt.Api.Repositories
                     case "balance":
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
+                        break;
+                    case "balanceValue":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BalanceValue == 0M ? null : row.BalanceValue;
                         break;
                     case "firstLevel":
                         foreach (var row in rows)

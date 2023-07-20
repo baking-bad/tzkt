@@ -1802,6 +1802,62 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Take(Pagination pagination, Func<string, (string[], string)> map, string id = @"""Id""")
+        {
+            var sortAsc = true;
+            var sortColumns = new string[1] { id };
+            var cursorColumn = id;
+
+            if (pagination.sort != null)
+            {
+                if (pagination.sort.Asc != null)
+                {
+                    (sortColumns, cursorColumn) = map(pagination.sort.Asc);
+                }
+                else if (pagination.sort.Desc != null)
+                {
+                    sortAsc = false;
+                    (sortColumns, cursorColumn) = map(pagination.sort.Desc);
+                }
+            }
+
+            if (pagination.offset?.Cr != null)
+            {
+                AppendFilter(sortAsc
+                    ? $"{cursorColumn} > {pagination.offset.Cr}"
+                    : $"{cursorColumn} < {pagination.offset.Cr}");
+            }
+
+            if (sortColumns.Length > 0)
+            {
+                if (sortColumns[0] == id)
+                {
+                    Builder.AppendLine(sortAsc
+                        ? $"ORDER BY {id}"
+                        : $"ORDER BY {id} DESC");
+                }
+                else
+                {
+                    Builder.AppendLine(sortAsc
+                        ? $"ORDER BY {string.Join(", ", sortColumns)}, {id}"
+                        : $"ORDER BY {string.Join(" DESC, ", sortColumns)} DESC, {id} DESC");
+                }
+            }
+
+            if (pagination.offset != null)
+            {
+                if (pagination.offset.El != null)
+                    Builder.AppendLine($"OFFSET {pagination.offset.El}");
+                else if (pagination.offset.Pg != null)
+                    Builder.AppendLine($"OFFSET {pagination.offset.Pg * pagination.limit}");
+            }
+
+            if (pagination.limit != -1)
+                Builder.AppendLine($"LIMIT {pagination.limit}");
+
+            return this;
+        }
+
         public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map)
         {
             var sortAsc = true;
