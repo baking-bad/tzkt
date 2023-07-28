@@ -17,6 +17,7 @@ namespace Tzkt.Data.Models
         public string JsonContent { get; set; }
         public string Entrypoint { get; set; }
         
+        //TODO Delete ForeignKey
         #region relations
         [ForeignKey(nameof(TicketerId))]
         public Account Ticketer { get; set; }
