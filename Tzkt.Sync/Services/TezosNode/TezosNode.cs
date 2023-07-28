@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using Tzkt.Data;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Protocols;
 
 namespace Tzkt.Sync.Services
 {
@@ -37,6 +38,11 @@ namespace Tzkt.Sync.Services
             using var stream = await Rpc.GetStreamAsync(url);
             using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 100_000 });
             return doc.RootElement.Clone();
+        }
+
+        public async Task<T> PostAsync<T>(string url, object data)
+        {
+            return await Rpc.PostAsync<T>(url, data);
         }
 
         public async Task<Header> GetHeaderAsync()
