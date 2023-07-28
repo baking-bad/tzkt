@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -51,6 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/cycle/{cycle}");
 
         public virtual Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
+            => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetTicketBalance(int level, string address, TicketToken ticket)
             => throw new InvalidOperationException();
         #endregion
     }

@@ -24,16 +24,24 @@ namespace Tzkt.Sync.Protocols.Proto17
             if (Updates.Count == 0) return;
             //TODO We need cache here;
 
-            foreach (var (op, update) in Updates)
+            foreach (var (op, ticketUpdates) in Updates)
             {
-                var ticketer = await Cache.Accounts.GetAsync(update.TicketToken.Ticketer);
+                var ticketer = await Cache.Accounts.GetAsync(ticketUpdates.TicketToken.Ticketer);
                 var contract = ticketer as Contract;
-                var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
-                var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
+                var contentHash = Script.GetHash(ticketUpdates.TicketToken.Content.ToBytes());
+                var contentTypeHash = Script.GetHash(ticketUpdates.TicketToken.ContentType.ToBytes());
                 var ticket = GetOrCreateTicket(op, contract, contentHash, contentTypeHash);
-            }
-            
 
+                //TODO Match updates, if successful, transfers, if not, burns and mints
+                foreach (var ticketUpdate in ticketUpdates.Updates)
+                {
+                    var amount = BigInteger.Parse(ticketUpdate.Amount);
+                    var account = GetOrCreateAccount(op, ticketUpdate.Account);
+                    var balance = GetOrCreateTicketBalance(op, ticket, account);
+                    MintOrBurnTickets(op, ticket, account, balance, amount);
+                }
+
+            }
         }
 
         Account GetOrCreateAccount(ContractOperation op, string address)
@@ -191,7 +199,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             });
         }
         
-        void MintOrBurnTickets(ContractOperation op, Contract contract, Ticket ticket,
+        void MintOrBurnTickets(ContractOperation op, Ticket ticket,
             Account account, TicketBalance balance,
             BigInteger diff)
         {
@@ -210,17 +218,11 @@ namespace Tzkt.Sync.Protocols.Proto17
             {
                 account.ActiveTicketsCount--;
                 ticket.HoldersCount--;
-
-                if (contract.Tags.HasFlag(ContractTags.Nft))
-                    ticket.OwnerId = null;
             }
             if (balance.Balance == diff)
             {
                 account.ActiveTicketsCount++;
                 ticket.HoldersCount++;
-
-                if (contract.Tags.HasFlag(ContractTags.Nft))
-                    ticket.OwnerId = account.Id;
             }
             if (diff > 0) ticket.TotalMinted += diff;
             else ticket.TotalBurned += -diff;

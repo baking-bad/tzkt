@@ -63,6 +63,18 @@ namespace Tzkt.Sync
             using var stream = await HttpClient.GetStreamAsync(path);
             return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
         }
+        
+        public async Task<T> PostAsync<T>(string path, object data)
+        {
+            var content = JsonSerializer.Serialize(data);
+
+            var response = await HttpClient.PostAsJsonAsync(path, content);
+            
+            using var stream = await response.Content.ReadAsStreamAsync();
+            return await JsonSerializer.DeserializeAsync<T>(stream);
+        }
+        
+        
 
         public void Dispose() => _HttpClient?.Dispose();
     }
