@@ -57,8 +57,8 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
-                Target = Accounts.GetAlias(row.TargetId),
-                Ticketer = Accounts.GetAlias(row.TicketerId),
+                Target = row.TargetId == null ? null : Accounts.GetAlias(row.TargetId) ,
+                Ticketer = row.TicketerId == null ? null : Accounts.GetAlias(row.TicketerId),
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
                 ContentType = (RawJson)Micheline.ToJson(row.RawType),
@@ -104,8 +104,8 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
-                Target = Accounts.GetAlias(row.TargetId),
-                Ticketer = Accounts.GetAlias(row.TicketerId),
+                Target = row.TargetId == null ? null : Accounts.GetAlias(row.TargetId),
+                Ticketer = row.TicketerId == null ? null : Accounts.GetAlias(row.TicketerId),
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
                 ContentType = (RawJson)Micheline.ToJson(row.RawType),
@@ -149,8 +149,8 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
-                Target = Accounts.GetAlias(row.TargetId),
-                Ticketer = Accounts.GetAlias(row.TicketerId),
+                Target = row.TargetId == null ? null : Accounts.GetAlias(row.TargetId),
+                Ticketer = row.TicketerId == null ? null : Accounts.GetAlias(row.TicketerId),
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
                 ContentType = (RawJson)Micheline.ToJson(row.RawType),
@@ -225,8 +225,8 @@ namespace Tzkt.Api.Repositories
                 StorageUsed = row.StorageUsed,
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
-                Target = Accounts.GetAlias(row.TargetId),
-                Ticketer = Accounts.GetAlias(row.TicketerId),
+                Target = row.TargetId == null ? null : Accounts.GetAlias(row.TargetId),
+                Ticketer = row.TicketerId == null ? null : Accounts.GetAlias(row.TicketerId),
                 Amount = row.Amount,
                 Entrypoint = row.Entrypoint,
                 ContentType = (RawJson)Micheline.ToJson(row.RawType),
@@ -392,11 +392,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "target":
                         foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync(row.TargetId);
+                            result[j++][i] = row.TargetId == null ? null : await Accounts.GetAliasAsync(row.TargetId);
                         break;
                     case "ticketer":
                         foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync(row.TicketerId);
+                            result[j++][i] = row.TicketerId == null ? null : await Accounts.GetAliasAsync(row.TicketerId);
                         break;
                     case "amount":
                         foreach (var row in rows)
@@ -586,11 +586,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "target":
                     foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync(row.TargetId);
+                        result[j++] = row.TargetId == null ? null : await Accounts.GetAliasAsync(row.TargetId);
                     break;
                 case "ticketer":
                     foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync(row.TicketerId);
+                        result[j++] = row.TicketerId == null ? null : await Accounts.GetAliasAsync(row.TicketerId);
                     break;
                 case "amount":
                     foreach (var row in rows)
