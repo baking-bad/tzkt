@@ -102,6 +102,7 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
+        //TODO Fix/delete
         public async Task Preload(IEnumerable<(int, int, int)> ids)
         {
             var missed = ids.Where(x => !CachedByKey.ContainsKey(x)).ToHashSet();
@@ -113,7 +114,7 @@ namespace Tzkt.Sync.Services.Cache
                     var items = await Db.Tickets
                         .FromSqlRaw($@"
                             SELECT * FROM ""{nameof(TzktContext.Tickets)}""
-                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.TicketId)}"") IN ({corteges})")
+                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.ContentHash)}"") IN ({corteges})")
                         .ToListAsync();
 
                     foreach (var item in items)

@@ -40,9 +40,9 @@ namespace Tzkt.Sync.Services
             return doc.RootElement.Clone();
         }
 
-        public async Task<T> PostAsync<T>(string url, object data)
+        public async Task<T> PostAsync<T>(string url, string content)
         {
-            return await Rpc.PostAsync<T>(url, data);
+            return await Rpc.PostAsync<T>(url, content);
         }
 
         public async Task<Header> GetHeaderAsync()

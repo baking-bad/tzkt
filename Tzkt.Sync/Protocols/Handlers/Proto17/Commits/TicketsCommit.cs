@@ -28,9 +28,8 @@ namespace Tzkt.Sync.Protocols.Proto17
             {
                 var ticketer = await Cache.Accounts.GetAsync(ticketUpdates.TicketToken.Ticketer);
                 var contract = ticketer as Contract;
-                var contentHash = Script.GetHash(ticketUpdates.TicketToken.Content.ToBytes());
-                var contentTypeHash = Script.GetHash(ticketUpdates.TicketToken.ContentType.ToBytes());
-                var ticket = GetOrCreateTicket(op, contract, contentHash, contentTypeHash);
+
+                var ticket = GetOrCreateTicket(op, contract, ticketUpdates.TicketToken);
 
                 //TODO Match updates, if successful, transfers, if not, burns and mints
                 foreach (var ticketUpdate in ticketUpdates.Updates)
@@ -74,13 +73,17 @@ namespace Tzkt.Sync.Protocols.Proto17
             return account;
         }
         
-        Ticket GetOrCreateTicket(ContractOperation op, Contract contract, int contentHash, int contentTypeHash)
+        Ticket GetOrCreateTicket(ContractOperation op, Contract contract, TicketToken ticketToken)
         {
+            var contentHash = Script.GetHash(ticketToken.Content.ToBytes());
+            var contentTypeHash = Script.GetHash(ticketToken.ContentType.ToBytes());
+            
             if (Cache.Tickets.TryGet(contract.Id, contentHash, contentTypeHash, out var ticket)) return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
 
+            
             ticket = new Ticket
             {
                 Id = Cache.AppState.NextSubId(op),
@@ -91,6 +94,8 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TotalBurned = BigInteger.Zero,
                 TotalMinted = BigInteger.Zero,
                 TotalSupply = BigInteger.Zero,
+                Content = ticketToken.Content.ToBytes(),
+                ContentType = ticketToken.ContentType.ToBytes(),
                 ContentHash = contentHash,
                 ContentTypeHash = contentTypeHash,
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
