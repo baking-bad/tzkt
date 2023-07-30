@@ -9,7 +9,6 @@ namespace Tzkt.Data.Models
     {
         public long Id { get; set; }
         public int TicketerId { get; set; }
-        public BigInteger TicketId { get; set; }
 
         public int FirstMinterId { get; set; }
         public int FirstLevel { get; set; }
@@ -49,11 +48,7 @@ namespace Tzkt.Data.Models
             var converter = new ValueConverter<BigInteger, string>(
                 x => x.ToString(),
                 x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TicketId)
-                .HasConversion(converter);
-
+            
             modelBuilder.Entity<Ticket>()
                 .Property(x => x.TotalMinted)
                 .HasConversion(converter);
@@ -74,11 +69,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.TicketerId);
-
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(x => new {ContractId = x.TicketerId, x.TicketId })
-                .IsUnique();
-
+            
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.FirstMinterId);
 

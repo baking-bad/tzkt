@@ -9,6 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto17
 
         protected override async Task TestTicketBalance(int level, TicketBalance balance)
         {
+            var a = balance.
             var a = await Rpc.GetTicketBalance(level, balance., ticket);
         }
     }
