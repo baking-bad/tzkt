@@ -27,6 +27,9 @@ namespace Tzkt.Data.Models
         
         public int ContentHash { get; set; }
         public int ContentTypeHash { get; set; }
+        
+        public byte[] Content { get; set; }
+        public byte[] ContentType { get; set; }
     }
     
     public static class TicketModel

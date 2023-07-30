@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -30,7 +31,7 @@ namespace Tzkt.Sync
 
                         _HttpClient.BaseAddress = BaseAddress;
                         _HttpClient.DefaultRequestHeaders.Accept.Add(
-                            new MediaTypeWithQualityHeaderValue("application/json"));
+                        new MediaTypeWithQualityHeaderValue("application/json"));
                         _HttpClient.DefaultRequestHeaders.UserAgent.Add(
                             new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
                         _HttpClient.Timeout = RequestTimeout;
@@ -64,11 +65,9 @@ namespace Tzkt.Sync
             return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
         }
         
-        public async Task<T> PostAsync<T>(string path, object data)
+        public async Task<T> PostAsync<T>(string path, string content)
         {
-            var content = JsonSerializer.Serialize(data);
-
-            var response = await HttpClient.PostAsJsonAsync(path, content);
+            var response = await HttpClient.PostAsync(path, new JsonContent(content));
             
             using var stream = await response.Content.ReadAsStreamAsync();
             return await JsonSerializer.DeserializeAsync<T>(stream);
