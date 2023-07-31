@@ -202,7 +202,7 @@ namespace Tzkt.Sync.Protocols.Proto13
         
         protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(JsonElement result)
         {
-            if (!result.TryGetProperty("ticket_update", out var ticketUpdates))
+            if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
 
             return ticketUpdates.RequiredArray().EnumerateArray().Select(x => new TicketUpdate

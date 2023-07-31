@@ -18,7 +18,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         public TransactionOperation Transaction { get; private set; }
         public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
         public IEnumerable<TicketUpdate> TicketUpdates { get; private set; }
-        public IEnumerable<TicketUpdate> TicketReceipt { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -293,7 +292,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await ProcessStorage(transaction, storage);
                 }
                 
-                TicketReceipt = ParseTicketUpdates("ticket_receipt", result);
+                TicketUpdates = ParseTicketUpdates("ticket_receipt", result);
 
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);

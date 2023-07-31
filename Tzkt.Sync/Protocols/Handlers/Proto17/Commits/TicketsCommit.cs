@@ -24,8 +24,61 @@ namespace Tzkt.Sync.Protocols.Proto17
             if (Updates.Count == 0) return;
             //TODO We need cache here;
 
+            
+            #region precache
+
+            var accountsSet = new HashSet<string>();
+            var ticketsSet = new HashSet<(int, int, int)>();
+            var balancesSet = new HashSet<(int, long)>();
+
+            foreach (var (op, update) in Updates)
+            {
+                accountsSet.Add(update.TicketToken.Ticketer);
+                foreach (var upd in update.Updates)
+                {
+                    accountsSet.Add(upd.Account);
+                }
+            }
+            await Cache.Accounts.Preload(accountsSet);
+
+            foreach (var (op, update) in Updates)
+            {
+                if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
+                {
+                    //TODO Move out
+                    var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
+                    var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
+                    ticketsSet.Add((ticketer.Id, contentHash, contentTypeHash));
+                }
+            }
+
+            await Cache.Tickets.Preload(ticketsSet);
+
+            foreach (var (op, update) in Updates)
+            {
+                if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
+                {
+                    //TODO Move out
+                    var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
+                    var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
+                    if (Cache.Tickets.TryGet(ticketer.Id, contentHash, contentTypeHash, out var ticket))
+                    {
+                        foreach (var upd in update.Updates)
+                        {
+                            if (Cache.Accounts.TryGetCached(upd.Account, out var acc))
+                                balancesSet.Add((acc.Id, ticket.Id));
+                        }
+                    }
+                }
+            }
+
+            await Cache.TicketBalances.Preload(balancesSet);
+            
+            #endregion
+
             foreach (var (op, ticketUpdates) in Updates)
             {
+                //TODO GetOrCreate?
                 var ticketer = await Cache.Accounts.GetAsync(ticketUpdates.TicketToken.Ticketer);
                 var contract = ticketer as Contract;
 

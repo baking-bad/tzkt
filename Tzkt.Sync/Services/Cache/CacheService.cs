@@ -68,6 +68,8 @@ namespace Tzkt.Sync.Services
             BigMapKeys.Reset();
             Tokens.Reset();
             TokenBalances.Reset();
+            Tickets.Reset();
+            TicketBalances.Reset();
             SmartRollupCommitments.Reset();
             SmartRollupStakes.Reset();
             RefutationGames.Reset();
@@ -80,6 +82,8 @@ namespace Tzkt.Sync.Services
         {
             Tokens.Trim();
             TokenBalances.Trim();
+            Tickets.Trim();
+            TicketBalances.Trim();
             SmartRollupCommitments.Trim();
             SmartRollupStakes.Trim();
             RefutationGames.Trim();
