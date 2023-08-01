@@ -234,7 +234,7 @@ namespace Tzkt.Sync.Protocols
                             await parent1.Apply(blockCommit.Block, operation, content);
                             if (parent1.TicketUpdates != null)
                                 //TODO Figure out behaviour for the transfer_ticket
-                                ticketsCommit.Append(null, parent1.TicketUpdates);
+                                ticketsCommit.Append(parent1.Operation, parent1.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult1))
                             {
                                 foreach (var internalContent in internalResult1.EnumerateArray())
