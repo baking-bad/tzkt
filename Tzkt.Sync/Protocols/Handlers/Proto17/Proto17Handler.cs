@@ -233,7 +233,6 @@ namespace Tzkt.Sync.Protocols
                             var parent1 = new TransferTicketCommit(this);
                             await parent1.Apply(blockCommit.Block, operation, content);
                             if (parent1.TicketUpdates != null)
-                                //TODO Figure out behaviour for the transfer_ticket
                                 ticketsCommit.Append(parent1.Operation, parent1.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult1))
                             {
@@ -264,6 +263,8 @@ namespace Tzkt.Sync.Protocols
                         case "smart_rollup_execute_outbox_message":
                             var parent2 = new SmartRollupExecuteCommit(this);
                             await parent2.Apply(blockCommit.Block, operation, content);
+                            if (parent2.TicketUpdates != null)
+                                ticketsCommit.Append(parent2.Operation, parent2.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult2))
                             {
                                 foreach (var internalContent in internalResult2.EnumerateArray())
@@ -284,6 +285,8 @@ namespace Tzkt.Sync.Protocols
                                             await internalTx.ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                            if (internalTx.TicketUpdates != null)
+                                                ticketsCommit.Append(internalTx.Transaction, internalTx.TicketUpdates);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
