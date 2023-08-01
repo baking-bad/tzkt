@@ -15,7 +15,7 @@ namespace Tzkt.Data.Models
         public int? FromId { get; set; }
         public int? ToId { get; set; }
 
-        public long? OriginationId { get; set; }
+        public long? TransferTicketId { get; set; }
         public long? TransactionId { get; set; }
         public long? MigrationId { get; set; }
         public int? IndexedAt { get; set; }
@@ -60,8 +60,8 @@ namespace Tzkt.Data.Models
                 .HasFilter($@"""{nameof(TicketTransfer.IndexedAt)}"" is not null");
 
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.OriginationId)
-                .HasFilter($@"""{nameof(TicketTransfer.OriginationId)}"" is not null");
+                .HasIndex(x => x.TransferTicketId)
+                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" is not null");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransactionId)

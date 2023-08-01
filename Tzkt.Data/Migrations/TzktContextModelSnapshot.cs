@@ -2039,9 +2039,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("SubIds")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TicketTransfers")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -3702,9 +3699,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<long?>("MigrationId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("OriginationId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("TicketId")
                         .HasColumnType("bigint");
 
@@ -3715,6 +3709,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<long?>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("TransferTicketId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -4142,7 +4139,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageUsed")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SubIds")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TicketerId")
