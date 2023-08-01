@@ -9,15 +9,23 @@ namespace Tzkt.Sync.Protocols.Proto17
     {
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        readonly List<(ContractOperation op,TicketUpdate update)> Updates = new();
+        readonly List<(ManagerOperation op,TicketUpdate update)> Updates = new();
+        // readonly List<(TransferTicketOperation op,TicketUpdate update)> Transfers = new();
         
-        public virtual void Append(ContractOperation op, IEnumerable<TicketUpdate> updates)
+        public virtual void Append(ManagerOperation op, IEnumerable<TicketUpdate> updates)
         {
             foreach (var update in updates)
             {
                 Updates.Add((op, update));
             }
         }
+        // public virtual void Append(TransferTicketOperation op, IEnumerable<TicketUpdate> updates)
+        // {
+        //     foreach (var update in updates)
+        //     {
+        //         Transfers.Add((op, update));
+        //     }
+        // }
         
         public virtual async Task Apply()
         {
@@ -88,6 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                 foreach (var ticketUpdate in ticketUpdates.Updates)
                 {
                     var amount = BigInteger.Parse(ticketUpdate.Amount);
+                    //TODO Fix here for transfer_ticket
                     var account = GetOrCreateAccount(op, ticketUpdate.Account);
                     var balance = GetOrCreateTicketBalance(op, ticket, account);
                     MintOrBurnTickets(op, ticket, account, balance, amount);
@@ -96,7 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             }
         }
 
-        Account GetOrCreateAccount(ContractOperation op, string address)
+        Account GetOrCreateAccount(ManagerOperation op, string address)
         {
             if (!Cache.Accounts.TryGetCached(address, out var account))
             {
@@ -126,7 +135,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             return account;
         }
         
-        Ticket GetOrCreateTicket(ContractOperation op, Contract contract, TicketToken ticketToken)
+        Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketToken ticketToken)
         {
             var contentHash = Script.GetHash(ticketToken.Content.ToBytes());
             var contentTypeHash = Script.GetHash(ticketToken.ContentType.ToBytes());
@@ -136,12 +145,23 @@ namespace Tzkt.Sync.Protocols.Proto17
             var state = Cache.AppState.Get();
             state.TicketsCount++;
 
-            
+            //Initiator to internal tx, sender for transfer_ticket and parent transaction             
+
             ticket = new Ticket
             {
-                Id = Cache.AppState.NextSubId(op),
+                Id = op switch
+                {
+                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                },
                 TicketerId = contract.Id,
-                FirstMinterId = op.InitiatorId ?? op.SenderId,
+                FirstMinterId = op switch
+                {
+                    ContractOperation contractOperation => contractOperation.InitiatorId ?? contractOperation.SenderId,
+                    TransferTicketOperation transfer => transfer.SenderId,
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                },
                 FirstLevel = op.Level,
                 LastLevel = op.Level,
                 TotalBurned = BigInteger.Zero,
@@ -153,6 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                 ContentTypeHash = contentTypeHash,
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             };
+             
             Db.Tickets.Add(ticket);
             Cache.Tickets.Add(ticket);
 
@@ -164,7 +185,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             return ticket;
         }
         
-        TicketBalance GetOrCreateTicketBalance(ContractOperation op, Ticket ticket, Account account)
+        TicketBalance GetOrCreateTicketBalance(ManagerOperation op, Ticket ticket, Account account)
         {
             if (!Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance))
             {
@@ -173,7 +194,12 @@ namespace Tzkt.Sync.Protocols.Proto17
 
                 ticketBalance = new TicketBalance
                 {
-                    Id = Cache.AppState.NextSubId(op),
+                    Id = op switch
+                    {
+                        ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                        TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                        _ => throw new ArgumentOutOfRangeException(nameof(op))
+                    },
                     AccountId = account.Id,
                     TicketId = ticket.Id,
                     TicketerId = ticket.TicketerId,
@@ -199,12 +225,21 @@ namespace Tzkt.Sync.Protocols.Proto17
             return ticketBalance;
         }
         
-        void TransferTickets(ContractOperation op, Contract contract, Ticket ticket,
+        void TransferTickets(ManagerOperation op, Contract contract, Ticket ticket,
             Account from, TicketBalance fromBalance,
             Account to, TicketBalance toBalance,
             BigInteger amount)
         {
-            op.TicketTransfers = (op.TicketTransfers ?? 0) + 1;
+            //TODO Need to be tested
+            switch (op)
+            {
+                case TransferTicketOperation transfer1:
+                    transfer1.TicketTransfers = (transfer1.TicketTransfers ?? 0) + 1;
+                    break;
+                case TransactionOperation tx:
+                    tx.TicketTransfers = (tx.TicketTransfers ?? 0) + 1;
+                    break;
+            }
 
             Db.TryAttach(from);
             from.TicketTransfersCount++;
@@ -244,7 +279,12 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             Db.TicketTransfers.Add(new TicketTransfer
             {
-                Id = Cache.AppState.NextSubId(op),
+                Id = op switch
+                {
+                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                },
                 Amount = amount,
                 FromId = from.Id,
                 ToId = to.Id,
@@ -252,16 +292,25 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                OriginationId = (op as OriginationOperation)?.Id,
+                TransferTicketId = (op as OriginationOperation)?.Id,
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             });
         }
         
-        void MintOrBurnTickets(ContractOperation op, Ticket ticket,
+        void MintOrBurnTickets(ManagerOperation op, Ticket ticket,
             Account account, TicketBalance balance,
             BigInteger diff)
         {
-            op.TicketTransfers = (op.TicketTransfers ?? 0) + 1;
+            //TODO Need to be tested
+            switch (op)
+            {
+                case TransferTicketOperation transfer1:
+                    transfer1.TicketTransfers = (transfer1.TicketTransfers ?? 0) + 1;
+                    break;
+                case TransactionOperation tx:
+                    tx.TicketTransfers = (tx.TicketTransfers ?? 0) + 1;
+                    break;
+            }
 
             Db.TryAttach(account);
             account.TicketTransfersCount++;
@@ -291,7 +340,12 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             Db.TicketTransfers.Add(new TicketTransfer
             {
-                Id = Cache.AppState.NextSubId(op),
+                Id = op switch
+                {
+                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                },
                 Amount = diff > BigInteger.Zero ? diff : -diff,
                 FromId = diff < BigInteger.Zero ? account.Id : null,
                 ToId = diff > BigInteger.Zero ? account.Id : null,
@@ -299,7 +353,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                OriginationId = (op as OriginationOperation)?.Id,
+                TransferTicketId = (op as TransferTicketOperation)?.Id,
                 IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
             });
         }

@@ -177,6 +177,13 @@ namespace Tzkt.Sync.Services.Cache
             return op.Id + (int)op.SubIds;
         }
 
+        public long NextSubId(TransferTicketOperation op)
+        {
+            op.SubIds = (op.SubIds ?? 0) +  1;
+            if (op.SubIds >= 1 << AppState.SubIdBits) throw new Exception("SubId overflow");
+            return op.Id + (int)op.SubIds;
+        }
+
         public long NextSubId(MigrationOperation op)
         {
             op.SubIds = (op.SubIds ?? 0) + 1;
