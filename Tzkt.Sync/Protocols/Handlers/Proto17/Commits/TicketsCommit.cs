@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -171,7 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                 ContentType = ticketToken.ContentType.ToBytes(),
                 ContentHash = contentHash,
                 ContentTypeHash = contentTypeHash,
-                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null //TODO Can be not null?
             };
              
             Db.Tickets.Add(ticket);
@@ -301,7 +302,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             Account account, TicketBalance balance,
             BigInteger diff)
         {
-            //TODO Need to be tested
             switch (op)
             {
                 case TransferTicketOperation transfer1:
@@ -360,9 +360,216 @@ namespace Tzkt.Sync.Protocols.Proto17
 
         public virtual async Task Revert(Block block)
         {
-            //TODO Implement revert
+            if (!block.Events.HasFlag(BlockEvents.Tickets))
+                return;
 
-            throw new NotImplementedException("Revert for Tickets commit not implemented yet");
+            var state = Cache.AppState.Get();
+
+            var transfers = await Db.TicketTransfers
+                .AsNoTracking()
+                .Where(x => x.Level == block.Level)
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
+
+            #region precache
+            var accountsSet = new HashSet<int>();
+            var ticketsSet = new HashSet<long>();
+            var balancesSet = new HashSet<(int, long)>();
+
+            foreach (var tr in transfers)
+                ticketsSet.Add(tr.TicketId);
+
+            await Cache.Tokens.Preload(ticketsSet);
+
+            foreach (var tr in transfers)
+            {
+                if (tr.FromId is int fromId)
+                {
+                    accountsSet.Add(fromId);
+                    balancesSet.Add((fromId, tr.TicketId));
+                }
+
+                if (tr.ToId is int toId)
+                {
+                    accountsSet.Add(toId);
+                    balancesSet.Add((toId, tr.TicketId));
+                }
+            }
+
+            foreach (var id in ticketsSet)
+            {
+                var ticket = Cache.Tickets.Get(id);
+                accountsSet.Add(ticket.TicketerId);
+            }
+
+            await Cache.Accounts.Preload(accountsSet);
+            await Cache.TicketBalances.Preload(balancesSet);
+            #endregion
+
+            var ticketsToRemove = new HashSet<Ticket>();
+            var ticketBalancesToRemove = new HashSet<TicketBalance>();
+
+            foreach (var transfer in transfers)
+            {
+                var ticket = Cache.Tickets.Get(transfer.TicketId);
+                var contract = (Contract)Cache.Accounts.GetCached(ticket.TicketerId);
+                Db.TryAttach(ticket);
+                ticket.LastLevel = block.Level;
+                if (ticket.FirstLevel == block.Level)
+                    ticketsToRemove.Add(ticket);
+
+                if (transfer.FromId is int fromId && transfer.ToId is int toId)
+                {
+                    #region revert transfer
+                    var from = Cache.Accounts.GetCached(fromId);
+                    var to = Cache.Accounts.GetCached(toId);
+                    var fromBalance = Cache.TicketBalances.Get(from.Id, ticket.Id);
+                    var toBalance = Cache.TicketBalances.Get(to.Id, ticket.Id);
+
+                    Db.TryAttach(from);
+                    Db.TryAttach(to);
+                    Db.TryAttach(fromBalance);
+                    Db.TryAttach(toBalance);
+
+                    from.TicketTransfersCount--;
+                    if (to != from) to.TicketTransfersCount--;
+
+                    fromBalance.Balance += transfer.Amount;
+                    fromBalance.TransfersCount--;
+                    fromBalance.LastLevel = block.Level;
+                    if (fromBalance.FirstLevel == block.Level)
+                        ticketBalancesToRemove.Add(fromBalance);
+
+                    toBalance.Balance -= transfer.Amount;
+                    if (toBalance != fromBalance) toBalance.TransfersCount--;
+                    toBalance.LastLevel = block.Level;
+                    if (toBalance.FirstLevel == block.Level)
+                        ticketBalancesToRemove.Add(toBalance);
+
+                    ticket.TransfersCount--;
+                    if (transfer.Amount != BigInteger.Zero && fromBalance.Id != toBalance.Id)
+                    {
+                        if (fromBalance.Balance == transfer.Amount)
+                        {
+                            from.ActiveTicketsCount++;
+                            ticket.HoldersCount++;
+                        }
+                        if (toBalance.Balance == BigInteger.Zero)
+                        {
+                            to.ActiveTicketsCount--;
+                            ticket.HoldersCount--;
+                        }
+
+                        if (contract.Tags.HasFlag(ContractTags.Nft))
+                            ticket.OwnerId = from.Id;
+                    }
+
+                    state.TicketTransfersCount--;
+                    #endregion
+                }
+                else if (transfer.ToId != null)
+                {
+                    #region revert mint
+                    var to = Cache.Accounts.GetCached((int)transfer.ToId);
+                    var toBalance = Cache.TicketBalances.Get(to.Id, ticket.Id);
+
+                    Db.TryAttach(to);
+                    Db.TryAttach(toBalance);
+
+                    to.TicketTransfersCount--;
+
+                    toBalance.Balance -= transfer.Amount;
+                    toBalance.TransfersCount--;
+                    toBalance.LastLevel = block.Level;
+                    if (toBalance.FirstLevel == block.Level)
+                        ticketBalancesToRemove.Add(toBalance);
+
+                    ticket.TransfersCount--;
+                    if (transfer.Amount != BigInteger.Zero)
+                    {
+                        if (toBalance.Balance == BigInteger.Zero)
+                        {
+                            to.ActiveTicketsCount--;
+                            ticket.HoldersCount--;
+                        }
+
+                        if (contract.Tags.HasFlag(ContractTags.Nft))
+                            ticket.OwnerId = null;
+                    }
+
+                    state.TicketTransfersCount--;
+                    #endregion
+                }
+                else
+                {
+                    #region revert burn
+                    var from = Cache.Accounts.GetCached((int)transfer.FromId);
+                    var fromBalance = Cache.TicketBalances.Get(from.Id, ticket.Id);
+
+                    Db.TryAttach(from);
+                    Db.TryAttach(fromBalance);
+
+                    from.TicketTransfersCount--;
+
+                    fromBalance.Balance += transfer.Amount;
+                    fromBalance.TransfersCount--;
+                    fromBalance.LastLevel = block.Level;
+                    if (fromBalance.FirstLevel == block.Level)
+                        ticketBalancesToRemove.Add(fromBalance);
+
+                    ticket.TransfersCount--;
+                    if (transfer.Amount != BigInteger.Zero)
+                    {
+                        if (fromBalance.Balance == transfer.Amount)
+                        {
+                            from.ActiveTicketsCount++;
+                            ticket.HoldersCount++;
+                        }
+
+                        if (contract.Tags.HasFlag(ContractTags.Nft))
+                            ticket.OwnerId = from.Id;
+                    }
+
+                    state.TicketTransfersCount--;
+                    #endregion
+                }
+            }
+
+            foreach (var ticketBalance in ticketBalancesToRemove)
+            {
+                if (ticketBalance.FirstLevel == block.Level)
+                {
+                    Db.TicketBalances.Remove(ticketBalance);
+                    Cache.TicketBalances.Remove(ticketBalance);
+                        
+                    var t = Cache.Tickets.Get(ticketBalance.TicketId);
+                    Db.TryAttach(t);
+                    t.BalancesCount--;
+
+                    var a = Cache.Accounts.GetCached(ticketBalance.AccountId);
+                    Db.TryAttach(a);
+                    a.TicketBalancesCount--;
+
+                    state.TicketBalancesCount--;
+                }
+            }
+
+            foreach (var ticket in ticketsToRemove)
+            {
+                if (ticket.FirstLevel == block.Level)
+                {
+                    Db.Tickets.Remove(ticket);
+                    Cache.Tickets.Remove(ticket);
+
+                    var c = (Contract)Cache.Accounts.GetCached(ticket.TicketerId);
+                    Db.TryAttach(c);
+                    c.TicketsCount--;
+
+                    state.TicketsCount--;
+                }
+            }
+
+            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""TicketTransfers"" WHERE ""Level"" = {block.Level};");
         }
     }
 }
