@@ -11,7 +11,6 @@ namespace Tzkt.Sync.Protocols.Proto17
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
         readonly List<(ManagerOperation op,TicketUpdate update)> Updates = new();
-        // readonly List<(TransferTicketOperation op,TicketUpdate update)> Transfers = new();
         
         public virtual void Append(ManagerOperation op, IEnumerable<TicketUpdate> updates)
         {
@@ -20,13 +19,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                 Updates.Add((op, update));
             }
         }
-        // public virtual void Append(TransferTicketOperation op, IEnumerable<TicketUpdate> updates)
-        // {
-        //     foreach (var update in updates)
-        //     {
-        //         Transfers.Add((op, update));
-        //     }
-        // }
         
         public virtual async Task Apply()
         {
@@ -379,7 +371,8 @@ namespace Tzkt.Sync.Protocols.Proto17
             foreach (var tr in transfers)
                 ticketsSet.Add(tr.TicketId);
 
-            await Cache.Tokens.Preload(ticketsSet);
+            //TODO If I throw an exception here, balances will be broken.
+            await Cache.Tickets.Preload(ticketsSet);
 
             foreach (var tr in transfers)
             {

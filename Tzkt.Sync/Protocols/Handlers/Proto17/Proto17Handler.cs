@@ -500,6 +500,7 @@ namespace Tzkt.Sync.Protocols
             await new DelegatorCycleCommit(this).Revert(currBlock);
             await new BakingRightsCommit(this).Revert(currBlock);
             await new TokensCommit(this).Revert(currBlock);
+            await new TicketsCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
             await new ContractEventCommit(this).Revert(currBlock);
             await new InboxCommit(this).Revert(currBlock);
