@@ -79,12 +79,16 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             foreach (var (op, ticketUpdates) in Updates)
             {
+                op.Block.Events |= BlockEvents.Tickets;
+                
                 //TODO GetOrCreate?
                 var ticketer = await Cache.Accounts.GetAsync(ticketUpdates.TicketToken.Ticketer);
                 var contract = ticketer as Contract;
 
                 var ticket = GetOrCreateTicket(op, contract, ticketUpdates.TicketToken);
 
+                
+                //TODO First, group by opHash?
                 //TODO Match updates, if successful, transfers, if not, burns and mints
                 foreach (var ticketUpdate in ticketUpdates.Updates)
                 {
@@ -174,7 +178,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             contract.TicketsCount++;
 
             Db.TryAttach(op.Block);
-            op.Block.Events |= BlockEvents.Tickets;
             return ticket;
         }
         
