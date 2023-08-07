@@ -13,6 +13,8 @@ namespace Tzkt.Sync.Protocols
         public string Ticketer { get; set; }
         public IMicheline ContentType { get; set; }
         public IMicheline Content { get; set; }
+        public int ContentTypeHash { get; set; }
+        public int ContentHash { get; set; }
     }
     
     public class Update

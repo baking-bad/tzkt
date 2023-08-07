@@ -115,7 +115,6 @@ namespace Tzkt.Data.Migrations
                     TotalBurned = table.Column<BigInteger>(type: "numeric", nullable: false),
                     TotalSupply = table.Column<BigInteger>(type: "numeric", nullable: false),
                     OwnerId = table.Column<int>(type: "integer", nullable: true),
-                    IndexedAt = table.Column<int>(type: "integer", nullable: true),
                     ContentHash = table.Column<int>(type: "integer", nullable: false),
                     ContentTypeHash = table.Column<int>(type: "integer", nullable: false),
                     Content = table.Column<byte[]>(type: "bytea", nullable: true),
