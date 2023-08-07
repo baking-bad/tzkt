@@ -16,18 +16,6 @@ namespace Tzkt.Data.Models
         public int TransfersCount { get; set; }
         public BigInteger Balance { get; set; }
         public int? IndexedAt { get; set; }
-        
-        //TODO Delete ForeignKey
-        #region relations
-        [ForeignKey(nameof(TicketerId))]
-        public Account Ticketer { get; set; }
-        
-        [ForeignKey(nameof(AccountId))]
-        public Account Account { get; set; }
-        
-        [ForeignKey(nameof(TicketId))]
-        public Ticket Ticket { get; set; }
-        #endregion
     }
 
     public static class TicketBalanceModel

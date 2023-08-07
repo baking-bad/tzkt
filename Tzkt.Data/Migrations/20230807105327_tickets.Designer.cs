@@ -14,8 +14,8 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20230730143042_test")]
-    partial class test
+    [Migration("20230807105327_tickets")]
+    partial class tickets
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2042,9 +2042,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("SubIds")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TicketTransfers")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -3673,12 +3670,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("TicketId");
-
-                    b.HasIndex("TicketerId");
-
                     b.ToTable("TicketBalances");
                 });
 
@@ -3705,9 +3696,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<long?>("MigrationId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("OriginationId")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("TicketId")
                         .HasColumnType("bigint");
 
@@ -3718,6 +3706,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<long?>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("TransferTicketId")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
@@ -4145,7 +4136,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageUsed")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SubIds")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TicketerId")
@@ -5848,33 +5845,6 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.TicketBalance", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Ticket", "Ticket")
-                        .WithMany()
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Ticketer")
-                        .WithMany()
-                        .HasForeignKey("TicketerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Ticket");
-
-                    b.Navigation("Ticketer");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Initiator")
@@ -5928,15 +5898,9 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.Account", "Ticketer")
-                        .WithMany()
-                        .HasForeignKey("TicketerId");
-
                     b.Navigation("Block");
 
                     b.Navigation("Sender");
-
-                    b.Navigation("Ticketer");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>

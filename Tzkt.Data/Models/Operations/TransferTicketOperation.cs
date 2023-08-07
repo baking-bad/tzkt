@@ -19,13 +19,6 @@ namespace Tzkt.Data.Models
 
         public int? TicketTransfers { get; set; }
         public int? SubIds { get; set; }
-
-        
-        //TODO Delete ForeignKey
-        #region relations
-        [ForeignKey(nameof(TicketerId))]
-        public Account Ticketer { get; set; }
-        #endregion
     }
 
     public static class TransferTicketOperationModel

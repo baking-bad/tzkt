@@ -3667,12 +3667,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
-                    b.HasIndex("TicketId");
-
-                    b.HasIndex("TicketerId");
-
                     b.ToTable("TicketBalances");
                 });
 
@@ -5848,33 +5842,6 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Sender");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.TicketBalance", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Ticket", "Ticket")
-                        .WithMany()
-                        .HasForeignKey("TicketId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Ticketer")
-                        .WithMany()
-                        .HasForeignKey("TicketerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Ticket");
-
-                    b.Navigation("Ticketer");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.Account", "Initiator")
@@ -5928,15 +5895,9 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.Account", "Ticketer")
-                        .WithMany()
-                        .HasForeignKey("TicketerId");
-
                     b.Navigation("Block");
 
                     b.Navigation("Sender");
-
-                    b.Navigation("Ticketer");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>
