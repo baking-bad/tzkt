@@ -19,7 +19,7 @@ namespace Tzkt.Data.Models
         public int? BigMapUpdates { get; set; }
         public int? TokenTransfers { get; set; }
         
-        //TODO Add Tickets to migrations
+        //TODO Add Tickets to migrations?
 
         public int? SubIds { get; set; }
 
