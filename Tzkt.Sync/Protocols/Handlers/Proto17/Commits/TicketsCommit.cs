@@ -23,8 +23,6 @@ namespace Tzkt.Sync.Protocols.Proto17
         public virtual async Task Apply()
         {
             if (Updates.Count == 0) return;
-            //TODO We need cache here;
-
             
             #region precache
 
@@ -87,6 +85,18 @@ namespace Tzkt.Sync.Protocols.Proto17
 
                 var ticket = GetOrCreateTicket(op, contract, ticketUpdates.TicketToken);
 
+                /*List<(ManagerOperation op, TicketUpdate update)> transfers = new();
+                
+                foreach (var updates in Updates.GroupBy(x => x.op.OpHash).Select(g => g.ToList()).ToList())
+                {
+                    foreach (var (managerOperation, update) in updates)
+                    {
+                        if (true)
+                        {
+                            transfers.Add(managerOperation, update);
+                        }
+                    }
+                }*/
                 
                 //TODO First, group by opHash?
                 //TODO Match updates, if successful, transfers, if not, burns and mints

@@ -11,18 +11,22 @@ namespace Tzkt.Sync.Protocols.Proto17
 
         protected override async Task TestTicketBalance(int level, TicketBalance balance)
         {
+            //TODO Make sure that's correct
+            var ticketer = await Cache.Accounts.GetAsync(balance.TicketerId);
+            var ticket = Cache.Tickets.Get(balance.TicketId);
+            var account = await Cache.Accounts.GetAsync(balance.AccountId);
+            
             var update = new
             {
-                ticketer = balance.Ticketer.Address,
-                content_type = Micheline.FromBytes(balance.Ticket.ContentType),
-                content = Micheline.FromBytes(balance.Ticket.Content)
+                ticketer = ticketer.Address,
+                content_type = Micheline.FromBytes(ticket.ContentType),
+                content = Micheline.FromBytes(ticket.Content)
             };
-            var ticket = JsonSerializer.Serialize(update);
 
-            if (BigInteger.TryParse((await Rpc.GetTicketBalance(level, balance.Account.Address, ticket)).ToString(), out var remoteBalance))
+            if (BigInteger.TryParse((await Rpc.GetTicketBalance(level, account.Address, JsonSerializer.Serialize(update))).ToString(), out var remoteBalance))
             {
                 if (remoteBalance != balance.Balance)
-                    throw new Exception($"Diagnostics failed: wrong ticket balance for {balance.Account.Address}");
+                    throw new Exception($"Diagnostics failed: wrong ticket balance for {account.Address}");
             }
             else
             {
