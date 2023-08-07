@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using Netezos.Encoding;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto17
 {
@@ -18,12 +19,10 @@ namespace Tzkt.Sync.Protocols.Proto17
                     ? new TicketToken
                     {
                         Ticketer = ticketToken.RequiredString("ticketer"),
-                        ContentType = ticketToken.TryGetProperty("content_type", out var contentType)
-                            ? Micheline.FromJson(contentType)
-                            : null,
-                        Content = ticketToken.TryGetProperty("content", out var content)
-                            ? Micheline.FromJson(content)
-                            : null,
+                        ContentType = Micheline.FromJson(ticketToken.Required("content_type")),
+                        Content = Micheline.FromJson(ticketToken.Required("content")),
+                        ContentTypeHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content_type")).ToBytes()),
+                        ContentHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content")).ToBytes())
                     }
                     : null,
                 Updates = x.TryGetProperty("updates", out var updates)

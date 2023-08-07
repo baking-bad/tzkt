@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             var ticketsSet = new HashSet<(int, int, int)>();
             var balancesSet = new HashSet<(int, long)>();
 
-            foreach (var (op, update) in Updates)
+            foreach (var (_, update) in Updates)
             {
                 accountsSet.Add(update.TicketToken.Ticketer);
                 foreach (var upd in update.Updates)
@@ -40,27 +40,19 @@ namespace Tzkt.Sync.Protocols.Proto17
             }
             await Cache.Accounts.Preload(accountsSet);
 
-            foreach (var (op, update) in Updates)
+            foreach (var (_, update) in Updates)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
-                {
-                    //TODO Move out
-                    var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
-                    var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
-                    ticketsSet.Add((ticketer.Id, contentHash, contentTypeHash));
-                }
+                    ticketsSet.Add((ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.ContentTypeHash));
             }
 
             await Cache.Tickets.Preload(ticketsSet);
 
-            foreach (var (op, update) in Updates)
+            foreach (var (_, update) in Updates)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                 {
-                    //TODO Move out
-                    var contentHash = Script.GetHash(update.TicketToken.Content.ToBytes());
-                    var contentTypeHash = Script.GetHash(update.TicketToken.ContentType.ToBytes());
-                    if (Cache.Tickets.TryGet(ticketer.Id, contentHash, contentTypeHash, out var ticket))
+                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.ContentTypeHash, out var ticket))
                     {
                         foreach (var upd in update.Updates)
                         {
@@ -79,11 +71,11 @@ namespace Tzkt.Sync.Protocols.Proto17
             {
                 op.Block.Events |= BlockEvents.Tickets;
                 
-                //TODO GetOrCreate?
-                var ticketer = await Cache.Accounts.GetAsync(ticketUpdates.TicketToken.Ticketer);
-                var contract = ticketer as Contract;
+                
+                //TODO Check all LastLevel fields.
+                var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
 
-                var ticket = GetOrCreateTicket(op, contract, ticketUpdates.TicketToken);
+                var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
 
                 /*List<(ManagerOperation op, TicketUpdate update)> transfers = new();
                 
@@ -103,7 +95,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                 foreach (var ticketUpdate in ticketUpdates.Updates)
                 {
                     var amount = BigInteger.Parse(ticketUpdate.Amount);
-                    //TODO Fix here for transfer_ticket
                     var account = GetOrCreateAccount(op, ticketUpdate.Account);
                     var balance = GetOrCreateTicketBalance(op, ticket, account);
                     MintOrBurnTickets(op, ticket, account, balance, amount);
@@ -144,10 +135,7 @@ namespace Tzkt.Sync.Protocols.Proto17
         
         Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketToken ticketToken)
         {
-            var contentHash = Script.GetHash(ticketToken.Content.ToBytes());
-            var contentTypeHash = Script.GetHash(ticketToken.ContentType.ToBytes());
-            
-            if (Cache.Tickets.TryGet(contract.Id, contentHash, contentTypeHash, out var ticket)) return ticket;
+            if (Cache.Tickets.TryGet(contract.Id, ticketToken.ContentHash, ticketToken.ContentTypeHash, out var ticket)) return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
@@ -176,9 +164,8 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TotalSupply = BigInteger.Zero,
                 Content = ticketToken.Content.ToBytes(),
                 ContentType = ticketToken.ContentType.ToBytes(),
-                ContentHash = contentHash,
-                ContentTypeHash = contentTypeHash,
-                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null //TODO Can be not null?
+                ContentHash = ticketToken.ContentHash,
+                ContentTypeHash = ticketToken.ContentTypeHash,
             };
              
             Db.Tickets.Add(ticket);
@@ -384,7 +371,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             foreach (var tr in transfers)
                 ticketsSet.Add(tr.TicketId);
 
-            //TODO If I throw an exception here, balances will be broken.
             await Cache.Tickets.Preload(ticketsSet);
 
             foreach (var tr in transfers)

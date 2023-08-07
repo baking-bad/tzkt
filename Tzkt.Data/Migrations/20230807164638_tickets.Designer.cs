@@ -14,7 +14,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20230807105327_tickets")]
+    [Migration("20230807164638_tickets")]
     partial class tickets
     {
         /// <inheritdoc />
@@ -3605,9 +3605,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("HoldersCount")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("IndexedAt")
                         .HasColumnType("integer");
 
                     b.Property<int>("LastLevel")

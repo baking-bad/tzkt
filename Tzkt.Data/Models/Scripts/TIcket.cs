@@ -23,7 +23,6 @@ namespace Tzkt.Data.Models
         public BigInteger TotalSupply { get; set; }
 
         public int? OwnerId { get; set; }
-        public int? IndexedAt { get; set; }
         
         public int ContentHash { get; set; }
         public int ContentTypeHash { get; set; }
@@ -78,10 +77,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.LastLevel);
-
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.IndexedAt)
-                .HasFilter($@"""{nameof(Ticket.IndexedAt)}"" is not null");
 
             // shadow property
             modelBuilder.Entity<Ticket>()

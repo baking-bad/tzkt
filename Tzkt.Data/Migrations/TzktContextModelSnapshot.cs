@@ -3604,9 +3604,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("HoldersCount")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("IndexedAt")
-                        .HasColumnType("integer");
-
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
