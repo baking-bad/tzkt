@@ -102,7 +102,6 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
-        //TODO Fix/delete
         public async Task Preload(IEnumerable<(int, int, int)> ids)
         {
             var missed = ids.Where(x => !CachedByKey.ContainsKey(x)).ToHashSet();
