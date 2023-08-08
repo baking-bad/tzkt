@@ -15,7 +15,6 @@ namespace Tzkt.Data.Models
         public int LastLevel { get; set; }
         public int TransfersCount { get; set; }
         public BigInteger Balance { get; set; }
-        public int? IndexedAt { get; set; }
     }
 
     public static class TicketBalanceModel
@@ -73,10 +72,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.LastLevel);
-
-            modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.IndexedAt)
-                .HasFilter($@"""{nameof(TicketBalance.IndexedAt)}"" is not null");
             #endregion
         }
     }
