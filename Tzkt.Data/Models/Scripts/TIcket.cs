@@ -22,6 +22,7 @@ namespace Tzkt.Data.Models
         public BigInteger TotalBurned { get; set; }
         public BigInteger TotalSupply { get; set; }
 
+        //TODO Make sure we need that
         public int? OwnerId { get; set; }
         
         public int ContentHash { get; set; }

@@ -198,8 +198,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                     TicketerId = ticket.TicketerId,
                     FirstLevel = op.Level,
                     LastLevel = op.Level,
-                    Balance = BigInteger.Zero,
-                    IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+                    Balance = BigInteger.Zero
                 };
                 Db.TicketBalances.Add(ticketBalance);
                 Cache.TicketBalances.Add(ticketBalance);
@@ -236,9 +235,14 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             Db.TryAttach(from);
             from.TicketTransfersCount++;
+            from.LastLevel = op.Level;
 
             Db.TryAttach(to);
-            if (to != from) to.TicketTransfersCount++;
+            if (to != from)
+            {
+                to.TicketTransfersCount++;
+                to.LastLevel = op.Level;
+            }
 
             Db.TryAttach(fromBalance);
             fromBalance.Balance -= amount;
@@ -285,14 +289,13 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                TransferTicketId = (op as OriginationOperation)?.Id,
-                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+                TransferTicketId = (op as OriginationOperation)?.Id
             });
         }
         
         void MintOrBurnTickets(ManagerOperation op, Ticket ticket,
             Account account, TicketBalance balance,
-            BigInteger diff)
+            BigInteger amount)
         {
             switch (op)
             {
@@ -306,26 +309,29 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             Db.TryAttach(account);
             account.TicketTransfersCount++;
+            account.LastLevel = op.Level;
 
             Db.TryAttach(balance);
-            balance.Balance += diff;
+            balance.Balance += amount;
             balance.TransfersCount++;
             balance.LastLevel = op.Level;
 
+            //TODO Check transfersCount, balancesCount, holdersCount
             ticket.TransfersCount++;
+            ticket.LastLevel = op.Level;
             if (balance.Balance == BigInteger.Zero)
             {
                 account.ActiveTicketsCount--;
                 ticket.HoldersCount--;
             }
-            if (balance.Balance == diff)
+            if (balance.Balance == amount)
             {
                 account.ActiveTicketsCount++;
                 ticket.HoldersCount++;
             }
-            if (diff > 0) ticket.TotalMinted += diff;
-            else ticket.TotalBurned += -diff;
-            ticket.TotalSupply += diff;
+            if (amount > 0) ticket.TotalMinted += amount;
+            else ticket.TotalBurned += -amount;
+            ticket.TotalSupply += amount;
 
             var state = Cache.AppState.Get();
             state.TicketTransfersCount++;
@@ -338,15 +344,14 @@ namespace Tzkt.Sync.Protocols.Proto17
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
-                Amount = diff > BigInteger.Zero ? diff : -diff,
-                FromId = diff < BigInteger.Zero ? account.Id : null,
-                ToId = diff > BigInteger.Zero ? account.Id : null,
+                Amount = amount > BigInteger.Zero ? amount : -amount,
+                FromId = amount < BigInteger.Zero ? account.Id : null,
+                ToId = amount > BigInteger.Zero ? account.Id : null,
                 Level = op.Level,
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                TransferTicketId = (op as TransferTicketOperation)?.Id,
-                IndexedAt = op.Level <= state.Level ? state.Level + 1 : null
+                TransferTicketId = (op as TransferTicketOperation)?.Id
             });
         }
 
