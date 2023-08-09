@@ -482,12 +482,12 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.SmartRollupRefute))
                 operations.AddRange(await Db.SmartRollupRefuteOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
-            if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
-            {
-                await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
-                foreach (var account in currBlock.CreatedAccounts)
-                    Cache.Accounts.Add(account);
-            }
+if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
+{
+    await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
+    foreach (var account in currBlock.CreatedAccounts)
+        Cache.Accounts.Add(account);
+}
             #endregion
 
             await new VotingCommit(this).Revert(currBlock);

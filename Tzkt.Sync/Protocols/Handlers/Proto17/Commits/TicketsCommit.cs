@@ -69,8 +69,8 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             foreach (var (op, ticketUpdates) in Updates)
             {
+                Db.TryAttach(op.Block);
                 op.Block.Events |= BlockEvents.Tickets;
-                
                 
                 //TODO Check all LastLevel fields.
                 var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
@@ -127,6 +127,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                 Db.Accounts.Add(account);
                 Cache.Accounts.Add(account);
 
+                //TODO Do we need to attach it twice?
                 Db.TryAttach(op.Block);
                 op.Block.Events |= BlockEvents.NewAccounts;
             }
@@ -139,8 +140,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
-
-            //Initiator to internal tx, sender for transfer_ticket and parent transaction             
 
             ticket = new Ticket
             {
@@ -162,8 +161,9 @@ namespace Tzkt.Sync.Protocols.Proto17
                 TotalBurned = BigInteger.Zero,
                 TotalMinted = BigInteger.Zero,
                 TotalSupply = BigInteger.Zero,
-                Content = ticketToken.Content.ToBytes(),
-                ContentType = ticketToken.ContentType.ToBytes(),
+                RawContent = ticketToken.RawContent,
+                RawType = ticketToken.RawType,
+                JsonContent = ticketToken.JsonContent,
                 ContentHash = ticketToken.ContentHash,
                 ContentTypeHash = ticketToken.ContentTypeHash,
             };
@@ -174,45 +174,43 @@ namespace Tzkt.Sync.Protocols.Proto17
             Db.TryAttach(contract);
             contract.TicketsCount++;
 
-            Db.TryAttach(op.Block);
             return ticket;
         }
         
         TicketBalance GetOrCreateTicketBalance(ManagerOperation op, Ticket ticket, Account account)
         {
-            if (!Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance))
+            if (Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance)) return ticketBalance;
+            
+            var state = Cache.AppState.Get();
+            state.TicketBalancesCount++;
+
+            ticketBalance = new TicketBalance
             {
-                var state = Cache.AppState.Get();
-                state.TicketBalancesCount++;
-
-                ticketBalance = new TicketBalance
+                Id = op switch
                 {
-                    Id = op switch
-                    {
-                        ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
-                        TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
-                        _ => throw new ArgumentOutOfRangeException(nameof(op))
-                    },
-                    AccountId = account.Id,
-                    TicketId = ticket.Id,
-                    TicketerId = ticket.TicketerId,
-                    FirstLevel = op.Level,
-                    LastLevel = op.Level,
-                    Balance = BigInteger.Zero
-                };
-                Db.TicketBalances.Add(ticketBalance);
-                Cache.TicketBalances.Add(ticketBalance);
+                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    _ => throw new ArgumentOutOfRangeException(nameof(op))
+                },
+                AccountId = account.Id,
+                TicketId = ticket.Id,
+                TicketerId = ticket.TicketerId,
+                FirstLevel = op.Level,
+                LastLevel = op.Level,
+                Balance = BigInteger.Zero
+            };
+            Db.TicketBalances.Add(ticketBalance);
+            Cache.TicketBalances.Add(ticketBalance);
 
-                Db.TryAttach(ticket);
-                ticket.BalancesCount++;
+            Db.TryAttach(ticket);
+            ticket.BalancesCount++;
 
-                Db.TryAttach(account);
-                account.TicketBalancesCount++;
-                if (account.FirstLevel > op.Level)
-                {
-                    account.FirstLevel = op.Level;
-                    op.Block.Events |= BlockEvents.NewAccounts;
-                }
+            Db.TryAttach(account);
+            account.TicketBalancesCount++;
+            if (account.FirstLevel > op.Level)
+            {
+                account.FirstLevel = op.Level;
+                op.Block.Events |= BlockEvents.NewAccounts;
             }
             return ticketBalance;
         }
@@ -267,8 +265,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                     to.ActiveTicketsCount++;
                     ticket.HoldersCount++;
                 }
-                if (contract.Tags.HasFlag(ContractTags.Nft))
-                    ticket.OwnerId = to.Id;
             }
 
             var state = Cache.AppState.Get();
@@ -297,6 +293,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             Account account, TicketBalance balance,
             BigInteger amount)
         {
+            Db.TryAttach(op);
             switch (op)
             {
                 case TransferTicketOperation transfer1:
@@ -317,6 +314,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             balance.LastLevel = op.Level;
 
             //TODO Check transfersCount, balancesCount, holdersCount
+            Db.TryAttach(ticket);
             ticket.TransfersCount++;
             ticket.LastLevel = op.Level;
             if (balance.Balance == BigInteger.Zero)
@@ -409,9 +407,9 @@ namespace Tzkt.Sync.Protocols.Proto17
             foreach (var transfer in transfers)
             {
                 var ticket = Cache.Tickets.Get(transfer.TicketId);
-                var contract = (Contract)Cache.Accounts.GetCached(ticket.TicketerId);
                 Db.TryAttach(ticket);
                 ticket.LastLevel = block.Level;
+                ticket.TransfersCount--;
                 if (ticket.FirstLevel == block.Level)
                     ticketsToRemove.Add(ticket);
 
@@ -443,7 +441,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                     if (toBalance.FirstLevel == block.Level)
                         ticketBalancesToRemove.Add(toBalance);
 
-                    ticket.TransfersCount--;
                     if (transfer.Amount != BigInteger.Zero && fromBalance.Id != toBalance.Id)
                     {
                         if (fromBalance.Balance == transfer.Amount)
@@ -456,9 +453,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                             to.ActiveTicketsCount--;
                             ticket.HoldersCount--;
                         }
-
-                        if (contract.Tags.HasFlag(ContractTags.Nft))
-                            ticket.OwnerId = from.Id;
                     }
 
                     state.TicketTransfersCount--;
@@ -481,7 +475,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                     if (toBalance.FirstLevel == block.Level)
                         ticketBalancesToRemove.Add(toBalance);
 
-                    ticket.TransfersCount--;
                     if (transfer.Amount != BigInteger.Zero)
                     {
                         if (toBalance.Balance == BigInteger.Zero)
@@ -489,9 +482,9 @@ namespace Tzkt.Sync.Protocols.Proto17
                             to.ActiveTicketsCount--;
                             ticket.HoldersCount--;
                         }
-
-                        if (contract.Tags.HasFlag(ContractTags.Nft))
-                            ticket.OwnerId = null;
+                        
+                        ticket.TotalMinted -= transfer.Amount;
+                        ticket.TotalSupply -= transfer.Amount;
                     }
 
                     state.TicketTransfersCount--;
@@ -514,7 +507,6 @@ namespace Tzkt.Sync.Protocols.Proto17
                     if (fromBalance.FirstLevel == block.Level)
                         ticketBalancesToRemove.Add(fromBalance);
 
-                    ticket.TransfersCount--;
                     if (transfer.Amount != BigInteger.Zero)
                     {
                         if (fromBalance.Balance == transfer.Amount)
@@ -523,8 +515,8 @@ namespace Tzkt.Sync.Protocols.Proto17
                             ticket.HoldersCount++;
                         }
 
-                        if (contract.Tags.HasFlag(ContractTags.Nft))
-                            ticket.OwnerId = from.Id;
+                        ticket.TotalBurned -= transfer.Amount;
+                        ticket.TotalSupply += transfer.Amount;
                     }
 
                     state.TicketTransfersCount--;

@@ -233,6 +233,12 @@ namespace Tzkt.Data
             modelBuilder.BuildTokenTransferModel();
             #endregion
 
+            #region tickets
+            modelBuilder.BuildTicketModel();
+            modelBuilder.BuildTicketBalanceModel();
+            modelBuilder.BuildTicketTransferModel();
+            #endregion
+
             #region rollups
             modelBuilder.BuildSmartRollupCommitmentModel();
             modelBuilder.BuildRefutationGameModel();
