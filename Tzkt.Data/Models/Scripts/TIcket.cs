@@ -1,5 +1,4 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -22,14 +21,14 @@ namespace Tzkt.Data.Models
         public BigInteger TotalBurned { get; set; }
         public BigInteger TotalSupply { get; set; }
 
-        //TODO Make sure we need that
-        public int? OwnerId { get; set; }
-        
         public int ContentHash { get; set; }
         public int ContentTypeHash { get; set; }
         
-        public byte[] Content { get; set; }
-        public byte[] ContentType { get; set; }
+        //TODO Do we need to build models?
+        //TODO To RawContent like in TransferTicketOps?
+        public byte[] RawContent { get; set; }
+        public byte[] RawType { get; set; }
+        public string JsonContent { get; set; }
     }
     
     public static class TicketModel

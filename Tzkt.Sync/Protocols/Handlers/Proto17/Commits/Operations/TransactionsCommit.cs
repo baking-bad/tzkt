@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -13,26 +14,41 @@ namespace Tzkt.Sync.Protocols.Proto17
             if (!result.TryGetProperty(property, out var ticketUpdates))
                 return null;
 
-            return ticketUpdates.RequiredArray().EnumerateArray().Select(x => new TicketUpdate
+            var res = new List<TicketUpdate>();
+            foreach (var update in  ticketUpdates.RequiredArray().EnumerateArray())
             {
-                TicketToken = x.TryGetProperty("ticket_token", out var ticketToken)
-                    ? new TicketToken
-                    {
-                        Ticketer = ticketToken.RequiredString("ticketer"),
-                        ContentType = Micheline.FromJson(ticketToken.Required("content_type")),
-                        Content = Micheline.FromJson(ticketToken.Required("content")),
-                        ContentTypeHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content_type")).ToBytes()),
-                        ContentHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content")).ToBytes())
-                    }
-                    : null,
-                Updates = x.TryGetProperty("updates", out var updates)
-                ? updates.RequiredArray().EnumerateArray().Select(y => new Update
+                try
                 {
-                    Account = y.RequiredString("account"),
-                    Amount = y.RequiredString("amount")
-                })
-                : null
-            });
+                    var ticketToken = update.Required("ticket_token");
+                    var micheType = Schema.Create(Micheline.FromJson(ticketToken.Required("content_type")) as MichelinePrim);
+                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var rawContent = micheType.Optimize(value).ToBytes();
+                    var rawType = micheType.ToMicheline().ToBytes();
+                    res.Add(new TicketUpdate
+                    {
+                        TicketToken = new TicketToken
+                        {
+                            Ticketer = ticketToken.RequiredString("ticketer"),
+                            RawType = rawType,
+                            RawContent = rawContent,
+                            JsonContent = micheType.Humanize(value),
+                            ContentTypeHash = Script.GetHash(rawType),
+                            ContentHash = Script.GetHash(rawContent)
+                        },
+                        Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
+                        {
+                            Account = y.RequiredString("account"),
+                            Amount = y.RequiredString("amount")
+                        })
+                    });
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "failed to process 'transfer_ticket' parameters");
+                }
+            }
+
+            return res;
         }
     }
 }
