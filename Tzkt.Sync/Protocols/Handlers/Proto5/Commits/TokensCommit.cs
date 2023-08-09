@@ -930,6 +930,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                         if (contract.Tags.HasFlag(ContractTags.Nft))
                             token.OwnerId = null;
+
+                        token.TotalMinted -= transfer.Amount;
+                        token.TotalSupply -= transfer.Amount;
                     }
 
                     state.TokenTransfersCount--;
@@ -963,6 +966,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                         if (contract.Tags.HasFlag(ContractTags.Nft))
                             token.OwnerId = from.Id;
+
+                        token.TotalBurned -= transfer.Amount;
+                        token.TotalSupply += transfer.Amount;
                     }
 
                     state.TokenTransfersCount--;
