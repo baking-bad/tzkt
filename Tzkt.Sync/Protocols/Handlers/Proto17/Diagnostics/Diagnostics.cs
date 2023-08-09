@@ -19,8 +19,8 @@ namespace Tzkt.Sync.Protocols.Proto17
             var update = new
             {
                 ticketer = ticketer.Address,
-                content_type = Micheline.FromBytes(ticket.ContentType),
-                content = Micheline.FromBytes(ticket.Content)
+                content_type = Micheline.FromBytes(ticket.RawType),
+                content = Micheline.FromBytes(ticket.RawContent)
             };
 
             if (BigInteger.TryParse((await Rpc.GetTicketBalance(level, account.Address, JsonSerializer.Serialize(update))).ToString(), out var remoteBalance))

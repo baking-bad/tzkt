@@ -18,7 +18,7 @@ namespace Tzkt.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.4")
+                .HasAnnotation("ProductVersion", "7.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -32,6 +32,9 @@ namespace Tzkt.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ActiveRefutationGamesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ActiveTicketsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("ActiveTokensCount")
@@ -126,6 +129,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<bool>("Staked")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("TicketBalancesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketTransfersCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("TokenBalancesCount")
                         .HasColumnType("integer");
 
@@ -194,7 +203,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Type");
 
-                    b.ToTable("Accounts", (string)null);
+                    b.ToTable("Accounts");
 
                     b.HasDiscriminator<byte>("Type").HasValue((byte)3);
 
@@ -236,7 +245,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("ActivationOps", (string)null);
+                    b.ToTable("ActivationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.AppState", b =>
@@ -448,6 +457,15 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageCounter")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TicketBalancesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketTransfersCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketsCount")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -504,7 +522,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("AppState", (string)null);
+                    b.ToTable("AppState");
 
                     b.HasData(
                         new
@@ -573,6 +591,9 @@ namespace Tzkt.Data.Migrations
                             SmartRollupRecoverBondOpsCount = 0,
                             SmartRollupRefuteOpsCount = 0,
                             StorageCounter = 0,
+                            TicketBalancesCount = 0,
+                            TicketTransfersCount = 0,
+                            TicketsCount = 0,
                             Timestamp = new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
                             TokenBalancesCount = 0,
                             TokenTransfersCount = 0,
@@ -707,7 +728,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Cycle", "BakerId")
                         .IsUnique();
 
-                    b.ToTable("BakerCycles", (string)null);
+                    b.ToTable("BakerCycles");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BakingRight", b =>
@@ -747,7 +768,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Cycle", "BakerId");
 
-                    b.ToTable("BakingRights", (string)null);
+                    b.ToTable("BakingRights");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
@@ -802,7 +823,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("BallotOps", (string)null);
+                    b.ToTable("BallotOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BigMap", b =>
@@ -861,7 +882,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Ptr")
                         .IsUnique();
 
-                    b.ToTable("BigMaps", (string)null);
+                    b.ToTable("BigMaps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BigMapKey", b =>
@@ -927,7 +948,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("BigMapPtr", "KeyHash");
 
-                    b.ToTable("BigMapKeys", (string)null);
+                    b.ToTable("BigMapKeys");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.BigMapUpdate", b =>
@@ -986,7 +1007,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TransactionId")
                         .HasFilter("\"TransactionId\" is not null");
 
-                    b.ToTable("BigMapUpdates", (string)null);
+                    b.ToTable("BigMapUpdates");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
@@ -1088,7 +1109,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SoftwareId");
 
-                    b.ToTable("Blocks", (string)null);
+                    b.ToTable("Blocks");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Commitment", b =>
@@ -1122,7 +1143,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Id")
                         .IsUnique();
 
-                    b.ToTable("Commitments", (string)null);
+                    b.ToTable("Commitments");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ContractEvent", b =>
@@ -1181,7 +1202,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("ContractId", "Tag");
 
-                    b.ToTable("Events", (string)null);
+                    b.ToTable("Events");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Cycle", b =>
@@ -1238,7 +1259,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Index")
                         .IsUnique();
 
-                    b.ToTable("Cycles", (string)null);
+                    b.ToTable("Cycles");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
@@ -1332,7 +1353,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("DelegationOps", (string)null);
+                    b.ToTable("DelegationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DelegatorCycle", b =>
@@ -1366,7 +1387,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Cycle", "DelegatorId")
                         .IsUnique();
 
-                    b.ToTable("DelegatorCycles", (string)null);
+                    b.ToTable("DelegatorCycles");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Domain", b =>
@@ -1418,7 +1439,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Owner");
 
-                    b.ToTable("Domains", (string)null);
+                    b.ToTable("Domains");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
@@ -1466,7 +1487,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("DoubleBakingOps", (string)null);
+                    b.ToTable("DoubleBakingOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DoubleEndorsingOperation", b =>
@@ -1514,7 +1535,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("DoubleEndorsingOps", (string)null);
+                    b.ToTable("DoubleEndorsingOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DoublePreendorsingOperation", b =>
@@ -1562,7 +1583,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("DoublePreendorsingOps", (string)null);
+                    b.ToTable("DoublePreendorsingOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DrainDelegateOperation", b =>
@@ -1607,7 +1628,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TargetId");
 
-                    b.ToTable("DrainDelegateOps", (string)null);
+                    b.ToTable("DrainDelegateOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.EndorsementOperation", b =>
@@ -1653,7 +1674,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("EndorsementOps", (string)null);
+                    b.ToTable("EndorsementOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.EndorsingRewardOperation", b =>
@@ -1685,7 +1706,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Level");
 
-                    b.ToTable("EndorsingRewardOps", (string)null);
+                    b.ToTable("EndorsingRewardOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.FreezerUpdate", b =>
@@ -1709,7 +1730,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Cycle");
 
-                    b.ToTable("FreezerUpdates", (string)null);
+                    b.ToTable("FreezerUpdates");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.InboxMessage", b =>
@@ -1746,7 +1767,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Type", "Id");
 
-                    b.ToTable("InboxMessages", (string)null);
+                    b.ToTable("InboxMessages");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.IncreasePaidStorageOperation", b =>
@@ -1819,7 +1840,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("IncreasePaidStorageOps", (string)null);
+                    b.ToTable("IncreasePaidStorageOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.MigrationOperation", b =>
@@ -1870,7 +1891,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("StorageId");
 
-                    b.ToTable("MigrationOps", (string)null);
+                    b.ToTable("MigrationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
@@ -1928,7 +1949,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("NonceRevelationOps", (string)null);
+                    b.ToTable("NonceRevelationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.OriginationOperation", b =>
@@ -2049,7 +2070,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("StorageId");
 
-                    b.ToTable("OriginationOps", (string)null);
+                    b.ToTable("OriginationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.PreendorsementOperation", b =>
@@ -2089,7 +2110,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("PreendorsementOps", (string)null);
+                    b.ToTable("PreendorsementOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Proposal", b =>
@@ -2135,7 +2156,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Hash");
 
-                    b.ToTable("Proposals", (string)null);
+                    b.ToTable("Proposals");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.ProposalOperation", b =>
@@ -2190,7 +2211,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("ProposalOps", (string)null);
+                    b.ToTable("ProposalOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Protocol", b =>
@@ -2362,7 +2383,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Protocols", (string)null);
+                    b.ToTable("Protocols");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Quote", b =>
@@ -2408,7 +2429,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Level")
                         .IsUnique();
 
-                    b.ToTable("Quotes", (string)null);
+                    b.ToTable("Quotes");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.RefutationGame", b =>
@@ -2471,7 +2492,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SmartRollupId");
 
-                    b.ToTable("RefutationGames", (string)null);
+                    b.ToTable("RefutationGames");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.RegisterConstantOperation", b =>
@@ -2549,7 +2570,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("RegisterConstantOps", (string)null);
+                    b.ToTable("RegisterConstantOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.RevealOperation", b =>
@@ -2613,7 +2634,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("RevealOps", (string)null);
+                    b.ToTable("RevealOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.RevelationPenaltyOperation", b =>
@@ -2645,7 +2666,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Level");
 
-                    b.ToTable("RevelationPenaltyOps", (string)null);
+                    b.ToTable("RevelationPenaltyOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Script", b =>
@@ -2697,7 +2718,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ContractId", "Current")
                         .HasFilter("\"Current\" = true");
 
-                    b.ToTable("Scripts", (string)null);
+                    b.ToTable("Scripts");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SetDepositsLimitOperation", b =>
@@ -2761,7 +2782,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("SetDepositsLimitOps", (string)null);
+                    b.ToTable("SetDepositsLimitOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupAddMessagesOperation", b =>
@@ -2828,7 +2849,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("SmartRollupAddMessagesOps", (string)null);
+                    b.ToTable("SmartRollupAddMessagesOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupCementOperation", b =>
@@ -2898,7 +2919,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("SmartRollupCementOps", (string)null);
+                    b.ToTable("SmartRollupCementOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupCommitment", b =>
@@ -2962,7 +2983,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Hash", "SmartRollupId");
 
-                    b.ToTable("SmartRollupCommitments", (string)null);
+                    b.ToTable("SmartRollupCommitments");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupExecuteOperation", b =>
@@ -3036,7 +3057,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SmartRollupId");
 
-                    b.ToTable("SmartRollupExecuteOps", (string)null);
+                    b.ToTable("SmartRollupExecuteOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupOriginateOperation", b =>
@@ -3120,7 +3141,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SmartRollupId");
 
-                    b.ToTable("SmartRollupOriginateOps", (string)null);
+                    b.ToTable("SmartRollupOriginateOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupPublishOperation", b =>
@@ -3206,7 +3227,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SmartRollupId", "BondStatus", "SenderId")
                         .HasFilter("\"BondStatus\" IS NOT NULL");
 
-                    b.ToTable("SmartRollupPublishOps", (string)null);
+                    b.ToTable("SmartRollupPublishOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupRecoverBondOperation", b =>
@@ -3283,7 +3304,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("StakerId");
 
-                    b.ToTable("SmartRollupRecoverBondOps", (string)null);
+                    b.ToTable("SmartRollupRecoverBondOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SmartRollupRefuteOperation", b =>
@@ -3372,7 +3393,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SmartRollupId");
 
-                    b.ToTable("SmartRollupRefuteOps", (string)null);
+                    b.ToTable("SmartRollupRefuteOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.SnapshotBalance", b =>
@@ -3409,7 +3430,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Level")
                         .HasFilter("\"DelegateId\" IS NULL");
 
-                    b.ToTable("SnapshotBalances", (string)null);
+                    b.ToTable("SnapshotBalances");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Software", b =>
@@ -3440,7 +3461,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Software", (string)null);
+                    b.ToTable("Software");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Statistics", b =>
@@ -3500,7 +3521,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Level")
                         .IsUnique();
 
-                    b.ToTable("Statistics", (string)null);
+                    b.ToTable("Statistics");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Storage", b =>
@@ -3547,7 +3568,204 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ContractId", "Current")
                         .HasFilter("\"Current\" = true");
 
-                    b.ToTable("Storages", (string)null);
+                    b.ToTable("Storages");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.Ticket", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BalancesCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContentHash")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ContentTypeHash")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FirstMinterId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("HoldersCount")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("JsonContent")
+                        .HasColumnType("text");
+
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Metadata")
+                        .HasColumnType("jsonb");
+
+                    b.Property<byte[]>("RawContent")
+                        .HasColumnType("bytea");
+
+                    b.Property<byte[]>("RawType")
+                        .HasColumnType("bytea");
+
+                    b.Property<int>("TicketerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TotalBurned")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TotalMinted")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TotalSupply")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("TransfersCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FirstMinterId");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LastLevel");
+
+                    b.HasIndex("Metadata");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Metadata"), new[] { "jsonb_path_ops" });
+
+                    b.HasIndex("TicketerId");
+
+                    b.ToTable("Tickets");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TicketBalance", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Balance")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("FirstLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("LastLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TicketId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TicketerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TransfersCount")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId")
+                        .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("LastLevel");
+
+                    b.HasIndex("TicketId")
+                        .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex("TicketerId")
+                        .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex("AccountId", "TicketId")
+                        .IsUnique();
+
+                    b.HasIndex("AccountId", "TicketerId");
+
+                    b.ToTable("TicketBalances");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.TicketTransfer", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Amount")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("FromId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("MigrationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TicketId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("TicketerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("ToId")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("TransactionId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("TransferTicketId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromId")
+                        .HasFilter("\"FromId\" is not null");
+
+                    b.HasIndex("Id")
+                        .IsUnique();
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("MigrationId")
+                        .HasFilter("\"MigrationId\" is not null");
+
+                    b.HasIndex("TicketId");
+
+                    b.HasIndex("TicketerId");
+
+                    b.HasIndex("ToId")
+                        .HasFilter("\"ToId\" is not null");
+
+                    b.HasIndex("TransactionId")
+                        .HasFilter("\"TransactionId\" is not null");
+
+                    b.HasIndex("TransferTicketId")
+                        .HasFilter("\"TransferTicketId\" is not null");
+
+                    b.ToTable("TicketTransfers");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Token", b =>
@@ -3629,7 +3847,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ContractId", "TokenId")
                         .IsUnique();
 
-                    b.ToTable("Tokens", (string)null);
+                    b.ToTable("Tokens");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TokenBalance", b =>
@@ -3689,7 +3907,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("AccountId", "TokenId")
                         .IsUnique();
 
-                    b.ToTable("TokenBalances", (string)null);
+                    b.ToTable("TokenBalances");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TokenTransfer", b =>
@@ -3760,7 +3978,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TransactionId")
                         .HasFilter("\"TransactionId\" is not null");
 
-                    b.ToTable("TokenTransfers", (string)null);
+                    b.ToTable("TokenTransfers");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
@@ -3867,6 +4085,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("TargetId")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("TicketTransfers")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -3898,7 +4119,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TargetId");
 
-                    b.ToTable("TransactionOps", (string)null);
+                    b.ToTable("TransactionOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TransferTicketOperation", b =>
@@ -3967,7 +4188,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageUsed")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SubIds")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("TargetId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TicketerId")
@@ -3988,7 +4215,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TicketerId");
 
-                    b.ToTable("TransferTicketOps", (string)null);
+                    b.ToTable("TransferTicketOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>
@@ -4060,7 +4287,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupCommitOps", (string)null);
+                    b.ToTable("TxRollupCommitOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupDispatchTicketsOperation", b =>
@@ -4129,7 +4356,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupDispatchTicketsOps", (string)null);
+                    b.ToTable("TxRollupDispatchTicketsOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupFinalizeCommitmentOperation", b =>
@@ -4198,7 +4425,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupFinalizeCommitmentOps", (string)null);
+                    b.ToTable("TxRollupFinalizeCommitmentOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupOriginationOperation", b =>
@@ -4267,7 +4494,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupOriginationOps", (string)null);
+                    b.ToTable("TxRollupOriginationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupRejectionOperation", b =>
@@ -4347,7 +4574,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupRejectionOps", (string)null);
+                    b.ToTable("TxRollupRejectionOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupRemoveCommitmentOperation", b =>
@@ -4416,7 +4643,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupRemoveCommitmentOps", (string)null);
+                    b.ToTable("TxRollupRemoveCommitmentOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupReturnBondOperation", b =>
@@ -4488,7 +4715,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupReturnBondOps", (string)null);
+                    b.ToTable("TxRollupReturnBondOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.TxRollupSubmitBatchOperation", b =>
@@ -4557,7 +4784,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("TxRollupSubmitBatchOps", (string)null);
+                    b.ToTable("TxRollupSubmitBatchOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.UpdateConsensusKeyOperation", b =>
@@ -4630,7 +4857,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.ToTable("UpdateConsensusKeyOps", (string)null);
+                    b.ToTable("UpdateConsensusKeyOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VdfRevelationOperation", b =>
@@ -4678,7 +4905,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("VdfRevelationOps", (string)null);
+                    b.ToTable("VdfRevelationOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VotingPeriod", b =>
@@ -4770,7 +4997,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Index")
                         .IsUnique();
 
-                    b.ToTable("VotingPeriods", (string)null);
+                    b.ToTable("VotingPeriods");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.VotingSnapshot", b =>
@@ -4803,7 +5030,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Period", "BakerId")
                         .IsUnique();
 
-                    b.ToTable("VotingSnapshots", (string)null);
+                    b.ToTable("VotingSnapshots");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
@@ -4831,6 +5058,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<int>("Tags")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TicketsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("TokensCount")
