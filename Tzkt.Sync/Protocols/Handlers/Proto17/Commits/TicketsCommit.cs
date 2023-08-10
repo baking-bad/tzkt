@@ -73,35 +73,78 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             foreach (var (parentId, opUpdates) in Updates)
             {
-                foreach (var (op, ticketUpdates) in opUpdates)
+                //TODO Will we add transfers to itself?
+                if (opUpdates.SelectMany(x => x.update.Updates).Count() == 1 || 
+                    opUpdates.BigSum(x => x.update.Updates.BigSum(y => y.Amount)) != BigInteger.Zero)
                 {
-                    Db.TryAttach(op.Block);
-                    op.Block.Events |= BlockEvents.Tickets;
-                
-                    var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
-                    var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
-
-                    /*List<(ManagerOperation op, TicketUpdate update)> transfers = new();
-                    
-                    foreach (var updates in Updates.GroupBy(x => x.op.OpHash).Select(g => g.ToList()).ToList())
+                    foreach (var (op, ticketUpdates) in opUpdates)
                     {
-                        foreach (var (managerOperation, update) in updates)
+                        Db.TryAttach(op.Block);
+                        op.Block.Events |= BlockEvents.Tickets;
+                
+                        var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
+                        var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
+                
+                        foreach (var ticketUpdate in ticketUpdates.Updates)
                         {
-                            if (true)
-                            {
-                                transfers.Add(managerOperation, update);
-                            }
+                            var account = GetOrCreateAccount(op, ticketUpdate.Account);
+                            var balance = GetOrCreateTicketBalance(op, ticket, account);
+                            MintOrBurnTickets(op, ticket, account, balance, ticketUpdate.Amount);
                         }
-                    }*/
-                
-                    //TODO First, group by parentTx?
-                    //TODO Match updates, if successful, transfers, if not, burns and mints
-                    foreach (var ticketUpdate in ticketUpdates.Updates)
+                    }
+                }
+                else if (opUpdates.Sum(x => x.update.Updates.Count(y => y.Amount < BigInteger.Zero)) == 1)
+                {
+                    var from = opUpdates.SelectMany(x => x.update.Updates).First(y => y.Amount < BigInteger.Zero);
+                    foreach (var (op, ticketUpdates) in opUpdates)
                     {
-                        var amount = BigInteger.Parse(ticketUpdate.Amount);
-                        var account = GetOrCreateAccount(op, ticketUpdate.Account);
-                        var balance = GetOrCreateTicketBalance(op, ticket, account);
-                        MintOrBurnTickets(op, ticket, account, balance, amount);
+                        Db.TryAttach(op.Block);
+                        op.Block.Events |= BlockEvents.Tickets;
+                
+                        var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
+                        var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
+                
+                        foreach (var ticketUpdate in ticketUpdates.Updates)
+                        {
+                            if (from.Account == ticketUpdate.Account) continue;
+                            TransferTickets(op, ticket, from.Account, ticketUpdate.Account, ticketUpdate.Amount);
+                        }
+                    }
+                }
+                else if (opUpdates.Sum(x => x.update.Updates.Count(y => y.Amount > BigInteger.Zero)) == 1)
+                {
+                    var to = opUpdates.SelectMany(x => x.update.Updates).First(y => y.Amount > BigInteger.Zero);
+                    foreach (var (op, ticketUpdates) in opUpdates)
+                    {
+                        Db.TryAttach(op.Block);
+                        op.Block.Events |= BlockEvents.Tickets;
+                
+                        var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
+                        var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
+                
+                        foreach (var ticketUpdate in ticketUpdates.Updates)
+                        {
+                            if (to.Account == ticketUpdate.Account) continue;
+                            TransferTickets(op, ticket, ticketUpdate.Account, to.Account, ticketUpdate.Amount);
+                        }
+                    }
+                }
+                else
+                {
+                    foreach (var (op, ticketUpdates) in opUpdates)
+                    {
+                        Db.TryAttach(op.Block);
+                        op.Block.Events |= BlockEvents.Tickets;
+                
+                        var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
+                        var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
+                
+                        foreach (var ticketUpdate in ticketUpdates.Updates)
+                        {
+                            var account = GetOrCreateAccount(op, ticketUpdate.Account);
+                            var balance = GetOrCreateTicketBalance(op, ticket, account);
+                            MintOrBurnTickets(op, ticket, account, balance, ticketUpdate.Amount);
+                        }
                     }
                 }
             }
@@ -219,11 +262,15 @@ namespace Tzkt.Sync.Protocols.Proto17
             return ticketBalance;
         }
         
-        void TransferTickets(ManagerOperation op, Contract contract, Ticket ticket,
-            Account from, TicketBalance fromBalance,
-            Account to, TicketBalance toBalance,
+        void TransferTickets(ManagerOperation op, Ticket ticket,
+            string fromAddress, string toAddress,
             BigInteger amount)
         {
+            var from = GetOrCreateAccount(op, fromAddress);
+            var fromBalance = GetOrCreateTicketBalance(op, ticket, from);
+            var to = GetOrCreateAccount(op, toAddress);
+            var toBalance = GetOrCreateTicketBalance(op, ticket, to);
+            
             switch (op)
             {
                 case TransferTicketOperation transfer1:

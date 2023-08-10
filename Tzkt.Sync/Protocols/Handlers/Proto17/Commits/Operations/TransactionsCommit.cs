@@ -1,10 +1,12 @@
-﻿using System.Text.Json;
+﻿using System.Numerics;
+using System.Text.Json;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto17
 {
+    //TODO Move to Proto16
     class TransactionsCommit : Proto14.TransactionsCommit
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -38,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto17
                         Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
                         {
                             Account = y.RequiredString("account"),
-                            Amount = y.RequiredString("amount")
+                            Amount = BigInteger.Parse(y.RequiredString("amount"))
                         })
                     });
                 }

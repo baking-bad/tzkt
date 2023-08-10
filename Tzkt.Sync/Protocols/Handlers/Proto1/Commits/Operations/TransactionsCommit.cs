@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 
@@ -692,6 +688,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
+        //TODO Move to Proto16
         protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(string property, JsonElement result)
         {
             if (!result.TryGetProperty(property, out var ticketUpdates))
@@ -721,7 +718,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
                         {
                             Account = y.RequiredString("account"),
-                            Amount = y.RequiredString("amount")
+                            Amount = BigInteger.Parse(y.RequiredString("amount"))
                         })
                     });
                 }

@@ -200,6 +200,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             Cache.AppState.ReleaseOperationId();
         }
         
+        //TODO Move to Proto16
         protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
@@ -229,7 +230,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                         Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
                         {
                             Account = y.RequiredString("account"),
-                            Amount = y.RequiredString("amount")
+                            Amount = BigInteger.Parse(y.RequiredString("amount"))
                         })
                     });
                 }
