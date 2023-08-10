@@ -1,4 +1,4 @@
-﻿using Netezos.Encoding;
+﻿using System.Numerics;
 
 namespace Tzkt.Sync.Protocols
 {
@@ -22,6 +22,6 @@ namespace Tzkt.Sync.Protocols
     public class Update
     {
         public string Account { get; set; }
-        public string Amount { get; set; }
+        public BigInteger Amount { get; set; }
     }
 }
