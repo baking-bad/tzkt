@@ -6,18 +6,20 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto17
 {
+//TODO Move to Proto16
     class TicketsCommit : ProtocolCommit
     {
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        readonly List<(ManagerOperation op,TicketUpdate update)> Updates = new();
+        readonly Dictionary<long, List<(ManagerOperation op, TicketUpdate update)>> Updates = new();
         
-        public virtual void Append(ManagerOperation op, IEnumerable<TicketUpdate> updates)
+        public virtual void Append(long parentId, ManagerOperation op, IEnumerable<TicketUpdate> updates)
         {
-            foreach (var update in updates)
+            if (!Updates.TryGetValue(parentId, out var list))
             {
-                Updates.Add((op, update));
+                Updates.Add(parentId, list = new List<(ManagerOperation op, TicketUpdate update)>());
             }
+            list.AddRange(updates.Select(update => (op, update)).ToList());
         }
         
         public virtual async Task Apply()
@@ -30,7 +32,9 @@ namespace Tzkt.Sync.Protocols.Proto17
             var ticketsSet = new HashSet<(int, int, int)>();
             var balancesSet = new HashSet<(int, long)>();
 
-            foreach (var (_, update) in Updates)
+            var list = Updates.SelectMany(x => x.Value).Select(x => x.update).ToList();
+            
+            foreach (var update in list)
             {
                 accountsSet.Add(update.TicketToken.Ticketer);
                 foreach (var upd in update.Updates)
@@ -39,8 +43,8 @@ namespace Tzkt.Sync.Protocols.Proto17
                 }
             }
             await Cache.Accounts.Preload(accountsSet);
-
-            foreach (var (_, update) in Updates)
+            
+            foreach (var update in list)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                     ticketsSet.Add((ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.ContentTypeHash));
@@ -48,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto17
 
             await Cache.Tickets.Preload(ticketsSet);
 
-            foreach (var (_, update) in Updates)
+            foreach (var update in list)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                 {
@@ -67,39 +71,39 @@ namespace Tzkt.Sync.Protocols.Proto17
             
             #endregion
 
-            foreach (var (op, ticketUpdates) in Updates)
+            foreach (var (parentId, opUpdates) in Updates)
             {
-                Db.TryAttach(op.Block);
-                op.Block.Events |= BlockEvents.Tickets;
-                
-                //TODO Check all LastLevel fields.
-                var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
-
-                var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
-
-                /*List<(ManagerOperation op, TicketUpdate update)> transfers = new();
-                
-                foreach (var updates in Updates.GroupBy(x => x.op.OpHash).Select(g => g.ToList()).ToList())
+                foreach (var (op, ticketUpdates) in opUpdates)
                 {
-                    foreach (var (managerOperation, update) in updates)
+                    Db.TryAttach(op.Block);
+                    op.Block.Events |= BlockEvents.Tickets;
+                
+                    var ticketer = GetOrCreateAccount(op, ticketUpdates.TicketToken.Ticketer) as Contract;
+                    var ticket = GetOrCreateTicket(op, ticketer, ticketUpdates.TicketToken);
+
+                    /*List<(ManagerOperation op, TicketUpdate update)> transfers = new();
+                    
+                    foreach (var updates in Updates.GroupBy(x => x.op.OpHash).Select(g => g.ToList()).ToList())
                     {
-                        if (true)
+                        foreach (var (managerOperation, update) in updates)
                         {
-                            transfers.Add(managerOperation, update);
+                            if (true)
+                            {
+                                transfers.Add(managerOperation, update);
+                            }
                         }
-                    }
-                }*/
+                    }*/
                 
-                //TODO First, group by opHash?
-                //TODO Match updates, if successful, transfers, if not, burns and mints
-                foreach (var ticketUpdate in ticketUpdates.Updates)
-                {
-                    var amount = BigInteger.Parse(ticketUpdate.Amount);
-                    var account = GetOrCreateAccount(op, ticketUpdate.Account);
-                    var balance = GetOrCreateTicketBalance(op, ticket, account);
-                    MintOrBurnTickets(op, ticket, account, balance, amount);
+                    //TODO First, group by parentTx?
+                    //TODO Match updates, if successful, transfers, if not, burns and mints
+                    foreach (var ticketUpdate in ticketUpdates.Updates)
+                    {
+                        var amount = BigInteger.Parse(ticketUpdate.Amount);
+                        var account = GetOrCreateAccount(op, ticketUpdate.Account);
+                        var balance = GetOrCreateTicketBalance(op, ticket, account);
+                        MintOrBurnTickets(op, ticket, account, balance, amount);
+                    }
                 }
-
             }
         }
 
@@ -220,7 +224,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             Account to, TicketBalance toBalance,
             BigInteger amount)
         {
-            //TODO Need to be tested
             switch (op)
             {
                 case TransferTicketOperation transfer1:
@@ -313,7 +316,6 @@ namespace Tzkt.Sync.Protocols.Proto17
             balance.TransfersCount++;
             balance.LastLevel = op.Level;
 
-            //TODO Check transfersCount, balancesCount, holdersCount
             Db.TryAttach(ticket);
             ticket.TransfersCount++;
             ticket.LastLevel = op.Level;
