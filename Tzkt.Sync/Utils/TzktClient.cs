@@ -31,7 +31,7 @@ namespace Tzkt.Sync
 
                         _HttpClient.BaseAddress = BaseAddress;
                         _HttpClient.DefaultRequestHeaders.Accept.Add(
-                        new MediaTypeWithQualityHeaderValue("application/json"));
+                            new MediaTypeWithQualityHeaderValue("application/json"));
                         _HttpClient.DefaultRequestHeaders.UserAgent.Add(
                             new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
                         _HttpClient.Timeout = RequestTimeout;

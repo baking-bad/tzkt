@@ -1,13 +1,7 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using Tzkt.Data;
 using Tzkt.Data.Models;
-using Tzkt.Sync.Protocols;
 
 namespace Tzkt.Sync.Services
 {

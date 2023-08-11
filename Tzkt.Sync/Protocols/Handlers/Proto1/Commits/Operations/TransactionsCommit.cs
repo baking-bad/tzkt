@@ -688,7 +688,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        //TODO Move to Proto16
         protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(string property, JsonElement result)
         {
             if (!result.TryGetProperty(property, out var ticketUpdates))

@@ -111,5 +111,5 @@ mumbai-stop:
 mumbai-db-start:
 	docker-compose -f docker-compose.mumbai.yml up -d mumbai-db
 reset:
-	docker-compose -f docker-compose.nairobi.yml down --volumes
-	docker-compose -f docker-compose.nairobi.yml up -d nairobi-db
+	docker-compose -f docker-compose.mumbai.yml down --volumes
+	docker-compose -f docker-compose.mumbai.yml up -d mumbai-db
