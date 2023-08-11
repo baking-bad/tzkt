@@ -150,12 +150,7 @@ namespace Tzkt.Sync.Services
             while (AppState.Level >= 0 && !cancelToken.IsCancellationRequested)
             {
                 var header = await Node.GetHeaderAsync(AppState.Level);
-
-                var initRevert = false;
-                if (!initRevert)
-                {
-                    if (AppState.Hash == header.Hash) break;
-                }
+                if (AppState.Hash == header.Hash) break;
 
                 Logger.LogError("Invalid head [{level}:{hash}]. Reverting...", AppState.Level, AppState.Hash);
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertBlockTime))
@@ -177,12 +172,8 @@ namespace Tzkt.Sync.Services
                 var header = await Node.GetHeaderAsync();
                 if (AppState.Level == header.Level) break;
 
-                var initRevert = false;
-                if (initRevert)
-                {
-                    if (AppState.Level >= 0)
-                        throw new ValidationException("Test", true);
-                }
+                //if (AppState.Level >= 0)
+                //    throw new ValidationException("Test", true);
 
                 Logger.LogDebug($"Applying block...");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.ApplyBlockTime))
