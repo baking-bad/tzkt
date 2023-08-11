@@ -1,8 +1,5 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
@@ -200,11 +197,45 @@ namespace Tzkt.Sync.Protocols.Proto13
             Cache.AppState.ReleaseOperationId();
         }
         
-        //TODO Move to Proto16
         protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
+            
+            return ticketUpdates.RequiredArray().EnumerateArray().Select(update =>
+            {
+                try
+                {
+                    var ticketToken = update.Required("ticket_token");
+                    var micheType = Schema.Create(Micheline.FromJson(ticketToken.Required("content_type")) as MichelinePrim);
+                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var rawContent = micheType.Optimize(value).ToBytes();
+                    var rawType = micheType.ToMicheline().ToBytes();
+
+                    return new TicketUpdate
+                    {
+                        TicketToken = new TicketToken
+                        {
+                            Ticketer = ticketToken.RequiredString("ticketer"),
+                            RawType = rawType,
+                            RawContent = rawContent,
+                            JsonContent = micheType.Humanize(value),
+                            ContentTypeHash = Script.GetHash(rawType),
+                            ContentHash = Script.GetHash(rawContent)
+                        },
+                        Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
+                        {
+                            Account = y.RequiredString("account"),
+                            Amount = BigInteger.Parse(y.RequiredString("amount"))
+                        })
+                    };
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "failed to process 'transfer_ticket' parameters");
+                    return null;
+                }
+            }).Where(update => update != null);
 
             var res = new List<TicketUpdate>();
             foreach (var update in  ticketUpdates.RequiredArray().EnumerateArray())
@@ -241,29 +272,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
 
             return res;
-            
-            /*return ticketUpdates.RequiredArray().EnumerateArray().Select(x => new TicketUpdate
-            {
-                
-                
-                TicketToken = x.TryGetProperty("ticket_token", out var ticketToken)
-                    ? new TicketToken
-                    {
-                        Ticketer = ticketToken.RequiredString("ticketer"),
-                        RawType = Micheline.FromJson(ticketToken.Required("content_type")).ToBytes(),
-                        RawContent = Micheline.FromJson(ticketToken.Required("content")).ToBytes(),
-                        ContentTypeHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content_type")).ToBytes()),
-                        ContentHash = Script.GetHash(Micheline.FromJson(ticketToken.Required("content")).ToBytes())
-                    }
-                    : null,
-                Updates = x.TryGetProperty("updates", out var updates)
-                    ? updates.RequiredArray().EnumerateArray().Select(y => new Update
-                    {
-                        Account = y.RequiredString("account"),
-                        Amount = y.RequiredString("amount")
-                    })
-                    : null
-            });*/
         }
     }
 }
