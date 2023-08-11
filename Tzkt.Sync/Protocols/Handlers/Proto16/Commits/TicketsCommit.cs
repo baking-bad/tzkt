@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         });
                     }
                     upds.updates.AddRange(upd.Updates);
-                    //TODO That's wrong
+                    //TODO That's wrong, isn't it? Parent operation everywhere?
                     upds.operation = op;
                 }
 

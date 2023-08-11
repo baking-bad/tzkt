@@ -265,6 +265,15 @@ namespace Tzkt.Sync.Tests.Database
             if (state.TokenTransfersCount != await db.TokenTransfers.CountAsync())
                 throw new Exception("Invalid AppState.TokenTransfersCount");
 
+            if (state.TicketsCount != await db.Tickets.CountAsync())
+                throw new Exception("Invalid AppState.TicketsCount");
+
+            if (state.TicketBalancesCount != await db.TicketBalances.CountAsync())
+                throw new Exception("Invalid AppState.TicketBalancesCount");
+
+            if (state.TicketTransfersCount != await db.TicketTransfers.CountAsync())
+                throw new Exception("Invalid AppState.TicketTransfersCount");
+
             if (state.EventsCount != await db.Events.CountAsync())
                 throw new Exception("Invalid AppState.EventsCount");
 

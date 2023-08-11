@@ -64,7 +64,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Spendable = GetSpendable(content),
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
-                        TokenTransfersCount = ghost.TokenTransfersCount
+                        TokenTransfersCount = ghost.TokenTransfersCount,
+                        ActiveTicketsCount = ghost.ActiveTicketsCount,
+                        TicketBalancesCount = ghost.TicketBalancesCount,
+                        TicketTransfersCount = ghost.TicketTransfersCount
                     };
                     Db.Entry(ghost).State = EntityState.Detached;
                     Db.Entry(contract).State = EntityState.Modified;
@@ -262,7 +265,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Spendable = GetSpendable(content),
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
-                        TokenTransfersCount = ghost.TokenTransfersCount
+                        TokenTransfersCount = ghost.TokenTransfersCount,
+                        ActiveTicketsCount = ghost.ActiveTicketsCount,
+                        TicketBalancesCount = ghost.TicketBalancesCount,
+                        TicketTransfersCount = ghost.TicketTransfersCount
                     };
                     Db.Entry(ghost).State = EntityState.Detached;
                     Db.Entry(contract).State = EntityState.Modified;
@@ -473,7 +479,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contract.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination);
 
-                if (contract.TokenTransfersCount == 0)
+                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
                     Db.Contracts.Remove(contract);
                     Cache.Accounts.Remove(contract);
@@ -490,6 +496,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                         ActiveTokensCount = contract.ActiveTokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
+                        ActiveTicketsCount = contract.ActiveTicketsCount,
+                        TicketBalancesCount = contract.TicketBalancesCount,
+                        TicketTransfersCount = contract.TicketTransfersCount,
                         Type = AccountType.Ghost,
                     };
 
@@ -598,7 +607,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contract.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination);
 
-                if (contract.TokenTransfersCount == 0)
+                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
                     Db.Contracts.Remove(contract);
                     Cache.Accounts.Remove(contract);
@@ -615,6 +624,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                         ActiveTokensCount = contract.ActiveTokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
+                        ActiveTicketsCount = contract.ActiveTicketsCount,
+                        TicketBalancesCount = contract.TicketBalancesCount,
+                        TicketTransfersCount = contract.TicketTransfersCount,
                         Type = AccountType.Ghost,
                     };
 

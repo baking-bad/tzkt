@@ -11,7 +11,6 @@ namespace Tzkt.Sync.Protocols.Proto16
         
         protected override async Task TestTicketBalance(int level, TicketBalance balance)
         {
-            //TODO Make sure that's correct
             var ticketer = await Cache.Accounts.GetAsync(balance.TicketerId);
             var ticket = Cache.Tickets.Get(balance.TicketId);
             var account = await Cache.Accounts.GetAsync(balance.AccountId);
