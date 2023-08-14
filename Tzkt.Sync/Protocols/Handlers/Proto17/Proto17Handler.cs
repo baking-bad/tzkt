@@ -171,7 +171,7 @@ namespace Tzkt.Sync.Protocols
                             if (parent.BigMapDiffs != null)
                                 bigMapCommit.Append(parent.Transaction, parent.Transaction.Target as Contract, parent.BigMapDiffs);
                             if (parent.TicketUpdates != null)
-                                ticketsCommit.Append(parent.Transaction.Id, parent.Transaction, parent.TicketUpdates);
+                                ticketsCommit.Append(parent.Transaction, parent.TicketUpdates);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -194,7 +194,7 @@ namespace Tzkt.Sync.Protocols
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
-                                                ticketsCommit.Append(parent.Transaction.Id, internalTx.Transaction, internalTx.TicketUpdates);
+                                                ticketsCommit.Append(parent.Transaction, internalTx.TicketUpdates);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
@@ -233,7 +233,7 @@ namespace Tzkt.Sync.Protocols
                             var parent1 = new TransferTicketCommit(this);
                             await parent1.Apply(blockCommit.Block, operation, content);
                             if (parent1.TicketUpdates != null)
-                                ticketsCommit.Append(parent1.Operation.Id, parent1.Operation, parent1.TicketUpdates);
+                                ticketsCommit.Append(parent1.Operation, parent1.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult1))
                             {
                                 foreach (var internalContent in internalResult1.EnumerateArray())
@@ -246,7 +246,7 @@ namespace Tzkt.Sync.Protocols
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
-                                                ticketsCommit.Append(parent1.Operation.Id, internalTx.Transaction, internalTx.TicketUpdates);
+                                                ticketsCommit.Append(parent1.Operation, internalTx.TicketUpdates);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{content.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
@@ -264,7 +264,7 @@ namespace Tzkt.Sync.Protocols
                             var parent2 = new SmartRollupExecuteCommit(this);
                             await parent2.Apply(blockCommit.Block, operation, content);
                             if (parent2.TicketUpdates != null)
-                                ticketsCommit.Append(parent2.Operation.Id, parent2.Operation, parent2.TicketUpdates);
+                                ticketsCommit.Append(parent2.Operation, parent2.TicketUpdates);
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult2))
                             {
                                 foreach (var internalContent in internalResult2.EnumerateArray())
@@ -286,7 +286,7 @@ namespace Tzkt.Sync.Protocols
                                             if (internalTx.BigMapDiffs != null)
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
-                                                ticketsCommit.Append(parent2.Operation.Id, internalTx.Transaction, internalTx.TicketUpdates);
+                                                ticketsCommit.Append(parent2.Operation, internalTx.TicketUpdates);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);

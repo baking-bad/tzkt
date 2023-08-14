@@ -3045,6 +3045,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StorageUsed")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("SubIds")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -3725,6 +3728,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<long?>("MigrationId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("SmartRollupExecuteId")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TicketId")

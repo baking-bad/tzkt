@@ -17,6 +17,8 @@ namespace Tzkt.Data.Models
 
         public long? TransferTicketId { get; set; }
         public long? TransactionId { get; set; }
+        public long? SmartRollupExecuteId { get; set; }
+
         public long? MigrationId { get; set; }
     }
 
@@ -53,6 +55,10 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<TicketTransfer>()
+                .HasIndex(x => x.SmartRollupExecuteId)
+                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" is not null");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransferTicketId)
