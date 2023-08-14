@@ -30,6 +30,12 @@ namespace Tzkt.Data.Migrations
                 nullable: true);
 
             migrationBuilder.AddColumn<int>(
+                name: "SubIds",
+                table: "SmartRollupExecuteOps",
+                type: "integer",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
                 name: "TicketTransfers",
                 table: "MigrationOps",
                 type: "integer",
@@ -144,6 +150,7 @@ namespace Tzkt.Data.Migrations
                     ToId = table.Column<int>(type: "integer", nullable: true),
                     TransferTicketId = table.Column<long>(type: "bigint", nullable: true),
                     TransactionId = table.Column<long>(type: "bigint", nullable: true),
+                    SmartRollupExecuteId = table.Column<long>(type: "bigint", nullable: true),
                     MigrationId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
@@ -301,6 +308,10 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.DropColumn(
                 name: "TicketTransfers",
                 table: "TransactionOps");
+
+            migrationBuilder.DropColumn(
+                name: "SubIds",
+                table: "SmartRollupExecuteOps");
 
             migrationBuilder.DropColumn(
                 name: "TicketTransfers",
