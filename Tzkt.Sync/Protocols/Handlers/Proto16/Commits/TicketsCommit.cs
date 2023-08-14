@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -10,15 +9,15 @@ namespace Tzkt.Sync.Protocols.Proto16
     {
         public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        readonly Dictionary<long, List<(ManagerOperation op, TicketUpdate update)>> Updates = new();
+        readonly Dictionary<ManagerOperation, List<TicketUpdate>> Updates = new();
         
-        public virtual void Append(long parentId, ManagerOperation op, IEnumerable<TicketUpdate> updates)
+        public virtual void Append(ManagerOperation op, IEnumerable<TicketUpdate> updates)
         {
-            if (!Updates.TryGetValue(parentId, out var list))
+            if (!Updates.TryGetValue(op, out var list))
             {
-                Updates.Add(parentId, list = new List<(ManagerOperation op, TicketUpdate update)>());
+                Updates.Add(op, list = new());
             }
-            list.AddRange(updates.Select(update => (op, update)).ToList());
+            list.AddRange(updates);
         }
         
         public virtual async Task Apply()
@@ -31,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             var ticketsSet = new HashSet<(int, int, int)>();
             var balancesSet = new HashSet<(int, long)>();
 
-            var list = Updates.SelectMany(x => x.Value).Select(x => x.update).ToList();
+            var list = Updates.SelectMany(x => x.Value).ToList();
             
             foreach (var update in list)
             {
@@ -70,34 +69,27 @@ namespace Tzkt.Sync.Protocols.Proto16
             
             #endregion
 
-            foreach (var (_, opUpdates) in Updates)
+            foreach (var (op, opUpdates) in Updates)
             {
-                var a = new Dictionary<Ticket, (ManagerOperation operation, List<Update> updates)>();
+                var updatesDict = new Dictionary<Ticket, List<Update>>();
 
-                foreach (var (op, upd) in opUpdates)
+                foreach (var upd in opUpdates)
                 {
                     var ticketer = GetOrCreateAccount(op, upd.TicketToken.Ticketer) as Contract;
                     var ticket = GetOrCreateTicket(op, ticketer, upd.TicketToken);
 
-                    if (!a.TryGetValue(ticket, out var upds))
+                    if (!updatesDict.TryGetValue(ticket, out var upds))
                     {
-                        a.Add(ticket, upds = new()
-                        {
-                            updates = new List<Update>(),
-                            operation = op
-                        });
+                        updatesDict.Add(ticket, upds = new());
                     }
-                    upds.updates.AddRange(upd.Updates);
-                    //TODO That's wrong, isn't it? Parent operation everywhere?
-                    upds.operation = op;
+                    upds.AddRange(upd.Updates);
                 }
 
-                foreach (var (ticket, (op, updates)) in a)
+                foreach (var (ticket, updates) in updatesDict)
                 {
                     Db.TryAttach(op.Block);
                     op.Block.Events |= BlockEvents.Tickets;
                     
-                    //TODO Will we add transfers to itself?
                     if (updates.Count == 1 || updates.BigSum(x => x.Amount) != BigInteger.Zero)
                     {
                         foreach (var ticketUpdate in updates)
@@ -112,6 +104,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         var from = updates.First(x => x.Amount < BigInteger.Zero);
                         foreach (var ticketUpdate in updates)
                         {
+                            //TODO Will we add transfers to oneself? For instance https://rpc.tzkt.io/sc39/chains/main/blocks/77
                             if (from.Account == ticketUpdate.Account) continue;
                             TransferTickets(op, ticket, from.Account, ticketUpdate.Account, ticketUpdate.Amount);
                         }
@@ -182,6 +175,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 TicketerId = contract.Id,
@@ -189,6 +183,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     ContractOperation contractOperation => contractOperation.InitiatorId ?? contractOperation.SenderId,
                     TransferTicketOperation transfer => transfer.SenderId,
+                    SmartRollupExecuteOperation sr => sr.SenderId,
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 FirstLevel = op.Level,
@@ -225,6 +220,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 AccountId = account.Id,
@@ -314,6 +310,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 Amount = amount,
@@ -323,7 +320,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                TransferTicketId = (op as OriginationOperation)?.Id
+                TransferTicketId = (op as TransferTicketOperation)?.Id,
+                SmartRollupExecuteId = (op as SmartRollupExecuteOperation)?.Id
             });
         }
         
@@ -377,6 +375,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
+                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 Amount = amount > BigInteger.Zero ? amount : -amount,
@@ -386,7 +385,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 TicketId = ticket.Id,
                 TicketerId = ticket.TicketerId,
                 TransactionId = (op as TransactionOperation)?.Id,
-                TransferTicketId = (op as TransferTicketOperation)?.Id
+                TransferTicketId = (op as TransferTicketOperation)?.Id,
+                SmartRollupExecuteId = (op as SmartRollupExecuteOperation)?.Id
             });
         }
 

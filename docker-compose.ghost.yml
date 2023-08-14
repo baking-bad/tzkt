@@ -34,7 +34,7 @@ services:
       ConnectionStrings__DefaultConnection: host=ghost-db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
       TezosNode__Endpoint: https://rpc.tzkt.io/ghostnet/
-      Protocols__Diagnostics: true
+      Protocols__Diagnostics: false
     depends_on:
       - ghost-db
     ports:
