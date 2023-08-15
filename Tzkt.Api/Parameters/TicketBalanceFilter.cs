@@ -53,14 +53,11 @@ namespace Tzkt.Api
         /// </summary>
         public TimestampParameter lastTime { get; set; }
 
-        [JsonIgnore]
-        public Int32NullParameter indexedAt { get; set; }
-
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("account", account), ("ticket", ticket), ("balance", balance), ("firstLevel", firstLevel),
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("indexedAt", indexedAt));
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
         }
     }
 }

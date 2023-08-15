@@ -36,16 +36,15 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetTicketsCount([FromQuery] TicketFilter filter)
         {
-            if (filter.contract != null ||
-                filter.metadata != null ||
+            if (filter.ticketer != null ||
                 filter.firstTime != null ||
                 filter.firstMinter != null ||
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
-                filter.ticketId != null ||
-                filter.id != null ||
-                filter.indexedAt != null)
+                filter.сontentHash != null ||
+                filter.сontentTypeHash != null ||
+                filter.id != null )
             {
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
 
@@ -74,10 +73,11 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<Ticket>>> GetTickets(
             [FromQuery] TicketFilter filter,
             [FromQuery] Pagination pagination,
-            [FromQuery] Selection selection)
+            [FromQuery] Selection selection,
+            MichelineFormat micheline = MichelineFormat.Json)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("filter", filter), ("pagination", pagination), ("selection", selection));
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -85,14 +85,14 @@ namespace Tzkt.Api.Controllers
             object res;
             if (selection.select == null)
             {
-                res = await Tickets.GetTickets(filter, pagination);
+                res = await Tickets.GetTickets(filter, pagination, micheline);
             }
             else
             {
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTickets(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTickets(filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -118,12 +118,9 @@ namespace Tzkt.Api.Controllers
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
-                filter.indexedAt != null ||
                 filter.id != null ||
                 filter.ticket.id != null ||
-                filter.ticket.contract != null ||
-                filter.ticket.ticketId != null ||
-                filter.ticket.metadata != null)
+                filter.ticket.ticketer != null)
             {
                 #region optimizations
                 if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
@@ -157,7 +154,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TicketBalance>>> GetTicketBalances(
             [FromQuery] TicketBalanceFilter filter,
             [FromQuery] Pagination pagination,
-            [FromQuery] Selection selection)
+            [FromQuery] Selection selection,
+            MichelineFormat micheline = MichelineFormat.Json)
         {
             #region optimizations
             if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
@@ -165,7 +163,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value, 
-                ("filter", filter), ("pagination", pagination), ("selection", selection));
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -173,14 +171,14 @@ namespace Tzkt.Api.Controllers
             object res;
             if (selection.select == null)
             {
-                res = await Tickets.GetTicketBalances(filter, pagination);
+                res = await Tickets.GetTicketBalances(filter, pagination, micheline);
             }
             else
             {
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTicketBalances(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTicketBalances(filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -208,13 +206,10 @@ namespace Tzkt.Api.Controllers
                 filter.amount != null ||
                 filter.id != null ||
                 filter.transactionId != null ||
-                filter.originationId != null ||
-                filter.migrationId != null ||
-                filter.indexedAt != null ||
-                filter.ticket.id != null ||
-                filter.ticket.contract != null ||
-                filter.ticket.ticketId != null ||
-                filter.ticket.metadata != null)
+                filter.transferTicketId != null ||
+                filter.smartRollupExecuteId != null ||
+                filter.ticket.ticketer != null ||
+                filter.ticket.id != null)
             {
                 #region optimizations
                 if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
@@ -254,7 +249,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TicketTransfer>>> GetTicketTransfers(
             [FromQuery] TicketTransferFilter filter,
             [FromQuery] Pagination pagination,
-            [FromQuery] Selection selection)
+            [FromQuery] Selection selection,
+            MichelineFormat micheline = MichelineFormat.Json)
         {
             #region optimizations
             if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
@@ -268,7 +264,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("filter", filter), ("pagination", pagination), ("selection", selection));
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -276,14 +272,14 @@ namespace Tzkt.Api.Controllers
             object res;
             if (selection.select == null)
             {
-                res = await Tickets.GetTicketTransfers(filter, pagination);
+                res = await Tickets.GetTicketTransfers(filter, pagination, micheline);
             }
             else
             {
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTicketTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTicketTransfers(filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -298,7 +294,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ticket balances at the end of the specified block.
         /// Note, this endpoint is quite heavy, therefore at least one of the filters
-        /// (`account`, `ticket.id`, `ticket.contract` with `ticket.ticketId`) must be specified.
+        /// (`account`, `ticket.id`, `ticket.ticketer`) must be specified.
         /// </remarks>
         /// <param name="level">Level of the block at the end of which historical balances must be calculated</param>
         /// <param name="filter">Filter</param>
@@ -309,15 +305,16 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TicketBalanceShort>>> GetTicketBalances(int level,
             [FromQuery] TicketBalanceShortFilter filter,
             [FromQuery] Pagination pagination,
-            [FromQuery] Selection selection)
+            [FromQuery] Selection selection,
+            MichelineFormat micheline = MichelineFormat.Json)
         {
             if (filter.account?.Eq == null &&
                 filter.account?.In == null &&
                 filter.ticket.id?.Eq == null &&
                 filter.ticket.id?.In == null &&
-                (filter.ticket.contract?.Eq == null && filter.ticket.contract?.In == null ||
-                filter.ticket.ticketId?.Eq == null && filter.ticket.ticketId?.In == null))
-                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.contract` with `ticket.ticketId`) must be specified");
+                filter.ticket.ticketer?.Eq == null && 
+                filter.ticket.ticketer?.In == null)
+                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer`) must be specified");
 
             #region optimizations
             if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
@@ -325,7 +322,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("filter", filter), ("pagination", pagination), ("selection", selection));
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("micheline", micheline));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -333,14 +330,14 @@ namespace Tzkt.Api.Controllers
             object res;
             if (selection.select == null)
             {
-                res = await Tickets.GetHistoricalTicketBalances(level, filter, pagination);
+                res = await Tickets.GetHistoricalTicketBalances(level, filter, pagination, micheline);
             }
             else
             {
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetHistoricalTicketBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetHistoricalTicketBalances(level, filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
                 };
             }
             cached = ResponseCache.Set(query, res);
