@@ -12,16 +12,10 @@ namespace Tzkt.Api
         public Int64Parameter id { get; set; }
 
         /// <summary>
-        /// Filter by contract address.  
+        /// Filter by ticketer address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter contract { get; set; }
-
-        /// <summary>
-        /// Filter by ticketId (for FA1.2 tickets ticketId is always `"0"`).  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public NatParameter ticketId { get; set; }
+        public AccountParameter ticketer { get; set; }
 
         /// <summary>
         /// Filter by address of the first minter.  
@@ -52,23 +46,25 @@ namespace Tzkt.Api
         /// Click on the parameter to expand more details.
         /// </summary>
         public TimestampParameter lastTime { get; set; }
-
+        
         /// <summary>
-        /// Filter by metadata.  
-        /// Note, this parameter supports the following format: `metadata{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by (for example, `?metadata.symbol.in=kUSD,uUSD`).  
+        /// Filter by 32-bit hash of ticket content (helpful for searching similar tickets).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public JsonParameter metadata { get; set; }
+        public Int32Parameter сontentHash { get; set; }
 
-        [JsonIgnore]
-        public Int32NullParameter indexedAt { get; set; }
+        /// <summary>
+        /// Filter by 32-bit hash of ticket content type (helpful for searching same tickets).  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter сontentTypeHash { get; set; }
+        
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("contract", contract), ("ticketId", ticketId), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata), ("indexedAt", indexedAt));
+                ("id", id), ("ticketer", ticketer), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("сontentHash", сontentHash), ("сontentTypeHash", сontentTypeHash));
         }
     }
 }

@@ -62,25 +62,22 @@ namespace Tzkt.Api
         public Int64NullParameter transactionId { get; set; }
 
         /// <summary>
-        /// Filter by id of the origination, caused the ticket transfer.  
+        /// Filter by id of the transfer ticket operation,, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter originationId { get; set; }
+        public Int64NullParameter transferTicketId { get; set; }
 
         /// <summary>
-        /// Filter by id of the migration, caused the ticket transfer.  
+        /// Filter by id of the smart rollup execute operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter migrationId { get; set; }
-
-        [JsonIgnore]
-        public Int32NullParameter indexedAt { get; set; }
+        public Int64NullParameter smartRollupExecuteId { get; set; }
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("level", level), ("timestamp", timestamp), ("ticket", ticket), ("anyof", anyof), ("from", from), ("to", to),
-                ("amount", amount), ("transactionId", transactionId), ("originationId", originationId), ("migrationId", migrationId), ("indexedAt", indexedAt));
+                ("amount", amount), ("transactionId", transactionId), ("transferTicketId", transferTicketId), ("smartRollupExecuteId", smartRollupExecuteId));
         }
     }
 }
