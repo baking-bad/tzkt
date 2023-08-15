@@ -18,6 +18,8 @@ namespace Tzkt.Data.Models
         public long? TransferTicketId { get; set; }
         public long? TransactionId { get; set; }
         public long? SmartRollupExecuteId { get; set; }
+        
+        //TODO Do we need to add MigrationId here?
 
         public long? MigrationId { get; set; }
     }

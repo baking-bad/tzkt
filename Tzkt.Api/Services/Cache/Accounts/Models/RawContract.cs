@@ -7,6 +7,7 @@
         public int CodeHash { get; set; }
         public int Tags { get; set; }
         public int TokensCount { get; set; }
+        public int TicketsCount { get; set; }
         public int EventsCount { get; set; }
 
         public int? CreatorId { get; set; }

@@ -115,6 +115,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                TicketTransfersCount = row.TicketTransfers,
                 EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -190,6 +191,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                TicketTransfersCount = row.TicketTransfers,
                 EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -265,6 +267,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                TicketTransfersCount = row.TicketTransfers,
                 EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -319,6 +322,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                TicketTransfersCount = row.TicketTransfers,
                 EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, block.Level)
             });
@@ -448,6 +452,7 @@ namespace Tzkt.Api.Repositories
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 HasInternals = row.InternalOperations > 0,
                 TokenTransfersCount = row.TokenTransfers,
+                TicketTransfersCount = row.TicketTransfers,
                 EventsCount = row.EventsCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -522,6 +527,7 @@ namespace Tzkt.Api.Repositories
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
                     case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
+                    case "ticketTransfersCount": columns.Add(@"o.""TicketTransfers"""); break;
                     case "eventsCount": columns.Add(@"o.""EventsCount"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -713,6 +719,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfers;
                         break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfers;
+                        break;
                     case "eventsCount":
                         foreach (var row in rows)
                             result[j++][i] = row.EventsCount;
@@ -799,6 +809,7 @@ namespace Tzkt.Api.Repositories
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "hasInternals": columns.Add(@"o.""InternalOperations"""); break;
                 case "tokenTransfersCount": columns.Add(@"o.""TokenTransfers"""); break;
+                case "ticketTransfersCount": columns.Add(@"o.""TicketTransfers"""); break;
                 case "eventsCount": columns.Add(@"o.""EventsCount"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -986,6 +997,10 @@ namespace Tzkt.Api.Repositories
                 case "tokenTransfersCount":
                     foreach (var row in rows)
                         result[j++] = row.TokenTransfers;
+                    break;
+                case "ticketTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketTransfers;
                     break;
                 case "eventsCount":
                     foreach (var row in rows)

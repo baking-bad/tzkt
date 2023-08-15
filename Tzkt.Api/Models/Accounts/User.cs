@@ -99,6 +99,26 @@ namespace Tzkt.Api.Models
         public int TokenTransfersCount { get; set; }
 
         /// <summary>
+        /// Number of account tickets with non-zero balances.
+        /// </summary>
+        public int ActiveTicketsCount { get; set; }
+
+        /// <summary>
+        /// Number of tickets minted in the contract.
+        /// </summary>
+        public int TicketsCount { get; set; }
+
+        /// <summary>
+        /// Number of tickets the account ever had.
+        /// </summary>
+        public int TicketBalancesCount { get; set; }
+
+        /// <summary>
+        /// Number of ticket transfers from/to the account.
+        /// </summary>
+        public int TicketTransfersCount { get; set; }
+
+        /// <summary>
         /// Number of account activation operations. Are used to activate accounts that were recommended allocations of
         /// tezos tokens for donations to the Tezos Foundation’s fundraiser
         /// </summary>

@@ -40,6 +40,9 @@ namespace Tzkt.Api.Repositories
                 r."ActiveTokensCount",
                 r."TokenBalancesCount",
                 r."TokenTransfersCount",
+                r."ActiveTicketsCount",
+                r."TicketBalancesCount",
+                r."TicketTransfersCount",
                 r."TransactionsCount",
                 r."TransferTicketCount",
                 r."SmartRollupCementCount",
@@ -80,6 +83,9 @@ namespace Tzkt.Api.Repositories
                         case "activeTokensCount": columns.Add(@"r.""ActiveTokensCount"""); break;
                         case "tokenBalancesCount": columns.Add(@"r.""TokenBalancesCount"""); break;
                         case "tokenTransfersCount": columns.Add(@"r.""TokenTransfersCount"""); break;
+                        case "activeTicketsCount": columns.Add(@"r.""ActiveTicketsCount"""); break;
+                        case "ticketBalancesCount": columns.Add(@"r.""TicketBalancesCount"""); break;
+                        case "ticketTransfersCount": columns.Add(@"r.""TicketTransfersCount"""); break;
                         case "numTransactions": columns.Add(@"r.""TransactionsCount"""); break;
                         case "transferTicketCount": columns.Add(@"r.""TransferTicketCount"""); break;
                         case "smartRollupCementCount": columns.Add(@"r.""SmartRollupCementCount"""); break;
@@ -178,6 +184,9 @@ namespace Tzkt.Api.Repositories
                 ActiveTokensCount = rollup.ActiveTokensCount,
                 TokenBalancesCount = rollup.TokenBalancesCount,
                 TokenTransfersCount = rollup.TokenTransfersCount,
+                ActiveTicketsCount = rollup.ActiveTicketsCount,
+                TicketBalancesCount = rollup.TicketBalancesCount,
+                TicketTransfersCount = rollup.TicketTransfersCount,
                 NumTransactions = rollup.TransactionsCount,
                 TransferTicketCount = rollup.TransferTicketCount,
                 SmartRollupCementCount = rollup.SmartRollupCementCount,
@@ -220,6 +229,9 @@ namespace Tzkt.Api.Repositories
                 ActiveTokensCount = row.ActiveTokensCount,
                 TokenBalancesCount = row.TokenBalancesCount,
                 TokenTransfersCount = row.TokenTransfersCount,
+                ActiveTicketsCount = row.ActiveTicketsCount,
+                TicketBalancesCount = row.TicketBalancesCount,
+                TicketTransfersCount = row.TicketTransfersCount,
                 NumTransactions = row.TransactionsCount,
                 TransferTicketCount = row.TransferTicketCount,
                 SmartRollupCementCount = row.SmartRollupCementCount,
@@ -333,6 +345,18 @@ namespace Tzkt.Api.Repositories
                     case "tokenTransfersCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfersCount;
+                        break;
+                    case "activeTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTicketsCount;
+                        break;
+                    case "ticketBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketBalancesCount;
+                        break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfersCount;
                         break;
                     case "numTransactions":
                         foreach (var row in rows)

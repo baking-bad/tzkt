@@ -13,6 +13,8 @@
                 options.OperationProcessors.Add(new TzktExtensionProcessor());
                 options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tokens_GetTokenTransfers", "from,to"));
                 options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tokens_GetTokenTransfersCount", "from,to"));
+                options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tickets_GetTicketTransfers", "from,to"));
+                options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tickets_GetTicketTransfersCount", "from,to"));
                 options.PostProcess = document =>
                 {
                     document.Info.Title = "TzKT API";
