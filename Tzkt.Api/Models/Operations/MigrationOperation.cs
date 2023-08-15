@@ -71,6 +71,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         public int? TokenTransfersCount { get; set; }
 
+        /// <summary>
+        /// Number of ticket transfers produced by the operation, or `null` if there are no transfers
+        /// </summary>
+        public int? TicketTransfersCount { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

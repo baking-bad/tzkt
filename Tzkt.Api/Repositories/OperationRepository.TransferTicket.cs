@@ -72,6 +72,7 @@ namespace Tzkt.Api.Repositories
                 },
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                TicketTransfersCount = row.TicketTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -119,6 +120,7 @@ namespace Tzkt.Api.Repositories
                 },
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                TicketTransfersCount = row.TicketTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -164,6 +166,7 @@ namespace Tzkt.Api.Repositories
                 },
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                TicketTransfersCount = row.TicketTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -240,6 +243,7 @@ namespace Tzkt.Api.Repositories
                 },
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                TicketTransfersCount = row.TicketTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -299,6 +303,7 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
+                    case "ticketTransfersCount": columns.Add(@"o.""TicketTransfers"""); break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                 }
             }
@@ -433,6 +438,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfers;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -496,6 +505,7 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
+                case "ticketTransfersCount": columns.Add(@"o.""TicketTransfers"""); break;
                 case "quote": columns.Add(@"o.""Level"""); break;
             }
 
@@ -626,6 +636,10 @@ namespace Tzkt.Api.Repositories
                 case "errors":
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
+                    break;
+                case "ticketTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketTransfers;
                     break;
                 case "quote":
                     foreach (var row in rows)
