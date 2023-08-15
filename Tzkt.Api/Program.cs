@@ -65,6 +65,7 @@ builder.Services.AddTransient<StatisticsRepository>();
 builder.Services.AddTransient<SoftwareRepository>();
 builder.Services.AddTransient<BigMapsRepository>();
 builder.Services.AddTransient<TokensRepository>();
+builder.Services.AddTransient<TicketsRepository>();
 builder.Services.AddTransient<ExtrasRepository>();
 builder.Services.AddTransient<ConstantsRepository>();
 builder.Services.AddTransient<ContractEventsRepository>();
@@ -120,6 +121,8 @@ if (builder.Configuration.GetWebsocketConfig().Enabled)
     builder.Services.AddTransient<TokenTransfersProcessor<DefaultHub>>();
     builder.Services.AddTransient<IHubProcessor, TokenTransfersProcessor<DefaultHub>>();
 
+    //TODO Add Ticket Balance and Transfer processors.
+    
     builder.Services.AddTransient<AccountsProcessor<DefaultHub>>();
     builder.Services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
 

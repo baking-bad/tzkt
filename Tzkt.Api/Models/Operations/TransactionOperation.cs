@@ -151,6 +151,11 @@ namespace Tzkt.Api.Models
         public int? TokenTransfersCount { get; set; }
 
         /// <summary>
+        /// Number of ticket transfers produced by the operation, or `null` if there are no transfers
+        /// </summary>
+        public int? TicketTransfersCount { get; set; }
+
+        /// <summary>
         /// Number of events produced by the operation, or `null` if there are no events
         /// </summary>
         public int? EventsCount { get; set; }

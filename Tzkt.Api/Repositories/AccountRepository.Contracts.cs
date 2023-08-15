@@ -45,6 +45,10 @@ namespace Tzkt.Api.Repositories
                         case "tokensCount": columns.Add(@"c.""TokensCount"""); break;
                         case "tokenBalancesCount": columns.Add(@"c.""TokenBalancesCount"""); break;
                         case "tokenTransfersCount": columns.Add(@"c.""TokenTransfersCount"""); break;
+                        case "activeTicketsCount": columns.Add(@"c.""ActiveTicketsCount"""); break;
+                        case "ticketsCount": columns.Add(@"c.""TicketsCount"""); break;
+                        case "ticketBalancesCount": columns.Add(@"c.""TicketBalancesCount"""); break;
+                        case "ticketTransfersCount": columns.Add(@"c.""TicketTransfersCount"""); break;
                         case "numDelegations": columns.Add(@"c.""DelegationsCount"""); break;
                         case "numOriginations": columns.Add(@"c.""OriginationsCount"""); break;
                         case "numTransactions": columns.Add(@"c.""TransactionsCount"""); break;
@@ -162,6 +166,10 @@ namespace Tzkt.Api.Repositories
                 ActiveTokensCount = contract.ActiveTokensCount,
                 TokenBalancesCount = contract.TokenBalancesCount,
                 TokenTransfersCount = contract.TokenTransfersCount,
+                ActiveTicketsCount = contract.ActiveTicketsCount,
+                TicketsCount = contract.TicketsCount,
+                TicketBalancesCount = contract.TicketBalancesCount,
+                TicketTransfersCount = contract.TicketTransfersCount,
                 NumDelegations = contract.DelegationsCount,
                 NumOriginations = contract.OriginationsCount,
                 NumReveals = contract.RevealsCount,
@@ -251,6 +259,10 @@ namespace Tzkt.Api.Repositories
                     ActiveTokensCount = row.ActiveTokensCount,
                     TokenBalancesCount = row.TokenBalancesCount,
                     TokenTransfersCount = row.TokenTransfersCount,
+                    ActiveTicketsCount = row.ActiveTicketsCount,
+                    TicketBalancesCount = row.TicketBalancesCount,
+                    TicketTransfersCount = row.TicketTransfersCount,
+                    TicketsCount = row.TicketsCount,
                     NumDelegations = row.DelegationsCount,
                     NumOriginations = row.OriginationsCount,
                     NumReveals = row.RevealsCount,
@@ -401,6 +413,22 @@ namespace Tzkt.Api.Repositories
                     case "tokenTransfersCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfersCount;
+                        break;
+                    case "activeTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTicketsCount;
+                        break;
+                    case "ticketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketsCount;
+                        break;
+                    case "ticketBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketBalancesCount;
+                        break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfersCount;
                         break;
                     case "numDelegations":
                         foreach (var row in rows)

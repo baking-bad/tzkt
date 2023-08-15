@@ -96,6 +96,11 @@ namespace Tzkt.Api.Models
         public string Entrypoint { get; set; }
 
         /// <summary>
+        /// Number of ticket transfers produced by the operation, or `null` if there are no transfers
+        /// </summary>
+        public int? TicketTransfersCount { get; set; }
+
+        /// <summary>
         /// Micheline type of the content
         /// </summary>
         public RawJson ContentType { get; set; }
