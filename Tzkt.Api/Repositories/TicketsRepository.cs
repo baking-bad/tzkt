@@ -49,16 +49,37 @@ namespace Tzkt.Api.Repositories
                         case "totalSupply": columns.Add(@"""TotalSupply"""); break;
                         case "contentHash": columns.Add(@"o.""ContentHash"""); break;
                         case "contentTypeHash": columns.Add(@"o.""ContentTypeHash"""); break;
-                        case "contentType": columns.Add(@"o.""RawType"""); break;
-                        case "content":
-                            columns.Add(format switch
+                        case "contentType":
+                            if (field.Path == null)
                             {
-                                MichelineFormat.Json => @"o.""JsonContent""",
-                                MichelineFormat.JsonString => @"o.""JsonContent""",
-                                MichelineFormat.Raw => @"o.""RawContent""",
-                                MichelineFormat.RawString => @"o.""RawContent""",
-                                _ => throw new Exception("Invalid MichelineFormat value")
-                            });
+                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonType""" : @"""RawType""");
+                            }
+                            else if (format <= MichelineFormat.JsonString)
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""JsonType"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"NULL as {field.Column}");
+                            }
+                            break;
+                        case "content":
+                            if (field.Path == null)
+                            {
+                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonContent""" : @"""RawContent""");
+                            }
+                            else if (format <= MichelineFormat.JsonString)
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""JsonContent"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"NULL as {field.Column}");
+                            }
                             break;
                     }
                 }
@@ -79,6 +100,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", filter.lastTime)
                 .Filter("ContentTypeHash", filter.сontentTypeHash)
                 .Filter("ContentHash", filter.сontentHash)
+                .Filter("JsonType", filter.contentType)
+                .Filter("JsonContent", filter.content)
                 .Take(pagination, x => x switch
                 {
                     "ticketId" => (@"""TicketId""::numeric", @"""TicketId""::numeric"),
@@ -88,6 +111,8 @@ namespace Tzkt.Api.Repositories
                     "firstLevel" => (@"""Id""", @"""FirstLevel"""),
                     "lastLevel" => (@"""LastLevel""", @"""LastLevel"""),
                     "metadata" => (@"""Metadata""", @"""Metadata"""),
+                    "content" => (@"""JsonContent""", @"""JsonContent"""),
+                    "contentType" => (@"""JsonType""", @"""JsonType"""),
                     _ => (@"""Id""", @"""Id""")
                 });
 
@@ -106,7 +131,9 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
                 .Filter("ContentTypeHash", filter.сontentTypeHash)
-                .Filter("ContentHash", filter.сontentHash);
+                .Filter("ContentHash", filter.сontentHash)
+                .Filter("JsonType", filter.contentType)
+                .Filter("JsonContent", filter.content);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -174,7 +201,14 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "contentType":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)Micheline.ToJson(row.RawType);
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonType == null ? null : (RawJson)row.JsonType,
+                                MichelineFormat.JsonString => row.JsonType,
+                                MichelineFormat.Raw => row.RawType == null ? null : (RawJson)Micheline.ToJson(row.RawType),
+                                MichelineFormat.RawString => row.RawType == null ? null : Micheline.ToJson(row.RawType),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
                         break;
                     case "content":
                         foreach (var row in rows)
@@ -266,6 +300,11 @@ namespace Tzkt.Api.Repositories
                 tb.""TransfersCount"",
                 tb.""TicketId"" as ""tId"",
                 tb.""TicketerId"" as ""tTicketerId"",
+                t.""JsonContent"" as ""JsonContent"",
+                t.""RawContent"" as ""RawContent"",
+                t.""ContentHash"" as ""ContentHash"",
+                t.""ContentTypeHash"" as ""ContentTypeHash"",
+                t.""RawType"" as ""RawType"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -284,19 +323,20 @@ namespace Tzkt.Api.Repositories
                         case "lastTime": columns.Add(@"tb.""LastLevel"""); break;
                         case "transfersCount": columns.Add(@"tb.""TransfersCount"""); break;
                         case "ticket":
-                            columns.Add(@"""Id""");
-                            columns.Add(@"""TicketerId""");
+                            columns.Add(@"tb.""TicketId"" as ""tId""");
+                            columns.Add(@"tb.""TicketerId"" as ""tTicketerId""");
+                            columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                             columns.Add(format switch
                             {
-                                MichelineFormat.Json => @"o.""JsonContent""",
-                                MichelineFormat.JsonString => @"o.""JsonContent""",
-                                MichelineFormat.Raw => @"o.""RawContent""",
-                                MichelineFormat.RawString => @"o.""RawContent""",
+                                MichelineFormat.Json => @"t.""JsonContent"" as ""JsonContent""",
+                                MichelineFormat.JsonString => @"t.""JsonContent"" as ""JsonContent""",
+                                MichelineFormat.Raw => @"t.""RawContent"" as ""RawContent""",
+                                MichelineFormat.RawString => @"t.""RawContent"" as ""RawContent""",
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             });
-                            columns.Add(@"o.""ContentHash""");
-                            columns.Add(@"o.""ContentTypeHash""");
-                            columns.Add(@"o.""RawType""");
+                            columns.Add(@"t.""ContentHash"" as ""ContentHash""");
+                            columns.Add(@"t.""ContentTypeHash"" as ""ContentTypeHash""");
+                            columns.Add(@"t.""RawType"" as ""RawType""");
                             break;
                     }
                 }
@@ -319,13 +359,14 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
                     "transfersCount" => (@"tb.""TransfersCount""", @"tb.""TransfersCount"""),
                     "firstLevel" => (@"tb.""Id""", @"tb.""FirstLevel"""),
                     "lastLevel" => (@"tb.""LastLevel""", @"tb.""LastLevel"""),
-                    "ticket.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => (@"tb.""Id""", @"tb.""Id""")
                 }, @"tb.""Id""");
 
@@ -345,8 +386,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
-                .FilterA(@"tb.""TicketId""", filter.ticket.id)
-                .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer);
+                .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -369,7 +411,18 @@ namespace Tzkt.Api.Repositories
                 {
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
-                    TotalSupply = row.tTotalSupply
+                    TotalSupply = row.tTotalSupply,
+                    ContentType = (RawJson)Micheline.ToJson(row.RawType),
+                    Content = format switch
+                    {
+                        MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                        MichelineFormat.JsonString => row.JsonContent,
+                        MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                        MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
+                    ContentHash = row.ContentHash,
+                    ContentTypeHash = row.ContentTypeHash
                 }
             });
         }
@@ -432,7 +485,18 @@ namespace Tzkt.Api.Repositories
                             {
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
-                                TotalSupply = row.tTotalSupply
+                                TotalSupply = row.tTotalSupply,
+                                ContentType = (RawJson)Micheline.ToJson(row.RawType),
+                                Content = format switch
+                                {
+                                    MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                                    MichelineFormat.JsonString => row.JsonContent,
+                                    MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                                    MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                                    _ => throw new Exception("Invalid MichelineFormat value")
+                                },
+                                ContentHash = row.ContentHash,
+                                ContentTypeHash = row.ContentTypeHash
                             };
                         break;
                     case "ticket.id":
@@ -455,6 +519,29 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.tTotalSupply;
                         break;
+                    case "ticket.content":
+                        foreach (var row in rows)
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                                MichelineFormat.JsonString => row.JsonContent,
+                                MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                                MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
+                        break;
+                    case "ticket.contentType":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)Micheline.ToJson(row.RawType);
+                        break;
+                    case "ticket.contentHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ContentHash;
+                        break;
+                    case "ticket.contentTypeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ContentTypeHash;
+                        break;
                 }
             }
 
@@ -475,6 +562,11 @@ namespace Tzkt.Api.Repositories
                 tr.""TransferTicketId"",
                 tr.""SmartRollupExecuteId"",
                 tr.""TicketerId"" as ""tTicketerId"",
+                t.""JsonContent"" as ""JsonContent"",
+                t.""RawContent"" as ""RawContent"",
+                t.""ContentHash"" as ""ContentHash"",
+                t.""ContentTypeHash"" as ""ContentTypeHash"",
+                t.""RawType"" as ""RawType"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -498,15 +590,15 @@ namespace Tzkt.Api.Repositories
                             columns.Add(@"""TicketerId""");
                             columns.Add(format switch
                             {
-                                MichelineFormat.Json => @"o.""JsonContent""",
-                                MichelineFormat.JsonString => @"o.""JsonContent""",
-                                MichelineFormat.Raw => @"o.""RawContent""",
-                                MichelineFormat.RawString => @"o.""RawContent""",
+                                MichelineFormat.Json => @"t.""JsonContent"" as ""JsonContent""",
+                                MichelineFormat.JsonString => @"t.""JsonContent"" as ""JsonContent""",
+                                MichelineFormat.Raw => @"t.""RawContent"" as ""RawContent""",
+                                MichelineFormat.RawString => @"t.""RawContent"" as ""RawContent""",
                                 _ => throw new Exception("Invalid MichelineFormat value")
                             });
-                            columns.Add(@"o.""ContentHash""");
-                            columns.Add(@"o.""ContentTypeHash""");
-                            columns.Add(@"o.""RawType""");
+                            columns.Add(@"t.""ContentHash"" as ""ContentHash""");
+                            columns.Add(@"t.""ContentTypeHash"" as ""ContentTypeHash""");
+                            columns.Add(@"t.""RawType"" as ""RawType""");
                             break;
                     }
                 }
@@ -532,6 +624,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash)
                 .Take(pagination, x => x switch
                 {
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
@@ -559,7 +653,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""TransferTicketId""", filter.transferTicketId)
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
-                .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer);
+                .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -584,6 +680,17 @@ namespace Tzkt.Api.Repositories
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
                     TotalSupply = row.tTotalSupply,
+                    ContentType = (RawJson)Micheline.ToJson(row.RawType),
+                    Content = format switch
+                    {
+                        MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                        MichelineFormat.JsonString => row.JsonContent,
+                        MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                        MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                        _ => throw new Exception("Invalid MichelineFormat value")
+                    },
+                    ContentHash = row.ContentHash,
+                    ContentTypeHash = row.ContentTypeHash
                 }
             });
         }
@@ -658,7 +765,18 @@ namespace Tzkt.Api.Repositories
                             {
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
-                                TotalSupply = row.tTotalSupply
+                                TotalSupply = row.tTotalSupply,
+                                ContentType = (RawJson)Micheline.ToJson(row.RawType),
+                                Content = format switch
+                                {
+                                    MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                                    MichelineFormat.JsonString => row.JsonContent,
+                                    MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                                    MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                                    _ => throw new Exception("Invalid MichelineFormat value")
+                                },
+                                ContentHash = row.ContentHash,
+                                ContentTypeHash = row.ContentTypeHash
                             };
                         break;
                     case "ticket.id":
@@ -680,6 +798,29 @@ namespace Tzkt.Api.Repositories
                     case "ticket.totalSupply":
                         foreach (var row in rows)
                             result[j++][i] = row.tTotalSupply;
+                        break;
+                    case "ticket.content":
+                        foreach (var row in rows)
+                            result[j++][i] = format switch
+                            {
+                                MichelineFormat.Json => row.JsonContent == null ? null : (RawJson)row.JsonContent,
+                                MichelineFormat.JsonString => row.JsonContent,
+                                MichelineFormat.Raw => row.RawContent == null ? null : (RawJson)Micheline.ToJson(row.RawContent),
+                                MichelineFormat.RawString => row.RawContent == null ? null : Micheline.ToJson(row.RawContent),
+                                _ => throw new Exception("Invalid MichelineFormat value")
+                            };
+                        break;
+                    case "ticket.contentType":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)Micheline.ToJson(row.RawType);
+                        break;
+                    case "ticket.contentHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ContentHash;
+                        break;
+                    case "ticket.contentTypeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ContentTypeHash;
                         break;
                 }
             }

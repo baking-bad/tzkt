@@ -128,7 +128,8 @@ namespace Tzkt.Data.Migrations
                     ContentTypeHash = table.Column<int>(type: "integer", nullable: false),
                     RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonContent = table.Column<string>(type: "text", nullable: true),
+                    JsonContent = table.Column<string>(type: "jsonb", nullable: true),
+                    JsonType = table.Column<string>(type: "jsonb", nullable: true),
                     Metadata = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -255,6 +256,12 @@ namespace Tzkt.Data.Migrations
                 table: "TicketTransfers",
                 column: "MigrationId",
                 filter: "\"MigrationId\" is not null");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketTransfers_SmartRollupExecuteId",
+                table: "TicketTransfers",
+                column: "SmartRollupExecuteId",
+                filter: "\"SmartRollupExecuteId\" is not null");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_TicketerId",

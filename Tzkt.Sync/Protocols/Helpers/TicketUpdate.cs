@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols
         public byte[] RawType { get; set; }
         public byte[] RawContent { get; set; }
         public string JsonContent { get; set; }
+        public string JsonType { get; set; }
 
         public int ContentTypeHash { get; set; }
         public int ContentHash { get; set; }

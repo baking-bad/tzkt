@@ -13,7 +13,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20230814170139_Tickets")]
+    [Migration("20230818112210_Tickets")]
     partial class Tickets
     {
         /// <inheritdoc />
@@ -3607,7 +3607,10 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("JsonContent")
-                        .HasColumnType("text");
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("JsonType")
+                        .HasColumnType("jsonb");
 
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
@@ -3763,6 +3766,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("MigrationId")
                         .HasFilter("\"MigrationId\" is not null");
+
+                    b.HasIndex("SmartRollupExecuteId")
+                        .HasFilter("\"SmartRollupExecuteId\" is not null");
 
                     b.HasIndex("TicketId");
 

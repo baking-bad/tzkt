@@ -27,6 +27,7 @@ namespace Tzkt.Data.Models
         public byte[] RawContent { get; set; }
         public byte[] RawType { get; set; }
         public string JsonContent { get; set; }
+        public string JsonType { get; set; }
     }
     
     public static class TicketModel
@@ -42,6 +43,14 @@ namespace Tzkt.Data.Models
             // shadow property
             modelBuilder.Entity<Ticket>()
                 .Property<string>("Metadata")
+                .HasColumnType("jsonb");
+            
+            modelBuilder.Entity<Ticket>()
+                .Property(x => x.JsonContent)
+                .HasColumnType("jsonb");
+            
+            modelBuilder.Entity<Ticket>()
+                .Property(x => x.JsonType)
                 .HasColumnType("jsonb");
 
             // TODO: switch to `numeric` type after migration to .NET 6
