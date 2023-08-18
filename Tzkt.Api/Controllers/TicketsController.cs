@@ -44,6 +44,8 @@ namespace Tzkt.Api.Controllers
                 filter.lastLevel != null ||
                 filter.сontentHash != null ||
                 filter.сontentTypeHash != null ||
+                filter.content != null ||
+                filter.contentType != null ||
                 filter.id != null )
             {
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
@@ -120,7 +122,9 @@ namespace Tzkt.Api.Controllers
                 filter.lastLevel != null ||
                 filter.id != null ||
                 filter.ticket.id != null ||
-                filter.ticket.ticketer != null)
+                filter.ticket.ticketer != null ||
+                filter.ticket.сontentHash != null ||
+                filter.ticket.сontentTypeHash != null)
             {
                 #region optimizations
                 if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))

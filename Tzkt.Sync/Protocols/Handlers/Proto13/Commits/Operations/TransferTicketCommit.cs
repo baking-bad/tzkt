@@ -220,6 +220,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                             RawType = rawType,
                             RawContent = rawContent,
                             JsonContent = micheType.Humanize(value),
+                            JsonType = micheType.ToMicheline().ToJson(),
                             ContentTypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
@@ -236,42 +237,6 @@ namespace Tzkt.Sync.Protocols.Proto13
                     return null;
                 }
             }).Where(update => update != null);
-
-            var res = new List<TicketUpdate>();
-            foreach (var update in  ticketUpdates.RequiredArray().EnumerateArray())
-            {
-                try
-                {
-                    var ticketToken = update.Required("ticket_token");
-                    var micheType = Schema.Create(Micheline.FromJson(ticketToken.Required("content_type")) as MichelinePrim);
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
-                    var rawContent = micheType.Optimize(value).ToBytes();
-                    var rawType = micheType.ToMicheline().ToBytes();
-                    res.Add(new TicketUpdate
-                    {
-                        TicketToken = new TicketToken
-                        {
-                            Ticketer = ticketToken.RequiredString("ticketer"),
-                            RawType = rawType,
-                            RawContent = rawContent,
-                            JsonContent = micheType.Humanize(value),
-                            ContentTypeHash = Script.GetHash(rawType),
-                            ContentHash = Script.GetHash(rawContent)
-                        },
-                        Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
-                        {
-                            Account = y.RequiredString("account"),
-                            Amount = BigInteger.Parse(y.RequiredString("amount"))
-                        })
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "failed to process 'transfer_ticket' parameters");
-                }
-            }
-
-            return res;
         }
     }
 }
