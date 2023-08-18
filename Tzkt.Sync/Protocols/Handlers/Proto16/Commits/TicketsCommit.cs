@@ -194,6 +194,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 RawContent = ticketToken.RawContent,
                 RawType = ticketToken.RawType,
                 JsonContent = ticketToken.JsonContent,
+                JsonType = ticketToken.JsonType,
                 ContentHash = ticketToken.ContentHash,
                 ContentTypeHash = ticketToken.ContentTypeHash,
             };

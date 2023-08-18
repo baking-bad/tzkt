@@ -215,6 +215,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                             Ticketer = ticketToken.RequiredString("ticketer"),
                             RawType = rawType,
                             RawContent = rawContent,
+                            JsonContent = micheType.Humanize(value),
+                            JsonType = micheType.ToMicheline().ToJson(),
                             ContentTypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },

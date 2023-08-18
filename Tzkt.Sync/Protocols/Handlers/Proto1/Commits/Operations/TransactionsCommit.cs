@@ -711,6 +711,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             RawType = rawType,
                             RawContent = rawContent,
                             JsonContent = micheType.Humanize(value),
+                            JsonType = micheType.ToMicheline().ToJson(),
                             ContentTypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
