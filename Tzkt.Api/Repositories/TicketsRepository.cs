@@ -386,6 +386,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
+                .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
                 .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
                 .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash);
@@ -561,6 +562,7 @@ namespace Tzkt.Api.Repositories
                 tr.""TransactionId"",
                 tr.""TransferTicketId"",
                 tr.""SmartRollupExecuteId"",
+                tr.""TicketId"" as ""tId"",
                 tr.""TicketerId"" as ""tTicketerId"",
                 t.""JsonContent"" as ""JsonContent"",
                 t.""RawContent"" as ""RawContent"",
@@ -586,8 +588,9 @@ namespace Tzkt.Api.Repositories
                         case "transferTicketId": columns.Add(@"tr.""TransferTicketId"""); break;
                         case "smartRollupExecuteId": columns.Add(@"tr.""SmartRollupExecuteId"""); break;
                         case "ticket":
-                            columns.Add(@"""Id""");
-                            columns.Add(@"""TicketerId""");
+                            columns.Add(@"tr.""TicketId"" as ""tId""");
+                            columns.Add(@"tr.""TicketerId"" as ""tTicketerId""");
+                            columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                             columns.Add(format switch
                             {
                                 MichelineFormat.Json => @"t.""JsonContent"" as ""JsonContent""",
