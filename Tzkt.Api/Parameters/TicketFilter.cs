@@ -51,13 +51,13 @@ namespace Tzkt.Api
         /// Filter by 32-bit hash of ticket content (helpful for searching similar tickets).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter сontentHash { get; set; }
+        public Int32Parameter contentHash { get; set; }
 
         /// <summary>
         /// Filter by 32-bit hash of ticket content type (helpful for searching same tickets).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter сontentTypeHash { get; set; }
+        public Int32Parameter contentTypeHash { get; set; }
 
         /// <summary>
         /// Filter by content.  
@@ -79,8 +79,8 @@ namespace Tzkt.Api
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("ticketer", ticketer), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("сontentHash", сontentHash),
-                ("сontentTypeHash", сontentTypeHash), ("content", content), ("contentType", contentType));
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("contentHash", contentHash),
+                ("contentTypeHash", contentTypeHash), ("content", content), ("contentType", contentType));
         }
     }
 }
