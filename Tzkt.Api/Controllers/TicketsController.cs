@@ -42,8 +42,8 @@ namespace Tzkt.Api.Controllers
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
-                filter.сontentHash != null ||
-                filter.сontentTypeHash != null ||
+                filter.contentHash != null ||
+                filter.contentTypeHash != null ||
                 filter.content != null ||
                 filter.contentType != null ||
                 filter.id != null )
@@ -123,8 +123,8 @@ namespace Tzkt.Api.Controllers
                 filter.id != null ||
                 filter.ticket.id != null ||
                 filter.ticket.ticketer != null ||
-                filter.ticket.сontentHash != null ||
-                filter.ticket.сontentTypeHash != null)
+                filter.ticket.contentHash != null ||
+                filter.ticket.contentTypeHash != null)
             {
                 #region optimizations
                 if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
@@ -213,6 +213,8 @@ namespace Tzkt.Api.Controllers
                 filter.transferTicketId != null ||
                 filter.smartRollupExecuteId != null ||
                 filter.ticket.ticketer != null ||
+                filter.ticket.contentHash != null ||
+                filter.ticket.contentTypeHash != null ||
                 filter.ticket.id != null)
             {
                 #region optimizations
@@ -312,10 +314,12 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Selection selection,
             MichelineFormat micheline = MichelineFormat.Json)
         {
+
             if (filter.account?.Eq == null &&
                 filter.account?.In == null &&
                 filter.ticket.id?.Eq == null &&
                 filter.ticket.id?.In == null &&
+                //TODO Make contentHash, contentTypeHash required
                 filter.ticket.ticketer?.Eq == null && 
                 filter.ticket.ticketer?.In == null)
                 return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer`) must be specified");

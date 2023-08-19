@@ -98,8 +98,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
-                .Filter("ContentTypeHash", filter.сontentTypeHash)
-                .Filter("ContentHash", filter.сontentHash)
+                .Filter("ContentTypeHash", filter.contentTypeHash)
+                .Filter("ContentHash", filter.contentHash)
                 .Filter("JsonType", filter.contentType)
                 .Filter("JsonContent", filter.content)
                 .Take(pagination, x => x switch
@@ -130,8 +130,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
-                .Filter("ContentTypeHash", filter.сontentTypeHash)
-                .Filter("ContentHash", filter.сontentHash)
+                .Filter("ContentTypeHash", filter.contentTypeHash)
+                .Filter("ContentHash", filter.contentHash)
                 .Filter("JsonType", filter.contentType)
                 .Filter("JsonContent", filter.content);
 
@@ -359,8 +359,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
@@ -388,8 +388,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash);
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -627,8 +627,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
                 .Take(pagination, x => x switch
                 {
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
@@ -657,8 +657,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.сontentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.сontentTypeHash);
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -874,7 +874,9 @@ namespace Tzkt.Api.Repositories
                         .FilterA(@"tr.""FromId""", filter.account)
                         .FilterA(@"tr.""TicketId""", filter.ticket.id)
                         .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
-                        .ResetFilters()
+                        .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                        .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
+                .ResetFilters()
 
                         .Append("UNION ALL")
 
@@ -885,6 +887,8 @@ namespace Tzkt.Api.Repositories
                         .FilterA(@"tr.""ToId""", filter.account)
                         .FilterA(@"tr.""TicketId""", filter.ticket.id)
                         .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
+                        .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
+                        .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
                         .ResetFilters()
 
                     .Append(") as tb")
