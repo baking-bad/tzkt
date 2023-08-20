@@ -319,10 +319,10 @@ namespace Tzkt.Api.Controllers
                 filter.account?.In == null &&
                 filter.ticket.id?.Eq == null &&
                 filter.ticket.id?.In == null &&
-                //TODO Make contentHash, contentTypeHash required
-                filter.ticket.ticketer?.Eq == null && 
-                filter.ticket.ticketer?.In == null)
-                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer`) must be specified");
+                (filter.ticket.ticketer?.Eq == null && filter.ticket.ticketer?.In == null ||
+                 filter.ticket.contentHash?.Eq == null && filter.ticket.contentHash?.In == null ||
+                 filter.ticket.contentTypeHash?.Eq == null && filter.ticket.contentTypeHash?.In == null))
+                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.contentTypeHash`) must be specified");
 
             #region optimizations
             if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
