@@ -62,7 +62,7 @@ namespace Tzkt.Api
         /// <summary>
         /// Filter by content.  
         /// Note, this parameter supports the following format: `content{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by (for example, `?content.foo.in=Token`).  
+        /// so you can specify a path to a particular field to filter by (for example, `?content.in=red,green`).  
         /// Click on the parameter to expand more details.
         /// </summary>
         public JsonParameter content { get; set; }
