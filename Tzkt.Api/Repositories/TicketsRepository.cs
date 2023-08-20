@@ -912,7 +912,7 @@ namespace Tzkt.Api.Repositories
                 Ticket = new TicketInfo
                 {
                     Id = row.tId,
-                    Ticketer = Accounts.GetAlias(row.tContractId)
+                    Ticketer = Accounts.GetAlias(row.tTicketerId)
                 }
             });
         }
