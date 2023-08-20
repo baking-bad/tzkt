@@ -601,6 +601,7 @@ namespace Tzkt.Api.Repositories
                             });
                             columns.Add(@"t.""ContentHash"" as ""ContentHash""");
                             columns.Add(@"t.""ContentTypeHash"" as ""ContentTypeHash""");
+                            //TODO Should we do format switch here?
                             columns.Add(@"t.""RawType"" as ""RawType""");
                             break;
                     }

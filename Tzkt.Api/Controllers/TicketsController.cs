@@ -300,7 +300,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ticket balances at the end of the specified block.
         /// Note, this endpoint is quite heavy, therefore at least one of the filters
-        /// (`account`, `ticket.id`, `ticket.ticketer`) must be specified.
+        /// (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.contentTypeHash`) must be specified.
         /// </remarks>
         /// <param name="level">Level of the block at the end of which historical balances must be calculated</param>
         /// <param name="filter">Filter</param>
