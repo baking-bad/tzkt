@@ -23,6 +23,8 @@ namespace Tzkt.Data.Models
         public short? InternalTransactions { get; set; }
 
         public int? EventsCount { get; set; }
+        
+        //TODO Make sure we don't need to put it to ContractOperation.
         public int? TicketTransfers { get; set; }
 
         #region relations

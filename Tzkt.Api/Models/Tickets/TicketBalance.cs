@@ -29,30 +29,30 @@ namespace Tzkt.Api.Models
         public string Balance { get; set; }
 
         /// <summary>
-        /// Total number of transfers, affecting the token balance.  
+        /// Total number of transfers, affecting the ticket balance.  
         /// **[sortable]**
         /// </summary>
         public int TransfersCount { get; set; }
 
         /// <summary>
-        /// Level of the block where the token balance was first changed.  
+        /// Level of the block where the ticket balance was first changed.  
         /// **[sortable]**
         /// </summary>
         public int FirstLevel { get; set; }
 
         /// <summary>
-        /// Timestamp of the block where the token balance was first changed.
+        /// Timestamp of the block where the ticket balance was first changed.
         /// </summary>
         public DateTime FirstTime { get; set; }
 
         /// <summary>
-        /// Level of the block where the token balance was last changed.  
+        /// Level of the block where the ticket balance was last changed.  
         /// **[sortable]**
         /// </summary>
         public int LastLevel { get; set; }
 
         /// <summary>
-        /// Timestamp of the block where the token balance was last changed.
+        /// Timestamp of the block where the ticket balance was last changed.
         /// </summary>
         public DateTime LastTime { get; set; }
     }

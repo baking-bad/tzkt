@@ -256,10 +256,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             var to = GetOrCreateAccount(op, toAddress);
             var toBalance = GetOrCreateTicketBalance(op, ticket, to);
             
+            //TODO Something wrong here, sometimes ticketTransfersCount is null.
             switch (op)
             {
-                case TransferTicketOperation transfer1:
-                    transfer1.TicketTransfers = (transfer1.TicketTransfers ?? 0) + 1;
+                case TransferTicketOperation transferTicket:
+                    transferTicket.TicketTransfers = (transferTicket.TicketTransfers ?? 0) + 1;
                     break;
                 case TransactionOperation tx:
                     tx.TicketTransfers = (tx.TicketTransfers ?? 0) + 1;

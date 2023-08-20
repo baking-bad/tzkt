@@ -96,10 +96,6 @@ namespace Tzkt.Api.Models
         public int TokenTransfersCount { get; set; }
 
         /// <summary>
-        /// Number of delegation operations of the contract.
-        /// </summary>
-
-        /// <summary>
         /// Number of account tickets with non-zero balances.
         /// </summary>
         public int ActiveTicketsCount { get; set; }

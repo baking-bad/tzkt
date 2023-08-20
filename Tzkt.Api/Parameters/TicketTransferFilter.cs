@@ -62,7 +62,7 @@ namespace Tzkt.Api
         public Int64NullParameter transactionId { get; set; }
 
         /// <summary>
-        /// Filter by id of the transfer ticket operation,, caused the ticket transfer.  
+        /// Filter by id of the transfer ticket operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter transferTicketId { get; set; }

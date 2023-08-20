@@ -110,11 +110,6 @@ namespace Tzkt.Api.Models
         public int ActiveTicketsCount { get; set; }
 
         /// <summary>
-        /// Number of tickets minted in the contract.
-        /// </summary>
-        public int TicketsCount { get; set; }
-
-        /// <summary>
         /// Number of tickets the account ever had.
         /// </summary>
         public int TicketBalancesCount { get; set; }
