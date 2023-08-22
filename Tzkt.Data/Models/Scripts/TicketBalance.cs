@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
@@ -9,7 +8,6 @@ namespace Tzkt.Data.Models
     {
         public long Id { get; set; }
         
-        //TODO Do we need ticketer here?
         public int TicketerId { get; set; }
         public long TicketId { get; set; }
         public int AccountId { get; set; }

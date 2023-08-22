@@ -121,8 +121,12 @@ if (builder.Configuration.GetWebsocketConfig().Enabled)
     builder.Services.AddTransient<TokenTransfersProcessor<DefaultHub>>();
     builder.Services.AddTransient<IHubProcessor, TokenTransfersProcessor<DefaultHub>>();
 
-    //TODO Add Ticket Balance and Transfer processors.
-    
+    builder.Services.AddTransient<TicketBalancesProcessor<DefaultHub>>();
+    builder.Services.AddTransient<IHubProcessor, TicketBalancesProcessor<DefaultHub>>();
+
+    builder.Services.AddTransient<TicketTransfersProcessor<DefaultHub>>();
+    builder.Services.AddTransient<IHubProcessor, TicketTransfersProcessor<DefaultHub>>();
+
     builder.Services.AddTransient<AccountsProcessor<DefaultHub>>();
     builder.Services.AddTransient<IHubProcessor, AccountsProcessor<DefaultHub>>();
 
