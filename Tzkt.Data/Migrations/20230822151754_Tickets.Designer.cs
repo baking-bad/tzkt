@@ -13,7 +13,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20230818112210_Tickets")]
+    [Migration("20230822151754_Tickets")]
     partial class Tickets
     {
         /// <inheritdoc />
@@ -3733,9 +3733,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("MigrationId")
-                        .HasColumnType("bigint");
-
                     b.Property<long?>("SmartRollupExecuteId")
                         .HasColumnType("bigint");
 
@@ -3763,9 +3760,6 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("Level");
-
-                    b.HasIndex("MigrationId")
-                        .HasFilter("\"MigrationId\" is not null");
 
                     b.HasIndex("SmartRollupExecuteId")
                         .HasFilter("\"SmartRollupExecuteId\" is not null");

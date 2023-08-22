@@ -151,8 +151,7 @@ namespace Tzkt.Data.Migrations
                     ToId = table.Column<int>(type: "integer", nullable: true),
                     TransferTicketId = table.Column<long>(type: "bigint", nullable: true),
                     TransactionId = table.Column<long>(type: "bigint", nullable: true),
-                    SmartRollupExecuteId = table.Column<long>(type: "bigint", nullable: true),
-                    MigrationId = table.Column<long>(type: "bigint", nullable: true)
+                    SmartRollupExecuteId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -250,12 +249,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TicketTransfers_Level",
                 table: "TicketTransfers",
                 column: "Level");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TicketTransfers_MigrationId",
-                table: "TicketTransfers",
-                column: "MigrationId",
-                filter: "\"MigrationId\" is not null");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_SmartRollupExecuteId",
