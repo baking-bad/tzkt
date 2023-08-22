@@ -71,6 +71,11 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             foreach (var (op, opUpdates) in Updates)
             {
+                if (op.Level == 5)
+                    Console.WriteLine($"Check this");
+                
+                op.Block.Events |= BlockEvents.Tickets;
+
                 var updatesDict = new Dictionary<Ticket, List<Update>>();
 
                 foreach (var upd in opUpdates)
@@ -87,9 +92,6 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 foreach (var (ticket, updates) in updatesDict)
                 {
-                    Db.TryAttach(op.Block);
-                    op.Block.Events |= BlockEvents.Tickets;
-                    
                     if (updates.Count == 1 || updates.BigSum(x => x.Amount) != BigInteger.Zero)
                     {
                         foreach (var ticketUpdate in updates)
@@ -102,19 +104,16 @@ namespace Tzkt.Sync.Protocols.Proto16
                     else if (updates.Count(x => x.Amount < BigInteger.Zero) == 1)
                     {
                         var from = updates.First(x => x.Amount < BigInteger.Zero);
-                        foreach (var ticketUpdate in updates)
+                        foreach (var ticketUpdate in updates.Where(x => x.Amount > BigInteger.Zero))
                         {
-                            //TODO Will we add transfers to oneself? For instance https://rpc.tzkt.io/sc39/chains/main/blocks/77
-                            if (from.Account == ticketUpdate.Account) continue;
                             TransferTickets(op, ticket, from.Account, ticketUpdate.Account, ticketUpdate.Amount);
                         }
                     }
                     else if (updates.Count(x => x.Amount > BigInteger.Zero) == 1)
                     {
                         var to = updates.First(x => x.Amount > BigInteger.Zero);
-                        foreach (var ticketUpdate in updates)
+                        foreach (var ticketUpdate in updates.Where(x => x.Amount < BigInteger.Zero))
                         {
-                            if (to.Account == ticketUpdate.Account) continue;
                             TransferTickets(op, ticket, ticketUpdate.Account, to.Account, ticketUpdate.Amount);
                         }
                     }
@@ -154,10 +153,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                     };
                 Db.Accounts.Add(account);
                 Cache.Accounts.Add(account);
-
-                //TODO Do we need to attach it twice?
-                Db.TryAttach(op.Block);
-                op.Block.Events |= BlockEvents.NewAccounts;
             }
             return account;
         }
@@ -173,7 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 Id = op switch
                 {
-                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
                     SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
@@ -181,7 +176,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 TicketerId = contract.Id,
                 FirstMinterId = op switch
                 {
-                    ContractOperation contractOperation => contractOperation.InitiatorId ?? contractOperation.SenderId,
+                    TransactionOperation transaction => transaction.InitiatorId ?? transaction.SenderId,
                     TransferTicketOperation transfer => transfer.SenderId,
                     SmartRollupExecuteOperation sr => sr.SenderId,
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
@@ -219,7 +214,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 Id = op switch
                 {
-                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
                     SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
@@ -256,7 +251,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             var to = GetOrCreateAccount(op, toAddress);
             var toBalance = GetOrCreateTicketBalance(op, ticket, to);
             
-            //TODO Something wrong here, sometimes ticketTransfersCount is null.
             switch (op)
             {
                 case TransferTicketOperation transferTicket:
@@ -310,7 +304,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 Id = op switch
                 {
-                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
                     SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
@@ -375,7 +369,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 Id = op switch
                 {
-                    ContractOperation contractOperation => Cache.AppState.NextSubId(contractOperation),
+                    TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
                     TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
                     SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
@@ -563,6 +557,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 }
             }
 
+            //TODO TICKETS Make test for mint, burn and transfer in one operation
             foreach (var ticketBalance in ticketBalancesToRemove)
             {
                 if (ticketBalance.FirstLevel == block.Level)

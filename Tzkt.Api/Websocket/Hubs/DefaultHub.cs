@@ -15,8 +15,10 @@ namespace Tzkt.Api.Websocket.Hubs
         readonly OperationsProcessor<DefaultHub> Operations;
         readonly BigMapsProcessor<DefaultHub> BigMaps;
         readonly EventsProcessor<DefaultHub> Events;
-        readonly TokenBalancesProcessor<DefaultHub> Balances;
-        readonly TokenTransfersProcessor<DefaultHub> Transfers;
+        readonly TokenBalancesProcessor<DefaultHub> TokenBalances;
+        readonly TokenTransfersProcessor<DefaultHub> TokenTransfers;
+        readonly TicketBalancesProcessor<DefaultHub> TicketBalances;
+        readonly TicketTransfersProcessor<DefaultHub> TicketTransfers;
         readonly AccountsProcessor<DefaultHub> Accounts;
 
         public DefaultHub(
@@ -26,8 +28,10 @@ namespace Tzkt.Api.Websocket.Hubs
             OperationsProcessor<DefaultHub> operations,
             BigMapsProcessor<DefaultHub> bigMaps,
             EventsProcessor<DefaultHub> events,
-            TokenBalancesProcessor<DefaultHub> balances,
-            TokenTransfersProcessor<DefaultHub> transfers,
+            TokenBalancesProcessor<DefaultHub> tokenBalances,
+            TokenTransfersProcessor<DefaultHub> tokenTransfers,
+            TicketBalancesProcessor<DefaultHub> ticketBalances,
+            TicketTransfersProcessor<DefaultHub> ticketTransfers,
             AccountsProcessor<DefaultHub> accounts,
             ILogger<DefaultHub> logger,
             IMetrics metrics,
@@ -39,8 +43,10 @@ namespace Tzkt.Api.Websocket.Hubs
             Operations = operations;
             BigMaps = bigMaps;
             Events = events;
-            Balances = balances;
-            Transfers = transfers;
+            TokenBalances = tokenBalances;
+            TokenTransfers = tokenTransfers;
+            TicketBalances = ticketBalances;
+            TicketTransfers = ticketTransfers;
             Accounts = accounts;
         }
 
@@ -86,14 +92,28 @@ namespace Tzkt.Api.Websocket.Hubs
         {
             parameters ??= new();
             parameters.EnsureValid();
-            return Balances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+            return TokenBalances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
         public Task<int> SubscribeToTokenTransfers(TokenTransfersParameter parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
-            return Transfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+            return TokenTransfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
+
+        public Task<int> SubscribeToTicketBalances(TicketTransfersParameter parameters)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return TicketBalances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
+        }
+
+        public Task<int> SubscribeToTicketTransfers(TicketTransfersParameter parameters)
+        {
+            parameters ??= new();
+            parameters.EnsureValid();
+            return TicketTransfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
         public Task<int> SubscribeToAccounts(AccountsParameter parameters)
@@ -109,8 +129,10 @@ namespace Tzkt.Api.Websocket.Hubs
             Operations.Unsubscribe(Context.ConnectionId);
             BigMaps.Unsubscribe(Context.ConnectionId);
             Events.Unsubscribe(Context.ConnectionId);
-            Balances.Unsubscribe(Context.ConnectionId);
-            Transfers.Unsubscribe(Context.ConnectionId);
+            TokenBalances.Unsubscribe(Context.ConnectionId);
+            TokenTransfers.Unsubscribe(Context.ConnectionId);
+            TicketBalances.Unsubscribe(Context.ConnectionId);
+            TicketTransfers.Unsubscribe(Context.ConnectionId);
             Accounts.Unsubscribe(Context.ConnectionId);
             return base.OnDisconnectedAsync(exception);
         }
