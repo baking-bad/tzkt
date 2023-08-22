@@ -28,9 +28,8 @@ namespace Tzkt.Api.Websocket.Processors
         class TicketerSub
         {
             public HashSet<string> All { get; set; }
-            public Dictionary<long, HashSet<string>> Tickets { get; set; }
 
-            public bool Empty => All == null && Tickets == null;
+            public bool Empty => All == null;
         }
         #endregion
 
@@ -140,10 +139,6 @@ namespace Tzkt.Api.Websocket.Processors
                             {
                                 if (accountTicketerSubs.All != null)
                                     Add(accountTicketerSubs.All, balance);
-
-                                if (accountTicketerSubs.Tickets != null)
-                                    if (accountTicketerSubs.Tickets.TryGetValue(balance.Ticket.Id, out var ticketerTicketSubs))
-                                        Add(ticketerTicketSubs, balance);
                             }
                         }
                     }
@@ -154,10 +149,6 @@ namespace Tzkt.Api.Websocket.Processors
                     {
                         if (ticketerSubs.All != null)
                             Add(ticketerSubs.All, balance);
-
-                        if (ticketerSubs.Tickets != null)
-                            if (ticketerSubs.Tickets.TryGetValue(balance.Ticket.Id, out var ticketerTicketSubs))
-                                Add(ticketerTicketSubs, balance);
                     }
                     #endregion
                 }
@@ -232,12 +223,7 @@ namespace Tzkt.Api.Websocket.Processors
                         {
                             ticketerSub = new();
                             accountSub.Ticketers.Add(parameter.Ticketer, ticketerSub);
-                        }
-                        if (parameter.TicketId is long ticketId)
-                        {
-                            ticketerSub.Tickets ??= new(4);
-                            TryAdd(ticketerSub.Tickets, ticketId, connectionId);
-                        }    
+                        }  
                         else
                         {
                             ticketerSub.All ??= new(4);
@@ -256,11 +242,6 @@ namespace Tzkt.Api.Websocket.Processors
                     {
                         ticketerSub = new();
                         TicketerSubs.Add(parameter.Ticketer, ticketerSub);
-                    }
-                    if (parameter.TicketId is long ticketId)
-                    {
-                        ticketerSub.Tickets ??= new(4);
-                        TryAdd(ticketerSub.Tickets, ticketId, connectionId);
                     }
                     else
                     {
@@ -330,7 +311,6 @@ namespace Tzkt.Api.Websocket.Processors
                         foreach (var (ticketer, ticketerSub) in accountSub.Ticketers)
                         {
                             ticketerSub.All = TryRemove(ticketerSub.All, connectionId);
-                            ticketerSub.Tickets = TryRemove(ticketerSub.Tickets, connectionId);
                             
                             if (ticketerSub.Empty)
                                 emptyAccountTicketerSubs.Add(ticketer);
@@ -353,7 +333,6 @@ namespace Tzkt.Api.Websocket.Processors
                 foreach (var (ticketer, ticketerSub) in TicketerSubs)
                 {
                     ticketerSub.All = TryRemove(ticketerSub.All, connectionId);
-                    ticketerSub.Tickets = TryRemove(ticketerSub.Tickets, connectionId);
 
                     if (ticketerSub.Empty)
                         emptyTicketerSubs.Add(ticketer);

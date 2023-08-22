@@ -7,7 +7,6 @@ namespace Tzkt.Api.Websocket
     {
         public string Account { get; set; }
         public string Ticketer { get; set; }
-        public long? TicketId { get; set; }
 
         public void EnsureValid()
         {
@@ -16,9 +15,6 @@ namespace Tzkt.Api.Websocket
 
             if (Ticketer != null && !Regex.IsMatch(Ticketer, "^KT1[0-9A-Za-z]{33}$"))
                 throw new HubException("Invalid contract address");
-            
-            if (TicketId is < 0)
-                throw new HubException("Invalid ticketId");
         }
     }
 }
