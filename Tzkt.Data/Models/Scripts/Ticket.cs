@@ -40,11 +40,6 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region props
-            // shadow property
-            modelBuilder.Entity<Ticket>()
-                .Property<string>("Metadata")
-                .HasColumnType("jsonb");
-            
             modelBuilder.Entity<Ticket>()
                 .Property(x => x.JsonContent)
                 .HasColumnType("jsonb");
@@ -84,12 +79,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.LastLevel);
-
-            // shadow property
-            modelBuilder.Entity<Ticket>()
-                .HasIndex("Metadata")
-                .HasMethod("gin")
-                .HasOperators("jsonb_path_ops");
             #endregion
         }
     }

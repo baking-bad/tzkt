@@ -129,8 +129,7 @@ namespace Tzkt.Data.Migrations
                     RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonContent = table.Column<string>(type: "jsonb", nullable: true),
-                    JsonType = table.Column<string>(type: "jsonb", nullable: true),
-                    Metadata = table.Column<string>(type: "jsonb", nullable: true)
+                    JsonType = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -220,13 +219,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Tickets_LastLevel",
                 table: "Tickets",
                 column: "LastLevel");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tickets_Metadata",
-                table: "Tickets",
-                column: "Metadata")
-                .Annotation("Npgsql:IndexMethod", "gin")
-                .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TicketerId",

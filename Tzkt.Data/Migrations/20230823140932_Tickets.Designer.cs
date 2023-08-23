@@ -13,7 +13,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20230822151754_Tickets")]
+    [Migration("20230823140932_Tickets")]
     partial class Tickets
     {
         /// <inheritdoc />
@@ -3615,9 +3615,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
-                    b.Property<string>("Metadata")
-                        .HasColumnType("jsonb");
-
                     b.Property<byte[]>("RawContent")
                         .HasColumnType("bytea");
 
@@ -3650,11 +3647,6 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.HasIndex("LastLevel");
-
-                    b.HasIndex("Metadata");
-
-                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "gin");
-                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Metadata"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("TicketerId");
 
