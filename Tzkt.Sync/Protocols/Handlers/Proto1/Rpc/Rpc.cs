@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
             => throw new InvalidOperationException();
 
-        public virtual Task<string> GetTicketBalance(int level, string address, string ticket)
+        public virtual Task<JsonElement> GetTicketBalance(int level, string address, string ticket)
             => throw new InvalidOperationException();
         #endregion
     }

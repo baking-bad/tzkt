@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 content = Micheline.FromBytes(ticket.RawContent)
             };
 
-            if (BigInteger.TryParse(await Rpc.GetTicketBalance(level, account.Address, JsonSerializer.Serialize(update)), out var remoteBalance))
+            if (BigInteger.TryParse((await Rpc.GetTicketBalance(level, account.Address, JsonSerializer.Serialize(update))).RequiredString(), out var remoteBalance))
             {
                 if (remoteBalance != balance.Balance)
                     throw new Exception($"Diagnostics failed: wrong ticket balance for {account.Address}");
