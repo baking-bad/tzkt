@@ -216,6 +216,7 @@ namespace Tzkt.Api.Websocket.Processors
                         accountSub = new();
                         AccountSubs.Add(parameter.Account, accountSub);
                     }
+                    
                     if (parameter.Ticketer != null)
                     {
                         accountSub.Ticketers ??= new(4);
@@ -224,11 +225,9 @@ namespace Tzkt.Api.Websocket.Processors
                             ticketerSub = new();
                             accountSub.Ticketers.Add(parameter.Ticketer, ticketerSub);
                         }  
-                        else
-                        {
-                            ticketerSub.All ??= new(4);
-                            TryAdd(ticketerSub.All, connectionId);
-                        }
+                        
+                        ticketerSub.All ??= new(4);
+                        TryAdd(ticketerSub.All, connectionId);
                     }
                     else
                     {
@@ -243,11 +242,9 @@ namespace Tzkt.Api.Websocket.Processors
                         ticketerSub = new();
                         TicketerSubs.Add(parameter.Ticketer, ticketerSub);
                     }
-                    else
-                    {
-                        ticketerSub.All ??= new();
-                        TryAdd(ticketerSub.All, connectionId);
-                    }
+                    
+                    ticketerSub.All ??= new();
+                    TryAdd(ticketerSub.All, connectionId);
                 }
                 else
                 {
