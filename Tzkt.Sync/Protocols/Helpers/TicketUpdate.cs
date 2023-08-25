@@ -11,10 +11,9 @@ namespace Tzkt.Sync.Protocols
     public class TicketToken
     {
         public string Ticketer { get; set; }
-        public byte[] RawContent { get; set; }
         public byte[] RawType { get; set; }
+        public byte[] RawContent { get; set; }
         public string JsonContent { get; set; }
-        public string JsonType { get; set; }
 
         public int ContentHash { get; set; }
         public int TypeHash { get; set; }

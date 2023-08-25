@@ -186,10 +186,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                 TotalBurned = BigInteger.Zero,
                 TotalMinted = BigInteger.Zero,
                 TotalSupply = BigInteger.Zero,
-                RawContent = ticketToken.RawContent,
                 RawType = ticketToken.RawType,
+                RawContent = ticketToken.RawContent,
                 JsonContent = ticketToken.JsonContent,
-                JsonType = ticketToken.JsonType,
                 ContentHash = ticketToken.ContentHash,
                 TypeHash = ticketToken.TypeHash,
             };

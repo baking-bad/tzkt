@@ -24,10 +24,9 @@ namespace Tzkt.Data.Models
         public int ContentHash { get; set; }
         public int TypeHash { get; set; }
         
-        public byte[] RawContent { get; set; }
         public byte[] RawType { get; set; }
+        public byte[] RawContent { get; set; }
         public string JsonContent { get; set; }
-        public string JsonType { get; set; }
     }
     
     public static class TicketModel
@@ -42,10 +41,6 @@ namespace Tzkt.Data.Models
             #region props
             modelBuilder.Entity<Ticket>()
                 .Property(x => x.JsonContent)
-                .HasColumnType("jsonb");
-            
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.JsonType)
                 .HasColumnType("jsonb");
 
             // TODO: switch to `numeric` type after migration to .NET 6
@@ -79,6 +74,17 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.LastLevel);
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(x => x.ContentHash);
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(x => x.TypeHash);
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(x => x.JsonContent)
+                .HasMethod("gin")
+                .HasOperators("jsonb_path_ops");
             #endregion
         }
     }

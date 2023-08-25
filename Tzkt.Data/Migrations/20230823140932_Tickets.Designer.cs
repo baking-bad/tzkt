@@ -3594,9 +3594,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ContentHash")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TypeHash")
-                        .HasColumnType("integer");
-
                     b.Property<int>("FirstLevel")
                         .HasColumnType("integer");
 
@@ -3607,9 +3604,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("JsonContent")
-                        .HasColumnType("jsonb");
-
-                    b.Property<string>("JsonType")
                         .HasColumnType("jsonb");
 
                     b.Property<int>("LastLevel")
@@ -3639,16 +3633,28 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("TransfersCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("TypeHash")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("ContentHash");
 
                     b.HasIndex("FirstMinterId");
 
                     b.HasIndex("Id")
                         .IsUnique();
 
+                    b.HasIndex("JsonContent");
+
+                    NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonContent"), "gin");
+                    NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonContent"), new[] { "jsonb_path_ops" });
+
                     b.HasIndex("LastLevel");
 
                     b.HasIndex("TicketerId");
+
+                    b.HasIndex("TypeHash");
 
                     b.ToTable("Tickets");
                 });

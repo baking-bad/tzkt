@@ -43,22 +43,7 @@ namespace Tzkt.Api.Repositories
                         case "totalSupply": columns.Add(@"""TotalSupply"""); break;
                         case "contentHash": columns.Add(@"o.""ContentHash"""); break;
                         case "typeHash": columns.Add(@"o.""TypeHash"""); break;
-                        case "type":
-                            if (field.Path == null)
-                            {
-                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonType""" : @"""RawType""");
-                            }
-                            else if (format <= MichelineFormat.JsonString)
-                            {
-                                field.Column = $"c{counter++}";
-                                columns.Add($@"""JsonType"" #> '{{{field.PathString}}}' as {field.Column}");
-                            }
-                            else
-                            {
-                                field.Column = $"c{counter++}";
-                                columns.Add($@"NULL as {field.Column}");
-                            }
-                            break;
+                        case "type": columns.Add(@"""RawType"""); break;
                         case "content":
                             if (field.Path == null)
                             {
@@ -94,7 +79,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", filter.lastTime)
                 .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonType", filter.type)
                 .Filter("JsonContent", filter.content)
                 .Take(pagination, x => x switch
                 {
@@ -125,7 +109,6 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", filter.lastTime)
                 .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonType", filter.type)
                 .Filter("JsonContent", filter.content);
 
             using var db = GetConnection();
@@ -150,7 +133,7 @@ namespace Tzkt.Api.Repositories
                 TotalMinted = row.TotalMinted,
                 TotalSupply = row.TotalSupply,
                 TransfersCount = row.TransfersCount,
-                Type = FormatType(row, format),
+                Type = Micheline.FromBytes((byte[])row.RawType),
                 Content = FormatContent(row, format),
                 ContentHash = row.ContentHash,
                 TypeHash = row.TypeHash
@@ -187,7 +170,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = FormatType(row, format);
+                            result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
                         break;
                     case "content":
                         foreach (var row in rows)
@@ -274,7 +257,6 @@ namespace Tzkt.Api.Repositories
                 tb.""TicketerId"" as ""tTicketerId"",
                 t.""JsonContent"" as ""JsonContent"",
                 t.""RawContent"" as ""RawContent"",
-                t.""JsonType"" as ""JsonType"",
                 t.""RawType"" as ""RawType"",
                 t.""ContentHash"" as ""ContentHash"",
                 t.""TypeHash"" as ""TypeHash"",
@@ -300,7 +282,7 @@ namespace Tzkt.Api.Repositories
                             columns.Add(@"tb.""TicketerId"" as ""tTicketerId""");
                             columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                             columns.Add(FormatContentQuery(format));
-                            columns.Add(FormatTypeQuery(format));
+                            columns.Add(@"t.""RawType"" as ""RawType""");
                             columns.Add(@"t.""ContentHash"" as ""ContentHash""");
                             columns.Add(@"t.""TypeHash"" as ""TypeHash""");
                             break;
@@ -379,7 +361,7 @@ namespace Tzkt.Api.Repositories
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
                     TotalSupply = row.tTotalSupply,
-                    Type = FormatType(row, format),
+                    Type = Micheline.FromBytes((byte[])row.RawType),
                     Content = FormatContent(row, format),
                     ContentHash = row.ContentHash,
                     TypeHash = row.TypeHash
@@ -446,7 +428,7 @@ namespace Tzkt.Api.Repositories
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
                                 TotalSupply = row.tTotalSupply,
-                                Type = FormatType(row, format),
+                                Type = Micheline.FromBytes((byte[])row.RawType),
                                 Content = FormatContent(row, format),
                                 ContentHash = row.ContentHash,
                                 TypeHash = row.TypeHash
@@ -478,7 +460,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket.type":
                         foreach (var row in rows)
-                            result[j++][i] = FormatType(row, format);
+                            result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
                         break;
                     case "ticket.contentHash":
                         foreach (var row in rows)
@@ -511,7 +493,6 @@ namespace Tzkt.Api.Repositories
                 tr.""TicketerId"" as ""tTicketerId"",
                 t.""JsonContent"" as ""JsonContent"",
                 t.""RawContent"" as ""RawContent"",
-                t.""JsonType"" as ""JsonType"",
                 t.""RawType"" as ""RawType"",
                 t.""ContentHash"" as ""ContentHash"",
                 t.""TypeHash"" as ""TypeHash"",
@@ -538,7 +519,7 @@ namespace Tzkt.Api.Repositories
                             columns.Add(@"tr.""TicketerId"" as ""tTicketerId""");
                             columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
                             columns.Add(FormatContentQuery(format));
-                            columns.Add(FormatTypeQuery(format));
+                            columns.Add(@"t.""RawType"" as ""RawType""");
                             columns.Add(@"t.""ContentHash"" as ""ContentHash""");
                             columns.Add(@"t.""TypeHash"" as ""TypeHash""");
                             break;
@@ -622,7 +603,7 @@ namespace Tzkt.Api.Repositories
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
                     TotalSupply = row.tTotalSupply,
-                    Type = FormatType(row, format),
+                    Type = Micheline.FromBytes((byte[])row.RawType),
                     Content = FormatContent(row, format),
                     ContentHash = row.ContentHash,
                     TypeHash = row.TypeHash
@@ -701,7 +682,7 @@ namespace Tzkt.Api.Repositories
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
                                 TotalSupply = row.tTotalSupply,
-                                Type = FormatType(row, format),
+                                Type = Micheline.FromBytes((byte[])row.RawType),
                                 Content = FormatContent(row, format),
                                 ContentHash = row.ContentHash,
                                 TypeHash = row.TypeHash
@@ -733,7 +714,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket.type":
                         foreach (var row in rows)
-                            result[j++][i] = FormatType(row, format);
+                            result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
                         break;
                     case "ticket.contentHash":
                         foreach (var row in rows)
@@ -903,30 +884,12 @@ namespace Tzkt.Api.Repositories
             _ => null
         };
 
-        static object FormatType(dynamic row, MichelineFormat format) => format switch
-        {
-            MichelineFormat.Json => (RawJson)row.JsonType,
-            MichelineFormat.JsonString => row.JsonType,
-            MichelineFormat.Raw => (RawJson)Micheline.ToJson(row.RawType),
-            MichelineFormat.RawString => Micheline.ToJson(row.RawType),
-            _ => null
-        };
-
         static string FormatContentQuery(MichelineFormat format) => format switch
         {
             MichelineFormat.Json => @"t.""JsonContent"" as ""JsonContent""",
             MichelineFormat.JsonString => @"t.""JsonContent"" as ""JsonContent""",
             MichelineFormat.Raw => @"t.""RawContent"" as ""RawContent""",
             MichelineFormat.RawString => @"t.""RawContent"" as ""RawContent""",
-            _ => throw new Exception("Invalid MichelineFormat value")
-        };
-
-        static string FormatTypeQuery(MichelineFormat format) => format switch
-        {
-            MichelineFormat.Json => @"t.""JsonType"" as ""JsonType""",
-            MichelineFormat.JsonString => @"t.""JsonType"" as ""JsonType""",
-            MichelineFormat.Raw => @"t.""RawType"" as ""RawType""",
-            MichelineFormat.RawString => @"t.""RawType"" as ""RawType""",
             _ => throw new Exception("Invalid MichelineFormat value")
         };
     }

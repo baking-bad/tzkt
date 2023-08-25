@@ -1,4 +1,4 @@
-﻿using NJsonSchema.Annotations;
+﻿using Netezos.Encoding;
 
 namespace Tzkt.Api.Models
 {
@@ -17,7 +17,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Micheline type of the content
         /// </summary>
-        public RawJson Type { get; set; }
+        public IMicheline Type { get; set; }
 
         /// <summary>
         /// Ticket content

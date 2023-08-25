@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using Netezos.Encoding;
+
+namespace Tzkt.Api.Models
 {
     public class Ticket
     {
@@ -16,7 +18,7 @@
         /// <summary>
         /// Micheline type of the content
         /// </summary>
-        public RawJson Type { get; set; }
+        public IMicheline Type { get; set; }
 
         /// <summary>
         /// Ticket content

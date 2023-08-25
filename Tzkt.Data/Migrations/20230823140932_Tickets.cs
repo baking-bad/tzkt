@@ -126,10 +126,9 @@ namespace Tzkt.Data.Migrations
                     TotalSupply = table.Column<string>(type: "text", nullable: false),
                     ContentHash = table.Column<int>(type: "integer", nullable: false),
                     TypeHash = table.Column<int>(type: "integer", nullable: false),
-                    RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonContent = table.Column<string>(type: "jsonb", nullable: true),
-                    JsonType = table.Column<string>(type: "jsonb", nullable: true)
+                    RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
+                    JsonContent = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -205,6 +204,11 @@ namespace Tzkt.Data.Migrations
                 filter: "\"Balance\" != '0'");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tickets_ContentHash",
+                table: "Tickets",
+                column: "ContentHash");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_FirstMinterId",
                 table: "Tickets",
                 column: "FirstMinterId");
@@ -216,6 +220,13 @@ namespace Tzkt.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tickets_JsonContent",
+                table: "Tickets",
+                column: "JsonContent")
+                .Annotation("Npgsql:IndexMethod", "gin")
+                .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_LastLevel",
                 table: "Tickets",
                 column: "LastLevel");
@@ -224,6 +235,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Tickets_TicketerId",
                 table: "Tickets",
                 column: "TicketerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_TypeHash",
+                table: "Tickets",
+                column: "TypeHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_FromId",

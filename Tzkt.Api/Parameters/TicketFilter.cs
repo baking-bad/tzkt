@@ -66,21 +66,13 @@ namespace Tzkt.Api
         /// Click on the parameter to expand more details.
         /// </summary>
         public JsonParameter content { get; set; }
-        
-        /// <summary>
-        /// Filter by content type.  
-        /// Note, this parameter supports the following format: `type{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by (for example, `?type.prim.in=string,int`).  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public JsonParameter type { get; set; }
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("ticketer", ticketer), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("contentHash", contentHash),
-                ("typeHash", typeHash), ("content", content), ("type", type));
+                ("typeHash", typeHash), ("content", content));
         }
     }
 }
