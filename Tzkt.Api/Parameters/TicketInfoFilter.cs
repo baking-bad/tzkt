@@ -27,12 +27,12 @@ namespace Tzkt.Api
         /// Filter by 32-bit hash of ticket content type (helpful for searching same tickets).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter contentTypeHash { get; set; }
+        public Int32Parameter typeHash { get; set; }
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("ticketer", ticketer), ("contentHash", contentHash), ("contentTypeHash", contentTypeHash));
+                ("id", id), ("ticketer", ticketer), ("contentHash", contentHash), ("typeHash", typeHash));
         }
     }
 }

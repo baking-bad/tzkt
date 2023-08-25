@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<long, Ticket> CachedById = new(MaxItems);
-        static readonly Dictionary<(int ContractId, int ContentHash, int ContentTypeHash), Ticket> CachedByKey = new(MaxItems);
+        static readonly Dictionary<(int ContractId, int ContentHash, int TypeHash), Ticket> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -47,18 +47,18 @@ namespace Tzkt.Sync.Services.Cache
         public void Add(Ticket ticket)
         {
             CachedById[ticket.Id] = ticket;
-            CachedByKey[(ticket.TicketerId, ticket.ContentHash, ticket.ContentTypeHash)] = ticket;
+            CachedByKey[(ticket.TicketerId, ticket.ContentHash, ticket.TypeHash)] = ticket;
         }
 
         public void Remove(Ticket ticket)
         {
             CachedById.Remove(ticket.Id);
-            CachedByKey.Remove((ticket.TicketerId, ticket.ContentHash, ticket.ContentTypeHash));
+            CachedByKey.Remove((ticket.TicketerId, ticket.ContentHash, ticket.TypeHash));
         }
 
-        public bool Has(int contractId, int contentHash, int contentTypeHash)
+        public bool Has(int contractId, int contentHash, int typeHash)
         {
-            return CachedByKey.ContainsKey((contractId, contentHash, contentTypeHash));
+            return CachedByKey.ContainsKey((contractId, contentHash, typeHash));
         }
 
         public Ticket GetOrAdd(Ticket token)
@@ -76,16 +76,16 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public Ticket Get(int contractId, int contentHash, int contentTypeHash)
+        public Ticket Get(int contractId, int contentHash, int typeHash)
         {
-            if (!CachedByKey.TryGetValue((contractId, contentHash, contentTypeHash), out var ticket))
-                throw new Exception($"Ticket ({contractId}, {contentHash}, {contentTypeHash}) doesn't exist");
+            if (!CachedByKey.TryGetValue((contractId, contentHash, typeHash), out var ticket))
+                throw new Exception($"Ticket ({contractId}, {contentHash}, {typeHash}) doesn't exist");
             return ticket;
         }
 
-        public bool TryGet(int contractId, int contentHash, int contentTypeHash, out Ticket token)
+        public bool TryGet(int contractId, int contentHash, int typeHash, out Ticket token)
         {
-            return CachedByKey.TryGetValue((contractId, contentHash, contentTypeHash), out token);
+            return CachedByKey.TryGetValue((contractId, contentHash, typeHash), out token);
         }
 
         public async Task Preload(IEnumerable<long> ids)

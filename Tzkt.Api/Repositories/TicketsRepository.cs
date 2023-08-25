@@ -42,8 +42,8 @@ namespace Tzkt.Api.Repositories
                         case "totalBurned": columns.Add(@"""TotalBurned"""); break;
                         case "totalSupply": columns.Add(@"""TotalSupply"""); break;
                         case "contentHash": columns.Add(@"o.""ContentHash"""); break;
-                        case "contentTypeHash": columns.Add(@"o.""ContentTypeHash"""); break;
-                        case "contentType":
+                        case "typeHash": columns.Add(@"o.""TypeHash"""); break;
+                        case "type":
                             if (field.Path == null)
                             {
                                 columns.Add(format <= MichelineFormat.JsonString ? @"""JsonType""" : @"""RawType""");
@@ -92,9 +92,9 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
-                .Filter("ContentTypeHash", filter.contentTypeHash)
+                .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonType", filter.contentType)
+                .Filter("JsonType", filter.type)
                 .Filter("JsonContent", filter.content)
                 .Take(pagination, x => x switch
                 {
@@ -105,7 +105,7 @@ namespace Tzkt.Api.Repositories
                     "firstLevel" => (@"""Id""", @"""FirstLevel"""),
                     "lastLevel" => (@"""LastLevel""", @"""LastLevel"""),
                     "contentHash" => (@"""ContentHash""", @"""ContentHash"""),
-                    "contentTypeHash" => (@"""ContentTypeHash""", @"""ContentTypeHash"""),
+                    "typeHash" => (@"""TypeHash""", @"""TypeHash"""),
                     _ => (@"""Id""", @"""Id""")
                 });
 
@@ -123,9 +123,9 @@ namespace Tzkt.Api.Repositories
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
-                .Filter("ContentTypeHash", filter.contentTypeHash)
+                .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonType", filter.contentType)
+                .Filter("JsonType", filter.type)
                 .Filter("JsonContent", filter.content);
 
             using var db = GetConnection();
@@ -150,10 +150,10 @@ namespace Tzkt.Api.Repositories
                 TotalMinted = row.TotalMinted,
                 TotalSupply = row.TotalSupply,
                 TransfersCount = row.TransfersCount,
-                ContentType = FormatType(row, format),
+                Type = FormatType(row, format),
                 Content = FormatContent(row, format),
                 ContentHash = row.ContentHash,
-                ContentTypeHash = row.ContentTypeHash
+                TypeHash = row.TypeHash
             });
         }
 
@@ -185,7 +185,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.TicketerId).Address;
                         break;
-                    case "contentType":
+                    case "type":
                         foreach (var row in rows)
                             result[j++][i] = FormatType(row, format);
                         break;
@@ -193,13 +193,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = FormatContent(row, format);
                         break;
-                    case "contentTypeHash":
+                    case "typeHash":
                         foreach (var row in rows)
-                            result[j++][i] = row.ContentTypeHash;
+                            result[j++][i] = row.TypeHash;
                         break;
                     case "contentHash":
                         foreach (var row in rows)
-                            result[j++][i] = row.ContentType;
+                            result[j++][i] = row.ContentHash;
                         break;
                     case "firstMinter":
                         foreach (var row in rows)
@@ -277,7 +277,7 @@ namespace Tzkt.Api.Repositories
                 t.""JsonType"" as ""JsonType"",
                 t.""RawType"" as ""RawType"",
                 t.""ContentHash"" as ""ContentHash"",
-                t.""ContentTypeHash"" as ""ContentTypeHash"",
+                t.""TypeHash"" as ""TypeHash"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -302,7 +302,7 @@ namespace Tzkt.Api.Repositories
                             columns.Add(FormatContentQuery(format));
                             columns.Add(FormatTypeQuery(format));
                             columns.Add(@"t.""ContentHash"" as ""ContentHash""");
-                            columns.Add(@"t.""ContentTypeHash"" as ""ContentTypeHash""");
+                            columns.Add(@"t.""TypeHash"" as ""TypeHash""");
                             break;
                     }
                 }
@@ -326,7 +326,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
@@ -355,7 +355,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash);
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -379,10 +379,10 @@ namespace Tzkt.Api.Repositories
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
                     TotalSupply = row.tTotalSupply,
-                    ContentType = FormatType(row, format),
+                    Type = FormatType(row, format),
                     Content = FormatContent(row, format),
                     ContentHash = row.ContentHash,
-                    ContentTypeHash = row.ContentTypeHash
+                    TypeHash = row.TypeHash
                 }
             });
         }
@@ -446,10 +446,10 @@ namespace Tzkt.Api.Repositories
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
                                 TotalSupply = row.tTotalSupply,
-                                ContentType = FormatType(row, format),
+                                Type = FormatType(row, format),
                                 Content = FormatContent(row, format),
                                 ContentHash = row.ContentHash,
-                                ContentTypeHash = row.ContentTypeHash
+                                TypeHash = row.TypeHash
                             };
                         break;
                     case "ticket.id":
@@ -476,7 +476,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = FormatContent(row, format);
                         break;
-                    case "ticket.contentType":
+                    case "ticket.type":
                         foreach (var row in rows)
                             result[j++][i] = FormatType(row, format);
                         break;
@@ -484,9 +484,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ContentHash;
                         break;
-                    case "ticket.contentTypeHash":
+                    case "ticket.typeHash":
                         foreach (var row in rows)
-                            result[j++][i] = row.ContentTypeHash;
+                            result[j++][i] = row.TypeHash;
                         break;
                 }
             }
@@ -514,7 +514,7 @@ namespace Tzkt.Api.Repositories
                 t.""JsonType"" as ""JsonType"",
                 t.""RawType"" as ""RawType"",
                 t.""ContentHash"" as ""ContentHash"",
-                t.""ContentTypeHash"" as ""ContentTypeHash"",
+                t.""TypeHash"" as ""TypeHash"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -540,7 +540,7 @@ namespace Tzkt.Api.Repositories
                             columns.Add(FormatContentQuery(format));
                             columns.Add(FormatTypeQuery(format));
                             columns.Add(@"t.""ContentHash"" as ""ContentHash""");
-                            columns.Add(@"t.""ContentTypeHash"" as ""ContentTypeHash""");
+                            columns.Add(@"t.""TypeHash"" as ""TypeHash""");
                             break;
                     }
                 }
@@ -567,7 +567,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .Take(pagination, x => x switch
                 {
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
@@ -597,7 +597,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash);
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -622,10 +622,10 @@ namespace Tzkt.Api.Repositories
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
                     TotalSupply = row.tTotalSupply,
-                    ContentType = FormatType(row, format),
+                    Type = FormatType(row, format),
                     Content = FormatContent(row, format),
                     ContentHash = row.ContentHash,
-                    ContentTypeHash = row.ContentTypeHash
+                    TypeHash = row.TypeHash
                 }
             });
         }
@@ -701,10 +701,10 @@ namespace Tzkt.Api.Repositories
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
                                 TotalSupply = row.tTotalSupply,
-                                ContentType = FormatType(row, format),
+                                Type = FormatType(row, format),
                                 Content = FormatContent(row, format),
                                 ContentHash = row.ContentHash,
-                                ContentTypeHash = row.ContentTypeHash
+                                TypeHash = row.TypeHash
                             };
                         break;
                     case "ticket.id":
@@ -731,7 +731,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = FormatContent(row, format);
                         break;
-                    case "ticket.contentType":
+                    case "ticket.type":
                         foreach (var row in rows)
                             result[j++][i] = FormatType(row, format);
                         break;
@@ -739,9 +739,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.ContentHash;
                         break;
-                    case "ticket.contentTypeHash":
+                    case "ticket.typeHash":
                         foreach (var row in rows)
-                            result[j++][i] = row.ContentTypeHash;
+                            result[j++][i] = row.TypeHash;
                         break;
                 }
             }
@@ -793,7 +793,7 @@ namespace Tzkt.Api.Repositories
                         .FilterA(@"tr.""TicketId""", filter.ticket.id)
                         .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
                         .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                        .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
+                        .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .ResetFilters()
 
                         .Append("UNION ALL")
@@ -806,7 +806,7 @@ namespace Tzkt.Api.Repositories
                         .FilterA(@"tr.""TicketId""", filter.ticket.id)
                         .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
                         .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                        .FilterA(@"t.""ContentTypeHash""", filter.ticket.contentTypeHash)
+                        .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                         .ResetFilters()
 
                     .Append(") as tb")

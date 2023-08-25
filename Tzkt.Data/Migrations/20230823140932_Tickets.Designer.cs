@@ -3594,7 +3594,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ContentHash")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ContentTypeHash")
+                    b.Property<int>("TypeHash")
                         .HasColumnType("integer");
 
                     b.Property<int>("FirstLevel")

@@ -43,9 +43,9 @@ namespace Tzkt.Api.Controllers
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
                 filter.contentHash != null ||
-                filter.contentTypeHash != null ||
+                filter.typeHash != null ||
                 filter.content != null ||
-                filter.contentType != null ||
+                filter.type != null ||
                 filter.id != null )
             {
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
@@ -124,7 +124,7 @@ namespace Tzkt.Api.Controllers
                 filter.ticket.id != null ||
                 filter.ticket.ticketer != null ||
                 filter.ticket.contentHash != null ||
-                filter.ticket.contentTypeHash != null)
+                filter.ticket.typeHash != null)
             {
                 #region optimizations
                 if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
@@ -214,7 +214,7 @@ namespace Tzkt.Api.Controllers
                 filter.smartRollupExecuteId != null ||
                 filter.ticket.ticketer != null ||
                 filter.ticket.contentHash != null ||
-                filter.ticket.contentTypeHash != null ||
+                filter.ticket.typeHash != null ||
                 filter.ticket.id != null)
             {
                 #region optimizations
@@ -300,7 +300,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of ticket balances at the end of the specified block.
         /// Note, this endpoint is quite heavy, therefore at least one of the filters
-        /// (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.contentTypeHash`) must be specified.
+        /// (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.typeHash`) must be specified.
         /// </remarks>
         /// <param name="level">Level of the block at the end of which historical balances must be calculated</param>
         /// <param name="filter">Filter</param>
@@ -321,8 +321,8 @@ namespace Tzkt.Api.Controllers
                 filter.ticket.id?.In == null &&
                 (filter.ticket.ticketer?.Eq == null && filter.ticket.ticketer?.In == null ||
                  filter.ticket.contentHash?.Eq == null && filter.ticket.contentHash?.In == null ||
-                 filter.ticket.contentTypeHash?.Eq == null && filter.ticket.contentTypeHash?.In == null))
-                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.contentTypeHash`) must be specified");
+                 filter.ticket.typeHash?.Eq == null && filter.ticket.typeHash?.In == null))
+                return new BadRequest("query", "At least one of the filters (`account`, `ticket.id`, `ticket.ticketer` with `ticket.contentHash` and `ticket.typeHash`) must be specified");
 
             #region optimizations
             if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))

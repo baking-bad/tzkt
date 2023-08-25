@@ -57,7 +57,7 @@ namespace Tzkt.Api
         /// Filter by 32-bit hash of ticket content type (helpful for searching same tickets).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter contentTypeHash { get; set; }
+        public Int32Parameter typeHash { get; set; }
 
         /// <summary>
         /// Filter by content.  
@@ -69,18 +69,18 @@ namespace Tzkt.Api
         
         /// <summary>
         /// Filter by content type.  
-        /// Note, this parameter supports the following format: `contentType{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by (for example, `?contentType.prim.in=string,int`).  
+        /// Note, this parameter supports the following format: `type{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by (for example, `?type.prim.in=string,int`).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public JsonParameter contentType { get; set; }
+        public JsonParameter type { get; set; }
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("ticketer", ticketer), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("contentHash", contentHash),
-                ("contentTypeHash", contentTypeHash), ("content", content), ("contentType", contentType));
+                ("typeHash", typeHash), ("content", content), ("type", type));
         }
     }
 }

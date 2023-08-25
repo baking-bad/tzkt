@@ -217,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                             RawContent = rawContent,
                             JsonContent = micheType.Humanize(value),
                             JsonType = micheType.ToMicheline().ToJson(),
-                            ContentTypeHash = Script.GetHash(rawType),
+                            TypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
                         Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update

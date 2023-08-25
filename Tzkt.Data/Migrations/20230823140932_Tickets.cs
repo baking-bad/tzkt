@@ -125,7 +125,7 @@ namespace Tzkt.Data.Migrations
                     TotalBurned = table.Column<string>(type: "text", nullable: false),
                     TotalSupply = table.Column<string>(type: "text", nullable: false),
                     ContentHash = table.Column<int>(type: "integer", nullable: false),
-                    ContentTypeHash = table.Column<int>(type: "integer", nullable: false),
+                    TypeHash = table.Column<int>(type: "integer", nullable: false),
                     RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonContent = table.Column<string>(type: "jsonb", nullable: true),

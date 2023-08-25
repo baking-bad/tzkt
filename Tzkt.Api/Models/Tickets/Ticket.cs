@@ -1,7 +1,4 @@
-﻿using System;
-using NJsonSchema.Annotations;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class Ticket
     {
@@ -14,25 +11,23 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Contract, created the ticket.
         /// </summary>
-        public Alias Ticketer { get; set; }
-        
+        public Alias Ticketer { get; set; }        
         
         /// <summary>
         /// Micheline type of the content
         /// </summary>
-        public RawJson ContentType { get; set; }
+        public RawJson Type { get; set; }
 
         /// <summary>
         /// Ticket content
         /// </summary>
-        public object Content { get; set; }
-        
+        public object Content { get; set; }        
 
         /// <summary>
         /// 32-bit hash of the ticket content type.
         /// This field can be used for searching similar tickets (which have the same type).
         /// </summary>
-        public int ContentTypeHash { get; set; }
+        public int TypeHash { get; set; }
 
         /// <summary>
         /// 32-bit hash of the ticket content.

@@ -17,7 +17,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Micheline type of the content
         /// </summary>
-        public RawJson ContentType { get; set; }
+        public RawJson Type { get; set; }
 
         /// <summary>
         /// Ticket content
@@ -28,7 +28,7 @@ namespace Tzkt.Api.Models
         /// 32-bit hash of the ticket content type.
         /// This field can be used for searching similar tickets (which have the same type).
         /// </summary>
-        public int ContentTypeHash { get; set; }
+        public int TypeHash { get; set; }
 
         /// <summary>
         /// 32-bit hash of the ticket content.

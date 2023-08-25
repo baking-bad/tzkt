@@ -22,7 +22,7 @@ namespace Tzkt.Data.Models
         public BigInteger TotalSupply { get; set; }
 
         public int ContentHash { get; set; }
-        public int ContentTypeHash { get; set; }
+        public int TypeHash { get; set; }
         
         public byte[] RawContent { get; set; }
         public byte[] RawType { get; set; }

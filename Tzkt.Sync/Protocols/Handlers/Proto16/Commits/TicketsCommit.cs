@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             foreach (var update in list)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
-                    ticketsSet.Add((ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.ContentTypeHash));
+                    ticketsSet.Add((ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.TypeHash));
             }
 
             await Cache.Tickets.Preload(ticketsSet);
@@ -54,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                 {
-                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.ContentTypeHash, out var ticket))
+                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.TypeHash, out var ticket))
                     {
                         foreach (var upd in update.Updates)
                         {
@@ -159,7 +159,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         
         Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketToken ticketToken)
         {
-            if (Cache.Tickets.TryGet(contract.Id, ticketToken.ContentHash, ticketToken.ContentTypeHash, out var ticket)) return ticket;
+            if (Cache.Tickets.TryGet(contract.Id, ticketToken.ContentHash, ticketToken.TypeHash, out var ticket)) return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
@@ -191,7 +191,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 JsonContent = ticketToken.JsonContent,
                 JsonType = ticketToken.JsonType,
                 ContentHash = ticketToken.ContentHash,
-                ContentTypeHash = ticketToken.ContentTypeHash,
+                TypeHash = ticketToken.TypeHash,
             };
              
             Db.Tickets.Add(ticket);
