@@ -252,11 +252,14 @@ namespace Tzkt.Sync.Protocols.Proto16
             
             switch (op)
             {
+                case TransactionOperation transaction:
+                    transaction.TicketTransfers = (transaction.TicketTransfers ?? 0) + 1;
+                    break;
                 case TransferTicketOperation transferTicket:
                     transferTicket.TicketTransfers = (transferTicket.TicketTransfers ?? 0) + 1;
                     break;
-                case TransactionOperation tx:
-                    tx.TicketTransfers = (tx.TicketTransfers ?? 0) + 1;
+                case SmartRollupExecuteOperation srExecute:
+                    srExecute.TicketTransfers = (srExecute.TicketTransfers ?? 0) + 1;
                     break;
             }
 
@@ -327,11 +330,14 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(op);
             switch (op)
             {
-                case TransferTicketOperation transfer1:
-                    transfer1.TicketTransfers = (transfer1.TicketTransfers ?? 0) + 1;
+                case TransactionOperation transaction:
+                    transaction.TicketTransfers = (transaction.TicketTransfers ?? 0) + 1;
                     break;
-                case TransactionOperation tx:
-                    tx.TicketTransfers = (tx.TicketTransfers ?? 0) + 1;
+                case TransferTicketOperation transferTicket:
+                    transferTicket.TicketTransfers = (transferTicket.TicketTransfers ?? 0) + 1;
+                    break;
+                case SmartRollupExecuteOperation srExecute:
+                    srExecute.TicketTransfers = (srExecute.TicketTransfers ?? 0) + 1;
                     break;
             }
 

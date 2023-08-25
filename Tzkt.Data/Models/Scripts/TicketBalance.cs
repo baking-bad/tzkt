@@ -7,7 +7,6 @@ namespace Tzkt.Data.Models
     public class TicketBalance
     {
         public long Id { get; set; }
-        
         public int TicketerId { get; set; }
         public long TicketId { get; set; }
         public int AccountId { get; set; }

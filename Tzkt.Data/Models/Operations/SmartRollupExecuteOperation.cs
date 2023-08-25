@@ -7,6 +7,8 @@ namespace Tzkt.Data.Models
     {
         public int? SmartRollupId { get; set; }
         public int? CommitmentId { get; set; }
+
+        public int? TicketTransfers { get; set; }
         public int? SubIds { get; set; }
     }
 

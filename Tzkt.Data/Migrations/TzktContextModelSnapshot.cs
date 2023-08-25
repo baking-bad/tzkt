@@ -1875,9 +1875,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("SubIds")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TicketTransfers")
-                        .HasColumnType("integer");
-
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
 
@@ -3046,6 +3043,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int?>("SubIds")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")

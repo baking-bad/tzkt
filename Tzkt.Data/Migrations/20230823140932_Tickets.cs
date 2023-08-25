@@ -37,7 +37,7 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.AddColumn<int>(
                 name: "TicketTransfers",
-                table: "MigrationOps",
+                table: "SmartRollupExecuteOps",
                 type: "integer",
                 nullable: true);
 
@@ -323,7 +323,7 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropColumn(
                 name: "TicketTransfers",
-                table: "MigrationOps");
+                table: "SmartRollupExecuteOps");
 
             migrationBuilder.DropColumn(
                 name: "TicketBalancesCount",
