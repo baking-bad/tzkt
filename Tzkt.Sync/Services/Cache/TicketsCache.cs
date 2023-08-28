@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
@@ -15,7 +9,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<long, Ticket> CachedById = new(MaxItems);
-        static readonly Dictionary<(int ContractId, int ContentHash, int TypeHash), Ticket> CachedByKey = new(MaxItems);
+        static readonly Dictionary<(int ContractId, byte[] RawContent, byte[] RawType), Ticket> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -47,26 +41,13 @@ namespace Tzkt.Sync.Services.Cache
         public void Add(Ticket ticket)
         {
             CachedById[ticket.Id] = ticket;
-            CachedByKey[(ticket.TicketerId, ticket.ContentHash, ticket.TypeHash)] = ticket;
+            CachedByKey[(ticket.TicketerId, ticket.RawContent, ticket.RawType)] = ticket;
         }
 
         public void Remove(Ticket ticket)
         {
             CachedById.Remove(ticket.Id);
-            CachedByKey.Remove((ticket.TicketerId, ticket.ContentHash, ticket.TypeHash));
-        }
-
-        public bool Has(int contractId, int contentHash, int typeHash)
-        {
-            return CachedByKey.ContainsKey((contractId, contentHash, typeHash));
-        }
-
-        public Ticket GetOrAdd(Ticket token)
-        {
-            if (CachedById.TryGetValue(token.Id, out var res))
-                return res;
-            Add(token);
-            return token;
+            CachedByKey.Remove((ticket.TicketerId, ticket.RawContent, ticket.RawType));
         }
 
         public Ticket Get(long id)
@@ -76,16 +57,9 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public Ticket Get(int contractId, int contentHash, int typeHash)
+        public bool TryGet(int contractId, byte[] rawContent, byte[] rawType, out Ticket token)
         {
-            if (!CachedByKey.TryGetValue((contractId, contentHash, typeHash), out var ticket))
-                throw new Exception($"Ticket ({contractId}, {contentHash}, {typeHash}) doesn't exist");
-            return ticket;
-        }
-
-        public bool TryGet(int contractId, int contentHash, int typeHash, out Ticket token)
-        {
-            return CachedByKey.TryGetValue((contractId, contentHash, typeHash), out token);
+            return CachedByKey.TryGetValue((contractId, rawContent, rawType), out token);
         }
 
         public async Task Preload(IEnumerable<long> ids)
@@ -102,18 +76,18 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
-        public async Task Preload(IEnumerable<(int, int, int)> ids)
+        public async Task Preload(IEnumerable<(int, byte[], int, byte[], int)> keys)
         {
-            var missed = ids.Where(x => !CachedByKey.ContainsKey(x)).ToHashSet();
+            var missed = keys.Where(x => !CachedByKey.ContainsKey((x.Item1, x.Item2, x.Item4))).ToHashSet();
             if (missed.Count > 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
-                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, '{x.Item2}')"));
+                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, '{x.Item3}', '{x.Item5}')"));
                     var items = await Db.Tickets
                         .FromSqlRaw($@"
                             SELECT * FROM ""{nameof(TzktContext.Tickets)}""
-                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.ContentHash)}"") IN ({corteges})")
+                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.ContentHash)}"", ""{nameof(Ticket.TypeHash)}"") IN ({corteges})")
                         .ToListAsync();
 
                     foreach (var item in items)

@@ -45,7 +45,6 @@ namespace Tzkt.Api.Controllers
                 filter.contentHash != null ||
                 filter.typeHash != null ||
                 filter.content != null ||
-                filter.type != null ||
                 filter.id != null )
             {
                 var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));

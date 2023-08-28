@@ -70,7 +70,7 @@ namespace Tzkt.Sync
             var response = await HttpClient.PostAsync(path, new JsonContent(content));
             
             using var stream = await response.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<T>(stream);
+            return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
         }
 
         public void Dispose() => _HttpClient?.Dispose();

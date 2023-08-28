@@ -6,7 +6,7 @@ namespace Tzkt.Sync
     {
         public JsonContent(string content) : base(content)
         {
-            Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            Headers.ContentType = new MediaTypeHeaderValue("application/json");
         }
     }
 }

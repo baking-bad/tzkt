@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region precache
 
             var accountsSet = new HashSet<string>();
-            var ticketsSet = new HashSet<(int, int, int)>();
+            var ticketsSet = new HashSet<(int, byte[], int, byte[], int)>();
             var balancesSet = new HashSet<(int, long)>();
 
             var list = Updates.SelectMany(x => x.Value).ToList();
@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             foreach (var update in list)
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
-                    ticketsSet.Add((ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.TypeHash));
+                    ticketsSet.Add((ticketer.Id, update.TicketToken.RawContent, update.TicketToken.ContentHash, update.TicketToken.RawType, update.TicketToken.TypeHash));
             }
 
             await Cache.Tickets.Preload(ticketsSet);
@@ -54,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                 {
-                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.ContentHash, update.TicketToken.TypeHash, out var ticket))
+                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.RawContent, update.TicketToken.RawType, out var ticket))
                     {
                         foreach (var upd in update.Updates)
                         {
@@ -159,7 +159,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         
         Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketToken ticketToken)
         {
-            if (Cache.Tickets.TryGet(contract.Id, ticketToken.ContentHash, ticketToken.TypeHash, out var ticket)) return ticket;
+            if (Cache.Tickets.TryGet(contract.Id, ticketToken.RawContent, ticketToken.RawType, out var ticket)) return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
