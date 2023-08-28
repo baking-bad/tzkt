@@ -57,7 +57,7 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public bool TryGet(int contractId, byte[] rawContent, byte[] rawType, out Ticket token)
+        public bool TryGetCached(int contractId, byte[] rawContent, byte[] rawType, out Ticket token)
         {
             return CachedByKey.TryGetValue((contractId, rawContent, rawType), out token);
         }

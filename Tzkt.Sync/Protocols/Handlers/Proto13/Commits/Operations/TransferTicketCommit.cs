@@ -201,41 +201,43 @@ namespace Tzkt.Sync.Protocols.Proto13
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
-            
-            return ticketUpdates.RequiredArray().EnumerateArray().Select(update =>
+
+            var res = new List<TicketUpdate>();
+            foreach (var update in ticketUpdates.RequiredArray().EnumerateArray())
             {
                 try
                 {
                     var ticketToken = update.Required("ticket_token");
-                    var micheType = Schema.Create(Micheline.FromJson(ticketToken.Required("content_type")) as MichelinePrim);
                     var value = Micheline.FromJson(ticketToken.Required("content"));
-                    var rawContent = micheType.Optimize(value).ToBytes();
-                    var rawType = micheType.ToMicheline().ToBytes();
-
-                    return new TicketUpdate
+                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
+                    var schema = Schema.Create(type as MichelinePrim); ;
+                    var rawContent = schema.Optimize(value).ToBytes();
+                    var rawType = type.ToBytes();
+                    res.Add(new TicketUpdate
                     {
                         TicketToken = new TicketToken
                         {
                             Ticketer = ticketToken.RequiredString("ticketer"),
                             RawType = rawType,
                             RawContent = rawContent,
-                            JsonContent = micheType.Humanize(value),
+                            JsonContent = schema.Humanize(value),
                             TypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
-                        Updates = update.Required("updates").RequiredArray().EnumerateArray().Select(y => new Update
+                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new Update
                         {
-                            Account = y.RequiredString("account"),
-                            Amount = BigInteger.Parse(y.RequiredString("amount"))
+                            Account = x.RequiredString("account"),
+                            Amount = BigInteger.Parse(x.RequiredString("amount"))
                         })
-                    };
+                    });
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "failed to process 'transfer_ticket' parameters");
-                    return null;
+                    Logger.LogError(ex, "Failed to process ticket updates");
                 }
-            }).Where(update => update != null);
+            }
+
+            return res;
         }
     }
 }

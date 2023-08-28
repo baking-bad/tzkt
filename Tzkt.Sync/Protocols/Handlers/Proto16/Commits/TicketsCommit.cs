@@ -14,9 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto16
         public virtual void Append(ManagerOperation op, IEnumerable<TicketUpdate> updates)
         {
             if (!Updates.TryGetValue(op, out var list))
-            {
                 Updates.Add(op, list = new());
-            }
+
             list.AddRange(updates);
         }
         
@@ -25,7 +24,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (Updates.Count == 0) return;
             
             #region precache
-
             var accountsSet = new HashSet<string>();
             var ticketsSet = new HashSet<(int, byte[], int, byte[], int)>();
             var balancesSet = new HashSet<(int, long)>();
@@ -54,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 if (Cache.Accounts.TryGetCached(update.TicketToken.Ticketer, out var ticketer))
                 {
-                    if (Cache.Tickets.TryGet(ticketer.Id, update.TicketToken.RawContent, update.TicketToken.RawType, out var ticket))
+                    if (Cache.Tickets.TryGetCached(ticketer.Id, update.TicketToken.RawContent, update.TicketToken.RawType, out var ticket))
                     {
                         foreach (var upd in update.Updates)
                         {
@@ -66,65 +64,48 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
 
             await Cache.TicketBalances.Preload(balancesSet);
-            
             #endregion
 
             foreach (var (op, opUpdates) in Updates)
             {
-                if (op.Level == 5)
-                    Console.WriteLine($"Check this");
-                
                 op.Block.Events |= BlockEvents.Tickets;
 
-                var updatesDict = new Dictionary<Ticket, List<Update>>();
+                var ticketUpdates = new Dictionary<Ticket, List<Update>>();
 
                 foreach (var upd in opUpdates)
                 {
                     var ticketer = GetOrCreateAccount(op, upd.TicketToken.Ticketer) as Contract;
                     var ticket = GetOrCreateTicket(op, ticketer, upd.TicketToken);
 
-                    if (!updatesDict.TryGetValue(ticket, out var upds))
-                    {
-                        updatesDict.Add(ticket, upds = new());
-                    }
+                    if (!ticketUpdates.TryGetValue(ticket, out var upds))
+                        ticketUpdates.Add(ticket, upds = new());
+
                     upds.AddRange(upd.Updates);
                 }
 
-                foreach (var (ticket, updates) in updatesDict)
+                foreach (var (ticket, updates) in ticketUpdates)
                 {
                     if (updates.Count == 1 || updates.BigSum(x => x.Amount) != BigInteger.Zero)
                     {
                         foreach (var ticketUpdate in updates)
-                        {
-                            var account = GetOrCreateAccount(op, ticketUpdate.Account);
-                            var balance = GetOrCreateTicketBalance(op, ticket, account);
-                            MintOrBurnTickets(op, ticket, account, balance, ticketUpdate.Amount);
-                        }
+                            MintOrBurnTickets(op, ticket, ticketUpdate.Account, ticketUpdate.Amount);
                     }
                     else if (updates.Count(x => x.Amount < BigInteger.Zero) == 1)
                     {
                         var from = updates.First(x => x.Amount < BigInteger.Zero);
                         foreach (var ticketUpdate in updates.Where(x => x.Amount > BigInteger.Zero))
-                        {
                             TransferTickets(op, ticket, from.Account, ticketUpdate.Account, ticketUpdate.Amount);
-                        }
                     }
                     else if (updates.Count(x => x.Amount > BigInteger.Zero) == 1)
                     {
                         var to = updates.First(x => x.Amount > BigInteger.Zero);
                         foreach (var ticketUpdate in updates.Where(x => x.Amount < BigInteger.Zero))
-                        {
-                            TransferTickets(op, ticket, ticketUpdate.Account, to.Account, ticketUpdate.Amount);
-                        }
+                            TransferTickets(op, ticket, ticketUpdate.Account, to.Account, -ticketUpdate.Amount);
                     }
                     else
                     {
                         foreach (var ticketUpdate in updates)
-                        {
-                            var account = GetOrCreateAccount(op, ticketUpdate.Account);
-                            var balance = GetOrCreateTicketBalance(op, ticket, account);
-                            MintOrBurnTickets(op, ticket, account, balance, ticketUpdate.Amount);
-                        }
+                            MintOrBurnTickets(op, ticket, ticketUpdate.Account, ticketUpdate.Amount);
                     }
                 }
             }
@@ -159,7 +140,8 @@ namespace Tzkt.Sync.Protocols.Proto16
         
         Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketToken ticketToken)
         {
-            if (Cache.Tickets.TryGet(contract.Id, ticketToken.RawContent, ticketToken.RawType, out var ticket)) return ticket;
+            if (Cache.Tickets.TryGetCached(contract.Id, ticketToken.RawContent, ticketToken.RawType, out var ticket))
+                return ticket;
             
             var state = Cache.AppState.Get();
             state.TicketsCount++;
@@ -169,16 +151,16 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Id = op switch
                 {
                     TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
-                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
-                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
+                    TransferTicketOperation transferTicket => Cache.AppState.NextSubId(transferTicket),
+                    SmartRollupExecuteOperation srExecute => Cache.AppState.NextSubId(srExecute),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 TicketerId = contract.Id,
                 FirstMinterId = op switch
                 {
                     TransactionOperation transaction => transaction.InitiatorId ?? transaction.SenderId,
-                    TransferTicketOperation transfer => transfer.SenderId,
-                    SmartRollupExecuteOperation sr => sr.SenderId,
+                    TransferTicketOperation transferTicket => transferTicket.SenderId,
+                    SmartRollupExecuteOperation srExecute => srExecute.SenderId,
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 FirstLevel = op.Level,
@@ -204,7 +186,8 @@ namespace Tzkt.Sync.Protocols.Proto16
         
         TicketBalance GetOrCreateTicketBalance(ManagerOperation op, Ticket ticket, Account account)
         {
-            if (Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance)) return ticketBalance;
+            if (Cache.TicketBalances.TryGet(account.Id, ticket.Id, out var ticketBalance))
+                return ticketBalance;
             
             var state = Cache.AppState.Get();
             state.TicketBalancesCount++;
@@ -214,8 +197,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Id = op switch
                 {
                     TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
-                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
-                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
+                    TransferTicketOperation transferTicket => Cache.AppState.NextSubId(transferTicket),
+                    SmartRollupExecuteOperation srExecute => Cache.AppState.NextSubId(srExecute),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 AccountId = account.Id,
@@ -233,17 +216,11 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             Db.TryAttach(account);
             account.TicketBalancesCount++;
-            if (account.FirstLevel > op.Level)
-            {
-                account.FirstLevel = op.Level;
-                op.Block.Events |= BlockEvents.NewAccounts;
-            }
+
             return ticketBalance;
         }
         
-        void TransferTickets(ManagerOperation op, Ticket ticket,
-            string fromAddress, string toAddress,
-            BigInteger amount)
+        void TransferTickets(ManagerOperation op, Ticket ticket, string fromAddress, string toAddress, BigInteger amount)
         {
             var from = GetOrCreateAccount(op, fromAddress);
             var fromBalance = GetOrCreateTicketBalance(op, ticket, from);
@@ -285,7 +262,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             toBalance.LastLevel = op.Level;
 
             ticket.TransfersCount++;
-            if (amount != BigInteger.Zero && fromBalance.Id != toBalance.Id)
+            if (amount != BigInteger.Zero && fromBalance != toBalance)
             {
                 if (fromBalance.Balance == BigInteger.Zero)
                 {
@@ -307,8 +284,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Id = op switch
                 {
                     TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
-                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
-                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
+                    TransferTicketOperation transferTicket => Cache.AppState.NextSubId(transferTicket),
+                    SmartRollupExecuteOperation srExecute => Cache.AppState.NextSubId(srExecute),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 Amount = amount,
@@ -323,11 +300,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             });
         }
         
-        void MintOrBurnTickets(ManagerOperation op, Ticket ticket,
-            Account account, TicketBalance balance,
-            BigInteger amount)
+        void MintOrBurnTickets(ManagerOperation op, Ticket ticket, string address, BigInteger amount)
         {
-            Db.TryAttach(op);
+            var account = GetOrCreateAccount(op, address);
+            var balance = GetOrCreateTicketBalance(op, ticket, account);
+
             switch (op)
             {
                 case TransactionOperation transaction:
@@ -353,19 +330,25 @@ namespace Tzkt.Sync.Protocols.Proto16
             Db.TryAttach(ticket);
             ticket.TransfersCount++;
             ticket.LastLevel = op.Level;
-            if (balance.Balance == BigInteger.Zero)
-            {
-                account.ActiveTicketsCount--;
-                ticket.HoldersCount--;
-            }
-            if (balance.Balance == amount)
-            {
-                account.ActiveTicketsCount++;
-                ticket.HoldersCount++;
-            }
-            if (amount > 0) ticket.TotalMinted += amount;
-            else ticket.TotalBurned += -amount;
             ticket.TotalSupply += amount;
+            if (amount > BigInteger.Zero)
+            {
+                ticket.TotalMinted += amount;
+                if (balance.Balance == amount)
+                {
+                    account.ActiveTicketsCount++;
+                    ticket.HoldersCount++;
+                }
+            }
+            else if (amount < BigInteger.Zero)
+            {
+                ticket.TotalBurned += -amount;
+                if (balance.Balance == BigInteger.Zero)
+                {
+                    account.ActiveTicketsCount--;
+                    ticket.HoldersCount--;
+                }
+            }
 
             var state = Cache.AppState.Get();
             state.TicketTransfersCount++;
@@ -375,8 +358,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Id = op switch
                 {
                     TransactionOperation transaction => Cache.AppState.NextSubId(transaction),
-                    TransferTicketOperation transfer => Cache.AppState.NextSubId(transfer),
-                    SmartRollupExecuteOperation sr => Cache.AppState.NextSubId(sr),
+                    TransferTicketOperation transferTicket => Cache.AppState.NextSubId(transferTicket),
+                    SmartRollupExecuteOperation srExecute => Cache.AppState.NextSubId(srExecute),
                     _ => throw new ArgumentOutOfRangeException(nameof(op))
                 },
                 Amount = amount > BigInteger.Zero ? amount : -amount,
