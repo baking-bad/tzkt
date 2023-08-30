@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto13
     class TransferTicketCommit : ProtocolCommit
     {
         public TransferTicketOperation Operation { get; private set; }
-        public IEnumerable<TicketUpdate> TicketUpdates { get; private set; }
+        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
 
 
         public TransferTicketCommit(ProtocolHandler protocol) : base(protocol) { }
@@ -197,12 +197,12 @@ namespace Tzkt.Sync.Protocols.Proto13
             Cache.AppState.ReleaseOperationId();
         }
         
-        protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(JsonElement result)
+        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
 
-            var res = new List<TicketUpdate>();
+            var res = new List<TicketUpdates>();
             foreach (var update in ticketUpdates.RequiredArray().EnumerateArray())
             {
                 try
@@ -213,9 +213,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                     var schema = Schema.Create(type as MichelinePrim); ;
                     var rawContent = schema.Optimize(value).ToBytes();
                     var rawType = type.ToBytes();
-                    res.Add(new TicketUpdate
+                    res.Add(new TicketUpdates
                     {
-                        TicketToken = new TicketToken
+                        Ticket = new TicketIdentity
                         {
                             Ticketer = ticketToken.RequiredString("ticketer"),
                             RawType = rawType,
@@ -224,7 +224,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                             TypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
-                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new Update
+                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new TicketUpdate
                         {
                             Account = x.RequiredString("account"),
                             Amount = BigInteger.Parse(x.RequiredString("amount"))

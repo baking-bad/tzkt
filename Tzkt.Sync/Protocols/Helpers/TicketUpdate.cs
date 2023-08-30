@@ -2,13 +2,13 @@
 
 namespace Tzkt.Sync.Protocols
 {
-    public class TicketUpdate
+    public class TicketUpdates
     {
-        public TicketToken TicketToken { get; set; }
-        public IEnumerable<Update> Updates { get; set; }
+        public TicketIdentity Ticket { get; set; }
+        public IEnumerable<TicketUpdate> Updates { get; set; }
     }
     
-    public class TicketToken
+    public class TicketIdentity
     {
         public string Ticketer { get; set; }
         public byte[] RawType { get; set; }
@@ -17,9 +17,22 @@ namespace Tzkt.Sync.Protocols
 
         public int ContentHash { get; set; }
         public int TypeHash { get; set; }
+
+        public override bool Equals(object obj)
+        {
+            return obj is TicketIdentity ticket &&
+                ticket.Ticketer == Ticketer &&
+                ticket.RawType.IsEqual(RawType) &&
+                ticket.RawContent.IsEqual(RawContent);
+        }
+
+        public override int GetHashCode()
+        {
+            return HashCode.Combine(Ticketer.GetHashCode(), ContentHash, TypeHash);
+        }
     }
     
-    public class Update
+    public class TicketUpdate
     {
         public string Account { get; set; }
         public BigInteger Amount { get; set; }

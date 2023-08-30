@@ -13,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public TransactionOperation Transaction { get; private set; }
         public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
-        public IEnumerable<TicketUpdate> TicketUpdates { get; private set; }
+        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -688,12 +688,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        protected virtual IEnumerable<TicketUpdate> ParseTicketUpdates(string property, JsonElement result)
+        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(string property, JsonElement result)
         {
             if (!result.TryGetProperty(property, out var ticketUpdates))
                 return null;
 
-            var res = new List<TicketUpdate>();
+            var res = new List<TicketUpdates>();
             foreach (var update in  ticketUpdates.RequiredArray().EnumerateArray())
             {
                 try
@@ -704,9 +704,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var schema = Schema.Create(type as MichelinePrim); ;
                     var rawContent = schema.Optimize(value).ToBytes();
                     var rawType = type.ToBytes();
-                    res.Add(new TicketUpdate
+                    res.Add(new TicketUpdates
                     {
-                        TicketToken = new TicketToken
+                        Ticket = new TicketIdentity
                         {
                             Ticketer = ticketToken.RequiredString("ticketer"),
                             RawType = rawType,
@@ -715,7 +715,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             TypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
-                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new Update
+                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new TicketUpdate
                         {
                             Account = x.RequiredString("account"),
                             Amount = BigInteger.Parse(x.RequiredString("amount"))

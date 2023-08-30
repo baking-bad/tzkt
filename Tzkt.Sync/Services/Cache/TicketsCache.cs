@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<long, Ticket> CachedById = new(MaxItems);
-        static readonly Dictionary<(int ContractId, byte[] RawContent, byte[] RawType), Ticket> CachedByKey = new(MaxItems);
+        static readonly Dictionary<(int ContractId, HashableBytes RawContent, HashableBytes RawType), Ticket> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -50,10 +50,10 @@ namespace Tzkt.Sync.Services.Cache
             CachedByKey.Remove((ticket.TicketerId, ticket.RawContent, ticket.RawType));
         }
 
-        public Ticket Get(long id)
+        public Ticket GetCached(long id)
         {
             if (!CachedById.TryGetValue(id, out var token))
-                throw new Exception($"Ticket #{id} doesn't exist");
+                throw new Exception($"Ticket #{id} doesn't exist in the cache");
             return token;
         }
 
