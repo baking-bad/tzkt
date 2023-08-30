@@ -196,23 +196,52 @@ namespace Tzkt.Sync.Protocols.Proto13
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
         }
-        
+
         protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
 
             var res = new List<TicketUpdates>();
-            foreach (var update in ticketUpdates.RequiredArray().EnumerateArray())
+            foreach (var updates in ticketUpdates.RequiredArray().EnumerateArray())
             {
-                try
+                var list = new List<TicketUpdate>();
+                foreach (var update in updates.RequiredArray("updates").EnumerateArray())
                 {
-                    var ticketToken = update.Required("ticket_token");
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var amount = update.RequiredBigInteger("amount");
+                    if (amount != BigInteger.Zero)
+                    {
+                        list.Add(new TicketUpdate
+                        {
+                            Account = update.RequiredString("account"),
+                            Amount = amount
+                        });
+                    }
+                }
+
+                if (list.Count > 0)
+                {
+                    var ticketToken = updates.Required("ticket_token");
                     var type = Micheline.FromJson(ticketToken.Required("content_type"));
-                    var schema = Schema.Create(type as MichelinePrim); ;
-                    var rawContent = schema.Optimize(value).ToBytes();
+                    var value = Micheline.FromJson(ticketToken.Required("content"));
                     var rawType = type.ToBytes();
+
+                    byte[] rawContent;
+                    string jsonContent;
+
+                    try
+                    {
+                        var schema = Schema.Create(type as MichelinePrim);
+                        rawContent = schema.Optimize(value).ToBytes();
+                        jsonContent = schema.Humanize(value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to parse ticket content");
+                        rawContent = value.ToBytes();
+                        jsonContent = null;
+                    }
+
                     res.Add(new TicketUpdates
                     {
                         Ticket = new TicketIdentity
@@ -220,24 +249,16 @@ namespace Tzkt.Sync.Protocols.Proto13
                             Ticketer = ticketToken.RequiredString("ticketer"),
                             RawType = rawType,
                             RawContent = rawContent,
-                            JsonContent = schema.Humanize(value),
+                            JsonContent = jsonContent,
                             TypeHash = Script.GetHash(rawType),
                             ContentHash = Script.GetHash(rawContent)
                         },
-                        Updates = update.RequiredArray("updates").EnumerateArray().Select(x => new TicketUpdate
-                        {
-                            Account = x.RequiredString("account"),
-                            Amount = BigInteger.Parse(x.RequiredString("amount"))
-                        })
+                        Updates = list
                     });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Failed to process ticket updates");
                 }
             }
 
-            return res;
+            return res.Count > 0 ? res : null;
         }
     }
 }
