@@ -95,6 +95,19 @@ namespace Tzkt.Sync.Protocols.Proto16
                         foreach (var (op, ticketUpdate) in ticketUpdates.Where(x => x.Update.Amount < BigInteger.Zero))
                             TransferTickets(ticketUpdates[0].Op, ticket, ticketUpdate.Account, toUpdate.Account, -ticketUpdate.Amount);
                     }
+                    else if (IsTransfersSequence(ticketUpdates))
+                    {
+                        for (int i = 0; i < ticketUpdates.Count; i += 2)
+                        {
+                            var u1 = ticketUpdates[i].Update;
+                            var u2 = ticketUpdates[i + 1].Update;
+
+                            if (u1.Amount < 0) // from u1 to u2
+                                TransferTickets(ticketUpdates[i].Op, ticket, u1.Account, u2.Account, u2.Amount);
+                            else // from u2 to u1
+                                TransferTickets(ticketUpdates[i].Op, ticket, u2.Account, u1.Account, u1.Amount);
+                        }
+                    }
                     else
                     {
                         foreach (var (op, ticketUpdate) in ticketUpdates)
@@ -102,6 +115,18 @@ namespace Tzkt.Sync.Protocols.Proto16
                     }
                 }
             }
+        }
+
+        static bool IsTransfersSequence(List<(ManagerOperation Op, TicketUpdate Update)> updates)
+        {
+            if (updates.Count % 2 != 0)
+                return false;
+            
+            for (int i = 0; i < updates.Count; i += 2)
+                if (updates[i].Update.Amount != -updates[i + 1].Update.Amount)
+                    return false;
+            
+            return true;
         }
 
         Account GetOrCreateAccount(ManagerOperation op, string address)
