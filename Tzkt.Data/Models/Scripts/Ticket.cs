@@ -21,8 +21,8 @@ namespace Tzkt.Data.Models
         public BigInteger TotalBurned { get; set; }
         public BigInteger TotalSupply { get; set; }
 
-        public int ContentHash { get; set; }
         public int TypeHash { get; set; }
+        public int ContentHash { get; set; }
         
         public byte[] RawType { get; set; }
         public byte[] RawContent { get; set; }
@@ -68,18 +68,24 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.TicketerId);
-            
+
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.FirstMinterId);
+
+            modelBuilder.Entity<Ticket>()
+                .HasIndex(x => x.FirstLevel);
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.LastLevel);
 
             modelBuilder.Entity<Ticket>()
+                .HasIndex(x => x.TypeHash);
+
+            modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.ContentHash);
 
             modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.TypeHash);
+                .HasIndex(x => new { x.TicketerId, x.TypeHash, x.ContentHash });
 
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.JsonContent)

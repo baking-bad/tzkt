@@ -15,8 +15,8 @@ namespace Tzkt.Data.Models
         public int? FromId { get; set; }
         public int? ToId { get; set; }
 
-        public long? TransferTicketId { get; set; }
         public long? TransactionId { get; set; }
+        public long? TransferTicketId { get; set; }
         public long? SmartRollupExecuteId { get; set; }
     }
 
@@ -46,33 +46,31 @@ namespace Tzkt.Data.Models
                 .IsUnique();
 
             modelBuilder.Entity<TicketTransfer>()
+                .HasIndex(x => x.Level);
+
+            modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TicketerId);
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TicketId);
 
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.Level);
+                .HasIndex(x => x.FromId);
 
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.SmartRollupExecuteId)
-                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" is not null");
-
-            modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.TransferTicketId)
-                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" is not null");
+                .HasIndex(x => x.ToId);
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransactionId)
                 .HasFilter($@"""{nameof(TicketTransfer.TransactionId)}"" is not null");
 
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.FromId)
-                .HasFilter($@"""{nameof(TicketTransfer.FromId)}"" is not null");
+                .HasIndex(x => x.TransferTicketId)
+                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" is not null");
 
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.ToId)
-                .HasFilter($@"""{nameof(TicketTransfer.ToId)}"" is not null");
+                .HasIndex(x => x.SmartRollupExecuteId)
+                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" is not null");
             #endregion
         }
     }

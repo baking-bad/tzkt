@@ -3637,6 +3637,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("ContentHash");
 
+                    b.HasIndex("FirstLevel");
+
                     b.HasIndex("FirstMinterId");
 
                     b.HasIndex("Id")
@@ -3652,6 +3654,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TicketerId");
 
                     b.HasIndex("TypeHash");
+
+                    b.HasIndex("TicketerId", "TypeHash", "ContentHash");
 
                     b.ToTable("Tickets");
                 });
@@ -3688,19 +3692,18 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId")
-                        .HasFilter("\"Balance\" != '0'");
+                    b.HasIndex("AccountId");
+
+                    b.HasIndex("FirstLevel");
 
                     b.HasIndex("Id")
                         .IsUnique();
 
                     b.HasIndex("LastLevel");
 
-                    b.HasIndex("TicketId")
-                        .HasFilter("\"Balance\" != '0'");
+                    b.HasIndex("TicketId");
 
-                    b.HasIndex("TicketerId")
-                        .HasFilter("\"Balance\" != '0'");
+                    b.HasIndex("TicketerId");
 
                     b.HasIndex("AccountId", "TicketId")
                         .IsUnique();
@@ -3748,8 +3751,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("FromId")
-                        .HasFilter("\"FromId\" is not null");
+                    b.HasIndex("FromId");
 
                     b.HasIndex("Id")
                         .IsUnique();
@@ -3763,8 +3765,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TicketerId");
 
-                    b.HasIndex("ToId")
-                        .HasFilter("\"ToId\" is not null");
+                    b.HasIndex("ToId");
 
                     b.HasIndex("TransactionId")
                         .HasFilter("\"TransactionId\" is not null");

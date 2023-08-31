@@ -124,8 +124,8 @@ namespace Tzkt.Data.Migrations
                     TotalMinted = table.Column<string>(type: "text", nullable: false),
                     TotalBurned = table.Column<string>(type: "text", nullable: false),
                     TotalSupply = table.Column<string>(type: "text", nullable: false),
-                    ContentHash = table.Column<int>(type: "integer", nullable: false),
                     TypeHash = table.Column<int>(type: "integer", nullable: false),
+                    ContentHash = table.Column<int>(type: "integer", nullable: false),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonContent = table.Column<string>(type: "jsonb", nullable: true)
@@ -147,8 +147,8 @@ namespace Tzkt.Data.Migrations
                     Amount = table.Column<string>(type: "text", nullable: false),
                     FromId = table.Column<int>(type: "integer", nullable: true),
                     ToId = table.Column<int>(type: "integer", nullable: true),
-                    TransferTicketId = table.Column<long>(type: "bigint", nullable: true),
                     TransactionId = table.Column<long>(type: "bigint", nullable: true),
+                    TransferTicketId = table.Column<long>(type: "bigint", nullable: true),
                     SmartRollupExecuteId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
@@ -166,8 +166,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_AccountId",
                 table: "TicketBalances",
-                column: "AccountId",
-                filter: "\"Balance\" != '0'");
+                column: "AccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_AccountId_TicketerId",
@@ -179,6 +178,11 @@ namespace Tzkt.Data.Migrations
                 table: "TicketBalances",
                 columns: new[] { "AccountId", "TicketId" },
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TicketBalances_FirstLevel",
+                table: "TicketBalances",
+                column: "FirstLevel");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_Id",
@@ -194,19 +198,22 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_TicketerId",
                 table: "TicketBalances",
-                column: "TicketerId",
-                filter: "\"Balance\" != '0'");
+                column: "TicketerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_TicketId",
                 table: "TicketBalances",
-                column: "TicketId",
-                filter: "\"Balance\" != '0'");
+                column: "TicketId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_ContentHash",
                 table: "Tickets",
                 column: "ContentHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Tickets_FirstLevel",
+                table: "Tickets",
+                column: "FirstLevel");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_FirstMinterId",
@@ -237,6 +244,11 @@ namespace Tzkt.Data.Migrations
                 column: "TicketerId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Tickets_TicketerId_TypeHash_ContentHash",
+                table: "Tickets",
+                columns: new[] { "TicketerId", "TypeHash", "ContentHash" });
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TypeHash",
                 table: "Tickets",
                 column: "TypeHash");
@@ -244,8 +256,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_FromId",
                 table: "TicketTransfers",
-                column: "FromId",
-                filter: "\"FromId\" is not null");
+                column: "FromId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_Id",
@@ -277,8 +288,7 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_ToId",
                 table: "TicketTransfers",
-                column: "ToId",
-                filter: "\"ToId\" is not null");
+                column: "ToId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_TransactionId",

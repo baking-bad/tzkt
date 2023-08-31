@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Services.Cache
         public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
 
         static readonly Dictionary<long, Ticket> CachedById = new(MaxItems);
-        static readonly Dictionary<(int ContractId, HashableBytes RawContent, HashableBytes RawType), Ticket> CachedByKey = new(MaxItems);
+        static readonly Dictionary<(int TicketerId, HashableBytes RawType, HashableBytes RawContent), Ticket> CachedByKey = new(MaxItems);
 
         readonly TzktContext Db;
 
@@ -41,13 +41,13 @@ namespace Tzkt.Sync.Services.Cache
         public void Add(Ticket ticket)
         {
             CachedById[ticket.Id] = ticket;
-            CachedByKey[(ticket.TicketerId, ticket.RawContent, ticket.RawType)] = ticket;
+            CachedByKey[(ticket.TicketerId, ticket.RawType, ticket.RawContent)] = ticket;
         }
 
         public void Remove(Ticket ticket)
         {
             CachedById.Remove(ticket.Id);
-            CachedByKey.Remove((ticket.TicketerId, ticket.RawContent, ticket.RawType));
+            CachedByKey.Remove((ticket.TicketerId, ticket.RawType, ticket.RawContent));
         }
 
         public Ticket GetCached(long id)
@@ -57,9 +57,9 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public bool TryGetCached(int contractId, byte[] rawContent, byte[] rawType, out Ticket token)
+        public bool TryGetCached(int ticketerId, byte[] rawType, byte[] rawContent, out Ticket token)
         {
-            return CachedByKey.TryGetValue((contractId, rawContent, rawType), out token);
+            return CachedByKey.TryGetValue((ticketerId, rawType, rawContent), out token);
         }
 
         public async Task Preload(IEnumerable<long> ids)
@@ -87,7 +87,7 @@ namespace Tzkt.Sync.Services.Cache
                     var items = await Db.Tickets
                         .FromSqlRaw($@"
                             SELECT * FROM ""{nameof(TzktContext.Tickets)}""
-                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.ContentHash)}"", ""{nameof(Ticket.TypeHash)}"") IN ({corteges})")
+                            WHERE (""{nameof(Ticket.TicketerId)}"", ""{nameof(Ticket.TypeHash)}"", ""{nameof(Ticket.ContentHash)}"") IN ({corteges})")
                         .ToListAsync();
 
                     foreach (var item in items)

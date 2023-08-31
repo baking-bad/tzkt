@@ -45,22 +45,10 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.TicketerId);
 
             modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.TicketerId)
-                .HasFilter($@"""{nameof(TicketBalance.Balance)}"" != '0'");
-
-            modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.TicketId);
 
             modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.TicketId)
-                .HasFilter($@"""{nameof(TicketBalance.Balance)}"" != '0'");
-
-            modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.AccountId);
-
-            modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.AccountId)
-                .HasFilter($@"""{nameof(TicketBalance.Balance)}"" != '0'");
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => new { x.AccountId, x.TicketerId });
@@ -68,6 +56,9 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => new { x.AccountId, x.TicketId })
                 .IsUnique();
+
+            modelBuilder.Entity<TicketBalance>()
+                .HasIndex(x => x.FirstLevel);
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.LastLevel);

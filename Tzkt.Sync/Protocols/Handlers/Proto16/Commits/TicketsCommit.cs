@@ -46,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             foreach (var (ticket, _) in Updates.SelectMany(x => x.Value))
             {
                 if (Cache.Accounts.TryGetCached(ticket.Ticketer, out var ticketer))
-                    ticketsSet.Add((ticketer.Id, ticket.RawContent, ticket.ContentHash, ticket.RawType, ticket.TypeHash));
+                    ticketsSet.Add((ticketer.Id, ticket.RawType, ticket.TypeHash, ticket.RawContent, ticket.ContentHash));
             }
 
             await Cache.Tickets.Preload(ticketsSet);
@@ -55,7 +55,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 if (Cache.Accounts.TryGetCached(ticket.Ticketer, out var ticketer))
                 {
-                    if (Cache.Tickets.TryGetCached(ticketer.Id, ticket.RawContent, ticket.RawType, out var _ticket))
+                    if (Cache.Tickets.TryGetCached(ticketer.Id, ticket.RawType, ticket.RawContent, out var _ticket))
                     {
                         foreach (var (_, upd) in updates)
                         {
@@ -157,9 +157,9 @@ namespace Tzkt.Sync.Protocols.Proto16
             return account;
         }
         
-        Ticket GetOrCreateTicket(ManagerOperation op, Contract contract, TicketIdentity ticketToken)
+        Ticket GetOrCreateTicket(ManagerOperation op, Contract ticketer, TicketIdentity ticketToken)
         {
-            if (!Cache.Tickets.TryGetCached(contract.Id, ticketToken.RawContent, ticketToken.RawType, out var ticket))
+            if (!Cache.Tickets.TryGetCached(ticketer.Id, ticketToken.RawType, ticketToken.RawContent, out var ticket))
             {
                 ticket = new Ticket
                 {
@@ -170,7 +170,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         SmartRollupExecuteOperation srExecute => Cache.AppState.NextSubId(srExecute),
                         _ => throw new ArgumentOutOfRangeException(nameof(op))
                     },
-                    TicketerId = contract.Id,
+                    TicketerId = ticketer.Id,
                     FirstMinterId = op switch
                     {
                         TransactionOperation transaction => transaction.InitiatorId ?? transaction.SenderId,
@@ -193,8 +193,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Db.Tickets.Add(ticket);
                 Cache.Tickets.Add(ticket);
 
-                Db.TryAttach(contract);
-                contract.TicketsCount++;
+                Db.TryAttach(ticketer);
+                ticketer.TicketsCount++;
 
                 var state = Cache.AppState.Get();
                 state.TicketsCount++;
