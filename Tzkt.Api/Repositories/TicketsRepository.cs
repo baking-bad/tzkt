@@ -17,7 +17,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region tickets
-        async Task<IEnumerable<dynamic>> QueryTicketsAsync(TicketFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTicketsAsync(TicketFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -30,6 +30,21 @@ namespace Tzkt.Api.Repositories
                     {
                         case "id": columns.Add(@"""Id"""); break;
                         case "ticketer": columns.Add(@"""TicketerId"""); break;
+                        case "rawType": columns.Add(@"""RawType"""); break;
+                        case "rawContent": columns.Add(@"""RawContent"""); break;
+                        case "content":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"""JsonContent""");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""JsonContent"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            break;
+                        case "typeHash": columns.Add(@"""TypeHash"""); break;
+                        case "contentHash": columns.Add(@"""ContentHash"""); break;
                         case "firstMinter": columns.Add(@"""FirstMinterId"""); break;
                         case "firstLevel": columns.Add(@"""FirstLevel"""); break;
                         case "firstTime": columns.Add(@"""FirstLevel"""); break;
@@ -41,25 +56,6 @@ namespace Tzkt.Api.Repositories
                         case "totalMinted": columns.Add(@"""TotalMinted"""); break;
                         case "totalBurned": columns.Add(@"""TotalBurned"""); break;
                         case "totalSupply": columns.Add(@"""TotalSupply"""); break;
-                        case "contentHash": columns.Add(@"o.""ContentHash"""); break;
-                        case "typeHash": columns.Add(@"o.""TypeHash"""); break;
-                        case "type": columns.Add(@"""RawType"""); break;
-                        case "content":
-                            if (field.Path == null)
-                            {
-                                columns.Add(format <= MichelineFormat.JsonString ? @"""JsonContent""" : @"""RawContent""");
-                            }
-                            else if (format <= MichelineFormat.JsonString)
-                            {
-                                field.Column = $"c{counter++}";
-                                columns.Add($@"""JsonContent"" #> '{{{field.PathString}}}' as {field.Column}");
-                            }
-                            else
-                            {
-                                field.Column = $"c{counter++}";
-                                columns.Add($@"NULL as {field.Column}");
-                            }
-                            break;
                     }
                 }
 
@@ -72,24 +68,21 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {select} FROM ""Tickets""")
                 .Filter("Id", filter.id)
                 .Filter("TicketerId", filter.ticketer)
+                .Filter("JsonContent", filter.content)
+                .Filter("TypeHash", filter.typeHash)
+                .Filter("ContentHash", filter.contentHash)
                 .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime)
-                .Filter("TypeHash", filter.typeHash)
-                .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonContent", filter.content)
                 .Take(pagination, x => x switch
                 {
-                    "ticketerId" => (@"""TicketerId""::numeric", @"""TicketerId""::numeric"),
-                    "transfersCount" => (@"""TransfersCount""", @"""TransfersCount"""),
-                    "holdersCount" => (@"""HoldersCount""", @"""HoldersCount"""),
-                    "balancesCount" => (@"""BalancesCount""", @"""BalancesCount"""),
-                    "firstLevel" => (@"""Id""", @"""FirstLevel"""),
+                    "firstLevel" => (@"""FirstLevel""", @"""FirstLevel"""),
                     "lastLevel" => (@"""LastLevel""", @"""LastLevel"""),
-                    "contentHash" => (@"""ContentHash""", @"""ContentHash"""),
-                    "typeHash" => (@"""TypeHash""", @"""TypeHash"""),
+                    "transfersCount" => (@"""TransfersCount""", @"""TransfersCount"""),
+                    "balancesCount" => (@"""BalancesCount""", @"""BalancesCount"""),
+                    "holdersCount" => (@"""HoldersCount""", @"""HoldersCount"""),
                     _ => (@"""Id""", @"""Id""")
                 });
 
@@ -102,47 +95,48 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Tickets""")
                 .Filter("Id", filter.id)
                 .Filter("TicketerId", filter.ticketer)
+                .Filter("JsonContent", filter.content)
+                .Filter("TypeHash", filter.typeHash)
+                .Filter("ContentHash", filter.contentHash)
                 .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
                 .Filter("LastLevel", filter.lastLevel)
-                .Filter("LastLevel", filter.lastTime)
-                .Filter("TypeHash", filter.typeHash)
-                .Filter("ContentHash", filter.contentHash)
-                .Filter("JsonContent", filter.content);
+                .Filter("LastLevel", filter.lastTime);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<Ticket>> GetTickets(TicketFilter filter, Pagination pagination, MichelineFormat format)
+        public async Task<IEnumerable<Ticket>> GetTickets(TicketFilter filter, Pagination pagination)
         {
-            var rows = await QueryTicketsAsync(filter, pagination, format);
+            var rows = await QueryTicketsAsync(filter, pagination);
             return rows.Select(row => new Ticket
             {
-                Ticketer = Accounts.GetAlias(row.TicketerId),
                 Id = row.Id,
-                BalancesCount = row.BalancesCount,
+                Ticketer = Accounts.GetAlias(row.TicketerId),
+                RawType = Micheline.FromBytes((byte[])row.RawType),
+                RawContent = Micheline.FromBytes((byte[])row.RawContent),
+                Content = (RawJson)row.JsonContent,
+                TypeHash = row.TypeHash,
+                ContentHash = row.ContentHash,
                 FirstMinter = Accounts.GetAlias(row.FirstMinterId),
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
-                HoldersCount = row.HoldersCount,
                 LastLevel = row.LastLevel,
                 LastTime = Times[row.LastLevel],
-                TotalBurned = row.TotalBurned,
-                TotalMinted = row.TotalMinted,
-                TotalSupply = row.TotalSupply,
                 TransfersCount = row.TransfersCount,
-                Type = Micheline.FromBytes((byte[])row.RawType),
-                Content = FormatContent(row, format),
-                ContentHash = row.ContentHash,
-                TypeHash = row.TypeHash
+                BalancesCount = row.BalancesCount,
+                HoldersCount = row.HoldersCount,
+                TotalMinted = row.TotalMinted,
+                TotalBurned = row.TotalBurned,
+                TotalSupply = row.TotalSupply
             });
         }
 
-        public async Task<object[][]> GetTickets(TicketFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        public async Task<object[][]> GetTickets(TicketFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var rows = await QueryTicketsAsync(filter, pagination, format, fields);
+            var rows = await QueryTicketsAsync(filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -168,13 +162,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.TicketerId).Address;
                         break;
-                    case "type":
+                    case "rawType":
                         foreach (var row in rows)
                             result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
                         break;
+                    case "rawContent":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.RawContent);
+                        break;
                     case "content":
                         foreach (var row in rows)
-                            result[j++][i] = FormatContent(row, format);
+                            result[j++][i] = (RawJson)row.JsonContent;
                         break;
                     case "typeHash":
                         foreach (var row in rows)
@@ -244,22 +242,22 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region ticket balances
-        async Task<IEnumerable<dynamic>> QueryTicketBalancesAsync(TicketBalanceFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTicketBalancesAsync(TicketBalanceFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = @"
                 tb.""Id"",
                 tb.""AccountId"",
                 tb.""Balance"",
+                tb.""TransfersCount"",
                 tb.""FirstLevel"",
                 tb.""LastLevel"",
-                tb.""TransfersCount"",
                 tb.""TicketId"" as ""tId"",
                 tb.""TicketerId"" as ""tTicketerId"",
-                t.""JsonContent"" as ""JsonContent"",
-                t.""RawContent"" as ""RawContent"",
-                t.""RawType"" as ""RawType"",
-                t.""ContentHash"" as ""ContentHash"",
-                t.""TypeHash"" as ""TypeHash"",
+                t.""RawType"" as ""tRawType"",
+                t.""RawContent"" as ""tRawContent"",
+                t.""JsonContent"" as ""tJsonContent"",
+                t.""TypeHash"" as ""tTypeHash"",
+                t.""ContentHash"" as ""tContentHash"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -270,22 +268,51 @@ namespace Tzkt.Api.Repositories
                     switch (field.Field)
                     {
                         case "id": columns.Add(@"tb.""Id"""); break;
+                        case "ticket":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"tb.""TicketId"" as ""tId""");
+                                columns.Add(@"tb.""TicketerId"" as ""tTicketerId""");
+                                columns.Add(@"t.""RawType"" as ""tRawType""");
+                                columns.Add(@"t.""RawContent"" as ""tRawContent""");
+                                columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                columns.Add(@"t.""TypeHash"" as ""tTypeHash""");
+                                columns.Add(@"t.""ContentHash"" as ""tContentHash""");
+                                columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
+                            }
+                            else
+                            {
+                                var subField = field.SubField();
+                                switch (subField.Field)
+                                {
+                                    case "id": columns.Add(@"tb.""TicketId"" as ""tId"""); break;
+                                    case "ticketer": columns.Add(@"tb.""TicketerId"" as ""tTicketerId"""); break;
+                                    case "rawType": columns.Add(@"t.""RawType"" as ""tRawType"""); break;
+                                    case "rawContent": columns.Add(@"t.""RawContent"" as ""tRawContent"""); break;
+                                    case "content":
+                                        if (subField.Path == null)
+                                        {
+                                            columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                        }
+                                        else
+                                        {
+                                            field.Column = $"c{counter++}";
+                                            columns.Add($@"t.""JsonContent"" #> '{{{subField.PathString}}}' as {field.Column}");
+                                        }
+                                        break;
+                                    case "typeHash": columns.Add(@"t.""TypeHash"" as ""tTypeHash"""); break;
+                                    case "contentHash": columns.Add(@"t.""ContentHash"" as ""tContentHash"""); break;
+                                    case "totalSupply": columns.Add(@"t.""TotalSupply"" as ""tTotalSupply"""); break;
+                                }
+                            }
+                            break;
                         case "account": columns.Add(@"tb.""AccountId"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
+                        case "transfersCount": columns.Add(@"tb.""TransfersCount"""); break;
                         case "firstLevel": columns.Add(@"tb.""FirstLevel"""); break;
                         case "firstTime": columns.Add(@"tb.""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"tb.""LastLevel"""); break;
                         case "lastTime": columns.Add(@"tb.""LastLevel"""); break;
-                        case "transfersCount": columns.Add(@"tb.""TransfersCount"""); break;
-                        case "ticket":
-                            columns.Add(@"tb.""TicketId"" as ""tId""");
-                            columns.Add(@"tb.""TicketerId"" as ""tTicketerId""");
-                            columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
-                            columns.Add(FormatContentQuery(format));
-                            columns.Add(@"t.""RawType"" as ""RawType""");
-                            columns.Add(@"t.""ContentHash"" as ""ContentHash""");
-                            columns.Add(@"t.""TypeHash"" as ""TypeHash""");
-                            break;
                     }
                 }
 
@@ -301,14 +328,15 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""Id""", filter.id)
                 .FilterA(@"tb.""AccountId""", filter.account)
                 .FilterA(@"tb.""Balance""", filter.balance)
+                .FilterA(@"tb.""TransfersCount""", filter.transfersCount)
                 .FilterA(@"tb.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
@@ -330,48 +358,50 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""Id""", filter.id)
                 .FilterA(@"tb.""AccountId""", filter.account)
                 .FilterA(@"tb.""Balance""", filter.balance)
+                .FilterA(@"tb.""TransfersCount""", filter.transfersCount)
                 .FilterA(@"tb.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
                 .FilterA(@"tb.""LastLevel""", filter.lastLevel)
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash);
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<TicketBalance>> GetTicketBalances(TicketBalanceFilter filter, Pagination pagination, MichelineFormat format)
+        public async Task<IEnumerable<TicketBalance>> GetTicketBalances(TicketBalanceFilter filter, Pagination pagination)
         {
-            var rows = await QueryTicketBalancesAsync(filter, pagination, format);
+            var rows = await QueryTicketBalancesAsync(filter, pagination);
             return rows.Select(row => new TicketBalance
             {
                 Id = row.Id,
-                Account = Accounts.GetAlias(row.AccountId),
-                Balance = row.Balance,
-                FirstLevel = row.FirstLevel,
-                FirstTime = Times[row.FirstLevel],
-                LastLevel = row.LastLevel,
-                LastTime = Times[row.LastLevel],
-                TransfersCount = row.TransfersCount,
                 Ticket = new TicketInfo
                 {
                     Id = row.tId,
                     Ticketer = Accounts.GetAlias(row.tTicketerId),
-                    TotalSupply = row.tTotalSupply,
-                    Type = Micheline.FromBytes((byte[])row.RawType),
-                    Content = FormatContent(row, format),
-                    ContentHash = row.ContentHash,
-                    TypeHash = row.TypeHash
-                }
+                    RawType = Micheline.FromBytes((byte[])row.tRawType),
+                    RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                    Content = (RawJson)row.tJsonContent,
+                    TypeHash = row.tTypeHash,
+                    ContentHash = row.tContentHash,
+                    TotalSupply = row.tTotalSupply
+                },
+                Account = Accounts.GetAlias(row.AccountId),
+                Balance = row.Balance,
+                TransfersCount = row.TransfersCount,
+                FirstLevel = row.FirstLevel,
+                FirstTime = Times[row.FirstLevel],
+                LastLevel = row.LastLevel,
+                LastTime = Times[row.LastLevel]
             });
         }
 
-        public async Task<object[][]> GetTicketBalances(TicketBalanceFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        public async Task<object[][]> GetTicketBalances(TicketBalanceFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var rows = await QueryTicketBalancesAsync(filter, pagination, format, fields);
+            var rows = await QueryTicketBalancesAsync(filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -401,6 +431,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Balance;
                         break;
+                    case "transfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TransfersCount;
+                        break;
                     case "firstLevel":
                         foreach (var row in rows)
                             result[j++][i] = row.FirstLevel;
@@ -417,21 +451,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Times[row.LastLevel];
                         break;
-                    case "transfersCount":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TransfersCount;
-                        break;
                     case "ticket":
                         foreach (var row in rows)
                             result[j++][i] = new TicketInfo
                             {
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
-                                TotalSupply = row.tTotalSupply,
-                                Type = Micheline.FromBytes((byte[])row.RawType),
-                                Content = FormatContent(row, format),
-                                ContentHash = row.ContentHash,
-                                TypeHash = row.TypeHash
+                                RawType = Micheline.FromBytes((byte[])row.tRawType),
+                                RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                                Content = (RawJson)row.tJsonContent,
+                                TypeHash = row.tTypeHash,
+                                ContentHash = row.tContentHash,
+                                TotalSupply = row.tTotalSupply
                             };
                         break;
                     case "ticket.id":
@@ -450,25 +481,34 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.tTicketerId).Address;
                         break;
+                    case "ticket.rawType":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawType);
+                        break;
+                    case "ticket.rawContent":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawContent);
+                        break;
+                    case "ticket.content":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)row.tJsonContent;
+                        break;
+                    case "ticket.typeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTypeHash;
+                        break;
+                    case "ticket.contentHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tContentHash;
+                        break;
                     case "ticket.totalSupply":
                         foreach (var row in rows)
                             result[j++][i] = row.tTotalSupply;
                         break;
-                    case "ticket.content":
-                        foreach (var row in rows)
-                            result[j++][i] = FormatContent(row, format);
-                        break;
-                    case "ticket.type":
-                        foreach (var row in rows)
-                            result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
-                        break;
-                    case "ticket.contentHash":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ContentHash;
-                        break;
-                    case "ticket.typeHash":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TypeHash;
+                    default:
+                        if (fields[i].Full.StartsWith("ticket.content."))
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
                         break;
                 }
             }
@@ -478,7 +518,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region ticket transfers
-        async Task<IEnumerable<dynamic>> QueryTicketTransfersAsync(TicketTransferFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTicketTransfersAsync(TicketTransferFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = @"
                 tr.""Id"",
@@ -491,11 +531,11 @@ namespace Tzkt.Api.Repositories
                 tr.""SmartRollupExecuteId"",
                 tr.""TicketId"" as ""tId"",
                 tr.""TicketerId"" as ""tTicketerId"",
-                t.""JsonContent"" as ""JsonContent"",
-                t.""RawContent"" as ""RawContent"",
-                t.""RawType"" as ""RawType"",
-                t.""ContentHash"" as ""ContentHash"",
-                t.""TypeHash"" as ""TypeHash"",
+                t.""RawType"" as ""tRawType"",
+                t.""RawContent"" as ""tRawContent"",
+                t.""JsonContent"" as ""tJsonContent"",
+                t.""TypeHash"" as ""tTypeHash"",
+                t.""ContentHash"" as ""tContentHash"",
                 t.""TotalSupply"" as ""tTotalSupply""";
             if (fields != null)
             {
@@ -508,21 +548,50 @@ namespace Tzkt.Api.Repositories
                         case "id": columns.Add(@"tr.""Id"""); break;
                         case "level": columns.Add(@"tr.""Level"""); break;
                         case "timestamp": columns.Add(@"tr.""Level"""); break;
+                        case "ticket":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"tr.""TicketId"" as ""tId""");
+                                columns.Add(@"tr.""TicketerId"" as ""tTicketerId""");
+                                columns.Add(@"t.""RawType"" as ""tRawType""");
+                                columns.Add(@"t.""RawContent"" as ""tRawContent""");
+                                columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                columns.Add(@"t.""TypeHash"" as ""tTypeHash""");
+                                columns.Add(@"t.""ContentHash"" as ""tContentHash""");
+                                columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
+                            }
+                            else
+                            {
+                                var subField = field.SubField();
+                                switch (subField.Field)
+                                {
+                                    case "id": columns.Add(@"tr.""TicketId"" as ""tId"""); break;
+                                    case "ticketer": columns.Add(@"tr.""TicketerId"" as ""tTicketerId"""); break;
+                                    case "rawType": columns.Add(@"t.""RawType"" as ""tRawType"""); break;
+                                    case "rawContent": columns.Add(@"t.""RawContent"" as ""tRawContent"""); break;
+                                    case "content":
+                                        if (subField.Path == null)
+                                        {
+                                            columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                        }
+                                        else
+                                        {
+                                            field.Column = $"c{counter++}";
+                                            columns.Add($@"t.""JsonContent"" #> '{{{subField.PathString}}}' as {field.Column}");
+                                        }
+                                        break;
+                                    case "typeHash": columns.Add(@"t.""TypeHash"" as ""tTypeHash"""); break;
+                                    case "contentHash": columns.Add(@"t.""ContentHash"" as ""tContentHash"""); break;
+                                    case "totalSupply": columns.Add(@"t.""TotalSupply"" as ""tTotalSupply"""); break;
+                                }
+                            }
+                            break;
                         case "from": columns.Add(@"tr.""FromId"""); break;
                         case "to": columns.Add(@"tr.""ToId"""); break;
                         case "amount": columns.Add(@"tr.""Amount"""); break;
                         case "transactionId": columns.Add(@"tr.""TransactionId"""); break;
                         case "transferTicketId": columns.Add(@"tr.""TransferTicketId"""); break;
                         case "smartRollupExecuteId": columns.Add(@"tr.""SmartRollupExecuteId"""); break;
-                        case "ticket":
-                            columns.Add(@"tr.""TicketId"" as ""tId""");
-                            columns.Add(@"tr.""TicketerId"" as ""tTicketerId""");
-                            columns.Add(@"t.""TotalSupply"" as ""tTotalSupply""");
-                            columns.Add(FormatContentQuery(format));
-                            columns.Add(@"t.""RawType"" as ""RawType""");
-                            columns.Add(@"t.""ContentHash"" as ""ContentHash""");
-                            columns.Add(@"t.""TypeHash"" as ""TypeHash""");
-                            break;
                     }
                 }
 
@@ -547,8 +616,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .Take(pagination, x => x switch
                 {
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
@@ -577,43 +646,44 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
-                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash);
+                .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
+                .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<TicketTransfer>> GetTicketTransfers(TicketTransferFilter filter, Pagination pagination, MichelineFormat format)
+        public async Task<IEnumerable<TicketTransfer>> GetTicketTransfers(TicketTransferFilter filter, Pagination pagination)
         {
-            var rows = await QueryTicketTransfersAsync(filter, pagination, format);
+            var rows = await QueryTicketTransfersAsync(filter, pagination);
             return rows.Select(row => new TicketTransfer
             {
                 Id = row.Id,
                 Level = row.Level,
                 Timestamp = Times[row.Level],
+                Ticket = new TicketInfo
+                {
+                    Id = row.tId,
+                    Ticketer = Accounts.GetAlias(row.tTicketerId),
+                    RawType = Micheline.FromBytes((byte[])row.tRawType),
+                    RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                    Content = (RawJson)row.tJsonContent,
+                    TypeHash = row.tTypeHash,
+                    ContentHash = row.tContentHash,
+                    TotalSupply = row.tTotalSupply
+                },
                 From = row.FromId == null ? null : Accounts.GetAlias(row.FromId),
                 To = row.ToId == null ? null : Accounts.GetAlias(row.ToId),
                 Amount = row.Amount,
                 TransactionId = row.TransactionId,
                 TransferTicketId = row.TransferTicketId,
-                SmartRollupExecuteId = row.SmartRollupExecuteId,
-                Ticket = new TicketInfo
-                {
-                    Id = row.tId,
-                    Ticketer = Accounts.GetAlias(row.tTicketerId),
-                    TotalSupply = row.tTotalSupply,
-                    Type = Micheline.FromBytes((byte[])row.RawType),
-                    Content = FormatContent(row, format),
-                    ContentHash = row.ContentHash,
-                    TypeHash = row.TypeHash
-                }
+                SmartRollupExecuteId = row.SmartRollupExecuteId
             });
         }
 
-        public async Task<object[][]> GetTicketTransfers(TicketTransferFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        public async Task<object[][]> GetTicketTransfers(TicketTransferFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var rows = await QueryTicketTransfersAsync(filter, pagination, format, fields);
+            var rows = await QueryTicketTransfersAsync(filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -681,11 +751,12 @@ namespace Tzkt.Api.Repositories
                             {
                                 Id = row.tId,
                                 Ticketer = Accounts.GetAlias(row.tTicketerId),
-                                TotalSupply = row.tTotalSupply,
-                                Type = Micheline.FromBytes((byte[])row.RawType),
-                                Content = FormatContent(row, format),
-                                ContentHash = row.ContentHash,
-                                TypeHash = row.TypeHash
+                                RawType = Micheline.FromBytes((byte[])row.tRawType),
+                                RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                                Content = (RawJson)row.tJsonContent,
+                                TypeHash = row.tTypeHash,
+                                ContentHash = row.tContentHash,
+                                TotalSupply = row.tTotalSupply
                             };
                         break;
                     case "ticket.id":
@@ -704,25 +775,34 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.tTicketerId).Address;
                         break;
+                    case "ticket.rawType":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawType);
+                        break;
+                    case "ticket.rawContent":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawContent);
+                        break;
+                    case "ticket.content":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)row.tJsonContent;
+                        break;
+                    case "ticket.typeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTypeHash;
+                        break;
+                    case "ticket.contentHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tContentHash;
+                        break;
                     case "ticket.totalSupply":
                         foreach (var row in rows)
                             result[j++][i] = row.tTotalSupply;
                         break;
-                    case "ticket.content":
-                        foreach (var row in rows)
-                            result[j++][i] = FormatContent(row, format);
-                        break;
-                    case "ticket.type":
-                        foreach (var row in rows)
-                            result[j++][i] = Micheline.FromBytes((byte[])row.RawType);
-                        break;
-                    case "ticket.contentHash":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ContentHash;
-                        break;
-                    case "ticket.typeHash":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TypeHash;
+                    default:
+                        if (fields[i].Full.StartsWith("ticket.content."))
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
                         break;
                 }
             }
@@ -732,13 +812,19 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region historical balances
-        async Task<IEnumerable<dynamic>> QueryHistoricalTicketBalancesAsync(int level, TicketBalanceShortFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryHistoricalTicketBalancesAsync(int level, TicketBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = @"
+                tb.""Id"",
                 tb.""AccountId"",
                 tb.""Balance"",
                 tb.""TicketId"" as ""tId"",
-                t.""TicketerId"" as ""tTicketerId""";
+                tb.""TicketerId"" as ""tTicketerId"",
+                t.""RawType"" as ""tRawType"",
+                t.""RawContent"" as ""tRawContent"",
+                t.""JsonContent"" as ""tJsonContent"",
+                t.""TypeHash"" as ""tTypeHash"",
+                t.""ContentHash"" as ""tContentHash""";
             if (fields != null)
             {
                 var counter = 0;
@@ -747,12 +833,45 @@ namespace Tzkt.Api.Repositories
                 {
                     switch (field.Field)
                     {
+                        case "id": columns.Add(@"tb.""Id"""); break;
+                        case "ticket":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"tb.""TicketId"" as ""tId""");
+                                columns.Add(@"tb.""TicketerId"" as ""tTicketerId""");
+                                columns.Add(@"t.""RawType"" as ""tRawType""");
+                                columns.Add(@"t.""RawContent"" as ""tRawContent""");
+                                columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                columns.Add(@"t.""TypeHash"" as ""tTypeHash""");
+                                columns.Add(@"t.""ContentHash"" as ""tContentHash""");
+                            }
+                            else
+                            {
+                                var subField = field.SubField();
+                                switch (subField.Field)
+                                {
+                                    case "id": columns.Add(@"tb.""TicketId"" as ""tId"""); break;
+                                    case "ticketer": columns.Add(@"tb.""TicketerId"" as ""tTicketerId"""); break;
+                                    case "rawType": columns.Add(@"t.""RawType"" as ""tRawType"""); break;
+                                    case "rawContent": columns.Add(@"t.""RawContent"" as ""tRawContent"""); break;
+                                    case "content":
+                                        if (subField.Path == null)
+                                        {
+                                            columns.Add(@"t.""JsonContent"" as ""tJsonContent""");
+                                        }
+                                        else
+                                        {
+                                            field.Column = $"c{counter++}";
+                                            columns.Add($@"t.""JsonContent"" #> '{{{subField.PathString}}}' as {field.Column}");
+                                        }
+                                        break;
+                                    case "typeHash": columns.Add(@"t.""TypeHash"" as ""tTypeHash"""); break;
+                                    case "contentHash": columns.Add(@"t.""ContentHash"" as ""tContentHash"""); break;
+                                }
+                            }
+                            break;
                         case "account": columns.Add(@"tb.""AccountId"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
-                        case "ticket":
-                            columns.Add(@"tb.""TicketId"" as ""tId""");
-                            columns.Add(@"t.""TicketerId"" as ""tTicketerId""");
-                            break;
                     }
                 }
 
@@ -764,61 +883,62 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder()
                 .Append($@"SELECT {select} FROM (")
-                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TicketId"", ""AccountId"") as ""Id"", ""TicketId"", ""AccountId"", SUM(""Amount"")::text AS ""Balance"" FROM (")
+                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TicketId"", ""AccountId"") as ""Id"", ""TicketId"", ""TicketerId"", ""AccountId"", SUM(""Amount"")::text AS ""Balance"" FROM (")
                         
-                        .Append(@"SELECT tr.""TicketId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount""::numeric AS ""Amount"" FROM ""TicketTransfers"" as tr")
-                        .Append(@"INNER JOIN ""Tickets"" AS t ON t.""Id"" = tr.""TicketId""")
-                        .Filter($@"tr.""Level"" <= {level}")
-                        .Filter($@"tr.""FromId"" IS NOT NULL")
-                        .FilterA(@"tr.""FromId""", filter.account)
-                        .FilterA(@"tr.""TicketId""", filter.ticket.id)
-                        .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
-                        .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                        .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
-                .ResetFilters()
+                        .Append(@"SELECT ""TicketId"", ""TicketerId"", ""FromId"" AS ""AccountId"", -""Amount""::numeric AS ""Amount"" FROM ""TicketTransfers""")
+                        .Filter($@"""Level"" <= {level}")
+                        .Filter($@"""FromId"" IS NOT NULL")
+                        .FilterA(@"""FromId""", filter.account)
+                        .FilterA(@"""TicketId""", filter.ticket.id)
+                        .FilterA(@"""TicketerId""", filter.ticket.ticketer)
+                        .ResetFilters()
 
                         .Append("UNION ALL")
 
-                        .Append(@"SELECT tr.""TicketId"", tr.""ToId"" AS ""AccountId"", tr.""Amount""::numeric AS ""Amount"" FROM ""TicketTransfers"" as tr")
-                        .Append(@"INNER JOIN ""Tickets"" AS t ON t.""Id"" = tr.""TicketId""")
-                        .Filter($@"tr.""Level"" <= {level}")
-                        .Filter($@"tr.""ToId"" IS NOT NULL")
-                        .FilterA(@"tr.""ToId""", filter.account)
-                        .FilterA(@"tr.""TicketId""", filter.ticket.id)
-                        .FilterA(@"t.""TicketerId""", filter.ticket.ticketer)
-                        .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
-                        .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
+                        .Append(@"SELECT ""TicketId"", ""TicketerId"", ""ToId"" AS ""AccountId"", ""Amount""::numeric AS ""Amount"" FROM ""TicketTransfers""")
+                        .Filter($@"""Level"" <= {level}")
+                        .Filter($@"""ToId"" IS NOT NULL")
+                        .FilterA(@"""ToId""", filter.account)
+                        .FilterA(@"""TicketId""", filter.ticket.id)
+                        .FilterA(@"""TicketerId""", filter.ticket.ticketer)
                         .ResetFilters()
 
                     .Append(") as tb")
-                    .Append(@"GROUP BY tb.""TicketId"", tb.""AccountId""")
+                    .Append(@"GROUP BY tb.""TicketId"", tb.""TicketerId"", tb.""AccountId""")
                 .Append(") as tb")
                 .Append(@"INNER JOIN ""Tickets"" AS t ON t.""Id"" = tb.""TicketId""")
+                .FilterA(@"tb.""Id""", filter.id)
                 .FilterA(@"tb.""Balance""", filter.balance)
-                .Take(pagination, _ => (@"""Balance""::numeric", @"""Balance""::numeric"), @"tb.""Id""");
+                .Take(pagination, _ => (@"tb.""Id""", @"tb.""Id"""), @"tb.""Id""");
 
             using var db = GetConnection();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<TicketBalanceShort>> GetHistoricalTicketBalances(int level, TicketBalanceShortFilter filter, Pagination pagination, MichelineFormat format)
+        public async Task<IEnumerable<TicketBalanceShort>> GetHistoricalTicketBalances(int level, TicketBalanceShortFilter filter, Pagination pagination)
         {
-            var rows = await QueryHistoricalTicketBalancesAsync(level, filter, pagination, format);
+            var rows = await QueryHistoricalTicketBalancesAsync(level, filter, pagination);
             return rows.Select(row => new TicketBalanceShort
             {
+                Id = row.Id,
                 Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance,
-                Ticket = new TicketInfo
+                Ticket = new TicketInfoShort
                 {
                     Id = row.tId,
-                    Ticketer = Accounts.GetAlias(row.tTicketerId)
+                    Ticketer = Accounts.GetAlias(row.tTicketerId),
+                    RawType = Micheline.FromBytes((byte[])row.tRawType),
+                    RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                    Content = (RawJson)row.tJsonContent,
+                    TypeHash = row.tTypeHash,
+                    ContentHash = row.tContentHash
                 }
             });
         }
 
-        public async Task<object[][]> GetHistoricalTicketBalances(int level, TicketBalanceShortFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        public async Task<object[][]> GetHistoricalTicketBalances(int level, TicketBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var rows = await QueryHistoricalTicketBalancesAsync(level, filter, pagination, format, fields);
+            var rows = await QueryHistoricalTicketBalancesAsync(level, filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -828,6 +948,10 @@ namespace Tzkt.Api.Repositories
             {
                 switch (fields[i].Full)
                 {
+                    case "id":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Id;
+                        break;
                     case "account":
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.AccountId);
@@ -846,10 +970,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket":
                         foreach (var row in rows)
-                            result[j++][i] = new TicketInfo
+                            result[j++][i] = new TicketInfoShort
                             {
                                 Id = row.tId,
-                                Ticketer = Accounts.GetAlias(row.tTicketerId)
+                                Ticketer = Accounts.GetAlias(row.tTicketerId),
+                                RawType = Micheline.FromBytes((byte[])row.tRawType),
+                                RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                                Content = (RawJson)row.tJsonContent,
+                                TypeHash = row.tTypeHash,
+                                ContentHash = row.tContentHash
                             };
                         break;
                     case "ticket.id":
@@ -868,29 +997,36 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.tTicketerId).Address;
                         break;
+                    case "ticket.rawType":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawType);
+                        break;
+                    case "ticket.rawContent":
+                        foreach (var row in rows)
+                            result[j++][i] = Micheline.FromBytes((byte[])row.tRawContent);
+                        break;
+                    case "ticket.content":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)row.tJsonContent;
+                        break;
+                    case "ticket.typeHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tTypeHash;
+                        break;
+                    case "ticket.contentHash":
+                        foreach (var row in rows)
+                            result[j++][i] = row.tContentHash;
+                        break;
+                    default:
+                        if (fields[i].Full.StartsWith("ticket.content."))
+                            foreach (var row in rows)
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                        break;
                 }
             }
 
             return result;
         }
         #endregion
-        
-        static object FormatContent(dynamic row, MichelineFormat format) => format switch
-        {
-            MichelineFormat.Json => (RawJson)row.JsonContent,
-            MichelineFormat.JsonString => row.JsonContent,
-            MichelineFormat.Raw => (RawJson)Micheline.ToJson(row.RawContent),
-            MichelineFormat.RawString => Micheline.ToJson(row.RawContent),
-            _ => null
-        };
-
-        static string FormatContentQuery(MichelineFormat format) => format switch
-        {
-            MichelineFormat.Json => @"t.""JsonContent"" as ""JsonContent""",
-            MichelineFormat.JsonString => @"t.""JsonContent"" as ""JsonContent""",
-            MichelineFormat.Raw => @"t.""RawContent"" as ""RawContent""",
-            MichelineFormat.RawString => @"t.""RawContent"" as ""RawContent""",
-            _ => throw new Exception("Invalid MichelineFormat value")
-        };
     }
 }

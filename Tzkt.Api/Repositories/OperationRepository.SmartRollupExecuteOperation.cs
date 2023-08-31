@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 o."SmartRollupId",
                 o."CommitmentId" as "cId",
                 o."Errors",
-                o."Level",
+                o."TicketTransfers",
 
                 c."InitiatorId" as "cInitiatorId",
                 c."InboxLevel" as "cInboxLevel",
@@ -105,6 +105,7 @@ namespace Tzkt.Api.Repositories
                             }
                             break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
+                        case "ticketTransfersCount": columns.Add(@"o.""TicketTransfers"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
                     }
                 }
@@ -163,6 +164,7 @@ namespace Tzkt.Api.Repositories
                     FirstTime = Times[row.cFirstLevel],
                 },
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                TicketTransfersCount = row.TicketTransfers,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -312,6 +314,10 @@ namespace Tzkt.Api.Repositories
                     case "errors":
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
+                        break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfers;
                         break;
                     case "quote":
                         foreach (var row in rows)

@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Tzkt.Api.Services;
+﻿using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -72,6 +71,19 @@ namespace Tzkt.Api
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter smartRollupExecuteId { get; set; }
+
+        public bool Empty =>
+            id == null &&
+            level == null &&
+            timestamp == null &&
+            (ticket == null || ticket.Empty) &&
+            anyof == null &&
+            from == null &&
+            to == null &&
+            amount == null &&
+            transactionId == null &&
+            transferTicketId == null &&
+            smartRollupExecuteId == null;
 
         public string Normalize(string name)
         {

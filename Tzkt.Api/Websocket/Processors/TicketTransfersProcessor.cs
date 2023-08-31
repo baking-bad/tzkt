@@ -81,7 +81,7 @@ namespace Tzkt.Api.Websocket.Processors
                 #region load ticket transfers
                 Logger.LogDebug("Fetching ticket transfers from block {valid} to block {current}", State.ValidLevel, State.Current.Level);
 
-                var params1 = new TicketTransferFilter
+                var param = new TicketTransferFilter
                 {
                     level = State.Current.Level == State.ValidLevel + 1
                         ? new Int32Parameter
@@ -96,10 +96,9 @@ namespace Tzkt.Api.Websocket.Processors
                     ticket = new()
                 };
                 var limit = 1_000_000;
-                var format = MichelineFormat.Json;
 
 
-                var transfers = (await Repo.GetTicketTransfers(params1, new() { limit = limit }, format));
+                var transfers = await Repo.GetTicketTransfers(param, new() { limit = limit });
                 var count = transfers.Count();
 
                 Logger.LogDebug("{cnt} ticket transfers fetched", count);
@@ -374,37 +373,10 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId)
-        {
-            if (!subs.TryGetValue(key, out var set))
-            {
-                set = new(4);
-                subs.Add(key, set);
-            }
-
-            if (set.Add(connectionId))
-                Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-        }
-
         private static void TryAdd(HashSet<string> set, string connectionId)
         {
             if (set.Add(connectionId))
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
-        }
-
-        private static Dictionary<TSubKey, HashSet<string>> TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
-        {
-            if (subs == null) return null;
-            foreach (var (key, value) in subs)
-            {
-                if (value.Remove(connectionId))
-                    Limits[connectionId]--;
-
-                if (value.Count == 0)
-                    subs.Remove(key);
-            }
-            if (subs.Count == 0) return null;
-            return subs;
         }
 
         private static HashSet<string> TryRemove(HashSet<string> set, string connectionId)

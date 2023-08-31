@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using Tzkt.Api.Services;
+﻿using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -12,22 +11,28 @@ namespace Tzkt.Api
         public Int64Parameter id { get; set; }
 
         /// <summary>
-        /// Filter by account address.  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public AccountParameter account { get; set; }
-
-        /// <summary>
         /// Filter by ticket.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public TicketInfoFilter ticket { get; set; }
 
         /// <summary>
+        /// Filter by account address.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public AccountParameter account { get; set; }
+
+        /// <summary>
         /// Filter by balance.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public NatParameter balance { get; set; }
+
+        /// <summary>
+        /// Filter by number of transfers.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter transfersCount { get; set; }
 
         /// <summary>
         /// Filter by level of the block where the balance was first changed.  
@@ -53,11 +58,22 @@ namespace Tzkt.Api
         /// </summary>
         public TimestampParameter lastTime { get; set; }
 
+        public bool Empty =>
+            id == null &&
+            (ticket == null || ticket.Empty) &&
+            account == null &&
+            balance == null &&
+            transfersCount == null &&
+            firstLevel == null &&
+            firstTime == null &&
+            lastLevel == null &&
+            lastTime == null;
+
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("account", account), ("ticket", ticket), ("balance", balance), ("firstLevel", firstLevel),
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
+                ("id", id), ("ticket", ticket), ("account", account), ("balance", balance), ("transfersCount", transfersCount),
+                ("firstLevel", firstLevel), ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
         }
     }
 }

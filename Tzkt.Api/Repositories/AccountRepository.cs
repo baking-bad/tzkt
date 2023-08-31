@@ -242,8 +242,8 @@ namespace Tzkt.Api.Repositories
                         TokensCount = contract.TokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
-                        ActiveTicketsCount = contract.ActiveTicketsCount,
                         TicketsCount = contract.TicketsCount,
+                        ActiveTicketsCount = contract.ActiveTicketsCount,
                         TicketBalancesCount = contract.TicketBalancesCount,
                         TicketTransfersCount = contract.TicketTransfersCount,
                         NumDelegations = contract.DelegationsCount,
@@ -612,8 +612,8 @@ namespace Tzkt.Api.Repositories
                             TokensCount = row.TokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
-                            ActiveTicketsCount = row.ActiveTicketsCount,
                             TicketsCount = row.TicketsCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
                             TicketBalancesCount = row.TicketBalancesCount,
                             TicketTransfersCount = row.TicketTransfersCount,
                             NumDelegations = row.DelegationsCount,
@@ -775,7 +775,6 @@ namespace Tzkt.Api.Repositories
                     case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                     case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
                     case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
-                    case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
                     case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
                     case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
@@ -834,6 +833,7 @@ namespace Tzkt.Api.Repositories
                     case "manager": columns.Add(@"""ManagerId"""); break;
                     case "tokensCount": columns.Add(@"""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"""EventsCount"""); break;
+                    case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
 
                     case "pvmKind": columns.Add(@"""PvmKind"""); break;
                     case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
@@ -994,10 +994,6 @@ namespace Tzkt.Api.Repositories
                     case "activeTicketsCount":
                         foreach (var row in rows)
                             result[j++][i] = row.ActiveTicketsCount;
-                        break;
-                    case "ticketsCount":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TicketsCount;
                         break;
                     case "ticketBalancesCount":
                         foreach (var row in rows)
@@ -1246,6 +1242,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.EventsCount;
                         break;
+                    case "ticketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketsCount;
+                        break;
                     case "pvmKind":
                         foreach (var row in rows)
                             result[j++][i] = PvmKinds.ToString((int)row.PvmKind);
@@ -1341,7 +1341,6 @@ namespace Tzkt.Api.Repositories
                 case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                 case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
                 case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
-                case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
                 case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
                 case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
@@ -1400,6 +1399,7 @@ namespace Tzkt.Api.Repositories
                 case "manager": columns.Add(@"""ManagerId"""); break;
                 case "tokensCount": columns.Add(@"""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"""EventsCount"""); break;
+                case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
 
                 case "pvmKind": columns.Add(@"""PvmKind"""); break;
                 case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
@@ -1556,10 +1556,6 @@ namespace Tzkt.Api.Repositories
                 case "activeTicketsCount":
                     foreach (var row in rows)
                         result[j++] = row.ActiveTicketsCount;
-                    break;
-                case "ticketsCount":
-                    foreach (var row in rows)
-                        result[j++] = row.TicketsCount;
                     break;
                 case "ticketBalancesCount":
                     foreach (var row in rows)
@@ -1807,6 +1803,10 @@ namespace Tzkt.Api.Repositories
                 case "eventsCount":
                     foreach (var row in rows)
                         result[j++] = row.EventsCount;
+                    break;
+                case "ticketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketsCount;
                     break;
                 case "pvmKind":
                     foreach (var row in rows)

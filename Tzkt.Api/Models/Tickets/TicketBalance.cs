@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class TicketBalance
     {
@@ -11,19 +9,19 @@ namespace Tzkt.Api.Models
         public long Id { get; set; }
 
         /// <summary>
-        /// Owner account.  
-        /// Click on the field to expand more details.
-        /// </summary>
-        public Alias Account { get; set; }
-
-        /// <summary>
         /// Ticket info.  
         /// Click on the field to expand more details.
         /// </summary>
         public TicketInfo Ticket { get; set; }
 
         /// <summary>
-        /// Balance (raw value, not divided by `decimals`).  
+        /// Owner account.  
+        /// Click on the field to expand more details.
+        /// </summary>
+        public Alias Account { get; set; }
+
+        /// <summary>
+        /// Balance.  
         /// **[sortable]**
         /// </summary>
         public string Balance { get; set; }

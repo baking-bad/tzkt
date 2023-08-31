@@ -76,14 +76,14 @@ namespace Tzkt.Api.Models
         public int NumContracts { get; set; }
 
         /// <summary>
-        /// Number of account tokens with non-zero balances.
-        /// </summary>
-        public int ActiveTokensCount { get; set; }
-
-        /// <summary>
         /// Number of tokens minted in the contract.
         /// </summary>
         public int TokensCount { get; set; }
+
+        /// <summary>
+        /// Number of account tokens with non-zero balances.
+        /// </summary>
+        public int ActiveTokensCount { get; set; }
 
         /// <summary>
         /// Number of tokens the account ever had.
@@ -96,17 +96,17 @@ namespace Tzkt.Api.Models
         public int TokenTransfersCount { get; set; }
 
         /// <summary>
-        /// Number of account tickets with non-zero balances.
-        /// </summary>
-        public int ActiveTicketsCount { get; set; }
-
-        /// <summary>
         /// Number of tickets minted in the contract.
         /// </summary>
         public int TicketsCount { get; set; }
 
         /// <summary>
-        /// Number of tickets the account ever had.
+        /// Number of tickets the account owns.
+        /// </summary>
+        public int ActiveTicketsCount { get; set; }
+
+        /// <summary>
+        /// Number of tickets the account ever owned.
         /// </summary>
         public int TicketBalancesCount { get; set; }
 

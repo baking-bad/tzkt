@@ -3,7 +3,7 @@ using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
-    public class TicketInfo
+    public class TicketInfoShort
     {
         /// <summary>
         /// Internal TzKT id.
@@ -44,10 +44,5 @@ namespace Tzkt.Api.Models
         /// This field can be used for searching same tickets (which have the same content).
         /// </summary>
         public int ContentHash { get; set; }
-
-        /// <summary>
-        /// Total amount of existing tickets.
-        /// </summary>
-        public string TotalSupply { get; set; }
     }
 }
