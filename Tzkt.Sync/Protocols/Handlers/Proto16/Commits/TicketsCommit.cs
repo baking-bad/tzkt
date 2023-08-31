@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 return false;
             
             for (int i = 0; i < updates.Count; i += 2)
-                if (updates[i].Update.Amount != -updates[i + 1].Update.Amount)
+                if (updates[i].Update.Amount > 0 || updates[i].Update.Amount != -updates[i + 1].Update.Amount)
                     return false;
             
             return true;
