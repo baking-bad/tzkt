@@ -2,7 +2,7 @@
 {
     public static class Swagger
     {
-        const string Version = "1.12.2";
+        const string Version = "1.12.3";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)

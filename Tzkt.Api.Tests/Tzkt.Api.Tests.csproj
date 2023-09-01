@@ -5,7 +5,7 @@
         <Nullable>enable</Nullable>
         <IsPackable>false</IsPackable>
         <LangVersion>10</LangVersion>
-		<AssemblyVersion>1.12.2</AssemblyVersion>
+		<AssemblyVersion>1.12.3</AssemblyVersion>
     </PropertyGroup>
 
     <ItemGroup>
