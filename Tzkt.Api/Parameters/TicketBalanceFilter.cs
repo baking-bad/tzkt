@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -47,7 +48,7 @@ namespace Tzkt.Api
         public TimestampParameter firstTime { get; set; }
 
         /// <summary>
-        /// Filter by level of the block where the balance was last seen.  
+        /// Filter by level of the block where the balance was last changed.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter lastLevel { get; set; }
@@ -58,6 +59,7 @@ namespace Tzkt.Api
         /// </summary>
         public TimestampParameter lastTime { get; set; }
 
+        [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             (ticket == null || ticket.Empty) &&

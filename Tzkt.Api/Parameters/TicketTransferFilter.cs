@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -37,13 +38,13 @@ namespace Tzkt.Api
         public AnyOfParameter anyof { get; set; }
 
         /// <summary>
-        /// Filter by sender account address.  
+        /// Filter by sender address.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AccountParameter from { get; set; }
 
         /// <summary>
-        /// Filter by target account address.  
+        /// Filter by recepient address.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AccountParameter to { get; set; }
@@ -61,17 +62,18 @@ namespace Tzkt.Api
         public Int64NullParameter transactionId { get; set; }
 
         /// <summary>
-        /// Filter by id of the transfer ticket operation, caused the ticket transfer.  
+        /// Filter by id of the transfer_ticket operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter transferTicketId { get; set; }
 
         /// <summary>
-        /// Filter by id of the smart rollup execute operation, caused the ticket transfer.  
+        /// Filter by id of the smart_rollup_execute operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter smartRollupExecuteId { get; set; }
 
+        [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             level == null &&

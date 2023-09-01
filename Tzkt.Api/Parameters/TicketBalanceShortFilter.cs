@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -28,6 +29,7 @@ namespace Tzkt.Api
         /// </summary>
         public NatParameter balance { get; set; }
 
+        [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             (ticket == null || ticket.Empty) &&

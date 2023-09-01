@@ -1,10 +1,11 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
     [JsonConverter(typeof(RawJsonConverter))]
+    [JsonSchemaType(typeof(object), IsNullable = true)]
     public class RawJson
     {
         string Json { get; }

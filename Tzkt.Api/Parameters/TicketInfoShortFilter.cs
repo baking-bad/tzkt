@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -16,6 +17,7 @@ namespace Tzkt.Api
         /// </summary>
         public AccountParameter ticketer { get; set; }
 
+        [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             ticketer == null;

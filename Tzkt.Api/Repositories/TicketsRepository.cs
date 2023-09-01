@@ -68,6 +68,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {select} FROM ""Tickets""")
                 .Filter("Id", filter.id)
                 .Filter("TicketerId", filter.ticketer)
+                .Filter("RawType", filter.rawType)
+                .Filter("RawContent", filter.rawContent)
                 .Filter("JsonContent", filter.content)
                 .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
@@ -95,6 +97,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Tickets""")
                 .Filter("Id", filter.id)
                 .Filter("TicketerId", filter.ticketer)
+                .Filter("RawType", filter.rawType)
+                .Filter("RawContent", filter.rawContent)
                 .Filter("JsonContent", filter.content)
                 .Filter("TypeHash", filter.typeHash)
                 .Filter("ContentHash", filter.contentHash)
@@ -335,13 +339,16 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""RawType""", filter.ticket.rawType)
+                .FilterA(@"t.""RawContent""", filter.ticket.rawContent)
+                .FilterA(@"t.""JsonContent""", filter.ticket.content)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
                     "transfersCount" => (@"tb.""TransfersCount""", @"tb.""TransfersCount"""),
-                    "firstLevel" => (@"tb.""Id""", @"tb.""FirstLevel"""),
+                    "firstLevel" => (@"tb.""FirstLevel""", @"tb.""FirstLevel"""),
                     "lastLevel" => (@"tb.""LastLevel""", @"tb.""LastLevel"""),
                     _ => (@"tb.""Id""", @"tb.""Id""")
                 }, @"tb.""Id""");
@@ -365,6 +372,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tb.""LastLevel""", filter.lastTime)
                 .FilterA(@"tb.""TicketId""", filter.ticket.id)
                 .FilterA(@"tb.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""RawType""", filter.ticket.rawType)
+                .FilterA(@"t.""RawContent""", filter.ticket.rawContent)
+                .FilterA(@"t.""JsonContent""", filter.ticket.content)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 
@@ -616,6 +626,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""RawType""", filter.ticket.rawType)
+                .FilterA(@"t.""RawContent""", filter.ticket.rawContent)
+                .FilterA(@"t.""JsonContent""", filter.ticket.content)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .Take(pagination, x => x switch
@@ -646,6 +659,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""SmartRollupExecuteId""", filter.smartRollupExecuteId)
                 .FilterA(@"tr.""TicketId""", filter.ticket.id)
                 .FilterA(@"tr.""TicketerId""", filter.ticket.ticketer)
+                .FilterA(@"t.""RawType""", filter.ticket.rawType)
+                .FilterA(@"t.""RawContent""", filter.ticket.rawContent)
+                .FilterA(@"t.""JsonContent""", filter.ticket.content)
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 

@@ -1,5 +1,4 @@
 ﻿using Netezos.Encoding;
-using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -18,20 +17,17 @@ namespace Tzkt.Api.Models
         
         /// <summary>
         /// Ticket content type in Micheline format.
-        /// This field is omitted by default and must be explicitly selected via `?select=` parameter.
         /// </summary>
         public IMicheline RawType { get; set; }
 
         /// <summary>
         /// Ticket content in Micheline format.
-        /// This field is omitted by default and must be explicitly selected via `?select=` parameter.
         /// </summary>
         public IMicheline RawContent { get; set; }
 
         /// <summary>
         /// Ticket content in JSON format.
         /// </summary>
-        [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson Content { get; set; }
 
         /// <summary>
@@ -90,17 +86,17 @@ namespace Tzkt.Api.Models
         public int HoldersCount { get; set; }
 
         /// <summary>
-        /// Total number of minted tickets (raw value, not divided by `decimals`).
+        /// Total amount minted.
         /// </summary>
         public string TotalMinted { get; set; }
 
         /// <summary>
-        /// Total number of burned tickets (raw value, not divided by `decimals`).
+        /// Total amount burned.
         /// </summary>
         public string TotalBurned { get; set; }
 
         /// <summary>
-        /// Total number of existing tickets (raw value, not divided by `decimals`).
+        /// Total amount exists.
         /// </summary>
         public string TotalSupply { get; set; }
     }

@@ -11,19 +11,17 @@ namespace Tzkt.Api.Models
         public long Id { get; set; }
 
         /// <summary>
-        /// Contract, created the ticket.
+        /// Contract, issued the ticket.
         /// </summary>
         public Alias Ticketer { get; set; }
 
         /// <summary>
         /// Ticket content type in Micheline format.
-        /// This field is omitted by default and must be explicitly selected via `?select=` parameter.
         /// </summary>
         public IMicheline RawType { get; set; }
 
         /// <summary>
         /// Ticket content in Micheline format.
-        /// This field is omitted by default and must be explicitly selected via `?select=` parameter.
         /// </summary>
         public IMicheline RawContent { get; set; }
 

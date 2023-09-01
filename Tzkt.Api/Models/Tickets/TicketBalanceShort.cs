@@ -21,8 +21,7 @@
         public Alias Account { get; set; }
 
         /// <summary>
-        /// Balance (raw value, not divided by `decimals`).  
-        /// **[sortable]**
+        /// Balance.  
         /// </summary>
         public string Balance { get; set; }
     }

@@ -263,7 +263,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="selection">Selection</param>
         /// <returns></returns>
         [HttpGet("historical_balances/{level:int}")]
-        public async Task<ActionResult<IEnumerable<TicketBalanceShort>>> GetTicketBalances(int level,
+        public async Task<ActionResult<IEnumerable<TicketBalanceShort>>> GetHistoricalTicketBalances(int level,
             [FromQuery] TicketBalanceShortFilter filter,
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection)
