@@ -59,6 +59,9 @@ namespace Tzkt.Api.Repositories
                 ActiveTokensCount = delegat.ActiveTokensCount,
                 TokenBalancesCount = delegat.TokenBalancesCount,
                 TokenTransfersCount = delegat.TokenTransfersCount,
+                ActiveTicketsCount = delegat.ActiveTicketsCount,
+                TicketBalancesCount = delegat.TicketBalancesCount,
+                TicketTransfersCount = delegat.TicketTransfersCount,
                 NumDelegators = delegat.DelegatorsCount,
                 NumBlocks = delegat.BlocksCount,
                 NumDelegations = delegat.DelegationsCount,
@@ -171,6 +174,9 @@ namespace Tzkt.Api.Repositories
                     ActiveTokensCount = row.ActiveTokensCount,
                     TokenBalancesCount = row.TokenBalancesCount,
                     TokenTransfersCount = row.TokenTransfersCount,
+                    ActiveTicketsCount = row.ActiveTicketsCount,
+                    TicketBalancesCount = row.TicketBalancesCount,
+                    TicketTransfersCount = row.TicketTransfersCount,
                     NumDelegators = row.DelegatorsCount,
                     NumBlocks = row.BlocksCount,
                     NumDelegations = row.DelegationsCount,
@@ -245,6 +251,9 @@ namespace Tzkt.Api.Repositories
                     case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
                     case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                     case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
+                    case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
+                    case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
+                    case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                     case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -428,6 +437,18 @@ namespace Tzkt.Api.Repositories
                     case "tokenTransfersCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfersCount;
+                        break;
+                    case "activeTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTicketsCount;
+                        break;
+                    case "ticketBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketBalancesCount;
+                        break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfersCount;
                         break;
                     case "numDelegators":
                         foreach (var row in rows)
@@ -653,6 +674,9 @@ namespace Tzkt.Api.Repositories
                 case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
                 case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                 case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
+                case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
+                case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
+                case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                 case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -832,6 +856,18 @@ namespace Tzkt.Api.Repositories
                 case "tokenTransfersCount":
                     foreach (var row in rows)
                         result[j++] = row.TokenTransfersCount;
+                    break;
+                case "activeTicketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveTicketsCount;
+                    break;
+                case "ticketBalancesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketBalancesCount;
+                    break;
+                case "ticketTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketTransfersCount;
                     break;
                 case "numDelegators":
                     foreach (var row in rows)

@@ -45,7 +45,10 @@ namespace Tzkt.Sync.Protocols.Proto13
                         Type = AccountType.Rollup,
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
-                        TokenTransfersCount = ghost.TokenTransfersCount
+                        TokenTransfersCount = ghost.TokenTransfersCount,
+                        ActiveTicketsCount = ghost.ActiveTicketsCount,
+                        TicketBalancesCount = ghost.TicketBalancesCount,
+                        TicketTransfersCount = ghost.TicketTransfersCount
                     };
                     Db.Entry(ghost).State = EntityState.Detached;
                     Db.Entry(rollup).State = EntityState.Modified;
@@ -186,7 +189,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                 sender.RollupsCount--;
 
-                if (rollup.TokenTransfersCount == 0)
+                if (rollup.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
                 {
                     Db.Rollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);
@@ -203,6 +206,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                         ActiveTokensCount = rollup.ActiveTokensCount,
                         TokenBalancesCount = rollup.TokenBalancesCount,
                         TokenTransfersCount = rollup.TokenTransfersCount,
+                        ActiveTicketsCount = rollup.ActiveTicketsCount,
+                        TicketBalancesCount = rollup.TicketBalancesCount,
+                        TicketTransfersCount = rollup.TicketTransfersCount,
                         Type = AccountType.Ghost,
                     };
 

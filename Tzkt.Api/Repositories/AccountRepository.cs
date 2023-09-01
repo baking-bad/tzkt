@@ -87,6 +87,9 @@ namespace Tzkt.Api.Repositories
                         ActiveTokensCount = delegat.ActiveTokensCount,
                         TokenBalancesCount = delegat.TokenBalancesCount,
                         TokenTransfersCount = delegat.TokenTransfersCount,
+                        ActiveTicketsCount = delegat.ActiveTicketsCount,
+                        TicketBalancesCount = delegat.TicketBalancesCount,
+                        TicketTransfersCount = delegat.TicketTransfersCount,
                         NumDelegators = delegat.DelegatorsCount,
                         NumBlocks = delegat.BlocksCount,
                         NumDelegations = delegat.DelegationsCount,
@@ -165,6 +168,9 @@ namespace Tzkt.Api.Repositories
                         ActiveTokensCount = user.ActiveTokensCount,
                         TokenBalancesCount = user.TokenBalancesCount,
                         TokenTransfersCount = user.TokenTransfersCount,
+                        ActiveTicketsCount = user.ActiveTicketsCount,
+                        TicketBalancesCount = user.TicketBalancesCount,
+                        TicketTransfersCount = user.TicketTransfersCount,
                         NumDelegations = user.DelegationsCount,
                         NumOriginations = user.OriginationsCount,
                         NumReveals = user.RevealsCount,
@@ -236,6 +242,10 @@ namespace Tzkt.Api.Repositories
                         TokensCount = contract.TokensCount,
                         TokenBalancesCount = contract.TokenBalancesCount,
                         TokenTransfersCount = contract.TokenTransfersCount,
+                        TicketsCount = contract.TicketsCount,
+                        ActiveTicketsCount = contract.ActiveTicketsCount,
+                        TicketBalancesCount = contract.TicketBalancesCount,
+                        TicketTransfersCount = contract.TicketTransfersCount,
                         NumDelegations = contract.DelegationsCount,
                         NumOriginations = contract.OriginationsCount,
                         NumReveals = contract.RevealsCount,
@@ -273,6 +283,9 @@ namespace Tzkt.Api.Repositories
                         ActiveTokensCount = rollup.ActiveTokensCount,
                         TokenBalancesCount = rollup.TokenBalancesCount,
                         TokenTransfersCount = rollup.TokenTransfersCount,
+                        ActiveTicketsCount = rollup.ActiveTicketsCount,
+                        TicketBalancesCount = rollup.TicketBalancesCount,
+                        TicketTransfersCount = rollup.TicketTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
                         Metadata = legacy ? rollup.Profile : null,
                         Extras = legacy ? null : rollup.Extras
@@ -295,6 +308,9 @@ namespace Tzkt.Api.Repositories
                         ActiveTokensCount = rollup.ActiveTokensCount,
                         TokenBalancesCount = rollup.TokenBalancesCount,
                         TokenTransfersCount = rollup.TokenTransfersCount,
+                        ActiveTicketsCount = rollup.ActiveTicketsCount,
+                        TicketBalancesCount = rollup.TicketBalancesCount,
+                        TicketTransfersCount = rollup.TicketTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
                         SmartRollupCementCount = rollup.SmartRollupCementCount,
                         SmartRollupExecuteCount = rollup.SmartRollupExecuteCount,
@@ -328,6 +344,9 @@ namespace Tzkt.Api.Repositories
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
                         TokenTransfersCount = ghost.TokenTransfersCount,
+                        ActiveTicketsCount = ghost.ActiveTicketsCount,
+                        TicketBalancesCount = ghost.TicketBalancesCount,
+                        TicketTransfersCount = ghost.TicketTransfersCount,
                         FirstActivity = ghost.FirstLevel,
                         FirstActivityTime = Time[ghost.FirstLevel],
                         LastActivity = ghost.LastLevel,
@@ -439,6 +458,9 @@ namespace Tzkt.Api.Repositories
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
@@ -505,6 +527,9 @@ namespace Tzkt.Api.Repositories
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             NumDelegators = row.DelegatorsCount,
                             NumBlocks = row.BlocksCount,
                             NumDelegations = row.DelegationsCount,
@@ -587,6 +612,10 @@ namespace Tzkt.Api.Repositories
                             TokensCount = row.TokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            TicketsCount = row.TicketsCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             NumDelegations = row.DelegationsCount,
                             NumOriginations = row.OriginationsCount,
                             NumReveals = row.RevealsCount,
@@ -608,6 +637,9 @@ namespace Tzkt.Api.Repositories
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
@@ -640,6 +672,9 @@ namespace Tzkt.Api.Repositories
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             NumTransactions = row.TransactionsCount
                         });
                         break;
@@ -661,6 +696,9 @@ namespace Tzkt.Api.Repositories
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
+                            ActiveTicketsCount = row.ActiveTicketsCount,
+                            TicketBalancesCount = row.TicketBalancesCount,
+                            TicketTransfersCount = row.TicketTransfersCount,
                             NumTransactions = row.TransactionsCount,
                             SmartRollupCementCount = row.SmartRollupCementCount,
                             SmartRollupExecuteCount = row.SmartRollupExecuteCount,
@@ -736,6 +774,9 @@ namespace Tzkt.Api.Repositories
                     case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
                     case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                     case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
+                    case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
+                    case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
+                    case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                     case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -792,6 +833,7 @@ namespace Tzkt.Api.Repositories
                     case "manager": columns.Add(@"""ManagerId"""); break;
                     case "tokensCount": columns.Add(@"""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"""EventsCount"""); break;
+                    case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
 
                     case "pvmKind": columns.Add(@"""PvmKind"""); break;
                     case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
@@ -948,6 +990,18 @@ namespace Tzkt.Api.Repositories
                     case "tokenTransfersCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TokenTransfersCount;
+                        break;
+                    case "activeTicketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActiveTicketsCount;
+                        break;
+                    case "ticketBalancesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketBalancesCount;
+                        break;
+                    case "ticketTransfersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketTransfersCount;
                         break;
                     case "numDelegators":
                         foreach (var row in rows)
@@ -1188,6 +1242,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.EventsCount;
                         break;
+                    case "ticketsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TicketsCount;
+                        break;
                     case "pvmKind":
                         foreach (var row in rows)
                             result[j++][i] = PvmKinds.ToString((int)row.PvmKind);
@@ -1282,6 +1340,9 @@ namespace Tzkt.Api.Repositories
                 case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
                 case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
                 case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
+                case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
+                case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
+                case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                 case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
@@ -1338,6 +1399,7 @@ namespace Tzkt.Api.Repositories
                 case "manager": columns.Add(@"""ManagerId"""); break;
                 case "tokensCount": columns.Add(@"""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"""EventsCount"""); break;
+                case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
 
                 case "pvmKind": columns.Add(@"""PvmKind"""); break;
                 case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
@@ -1490,6 +1552,18 @@ namespace Tzkt.Api.Repositories
                 case "tokenTransfersCount":
                     foreach (var row in rows)
                         result[j++] = row.TokenTransfersCount;
+                    break;
+                case "activeTicketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ActiveTicketsCount;
+                    break;
+                case "ticketBalancesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketBalancesCount;
+                    break;
+                case "ticketTransfersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketTransfersCount;
                     break;
                 case "numDelegators":
                     foreach (var row in rows)
@@ -1729,6 +1803,10 @@ namespace Tzkt.Api.Repositories
                 case "eventsCount":
                     foreach (var row in rows)
                         result[j++] = row.EventsCount;
+                    break;
+                case "ticketsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.TicketsCount;
                     break;
                 case "pvmKind":
                     foreach (var row in rows)

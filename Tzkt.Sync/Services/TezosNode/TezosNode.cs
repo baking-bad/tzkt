@@ -1,10 +1,5 @@
-﻿using System;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using System.Text.Json;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
@@ -37,6 +32,11 @@ namespace Tzkt.Sync.Services
             using var stream = await Rpc.GetStreamAsync(url);
             using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 100_000 });
             return doc.RootElement.Clone();
+        }
+
+        public async Task<T> PostAsync<T>(string url, string content)
+        {
+            return await Rpc.PostAsync<T>(url, content);
         }
 
         public async Task<Header> GetHeaderAsync()

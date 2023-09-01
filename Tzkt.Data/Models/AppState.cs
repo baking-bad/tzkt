@@ -97,6 +97,11 @@ namespace Tzkt.Data.Models
         public int TokensCount { get; set; }
         public int TokenBalancesCount { get; set; }
         public int TokenTransfersCount { get; set; }
+        
+        public int TicketsCount { get; set; }
+        public int TicketBalancesCount { get; set; }
+        public int TicketTransfersCount { get; set; }
+
         public int EventsCount { get; set; }
         #endregion
 

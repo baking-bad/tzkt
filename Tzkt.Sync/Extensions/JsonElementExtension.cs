@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Numerics;
 using System.Text.Json;
 
 namespace Tzkt.Sync
@@ -134,6 +133,12 @@ namespace Tzkt.Sync
         {
             return el.TryGetProperty(name, out var prop) && prop.TryParseInt64(out var res) ? res
                 : throw new SerializationException($"Missed required long {name}");
+        }
+
+        public static BigInteger RequiredBigInteger(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var prop) && BigInteger.TryParse(prop.GetString(), out var res) ? res
+                : throw new SerializationException($"Missed required BigInteger {name}");
         }
 
         public static int ParseInt32(this JsonElement el)

@@ -22,6 +22,7 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetActiveDelegatesAsync(int level);
         Task<JsonElement> GetDelegateParticipationAsync(int level, string address);
         Task<JsonElement> GetCycleAsync(int level, int cycle);
+        Task<JsonElement> GetTicketBalance(int level, string address, string ticket);
         #endregion
     }
 }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Sync
+﻿namespace Tzkt.Sync
 {
     static class BytesExtension
     {
@@ -47,6 +45,14 @@ namespace Tzkt.Sync
                     return false;
 
             return true;
+        }
+
+        public static int GetHashCodeExt(this byte[] data)
+        {
+            var res = data.Length;
+            for (int i = 0; i < data.Length; i++)
+                res ^= data[i] << (8 * (i % 4));
+            return res;
         }
 
         public static void Flush(this byte[] data)

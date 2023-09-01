@@ -4,6 +4,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
@@ -61,6 +62,14 @@ namespace Tzkt.Sync
         public async Task<T> GetObjectAsync<T>(string path)
         {
             using var stream = await HttpClient.GetStreamAsync(path);
+            return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
+        }
+        
+        public async Task<T> PostAsync<T>(string path, string content)
+        {
+            var response = await HttpClient.PostAsync(path, new JsonContent(content));
+            
+            using var stream = await response.Content.ReadAsStreamAsync();
             return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
         }
 

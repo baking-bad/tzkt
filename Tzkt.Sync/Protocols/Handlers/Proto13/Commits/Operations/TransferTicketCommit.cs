@@ -1,8 +1,5 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
@@ -13,6 +10,8 @@ namespace Tzkt.Sync.Protocols.Proto13
     class TransferTicketCommit : ProtocolCommit
     {
         public TransferTicketOperation Operation { get; private set; }
+        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
+
 
         public TransferTicketCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -120,6 +119,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                     if (senderDelegate.Id != sender.Id)
                         senderDelegate.DelegatedBalance -= burned;
                 }
+                
+                TicketUpdates = ParseTicketUpdates(result);
             }
             #endregion
 
@@ -194,6 +195,70 @@ namespace Tzkt.Sync.Protocols.Proto13
             Db.TransferTicketOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
+        }
+
+        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(JsonElement result)
+        {
+            if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
+                return null;
+
+            var res = new List<TicketUpdates>();
+            foreach (var updates in ticketUpdates.RequiredArray().EnumerateArray())
+            {
+                var list = new List<TicketUpdate>();
+                foreach (var update in updates.RequiredArray("updates").EnumerateArray())
+                {
+                    var amount = update.RequiredBigInteger("amount");
+                    if (amount != BigInteger.Zero)
+                    {
+                        list.Add(new TicketUpdate
+                        {
+                            Account = update.RequiredString("account"),
+                            Amount = amount
+                        });
+                    }
+                }
+
+                if (list.Count > 0)
+                {
+                    var ticketToken = updates.Required("ticket_token");
+                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
+                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var rawType = type.ToBytes();
+
+                    byte[] rawContent;
+                    string jsonContent;
+
+                    try
+                    {
+                        var schema = Schema.Create(type as MichelinePrim);
+                        rawContent = schema.Optimize(value).ToBytes();
+                        jsonContent = schema.Humanize(value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to parse ticket content");
+                        rawContent = value.ToBytes();
+                        jsonContent = null;
+                    }
+
+                    res.Add(new TicketUpdates
+                    {
+                        Ticket = new TicketIdentity
+                        {
+                            Ticketer = ticketToken.RequiredString("ticketer"),
+                            RawType = rawType,
+                            RawContent = rawContent,
+                            JsonContent = jsonContent,
+                            TypeHash = Script.GetHash(rawType),
+                            ContentHash = Script.GetHash(rawContent)
+                        },
+                        Updates = list
+                    });
+                }
+            }
+
+            return res.Count > 0 ? res : null;
         }
     }
 }

@@ -109,6 +109,12 @@ namespace Tzkt.Data
         public DbSet<TokenTransfer> TokenTransfers { get; set; }
         #endregion
 
+        #region tickets
+        public DbSet<Ticket> Tickets { get; set; }
+        public DbSet<TicketBalance> TicketBalances { get; set; }
+        public DbSet<TicketTransfer> TicketTransfers { get; set; }
+        #endregion
+
         #region rollups
         public DbSet<SmartRollupCommitment> SmartRollupCommitments { get; set; }
         public DbSet<RefutationGame> RefutationGames { get; set; }
@@ -225,6 +231,12 @@ namespace Tzkt.Data
             modelBuilder.BuildTokenModel();
             modelBuilder.BuildTokenBalanceModel();
             modelBuilder.BuildTokenTransferModel();
+            #endregion
+
+            #region tickets
+            modelBuilder.BuildTicketModel();
+            modelBuilder.BuildTicketBalanceModel();
+            modelBuilder.BuildTicketTransferModel();
             #endregion
 
             #region rollups

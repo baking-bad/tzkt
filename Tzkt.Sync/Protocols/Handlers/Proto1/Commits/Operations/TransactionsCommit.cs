@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
-
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -17,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public TransactionOperation Transaction { get; private set; }
         public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
+        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
 
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -145,6 +141,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await ProcessStorage(transaction, storage);
                 }
 
+                TicketUpdates = ParseTicketUpdates("ticket_updates", result);
+                
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
             }
@@ -288,6 +286,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, storage);
                 }
+                
+                TicketUpdates = ParseTicketUpdates("ticket_receipt", result);
 
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
@@ -685,6 +685,70 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual int GetConsumedGas(JsonElement result)
         {
             return result.OptionalInt32("consumed_gas") ?? 0;
+        }
+
+        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(string property, JsonElement result)
+        {
+            if (!result.TryGetProperty(property, out var ticketUpdates))
+                return null;
+
+            var res = new List<TicketUpdates>();
+            foreach (var updates in ticketUpdates.RequiredArray().EnumerateArray())
+            {
+                var list = new List<TicketUpdate>();
+                foreach (var update in updates.RequiredArray("updates").EnumerateArray())
+                {
+                    var amount = update.RequiredBigInteger("amount");
+                    if (amount != BigInteger.Zero)
+                    {
+                        list.Add(new TicketUpdate
+                        {
+                            Account = update.RequiredString("account"),
+                            Amount = amount
+                        });
+                    }
+                }
+
+                if (list.Count > 0)
+                {
+                    var ticketToken = updates.Required("ticket_token");
+                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
+                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var rawType = type.ToBytes();
+
+                    byte[] rawContent;
+                    string jsonContent;
+
+                    try
+                    {
+                        var schema = Schema.Create(type as MichelinePrim);
+                        rawContent = schema.Optimize(value).ToBytes();
+                        jsonContent = schema.Humanize(value);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "Failed to parse ticket content");
+                        rawContent = value.ToBytes();
+                        jsonContent = null;
+                    }
+
+                    res.Add(new TicketUpdates
+                    {
+                        Ticket = new TicketIdentity
+                        {
+                            Ticketer = ticketToken.RequiredString("ticketer"),
+                            RawType = rawType,
+                            RawContent = rawContent,
+                            JsonContent = jsonContent,
+                            TypeHash = Script.GetHash(rawType),
+                            ContentHash = Script.GetHash(rawContent)
+                        },
+                        Updates = list
+                    });
+                }
+            }
+
+            return res.Count > 0 ? res : null;
         }
     }
 }

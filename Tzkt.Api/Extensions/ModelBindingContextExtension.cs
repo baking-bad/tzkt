@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Netezos.Encoding;
 
 namespace Tzkt.Api
 {
@@ -182,6 +183,68 @@ namespace Tzkt.Api
                             return false;
                         }
                         result.Add(value);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetMicheline(this ModelBindingContext bindingContext, string name, ref bool hasValue, out IMicheline result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    try
+                    {
+                        result = Micheline.FromJson(valueObject.FirstValue);
+                        hasValue = true;
+                    }
+                    catch
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid Micheline value.");
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetMichelineList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<IMicheline> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    try
+                    {
+                        var json = valueObject.FirstValue.Trim();
+                        if (json[0] != '[') json = $"[{json}]";
+                        var values = JsonSerializer.Deserialize<List<IMicheline>>(json);
+
+                        if (values.Count == 0)
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                            return false;
+                        }
+
+                        hasValue = true;
+                        result = values;
+                    }
+                    catch
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List contains invalid Micheline value(s).");
+                        return false;
                     }
                 }
             }

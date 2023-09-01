@@ -15,6 +15,9 @@ namespace Tzkt.Data.Models
         public byte[] RawContent { get; set; }
         public string JsonContent { get; set; }
         public string Entrypoint { get; set; }
+
+        public int? TicketTransfers { get; set; }
+        public int? SubIds { get; set; }
     }
 
     public static class TransferTicketOperationModel

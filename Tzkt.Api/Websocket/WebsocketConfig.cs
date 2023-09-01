@@ -12,6 +12,8 @@ namespace Tzkt.Api.Websocket
         public int MaxAccountsSubscriptions { get; set; } = 50;
         public int MaxTokenBalancesSubscriptions { get; set; } = 50;
         public int MaxTokenTransfersSubscriptions { get; set; } = 50;
+        public int MaxTicketBalancesSubscriptions { get; set; } = 50;
+        public int MaxTicketTransfersSubscriptions { get; set; } = 50;
     }
 
     public static class CacheConfigExt

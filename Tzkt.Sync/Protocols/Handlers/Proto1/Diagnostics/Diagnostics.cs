@@ -1,9 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -72,6 +68,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             var accounts = entries.Where(x =>
                 x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
                 .Select(x => x.Entity as Account);
+            
+            var ticketBalances = entries.Where(x =>
+                x.Entity is TicketBalance && (x.State == EntityState.Modified || x.State == EntityState.Added))
+                .Select(x => x.Entity as TicketBalance);
+
+            foreach (var ticketBalance in ticketBalances)
+            {
+                await TestTicketBalance(level, ticketBalance);
+            }
 
             await TestGlobalCounter(level, state);
 
@@ -173,6 +178,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             TestAccountDelegate(remote, account);
             TestAccountCounter(remote, account);
         }
+        
+        protected virtual Task TestTicketBalance(int level, TicketBalance ticketBalance) => Task.CompletedTask;
 
         protected virtual void TestAccountDelegate(JsonElement remote, Account local)
         {

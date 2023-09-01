@@ -51,6 +51,21 @@ namespace Tzkt.Api.Models
         public int TokenTransfersCount { get; set; }
 
         /// <summary>
+        /// Number of tickets the account owns.
+        /// </summary>
+        public int ActiveTicketsCount { get; set; }
+
+        /// <summary>
+        /// Number of tickets the account ever owned.
+        /// </summary>
+        public int TicketBalancesCount { get; set; }
+
+        /// <summary>
+        /// Number of ticket transfers from/to the account.
+        /// </summary>
+        public int TicketTransfersCount { get; set; }
+        
+        /// <summary>
         /// Number of transaction operations related to the account
         /// </summary>
         public int NumTransactions { get; set; }

@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Dapper;
+using Netezos.Encoding;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api
@@ -1622,6 +1623,44 @@ namespace Tzkt.Api
                     ? $@"{column} IS NULL"
                     : $@"{column} IS NOT NULL");
             }
+
+            return this;
+        }
+
+        public SqlBuilder Filter(string column, MichelineParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"""{column}"" = {Param(value.Eq.ToBytes())}");
+
+            if (value.Ne != null)
+                AppendFilter($@"""{column}"" != {Param(value.Ne.ToBytes())}");
+
+            if (value.In != null)
+                AppendFilter($@"""{column}"" = ANY ({Param(value.In.Select(x => x.ToBytes()).ToArray())})");
+
+            if (value.Ni != null)
+                AppendFilter($@"NOT (""{column}"" = ANY ({Param(value.Ni.Select(x => x.ToBytes()).ToArray())}))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, MichelineParameter value, Func<string, string> map = null)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {Param(value.Eq.ToBytes())}");
+
+            if (value.Ne != null)
+                AppendFilter($"{column} != {Param(value.Ne.ToBytes())}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In.Select(x => x.ToBytes()).ToArray())})");
+
+            if (value.Ni != null)
+                AppendFilter($"NOT ({column} = ANY ({Param(value.Ni.Select(x => x.ToBytes()).ToArray())}))");
 
             return this;
         }
