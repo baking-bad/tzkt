@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Netezos.Keys;
@@ -25,8 +21,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     x["amount"].Value<long>(),
                     x["delegate"]?.Value<string>() ?? null,
                     x["script"]["code"].ToString(),
-                    x["script"]["storage"].ToString())
-                )
+                    x["script"]["storage"].ToString()
+                ))
+                .ToList() ?? new(0);
+
+            var bootstrapSmartRollups = parameters["bootstrap_smart_rollups"]?
+                .Select(x =>
+                (
+                    x["address"].Value<string>(),
+                    x["pvm_kind"].Value<string>()
+                ))
                 .ToList() ?? new(0);
 
             var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count);
@@ -213,6 +217,46 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Cache.Storages.Add(contract, storage);
                 #endregion
 
+            }
+            #endregion
+
+            #region bootstrap smart rollups
+            foreach (var (address, pvmKind) in bootstrapSmartRollups)
+            {
+                var creator = nullAddress;
+                var rollup = new SmartRollup()
+                {
+                    Id = Cache.AppState.NextAccountId(),
+                    FirstLevel = 1,
+                    LastLevel = 1,
+                    Address = address,
+                    Balance = 0,
+                    Counter = 0,
+                    CreatorId = creator.Id,
+                    Staked = false,
+                    Type = AccountType.SmartRollup,
+                    PvmKind = pvmKind switch
+                    {
+                        "arith" => PvmKind.Arith,
+                        "wasm_2_0_0" => PvmKind.Wasm,
+                        _ => throw new NotImplementedException()
+                    },
+                    GenesisCommitment = "genesis_commitment_hash", // this should be calculated from Machine.install_boot_sector and Machine.state_hash,
+                    LastCommitment = "genesis_commitment_hash",    // but that cannot be done on the indexer side, so we set a random string
+                    InboxLevel = 2,
+                    TotalStakers = 0,
+                    ActiveStakers = 0,
+                    ExecutedCommitments = 0,
+                    CementedCommitments = 0,
+                    PendingCommitments = 0,
+                    RefutedCommitments = 0,
+                    OrphanCommitments = 0,
+                    SmartRollupBonds = 0
+                };
+                Cache.Accounts.Add(rollup);
+                accounts.Add(rollup);
+
+                creator.SmartRollupsCount++;
             }
             #endregion
 
