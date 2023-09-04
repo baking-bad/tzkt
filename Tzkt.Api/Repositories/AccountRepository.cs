@@ -2022,7 +2022,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(OpTypes.VdfRevelation)
-                        ? Operations.GetVdfRevelations(baker, level, null, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetVdfRevelations(_delegat, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
