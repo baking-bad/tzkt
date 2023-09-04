@@ -87,11 +87,6 @@
         public byte[] Kernel { get; set; }
 
         /// <summary>
-        /// Origination proof bytes (in base64).
-        /// </summary>
-        public byte[] OriginationProof { get; set; }
-
-        /// <summary>
         /// Smart rollup parameter type. Note: you can configure format by setting `micheline` query parameter.
         /// </summary>
         public object ParameterType { get; set; }
