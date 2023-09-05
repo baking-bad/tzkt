@@ -172,7 +172,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                             case "transaction": await ValidateTransaction(content); break;
                             case "reveal": await ValidateReveal(content); break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
-                            case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
                             case "update_consensus_key": await ValidateUpdateConsensusKey(content); break;
                             case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
@@ -481,19 +480,6 @@ namespace Tzkt.Sync.Protocols.Proto18
         }
 
         protected virtual async Task ValidateRegisterConstant(JsonElement content)
-        {
-            var source = content.RequiredString("source");
-
-            if (!await Cache.Accounts.ExistsAsync(source))
-                throw new ValidationException("unknown source account");
-
-            ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
-                source,
-                content.RequiredInt64("fee"));
-        }
-
-        protected virtual async Task ValidateSetDepositsLimit(JsonElement content)
         {
             var source = content.RequiredString("source");
 
