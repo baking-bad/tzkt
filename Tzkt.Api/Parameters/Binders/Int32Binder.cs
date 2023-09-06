@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Tzkt.Api
 {
@@ -43,6 +39,23 @@ namespace Tzkt.Api
             if (!hasValue)
             {
                 bindingContext.Result = ModelBindingResult.Success(null);
+                return Task.CompletedTask;
+            }
+            
+            if (ge != null && (ge == le || ge == lt + 1))
+            {
+                bindingContext.Result = ModelBindingResult.Success(new Int32Parameter
+                {
+                    Eq = ge,
+                    Ne = null,
+                    Gt = null,
+                    Ge = null,
+                    Lt = null,
+                    Le = null,
+                    In = null,
+                    Ni = null
+                });
+
                 return Task.CompletedTask;
             }
 
