@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var entries = Db.ChangeTracker.Entries();
 
-            if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation && x.State == EntityState.Added))
+            if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation or ContractEvent && x.State == EntityState.Added))
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = Cache.AppState.Get();
