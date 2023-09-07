@@ -46,14 +46,7 @@ namespace Tzkt.Api
             {
                 bindingContext.Result = ModelBindingResult.Success(new Int32Parameter
                 {
-                    Eq = ge,
-                    Ne = null,
-                    Gt = null,
-                    Ge = null,
-                    Lt = null,
-                    Le = null,
-                    In = null,
-                    Ni = null
+                    Eq = ge
                 });
 
                 return Task.CompletedTask;
