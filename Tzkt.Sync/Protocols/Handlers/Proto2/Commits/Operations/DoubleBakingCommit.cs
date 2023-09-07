@@ -69,6 +69,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (offender != accuser) offender.DoubleBakingCount++;
 
             block.Operations |= Operations.DoubleBakings;
+
+            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLoss - doubleBaking.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLoss - doubleBaking.AccuserReward;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);

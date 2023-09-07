@@ -145,6 +145,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
+
+                Cache.Statistics.Current.TotalBurned += burned;
+                if (transaction.Target.Id == NullAddress.Id)
+                    Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
 
@@ -291,6 +295,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (transaction.Target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
+
+                Cache.Statistics.Current.TotalBurned += burned;
+                if (transaction.Target.Id == NullAddress.Id)
+                    Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
 

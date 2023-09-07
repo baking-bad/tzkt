@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -43,6 +39,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     default:
                         throw new Exception("unexpected freezer balance update type");
                 }
+
+                Cache.Statistics.Current.TotalFrozen += change;
             }
 
             return Task.CompletedTask;

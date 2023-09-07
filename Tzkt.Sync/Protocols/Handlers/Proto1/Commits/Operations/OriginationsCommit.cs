@@ -210,6 +210,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 
@@ -414,6 +416,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

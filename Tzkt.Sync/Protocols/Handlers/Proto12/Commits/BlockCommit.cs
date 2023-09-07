@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -106,6 +104,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             Db.TryAttach(protocol); // if we don't attach it, ef will recognize it as 'added'
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 protocol.LastLevel = Block.Level;
+
+            Cache.Statistics.Current.TotalCreated += Block.Reward + Block.Bonus;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);

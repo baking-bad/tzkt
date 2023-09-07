@@ -96,6 +96,8 @@ namespace Tzkt.Sync.Protocols.Proto11
                 registerConstant.Refs = 0;
 
                 Cache.AppState.Get().ConstantsCount++;
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

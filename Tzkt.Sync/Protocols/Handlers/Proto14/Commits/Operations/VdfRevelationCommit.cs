@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -47,6 +45,8 @@ namespace Tzkt.Sync.Protocols.Proto14
             Cache.AppState.Get().VdfRevelationOpsCount++;
 
             block.Operations |= Operations.VdfRevelation;
+
+            Cache.Statistics.Current.TotalCreated += revelation.Reward;
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);

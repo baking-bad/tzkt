@@ -187,6 +187,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 }
 
                 sender.SmartRollupsCount++;
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

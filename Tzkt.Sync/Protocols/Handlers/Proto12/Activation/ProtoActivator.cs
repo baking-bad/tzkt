@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var bakers = await MigrateBakers(nextProto);
             await MigrateCycles(state, bakers, nextProto);
-            await MigrateStatistics(state, bakers);
+            MigrateStatistics(bakers);
         }
 
         public async Task PostActivation(AppState state)
@@ -148,11 +148,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
         }
 
-        async Task MigrateStatistics(AppState state, List<Data.Models.Delegate> bakers)
+        void MigrateStatistics(List<Data.Models.Delegate> bakers)
         {
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            Db.TryAttach(stats);
-            stats.TotalFrozen = bakers.Sum(x => x.FrozenDeposit);
+            Cache.Statistics.Current.TotalFrozen = bakers.Sum(x => x.FrozenDeposit);
         }
 
         async Task MigrateSnapshots(AppState state)

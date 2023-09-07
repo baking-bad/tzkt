@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -81,6 +77,9 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 delegat.RevelationPenaltiesCount++;
                 block.Operations |= Operations.RevelationPenalty;
+
+                Cache.Statistics.Current.TotalBurned += penalty.Loss;
+                Cache.Statistics.Current.TotalFrozen -= penalty.Loss;
 
                 Db.RevelationPenaltyOps.Add(penalty);
             }

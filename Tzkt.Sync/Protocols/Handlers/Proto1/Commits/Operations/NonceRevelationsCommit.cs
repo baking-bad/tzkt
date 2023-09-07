@@ -54,6 +54,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Revelations;
 
             revealedBlock.Revelation = revelation;
+
+            Cache.Statistics.Current.TotalCreated += revelation.Reward;
+            Cache.Statistics.Current.TotalFrozen += revelation.Reward;
             #endregion
 
             Db.NonceRevelationOps.Add(revelation);

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -21,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
                 BootstrapSnapshotBalances(accounts);
                 BootstrapVoting(protocol, accounts);
-                await BootstrapCommitments(parameters);
+                BootstrapCommitments(parameters);
                 await ActivateContext(state);
             }
             else // upgrade

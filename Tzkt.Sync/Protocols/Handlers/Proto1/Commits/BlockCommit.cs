@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -79,6 +77,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 proto.LastLevel = Block.Level;
+
+            Cache.Statistics.Current.TotalCreated += Block.Reward;
+            Cache.Statistics.Current.TotalFrozen += Block.Reward + Block.Deposit + Block.Fees;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);

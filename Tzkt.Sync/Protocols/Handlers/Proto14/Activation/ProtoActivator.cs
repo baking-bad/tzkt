@@ -50,8 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += 3_000_000_000L;
+            Cache.Statistics.Current.TotalCreated += 3_000_000_000L;
 
             if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet
             {

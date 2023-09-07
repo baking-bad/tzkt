@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            var statistics = await Cache.Statistics.GetAsync(state.Level);
+            var statistics = Cache.Statistics.Current;
 
             #region airdrop
             var emptiedManagers = await Db.Contracts

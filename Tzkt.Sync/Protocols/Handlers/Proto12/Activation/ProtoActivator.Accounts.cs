@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -20,8 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     : 0;
             }
 
-            var stats = await Cache.Statistics.GetAsync(1);
-            stats.TotalFrozen = accounts.Sum(x => (x as Data.Models.Delegate)?.FrozenDeposit ?? 0);
+            Cache.Statistics.Current.TotalFrozen = accounts.Sum(x => (x as Data.Models.Delegate)?.FrozenDeposit ?? 0);
 
             return accounts;
         }

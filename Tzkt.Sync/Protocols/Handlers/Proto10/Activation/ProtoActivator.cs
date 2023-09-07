@@ -573,8 +573,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             var state = Cache.AppState.Get();
             state.MigrationOpsCount++;
 
-            var statistics = await Cache.Statistics.GetAsync(state.Level);
-            statistics.TotalCreated += contract.Balance;
+            Cache.Statistics.Current.TotalCreated += contract.Balance;
 
             Db.MigrationOps.Add(migration);
             #endregion

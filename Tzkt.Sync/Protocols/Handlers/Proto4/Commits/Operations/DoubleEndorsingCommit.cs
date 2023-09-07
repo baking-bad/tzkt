@@ -69,6 +69,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
+
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);

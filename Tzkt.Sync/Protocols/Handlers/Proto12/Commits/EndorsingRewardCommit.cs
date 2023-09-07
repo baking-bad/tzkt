@@ -67,6 +67,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 baker.EndorsingRewardsCount++;
 
                 block.Operations |= Operations.EndorsingRewards;
+
+                Cache.Statistics.Current.TotalCreated += op.Received;
             }
 
             Cache.AppState.Get().EndorsingRewardOpsCount += Ops.Count;

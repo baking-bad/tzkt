@@ -1,8 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -90,6 +86,8 @@ namespace Tzkt.Sync.Protocols.Proto13
             {
                 sender.RollupBonds += operation.Bond;
                 rollup.RollupBonds += operation.Bond;
+
+                Cache.Statistics.Current.TotalRollupBonds += operation.Bond;
             }
             #endregion
 

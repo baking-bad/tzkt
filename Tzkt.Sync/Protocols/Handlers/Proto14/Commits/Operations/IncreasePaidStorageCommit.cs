@@ -1,9 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
-
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -104,6 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto14
                     if (senderDelegate.Id != sender.Id)
                         senderDelegate.DelegatedBalance -= burned;
                 }
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

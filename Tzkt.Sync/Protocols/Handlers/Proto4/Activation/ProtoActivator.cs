@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -50,8 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += 100_000_000;
+            Cache.Statistics.Current.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

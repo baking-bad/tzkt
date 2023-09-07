@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -42,6 +41,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             commitment.AccountId = sender.Id;
             commitment.Level = block.Level;
+
+            Cache.Statistics.Current.TotalActivated += activation.Balance;
             #endregion
 
             Db.ActivationOps.Add(activation);

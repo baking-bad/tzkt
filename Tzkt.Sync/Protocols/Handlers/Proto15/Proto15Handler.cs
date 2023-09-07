@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using App.Metrics;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -38,6 +31,8 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
+            await new StatisticsCommit(this).Apply(block);
+
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
@@ -277,13 +272,8 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
-            var freezerCommit = new FreezerCommit(this);
-            freezerCommit.Apply(blockCommit.Block, block);
-
-            var endorsingRewardCommit = new EndorsingRewardCommit(this);
-            await endorsingRewardCommit.Apply(blockCommit.Block, block);
-
-            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerChange);
+            new FreezerCommit(this).Apply(blockCommit.Block, block);
+            await new EndorsingRewardCommit(this).Apply(blockCommit.Block, block);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }

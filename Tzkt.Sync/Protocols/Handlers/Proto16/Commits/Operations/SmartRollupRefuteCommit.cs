@@ -309,6 +309,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                         initiator.ActiveRefutationGamesCount--;
                         opponent.ActiveRefutationGamesCount--;
                         rollup.ActiveRefutationGamesCount--;
+
+                        var totalLoss = (game.InitiatorLoss ?? 0) + (game.OpponentLoss ?? 0);
+                        var totalReward = (game.InitiatorReward ?? 0) + (game.OpponentReward ?? 0);
+                        Cache.Statistics.Current.TotalBurned += totalLoss - totalReward;
+                        Cache.Statistics.Current.TotalSmartRollupBonds -= totalLoss;
                     }
                 }
             }

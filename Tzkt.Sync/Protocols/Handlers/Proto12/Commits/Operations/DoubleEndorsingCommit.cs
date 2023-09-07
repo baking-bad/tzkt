@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -63,6 +62,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
+
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLoss;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);

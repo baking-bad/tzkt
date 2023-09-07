@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;
@@ -10,7 +7,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        async Task BootstrapCommitments(JToken parameters)
+        void BootstrapCommitments(JToken parameters)
         {
             var commitments = parameters["commitments"]?.Select(x => new Commitment
             {
@@ -21,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (commitments != null)
             {
                 var state = Cache.AppState.Get();
-                var statistics = await Cache.Statistics.GetAsync(1);
+                var statistics = Cache.Statistics.Current;
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""Commitments"" (""Balance"", ""Address"") FROM STDIN (FORMAT BINARY)");

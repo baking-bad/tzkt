@@ -35,8 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += 100_000_000;
+            Cache.Statistics.Current.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

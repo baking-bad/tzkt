@@ -304,8 +304,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region statistics
-            var stats = await Cache.Statistics.GetAsync(1);
-            stats.TotalBootstrapped = accounts.Sum(x => x.Balance);
+            Cache.Statistics.Current.TotalBootstrapped = accounts.Sum(x => x.Balance);
             #endregion
 
             return accounts;

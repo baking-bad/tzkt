@@ -148,8 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += amount;
+            Cache.Statistics.Current.TotalCreated += amount;
         }
 
         async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)

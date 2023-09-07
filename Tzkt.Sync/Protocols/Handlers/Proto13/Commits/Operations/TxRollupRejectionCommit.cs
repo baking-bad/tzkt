@@ -129,6 +129,9 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                 committer.RollupBonds -= operation.Loss;
                 rollup.RollupBonds -= operation.Loss;
+
+                Cache.Statistics.Current.TotalBurned += operation.Loss - operation.Reward;
+                Cache.Statistics.Current.TotalRollupBonds -= operation.Loss;
             }
             #endregion
 

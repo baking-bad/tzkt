@@ -31,6 +31,8 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
+            await new StatisticsCommit(this).Apply(block);
+
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
@@ -202,30 +204,6 @@ namespace Tzkt.Sync.Protocols
                                 }
                             }
                             break;
-                        case "tx_rollup_origination":
-                            await new TxRollupOriginationCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_submit_batch":
-                            await new TxRollupSubmitBatchCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_commit":
-                            await new TxRollupCommitCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_finalize_commitment":
-                            await new TxRollupFinalizeCommitmentCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_remove_commitment":
-                            await new TxRollupRemoveCommitmentCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_return_bond":
-                            await new TxRollupReturnBondCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_rejection":
-                            await new TxRollupRejectionCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "tx_rollup_dispatch_tickets":
-                            await new TxRollupDispatchTicketsCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
                         case "transfer_ticket":
                             var parent1 = new TransferTicketCommit(this);
                             await parent1.Apply(blockCommit.Block, operation, content);
@@ -337,13 +315,7 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
-            var freezerCommit = new FreezerCommit(this);
-            freezerCommit.Apply(blockCommit.Block, block);
-
-            var endorsingRewardCommit = new EndorsingRewardCommit(this);
-            await endorsingRewardCommit.Apply(blockCommit.Block, block);
-
-            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerChange);
+            await new EndorsingRewardCommit(this).Apply(blockCommit.Block, block);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -403,30 +375,6 @@ namespace Tzkt.Sync.Protocols
 
             if (currBlock.Operations.HasFlag(Operations.Transactions))
                 operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupOrigination))
-                operations.AddRange(await Db.TxRollupOriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupSubmitBatch))
-                operations.AddRange(await Db.TxRollupSubmitBatchOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupCommit))
-                operations.AddRange(await Db.TxRollupCommitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupFinalizeCommitment))
-                operations.AddRange(await Db.TxRollupFinalizeCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupRemoveCommitment))
-                operations.AddRange(await Db.TxRollupRemoveCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupReturnBond))
-                operations.AddRange(await Db.TxRollupReturnBondOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupRejection))
-                operations.AddRange(await Db.TxRollupRejectionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupDispatchTickets))
-                operations.AddRange(await Db.TxRollupDispatchTicketsOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.TransferTicket))
                 operations.AddRange(await Db.TransferTicketOps.Where(x => x.Level == currBlock.Level).ToListAsync());
@@ -488,7 +436,6 @@ namespace Tzkt.Sync.Protocols
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new EndorsingRewardCommit(this).Revert(currBlock);
-            await new FreezerCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
@@ -565,30 +512,6 @@ namespace Tzkt.Sync.Protocols
                             await new TransactionsCommit(this).Revert(currBlock, transaction);
                         else
                             await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
-                        break;
-                    case TxRollupOriginationOperation rollupOrigination:
-                        await new TxRollupOriginationCommit(this).Revert(currBlock, rollupOrigination);
-                        break;
-                    case TxRollupSubmitBatchOperation submitBatch:
-                        await new TxRollupSubmitBatchCommit(this).Revert(currBlock, submitBatch);
-                        break;
-                    case TxRollupCommitOperation rollupCommit:
-                        await new TxRollupCommitCommit(this).Revert(currBlock, rollupCommit);
-                        break;
-                    case TxRollupFinalizeCommitmentOperation finalizeCommitment:
-                        await new TxRollupFinalizeCommitmentCommit(this).Revert(currBlock, finalizeCommitment);
-                        break;
-                    case TxRollupRemoveCommitmentOperation removeCommitment:
-                        await new TxRollupRemoveCommitmentCommit(this).Revert(currBlock, removeCommitment);
-                        break;
-                    case TxRollupReturnBondOperation returnBond:
-                        await new TxRollupReturnBondCommit(this).Revert(currBlock, returnBond);
-                        break;
-                    case TxRollupRejectionOperation rejection:
-                        await new TxRollupRejectionCommit(this).Revert(currBlock, rejection);
-                        break;
-                    case TxRollupDispatchTicketsOperation dispatchTickets:
-                        await new TxRollupDispatchTicketsCommit(this).Revert(currBlock, dispatchTickets);
                         break;
                     case TransferTicketOperation transferTicket:
                         await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
