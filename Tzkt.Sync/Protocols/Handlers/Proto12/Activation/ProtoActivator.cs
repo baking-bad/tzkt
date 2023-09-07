@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             base.SetParameters(protocol, parameters);
             protocol.BlocksPerSnapshot = parameters["blocks_per_stake_snapshot"]?.Value<int>() ?? 512;
             protocol.EndorsersPerBlock = parameters["consensus_committee_size"]?.Value<int>() ?? 7000;
-            protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 6_000_000_000;
+            protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 6_000_000_000;
             protocol.BlockDeposit = 0;
             protocol.EndorsementDeposit = 0;
 
@@ -36,10 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.MinParticipationNumerator = parameters["minimal_participation_ratio"]?["numerator"]?.Value<int>() ?? 2;
             protocol.MinParticipationDenominator = parameters["minimal_participation_ratio"]?["denominator"]?.Value<int>() ?? 3;
             protocol.MaxSlashingPeriod = parameters["max_slashing_period"]?.Value<int>() ?? 2;
-            protocol.FrozenDepositsPercentage = parameters["frozen_deposits_percentage"]?.Value<int>() ?? 10;
-            protocol.DoubleBakingPunishment = parameters["double_baking_punishment"]?.Value<long>() ?? 640_000_000;
-            protocol.DoubleEndorsingPunishmentNumerator = parameters["ratio_of_frozen_deposits_slashed_per_double_endorsement"]?["numerator"]?.Value<int>() ?? 1;
-            protocol.DoubleEndorsingPunishmentDenominator = parameters["ratio_of_frozen_deposits_slashed_per_double_endorsement"]?["denominator"]?.Value<int>() ?? 2;
+            protocol.MaxDelegatedOverFrozenRatio = 100 / (parameters["frozen_deposits_percentage"]?.Value<int>() ?? 10) - 1;
 
             protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
             protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
@@ -48,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             protocol.EndorsersPerBlock = 7000;
-            protocol.TokensPerRoll = 6_000_000_000;
+            protocol.MinimalStake = 6_000_000_000;
             protocol.BlockDeposit = 0;
             protocol.EndorsementDeposit = 0;
 
@@ -64,10 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.MinParticipationNumerator = 2;
             protocol.MinParticipationDenominator = 3;
             protocol.MaxSlashingPeriod = 2;
-            protocol.FrozenDepositsPercentage = 10;
-            protocol.DoubleBakingPunishment = 640_000_000;
-            protocol.DoubleEndorsingPunishmentNumerator = 1;
-            protocol.DoubleEndorsingPunishmentDenominator = 2;
+            protocol.MaxDelegatedOverFrozenRatio = 9;
 
             protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
             protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
@@ -115,10 +109,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 Cache.Accounts.Add(baker);
                 baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
-                if (baker.Staked && baker.StakingBalance >= nextProto.TokensPerRoll)
+                if (baker.Staked && baker.StakingBalance >= nextProto.MinimalStake)
                 {
-                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / nextProto.FrozenDepositsPercentage);
-                    baker.FrozenDeposit = activeStake * nextProto.FrozenDepositsPercentage / 100;
+                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
+                    baker.FrozenDeposit = activeStake / (nextProto.MaxDelegatedOverFrozenRatio + 1);
                 }
                 else
                 {
@@ -131,8 +125,8 @@ namespace Tzkt.Sync.Protocols.Proto12
         async Task MigrateCycles(AppState state, List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
             var selectedStakes = bakers
-                .Where(x => x.StakingBalance >= nextProto.TokensPerRoll)
-                .Select(x => Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage));
+                .Where(x => x.StakingBalance >= nextProto.MinimalStake)
+                .Select(x => Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)));
 
             var totalStaking = bakers.Sum(x => x.StakingBalance);
             var totalDelegated = bakers.Sum(x => x.DelegatedBalance);
@@ -178,7 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
             var selectedBakers = await Db.Delegates.AsNoTracking()
-                .Where(x => x.Staked && x.StakingBalance >= nextProto.TokensPerRoll)
+                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .ToListAsync();
 
             #region revert current rights
@@ -246,9 +240,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bc.ActiveStake = 0;
                 bc.SelectedStake = cycle.SelectedStake;
 
-                if (baker.StakingBalance >= nextProto.TokensPerRoll)
+                if (baker.StakingBalance >= nextProto.MinimalStake)
                 {
-                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * 100 / nextProto.FrozenDepositsPercentage);
+                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
                     var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
                     bakerCycles[baker.Id].FutureEndorsementRewards += expectedEndorsements * nextProto.EndorsementReward0;
                     bakerCycles[baker.Id].ActiveStake = activeStake;
@@ -259,7 +253,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region apply new rights
             var sampler = GetSampler(selectedBakers
                 .Where(x => x.Balance > 0)
-                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage))));
+                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)))));
 
             #region temporary diagnostics
             await sampler.Validate(Proto, state.Level, cycle.Index);
@@ -330,8 +324,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked).ToListAsync();
             var sampler = GetSampler(bakers
-                .Where(x => x.StakingBalance >= nextProto.TokensPerRoll && x.Balance > 0)
-                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage))));
+                .Where(x => x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
+                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)))));
 
             #region temporary diagnostics
             await sampler.Validate(Proto, state.Level, state.Cycle);
@@ -425,9 +419,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                         ActiveStake = 0,
                         SelectedStake = cycle.SelectedStake
                     };
-                    if (x.StakingBalance >= nextProto.TokensPerRoll && x.Balance > 0)
+                    if (x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
                     {
-                        var activeStake = Math.Min(x.StakingBalance, x.Balance * 100 / nextProto.FrozenDepositsPercentage);
+                        var activeStake = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
                         var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
                         bc.ExpectedBlocks = nextProto.BlocksPerCycle * activeStake / cycle.SelectedStake;
                         bc.ExpectedEndorsements = expectedEndorsements;

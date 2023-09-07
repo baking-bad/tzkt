@@ -35,7 +35,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             protocol.BlockReward1 = totalReward / 4 / (protocol.EndorsersPerBlock / 3);
             protocol.EndorsementReward0 = totalReward / 2 / protocol.EndorsersPerBlock;
             protocol.EndorsementReward1 = 0;
-            protocol.LBSubsidy = totalReward / 16;
 
             protocol.SmartRollupOriginationSize = 6_314;
             protocol.SmartRollupStakeAmount = 10_000_000_000;

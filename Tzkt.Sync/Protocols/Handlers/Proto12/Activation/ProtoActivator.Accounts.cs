@@ -15,8 +15,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             foreach (var account in accounts.Where(x => x.Type == AccountType.Delegate))
             {
                 var baker = account as Data.Models.Delegate;
-                baker.FrozenDeposit = baker.StakingBalance >= protocol.TokensPerRoll
-                    ? baker.StakingBalance * protocol.FrozenDepositsPercentage / 100
+                baker.FrozenDeposit = baker.StakingBalance >= protocol.MinimalStake
+                    ? baker.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1)
                     : 0;
             }
 

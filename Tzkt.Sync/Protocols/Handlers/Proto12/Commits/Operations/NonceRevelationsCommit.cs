@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -12,6 +11,13 @@ namespace Tzkt.Sync.Protocols.Proto12
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
+            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
+                   .FirstOrDefault(x => x.RequiredString("kind") == "contract");
+
+            var reward = balanceUpdate.ValueKind != JsonValueKind.Undefined
+                ? balanceUpdate.RequiredInt64("change")
+                : 0;
+
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));
             var revelation = new NonceRevelationOperation
             {
@@ -26,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce")),
-                Reward = block.Protocol.RevelationReward
+                Reward = reward
             };
             #endregion
 

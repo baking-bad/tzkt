@@ -32,16 +32,18 @@ namespace Tzkt.Data.Models
         public int HardOperationStorageLimit { get; set; }
         public int HardBlockGasLimit { get; set; }
 
-        public long TokensPerRoll { get; set; }
-        public long RevelationReward { get; set; }
+        public long MinimalStake { get; set; }
+        public long MinimalFrozenStake { get; set; }
 
         public long BlockDeposit { get; set; }
         public long BlockReward0 { get; set; }
         public long BlockReward1 { get; set; }
+        public long MaxBakingReward { get; set; }
 
         public long EndorsementDeposit { get; set; }
         public long EndorsementReward0 { get; set; }
         public long EndorsementReward1 { get; set; }
+        public long MaxEndorsingReward { get; set; }
 
         public int OriginationSize { get; set; }
         public int ByteCost { get; set; }
@@ -51,10 +53,6 @@ namespace Tzkt.Data.Models
         public int BallotQuorumMax { get; set; }
 
         /// <summary>
-        /// Liquidity baking subsidy is 1/16th of total rewards for a block of priority 0 with all endorsements
-        /// </summary>
-        public int LBSubsidy { get; set; }
-        /// <summary>
         /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
         public int LBToggleThreshold { get; set; }
@@ -63,16 +61,9 @@ namespace Tzkt.Data.Models
         public int MinParticipationNumerator { get; set; }
         public int MinParticipationDenominator { get; set; }
         public int MaxSlashingPeriod { get; set; }
-        public int FrozenDepositsPercentage { get; set; }
-        public long DoubleBakingPunishment { get; set; }
-        public int DoubleEndorsingPunishmentNumerator { get; set; }
-        public int DoubleEndorsingPunishmentDenominator { get; set; }
-
-        public long MaxBakingReward { get; set; }
-        public long MaxEndorsingReward { get; set; }
-
-        public int TxRollupOriginationSize { get; set; }
-        public long TxRollupCommitmentBond { get; set; }
+        public int MaxDelegatedOverFrozenRatio { get; set; }
+        public int MaxExternalOverOwnStakeRatio { get; set; }
+        public int StakePowerMultiplier { get; set; }
 
         public int SmartRollupOriginationSize { get; set; }
         public long SmartRollupStakeAmount { get; set; }
@@ -81,6 +72,26 @@ namespace Tzkt.Data.Models
         public int SmartRollupTimeoutPeriod { get; set; }
 
         public string Dictator { get; set; }
+
+        public long BaseIssuedPerMinute { get; set; }
+        public int BlockRewardWeight { get; set; }
+        public int BlockBonusWeight { get; set; }
+        public int EndorsingRewardWeight { get; set; }
+        public int NonceRevelationRewardWeight { get; set; }
+        public int VdfRevelationRewardWeight { get; set; }
+        public int LBSubsidyWeight { get; set; }
+
+        public int AdaptiveIssuanceLaunchEmaThreshold { get; set; }
+        public int AdaptiveIssuanceRatioMinNumerator { get; set; }
+        public int AdaptiveIssuanceRatioMinDenominator { get; set; }
+        public int AdaptiveIssuanceRatioMaxNumerator { get; set; }
+        public int AdaptiveIssuanceRatioMaxDenominator { get; set; }
+        public int AdaptiveIssuanceCenterDzNumerator { get; set; }
+        public int AdaptiveIssuanceCenterDzDenominator { get; set; }
+        public int AdaptiveIssuanceRadiusDzNumerator { get; set; }
+        public int AdaptiveIssuanceRadiusDzDenominator { get; set; }
+        public long AdaptiveIssuanceMaxBonus { get; set; }
+        public long AdaptiveIssuanceGrowthRate { get; set; }
 
         #region helpers
         public int GetCycleStart(int cycle)

@@ -297,9 +297,6 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             if (balanceUpdate.RequiredString("contract") != Proposer)
                 throw new ValidationException("invalid seed nonce revelation baker");
-
-            if (balanceUpdate.RequiredInt64("change") != Protocol.RevelationReward)
-                throw new ValidationException("invalid seed nonce revelation balance update amount");
         }
         
         protected virtual void ValidateVdfRevelation(JsonElement content)
@@ -540,7 +537,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     null,
                     0,
                     0,
-                    Protocol.TxRollupOriginationSize * Protocol.ByteCost);
+                    4_000 * Protocol.ByteCost);
         }
 
         protected virtual async Task ValidateTxRollupSubmitBatch(JsonElement content)

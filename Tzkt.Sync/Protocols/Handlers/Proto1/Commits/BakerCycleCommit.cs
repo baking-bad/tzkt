@@ -235,7 +235,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var baker = await Cache.Accounts.GetAsync(kv.Key); // WTF: rights were given to non-baker accounts
                     var snapshot = snapshots[kv.Key];
 
-                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.TokensPerRoll;
+                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.MinimalStake;
                     var share = (double)activeStake / futureCycle.SelectedStake;
 
                     var bakerCycle = new BakerCycle
@@ -316,7 +316,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             throw new Exception("Deactivated baker got baking rights");
 
                         var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                        var activeStake = stakingBalance - stakingBalance % block.Protocol.TokensPerRoll;
+                        var activeStake = stakingBalance - stakingBalance % block.Protocol.MinimalStake;
                         var share = (double)activeStake / futureCycle.SelectedStake;
 
                         bakerCycle = new BakerCycle

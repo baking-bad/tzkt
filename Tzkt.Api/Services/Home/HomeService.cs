@@ -496,13 +496,14 @@ namespace Tzkt.Api.Services
                 FROM "Accounts"
                 WHERE "Type" = 1
                 AND "Staked" = true
-                AND "StakingBalance" >= {protocol.TokensPerRoll}
+                AND "StakingBalance" >= {protocol.MinimalStake}
                 """);
 
+            var lbSubsidy = 80_000_000 * protocol.TimeBetweenBlocks / 60 / 16;
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.MaxBakingReward + protocol.MaxEndorsingReward; //microtez
             var totalRewardsPerYear = maxBlockReward * blocksPerYear;
-            var maxBlockCreated = maxBlockReward + protocol.LBSubsidy; //microtez
+            var maxBlockCreated = maxBlockReward + lbSubsidy; //microtez
             var totalCreatedPerYear = maxBlockCreated * blocksPerYear;
 
             return new StakingData

@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewards);
 
             SelectedStakes = Snapshots
-                .Where(x => x.StakingBalance >= block.Protocol.TokensPerRoll)
+                .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
                 .ToDictionary(x => x.AccountId, x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
@@ -87,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         lastBalance -= block.Bonus;
 
                     var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                    return Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
+                    return Math.Min((long)x.StakingBalance, depositCap * (block.Protocol.MaxDelegatedOverFrozenRatio + 1));
                 });
 
             FutureCycle = new Cycle

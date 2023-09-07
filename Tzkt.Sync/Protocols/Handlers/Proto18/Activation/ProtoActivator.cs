@@ -1,6 +1,7 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
+using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -8,6 +9,81 @@ namespace Tzkt.Sync.Protocols.Proto18
     partial class ProtoActivator : Proto17.ProtoActivator
     {
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
+
+        protected override void SetParameters(Protocol protocol, JToken parameters)
+        {
+            base.SetParameters(protocol, parameters);
+            protocol.MinimalFrozenStake = parameters["minimal_frozen_stake"]?.Value<long>() ?? 600_000_000;
+            protocol.MaxDelegatedOverFrozenRatio = parameters["limit_of_delegation_over_baking"]?.Value<int>() ?? 9;
+            protocol.MaxExternalOverOwnStakeRatio = parameters["global_limit_of_staking_over_baking"]?.Value<int>() ?? 5;
+            protocol.StakePowerMultiplier = parameters["edge_of_staking_over_delegation"]?.Value<int>() ?? 2;
+            
+            protocol.BaseIssuedPerMinute = parameters["issuance_weights"]?["base_total_issued_per_minute"]?.Value<long>() ?? 85_007_812;
+            protocol.BlockRewardWeight = parameters["issuance_weights"]?["baking_reward_fixed_portion_weight"]?.Value<int>() ?? 5120;
+            protocol.BlockBonusWeight = parameters["issuance_weights"]?["baking_reward_bonus_weight"]?.Value<int>() ?? 5120;
+            protocol.EndorsingRewardWeight = parameters["issuance_weights"]?["attesting_reward_weight"]?.Value<int>() ?? 10240;
+            protocol.NonceRevelationRewardWeight = parameters["issuance_weights"]?["seed_nonce_revelation_tip_weight"]?.Value<int>() ?? 1;
+            protocol.VdfRevelationRewardWeight = parameters["issuance_weights"]?["vdf_revelation_tip_weight"]?.Value<int>() ?? 1;
+            protocol.LBSubsidyWeight = parameters["issuance_weights"]?["liquidity_baking_subsidy_weight"]?.Value<int>() ?? 1280;
+
+            protocol.AdaptiveIssuanceLaunchEmaThreshold = parameters["adaptive_issuance_launch_ema_threshold"]?.Value<int>() ?? 100_000_000;
+            protocol.AdaptiveIssuanceRatioMinNumerator = parameters["adaptive_rewards_params"]?["issuance_ratio_min"]?["numerator"]?.Value<int>() ?? 1;
+            protocol.AdaptiveIssuanceRatioMinDenominator = parameters["adaptive_rewards_params"]?["issuance_ratio_min"]?["denominator"]?.Value<int>() ?? 2000;
+            protocol.AdaptiveIssuanceRatioMaxNumerator = parameters["adaptive_rewards_params"]?["issuance_ratio_max"]?["numerator"]?.Value<int>() ?? 1;
+            protocol.AdaptiveIssuanceRatioMaxDenominator = parameters["adaptive_rewards_params"]?["issuance_ratio_max"]?["denominator"]?.Value<int>() ?? 20;
+            protocol.AdaptiveIssuanceCenterDzNumerator = parameters["adaptive_rewards_params"]?["center_dz"]?["numerator"]?.Value<int>() ?? 1;
+            protocol.AdaptiveIssuanceCenterDzDenominator = parameters["adaptive_rewards_params"]?["center_dz"]?["denominator"]?.Value<int>() ?? 2;
+            protocol.AdaptiveIssuanceRadiusDzNumerator = parameters["adaptive_rewards_params"]?["radius_dz"]?["numerator"]?.Value<int>() ?? 1;
+            protocol.AdaptiveIssuanceRadiusDzDenominator = parameters["adaptive_rewards_params"]?["radius_dz"]?["denominator"]?.Value<int>() ?? 50;
+            protocol.AdaptiveIssuanceMaxBonus = parameters["adaptive_rewards_params"]?["max_bonus"]?.Value<long>() ?? 50_000_000_000_000;
+            protocol.AdaptiveIssuanceGrowthRate = parameters["adaptive_rewards_params"]?["growth_rate"]?.Value<long>() ?? 115_740_740;
+
+            protocol.BlockDeposit = 0;
+            protocol.BlockReward0 = 0;
+            protocol.BlockReward1 = 0;
+            protocol.MaxBakingReward = 0;
+            protocol.EndorsementDeposit = 0;
+            protocol.EndorsementReward0 = 0;
+            protocol.EndorsementReward1 = 0;
+            protocol.MaxEndorsingReward = 0;
+        }
+
+        protected override void UpgradeParameters(Protocol protocol, Protocol prev)
+        {
+            protocol.MinimalFrozenStake = 600_000_000;
+            protocol.MaxDelegatedOverFrozenRatio = 9;
+            protocol.MaxExternalOverOwnStakeRatio = 5;
+            protocol.StakePowerMultiplier = 2;
+
+            protocol.BaseIssuedPerMinute = 85_007_812;
+            protocol.BlockRewardWeight = 5120;
+            protocol.BlockBonusWeight = 5120;
+            protocol.EndorsingRewardWeight = 10240;
+            protocol.NonceRevelationRewardWeight = 1;
+            protocol.VdfRevelationRewardWeight = 1;
+            protocol.LBSubsidyWeight = 1280;
+
+            protocol.AdaptiveIssuanceLaunchEmaThreshold = 100_000_000;
+            protocol.AdaptiveIssuanceRatioMinNumerator = 1;
+            protocol.AdaptiveIssuanceRatioMinDenominator = 2000;
+            protocol.AdaptiveIssuanceRatioMaxNumerator = 1;
+            protocol.AdaptiveIssuanceRatioMaxDenominator = 20;
+            protocol.AdaptiveIssuanceCenterDzNumerator = 1;
+            protocol.AdaptiveIssuanceCenterDzDenominator = 2;
+            protocol.AdaptiveIssuanceRadiusDzNumerator = 1;
+            protocol.AdaptiveIssuanceRadiusDzDenominator = 50;
+            protocol.AdaptiveIssuanceMaxBonus = 50_000_000_000_000;
+            protocol.AdaptiveIssuanceGrowthRate = 115_740_740;
+
+            protocol.BlockDeposit = 0;
+            protocol.BlockReward0 = 0;
+            protocol.BlockReward1 = 0;
+            protocol.MaxBakingReward = 0;
+            protocol.EndorsementDeposit = 0;
+            protocol.EndorsementReward0 = 0;
+            protocol.EndorsementReward1 = 0;
+            protocol.MaxEndorsingReward = 0;
+        }
 
         protected override async Task MigrateContext(AppState state)
         {

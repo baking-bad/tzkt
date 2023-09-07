@@ -20,15 +20,11 @@ namespace Tzkt.Sync.Protocols.Proto13
             base.SetParameters(protocol, parameters);
             protocol.LBToggleThreshold = parameters["liquidity_baking_toggle_ema_threshold"]?.Value<int>() ?? 1_000_000_000;
             protocol.BlocksPerVoting = (parameters["cycles_per_voting_period"]?.Value<int>() ?? 5) * protocol.BlocksPerCycle;
-            protocol.TxRollupOriginationSize = parameters["tx_rollup_origination_size"]?.Value<int>() ?? 4_000;
-            protocol.TxRollupCommitmentBond = long.Parse((parameters["tx_rollup_commitment_bond"]?.Value<string>() ?? "10000000000").Replace("_", ""));
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             protocol.LBToggleThreshold = 1_000_000_000;
-            protocol.TxRollupOriginationSize = 4_000;
-            protocol.TxRollupCommitmentBond = 10_000_000_000;
         }
 
         protected override long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
@@ -58,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .Select(x => x.Entity as VotingSnapshot));
 
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= nextProto.TokensPerRoll)
+                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .Select(x => new VotingSnapshot
                 {
                     Level = state.Level,

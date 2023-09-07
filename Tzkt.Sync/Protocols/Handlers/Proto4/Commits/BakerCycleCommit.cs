@@ -234,7 +234,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 {
                     var snapshot = snapshots[id];
 
-                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % snapshotProtocol.TokensPerRoll;
+                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % snapshotProtocol.MinimalStake;
                     var share = (double)activeStake / futureCycle.SelectedStake;
 
                     var bakerCycle = new BakerCycle
@@ -306,7 +306,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                             throw new Exception("Deactivated baker got baking rights");
 
                         var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                        var activeStake = stakingBalance - stakingBalance % snapshotProtocol.TokensPerRoll;
+                        var activeStake = stakingBalance - stakingBalance % snapshotProtocol.MinimalStake;
                         var share = (double)activeStake / futureCycle.SelectedStake;
 
                         bakerCycle = new BakerCycle

@@ -169,7 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
@@ -212,7 +212,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
@@ -262,7 +262,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region snapshot
                 Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
-                    .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                    .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
                     .Select(x => new VotingSnapshot
                     {
                         Level = block.Level,
@@ -313,7 +313,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
         {
-            return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
+            return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
         }
     }
 }

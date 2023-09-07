@@ -31,8 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
             protocol.PreservedCycles = parameters["preserved_cycles"]?.Value<int>() ?? 5;
-            protocol.RevelationReward = parameters["seed_nonce_revelation_tip"]?.Value<long>() ?? 125_000;
-            protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
+            protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
             protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
             protocol.ProposalQuorum = parameters["min_proposal_quorum"]?.Value<int>() ?? 500;
@@ -57,7 +56,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 5_200_000;
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
 
-            protocol.LBSubsidy = parameters["liquidity_baking_subsidy"]?.Value<int>() ?? 2_500_000;
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000) * 1000;
         }
 
@@ -79,7 +77,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardBlockGasLimit = 5_200_000;
             protocol.TimeBetweenBlocks /= 2;
 
-            protocol.LBSubsidy = 2_500_000;
             protocol.LBToggleThreshold = 1_000_000_000;
         }
 
@@ -394,7 +391,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Where(x => x != baker.Address);
 
                     var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                    var activeStake = stakingBalance - stakingBalance % protocol.TokensPerRoll;
+                    var activeStake = stakingBalance - stakingBalance % protocol.MinimalStake;
                     var share = (double)activeStake / cycle.SelectedStake;
 
                     bakerCycle = new BakerCycle

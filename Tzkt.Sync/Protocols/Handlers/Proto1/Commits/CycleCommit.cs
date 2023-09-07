@@ -88,8 +88,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
                     TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),
                     TotalBakers = Snapshots.Count,
-                    SelectedStake = Snapshots.Values.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.TokensPerRoll),
-                    SelectedBakers = Snapshots.Values.Count(x => x.StakingBalance >= snapshotProto.TokensPerRoll),
+                    SelectedStake = Snapshots.Values.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
+                    SelectedBakers = Snapshots.Values.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
                     Seed = futureSeed
                 };
 

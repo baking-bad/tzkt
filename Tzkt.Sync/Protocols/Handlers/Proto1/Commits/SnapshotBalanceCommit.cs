@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var inserted = false;
                     foreach (var weirds in weirdDelegators)
                     {
-                        if (weirds.Sum(x => x.Balance) < block.Protocol.TokensPerRoll)
+                        if (weirds.Sum(x => x.Balance) < block.Protocol.MinimalStake)
                             continue;
 
                         sql += $@"

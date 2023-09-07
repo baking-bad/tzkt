@@ -67,18 +67,13 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Required number of tokens to get 1 roll (micro tez)
         /// </summary>
-        public long TokensPerRoll { get; set; }
-        
-        /// <summary>
-        /// Reward for seed nonce revelation (micro tez)
-        /// </summary>
-        public long RevelationReward { get; set; }
+        public long MinimalStake { get; set; }
 
         /// <summary>
         /// Security deposit for baking (producing) a block (micro tez)
         /// </summary>
         public long BlockDeposit { get; set; }
-        
+
         //TODO Think about it
         /// <summary>
         /// Reward for baking (producing) a block (micro tez)
@@ -121,11 +116,6 @@ namespace Tzkt.Api.Models
         public double BallotQuorumMax { get; set; }
 
         /// <summary>
-        /// Liquidity baking subsidy is 1/16th of total rewards for a block of priority 0 with all endorsements
-        /// </summary>
-        public int LBSubsidy { get; set; }
-
-        /// <summary>
         /// 1/2 window size of 2000 blocks with precision of 1000000 for integer computation
         /// </summary>
         public int LBToggleThreshold { get; set; }
@@ -151,34 +141,9 @@ namespace Tzkt.Api.Models
         public int MaxSlashingPeriod { get; set; }
 
         /// <summary>
-        /// How much of baker's active stake is frozen as a security deposit
+        /// The ratio of delegated tez over the baker’s frozen stake
         /// </summary>
-        public int FrozenDepositsPercentage { get; set; }
-
-        /// <summary>
-        /// How much mutez is burned from baker's frozen deposits, in case of double baking
-        /// </summary>
-        public long DoubleBakingPunishment { get; set; }
-
-        /// <summary>
-        /// How much is burned from baker's frozen deposits, in case of double (pre)endorsing
-        /// </summary>
-        public int DoubleEndorsingPunishmentNumerator { get; set; }
-
-        /// <summary>
-        /// How much is burned from baker's frozen deposits, in case of double (pre)endorsing
-        /// </summary>
-        public int DoubleEndorsingPunishmentDenominator { get; set; }
-
-        /// <summary>
-        /// Initial storage size of an originated (created) tx rollup (bytes)
-        /// </summary>
-        public int TxRollupOriginationSize { get; set; }
-
-        /// <summary>
-        /// Tx rollup commitment bond (mutez)
-        /// </summary>
-        public long TxRollupCommitmentBond { get; set; }
+        public int MaxDelegatedOverFrozenRatio { get; set; }
 
         /// <summary>
         /// Initial storage size of an originated (created) smart rollup (bytes)
@@ -220,6 +185,51 @@ namespace Tzkt.Api.Models
         /// [DEPRECATED]
         /// </summary>
         public int LBSunsetLevel => 3_063_809;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int FrozenDepositsPercentage => 10;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int TxRollupOriginationSize => 4_000;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long TxRollupCommitmentBond => 10_000_000_000;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long DoubleBakingPunishment => 640_000_000;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int DoubleEndorsingPunishmentNumerator => 1;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int DoubleEndorsingPunishmentDenominator => 2;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long RevelationReward => 125_000;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int LBSubsidy => 80_000_000 * TimeBetweenBlocks / 60 / 16;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long TokensPerRoll => MinimalStake;
         #endregion
     }
 }

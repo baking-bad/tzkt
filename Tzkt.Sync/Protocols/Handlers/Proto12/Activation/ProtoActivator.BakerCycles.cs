@@ -34,9 +34,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                         ActiveStake = 0,
                         SelectedStake = cycle.SelectedStake
                     };
-                    if (x.StakingBalance >= protocol.TokensPerRoll)
+                    if (x.StakingBalance >= protocol.MinimalStake)
                     {
-                        var activeStake = Math.Min(x.StakingBalance, x.Balance * 100 / protocol.FrozenDepositsPercentage);
+                        var activeStake = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
                         var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * activeStake / cycle.SelectedStake);
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * activeStake / cycle.SelectedStake;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;

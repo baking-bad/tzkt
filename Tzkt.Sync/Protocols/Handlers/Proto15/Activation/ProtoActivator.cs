@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto15
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
-            protocol.TokensPerRoll = parameters["minimal_stake"]?.Value<long>() ?? 6_000_000L;
+            protocol.MinimalStake = parameters["minimal_stake"]?.Value<long>() ?? 6_000_000L;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev) { }

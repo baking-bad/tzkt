@@ -20,13 +20,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => x as Data.Models.Delegate);
 
-            var selectedStake = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.TokensPerRoll);
+            var selectedStake = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
 
             for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
             {
                 var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
-                    var activeStake = x.StakingBalance - x.StakingBalance % protocol.TokensPerRoll;
+                    var activeStake = x.StakingBalance - x.StakingBalance % protocol.MinimalStake;
                     var share = (double)activeStake / selectedStake;
                     return new BakerCycle
                     {

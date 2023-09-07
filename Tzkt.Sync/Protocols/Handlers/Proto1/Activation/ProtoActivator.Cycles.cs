@@ -22,8 +22,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var totalDelegated = delegates.Sum(x => x.DelegatedBalance);
             var totalDelegators = delegates.Sum(x => x.DelegatorsCount);
             var totalBakers = delegates.Count();
-            var selectedStake = delegates.Sum(x => x.StakingBalance - x.StakingBalance % protocol.TokensPerRoll);
-            var selectedBakers = delegates.Count(x => x.StakingBalance >= protocol.TokensPerRoll);
+            var selectedStake = delegates.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
+            var selectedBakers = delegates.Count(x => x.StakingBalance >= protocol.MinimalStake);
 
             var base58Seed = parameters["initial_seed"]?.Value<string>();
             if (!Base58.TryParse(base58Seed, new byte[3], out var initialSeed) || initialSeed.Length != 32)
