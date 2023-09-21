@@ -2050,7 +2050,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
 
                     var transferTicketOps = delegat.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(null, _delegat, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransferTicketOps(null, _delegat, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
 
                     var txRollupCommitOps = delegat.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
@@ -2255,7 +2255,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
 
                     var userTransferTicketOps = user.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(null, _user, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransferTicketOps(null, _user, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
                     
                     var userTxRollupCommitOps = user.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
@@ -2414,7 +2414,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractTransferTicketOps = contract.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
 
                     var contractIncreasePaidStorageOps = contract.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)

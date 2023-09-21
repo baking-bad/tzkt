@@ -3018,6 +3018,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.sender.target=tz1...` will return operations where `sender` OR `target` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="id">Filters by id.</param>
         /// <param name="ticketer">Filters by ticketer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
@@ -3036,6 +3037,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter anyof,
             AccountParameter sender,
             AccountParameter target,
+            Int64Parameter id,
             AccountParameter ticketer,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -3089,25 +3091,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, select.Values[0], micheline, quote));
                 else
-                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, select.Values, micheline, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
+                    return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, select.Fields, micheline, quote)
                     });
                 }
             }
