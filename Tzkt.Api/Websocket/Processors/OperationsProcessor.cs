@@ -153,7 +153,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.SetDepositsLimitOperation>());
 
                 var transferTicketOps = TypeSubs.TryGetValue(Operations.TransferTicket, out var transferTicketSub)
-                    ? Repo.GetTransferTicketOps(null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
+                    ? Repo.GetTransferTicketOps(null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TransferTicketOperation>());
 
                 var txRollupCommitOps = TypeSubs.TryGetValue(Operations.TxRollupCommit, out var txRollupCommitSub)
