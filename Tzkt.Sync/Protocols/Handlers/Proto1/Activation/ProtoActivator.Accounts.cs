@@ -52,8 +52,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Address = PubKey.FromBase58(pubKey).Address,
                     Balance = balance,
                     StakingBalance = balance,
-                    DelegatedBalance = 0,
-                    Counter = 0,
                     PublicKey = pubKey,
                     FirstLevel = 1,
                     LastLevel = 1,
@@ -78,15 +76,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Id = Cache.AppState.NextAccountId(),
                     Address = PubKey.FromBase58(pubKey).Address,
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User,
                     PublicKey = pubKey,
-                    Revealed = true, 
+                    Revealed = true,
                     Staked = true,
                     DelegationLevel = 1,
-                    Delegate = delegat
+                    Delegate = delegat,
+                    DelegateId = delegat.Id
                 };
 
                 delegat.DelegatorsCount++;
@@ -106,7 +104,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Id = Cache.AppState.NextAccountId(),
                     Address = pkh,
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User
@@ -129,7 +126,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Id = Cache.AppState.NextAccountId(),
                     Address = OriginationNonce.GetContractAddress(index++),
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Spendable = false,
@@ -231,7 +227,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = 1,
                     Address = address,
                     Balance = 0,
-                    Counter = 0,
                     CreatorId = creator.Id,
                     Staked = false,
                     Type = AccountType.SmartRollup,

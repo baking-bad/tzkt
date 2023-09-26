@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -100,7 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
-                        bakerCycle.EndorsementRewards += successReward;
+                        bakerCycle.EndorsementRewardsLiquid += successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards += successReward;
                     else
@@ -134,7 +130,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (actualReward > 0)
                     {
-                        bakerCycle.BlockRewards += actualReward;
+                        bakerCycle.BlockRewardsLiquid += actualReward;
                     }
 
                     if (successReward != actualReward)
@@ -176,7 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLosses += op.OffenderLoss;
+                    offenderCycle.DoubleBakingLossesOwn += op.OffenderLossOwn;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
@@ -193,7 +189,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLosses += op.OffenderLoss;
+                    offenderCycle.DoubleEndorsingLossesOwn += op.OffenderLossOwn;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
@@ -209,7 +205,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.RevelationRewards += op.Reward;
+                    bakerCycle.NonceRevelationRewardsLiquid += op.RewardLiquid;
                 }
             }
 
@@ -221,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.Baker.Id);
                     Db.TryAttach(penaltyCycle);
 
-                    penaltyCycle.RevelationLosses += op.Loss;
+                    penaltyCycle.NonceRevelationLosses += op.Loss;
                 }
             }
             #endregion
@@ -235,18 +231,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var baker = await Cache.Accounts.GetAsync(kv.Key); // WTF: rights were given to non-baker accounts
                     var snapshot = snapshots[kv.Key];
 
-                    var activeStake = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.MinimalStake;
-                    var share = (double)activeStake / futureCycle.SelectedStake;
+                    var bakingPower = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.MinimalStake;
+                    var share = (double)bakingPower / futureCycle.TotalBakingPower;
 
                     var bakerCycle = new BakerCycle
                     {
                         Cycle = futureCycle.Index,
                         BakerId = kv.Key,
                         StakingBalance = snapshot.StakingBalance,
-                        ActiveStake = activeStake,
-                        SelectedStake = futureCycle.SelectedStake,
                         DelegatedBalance = snapshot.DelegatedBalance,
                         DelegatorsCount = snapshot.DelegatorsCount,
+                        TotalStakedBalance = 0,
+                        ExternalStakedBalance = 0,
+                        StakersCount = 0,
+                        BakingPower = bakingPower,
+                        TotalBakingPower = futureCycle.TotalBakingPower,
                         ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
                         ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
                     };
@@ -316,18 +315,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                             throw new Exception("Deactivated baker got baking rights");
 
                         var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                        var activeStake = stakingBalance - stakingBalance % block.Protocol.MinimalStake;
-                        var share = (double)activeStake / futureCycle.SelectedStake;
+                        var bakingPower = stakingBalance - stakingBalance % block.Protocol.MinimalStake;
+                        var share = (double)bakingPower / futureCycle.TotalBakingPower;
 
                         bakerCycle = new BakerCycle
                         {
                             Cycle = futureCycle.Index,
                             BakerId = baker.Id,
                             StakingBalance = stakingBalance,
-                            ActiveStake = activeStake,
-                            SelectedStake = futureCycle.SelectedStake,
                             DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
                             DelegatorsCount = delegators.Count(),
+                            TotalStakedBalance = 0,
+                            ExternalStakedBalance = 0,
+                            StakersCount = 0,
+                            BakingPower = bakingPower,
+                            TotalBakingPower = futureCycle.TotalBakingPower,
                             ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
                             ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
                         };
@@ -340,6 +342,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             {
                                 BakerId = baker.Id,
                                 Balance = snapshottedDelegator.RequiredInt64("balance"),
+                                StakedBalance = 0,
                                 Cycle = futureCycle.Index,
                                 DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
                             });
@@ -459,7 +462,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
-                        bakerCycle.EndorsementRewards -= successReward;
+                        bakerCycle.EndorsementRewardsLiquid -= successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards -= successReward;
                     else
@@ -493,7 +496,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                     if (actualReward > 0)
                     {
-                        bakerCycle.BlockRewards -= actualReward;
+                        bakerCycle.BlockRewardsLiquid -= actualReward;
                     }
 
                     if (successReward != actualReward)
@@ -535,7 +538,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLosses -= op.OffenderLoss;
+                    offenderCycle.DoubleBakingLossesOwn -= op.OffenderLossOwn;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
                     Db.TryAttach(accuserCycle);
@@ -552,7 +555,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLosses -= op.OffenderLoss;
+                    offenderCycle.DoubleEndorsingLossesOwn -= op.OffenderLossOwn;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
                     Db.TryAttach(accuserCycle);
@@ -568,7 +571,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.RevelationRewards -= op.Reward;
+                    bakerCycle.NonceRevelationRewardsLiquid -= op.RewardLiquid;
                 }
             }
 
@@ -580,7 +583,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.BakerId);
                     Db.TryAttach(penaltyCycle);
 
-                    penaltyCycle.RevelationLosses -= op.Loss;
+                    penaltyCycle.NonceRevelationLosses -= op.Loss;
                 }
             }
             #endregion

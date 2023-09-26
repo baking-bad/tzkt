@@ -26,9 +26,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                     Change = update.RequiredInt64("change")
                 };
 
-                Db.TryAttach(baker);
-                baker.FrozenDeposit += freezerUpdate.Change;
-
                 Cache.Statistics.Current.TotalFrozen += freezerUpdate.Change;
 
                 Db.FreezerUpdates.Add(freezerUpdate);
@@ -42,10 +39,6 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             foreach (var freezerUpdate in await Db.FreezerUpdates.Where(x => x.Cycle == block.Cycle).ToListAsync())
             {
-                var baker = Cache.Accounts.GetDelegate(freezerUpdate.BakerId);
-                Db.TryAttach(baker);
-                baker.FrozenDeposit -= freezerUpdate.Change;
-
                 Db.FreezerUpdates.Remove(freezerUpdate);
             }
         }

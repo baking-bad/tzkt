@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             foreach (var cycle in cycles)
             {
-                cycle.SelectedStake = delegates.Sum(x => Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1)));
-                cycle.SelectedBakers = delegates.Count();
+                cycle.TotalBakingPower = delegates.Sum(x => Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1)));
+                cycle.TotalBakers = delegates.Count();
             }
 
             return cycles;

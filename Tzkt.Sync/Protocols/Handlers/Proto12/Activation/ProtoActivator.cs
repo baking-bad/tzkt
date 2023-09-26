@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -73,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var bakers = await MigrateBakers(nextProto);
             await MigrateCycles(state, bakers, nextProto);
-            MigrateStatistics(bakers);
+            MigrateStatistics(bakers, nextProto);
         }
 
         public async Task PostActivation(AppState state)
@@ -109,15 +105,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 Cache.Accounts.Add(baker);
                 baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
-                if (baker.Staked && baker.StakingBalance >= nextProto.MinimalStake)
-                {
-                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                    baker.FrozenDeposit = activeStake / (nextProto.MaxDelegatedOverFrozenRatio + 1);
-                }
-                else
-                {
-                    baker.FrozenDeposit = 0;
-                }
             }
             return bakers.Where(x => x.Staked).ToList();
         }
@@ -128,10 +115,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.StakingBalance >= nextProto.MinimalStake)
                 .Select(x => Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)));
 
-            var totalStaking = bakers.Sum(x => x.StakingBalance);
-            var totalDelegated = bakers.Sum(x => x.DelegatedBalance);
-            var totalDelegators = bakers.Sum(x => x.DelegatorsCount);
-            var totalBakers = bakers.Count;
             var selectedBakers = selectedStakes.Count();
             var selectedStake = selectedStakes.Sum();
 
@@ -139,18 +122,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 cycle.SnapshotIndex = 0;
                 cycle.SnapshotLevel = state.Level;
-                cycle.TotalStaking = totalStaking;
-                cycle.TotalDelegated = totalDelegated;
-                cycle.TotalDelegators = totalDelegators;
-                cycle.TotalBakers = totalBakers;
-                cycle.SelectedBakers = selectedBakers;
-                cycle.SelectedStake = selectedStake;
+                cycle.TotalBakers = selectedBakers;
+                cycle.TotalBakingPower = selectedStake;
             }
         }
 
-        void MigrateStatistics(List<Data.Models.Delegate> bakers)
+        void MigrateStatistics(List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
-            Cache.Statistics.Current.TotalFrozen = bakers.Sum(x => x.FrozenDeposit);
+            Cache.Statistics.Current.TotalFrozen = bakers
+                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
+                .Sum(x => {
+                    var activeStake = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
+                    return activeStake / (nextProto.MaxDelegatedOverFrozenRatio + 1);
+                });
         }
 
         async Task MigrateSnapshots(AppState state)
@@ -216,8 +200,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (baker.DelegatorsCount > 0)
                     {
                         await Db.Database.ExecuteSqlRawAsync($@"
-                            INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                            SELECT  {state.Cycle}, ""AccountId"", ""DelegateId"", ""Balance""
+                            INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"", ""StakedBalance"")
+                            SELECT  {state.Cycle}, ""AccountId"", ""DelegateId"", ""Balance"", ""StakedBalance""
                             FROM    ""SnapshotBalances""
                             WHERE   ""Level"" = {state.Level}
                             AND     ""DelegateId"" = {baker.Id}");
@@ -232,18 +216,18 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(bakerId);
 
                 Db.TryAttach(bc);
+                bc.StakingBalance = baker.StakingBalance;
                 bc.DelegatedBalance = baker.DelegatedBalance;
                 bc.DelegatorsCount = baker.DelegatorsCount;
-                bc.StakingBalance = baker.StakingBalance;
-                bc.ActiveStake = 0;
-                bc.SelectedStake = cycle.SelectedStake;
+                bc.BakingPower = 0;
+                bc.TotalBakingPower = cycle.TotalBakingPower;
 
                 if (baker.StakingBalance >= nextProto.MinimalStake)
                 {
-                    var activeStake = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                    var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
+                    var bakingPower = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
+                    var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
                     bakerCycles[baker.Id].FutureEndorsementRewards += expectedEndorsements * nextProto.EndorsementReward0;
-                    bakerCycles[baker.Id].ActiveStake = activeStake;
+                    bakerCycles[baker.Id].BakingPower = bakingPower;
                 }
             }
             #endregion
@@ -397,8 +381,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                 #region save delegator cycles
                 await Db.Database.ExecuteSqlRawAsync($@"
-                    INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                    SELECT  {cycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
+                    INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"", ""StakedBalance"")
+                    SELECT  {cycle.Index}, ""AccountId"", ""DelegateId"", ""Balance"", ""StakedBalance""
                     FROM    ""SnapshotBalances""
                     WHERE   ""Level"" = {cycle.SnapshotLevel}
                     AND     ""DelegateId"" IS NOT NULL");
@@ -411,20 +395,23 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {
                         BakerId = x.Id,
                         Cycle = cycle.Index,
-                        DelegatedBalance = x.DelegatedBalance,
-                        DelegatorsCount = x.DelegatorsCount, 
                         StakingBalance = x.StakingBalance,
-                        ActiveStake = 0,
-                        SelectedStake = cycle.SelectedStake
+                        DelegatedBalance = x.DelegatedBalance,
+                        DelegatorsCount = x.DelegatorsCount,
+                        TotalStakedBalance = 0,
+                        ExternalStakedBalance = 0,
+                        StakersCount = 0,
+                        BakingPower = 0,
+                        TotalBakingPower = cycle.TotalBakingPower
                     };
                     if (x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
                     {
-                        var activeStake = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * activeStake / cycle.SelectedStake);
-                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * activeStake / cycle.SelectedStake;
+                        var bakingPower = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
+                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bc.ExpectedEndorsements = expectedEndorsements;
                         bc.FutureEndorsementRewards = expectedEndorsements * nextProto.EndorsementReward0;
-                        bc.ActiveStake = activeStake;
+                        bc.BakingPower = bakingPower;
                     }
                     return bc;
                 });

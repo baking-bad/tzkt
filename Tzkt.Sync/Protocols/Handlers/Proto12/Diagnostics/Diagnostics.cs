@@ -15,14 +15,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt64("full_balance") != delegat.Balance)
                 throw new Exception($"Diagnostics failed: wrong balance {delegat.Address}");
 
-            if (remote.RequiredInt64("current_frozen_deposits") != delegat.FrozenDeposit)
-                throw new Exception($"Diagnostics failed: wrong frozen deposits {delegat.Address}");
-
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
-            if (!CheckDelegatedBalance(remote, delegat))
-                throw new Exception($"Diagnostics failed: wrong delegated balance {delegat.Address}");
+            //if (!CheckDelegatedBalance(remote, delegat))
+            //    throw new Exception($"Diagnostics failed: wrong delegated balance {delegat.Address}");
 
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong deactivation state {delegat.Address}");
@@ -89,11 +86,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredString("random_seed") != Hex.Convert(cycle.Seed))
                 throw new Exception($"Invalid cycle {cycle.Index} seed {Hex.Convert(cycle.Seed)}");
 
-            if (remote.RequiredInt64("total_active_stake") != cycle.SelectedStake)
-                throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.SelectedStake}");
+            if (remote.RequiredInt64("total_active_stake") != cycle.TotalBakingPower)
+                throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.TotalBakingPower}");
 
-            if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.SelectedBakers)
-                throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.SelectedBakers}");
+            if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.TotalBakers)
+                throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.TotalBakers}");
         }
 
         protected virtual bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>

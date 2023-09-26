@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Genesis
@@ -35,6 +33,9 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public Task<JsonElement> GetStakeDistribution(int block, int cycle)
             => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetExpectedIssuance(int level)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics
@@ -54,6 +55,12 @@ namespace Tzkt.Sync.Protocols.Genesis
             => throw new InvalidOperationException();
         
         public Task<JsonElement> GetTicketBalance(int level, string address, string ticket)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetCurrentStakingBalance(int level, string address)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetStakingParameters(int level, string address)
             => throw new InvalidOperationException();
         #endregion
     }

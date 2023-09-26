@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToListAsync();
 
                     var slashedBakers = bakerCycles
-                        .Where(x => x.DoubleBakingLosses > 0 || x.DoubleEndorsingLosses > 0)
+                        .Where(x => x.DoubleBakingLossesOwn > 0 || x.DoubleEndorsingLossesOwn > 0)
                         .Select(x => x.BakerId)
                         .ToHashSet();
 
@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
-                            Loss = slashed ? 0 : missedBlock.Reward + missedBlock.Fees
+                            Loss = slashed ? 0 : missedBlock.RewardLiquid + missedBlock.Fees
                         });
                     }
                 }

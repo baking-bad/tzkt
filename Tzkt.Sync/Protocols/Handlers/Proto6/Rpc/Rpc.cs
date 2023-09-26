@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto6

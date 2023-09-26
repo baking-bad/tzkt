@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
@@ -270,7 +266,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                 foreach (var bc in bakerCycles.Values)
                 {
-                    var share = (double)bc.StakingBalance / cycle.TotalStaking;
+                    var share = (double)bc.BakingPower / cycle.TotalBakingPower;
                     bc.ExpectedBlocks = nextProto.BlocksPerCycle * share;
                     bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * share;
                     bc.FutureBlockRewards = 0;
@@ -391,18 +387,21 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Where(x => x != baker.Address);
 
                     var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                    var activeStake = stakingBalance - stakingBalance % protocol.MinimalStake;
-                    var share = (double)activeStake / cycle.SelectedStake;
+                    var bakingPower = stakingBalance - stakingBalance % protocol.MinimalStake;
+                    var share = (double)bakingPower / cycle.TotalBakingPower;
 
                     bakerCycle = new BakerCycle
                     {
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
                         StakingBalance = stakingBalance,
-                        ActiveStake = activeStake,
-                        SelectedStake = cycle.SelectedStake,
                         DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
                         DelegatorsCount = delegators.Count(),
+                        TotalStakedBalance = 0,
+                        ExternalStakedBalance = 0,
+                        StakersCount = 0,
+                        BakingPower = bakingPower,
+                        TotalBakingPower = cycle.TotalBakingPower,
                         ExpectedBlocks = protocol.BlocksPerCycle * share,
                         ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
                     };
@@ -416,6 +415,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         {
                             BakerId = baker.Id,
                             Balance = snapshottedDelegator.RequiredInt64("balance"),
+                            StakedBalance = 0,
                             Cycle = cycle.Index,
                             DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
                         });

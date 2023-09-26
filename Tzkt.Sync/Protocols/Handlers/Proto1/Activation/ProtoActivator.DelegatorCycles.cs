@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -18,6 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Cycle = cycle,
                         BakerId = (int)x.DelegateId,
                         Balance = x.Balance,
+                        StakedBalance = (x as User)?.StakedBalance ?? 0,
                         DelegatorId = x.Id
                     }));
             }

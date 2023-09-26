@@ -22,8 +22,12 @@ namespace Tzkt.Data.Models
         public Operations Operations { get; set; }
 
         public long Deposit { get; set; }
-        public long Reward { get; set; }
-        public long Bonus { get; set; }
+        public long RewardLiquid { get; set; }
+        public long RewardStakedOwn { get; set; }
+        public long RewardStakedShared { get; set; }
+        public long BonusLiquid { get; set; }
+        public long BonusStakedOwn { get; set; }
+        public long BonusStakedShared { get; set; }
         public long Fees { get; set; }
 
         public int? ProposerId { get; set; }
@@ -34,6 +38,9 @@ namespace Tzkt.Data.Models
 
         public bool? LBToggle { get; set; }
         public int LBToggleEma { get; set; }
+
+        public bool? AIToggle { get; set; }
+        public int AIToggleEma { get; set; }
 
         #region relations
         [ForeignKey(nameof(ProtoCode))]
@@ -66,6 +73,7 @@ namespace Tzkt.Data.Models
 
         public List<DelegationOperation> Delegations { get; set; }
         public List<OriginationOperation> Originations { get; set; }
+        public List<StakingOperation> StakingOps { get; set; }
         public List<TransactionOperation> Transactions { get; set; }
         public List<RevealOperation> Reveals { get; set; }
         public List<RegisterConstantOperation> RegisterConstants { get; set; }

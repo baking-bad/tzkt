@@ -84,12 +84,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                     SnapshotIndex = snapshotIndex,
                     SnapshotLevel = snapshotLevel,
-                    TotalStaking = Snapshots.Values.Sum(x => x.StakingBalance),
-                    TotalDelegated = Snapshots.Values.Sum(x => x.DelegatedBalance),
-                    TotalDelegators = Snapshots.Values.Sum(x => x.DelegatorsCount),
-                    TotalBakers = Snapshots.Count,
-                    SelectedStake = Snapshots.Values.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
-                    SelectedBakers = Snapshots.Values.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
+                    TotalBakers = Snapshots.Values.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
+                    TotalBakingPower = Snapshots.Values.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
                     Seed = futureSeed
                 };
 

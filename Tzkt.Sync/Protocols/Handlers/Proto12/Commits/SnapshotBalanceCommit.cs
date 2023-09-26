@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -68,13 +66,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     await Db.Database.ExecuteSqlRawAsync($@"
                         UPDATE ""SnapshotBalances"" as sb
-                        SET ""Balance"" = ""Balance"" - bc.""EndorsementRewards"",
-                            ""StakingBalance"" = ""StakingBalance"" - bc.""EndorsementRewards""	                        
+                        SET ""Balance"" = ""Balance"" - bc.""EndorsementRewardsLiquid"",
+                            ""StakingBalance"" = ""StakingBalance"" - bc.""EndorsementRewardsLiquid""	                        
                         FROM (
-	                        SELECT ""BakerId"", ""EndorsementRewards""
+	                        SELECT ""BakerId"", ""EndorsementRewardsLiquid""
 	                        FROM ""BakerCycles""
 	                        WHERE ""Cycle"" = {block.Cycle}
-                            AND ""EndorsementRewards"" != 0
+                            AND ""EndorsementRewardsLiquid"" != 0
                         ) as bc
                         WHERE sb.""Level"" = {block.Level}
                         AND sb.""DelegateId"" IS NULL

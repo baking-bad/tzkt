@@ -11,19 +11,19 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             #region init
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
-            var freezerUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-            var contractUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "contract");
+            var freezerUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
+            var contractUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
 
-            var offenderAddr = freezerUpdate.ValueKind != JsonValueKind.Undefined
-                ? freezerUpdate.RequiredString("delegate")
+            var offenderAddr = freezerUpdates.Any()
+                ? freezerUpdates.First().RequiredString("delegate")
                 : block.Proposer.Address; // this is wrong, but no big deal
 
-            var offenderLoss = freezerUpdate.ValueKind != JsonValueKind.Undefined
-                ? -freezerUpdate.RequiredInt64("change")
+            var offenderLoss = freezerUpdates.Any()
+                ? -freezerUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;
 
-            var accuserReward = contractUpdate.ValueKind != JsonValueKind.Undefined
-                ? contractUpdate.RequiredInt64("change")
+            var accuserReward = contractUpdates.Any()
+                ? contractUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;
 
             var doubleEndorsing = new DoubleEndorsingOperation
@@ -39,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = accuserReward,
-                OffenderLoss = offenderLoss
+                OffenderLossOwn = offenderLoss
             };
             #endregion
 
@@ -54,17 +54,16 @@ namespace Tzkt.Sync.Protocols.Proto12
             accuser.Balance += doubleEndorsing.AccuserReward;
             accuser.StakingBalance += doubleEndorsing.AccuserReward;
 
-            offender.Balance -= doubleEndorsing.OffenderLoss;
-            offender.FrozenDeposit -= doubleEndorsing.OffenderLoss;
-            offender.StakingBalance -= doubleEndorsing.OffenderLoss;
+            offender.Balance -= doubleEndorsing.OffenderLossOwn;
+            offender.StakingBalance -= doubleEndorsing.OffenderLossOwn;
 
             accuser.DoubleEndorsingCount++;
             if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
 
-            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLoss;
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLossOwn - doubleEndorsing.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLossOwn;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);
@@ -91,9 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             accuser.Balance -= doubleEndorsing.AccuserReward;
             accuser.StakingBalance -= doubleEndorsing.AccuserReward;
 
-            offender.Balance += doubleEndorsing.OffenderLoss;
-            offender.FrozenDeposit += doubleEndorsing.OffenderLoss;
-            offender.StakingBalance += doubleEndorsing.OffenderLoss;
+            offender.Balance += doubleEndorsing.OffenderLossOwn;
+            offender.StakingBalance += doubleEndorsing.OffenderLossOwn;
 
             accuser.DoubleEndorsingCount--;
             if (offender != accuser) offender.DoubleEndorsingCount--;

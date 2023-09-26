@@ -9,15 +9,9 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var accounts = await base.BootstrapAccounts(protocol, parameters);
 
-            foreach (var account in accounts.Where(x => x.Type == AccountType.Delegate))
-            {
-                var baker = account as Data.Models.Delegate;
-                baker.FrozenDeposit = baker.StakingBalance >= protocol.MinimalStake
-                    ? baker.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1)
-                    : 0;
-            }
-
-            Cache.Statistics.Current.TotalFrozen = accounts.Sum(x => (x as Data.Models.Delegate)?.FrozenDeposit ?? 0);
+            Cache.Statistics.Current.TotalFrozen = accounts
+                .Where(x => x is Data.Models.Delegate baker && baker.StakingBalance >= protocol.MinimalStake)
+                .Sum(x => (x as Data.Models.Delegate).StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1));
 
             return accounts;
         }

@@ -186,8 +186,8 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             #region apply new rights
             var sampler = GetOldSampler(bakerCycles.Values
-                .Where(x => x.ActiveStake > 0)
-                .Select(x => (x.BakerId, x.ActiveStake))
+                .Where(x => x.BakingPower > 0)
+                .Select(x => (x.BakerId, x.BakingPower))
                 .ToList());
 
             #region temporary diagnostics
@@ -268,8 +268,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             {
                 var bakerCycles = await Cache.BakerCycles.GetAsync(cycle.Index);
                 var sampler = GetOldSampler(bakerCycles.Values
-                    .Where(x => x.ActiveStake > 0)
-                    .Select(x => (x.BakerId, x.ActiveStake))
+                    .Where(x => x.BakingPower > 0)
+                    .Select(x => (x.BakerId, x.BakingPower))
                     .ToList());
 
                 #region temporary diagnostics

@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -169,13 +166,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
+                .Where(x => BakerIsListed(x, block, block.Protocol))
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, proto),
+                    VotingPower = GetVotingPower(x, block, proto),
                     Status = VoterStatus.None
                 });
 
@@ -212,13 +209,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
+                .Where(x => BakerIsListed(x, block, block.Protocol))
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, proto),
+                    VotingPower = GetVotingPower(x, block, proto),
                     Status = VoterStatus.None
                 });
 
@@ -262,13 +259,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region snapshot
                 Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
-                    .Where(x => x.Staked && x.StakingBalance >= proto.MinimalStake)
+                    .Where(x => BakerIsListed(x, block, block.Protocol))
                     .Select(x => new VotingSnapshot
                     {
                         Level = block.Level,
                         Period = period.Index,
                         BakerId = x.Id,
-                        VotingPower = GetVotingPower(x, proto),
+                        VotingPower = GetVotingPower(x, block, proto),
                         Status = VoterStatus.None
                     }));
                 #endregion
@@ -311,9 +308,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             return 8000;
         }
 
-        protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
+        protected virtual long GetVotingPower(Data.Models.Delegate baker, Block block, Protocol protocol)
         {
             return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
+        }
+
+        protected virtual bool BakerIsListed(Data.Models.Delegate baker, Block block, Protocol protocol)
+        {
+            return baker.Staked && baker.StakingBalance >= protocol.MinimalStake;
         }
     }
 }

@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
-                OffenderLoss = lostDepositsValue + lostRewardsValue + lostFeesValue
+                OffenderLossOwn = lostDepositsValue + lostRewardsValue + lostFeesValue
             };
             #endregion
 
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance += doubleEndorsing.AccuserReward;
-            offender.Balance -= doubleEndorsing.OffenderLoss;
+            offender.Balance -= doubleEndorsing.OffenderLossOwn;
             offender.StakingBalance -= lostDepositsValue;
             offender.StakingBalance -= lostFeesValue;
 
@@ -70,8 +70,8 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             block.Operations |= Operations.DoubleEndorsings;
 
-            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLoss - doubleEndorsing.AccuserReward;
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLossOwn - doubleEndorsing.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLossOwn - doubleEndorsing.AccuserReward;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);
@@ -100,7 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             #region apply operation
             accuser.Balance -= doubleEndorsing.AccuserReward;
-            offender.Balance += doubleEndorsing.OffenderLoss;
+            offender.Balance += doubleEndorsing.OffenderLossOwn;
             offender.StakingBalance += doubleEndorsing.AccuserReward * 2;
             // here we can miss 1 mutez, but this may happen only in legacy protocols, so let's ignore
             // TODO: replace it with NotImplementedException after Ithaca

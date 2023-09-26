@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -69,8 +65,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var endorsingRewards = activation ? new() : await Db.BakerCycles
                 .AsNoTracking()
-                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewards > 0)
-                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewards);
+                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsLiquid > 0)
+                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsLiquid);
 
             SelectedStakes = Snapshots
                 .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
@@ -82,9 +78,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (endorsingRewards.TryGetValue(baker.Id, out var reward))
                         lastBalance -= reward;
                     if (block.ProposerId == baker.Id)
-                        lastBalance -= block.Reward;
+                        lastBalance -= block.RewardLiquid;
                     if (block.ProducerId == baker.Id)
-                        lastBalance -= block.Bonus;
+                        lastBalance -= block.BonusLiquid;
 
                     var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
                     return Math.Min((long)x.StakingBalance, depositCap * (block.Protocol.MaxDelegatedOverFrozenRatio + 1));
@@ -97,12 +93,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                 SnapshotIndex = snapshotIndex,
                 SnapshotLevel = snapshotLevel,
-                TotalStaking = Snapshots.Sum(x => (long)x.StakingBalance),
-                TotalDelegated = Snapshots.Sum(x => (long)x.DelegatedBalance),
-                TotalDelegators = Snapshots.Sum(x => (int)x.DelegatorsCount),
-                SelectedBakers = SelectedStakes.Count,
-                SelectedStake = SelectedStakes.Values.Sum(),
-                TotalBakers = Snapshots.Count,
+                TotalBakers = SelectedStakes.Count,
+                TotalBakingPower = SelectedStakes.Values.Sum(),
                 Seed = futureSeed
             };
 

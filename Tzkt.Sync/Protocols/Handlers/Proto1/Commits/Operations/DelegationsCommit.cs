@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -69,7 +64,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (prevDelegate != null)
             {
                 prevDelegate.StakingBalance -= delegation.BakerFee;
-                if (prevDelegate.Id != sender.Id) 
+                if (prevDelegate.Id != sender.Id)
                     prevDelegate.DelegatedBalance -= delegation.BakerFee;
             }
             blockBaker.Balance += delegation.BakerFee;
@@ -92,6 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     if (sender.Type == AccountType.User)
                     {
+                        Unstake(sender, prevDelegate, delegation);
                         ResetDelegate(sender, prevDelegate);
                         UpgradeUser(delegation);
 
@@ -127,6 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
                 else
                 {
+                    Unstake(sender, prevDelegate, delegation);
                     ResetDelegate(sender, prevDelegate);
                     if (newDelegate != null)
                         SetDelegate(sender, newDelegate, block.Level);
@@ -312,7 +309,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                         sender = delegation.Sender;
 
                         if (prevDelegate != null && prevDelegate.Id != sender.Id)
+                        {
                             SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                            RevertUnstake(sender, prevDelegate, delegation);
+                        }
                     }
                     else
                     {
@@ -323,7 +323,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     ResetDelegate(sender, senderDelegate);
                     if (prevDelegate != null && prevDelegate.Id != sender.Id)
+                    {
                         SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                        RevertUnstake(sender, prevDelegate, delegation);
+                    }
                 }
             }
             #endregion
@@ -458,7 +461,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                 PublicKey = user.PublicKey,
                 Revealed = user.Revealed,
                 Staked = true,
-                StakingBalance = user.Balance,
+                StakingBalance = user.Balance - user.UnstakedBalance,
+                StakedBalance = user.StakedBalance,
+                UnstakedBalance = user.UnstakedBalance,
+                StakingPseudotokens = user.StakingPseudotokens,
+                StakingOpsCount = user.StakingOpsCount,
+                TotalStakedBalance = user.StakedBalance,
                 DelegatedBalance = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
@@ -707,6 +715,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
+                StakedBalance = delegat.StakedBalance,
+                UnstakedBalance = delegat.UnstakedBalance,
+                StakingPseudotokens = delegat.StakingPseudotokens,
+                StakingOpsCount = delegat.StakingOpsCount,
                 Id = delegat.Id,
                 Activated = delegat.Activated,
                 DelegationsCount = delegat.DelegationsCount,
@@ -1001,8 +1013,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Staked = newDelegate.Staked;
 
             newDelegate.DelegatorsCount++;
-            newDelegate.StakingBalance += sender.Balance;
-            newDelegate.DelegatedBalance += sender.Balance;
+            newDelegate.StakingBalance += sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
+            newDelegate.DelegatedBalance += sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
         }
 
         void ResetDelegate(Account sender, Data.Models.Delegate prevDelegate)
@@ -1012,10 +1024,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (sender.Address != prevDelegate.Address)
                 {
                     prevDelegate.DelegatorsCount--;
-                    prevDelegate.DelegatedBalance -= sender.Balance;
+                    prevDelegate.DelegatedBalance -= sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
                 }
-                
-                prevDelegate.StakingBalance -= sender.Balance;
+
+                prevDelegate.StakingBalance -= sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
             }
 
             sender.Delegate = null;
@@ -1023,6 +1035,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.DelegationLevel = null;
             sender.Staked = false;
         }
+
+        protected virtual void Unstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
+
+        protected virtual void RevertUnstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
 
         async Task<OriginationOperation> GetOriginationAsync(Contract contract)
         {

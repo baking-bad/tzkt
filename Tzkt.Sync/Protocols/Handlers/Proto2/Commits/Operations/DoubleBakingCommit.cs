@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
-                OffenderLoss = lostDepositsValue + lostRewardsValue + lostFeesValue
+                OffenderLossOwn = lostDepositsValue + lostRewardsValue + lostFeesValue
             };
             #endregion
 
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             #region apply operation
             accuser.Balance += doubleBaking.AccuserReward;
-            offender.Balance -= doubleBaking.OffenderLoss;
+            offender.Balance -= doubleBaking.OffenderLossOwn;
             offender.StakingBalance -= lostDepositsValue;
             offender.StakingBalance -= lostFeesValue;
 
@@ -70,8 +70,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             block.Operations |= Operations.DoubleBakings;
 
-            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLoss - doubleBaking.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLoss - doubleBaking.AccuserReward;
+            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLossOwn - doubleBaking.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLossOwn - doubleBaking.AccuserReward;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
@@ -100,7 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             #region apply operation
             accuser.Balance -= doubleBaking.AccuserReward;
-            offender.Balance += doubleBaking.OffenderLoss;
+            offender.Balance += doubleBaking.OffenderLossOwn;
             offender.StakingBalance += doubleBaking.AccuserReward * 2;
             // here we can miss 1 mutez, but this may happen only in legacy protocols
             // TODO: replace it with NotImplementedException after Ithaca

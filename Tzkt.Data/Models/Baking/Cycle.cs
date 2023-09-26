@@ -10,14 +10,19 @@ namespace Tzkt.Data.Models
         public int LastLevel { get; set; }
         public int SnapshotIndex { get; set; }
         public int SnapshotLevel { get; set; }
-        public long TotalStaking { get; set; }
-        public long TotalDelegated { get; set; }
-        public int TotalDelegators { get; set; }
+
         public int TotalBakers { get; set; }
-        public int SelectedBakers { get; set; }
-        public long SelectedStake { get; set; }
+        public long TotalBakingPower { get; set; }
 
         public byte[] Seed { get; set; }
+
+        public long BlockReward { get; set; }
+        public long BlockBonusPerSlot { get; set; }
+        public long MaxBlockReward { get; set; }
+        public long EndorsementRewardPerSlot { get; set; }
+        public long NonceRevelationReward { get; set; }
+        public long VdfRevelationReward { get; set; }
+        public long LBSubsidy { get; set; }
     }
 
     public static class CycleModel

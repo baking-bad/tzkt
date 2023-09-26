@@ -103,14 +103,11 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             else
             {
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") != 1)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") > 2)
                     throw new ValidationException("invalid block reward");
                 
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 1)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 2)
                     throw new ValidationException("invalid block bonus");
-                
-                if (balanceUpdates.Count(x => x.RequiredString("origin") == "block") > 5 && !Protocol.IsCycleEnd(Level))
-                    throw new ValidationException("unexpected cycle rewards");
             }
             #endregion
 
@@ -263,10 +260,10 @@ namespace Tzkt.Sync.Protocols.Proto18
             var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
             if (offenders.Any())
             {
-                if (offenders.Count() > 1)
+                if (offenders.Count() > 2)
                     throw new ValidationException("invalid double baking offender updates");
 
-                if (!Cache.Accounts.DelegateExists(offenders.First().RequiredString("delegate")))
+                if (!Cache.Accounts.DelegateExists(offenders.First().Required("staker").RequiredString("delegate")))
                     throw new ValidationException("invalid double baking offender");
             }
 
@@ -290,25 +287,29 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (level % proto.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
 
-            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates", 2)[1];
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
 
-            if (balanceUpdate.RequiredString("kind") != "contract")
-                throw new ValidationException("invalid seed nonce revelation balance update kind");
+            if (balanceUpdates.Count() > 4 || balanceUpdates.Count() % 2 != 0)
+                throw new ValidationException("invalid seed nonce revelation balance updates count");
 
-            if (balanceUpdate.RequiredString("contract") != Proposer)
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("delegate") != Proposer ||
+                x.RequiredString("kind") == "contract" && x.RequiredString("contract") != Proposer))
                 throw new ValidationException("invalid seed nonce revelation baker");
         }
         
         protected virtual void ValidateVdfRevelation(JsonElement content)
         {
+            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+
+            if (balanceUpdates.Count() > 4 || balanceUpdates.Count() % 2 != 0)
+                throw new ValidationException("invalid vdf revelation balance updates count");
+
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("delegate") != Proposer ||
+                x.RequiredString("kind") == "contract" && x.RequiredString("contract") != Proposer))
+                throw new ValidationException("invalid vdf revelation baker");
+
             var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
                 .SingleOrDefault(x => x.RequiredString("kind") == "contract");
-
-            if (balanceUpdate.RequiredString("kind") != "contract")
-                throw new ValidationException("invalid vdf revelation balance update kind");
-
-            if (balanceUpdate.ValueKind != JsonValueKind.Undefined && balanceUpdate.RequiredString("contract") != Proposer)
-                throw new ValidationException("invalid vdf revelation baker");
         }
 
         protected virtual void ValidateDrainDelegate(JsonElement content)
@@ -404,6 +405,72 @@ namespace Tzkt.Sync.Protocols.Proto18
                     initiator);
         }
 
+        protected virtual async Task ValidateStakeTransaction(string source, JsonElement content)
+        {
+            var sender = await Cache.Accounts.GetAsync(source);
+            var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
+                ?? throw new ValidationException("sender account is not delegated");
+
+            var result = content.Required("metadata").Required("operation_result");
+            var amount = content.RequiredInt64("amount");
+            if (amount > 0)
+            {
+                var updates = result.RequiredArray("balance_updates", 2).EnumerateArray();
+                var contractUpdate = updates.First(x => x.RequiredString("kind") == "contract");
+                var freezerUpdate = updates.First(x => x.RequiredString("kind") == "freezer");
+
+                if (contractUpdate.RequiredInt64("change") != -freezerUpdate.RequiredInt64("change") || freezerUpdate.RequiredInt64("change") != amount)
+                    throw new ValidationException("inconsistent contract and freezer updates");
+
+                if (freezerUpdate.Required("staker").RequiredString("contract") != sender.Address)
+                    throw new ValidationException("invalid staker.contract");
+
+                if (freezerUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+                    throw new ValidationException("invalid staker.delegate");
+            }
+            else
+            {
+                if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
+                    throw new ValidationException("unexpected balance updates");
+            }
+        }
+
+        protected virtual async Task ValidateUntakeTransaction(string source, JsonElement content)
+        {
+            var sender = await Cache.Accounts.GetAsync(source);
+            var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
+                ?? throw new ValidationException("sender account is not delegated");
+
+            var result = content.Required("metadata").Required("operation_result");
+            var amount = content.Required("parameters").Required("value").RequiredBigInteger("int");
+            if (amount > 0)
+            {
+                var updates = result.RequiredArray("balance_updates", 2).EnumerateArray();
+                var depositsUpdate = updates.First(x => x.RequiredString("category") == "deposits");
+                var unstakedUpdate = updates.First(x => x.RequiredString("category") == "unstaked_deposits");
+
+                if (depositsUpdate.RequiredInt64("change") != -unstakedUpdate.RequiredInt64("change") || unstakedUpdate.RequiredInt64("change") > amount)
+                    throw new ValidationException("inconsistent deposits and unstaked_deposits updates");
+
+                if (depositsUpdate.Required("staker").RequiredString("contract") != sender.Address)
+                    throw new ValidationException("invalid staker.contract for deposits update");
+
+                if (depositsUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+                    throw new ValidationException("invalid staker.delegate for deposits update");
+
+                if (unstakedUpdate.Required("staker").RequiredString("contract") != sender.Address)
+                    throw new ValidationException("invalid staker.contract for unstaked_deposits update");
+
+                if (unstakedUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+                    throw new ValidationException("invalid staker.delegate for unstaked_deposits update");
+            }
+            else
+            {
+                if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
+                    throw new ValidationException("unexpected balance updates");
+            }
+        }
+
         protected virtual async Task ValidateTransaction(JsonElement content)
         {
             var source = content.RequiredString("source");
@@ -421,14 +488,38 @@ namespace Tzkt.Sync.Protocols.Proto18
             var result = metadata.Required("operation_result");
             var applied = result.RequiredString("status") == "applied";
 
-            if (applied && result.TryGetProperty("balance_updates", out var resultUpdates))
-                ValidateTransferBalanceUpdates(
-                    resultUpdates.RequiredArray().EnumerateArray(),
-                    source,
-                    content.RequiredString("destination"),
-                    content.RequiredInt64("amount"),
-                    (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,
-                    (result.OptionalBool("allocated_destination_contract") ?? false) ? Protocol.OriginationSize * Protocol.ByteCost : 0);
+            if (applied)
+            {
+                var target = content.RequiredString("destination");
+                
+                if (source == target && source.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
+                {
+                    switch (entrypoint)
+                    {
+                        case "stake":
+                            await ValidateStakeTransaction(source, content);
+                            return;
+                        case "unstake":
+                            await ValidateUntakeTransaction(source, content);
+                            return;
+                        case "finalize_unstake":
+                            return;
+                        case "set_delegate_parameters":
+                            return;
+                        default:
+                            throw new ValidationException("unsupported staking operation");
+                    }
+                }
+
+                if (result.TryGetProperty("balance_updates", out var resultUpdates))
+                    ValidateTransferBalanceUpdates(
+                        resultUpdates.RequiredArray().EnumerateArray(),
+                        source,
+                        target,
+                        content.RequiredInt64("amount"),
+                        (result.OptionalInt32("paid_storage_size_diff") ?? 0) * Protocol.ByteCost,
+                        (result.OptionalBool("allocated_destination_contract") ?? false) ? Protocol.OriginationSize * Protocol.ByteCost : 0);
+            }
 
             if (metadata.TryGetProperty("internal_operation_results", out var internalResults))
             {

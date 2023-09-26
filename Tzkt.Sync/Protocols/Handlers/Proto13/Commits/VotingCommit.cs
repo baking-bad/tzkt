@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Proto13
     {
         public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
+        protected override long GetVotingPower(Data.Models.Delegate baker, Block block, Protocol protocol)
         {
             return baker.StakingBalance;
         }

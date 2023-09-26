@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -28,20 +25,23 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {
                         BakerId = x.Id,
                         Cycle = cycle.Index,
+                        StakingBalance = x.StakingBalance,
                         DelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
-                        StakingBalance = x.StakingBalance,
-                        ActiveStake = 0,
-                        SelectedStake = cycle.SelectedStake
+                        TotalStakedBalance = 0,
+                        ExternalStakedBalance = 0,
+                        StakersCount = 0,
+                        BakingPower = 0,
+                        TotalBakingPower = cycle.TotalBakingPower
                     };
                     if (x.StakingBalance >= protocol.MinimalStake)
                     {
-                        var activeStake = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * activeStake / cycle.SelectedStake);
-                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * activeStake / cycle.SelectedStake;
+                        var bakingPower = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
+                        var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * protocol.EndorsementReward0;
-                        bakerCycle.ActiveStake = activeStake;
+                        bakerCycle.BakingPower = bakingPower;
                     }
                     return bakerCycle;
                 });

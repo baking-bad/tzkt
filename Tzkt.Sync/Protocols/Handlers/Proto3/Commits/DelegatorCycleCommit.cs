@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto3
@@ -12,12 +11,13 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    INSERT  INTO ""DelegatorCycles"" (""Cycle"", ""DelegatorId"", ""BakerId"", ""Balance"")
-                    SELECT  {futureCycle.Index}, ""AccountId"", ""DelegateId"", ""Balance""
-                    FROM    ""SnapshotBalances""
-                    WHERE   ""Level"" = {futureCycle.SnapshotLevel}
-                    AND     ""DelegateId"" IS NOT NULL");
+                await Db.Database.ExecuteSqlRawAsync($"""
+                    INSERT  INTO "DelegatorCycles" ("Cycle", "DelegatorId", "BakerId", "Balance", "StakedBalance")
+                    SELECT  {futureCycle.Index}, "AccountId", "DelegateId", "Balance", "StakedBalance"
+                    FROM    "SnapshotBalances"
+                    WHERE   "Level" = {futureCycle.SnapshotLevel}
+                    AND     "DelegateId" IS NOT NULL
+                    """);
             }
         }
     }

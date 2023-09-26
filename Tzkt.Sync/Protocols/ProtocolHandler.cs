@@ -361,6 +361,7 @@ namespace Tzkt.Sync
                         b.SetDepositsLimits = null;
                         b.Revelation = null;
                         b.Revelations = null;
+                        b.StakingOps = null;
                         b.Transactions = null;
                         b.Migrations = null;
                         b.RevelationPenalties = null;

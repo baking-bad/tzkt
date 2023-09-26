@@ -1,22 +1,26 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public virtual void BootstrapSnapshotBalances(List<Account> accounts)
+        public void BootstrapSnapshotBalances(List<Account> accounts)
         {
             Db.SnapshotBalances.AddRange(accounts.Where(x => x.Staked)
                 .Select(x => new SnapshotBalance
                 {
-                    AccountId = x.Id, 
+                    Level = 1,
                     Balance = x.Balance,
+                    StakedBalance = (x as User)?.StakedBalance ?? 0,
+                    AccountId = x.Id,
                     DelegateId = x.DelegateId,
-                    Level = 1
+                    StakingBalance = (x as Data.Models.Delegate)?.StakingBalance,
+                    DelegatedBalance = (x as Data.Models.Delegate)?.DelegatedBalance,
+                    DelegatorsCount = (x as Data.Models.Delegate)?.DelegatorsCount,
+                    TotalStakedBalance = (x as Data.Models.Delegate)?.TotalStakedBalance,
+                    ExternalStakedBalance = (x as Data.Models.Delegate)?.ExternalStakedBalance,
+                    StakersCount = (x as Data.Models.Delegate)?.StakersCount,
                 }));
         }
 

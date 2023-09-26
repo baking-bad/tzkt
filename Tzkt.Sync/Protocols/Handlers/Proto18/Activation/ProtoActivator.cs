@@ -10,6 +10,132 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
+        protected override async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
+        {
+            var accounts = await base.BootstrapAccounts(protocol, parameters);
+
+            var bakers = accounts
+                .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
+                .Select(x => x as Data.Models.Delegate);
+
+            Cache.Statistics.Current.TotalFrozen = 0;
+            foreach (var baker in bakers)
+            {
+                baker.StakedBalance = baker.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1);
+                baker.TotalStakedBalance = baker.StakedBalance;
+                Cache.Statistics.Current.TotalFrozen += baker.StakedBalance;
+            }
+
+            return accounts;
+        }
+
+        public override List<Cycle> BootstrapCycles(Protocol protocol, List<Account> accounts, JToken parameters)
+        {
+            var cycles = base.BootstrapCycles(protocol, accounts, parameters);
+
+            var bakers = accounts
+                .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
+                .Select(x => x as Data.Models.Delegate);
+
+            var issuances = Proto.Rpc.GetExpectedIssuance(1).Result;
+
+            foreach (var cycle in cycles)
+            {
+                cycle.TotalBakingPower = bakers.Sum(x => Math.Min(x.StakingBalance, x.TotalStakedBalance * (protocol.MaxDelegatedOverFrozenRatio + 1)));
+                cycle.TotalBakers = bakers.Count();
+
+                var issuance = issuances.EnumerateArray().First(x => x.RequiredInt32("cycle") == cycle.Index);
+
+                cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
+                cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
+                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold);
+                cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
+                cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
+                cycle.LBSubsidy = issuance.RequiredInt64("liquidity_baking_subsidy");
+            }
+
+            return cycles;
+        }
+
+        public override void BootstrapBakerCycles(
+            Protocol protocol,
+            List<Account> accounts,
+            List<Cycle> cycles,
+            List<IEnumerable<RightsGenerator.BR>> bakingRights,
+            List<IEnumerable<RightsGenerator.ER>> endorsingRights)
+        {
+            var bakers = accounts
+                .Where(x => x.Type == AccountType.Delegate)
+                .Select(x => x as Data.Models.Delegate);
+
+            foreach (var cycle in cycles)
+            {
+                var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
+                {
+                    var bakerCycle = new BakerCycle
+                    {
+                        BakerId = x.Id,
+                        Cycle = cycle.Index,
+                        StakingBalance = x.StakingBalance,
+                        DelegatedBalance = x.DelegatedBalance,
+                        DelegatorsCount = x.DelegatorsCount,
+                        TotalStakedBalance = x.TotalStakedBalance,
+                        ExternalStakedBalance = x.ExternalStakedBalance,
+                        StakersCount = x.StakersCount,
+                        BakingPower = 0,
+                        TotalBakingPower = cycle.TotalBakingPower
+                    };
+                    if (x.StakingBalance >= protocol.MinimalStake)
+                    {
+                        var bakingPower = Math.Min(x.StakingBalance, x.TotalStakedBalance * (protocol.MaxDelegatedOverFrozenRatio + 1));
+                        var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
+                        bakerCycle.ExpectedEndorsements = expectedEndorsements;
+                        bakerCycle.FutureEndorsementRewards = expectedEndorsements * cycle.EndorsementRewardPerSlot;
+                        bakerCycle.BakingPower = bakingPower;
+                    }
+                    return bakerCycle;
+                });
+
+                #region future baking rights
+                foreach (var br in bakingRights[cycle.Index].SkipWhile(x => x.Level == 1).Where(x => x.Round == 0))
+                {
+                    if (!bakerCycles.TryGetValue(br.Baker, out var bakerCycle))
+                        throw new Exception("Unknown baking right recipient");
+
+                    bakerCycle.FutureBlocks++;
+                    bakerCycle.FutureBlockRewards += cycle.MaxBlockReward;
+                }
+                #endregion
+
+                #region future endorsing rights
+                foreach (var er in endorsingRights[cycle.Index].TakeWhile(x => x.Level < cycle.LastLevel))
+                {
+                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                        throw new Exception("Unknown endorsing right recipient");
+
+                    bakerCycle.FutureEndorsements += er.Slots;
+                }
+                #endregion
+
+                #region shifted future endirsing rights
+                if (cycle.Index > 0)
+                {
+                    foreach (var er in endorsingRights[cycle.Index - 1].Reverse().TakeWhile(x => x.Level == cycle.FirstLevel - 1))
+                    {
+                        if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                            throw new Exception("Unknown endorsing right recipient");
+
+                        bakerCycle.FutureEndorsements += er.Slots;
+                    }
+                }
+                #endregion
+
+                Db.BakerCycles.AddRange(bakerCycles.Values);
+            }
+        }
+
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -89,6 +215,7 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             await RemoveDeadRefutationGames(state);
             await RemoveBigmapKeys(state);
+            await MigrateBakers(state);
         }
 
         protected async Task RemoveDeadRefutationGames(AppState state)
@@ -258,6 +385,23 @@ namespace Tzkt.Sync.Protocols.Proto18
                     bigmap.LastLevel = block.Level;
                     bigmap.Updates++;
                 }
+            }
+        }
+
+        async Task MigrateBakers(AppState state)
+        {
+            var stakes = (await Proto.Node.GetAsync($"chains/main/blocks/{state.Level}/context/raw/json/staking_balance/current?depth=1"))
+                .EnumerateArray()
+                .ToDictionary(
+                    x => x.EnumerateArray().First().RequiredString(),
+                    x => x.EnumerateArray().Last().RequiredInt64("own_frozen"));
+
+            foreach (var baker in Cache.Accounts.GetDelegates())
+            {
+                Db.TryAttach(baker);
+                baker.FrozenDepositLimit = null;
+                baker.StakedBalance = stakes.GetValueOrDefault(baker.Address);
+                baker.TotalStakedBalance = stakes.GetValueOrDefault(baker.Address);
             }
         }
     }

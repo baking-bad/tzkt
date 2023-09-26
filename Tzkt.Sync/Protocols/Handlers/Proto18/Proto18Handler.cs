@@ -39,6 +39,8 @@ namespace Tzkt.Sync.Protocols
             var cycleCommit = new CycleCommit(this);
             await cycleCommit.Apply(blockCommit.Block);
 
+            await new StakingCommit(this).ActivateStakingParameters(blockCommit.Block);
+
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
@@ -165,6 +167,17 @@ namespace Tzkt.Sync.Protocols
                                 bigMapCommit.Append(orig.Origination, orig.Origination.Contract, orig.BigMapDiffs);
                             break;
                         case "transaction":
+                            var src = content.RequiredString("source");
+                            var dst = content.RequiredString("destination");
+                            if (src == dst &&
+                                src.StartsWith("tz") &&
+                                content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint &&
+                                StakingCommit.Entrypoints.Contains(entrypoint))
+                            {
+                                await new StakingCommit(this).Apply(blockCommit.Block, operation, content);
+                                break;
+                            }
+
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
@@ -295,6 +308,8 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            await blockCommit.ApplyRewards(block);
+
             new InboxCommit(this).Apply(blockCommit.Block);
 
             await bigMapCommit.Apply();
@@ -373,6 +388,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.VdfRevelation))
                 operations.AddRange(await Db.VdfRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.Staking))
+                operations.AddRange(await Db.StakingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.Transactions))
                 operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -432,6 +450,8 @@ namespace Tzkt.Sync.Protocols
             }
             #endregion
 
+            await new StakingCommit(this).DeactivateStakingParameters(currBlock);
+
             await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
@@ -445,37 +465,38 @@ namespace Tzkt.Sync.Protocols
             await new BigMapCommit(this).Revert(currBlock);
             await new ContractEventCommit(this).Revert(currBlock);
             await new InboxCommit(this).Revert(currBlock);
+            await new BlockCommit(this).RevertRewards(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {
                 switch (operation)
                 {
-                    case EndorsementOperation endorsement:
-                        await new EndorsementsCommit(this).Revert(currBlock, endorsement);
+                    case EndorsementOperation op:
+                        await new EndorsementsCommit(this).Revert(currBlock, op);
                         break;
-                    case PreendorsementOperation preendorsement:
-                        await new PreendorsementsCommit(this).Revert(currBlock, preendorsement);
+                    case PreendorsementOperation op:
+                        await new PreendorsementsCommit(this).Revert(currBlock, op);
                         break;
-                    case ProposalOperation proposal:
-                        await new ProposalsCommit(this).Revert(currBlock, proposal);
+                    case ProposalOperation op:
+                        await new ProposalsCommit(this).Revert(currBlock, op);
                         break;
-                    case BallotOperation ballot:
-                        await new BallotsCommit(this).Revert(currBlock, ballot);
+                    case BallotOperation op:
+                        await new BallotsCommit(this).Revert(currBlock, op);
                         break;
-                    case ActivationOperation activation:
-                        await new ActivationsCommit(this).Revert(currBlock, activation);
+                    case ActivationOperation op:
+                        await new ActivationsCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleBakingOperation doubleBaking:
-                        new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
+                    case DoubleBakingOperation op:
+                        new DoubleBakingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleEndorsingOperation doubleEndorsing:
-                        new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                    case DoubleEndorsingOperation op:
+                        new DoubleEndorsingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoublePreendorsingOperation doublePreendorsing:
-                        new DoublePreendorsingCommit(this).Revert(currBlock, doublePreendorsing);
+                    case DoublePreendorsingOperation op:
+                        new DoublePreendorsingCommit(this).Revert(currBlock, op);
                         break;
-                    case NonceRevelationOperation revelation:
-                        await new NonceRevelationsCommit(this).Revert(currBlock, revelation);
+                    case NonceRevelationOperation op:
+                        await new NonceRevelationsCommit(this).Revert(currBlock, op);
                         break;
                     case VdfRevelationOperation op:
                         await new VdfRevelationCommit(this).Revert(currBlock, op);
@@ -483,8 +504,8 @@ namespace Tzkt.Sync.Protocols
                     case DrainDelegateOperation op:
                         await new DrainDelegateCommit(this).Revert(currBlock, op);
                         break;
-                    case RevealOperation reveal:
-                        await new RevealsCommit(this).Revert(currBlock, reveal);
+                    case RevealOperation op:
+                        await new RevealsCommit(this).Revert(currBlock, op);
                         break;
                     case IncreasePaidStorageOperation op:
                         await new IncreasePaidStorageCommit(this).Revert(currBlock, op);
@@ -495,26 +516,29 @@ namespace Tzkt.Sync.Protocols
                     case RegisterConstantOperation registerConstant:
                         await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
                         break;
-                    case DelegationOperation delegation:
-                        if (delegation.InitiatorId == null)
-                            await new DelegationsCommit(this).Revert(currBlock, delegation);
+                    case DelegationOperation op:
+                        if (op.InitiatorId == null)
+                            await new DelegationsCommit(this).Revert(currBlock, op);
                         else
-                            await new DelegationsCommit(this).RevertInternal(currBlock, delegation);
+                            await new DelegationsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case OriginationOperation origination:
-                        if (origination.InitiatorId == null)
-                            await new OriginationsCommit(this).Revert(currBlock, origination);
+                    case OriginationOperation op:
+                        if (op.InitiatorId == null)
+                            await new OriginationsCommit(this).Revert(currBlock, op);
                         else
-                            await new OriginationsCommit(this).RevertInternal(currBlock, origination);
+                            await new OriginationsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case TransactionOperation transaction:
-                        if (transaction.InitiatorId == null)
-                            await new TransactionsCommit(this).Revert(currBlock, transaction);
+                    case StakingOperation op:
+                        await new StakingCommit(this).Revert(currBlock, op);
+                        break;
+                    case TransactionOperation op:
+                        if (op.InitiatorId == null)
+                            await new TransactionsCommit(this).Revert(currBlock, op);
                         else
-                            await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
+                            await new TransactionsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case TransferTicketOperation transferTicket:
-                        await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
+                    case TransferTicketOperation op:
+                        await new TransferTicketCommit(this).Revert(currBlock, op);
                         break;
                     case SmartRollupAddMessagesOperation op:
                         await new SmartRollupAddMessagesCommit(this).Revert(currBlock, op);
@@ -547,7 +571,7 @@ namespace Tzkt.Sync.Protocols
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
             await new CycleCommit(this).Revert(currBlock);
-            await new BlockCommit(this).Revert(currBlock);
+            new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);
         }

@@ -32,7 +32,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce")),
-                Reward = reward
+                RewardLiquid = reward,
+                RewardStakedOwn = 0,
+                RewardStakedShared = 0
             };
             #endregion
 
@@ -46,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.Reward;
+            blockBaker.Balance += revelation.RewardLiquid;
 
             sender.NonceRevelationsCount++;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount++;
@@ -55,8 +57,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             revealedBlock.Revelation = revelation;
 
-            Cache.Statistics.Current.TotalCreated += revelation.Reward;
-            Cache.Statistics.Current.TotalFrozen += revelation.Reward;
+            Cache.Statistics.Current.TotalCreated += revelation.RewardLiquid;
+            Cache.Statistics.Current.TotalFrozen += revelation.RewardLiquid;
             #endregion
 
             Db.NonceRevelationOps.Add(revelation);
@@ -85,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.Reward;
+            blockBaker.Balance -= revelation.RewardLiquid;
 
             sender.NonceRevelationsCount--;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount--;

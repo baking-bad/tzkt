@@ -129,8 +129,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 var bakerCycles = await Cache.BakerCycles.GetAsync(cycle.Index);
                 var sampler = GetOldSampler(bakerCycles.Values
-                    .Where(x => x.ActiveStake > 0)
-                    .Select(x => (x.BakerId, x.ActiveStake))
+                    .Where(x => x.BakingPower > 0)
+                    .Select(x => (x.BakerId, x.BakingPower))
                     .ToList());
 
                 #region temporary diagnostics
@@ -209,8 +209,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                         bakerCycle.FutureBlockRewards = 0;
                         bakerCycle.FutureEndorsements = 0;
                         
-                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakerCycle.ActiveStake / cycle.SelectedStake);
-                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.ActiveStake / cycle.SelectedStake;
+                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * nextProto.EndorsementReward0;
                     }

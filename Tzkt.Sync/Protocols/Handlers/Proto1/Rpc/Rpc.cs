@@ -33,6 +33,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual Task<JsonElement> GetStakeDistribution(int block, int cycle)
             => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetExpectedIssuance(int block)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics
@@ -52,6 +55,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             => throw new InvalidOperationException();
 
         public virtual Task<JsonElement> GetTicketBalance(int level, string address, string ticket)
+            => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetCurrentStakingBalance(int level, string address)
+            => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetStakingParameters(int level, string address)
             => throw new InvalidOperationException();
         #endregion
     }

@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Tzkt.Sync.Protocols
 {
@@ -14,8 +13,9 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);
         Task<JsonElement> GetStakeDistribution(int block, int cycle);
+        Task<JsonElement> GetExpectedIssuance(int level);
         #endregion
-        
+
         #region diagnostics
         Task<JsonElement> GetGlobalCounterAsync(int level);
         Task<JsonElement> GetDelegatesAsync(int level);
@@ -23,6 +23,8 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetDelegateParticipationAsync(int level, string address);
         Task<JsonElement> GetCycleAsync(int level, int cycle);
         Task<JsonElement> GetTicketBalance(int level, string address, string ticket);
+        Task<JsonElement> GetCurrentStakingBalance(int level, string address);
+        Task<JsonElement> GetStakingParameters(int level, string address);
         #endregion
     }
 }

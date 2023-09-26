@@ -12,7 +12,8 @@ namespace Tzkt.Data.Models
         public long AccuserReward { get; set; }
 
         public int OffenderId { get; set; }
-        public long OffenderLoss { get; set; }
+        public long OffenderLossOwn { get; set; }
+        public long OffenderLossShared { get; set; }
 
         #region relations
         [ForeignKey(nameof(AccuserId))]

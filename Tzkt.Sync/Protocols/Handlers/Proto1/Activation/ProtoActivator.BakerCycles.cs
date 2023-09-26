@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -20,23 +16,26 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => x as Data.Models.Delegate);
 
-            var selectedStake = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
+            var totalPower = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
 
             for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
             {
                 var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
-                    var activeStake = x.StakingBalance - x.StakingBalance % protocol.MinimalStake;
-                    var share = (double)activeStake / selectedStake;
+                    var bakingPower = x.StakingBalance - x.StakingBalance % protocol.MinimalStake;
+                    var share = (double)bakingPower / totalPower;
                     return new BakerCycle
                     {
                         Cycle = cycle,
                         BakerId = x.Id,
                         StakingBalance = x.StakingBalance,
-                        ActiveStake = activeStake,
-                        SelectedStake = selectedStake,
                         DelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
+                        TotalStakedBalance = x.TotalStakedBalance,
+                        ExternalStakedBalance = x.ExternalStakedBalance,
+                        StakersCount = x.StakersCount,
+                        BakingPower = bakingPower,
+                        TotalBakingPower = totalPower,
                         ExpectedBlocks = protocol.BlocksPerCycle * share, 
                         ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
                     };

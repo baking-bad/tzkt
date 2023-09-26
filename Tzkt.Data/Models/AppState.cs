@@ -24,6 +24,13 @@ namespace Tzkt.Data.Models
         public int VotingPeriod { get; set; }
         #endregion
 
+        #region state
+        public bool AIActivated { get; set; }
+        public int AIActivationCycle { get; set; }
+        public int AIFinalUpvoteLevel { get; set; }
+        public int PendingStakingParameters { get; set; }
+        #endregion
+
         #region counters
         public int AccountCounter { get; set; }
         public long OperationCounter { get; set; }
@@ -59,6 +66,7 @@ namespace Tzkt.Data.Models
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
+        public int StakingOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
         public int EndorsingRewardOpsCount { get; set; }

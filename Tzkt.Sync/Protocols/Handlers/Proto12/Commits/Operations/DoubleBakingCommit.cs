@@ -1,5 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -12,19 +11,19 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             #region init
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
-            var freezerUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-            var contractUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("kind") == "contract");
+            var freezerUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
+            var contractUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
 
-            var offenderAddr = freezerUpdate.ValueKind != JsonValueKind.Undefined
-                ? freezerUpdate.RequiredString("delegate")
+            var offenderAddr = freezerUpdates.Any()
+                ? freezerUpdates.First().RequiredString("delegate")
                 : block.Proposer.Address; // this is wrong, but no big deal
 
-            var offenderLoss = freezerUpdate.ValueKind != JsonValueKind.Undefined
-                ? -freezerUpdate.RequiredInt64("change")
+            var offenderLoss = freezerUpdates.Any()
+                ? -freezerUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;
 
-            var accuserReward = contractUpdate.ValueKind != JsonValueKind.Undefined
-                ? contractUpdate.RequiredInt64("change")
+            var accuserReward = contractUpdates.Any()
+                ? contractUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;
 
             var doubleBaking = new DoubleBakingOperation
@@ -40,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
                 AccuserReward = accuserReward,
-                OffenderLoss = offenderLoss
+                OffenderLossOwn = offenderLoss
             };
             #endregion
 
@@ -55,17 +54,16 @@ namespace Tzkt.Sync.Protocols.Proto12
             accuser.Balance += doubleBaking.AccuserReward;
             accuser.StakingBalance += doubleBaking.AccuserReward;
 
-            offender.Balance -= doubleBaking.OffenderLoss;
-            offender.FrozenDeposit -= doubleBaking.OffenderLoss;
-            offender.StakingBalance -= doubleBaking.OffenderLoss;
+            offender.Balance -= doubleBaking.OffenderLossOwn;
+            offender.StakingBalance -= doubleBaking.OffenderLossOwn;
 
             accuser.DoubleBakingCount++;
             if (offender != accuser) offender.DoubleBakingCount++;
 
             block.Operations |= Operations.DoubleBakings;
 
-            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLoss - doubleBaking.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLoss;
+            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLossOwn - doubleBaking.AccuserReward;
+            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLossOwn;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
@@ -92,9 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             accuser.Balance -= doubleBaking.AccuserReward;
             accuser.StakingBalance -= doubleBaking.AccuserReward;
 
-            offender.Balance += doubleBaking.OffenderLoss;
-            offender.FrozenDeposit += doubleBaking.OffenderLoss;
-            offender.StakingBalance += doubleBaking.OffenderLoss;
+            offender.Balance += doubleBaking.OffenderLossOwn;
+            offender.StakingBalance += doubleBaking.OffenderLossOwn;
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;

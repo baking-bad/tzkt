@@ -7,11 +7,17 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public long Balance { get; set; }
+        public long StakedBalance { get; set; }
         public int AccountId { get; set; }
         public int? DelegateId { get; set; }
-        public int? DelegatorsCount { get; set; }
-        public long? DelegatedBalance { get; set; }
+
         public long? StakingBalance { get; set; }
+        public long? DelegatedBalance { get; set; }
+        public int? DelegatorsCount { get; set; }
+
+        public long? TotalStakedBalance { get; set; }
+        public long? ExternalStakedBalance { get; set; }
+        public int? StakersCount { get; set; }
     }
 
     public static class SnapshotBalanceModel

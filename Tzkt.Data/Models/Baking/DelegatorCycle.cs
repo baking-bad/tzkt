@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
 
         public int BakerId { get; set; }
         public long Balance { get; set; }
+        public long StakedBalance { get; set; }
     }
 
     public static class DelegatorCycleModel
