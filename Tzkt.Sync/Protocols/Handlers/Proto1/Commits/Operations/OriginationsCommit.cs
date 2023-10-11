@@ -712,6 +712,24 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected async Task ProcessScript(OriginationOperation origination, MichelineArray code, IMicheline storageValue)
         {
+            #region expand top-level constants
+            var constants = await Constants.Find(Db, code);
+            if (constants.Count > 0)
+            {
+                var depth = 0;
+                while (code.Any(x => x is MichelinePrim prim && prim.Prim == PrimType.constant) && depth++ <= 10_000)
+                {
+                    for (int i = 0; i < code.Count; i++)
+                    {
+                        if (code[i] is MichelinePrim prim && prim.Prim == PrimType.constant)
+                        {
+                            code[i] = Micheline.FromBytes(constants.First(x => x.Address == (prim.Args[0] as MichelineString).Value).Value);
+                        }
+                    }
+                }
+            }
+            #endregion
+
             var contract = origination.Contract;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
@@ -719,7 +737,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
             #region process constants
-            var constants = await Constants.Find(Db, code);
             if (constants.Count > 0)
             {
                 contract.Tags |= ContractTags.Constants;
