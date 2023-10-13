@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.diff.Ptr >= 0 && !allocated.Contains(x.diff.Ptr) && x.diff.Action == BigMapDiffAction.Update)
                 .Select(x => (x.diff.Ptr, (x.diff as UpdateDiff).KeyHash)));
 
-            var copiedKeys = copiedFrom.Count == 0 ? null :
+            var copiedKeys = copiedFrom.Count == 0 ? new(0) :
                 await Db.BigMapKeys.AsNoTracking().Where(x => copiedFrom.Contains(x.BigMapPtr)).ToListAsync();
             #endregion
 
