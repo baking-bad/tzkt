@@ -214,13 +214,13 @@ namespace Tzkt.Api.Repositories
 
             using var db = GetConnection();
 
-            var parameterType = await db.QueryFirstOrDefaultAsync($@"
+            var origination = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""ParameterType""
                 FROM        ""SmartRollupOriginateOps""
                 WHERE       ""SmartRollupId"" = {rollup.Id}
                 LIMIT       1"
             );
-            if (parameterType is not byte[] bytes)
+            if (origination.ParameterType is not byte[] bytes)
                 return null;
 
             return Schema.Create(Micheline.FromBytes(bytes) as MichelinePrim).GetJsonSchema();
