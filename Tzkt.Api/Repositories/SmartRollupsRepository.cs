@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using Dapper;
 using Netezos.Encoding;
+using Netezos.Contracts;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -203,6 +204,26 @@ namespace Tzkt.Api.Repositories
                 LastActivityTime = Times[rollup.LastLevel],
                 Extras = rollup.Extras
             };
+        }
+
+        public async Task<RawJson> GetSmartRollupInterface(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return null;
+
+            using var db = GetConnection();
+
+            var origination = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ""ParameterType""
+                FROM        ""SmartRollupOriginateOps""
+                WHERE       ""SmartRollupId"" = {rollup.Id}
+                LIMIT       1"
+            );
+            if (origination.ParameterType is not byte[] bytes)
+                return null;
+
+            return Schema.Create(Micheline.FromBytes(bytes) as MichelinePrim).GetJsonSchema();
         }
 
         public async Task<IEnumerable<SmartRollup>> GetSmartRollups(SrFilter filter, Pagination pagination)

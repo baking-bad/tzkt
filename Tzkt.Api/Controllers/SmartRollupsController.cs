@@ -93,6 +93,27 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get JSON Schema [2020-12] interface for the smart rollup
+        /// </summary>
+        /// <remarks>
+        /// Returns standard JSON Schema for smart rollup parameter.
+        /// </remarks>
+        /// <param name="address">Smart rollup address</param>
+        /// <returns></returns>
+        [HttpGet("{address}/interface")]
+        public async Task<ActionResult<ContractInterface>> GetInterface([Required][Address] string address)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await SmartRollups.GetSmartRollupInterface(address);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get smart rollup stakers
         /// </summary>
         /// <remarks>
