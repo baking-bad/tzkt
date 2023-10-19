@@ -42,11 +42,16 @@ namespace Tzkt.Api
                 return Task.CompletedTask;
             }
             
-            if (ge != null && (ge == le || ge == lt + 1))
+            if (ge != null && ge == le)
             {
                 bindingContext.Result = ModelBindingResult.Success(new Int32Parameter
                 {
-                    Eq = ge
+                    Eq = ge,
+                    Ne = ne,
+                    Gt = gt,
+                    Lt = lt,
+                    In = @in,
+                    Ni = ni
                 });
 
                 return Task.CompletedTask;
