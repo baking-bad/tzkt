@@ -440,7 +440,141 @@ connection.on("transfers", (msg) => { console.log(msg); });
 await connection.invoke("SubscribeToTokenTransfers", { account: 'tz123...' });
 ````
 
+---		
+
+## SubscribeToTicketBalances
+
+Sends ticket balances when they are updated
+
+### Method
+
+`SubscribeToTicketBalances`
+
+### Channel
+
+`ticket_balances`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	account: '',    // address of the account that holds tickets
+	ticketer: '',   // address of the ticketer
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all ticket balance updates
+{
+}
+
+// subscribe to balance updates of all tickets within the ticketer
+{
+	ticketer: 'KT1...'
+}	 
+
+// subscribe to ticket balance updates for the account
+{		
+	account: 'tz1...'
+} 	 
+
+// subscribe to balance updates of all tickets within the ticketer for the account
+{		
+	account: 'tz1...',
+	ticketer: 'KT1...'
+} 
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/tickets/balances](#operation/Tickets_GetTicketBalances).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("ticket_balances", (msg) => { console.log(msg); });
+// subscribe to all ticket balances of the 'tz123...' account
+await connection.invoke("SubscribeToTicketBalances", { account: 'tz123...' });
+````
+
 ---			
+
+## SubscribeToTicketTransfers
+
+Sends ticket transfers
+
+### Method
+
+`SubscribeToTicketTransfers`
+
+### Channel
+
+`ticket_transfers`
+
+### Parameters
+
+This method accepts the following parameters:
+
+````js
+{
+	account: '',    // address of the account that sends/receives tickets
+	ticketer: '',   // address of the ticketer
+}
+````
+
+You can set various combinations of these fields to configure what you want to subscribe to. For example:
+
+````js
+// subscribe to all transfers
+{
+}
+
+// subscribe to transfers of all tickets within the ticketer
+{
+	ticketer: 'KT1...'
+} 
+
+// subscribe to transfers from/to the account
+{		
+	account: 'tz1...'
+} 	 
+
+// subscribe to transfers of all tickets within the ticketer from/to the account
+{		
+	account: 'tz1...',
+	ticketer: 'KT1...'
+}
+````
+
+> **Note:** you can invoke this method multiple times with different parameters to register multiple subscriptions.
+
+### Data model
+
+Same as in [/tickets/transfers](#operation/Tickets_GetTicketTransfers).
+
+### State
+
+State contains level (`int`) of the last processed block.
+
+### Example
+
+````js
+connection.on("ticket_transfers", (msg) => { console.log(msg); });
+// subscribe to all transfers of the 'tz123...' account
+await connection.invoke("SubscribeToTicketTransfers", { account: 'tz123...' });
+````
+
+---		
 
 ## SubscribeToEvents 
 														  
