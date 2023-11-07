@@ -8,11 +8,11 @@ namespace Tzkt.Data.Models
         public int Cycle { get; set; }
         public int BakerId { get; set; }
 
-        public long StakingBalance { get; set; }
-        public long DelegatedBalance { get; set; }
+        public long OwnDelegatedBalance { get; set; }
+        public long ExternalDelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
 
-        public long TotalStakedBalance { get; set; }
+        public long OwnStakedBalance { get; set; }
         public long ExternalStakedBalance { get; set; }
         public int StakersCount { get; set; }
 
@@ -84,18 +84,10 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => x.Id)
-                .IsUnique(true);
-
-            modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => x.Cycle);
+                .HasIndex(x => new { x.Cycle, x.BakerId });
 
             modelBuilder.Entity<BakerCycle>()
                 .HasIndex(x => x.BakerId);
-
-            modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => new { x.Cycle, x.BakerId })
-                .IsUnique(true);
             #endregion
         }
     }

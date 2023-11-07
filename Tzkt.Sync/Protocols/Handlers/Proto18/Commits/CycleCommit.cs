@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (block.Cycle <= Cache.AppState.Get().AIActivationCycle)
                 return Task.FromResult(Snapshots
                     .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
-                    .ToDictionary(x => x.AccountId, x => Math.Min((long)x.StakingBalance, (long)x.TotalStakedBalance * (block.Protocol.MaxDelegatedOverFrozenRatio + 1))));
+                    .ToDictionary(x => x.AccountId, x => Math.Min(x.StakingBalance, x.TotalStakedBalance * (block.Protocol.MaxDelegatedOverFrozenRatio + 1))));
 
             return Task.FromResult(Snapshots
                 .Select(x =>
@@ -43,8 +43,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                         block.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000,
                         Cache.Accounts.GetDelegate(x.AccountId).LimitOfStakingOverBaking ?? long.MaxValue);
 
-                    var frozen = Math.Min((long)x.TotalStakedBalance, x.StakedBalance + (long)((BigInteger)x.StakedBalance * stakingOverBaking / 1_000_000));
-                    var delegated = Math.Min((long)x.StakingBalance - frozen, x.StakedBalance * block.Protocol.MaxDelegatedOverFrozenRatio);
+                    var frozen = Math.Min(x.TotalStakedBalance, x.OwnStakedBalance + (long)((BigInteger)x.OwnStakedBalance* stakingOverBaking / 1_000_000));
+                    var delegated = Math.Min(x.StakingBalance - frozen, x.OwnStakedBalance * block.Protocol.MaxDelegatedOverFrozenRatio);
 
                     return (x.AccountId, frozen, delegated);
                 })

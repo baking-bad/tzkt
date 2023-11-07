@@ -16,6 +16,7 @@ namespace Tzkt.Data.Models
         public long TotalStakedBalance { get; set; }
         public long ExternalStakedBalance { get; set; }
         public long ExternalUnstakedBalance { get; set; }
+        public long IssuedPseudotokens { get; set; }
         public int StakersCount { get; set; }
 
         public long? LimitOfStakingOverBaking { get; set; }

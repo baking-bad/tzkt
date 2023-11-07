@@ -11,27 +11,39 @@ namespace Tzkt.Sync.Protocols.Proto18
         public void Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+            var balanceUpdates = content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray()
+                ?? Enumerable.Empty<JsonElement>();
+
             var freezerUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
             var contractUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
+
+            // there are also ("freezer", "unstaked_deposits") updates, but they don't work properly in oxford,
+            // so we count slashed unstaked deposits at the moment of finalize_update
+            // TODO: count slashing here, when all protocol bugs are fixed
 
             var offenderAddr = freezerUpdates.Any()
                 ? freezerUpdates.First().Required("staker").RequiredString("delegate")
                 : block.Proposer.Address; // this is wrong, but no big deal
 
-            var accuser = block.Proposer;
             var offender = Cache.Accounts.GetDelegate(offenderAddr);
-            var offenderLossOwn = 0L;
-            var offenderLossShared = 0L;
-            foreach(var freezerUpdate in freezerUpdates)
-            {
-                var change = -freezerUpdate.RequiredInt64("change");
-                var changeOwn = (long)((BigInteger)change * offender.StakedBalance / offender.TotalStakedBalance);
-                var changeShared = change - changeOwn;
-                offenderLossOwn += changeOwn;
-                offenderLossShared += changeShared;
-            }
+            var offenderLoss = freezerUpdates.Any()
+                ? contractUpdates.Sum(x => -x.RequiredInt64("change"))
+                : 0;
+            var offenderLossOwn = (long)((BigInteger)offenderLoss * offender.StakedBalance / offender.TotalStakedBalance);
+            var offenderLossShared = offenderLoss - offenderLossOwn;
 
+            //var offenderLossOwn = 0L;
+            //var offenderLossShared = 0L;
+            //foreach (var freezerUpdate in freezerUpdates)
+            //{
+            //    var change = -freezerUpdate.RequiredInt64("change");
+            //    var changeOwn = (long)((BigInteger)change * offender.StakedBalance / offender.TotalStakedBalance);
+            //    var changeShared = change - changeOwn;
+            //    offenderLossOwn += changeOwn;
+            //    offenderLossShared += changeShared;
+            //}
+
+            var accuser = block.Proposer;
             var accuserReward = contractUpdates.Any()
                 ? contractUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;

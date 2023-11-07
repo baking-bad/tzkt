@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Snapshots = await Db.SnapshotBalances
                 .AsNoTracking()
-                .Where(x => x.Level == snapshotLevel && x.DelegateId == null)
+                .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
             var endorsingRewards = activation ? new() : await Db.BakerCycles

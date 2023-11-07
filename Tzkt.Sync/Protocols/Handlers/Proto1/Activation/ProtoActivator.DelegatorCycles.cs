@@ -13,10 +13,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .Select(x => new DelegatorCycle
                     {
                         Cycle = cycle,
+                        DelegatorId = x.Id,
                         BakerId = (int)x.DelegateId,
-                        Balance = x.Balance,
-                        StakedBalance = (x as User)?.StakedBalance ?? 0,
-                        DelegatorId = x.Id
+                        DelegatedBalance = x.Balance,
+                        StakedBalance = (x as User)?.StakedBalance ?? 0
                     }));
             }
         }

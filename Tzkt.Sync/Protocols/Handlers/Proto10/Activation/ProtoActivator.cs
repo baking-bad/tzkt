@@ -387,6 +387,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Where(x => x != baker.Address);
 
                     var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
+                    var delegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance");
                     var bakingPower = stakingBalance - stakingBalance % protocol.MinimalStake;
                     var share = (double)bakingPower / cycle.TotalBakingPower;
 
@@ -394,10 +395,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                     {
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
-                        StakingBalance = stakingBalance,
-                        DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
+                        OwnDelegatedBalance = stakingBalance - delegatedBalance,
+                        ExternalDelegatedBalance = delegatedBalance,
                         DelegatorsCount = delegators.Count(),
-                        TotalStakedBalance = 0,
+                        OwnStakedBalance = 0,
                         ExternalStakedBalance = 0,
                         StakersCount = 0,
                         BakingPower = bakingPower,
@@ -413,11 +414,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                         var snapshottedDelegator = await Proto.Rpc.GetContractAsync(cycle.SnapshotLevel, delegatorAddress);
                         Db.DelegatorCycles.Add(new DelegatorCycle
                         {
-                            BakerId = baker.Id,
-                            Balance = snapshottedDelegator.RequiredInt64("balance"),
-                            StakedBalance = 0,
                             Cycle = cycle.Index,
-                            DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
+                            DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id,
+                            BakerId = baker.Id,
+                            DelegatedBalance = snapshottedDelegator.RequiredInt64("balance"),
+                            StakedBalance = 0
                         });
                     }
                     #endregion

@@ -281,7 +281,7 @@ namespace Tzkt.Sync.Protocols
         public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Apply(block, rawBlock);
+            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
         }
 
         public override async Task BeforeRevert()

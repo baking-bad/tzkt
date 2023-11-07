@@ -192,7 +192,7 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.FutureCycle,
                 brCommit.FutureBakingRights,
                 brCommit.FutureEndorsingRights,
-                cycleCommit.Snapshots,
+                cycleCommit.BakerSnapshots,
                 brCommit.CurrentRights);
 
             await new VotingCommit(this).Apply(blockCommit.Block, block);
@@ -202,7 +202,7 @@ namespace Tzkt.Sync.Protocols
         public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Apply(block, rawBlock);
+            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
         }
 
         public override async Task BeforeRevert()

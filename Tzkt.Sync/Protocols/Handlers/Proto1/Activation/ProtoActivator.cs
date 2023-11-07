@@ -16,9 +16,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var accounts = await BootstrapAccounts(protocol, parameters);
                 var cycles = BootstrapCycles(protocol, accounts, parameters);
                 var (bakingRights, endorsingRights) = await BootstrapBakingRights(protocol, accounts, cycles);
-                BootstrapDelegatorCycles(protocol, accounts);
-                BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
                 BootstrapSnapshotBalances(accounts);
+                BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
+                BootstrapDelegatorCycles(protocol, accounts);
                 BootstrapVoting(protocol, accounts);
                 BootstrapCommitments(parameters);
                 await ActivateContext(state);

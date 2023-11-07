@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
-            //if (!CheckDelegatedBalance(remote, delegat))
-            //    throw new Exception($"Diagnostics failed: wrong delegated balance {delegat.Address}");
+            if (!CheckDelegatedBalance(remote, delegat))
+                throw new Exception($"Diagnostics failed: wrong delegated balance {delegat.Address}");
 
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong deactivation state {delegat.Address}");

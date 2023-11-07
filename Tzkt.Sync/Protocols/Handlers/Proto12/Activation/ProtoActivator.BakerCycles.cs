@@ -23,14 +23,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var bakerCycle = new BakerCycle
                     {
-                        BakerId = x.Id,
                         Cycle = cycle.Index,
-                        StakingBalance = x.StakingBalance,
-                        DelegatedBalance = x.DelegatedBalance,
+                        BakerId = x.Id,
+                        OwnDelegatedBalance = x.Balance,
+                        ExternalDelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
-                        TotalStakedBalance = 0,
-                        ExternalStakedBalance = 0,
-                        StakersCount = 0,
+                        OwnStakedBalance = x.StakedBalance,
+                        ExternalStakedBalance = x.ExternalStakedBalance,
+                        StakersCount = x.StakersCount,
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower
                     };
@@ -38,10 +38,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {
                         var bakingPower = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
                         var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * protocol.EndorsementReward0;
-                        bakerCycle.BakingPower = bakingPower;
                     }
                     return bakerCycle;
                 });

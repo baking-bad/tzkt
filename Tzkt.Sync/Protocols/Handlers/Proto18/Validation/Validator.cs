@@ -255,7 +255,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual void ValidateDoubleBaking(JsonElement content)
         {
-            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
+            var balanceUpdates = content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray()
+                ?? Enumerable.Empty<JsonElement>();
             
             var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
             if (offenders.Any())
@@ -445,24 +446,34 @@ namespace Tzkt.Sync.Protocols.Proto18
             var amount = content.Required("parameters").Required("value").RequiredBigInteger("int");
             if (amount > 0)
             {
-                var updates = result.RequiredArray("balance_updates", 2).EnumerateArray();
-                var depositsUpdate = updates.First(x => x.RequiredString("category") == "deposits");
-                var unstakedUpdate = updates.First(x => x.RequiredString("category") == "unstaked_deposits");
+                if (result.TryGetProperty("balance_updates", out var balanceUpdates))
+                {
+                    var updates = balanceUpdates.EnumerateArray();
 
-                if (depositsUpdate.RequiredInt64("change") != -unstakedUpdate.RequiredInt64("change") || unstakedUpdate.RequiredInt64("change") > amount)
-                    throw new ValidationException("inconsistent deposits and unstaked_deposits updates");
+                    if (!updates.Any())
+                        return;
 
-                if (depositsUpdate.Required("staker").RequiredString("contract") != sender.Address)
-                    throw new ValidationException("invalid staker.contract for deposits update");
+                    if (updates.Count() != 2)
+                        throw new ValidationException("unexpected number of unstake balance updates");
 
-                if (depositsUpdate.Required("staker").RequiredString("delegate") != baker.Address)
-                    throw new ValidationException("invalid staker.delegate for deposits update");
+                    var depositsUpdate = updates.First(x => x.RequiredString("category") == "deposits");
+                    var unstakedUpdate = updates.First(x => x.RequiredString("category") == "unstaked_deposits");
 
-                if (unstakedUpdate.Required("staker").RequiredString("contract") != sender.Address)
-                    throw new ValidationException("invalid staker.contract for unstaked_deposits update");
+                    if (depositsUpdate.RequiredInt64("change") != -unstakedUpdate.RequiredInt64("change") || unstakedUpdate.RequiredInt64("change") > amount)
+                        throw new ValidationException("inconsistent deposits and unstaked_deposits updates");
 
-                if (unstakedUpdate.Required("staker").RequiredString("delegate") != baker.Address)
-                    throw new ValidationException("invalid staker.delegate for unstaked_deposits update");
+                    if (depositsUpdate.Required("staker").RequiredString("contract") != sender.Address)
+                        throw new ValidationException("invalid staker.contract for deposits update");
+
+                    if (depositsUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+                        throw new ValidationException("invalid staker.delegate for deposits update");
+
+                    if (unstakedUpdate.Required("staker").RequiredString("contract") != sender.Address)
+                        throw new ValidationException("invalid staker.contract for unstaked_deposits update");
+
+                    if (unstakedUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+                        throw new ValidationException("invalid staker.delegate for unstaked_deposits update");
+                }
             }
             else
             {

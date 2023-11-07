@@ -186,22 +186,22 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {
                         BakerId = snapshot.AccountId,
                         Cycle = futureCycle.Index,
-                        StakingBalance = (long)snapshot.StakingBalance,
-                        DelegatedBalance = (long)snapshot.DelegatedBalance,
-                        DelegatorsCount = (int)snapshot.DelegatorsCount,
-                        TotalStakedBalance = 0,
-                        ExternalStakedBalance = 0,
-                        StakersCount = 0,
+                        OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
+                        ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
+                        DelegatorsCount = snapshot.DelegatorsCount,
+                        OwnStakedBalance = snapshot.OwnStakedBalance,
+                        ExternalStakedBalance = snapshot.ExternalStakedBalance,
+                        StakersCount = snapshot.StakersCount,
                         BakingPower = 0,
                         TotalBakingPower = futureCycle.TotalBakingPower
                     };
                     if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                     {
                         var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                        bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * block.Protocol.EndorsementReward0;
-                        bakerCycle.BakingPower = bakingPower;
                     }
                     return bakerCycle;
                 });
@@ -422,9 +422,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE  FROM ""BakerCycles""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles}");
+                await Db.Database.ExecuteSqlRawAsync($"""
+                    DELETE FROM "BakerCycles"
+                    WHERE "Cycle" = {block.Cycle + block.Protocol.PreservedCycles}
+                    """);
             }
             #endregion
         }

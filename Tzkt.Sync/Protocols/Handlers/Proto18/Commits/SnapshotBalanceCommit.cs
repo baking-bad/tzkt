@@ -4,101 +4,179 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class SnapshotBalanceCommit : ProtocolCommit
+    class SnapshotBalanceCommit : Proto12.SnapshotBalanceCommit
     {
         public SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual async Task Apply(Block block, JsonElement rawBlock)
+        protected override Task TakeSnapshot(Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
+            return Db.Database.ExecuteSqlRawAsync($"""
+                INSERT INTO "SnapshotBalances" (
+                    "Level",
+                    "AccountId",
+                    "BakerId",
+                    "OwnDelegatedBalance",
+                    "ExternalDelegatedBalance",
+                    "DelegatorsCount",
+                    "OwnStakedBalance",
+                    "ExternalStakedBalance",
+                    "StakersCount",
+                    "StakedPseudotokens",
+                    "IssuedPseudotokens"
+                )
+
+                SELECT
+                    {block.Level},
+                    "Id",
+                    COALESCE("DelegateId", "Id"),
+                    "Balance" - COALESCE("StakedBalance", 0) - (CASE
+                                                                WHEN "UnstakedBakerId" IS NOT NULL
+                                                                AND "UnstakedBakerId" != "DelegateId"
+                                                                AND "UnstakedBakerId" != "Id"
+                                                                THEN "UnstakedBalance"
+                                                                ELSE 0
+                                                                END),
+                    COALESCE("DelegatedBalance", 0),
+                    COALESCE("DelegatorsCount", 0),
+                    COALESCE("StakedBalance", 0),
+                    COALESCE("ExternalStakedBalance", 0),
+                    COALESCE("StakersCount", 0),
+                    COALESCE("StakedPseudotokens", 0),
+                    COALESCE("IssuedPseudotokens", 0)
+                FROM "Accounts"
+                WHERE "Staked" = true
+
+                UNION ALL
+                
+                SELECT
+                    {block.Level},
+                    account."Id",
+                    account."UnstakedBakerId",
+                    account."UnstakedBalance",
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0,
+                    0
+                FROM "Accounts" as account
+                INNER JOIN "Accounts" as unstakedBaker
+                ON unstakedBaker."Id" = account."UnstakedBakerId"
+                WHERE unstakedBaker."Staked" = true
+                AND account."UnstakedBakerId" != account."DelegateId"
+                AND account."UnstakedBakerId" != account."Id"
+                """);
+        }
+
+        protected override async Task TakeDeactivatedSnapshot(Block block)
+        {
+            var deactivated = await Db.Delegates
+                .AsNoTracking()
+                .Where(x => x.DeactivationLevel == block.Level)
+                .ToListAsync();
+
+            if (deactivated.Count > 0)
             {
-                #region remove outdated
-                var delete = string.Empty;
-                var outdatedLevel = block.Level - (block.Protocol.PreservedCycles + 3) * block.Protocol.BlocksPerCycle;
-                if (outdatedLevel > 0)
+                var values = new List<string>();
+                foreach (var baker in deactivated)
                 {
-                    delete += block.Cycle <= block.Protocol.FirstCycle + block.Protocol.PreservedCycles + 4
-                        ? $"""DELETE FROM "SnapshotBalances" WHERE "Level" <= {outdatedLevel};"""
-                        : $"""DELETE FROM "SnapshotBalances" WHERE "Level" = {outdatedLevel};""";
-                }
-                #endregion
+                    var delegators = await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync();
+                    var unstakers = baker.ExternalUnstakedBalance > 0
+                        ? await Db.Users.Where(x => x.UnstakedBakerId == baker.Id).ToListAsync()
+                        : new(0);
 
-                #region make snapshot
-                await Db.Database.ExecuteSqlRawAsync($"""
-                    {delete}
-                    INSERT INTO "SnapshotBalances" ("Level", "Balance", "StakedBalance", "AccountId", "DelegateId", "StakingBalance", "DelegatedBalance", "DelegatorsCount", "TotalStakedBalance", "ExternalStakedBalance", "StakersCount")
-                    SELECT {block.Level}, "Balance", COALESCE("StakedBalance", 0), "Id", "DelegateId", "StakingBalance", "DelegatedBalance", "DelegatorsCount", "TotalStakedBalance", "ExternalStakedBalance", "StakersCount"
-                    FROM "Accounts"
-                    WHERE "Staked" = true
-                    """);
-                #endregion
+                    values.Add("(" + string.Join(',',
+                        block.Level,
+                        baker.Id,
+                        baker.Id,
+                        baker.Balance - baker.StakedBalance - (baker.UnstakedBakerId != null && baker.UnstakedBakerId != baker.Id ? baker.UnstakedBalance : 0),
+                        baker.DelegatedBalance,
+                        baker.DelegatorsCount,
+                        baker.StakedBalance,
+                        baker.ExternalStakedBalance,
+                        baker.StakersCount,
+                        baker.StakedPseudotokens,
+                        baker.IssuedPseudotokens) + ")");
 
-                #region ignore just deactivated
-                if (block.Events.HasFlag(BlockEvents.Deactivations))
-                {
-                    var deactivated = await Db.Delegates
-                        .AsNoTracking()
-                        .Include(x => x.DelegatedAccounts)
-                        .Where(x => x.DeactivationLevel == block.Level)
-                        .ToListAsync();
-
-                    if (deactivated.Any())
+                    foreach (var delegator in delegators)
                     {
-                        var sql = """
-                            INSERT INTO "SnapshotBalances" ("Level", "Balance", "StakedBalance", "AccountId", "DelegateId", "StakingBalance", "DelegatedBalance", "DelegatorsCount", "TotalStakedBalance", "ExternalStakedBalance", "StakersCount") VALUES 
-                            """;
+                        values.Add("(" + string.Join(',',
+                            block.Level,
+                            delegator.Id,
+                            delegator.DelegateId,
+                            delegator.Balance - (delegator is User user
+                                ? (user.StakedBalance - (user.UnstakedBakerId != null && user.UnstakedBakerId != user.DelegateId ? user.UnstakedBalance : 0))
+                                : 0),
+                            0,
+                            0,
+                            (delegator as User)?.StakedBalance,
+                            0,
+                            0,
+                            (delegator as User)?.StakedPseudotokens ?? 0,
+                            (delegator as Data.Models.Delegate)?.IssuedPseudotokens ?? 0) + ")");
+                    }
 
-                        foreach (var baker in deactivated)
-                        {
-                            sql += $"""
-                                ({block.Level}, {baker.Balance}, {baker.StakedBalance}, {baker.Id}, NULL, {baker.StakingBalance}, {baker.DelegatedBalance}, {baker.DelegatorsCount}, {baker.TotalStakedBalance}, {baker.ExternalStakedBalance}, {baker.StakersCount}),
-                                """;
-
-                            foreach (var delegator in baker.DelegatedAccounts)
-                                sql += $"""
-                                    ({block.Level}, {delegator.Balance}, {(delegator as User)?.StakedBalance ?? 0}, {delegator.Id}, {delegator.DelegateId}, NULL, NULL, NULL, NULL, NULL, NULL),
-                                    """;
-                        }
-
-                        await Db.Database.ExecuteSqlRawAsync(sql[..^1]);
+                    foreach (var unstaker in unstakers)
+                    {
+                        values.Add("(" + string.Join(',',
+                            block.Level,
+                            unstaker.Id,
+                            unstaker.UnstakedBakerId,
+                            unstaker.UnstakedBalance,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0,
+                            0) + ")");
                     }
                 }
-                #endregion
-
-                #region revert endorsing rewards
-                if (block.Events.HasFlag(BlockEvents.CycleEnd))
+                if (values.Count > 0)
                 {
                     await Db.Database.ExecuteSqlRawAsync($"""
-                        UPDATE "SnapshotBalances" as sb
-                        SET "Balance" = "Balance" - bc."EndorsementRewardsLiquid" - bc."EndorsementRewardsStakedOwn" - bc."EndorsementRewardsStakedShared",
-                            "StakingBalance" = "StakingBalance" - bc."EndorsementRewardsLiquid" - bc."EndorsementRewardsStakedOwn" - bc."EndorsementRewardsStakedShared",
-                            "StakedBalance" = "StakedBalance" - bc."EndorsementRewardsStakedOwn",
-                            "ExternalStakedBalance" = "ExternalStakedBalance" - bc."EndorsementRewardsStakedShared",
-                            "TotalStakedBalance" = "TotalStakedBalance" - bc."EndorsementRewardsStakedOwn" - bc."EndorsementRewardsStakedShared"
-                        FROM (
-                            SELECT "BakerId", "EndorsementRewardsLiquid", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedShared"
-                            FROM "BakerCycles"
-                            WHERE "Cycle" = {block.Cycle}
-                            AND ("EndorsementRewardsLiquid" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedShared" != 0)
-                        ) as bc
-                        WHERE sb."Level" = {block.Level}
-                        AND sb."DelegateId" IS NULL
-                        AND sb."AccountId" = bc."BakerId"
+                        INSERT INTO "SnapshotBalances" (
+                            "Level",
+                            "AccountId",
+                            "BakerId",
+                            "OwnDelegatedBalance",
+                            "ExternalDelegatedBalance",
+                            "DelegatorsCount",
+                            "OwnStakedBalance",
+                            "ExternalStakedBalance",
+                            "StakersCount",
+                            "StakedPseudotokens",
+                            "IssuedPseudotokens"
+                        )
+                        VALUES
+                        {string.Join(",\n", values)}
                         """);
                 }
-                #endregion
             }
         }
 
-        public async Task Revert(Block block)
+        protected override async Task SubtractCycleRewards(JsonElement rawBlock, Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.BalanceSnapshot))
-            {
-                await Db.Database.ExecuteSqlRawAsync($"""
-                    DELETE FROM "SnapshotBalances"
-                    WHERE "Level" = {block.Level}
-                    """);
-            }
+            if (!block.Events.HasFlag(BlockEvents.CycleEnd))
+                return;
+
+            await Db.Database.ExecuteSqlRawAsync($"""
+                UPDATE "SnapshotBalances" as sb
+                SET 
+                    "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsLiquid",
+                    "OwnStakedBalance" = "OwnStakedBalance" - bc."EndorsementRewardsStakedOwn",
+                    "ExternalStakedBalance" = "ExternalStakedBalance" - bc."EndorsementRewardsStakedShared"
+                FROM (
+                    SELECT "BakerId", "EndorsementRewardsLiquid", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedShared"
+                    FROM "BakerCycles"
+                    WHERE "Cycle" = {block.Cycle}
+                    AND ("EndorsementRewardsLiquid" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedShared" != 0)
+                ) as bc
+                WHERE sb."Level" = {block.Level}
+                AND sb."AccountId" = bc."BakerId"
+                AND sb."BakerId" = bc."BakerId"
+                """);
         }
     }
 }

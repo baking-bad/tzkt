@@ -197,24 +197,24 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var bakerCycle = new BakerCycle
                     {
-                        BakerId = snapshot.AccountId,
                         Cycle = futureCycle.Index,
-                        StakingBalance = (long)snapshot.StakingBalance,
-                        DelegatedBalance = (long)snapshot.DelegatedBalance,
-                        DelegatorsCount = (int)snapshot.DelegatorsCount,
-                        TotalStakedBalance = (long)snapshot.TotalStakedBalance,
-                        ExternalStakedBalance = (long)snapshot.ExternalStakedBalance,
-                        StakersCount = (int)snapshot.StakersCount,
+                        BakerId = snapshot.AccountId,
+                        OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
+                        ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
+                        DelegatorsCount = snapshot.DelegatorsCount,
+                        OwnStakedBalance = snapshot.OwnStakedBalance,
+                        ExternalStakedBalance = snapshot.ExternalStakedBalance,
+                        StakersCount = snapshot.StakersCount,
                         BakingPower = 0,
                         TotalBakingPower = futureCycle.TotalBakingPower
                     };
                     if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                     {
                         var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                        bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * futureCycle.EndorsementRewardPerSlot;
-                        bakerCycle.BakingPower = bakingPower;
                     }
                     return bakerCycle;
                 });
@@ -450,8 +450,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 await Db.Database.ExecuteSqlRawAsync($"""
-                    DELETE  FROM "BakerCycles"
-                    WHERE   "Cycle" = {block.Cycle + block.Protocol.PreservedCycles}
+                    DELETE FROM "BakerCycles"
+                    WHERE "Cycle" = {block.Cycle + block.Protocol.PreservedCycles}
                     """);
             }
             #endregion

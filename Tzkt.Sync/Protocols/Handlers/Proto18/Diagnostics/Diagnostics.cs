@@ -1,4 +1,5 @@
-﻿using Netezos.Encoding;
+﻿using System.Text.Json;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -6,6 +7,11 @@ namespace Tzkt.Sync.Protocols.Proto18
     class Diagnostics : Proto16.Diagnostics
     {
         public Diagnostics(ProtocolHandler handler) : base(handler) { }
+
+        protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance;
+        }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
         {
@@ -22,20 +28,23 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (stakingBalance.RequiredInt64("delegated") != delegat.StakingBalance - delegat.TotalStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong delegated balance for {delegat.Address}");
 
-            var stakingParameters = await Rpc.GetStakingParameters(level, delegat.Address);
-
-            if (stakingParameters.TryGetProperty("active", out var active))
+            if (level > 1)
             {
-                if (active.RequiredInt64("limit_of_staking_over_baking_millionth") != delegat.LimitOfStakingOverBaking)
-                    throw new Exception($"Diagnostics failed: wrong limit_of_staking_over_baking_millionth for {delegat.Address}");
+                var stakingParameters = await Rpc.GetStakingParameters(level - 1, delegat.Address);
 
-                if (active.RequiredInt64("edge_of_baking_over_staking_billionth") != delegat.EdgeOfBakingOverStaking)
-                    throw new Exception($"Diagnostics failed: wrong edge_of_baking_over_staking_billionth for {delegat.Address}");
-            }
-            else
-            {
-                if (delegat.LimitOfStakingOverBaking != null || delegat.EdgeOfBakingOverStaking != null)
-                    throw new Exception($"Diagnostics failed: wrong staking parameters for {delegat.Address}");
+                if (stakingParameters.TryGetProperty("active", out var active))
+                {
+                    if (active.RequiredInt64("limit_of_staking_over_baking_millionth") != delegat.LimitOfStakingOverBaking)
+                        throw new Exception($"Diagnostics failed: wrong limit_of_staking_over_baking_millionth for {delegat.Address}");
+
+                    if (active.RequiredInt64("edge_of_baking_over_staking_billionth") != delegat.EdgeOfBakingOverStaking)
+                        throw new Exception($"Diagnostics failed: wrong edge_of_baking_over_staking_billionth for {delegat.Address}");
+                }
+                else
+                {
+                    if (delegat.LimitOfStakingOverBaking != null || delegat.EdgeOfBakingOverStaking != null)
+                        throw new Exception($"Diagnostics failed: wrong staking parameters for {delegat.Address}");
+                }
             }
         }
 
