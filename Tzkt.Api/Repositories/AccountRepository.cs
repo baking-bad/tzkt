@@ -2130,7 +2130,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
                     var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
-                        ? Operations.GetRevelationPenalties(_delegat, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetRevelationPenalties(null, _delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
@@ -2138,7 +2138,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
-                        ? Operations.GetEndorsingRewards(_delegat, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetEndorsingRewards(null, _delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
                     await Task.WhenAll(

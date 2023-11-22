@@ -233,7 +233,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
                 var penalties = TypeSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
-                    ? Repo.GetRevelationPenalties(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetRevelationPenalties(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
                 var baking = TypeSubs.TryGetValue(Operations.Baking, out var bakingSub)
@@ -241,7 +241,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
                 var endorsingRewards = TypeSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
-                    ? Repo.GetEndorsingRewards(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetEndorsingRewards(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
 
                 await Task.WhenAll(

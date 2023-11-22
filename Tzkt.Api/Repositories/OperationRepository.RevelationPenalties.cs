@@ -49,6 +49,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
+            Int64Parameter id,
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -58,6 +59,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
@@ -80,6 +82,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[][]> GetRevelationPenalties(
+            Int64Parameter id,
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -114,6 +117,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
@@ -169,6 +173,7 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> GetRevelationPenalties(
+            Int64Parameter id,
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -200,6 +205,7 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)

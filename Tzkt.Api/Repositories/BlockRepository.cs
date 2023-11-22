@@ -636,11 +636,11 @@ namespace Tzkt.Api.Repositories
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
             var penalties = operations.HasFlag(Data.Models.Operations.RevelationPenalty)
-                ? Operations.GetRevelationPenalties(null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                ? Operations.GetRevelationPenalties(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
             var endorsingRewards = operations.HasFlag(Data.Models.Operations.EndorsingRewards)
-                ? Operations.GetEndorsingRewards(null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                ? Operations.GetEndorsingRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
             await Task.WhenAll(

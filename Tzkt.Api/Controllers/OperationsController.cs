@@ -5182,6 +5182,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of revelation penalty operations (synthetic type).
         /// </remarks>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="baker">Filters revelation penalty operations by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters revelation penalty operations by level.</param>
         /// <param name="timestamp">Filters revelation penalty operations by timestamp.</param>
@@ -5193,6 +5194,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
+            Int64Parameter id,
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -5220,7 +5222,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("baker", baker), ("level", level), ("timestamp", timestamp),
+                ("id", id), ("baker", baker), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -5229,25 +5231,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetRevelationPenalties(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -5481,6 +5483,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of endorsing reward operations (synthetic type).
         /// </remarks>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
@@ -5492,6 +5495,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsing_rewards")]
         public async Task<ActionResult<IEnumerable<EndorsingRewardOperation>>> GetEndorsingRewards(
+            Int64Parameter id,
             AccountParameter baker,
             Int32Parameter level,
             DateTimeParameter timestamp,
@@ -5519,7 +5523,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("baker", baker), ("level", level), ("timestamp", timestamp),
+                ("id", id), ("baker", baker), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -5528,25 +5532,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsingRewards(baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
