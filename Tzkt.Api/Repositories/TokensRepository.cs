@@ -356,6 +356,35 @@ namespace Tzkt.Api.Repositories
                 return (new string[1] { @"tb.""Id""" }, @"tb.""Id""");
             }
 
+            using var db = GetConnection();
+
+            #region optimizations
+            if (filter.balance?.Gt == "0" && filter.balance.Ne == null)
+            {
+                filter.balance.Gt = null;
+                filter.balance.Ne = "0";
+            }
+            if (filter.token?.contract?.Eq != null && filter.token.tokenId?.Eq != null && filter.token.id?.Eq == null)
+            {
+                var row = await db.QueryFirstOrDefaultAsync("""
+                    SELECT "Id"
+                    FROM "Tokens"
+                    WHERE "ContractId" = @contractId
+                    AND "TokenId" = @tokenId
+                    LIMIT 1
+                    """, new { contractId = filter.token.contract.Eq.Value, tokenId = filter.token.tokenId.Eq });
+
+                if (row == null)
+                    return Enumerable.Empty<dynamic>();
+
+                filter.token.contract.Eq = null;
+                filter.token.tokenId.Eq = null;
+
+                filter.token.id ??= new();
+                filter.token.id.Eq = (long)row.id;
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"
                 SELECT {select} FROM ""TokenBalances"" as tb
                 INNER JOIN ""Tokens"" AS t ON t.""Id"" = tb.""TokenId""")
@@ -384,7 +413,6 @@ namespace Tzkt.Api.Repositories
                     _ => TryMetaSort(x)
                 }, @"tb.""Id""");
 
-            using var db = GetConnection();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
