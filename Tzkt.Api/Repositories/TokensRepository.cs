@@ -381,7 +381,7 @@ namespace Tzkt.Api.Repositories
                 filter.token.tokenId.Eq = null;
 
                 filter.token.id ??= new();
-                filter.token.id.Eq = (long)row.id;
+                filter.token.id.Eq = (long)row.Id;
             }
             #endregion
 
