@@ -376,7 +376,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
-                .Take(sort, offset, limit, x => x switch
+                .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
@@ -389,7 +389,7 @@ namespace Tzkt.Api.Repositories
                 }, "o");
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            var rows = (await db.QueryAsync(sql.Query, sql.Params)).Take(limit);
 
             #region include storage
             var storages = includeStorage
@@ -564,7 +564,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
-                .Take(sort, offset, limit, x => x switch
+                .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
@@ -577,7 +577,7 @@ namespace Tzkt.Api.Repositories
                 }, "o");
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            var rows = (await db.QueryAsync(sql.Query, sql.Params)).Take(limit);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -845,7 +845,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
-                .Take(sort, offset, limit, x => x switch
+                .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
                     "gasUsed" => ("GasUsed", "GasUsed"),
@@ -858,7 +858,7 @@ namespace Tzkt.Api.Repositories
                 }, "o");
 
             using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.Query, sql.Params);
+            var rows = (await db.QueryAsync(sql.Query, sql.Params)).Take(limit);
 
             //TODO: optimize memory allocation
             var result = new object[rows.Count()];

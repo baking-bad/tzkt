@@ -1129,6 +1129,34 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region bigmap updates
+        public async Task<int> GetUpdatesCount(
+            Int32Parameter ptr,
+            StringParameter path,
+            AccountParameter contract,
+            BigMapActionParameter action,
+            JsonParameter value,
+            BigMapTagsParameter tags,
+            Int32Parameter level,
+            TimestampParameter timestamp)
+        {
+            var query = @"SELECT COUNT(*) FROM ""BigMapUpdates"" as u";
+            if (path != null || contract != null || tags != null)
+                query += "\n" + @"LEFT JOIN ""BigMaps"" as b on b.""Ptr"" = u.""BigMapPtr""";
+
+            var sql = new SqlBuilder(query)
+                .Filter("BigMapPtr", ptr)
+                .Filter("StoragePath", path)
+                .Filter("ContractId", contract)
+                .Filter("Action", action)
+                .Filter("JsonValue", value)
+                .Filter("Tags", tags)
+                .Filter("Level", level)
+                .Filter("Level", timestamp);
+
+            using var db = GetConnection();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
         public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
             Int32Parameter ptr,
             BigMapActionParameter action,
@@ -1211,7 +1239,7 @@ namespace Tzkt.Api.Repositories
                 };
             });
         }
-
+        
         public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
             Int32Parameter ptr,
             StringParameter path,

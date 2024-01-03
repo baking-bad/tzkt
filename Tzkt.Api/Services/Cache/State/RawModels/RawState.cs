@@ -20,6 +20,7 @@
         public int SmartRollupCommitmentCounter { get; set; }
         public int RefutationGameCounter { get; set; }
         public int InboxMessageCounter { get; set; }
+        public int BigMapUpdateCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }

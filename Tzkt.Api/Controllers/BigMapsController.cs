@@ -1,13 +1,12 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Controllers
 {
@@ -15,11 +14,13 @@ namespace Tzkt.Api.Controllers
     [Route("v1/bigmaps")]
     public class BigMapsController : ControllerBase
     {
+        readonly StateCache State;
         readonly BigMapsRepository BigMaps;
         readonly ResponseCacheService ResponseCache;
 
-        public BigMapsController(BigMapsRepository bigMaps, ResponseCacheService responseCache)
+        public BigMapsController(StateCache state, BigMapsRepository bigMaps, ResponseCacheService responseCache)
         {
+            State = state;
             BigMaps = bigMaps;
             ResponseCache = responseCache;
         }
@@ -157,6 +158,57 @@ namespace Tzkt.Api.Controllers
             }
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get bigmap updates count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of bigmap updates.
+        /// </remarks>
+        /// <param name="bigmap">Filters by bigmap ptr</param>
+        /// <param name="path">Filters by bigmap path</param>
+        /// <param name="contract">Filters by bigmap contract</param>
+        /// <param name="tags">Filters by bigmap tags: `metadata`, `token_metadata`, `ledger`</param>
+        /// <param name="action">Filters by action</param>
+        /// <param name="value">Filters by JSON value. Note, this query parameter supports the following format: `?value{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?value.balance.gt=...`.</param>
+        /// <param name="level">Filters by level</param>
+        /// <param name="timestamp">Filters by timestamp</param>
+        /// <returns></returns>
+        [HttpGet("updates/count")]
+        public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
+            Int32Parameter bigmap,
+            StringParameter path,
+            AccountParameter contract,
+            BigMapTagsParameter tags,
+            BigMapActionParameter action,
+            JsonParameter value,
+            Int32Parameter level,
+            TimestampParameter timestamp)
+        {
+            if (bigmap != null ||
+                path != null ||
+                contract != null ||
+                tags != null ||
+                action != null ||
+                value != null ||
+                level != null ||
+                timestamp != null)
+            {
+                var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                    ("bigmap", bigmap), ("path", path), ("contract", contract), ("tags", tags),
+                    ("action", action), ("value", value), ("level", level), ("timestamp", timestamp));
+
+                if (ResponseCache.TryGet(query, out var cached))
+                    return this.Bytes(cached);
+
+                var res = await BigMaps.GetUpdatesCount(bigmap, path, contract, action, value, tags, level, timestamp);
+                cached = ResponseCache.Set(query, res);
+                return this.Bytes(cached);
+            }
+
+            return Ok(State.Current.BigMapUpdateCounter);
         }
 
         /// <summary>
