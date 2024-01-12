@@ -62,6 +62,7 @@ namespace Tzkt.Data
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
+        public DbSet<AutostakingOperation> AutostakingOps { get; set; }
 
         public DbSet<SmartRollupAddMessagesOperation> SmartRollupAddMessagesOps { get; set; }
         public DbSet<SmartRollupCementOperation> SmartRollupCementOps { get; set; }
@@ -187,6 +188,7 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+            modelBuilder.BuildAutostakingOperationModel();
 
             modelBuilder.BuildSmartRollupAddMessagesOperationModel();
             modelBuilder.BuildSmartRollupCementOperationModel();

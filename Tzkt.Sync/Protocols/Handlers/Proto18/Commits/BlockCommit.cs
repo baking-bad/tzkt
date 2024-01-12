@@ -92,7 +92,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Required("metadata")
                 .RequiredArray("balance_updates")
                 .EnumerateArray()
-                .Where(x => x.RequiredString("origin") == "block").ToList();
+                .Where(x => x.RequiredString("origin") == "block")
+                .ToList();
 
             #region parse rewards
             var rewardLiquid = 0L;
@@ -115,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     var nextUpdate = balanceUpdates[i + 1];
                     if (nextUpdate.RequiredString("kind") == "freezer" &&
                         nextUpdate.RequiredString("category") == "deposits" &&
-                        nextUpdate.Required("staker").RequiredString("delegate") == proposer.Address &&
+                        nextUpdate.Required("staker").RequiredString("baker") == proposer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
                         var changeOwn = (long)((BigInteger)change * proposer.StakedBalance / proposer.TotalStakedBalance);
@@ -144,7 +145,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     var nextUpdate = balanceUpdates[i + 1];
                     if (nextUpdate.RequiredString("kind") == "freezer" &&
                         nextUpdate.RequiredString("category") == "deposits" &&
-                        nextUpdate.Required("staker").RequiredString("delegate") == producer.Address &&
+                        nextUpdate.Required("staker").RequiredString("baker") == producer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
                         var changeOwn = (long)((BigInteger)change * producer.StakedBalance / producer.TotalStakedBalance);

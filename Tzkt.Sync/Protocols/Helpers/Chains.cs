@@ -16,7 +16,7 @@
             "NetXizpkH94bocH" => "limanet",
             "NetXgbcrNtXD2yA" => "mumbainet",
             "NetXyuzvDo2Ugzb" => "nairobinet",
-            "NetXH6zDyMzRsUy" => "oxfordnet",
+            "NetXxWsskGahzQB" => "oxfordnet",
             _ => "private"
         };
     }

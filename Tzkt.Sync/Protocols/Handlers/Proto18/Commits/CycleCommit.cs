@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         block.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000,
                         Cache.Accounts.GetDelegate(x.AccountId).LimitOfStakingOverBaking ?? long.MaxValue);
 
-                    var frozen = Math.Min(x.TotalStakedBalance, x.OwnStakedBalance + (long)((BigInteger)x.OwnStakedBalance* stakingOverBaking / 1_000_000));
+                    var frozen = Math.Min(x.TotalStakedBalance, x.OwnStakedBalance + (long)((BigInteger)x.OwnStakedBalance * stakingOverBaking / 1_000_000));
                     var delegated = Math.Min(x.StakingBalance - frozen, x.OwnStakedBalance * block.Protocol.MaxDelegatedOverFrozenRatio);
 
                     return (x.AccountId, frozen, delegated);
@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.frozen >= block.Protocol.MinimalFrozenStake && x.frozen + x.delegated >= block.Protocol.MinimalStake)
                 .ToDictionary(x => x.AccountId, x =>
                 {
-                    return x.frozen + x.delegated / block.Protocol.StakePowerMultiplier;
+                    return x.frozen + x.delegated;
                 }));
         }
     }

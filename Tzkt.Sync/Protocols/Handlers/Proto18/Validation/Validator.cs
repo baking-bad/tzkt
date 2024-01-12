@@ -293,7 +293,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (balanceUpdates.Count() > 4 || balanceUpdates.Count() % 2 != 0)
                 throw new ValidationException("invalid seed nonce revelation balance updates count");
 
-            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("delegate") != Proposer ||
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("baker") != Proposer ||
                 x.RequiredString("kind") == "contract" && x.RequiredString("contract") != Proposer))
                 throw new ValidationException("invalid seed nonce revelation baker");
         }

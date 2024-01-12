@@ -90,8 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                     }
                     else
                     {
-                        var amount = content.Required("parameters").Required("value").RequiredBigInteger("int");
-                        unstakedAmount = amount >= long.MaxValue ? long.MaxValue : (long)amount;
+                        if (content.Required("parameters").Required("value").TryGetBigInteger("int", out var amount))
+                            unstakedAmount = amount.TrimToInt64();
                     }
                     operation.Kind = StakingOperationKind.Unstake;
                     operation.Amount = unstakedAmount;
@@ -119,11 +119,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                     operation.LastCycleUnstaked = lastCycle;
                     break;
                 case "set_delegate_parameters":
-                    var param = DelegateParametersSchema.Optimize(Micheline.FromJson(content.Required("parameters").Required("value")));
-                    var limit = ((param as MichelinePrim).Args[0] as MichelineInt).Value;
-                    var edge = (((param as MichelinePrim).Args[1] as MichelinePrim).Args[0] as MichelineInt).Value;
+                    var limit = BigInteger.Zero;
+                    var edge = BigInteger.Zero;
+                    try
+                    {
+                        var param = DelegateParametersSchema.Optimize(Micheline.FromJson(content.Required("parameters").Required("value")));
+                        limit = ((param as MichelinePrim).Args[0] as MichelineInt).Value;
+                        edge = (((param as MichelinePrim).Args[1] as MichelinePrim).Args[0] as MichelineInt).Value;
+                    }
+                    catch when (operation.Status != OperationStatus.Applied) { }
                     operation.Kind = StakingOperationKind.SetDelegateParameter;
-                    operation.LimitOfStakingOverBaking = limit >= 999_999_999_999 ? 999_999_999_999 : (long)limit;
+                    operation.LimitOfStakingOverBaking = limit.TrimToInt64();
                     operation.EdgeOfBakingOverStaking = (long)edge;
                     operation.ActivationCycle = block.Cycle + block.Protocol.PreservedCycles + 1;
                     break;

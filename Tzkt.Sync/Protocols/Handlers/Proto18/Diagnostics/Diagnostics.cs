@@ -28,7 +28,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (stakingBalance.RequiredInt64("delegated") != delegat.StakingBalance - delegat.TotalStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong delegated balance for {delegat.Address}");
 
-            if (level > 1)
+            if (level > proto.FirstLevel)
             {
                 var stakingParameters = await Rpc.GetStakingParameters(level - 1, delegat.Address);
 

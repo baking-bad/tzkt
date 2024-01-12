@@ -141,6 +141,12 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required BigInteger {name}");
         }
 
+        public static bool TryGetBigInteger(this JsonElement el, string name, out BigInteger res)
+        {
+            res = BigInteger.Zero;
+            return el.TryGetProperty(name, out var prop) && BigInteger.TryParse(prop.GetString(), out res);
+        }
+
         public static int ParseInt32(this JsonElement el)
         {
             return el.ValueKind == JsonValueKind.String

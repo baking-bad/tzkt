@@ -88,6 +88,7 @@ namespace Tzkt.Data.Models
 
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
+        public int AutostakingOpsCount { get; set; }
 
         public int SmartRollupAddMessagesOpsCount { get; set; }
         public int SmartRollupCementOpsCount { get; set; }

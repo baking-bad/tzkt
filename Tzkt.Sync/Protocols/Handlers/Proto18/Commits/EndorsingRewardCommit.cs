@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.RequiredString("category") == "deposits" &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.Required("staker").RequiredString("delegate"));
+                        var baker = Cache.Accounts.GetDelegate(nextUpdate.Required("staker").RequiredString("baker"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 

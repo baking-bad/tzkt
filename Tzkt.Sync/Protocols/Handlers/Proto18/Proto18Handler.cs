@@ -339,11 +339,13 @@ namespace Tzkt.Sync.Protocols
         {
             var block = await Cache.Blocks.CurrentAsync();
             await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
+            await new AutostakingCommit(this).Apply(block, rawBlock);
         }
 
         public override async Task BeforeRevert()
         {
             var block = await Cache.Blocks.CurrentAsync();
+            await new AutostakingCommit(this).Revert(block);
             await new SnapshotBalanceCommit(this).Revert(block);
         }
 
