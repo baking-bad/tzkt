@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         public AutostakingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual async Task Apply(Block block, JsonElement rawBlock)
+        public virtual void Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
@@ -170,8 +170,6 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 Db.AutostakingOps.Add(op);
             }
-
-            await Db.SaveChangesAsync();
         }
 
         public virtual async Task Revert(Block block)
