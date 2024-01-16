@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
-                        var changeOwn = (long)((BigInteger)change * baker.StakedBalance / baker.TotalStakedBalance);
+                        var changeOwn = baker.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * baker.StakedBalance / baker.TotalStakedBalance);
                         var changeShared = change - changeOwn;
                         op.RewardStakedOwn = changeOwn;
                         op.RewardStakedShared = changeShared;

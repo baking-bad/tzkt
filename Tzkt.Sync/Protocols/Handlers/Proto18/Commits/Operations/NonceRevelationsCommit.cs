@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             var rewardStaked = freezerUpdate.ValueKind != JsonValueKind.Undefined
                 ? freezerUpdate.RequiredInt64("change")
                 : 0;
-            var rewardStakedOwn = (long)((BigInteger)rewardStaked * block.Proposer.StakedBalance / block.Proposer.TotalStakedBalance);
+            var rewardStakedOwn = block.Proposer.TotalStakedBalance == 0 ? rewardStaked : (long)((BigInteger)rewardStaked * block.Proposer.StakedBalance / block.Proposer.TotalStakedBalance);
             var rewardStakedShared = rewardStaked - rewardStakedOwn;
 
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));

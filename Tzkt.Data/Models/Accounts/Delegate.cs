@@ -19,6 +19,7 @@ namespace Tzkt.Data.Models
         public long IssuedPseudotokens { get; set; }
         public int StakersCount { get; set; }
 
+        public long? FrozenDepositLimit { get; set; }
         public long? LimitOfStakingOverBaking { get; set; }
         public long? EdgeOfBakingOverStaking { get; set; }
 
@@ -37,10 +38,6 @@ namespace Tzkt.Data.Models
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }
-
-        #region legacy
-        public long? FrozenDepositLimit { get; set; }
-        #endregion
 
         #region relations
         [ForeignKey(nameof(SoftwareId))]

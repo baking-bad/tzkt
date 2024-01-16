@@ -169,6 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                             case "transaction": await ValidateTransaction(content); break;
                             case "reveal": await ValidateReveal(content); break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
+                            case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
                             case "update_consensus_key": await ValidateUpdateConsensusKey(content); break;
                             case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
@@ -255,29 +256,6 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual void ValidateDoubleBaking(JsonElement content)
         {
-            var balanceUpdates = content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray()
-                ?? Enumerable.Empty<JsonElement>();
-            
-            var offenders = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-            if (offenders.Any())
-            {
-                if (offenders.Count() > 2)
-                    throw new ValidationException("invalid double baking offender updates");
-
-                if (!Cache.Accounts.DelegateExists(offenders.First().Required("staker").RequiredString("delegate")))
-                    throw new ValidationException("invalid double baking offender");
-            }
-
-            var accusers = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
-            if (accusers.Any())
-            {
-                if (accusers.Count() > 1)
-                    throw new ValidationException("invalid double baking accuser updates");
-
-                var accuserAddress = accusers.First().RequiredString("contract");
-                if (!Cache.Accounts.DelegateExists(accuserAddress) || accuserAddress != Proposer)
-                    throw new ValidationException("invalid double baking accuser");
-            }
         }
 
         protected virtual async Task ValidateSeedNonceRevelation(JsonElement content)
@@ -305,7 +283,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (balanceUpdates.Count() > 4 || balanceUpdates.Count() % 2 != 0)
                 throw new ValidationException("invalid vdf revelation balance updates count");
 
-            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("delegate") != Proposer ||
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "freezer" && x.Required("staker").RequiredString("baker") != Proposer ||
                 x.RequiredString("kind") == "contract" && x.RequiredString("contract") != Proposer))
                 throw new ValidationException("invalid vdf revelation baker");
 
@@ -406,80 +384,82 @@ namespace Tzkt.Sync.Protocols.Proto18
                     initiator);
         }
 
-        protected virtual async Task ValidateStakeTransaction(string source, JsonElement content)
+        protected virtual Task ValidateStakeTransaction(string source, JsonElement content)
         {
-            var sender = await Cache.Accounts.GetAsync(source);
-            var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
-                ?? throw new ValidationException("sender account is not delegated");
+            throw new NotImplementedException("Staking operations are disabled ix Oxford2");
+            //var sender = await Cache.Accounts.GetAsync(source);
+            //var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
+            //    ?? throw new ValidationException("sender account is not delegated");
 
-            var result = content.Required("metadata").Required("operation_result");
-            var amount = content.RequiredInt64("amount");
-            if (amount > 0)
-            {
-                var updates = result.RequiredArray("balance_updates", 2).EnumerateArray();
-                var contractUpdate = updates.First(x => x.RequiredString("kind") == "contract");
-                var freezerUpdate = updates.First(x => x.RequiredString("kind") == "freezer");
+            //var result = content.Required("metadata").Required("operation_result");
+            //var amount = content.RequiredInt64("amount");
+            //if (amount > 0)
+            //{
+            //    var updates = result.RequiredArray("balance_updates", 2).EnumerateArray();
+            //    var contractUpdate = updates.First(x => x.RequiredString("kind") == "contract");
+            //    var freezerUpdate = updates.First(x => x.RequiredString("kind") == "freezer");
 
-                if (contractUpdate.RequiredInt64("change") != -freezerUpdate.RequiredInt64("change") || freezerUpdate.RequiredInt64("change") != amount)
-                    throw new ValidationException("inconsistent contract and freezer updates");
+            //    if (contractUpdate.RequiredInt64("change") != -freezerUpdate.RequiredInt64("change") || freezerUpdate.RequiredInt64("change") != amount)
+            //        throw new ValidationException("inconsistent contract and freezer updates");
 
-                if (freezerUpdate.Required("staker").RequiredString("contract") != sender.Address)
-                    throw new ValidationException("invalid staker.contract");
+            //    if (freezerUpdate.Required("staker").RequiredString("contract") != sender.Address)
+            //        throw new ValidationException("invalid staker.contract");
 
-                if (freezerUpdate.Required("staker").RequiredString("delegate") != baker.Address)
-                    throw new ValidationException("invalid staker.delegate");
-            }
-            else
-            {
-                if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
-                    throw new ValidationException("unexpected balance updates");
-            }
+            //    if (freezerUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+            //        throw new ValidationException("invalid staker.delegate");
+            //}
+            //else
+            //{
+            //    if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
+            //        throw new ValidationException("unexpected balance updates");
+            //}
         }
 
-        protected virtual async Task ValidateUntakeTransaction(string source, JsonElement content)
+        protected virtual Task ValidateUntakeTransaction(string source, JsonElement content)
         {
-            var sender = await Cache.Accounts.GetAsync(source);
-            var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
-                ?? throw new ValidationException("sender account is not delegated");
+            throw new NotImplementedException("Staking operations are disabled ix Oxford2");
+            //var sender = await Cache.Accounts.GetAsync(source);
+            //var baker = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId)
+            //    ?? throw new ValidationException("sender account is not delegated");
 
-            var result = content.Required("metadata").Required("operation_result");
-            var amount = content.Required("parameters").Required("value").RequiredBigInteger("int");
-            if (amount > 0)
-            {
-                if (result.TryGetProperty("balance_updates", out var balanceUpdates))
-                {
-                    var updates = balanceUpdates.EnumerateArray();
+            //var result = content.Required("metadata").Required("operation_result");
+            //var amount = content.Required("parameters").Required("value").RequiredBigInteger("int");
+            //if (amount > 0)
+            //{
+            //    if (result.TryGetProperty("balance_updates", out var balanceUpdates))
+            //    {
+            //        var updates = balanceUpdates.EnumerateArray();
 
-                    if (!updates.Any())
-                        return;
+            //        if (!updates.Any())
+            //            return;
 
-                    if (updates.Count() != 2)
-                        throw new ValidationException("unexpected number of unstake balance updates");
+            //        if (updates.Count() != 2)
+            //            throw new ValidationException("unexpected number of unstake balance updates");
 
-                    var depositsUpdate = updates.First(x => x.RequiredString("category") == "deposits");
-                    var unstakedUpdate = updates.First(x => x.RequiredString("category") == "unstaked_deposits");
+            //        var depositsUpdate = updates.First(x => x.RequiredString("category") == "deposits");
+            //        var unstakedUpdate = updates.First(x => x.RequiredString("category") == "unstaked_deposits");
 
-                    if (depositsUpdate.RequiredInt64("change") != -unstakedUpdate.RequiredInt64("change") || unstakedUpdate.RequiredInt64("change") > amount)
-                        throw new ValidationException("inconsistent deposits and unstaked_deposits updates");
+            //        if (depositsUpdate.RequiredInt64("change") != -unstakedUpdate.RequiredInt64("change") || unstakedUpdate.RequiredInt64("change") > amount)
+            //            throw new ValidationException("inconsistent deposits and unstaked_deposits updates");
 
-                    if (depositsUpdate.Required("staker").RequiredString("contract") != sender.Address)
-                        throw new ValidationException("invalid staker.contract for deposits update");
+            //        if (depositsUpdate.Required("staker").RequiredString("contract") != sender.Address)
+            //            throw new ValidationException("invalid staker.contract for deposits update");
 
-                    if (depositsUpdate.Required("staker").RequiredString("delegate") != baker.Address)
-                        throw new ValidationException("invalid staker.delegate for deposits update");
+            //        if (depositsUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+            //            throw new ValidationException("invalid staker.delegate for deposits update");
 
-                    if (unstakedUpdate.Required("staker").RequiredString("contract") != sender.Address)
-                        throw new ValidationException("invalid staker.contract for unstaked_deposits update");
+            //        if (unstakedUpdate.Required("staker").RequiredString("contract") != sender.Address)
+            //            throw new ValidationException("invalid staker.contract for unstaked_deposits update");
 
-                    if (unstakedUpdate.Required("staker").RequiredString("delegate") != baker.Address)
-                        throw new ValidationException("invalid staker.delegate for unstaked_deposits update");
-                }
-            }
-            else
-            {
-                if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
-                    throw new ValidationException("unexpected balance updates");
-            }
+            //        if (unstakedUpdate.Required("staker").RequiredString("delegate") != baker.Address)
+            //            throw new ValidationException("invalid staker.delegate for unstaked_deposits update");
+            //    }
+            //}
+            //else
+            //{
+            //    if (result.OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
+            //        throw new ValidationException("unexpected balance updates");
+            //}
         }
 
         protected virtual async Task ValidateTransaction(JsonElement content)
@@ -590,7 +570,20 @@ namespace Tzkt.Sync.Protocols.Proto18
                 source,
                 content.RequiredInt64("fee"));
         }
-        
+
+        protected virtual async Task ValidateSetDepositsLimit(JsonElement content)
+        {
+            var source = content.RequiredString("source");
+
+            if (!await Cache.Accounts.ExistsAsync(source))
+                throw new ValidationException("unknown source account");
+
+            ValidateFeeBalanceUpdates(
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                source,
+                content.RequiredInt64("fee"));
+        }
+
         protected virtual async Task ValidateIncreasePaidStorage(JsonElement content)
         {
             var source = content.RequiredString("source");

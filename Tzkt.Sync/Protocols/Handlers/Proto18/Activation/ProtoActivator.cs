@@ -152,17 +152,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.VdfRevelationRewardWeight = parameters["issuance_weights"]?["vdf_revelation_tip_weight"]?.Value<int>() ?? 1;
             protocol.LBSubsidyWeight = parameters["issuance_weights"]?["liquidity_baking_subsidy_weight"]?.Value<int>() ?? 1280;
 
-            protocol.AdaptiveIssuanceLaunchEmaThreshold = parameters["adaptive_issuance_launch_ema_threshold"]?.Value<int>() ?? 100_000_000;
-            protocol.AdaptiveIssuanceRatioMinNumerator = parameters["adaptive_rewards_params"]?["issuance_ratio_min"]?["numerator"]?.Value<int>() ?? 1;
-            protocol.AdaptiveIssuanceRatioMinDenominator = parameters["adaptive_rewards_params"]?["issuance_ratio_min"]?["denominator"]?.Value<int>() ?? 2000;
-            protocol.AdaptiveIssuanceRatioMaxNumerator = parameters["adaptive_rewards_params"]?["issuance_ratio_max"]?["numerator"]?.Value<int>() ?? 1;
-            protocol.AdaptiveIssuanceRatioMaxDenominator = parameters["adaptive_rewards_params"]?["issuance_ratio_max"]?["denominator"]?.Value<int>() ?? 20;
-            protocol.AdaptiveIssuanceCenterDzNumerator = parameters["adaptive_rewards_params"]?["center_dz"]?["numerator"]?.Value<int>() ?? 1;
-            protocol.AdaptiveIssuanceCenterDzDenominator = parameters["adaptive_rewards_params"]?["center_dz"]?["denominator"]?.Value<int>() ?? 2;
-            protocol.AdaptiveIssuanceRadiusDzNumerator = parameters["adaptive_rewards_params"]?["radius_dz"]?["numerator"]?.Value<int>() ?? 1;
-            protocol.AdaptiveIssuanceRadiusDzDenominator = parameters["adaptive_rewards_params"]?["radius_dz"]?["denominator"]?.Value<int>() ?? 50;
-            protocol.AdaptiveIssuanceMaxBonus = parameters["adaptive_rewards_params"]?["max_bonus"]?.Value<long>() ?? 50_000_000_000_000;
-            protocol.AdaptiveIssuanceGrowthRate = parameters["adaptive_rewards_params"]?["growth_rate"]?.Value<long>() ?? 115_740_740;
+            protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 5;
+            protocol.DoubleEndorsingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50;
 
             protocol.BlockDeposit = 0;
             protocol.BlockReward0 = 0;
@@ -189,17 +180,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.VdfRevelationRewardWeight = 1;
             protocol.LBSubsidyWeight = 1280;
 
-            protocol.AdaptiveIssuanceLaunchEmaThreshold = 100_000_000;
-            protocol.AdaptiveIssuanceRatioMinNumerator = 1;
-            protocol.AdaptiveIssuanceRatioMinDenominator = 2000;
-            protocol.AdaptiveIssuanceRatioMaxNumerator = 1;
-            protocol.AdaptiveIssuanceRatioMaxDenominator = 20;
-            protocol.AdaptiveIssuanceCenterDzNumerator = 1;
-            protocol.AdaptiveIssuanceCenterDzDenominator = 2;
-            protocol.AdaptiveIssuanceRadiusDzNumerator = 1;
-            protocol.AdaptiveIssuanceRadiusDzDenominator = 50;
-            protocol.AdaptiveIssuanceMaxBonus = 50_000_000_000_000;
-            protocol.AdaptiveIssuanceGrowthRate = 115_740_740;
+            protocol.DoubleBakingSlashedPercentage = 5;
+            protocol.DoubleEndorsingSlashedPercentage = 50;
 
             protocol.BlockDeposit = 0;
             protocol.BlockReward0 = 0;
@@ -399,7 +381,6 @@ namespace Tzkt.Sync.Protocols.Proto18
             foreach (var baker in Cache.Accounts.GetDelegates())
             {
                 Db.TryAttach(baker);
-                baker.FrozenDepositLimit = null;
                 baker.StakedBalance = stakes.GetValueOrDefault(baker.Address);
                 baker.TotalStakedBalance = stakes.GetValueOrDefault(baker.Address);
             }

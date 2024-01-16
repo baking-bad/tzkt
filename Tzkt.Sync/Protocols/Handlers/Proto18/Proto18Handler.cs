@@ -36,6 +36,8 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
+            await new SlashingCommit(this).Apply(blockCommit.Block, block);
+
             var cycleCommit = new CycleCommit(this);
             await cycleCommit.Apply(blockCommit.Block);
 
@@ -110,13 +112,13 @@ namespace Tzkt.Sync.Protocols
                             await new ActivationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_baking_evidence":
-                            new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_endorsement_evidence":
-                            new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_preendorsement_evidence":
-                            new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -145,6 +147,9 @@ namespace Tzkt.Sync.Protocols
                 {
                     switch (content.RequiredString("kind"))
                     {
+                        case "set_deposits_limit":
+                            await new SetDepositsLimitCommit(this).Apply(blockCommit.Block, operation, content);
+                            break;
                         case "increase_paid_storage":
                             await new IncreasePaidStorageCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
@@ -375,6 +380,9 @@ namespace Tzkt.Sync.Protocols
             if (currBlock.Operations.HasFlag(Operations.Reveals))
                 operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
+            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
+                operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
             if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
                 operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
@@ -489,13 +497,13 @@ namespace Tzkt.Sync.Protocols
                         await new ActivationsCommit(this).Revert(currBlock, op);
                         break;
                     case DoubleBakingOperation op:
-                        new DoubleBakingCommit(this).Revert(currBlock, op);
+                        new DoubleBakingCommit(this).Revert(op);
                         break;
                     case DoubleEndorsingOperation op:
-                        new DoubleEndorsingCommit(this).Revert(currBlock, op);
+                        new DoubleEndorsingCommit(this).Revert(op);
                         break;
                     case DoublePreendorsingOperation op:
-                        new DoublePreendorsingCommit(this).Revert(currBlock, op);
+                        new DoublePreendorsingCommit(this).Revert(op);
                         break;
                     case NonceRevelationOperation op:
                         await new NonceRevelationsCommit(this).Revert(currBlock, op);
@@ -517,6 +525,9 @@ namespace Tzkt.Sync.Protocols
                         break;
                     case RegisterConstantOperation registerConstant:
                         await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
+                        break;
+                    case SetDepositsLimitOperation setDepositsLimit:
+                        await new SetDepositsLimitCommit(this).Revert(currBlock, setDepositsLimit);
                         break;
                     case DelegationOperation op:
                         if (op.InitiatorId == null)
@@ -573,6 +584,7 @@ namespace Tzkt.Sync.Protocols
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
             await new CycleCommit(this).Revert(currBlock);
+            await new SlashingCommit(this).Revert(currBlock);
             new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);

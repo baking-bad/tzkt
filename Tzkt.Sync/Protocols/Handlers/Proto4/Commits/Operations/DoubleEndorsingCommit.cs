@@ -40,6 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
+                SlashedLevel = block.Level,
                 AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level"),
                 Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),

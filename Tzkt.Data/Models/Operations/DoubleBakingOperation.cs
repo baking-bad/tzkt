@@ -7,6 +7,7 @@ namespace Tzkt.Data.Models
     public class DoubleBakingOperation : BaseOperation
     {
         public int AccusedLevel { get; set; }
+        public int SlashedLevel { get; set; }
 
         public int AccuserId { get; set; }
         public long AccuserReward { get; set; }

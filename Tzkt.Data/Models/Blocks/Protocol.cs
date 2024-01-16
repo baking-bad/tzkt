@@ -81,17 +81,8 @@ namespace Tzkt.Data.Models
         public int VdfRevelationRewardWeight { get; set; }
         public int LBSubsidyWeight { get; set; }
 
-        public int AdaptiveIssuanceLaunchEmaThreshold { get; set; }
-        public int AdaptiveIssuanceRatioMinNumerator { get; set; }
-        public int AdaptiveIssuanceRatioMinDenominator { get; set; }
-        public int AdaptiveIssuanceRatioMaxNumerator { get; set; }
-        public int AdaptiveIssuanceRatioMaxDenominator { get; set; }
-        public int AdaptiveIssuanceCenterDzNumerator { get; set; }
-        public int AdaptiveIssuanceCenterDzDenominator { get; set; }
-        public int AdaptiveIssuanceRadiusDzNumerator { get; set; }
-        public int AdaptiveIssuanceRadiusDzDenominator { get; set; }
-        public long AdaptiveIssuanceMaxBonus { get; set; }
-        public long AdaptiveIssuanceGrowthRate { get; set; }
+        public int DoubleBakingSlashedPercentage { get; set; }
+        public int DoubleEndorsingSlashedPercentage { get; set; }
 
         #region helpers
         public int GetCycleStart(int cycle)

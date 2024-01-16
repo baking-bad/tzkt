@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -8,45 +7,21 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         public DoublePreendorsingCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public void Apply(Block block, JsonElement op, JsonElement content)
+        public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var balanceUpdates = content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray()
-                ?? Enumerable.Empty<JsonElement>();
-
-            var freezerUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-            var contractUpdates = balanceUpdates.Where(x => x.RequiredString("kind") == "contract");
-
-            // there are also ("freezer", "unstaked_deposits") updates, but they don't work properly in oxford,
-            // so we count slashed unstaked deposits at the moment of finalize_update
-            // TODO: count slashing here, when all protocol bugs are fixed
-
-            var offenderAddr = freezerUpdates.Any()
-                ? freezerUpdates.First().Required("staker").RequiredString("delegate")
-                : block.Proposer.Address; // this is wrong, but no big deal
-
-            var offender = Cache.Accounts.GetDelegate(offenderAddr);
-            var offenderLoss = freezerUpdates.Any()
-                ? contractUpdates.Sum(x => -x.RequiredInt64("change"))
-                : 0;
-            var offenderLossOwn = (long)((BigInteger)offenderLoss * offender.StakedBalance / offender.TotalStakedBalance);
-            var offenderLossShared = offenderLoss - offenderLossOwn;
-
-            //var offenderLossOwn = 0L;
-            //var offenderLossShared = 0L;
-            //foreach (var freezerUpdate in freezerUpdates)
-            //{
-            //    var change = -freezerUpdate.RequiredInt64("change");
-            //    var changeOwn = (long)((BigInteger)change * offender.StakedBalance / offender.TotalStakedBalance);
-            //    var changeShared = change - changeOwn;
-            //    offenderLossOwn += changeOwn;
-            //    offenderLossShared += changeShared;
-            //}
+            var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level");
+            var sig1 = content.Required("op1").RequiredString("signature");
+            var sig2 = content.Required("op2").RequiredString("signature");
+            var accusedBlock = await Proto.Rpc.GetBlockAsync(accusedLevel);
+            var accusedOp = accusedBlock.Required("operations")[0].EnumerateArray().First(x =>
+            {
+                var sig = x.RequiredString("signature");
+                return sig == sig1 || sig == sig2;
+            });
 
             var accuser = block.Proposer;
-            var accuserReward = contractUpdates.Any()
-                ? contractUpdates.Sum(x => x.RequiredInt64("change"))
-                : 0;
+            var offender = Cache.Accounts.GetDelegate(accusedOp.Required("contents")[0].Required("metadata").RequiredString("delegate"));
 
             var operation = new DoublePreendorsingOperation
             {
@@ -56,72 +31,50 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
-                AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level"),
+                AccusedLevel = accusedLevel,
+                SlashedLevel = block.Protocol.GetCycleEnd(block.Cycle),
+
                 Accuser = accuser,
                 Offender = offender,
 
-                AccuserReward = accuserReward,
-                OffenderLossOwn = offenderLossOwn,
-                OffenderLossShared = offenderLossShared
+                AccuserReward = 0,
+                OffenderLossOwn = 0,
+                OffenderLossShared = 0
             };
             #endregion
 
-            #region entities
-            Db.TryAttach(accuser);
-            Db.TryAttach(offender);
-            #endregion
-
             #region apply operation
-            accuser.Balance += operation.AccuserReward;
-            accuser.StakingBalance += operation.AccuserReward;
-
-            offender.Balance -= operation.OffenderLossOwn;
-            offender.StakingBalance -= operation.OffenderLossOwn + operation.OffenderLossShared;
-            offender.StakedBalance -= operation.OffenderLossOwn;
-            offender.ExternalStakedBalance -= operation.OffenderLossShared;
-            offender.TotalStakedBalance -= operation.OffenderLossOwn + operation.OffenderLossShared;
-
+            Db.TryAttach(accuser);
             accuser.DoublePreendorsingCount++;
-            if (offender != accuser) offender.DoublePreendorsingCount++;
+
+            if (offender != accuser)
+            {
+                Db.TryAttach(offender);
+                offender.DoublePreendorsingCount++;
+            }
 
             block.Operations |= Operations.DoublePreendorsings;
-
-            Cache.Statistics.Current.TotalBurned += operation.OffenderLossOwn + operation.OffenderLossShared - operation.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= operation.OffenderLossOwn + operation.OffenderLossShared;
             #endregion
 
             Db.DoublePreendorsingOps.Add(operation);
         }
 
-        public void Revert(Block block, DoublePreendorsingOperation operation)
+        public void Revert(DoublePreendorsingOperation operation)
         {
             #region init
-            operation.Block ??= block;
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Accuser ??= Cache.Accounts.GetDelegate(operation.AccuserId);
-            operation.Offender ??= Cache.Accounts.GetDelegate(operation.OffenderId);
+            var accuser = Cache.Accounts.GetDelegate(operation.AccuserId);
+            var offender = Cache.Accounts.GetDelegate(operation.OffenderId);
             #endregion
 
-            #region entities
-            var accuser = operation.Accuser;
-            var offender = operation.Offender;
+            #region revert operation
             Db.TryAttach(accuser);
-            Db.TryAttach(offender);
-            #endregion
-
-            #region apply operation
-            accuser.Balance -= operation.AccuserReward;
-            accuser.StakingBalance -= operation.AccuserReward;
-
-            offender.Balance += operation.OffenderLossOwn;
-            offender.StakingBalance += operation.OffenderLossOwn + operation.OffenderLossShared;
-            offender.StakedBalance += operation.OffenderLossOwn;
-            offender.ExternalStakedBalance += operation.OffenderLossShared;
-            offender.TotalStakedBalance += operation.OffenderLossOwn + operation.OffenderLossShared;
-
             accuser.DoublePreendorsingCount--;
-            if (offender != accuser) offender.DoublePreendorsingCount--;
+
+            if (offender != accuser)
+            {
+                Db.TryAttach(offender);
+                offender.DoublePreendorsingCount--;
+            }
             #endregion
 
             Db.DoublePreendorsingOps.Remove(operation);

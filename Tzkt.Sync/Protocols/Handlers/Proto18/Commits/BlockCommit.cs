@@ -119,7 +119,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.Required("staker").RequiredString("baker") == proposer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var changeOwn = (long)((BigInteger)change * proposer.StakedBalance / proposer.TotalStakedBalance);
+                        var changeOwn = proposer.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * proposer.StakedBalance / proposer.TotalStakedBalance);
                         var changeShared = change - changeOwn;
                         rewardStakedOwn += changeOwn;
                         rewardStakedShared += changeShared;
@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.Required("staker").RequiredString("baker") == producer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var changeOwn = (long)((BigInteger)change * producer.StakedBalance / producer.TotalStakedBalance);
+                        var changeOwn = producer.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * producer.StakedBalance / producer.TotalStakedBalance);
                         var changeShared = change - changeOwn;
                         bonusStakedOwn += changeOwn;
                         bonusStakedShared += changeShared;
