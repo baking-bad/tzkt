@@ -21,7 +21,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     x["amount"].Value<long>(),
                     x["delegate"]?.Value<string>() ?? null,
                     x["script"]["code"].ToString(),
-                    x["script"]["storage"].ToString()
+                    x["script"]["storage"].ToString(),
+                    x["hash"]?.Value<string>() ?? null
                 ))
                 .ToList() ?? new(0);
 
@@ -33,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ))
                 .ToList() ?? new(0);
 
-            var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count);
+            var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count + bootstrapSmartRollups.Count);
 
             #region allocate null-address
             var nullAddress = (User)await Cache.Accounts.GetAsync(NullAddress.Address);
@@ -115,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region bootstrap contracts
             var index = 0;
-            foreach (var (balance, delegatePkh, codeStr, storageStr) in bootstrapContracts)
+            foreach (var (balance, delegatePkh, codeStr, storageStr, hash) in bootstrapContracts)
             {
                 #region contract
                 var delegat = Cache.Accounts.GetDelegate(delegatePkh);
@@ -124,7 +125,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var contract = new Contract
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = OriginationNonce.GetContractAddress(index++),
+                    Address = hash ?? OriginationNonce.GetContractAddress(index++),
                     Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
