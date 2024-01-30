@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols
             await blockCommit.Apply(block);
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
-            await new FreezerCommit(this).Apply(blockCommit.Block, block);
+            new FreezerCommit(this).Apply(blockCommit.Block, block);
             await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 

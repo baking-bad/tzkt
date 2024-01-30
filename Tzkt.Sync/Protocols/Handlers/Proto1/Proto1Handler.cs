@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
-            await new FreezerCommit(this).Apply(blockCommit.Block, block);
+            new FreezerCommit(this).Apply(blockCommit.Block, block);
 
             var operations = block.RequiredArray("operations", 4);
 

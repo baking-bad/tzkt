@@ -1912,30 +1912,6 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("EndorsingRewardOps");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.FreezerUpdate", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("BakerId")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("Change")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Cycle")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Cycle");
-
-                    b.ToTable("FreezerUpdates");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.InboxMessage", b =>
                 {
                     b.Property<int>("Id")

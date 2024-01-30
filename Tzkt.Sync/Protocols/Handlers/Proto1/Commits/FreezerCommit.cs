@@ -5,33 +5,23 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class FreezerCommit : ProtocolCommit
     {
-        public IEnumerable<JsonElement> FreezerUpdates { get; private set; }
-
         public FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual Task Apply(Block block, JsonElement rawBlock)
+        public void Apply(Block block, JsonElement rawBlock)
         {
-            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+            if (!block.Events.HasFlag(BlockEvents.CycleEnd))
+                return;
+
+            foreach (var update in GetFreezerUpdates(block, rawBlock))
             {
-                FreezerUpdates = GetFreezerUpdates(block, rawBlock);
-            }
-
-            if (FreezerUpdates == null) return Task.CompletedTask;
-
-            foreach (var update in FreezerUpdates)
-            {
-                #region entities
-                var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
-
-                Db.TryAttach(delegat);
-                #endregion
-
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
                 {
                     case 'd':
                         break;
                     case 'r':
+                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        Db.TryAttach(delegat);
                         delegat.StakingBalance -= change;
                         break;
                     case 'f':
@@ -43,33 +33,26 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Cache.Statistics.Current.TotalFrozen += change;
             }
 
-            return Task.CompletedTask;
+            return;
         }
 
-        public virtual async Task Revert(Block block)
+        public async Task Revert(Block block)
         {
-            if (block.Events.HasFlag(BlockEvents.CycleEnd))
+            if (!block.Events.HasFlag(BlockEvents.CycleEnd))
+                return;
+
+            var rawBlock = await Proto.Rpc.GetBlockAsync(block.Level);
+
+            foreach (var update in GetFreezerUpdates(block, rawBlock))
             {
-                var rawBlock = await Proto.Rpc.GetBlockAsync(block.Level);
-                FreezerUpdates = GetFreezerUpdates(block, rawBlock);
-            }
-
-            if (FreezerUpdates == null) return;
-
-            foreach (var update in FreezerUpdates)
-            {
-                #region entities
-                var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
-
-                Db.TryAttach(delegat);
-                #endregion
-
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
                 {
                     case 'd':
                         break;
                     case 'r':
+                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        Db.TryAttach(delegat);
                         delegat.StakingBalance += change;
                         break;
                     case 'f':

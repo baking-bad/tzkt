@@ -400,7 +400,7 @@ namespace Tzkt.Sync.Protocols
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new EndorsingRewardCommit(this).Revert(currBlock);
-            await new FreezerCommit(this).Revert(currBlock);
+            new FreezerCommit(this).Revert();
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);

@@ -409,21 +409,6 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "FreezerUpdates",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cycle = table.Column<int>(type: "integer", nullable: false),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
-                    Change = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_FreezerUpdates", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "InboxMessages",
                 columns: table => new
                 {
@@ -3254,11 +3239,6 @@ namespace Tzkt.Data.Migrations
                 column: "TransactionId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_FreezerUpdates_Cycle",
-                table: "FreezerUpdates",
-                column: "Cycle");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_InboxMessages_Level",
                 table: "InboxMessages",
                 column: "Level");
@@ -4518,9 +4498,6 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Events");
-
-            migrationBuilder.DropTable(
-                name: "FreezerUpdates");
 
             migrationBuilder.DropTable(
                 name: "InboxMessages");

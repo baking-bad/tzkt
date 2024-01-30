@@ -87,7 +87,6 @@ namespace Tzkt.Data
         public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
-        public DbSet<FreezerUpdate> FreezerUpdates { get; set; }
         #endregion
 
         #region statistics
@@ -213,7 +212,6 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
-            modelBuilder.BuildFreezerUpdateModel();
             #endregion
 
             #region statistics
