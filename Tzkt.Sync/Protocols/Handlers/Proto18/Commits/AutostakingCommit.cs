@@ -45,6 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Level = block.Level,
                             BakerId = Cache.Accounts.GetDelegate(balanceUpdates[i].RequiredString("contract")).Id,
                             Action = AutostakingAction.Stake,
+                            Cycle = block.Cycle + 1,
                             Amount = balanceUpdates[i + 1].RequiredInt64("change")
                         });
 
@@ -65,6 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Level = block.Level,
                             BakerId = Cache.Accounts.GetDelegate(balanceUpdates[i].Required("staker").RequiredString("baker")).Id,
                             Action = AutostakingAction.Unstake,
+                            Cycle = balanceUpdates[i + 1].RequiredInt32("cycle"),
                             Amount = balanceUpdates[i + 1].RequiredInt64("change")
                         });
 
@@ -83,6 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 Level = block.Level,
                                 BakerId = Cache.Accounts.GetDelegate(balanceUpdates[i].Required("staker").RequiredString("delegate")).Id,
                                 Action = AutostakingAction.Finalize,
+                                Cycle = balanceUpdates[i].RequiredInt32("cycle"),
                                 Amount = balanceUpdates[i + 1].RequiredInt64("change")
                             });
                         }
@@ -99,6 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 Level = block.Level,
                                 BakerId = Cache.Accounts.GetDelegate(balanceUpdates[i].Required("staker").RequiredString("delegate")).Id,
                                 Action = AutostakingAction.Restake,
+                                Cycle = balanceUpdates[i].RequiredInt32("cycle"),
                                 Amount = balanceUpdates[i + 1].RequiredInt64("change")
                             });
                         }
@@ -115,14 +119,19 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             #endregion
 
+            Db.TryAttach(block);
+
+            var state = Cache.AppState.Get();
+            Db.TryAttach(state);
+
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+
             foreach (var op in ops)
             {
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
                 baker.AutostakingOpsCount++;
-
-                var stats = Cache.Statistics.Current;
-                Db.TryAttach(stats);
 
                 switch (op.Action)
                 {
@@ -161,11 +170,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         throw new InvalidOperationException($"Invalid AutostakingAction: {op.Action}");
                 }
 
-                Db.TryAttach(block);
                 block.Operations |= Operations.Autostaking;
-
-                var state = Cache.AppState.Get();
-                Db.TryAttach(state);
                 state.AutostakingOpsCount++;
 
                 Db.AutostakingOps.Add(op);

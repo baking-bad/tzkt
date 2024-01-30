@@ -75,13 +75,14 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupSubmitBatchOpsCount +
                 state.UpdateConsensusKeyOpsCount +
                 state.VdfRevelationOpsCount +
-                state.SmartRollupAddMessagesOpsCount + 
+                state.SmartRollupAddMessagesOpsCount +
                 state.SmartRollupCementOpsCount +
                 state.SmartRollupExecuteOpsCount +
                 state.SmartRollupOriginateOpsCount +
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
-                state.SmartRollupRefuteOpsCount;
+                state.SmartRollupRefuteOpsCount +
+                state.AutostakingOpsCount;
 
             if (state.OperationCounter != opsCount)
                 throw new Exception("Invalid AppState.OperationCounter");
@@ -302,6 +303,9 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
                 throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
+
+            if (state.AutostakingOpsCount != await db.AutostakingOps.CountAsync())
+                throw new Exception("Invalid AppState.AutostakingOpsCount");
             #endregion
 
             #region quotes

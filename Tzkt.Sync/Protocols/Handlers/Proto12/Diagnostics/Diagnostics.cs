@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var remote = await Rpc.GetDelegateAsync(level, delegat.Address);
 
-            if (remote.RequiredInt64("full_balance") != delegat.Balance)
+            if (remote.RequiredInt64("full_balance") != delegat.Balance - delegat.LostBalance)
                 throw new Exception($"Diagnostics failed: wrong balance {delegat.Address}");
 
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)

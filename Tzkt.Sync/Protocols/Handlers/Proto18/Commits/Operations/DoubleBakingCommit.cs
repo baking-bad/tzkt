@@ -27,14 +27,19 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
-                SlashedLevel = block.Protocol.GetCycleEnd(block.Cycle),
                 AccusedLevel = accusedLevel,
+                SlashedLevel = block.Protocol.GetCycleEnd(block.Cycle),
+
                 Accuser = accuser,
                 Offender = offender,
 
-                AccuserReward = 0,
-                OffenderLossOwn = 0,
-                OffenderLossShared = 0
+                Reward = 0,
+                LostStaked = 0,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 

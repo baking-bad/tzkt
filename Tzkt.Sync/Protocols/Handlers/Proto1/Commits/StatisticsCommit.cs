@@ -18,6 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TotalBootstrapped = prev.TotalBootstrapped,
                 TotalBurned = prev.TotalBurned,
                 TotalBanished = prev.TotalBanished,
+                TotalLost = prev.TotalLost,
                 TotalCommitments = prev.TotalCommitments,
                 TotalCreated = prev.TotalCreated,
                 TotalFrozen = prev.TotalFrozen,

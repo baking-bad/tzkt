@@ -46,16 +46,22 @@ namespace Tzkt.Data.Models
         public long MissedBlockFees { get; set; }
 
         public long DoubleBakingRewards { get; set; }
-        public long DoubleBakingLossesOwn { get; set; }
-        public long DoubleBakingLossesShared { get; set; }
+        public long DoubleBakingLostStaked { get; set; }
+        public long DoubleBakingLostUnstaked { get; set; }
+        public long DoubleBakingLostExternalStaked { get; set; }
+        public long DoubleBakingLostExternalUnstaked { get; set; }
 
         public long DoubleEndorsingRewards { get; set; }
-        public long DoubleEndorsingLossesOwn { get; set; }
-        public long DoubleEndorsingLossesShared { get; set; }
+        public long DoubleEndorsingLostStaked { get; set; }
+        public long DoubleEndorsingLostUnstaked { get; set; }
+        public long DoubleEndorsingLostExternalStaked { get; set; }
+        public long DoubleEndorsingLostExternalUnstaked { get; set; }
 
         public long DoublePreendorsingRewards { get; set; }
-        public long DoublePreendorsingLossesOwn { get; set; }
-        public long DoublePreendorsingLossesShared { get; set; }
+        public long DoublePreendorsingLostStaked { get; set; }
+        public long DoublePreendorsingLostUnstaked { get; set; }
+        public long DoublePreendorsingLostExternalStaked { get; set; }
+        public long DoublePreendorsingLostExternalUnstaked { get; set; }
 
         public long VdfRevelationRewardsLiquid { get; set; }
         public long VdfRevelationRewardsStakedOwn { get; set; }

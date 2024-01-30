@@ -10,11 +10,16 @@ namespace Tzkt.Data.Models
         public int SlashedLevel { get; set; }
 
         public int AccuserId { get; set; }
-        public long AccuserReward { get; set; }
-
         public int OffenderId { get; set; }
-        public long OffenderLossOwn { get; set; }
-        public long OffenderLossShared { get; set; }
+
+        public long Reward { get; set; }
+        public long LostStaked { get; set; }
+        public long LostUnstaked { get; set; }
+        public long LostExternalStaked { get; set; }
+        public long LostExternalUnstaked { get; set; }
+
+        // it's needed to handle negligent Oxford implementation
+        public long RoundingLoss { get; set; } 
 
         #region relations
         [ForeignKey(nameof(AccuserId))]

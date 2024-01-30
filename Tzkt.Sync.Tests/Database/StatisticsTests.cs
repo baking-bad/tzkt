@@ -31,9 +31,9 @@ namespace Tzkt.Sync.Tests.Database
             if (stats.TotalCreated != totalCreated)
                 throw new Exception("Invalid Statistics.TotalCreated");
 
-            var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.OffenderLossOwn + x.OffenderLossShared - x.AccuserReward);
-            totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.OffenderLossOwn + x.OffenderLossShared - x.AccuserReward);
-            totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.OffenderLossOwn + x.OffenderLossShared - x.AccuserReward);
+            var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.RevelationPenaltyOps.SumAsync(x => x.Loss);
             totalBurned += await db.DelegationOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.IncreasePaidStorageOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
@@ -63,6 +63,13 @@ namespace Tzkt.Sync.Tests.Database
 
             if (stats.TotalBurned != totalBurned)
                 throw new Exception("Invalid Statistics.TotalBurned");
+
+            var totalLost = await db.DoubleBakingOps.SumAsync(x => x.RoundingLoss);
+            totalLost += await db.DoubleEndorsingOps.SumAsync(x => x.RoundingLoss);
+            totalLost += await db.DoublePreendorsingOps.SumAsync(x => x.RoundingLoss);
+
+            if (stats.TotalLost != totalLost)
+                throw new Exception("Invalid Statistics.TotalLost");
 
             var totalBanished = await db.Accounts.Where(x => x.Id == 1).SumAsync(x => x.Balance);
 

@@ -1,4 +1,8 @@
 ﻿using System.Text.Json;
+using Netezos.Encoding;
+using Netezos.Forging;
+using Netezos.Forging.Models;
+using Netezos.Keys;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -10,18 +14,10 @@ namespace Tzkt.Sync.Protocols.Proto18
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level") + 1;
-            var sig1 = content.Required("op1").RequiredString("signature");
-            var sig2 = content.Required("op2").RequiredString("signature");
-            var accusedBlock = await Proto.Rpc.GetBlockAsync(accusedLevel);
-            var accusedOp = accusedBlock.Required("operations")[0].EnumerateArray().First(x =>
-            {
-                var sig = x.RequiredString("signature");
-                return sig == sig1 || sig == sig2;
-            });
+            var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level");
 
             var accuser = block.Proposer;
-            var offender = Cache.Accounts.GetDelegate(accusedOp.Required("contents")[0].Required("metadata").RequiredString("delegate"));
+            var offender = await GetEndorser(op.RequiredString("chain_id"), content.Required("op1"));
 
             var operation = new DoubleEndorsingOperation
             {
@@ -37,9 +33,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Accuser = accuser,
                 Offender = offender,
 
-                AccuserReward = 0,
-                OffenderLossOwn = 0,
-                OffenderLossShared = 0
+                Reward = 0,
+                LostStaked = 0,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 
@@ -79,6 +79,31 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             Db.DoubleEndorsingOps.Remove(operation);
             Cache.AppState.ReleaseOperationId();
+        }
+
+        protected async Task<Data.Models.Delegate> GetEndorser(string chainId, JsonElement op)
+        {
+            var branch = op.RequiredString("branch");
+            var content = op.Required("operations");
+            var endorsement = new EndorsementContent
+            {
+                Level = content.RequiredInt32("level"),
+                Round = content.RequiredInt32("round"),
+                Slot = content.RequiredInt32("slot"),
+                PayloadHash = content.RequiredString("block_payload_hash")
+            };
+            var signature = Base58.Parse(op.RequiredString("signature"), 3);
+
+            var bytes = new byte[1] { 19 }
+                .Concat(Base58.Parse(chainId, 3))
+                .Concat(await new LocalForge().ForgeOperationAsync(branch, endorsement))
+                .ToArray();
+
+            foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))
+                if (PubKey.FromBase58(baker.PublicKey).Verify(bytes, signature))
+                    return baker;
+
+            throw new Exception("Failed to determine double endorser");
         }
     }
 }

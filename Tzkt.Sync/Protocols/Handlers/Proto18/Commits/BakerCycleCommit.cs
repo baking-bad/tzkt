@@ -98,69 +98,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                     throw new Exception("Unexpected future rights");
             }
 
-            if (block.DoubleBakings != null)
-            {
-                foreach (var op in block.DoubleBakings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLossesOwn += op.OffenderLossOwn;
-                        offenderCycle.DoubleBakingLossesShared += op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards += op.AccuserReward;
-                    }
-                }
-            }
-
-            if (block.DoubleEndorsings != null)
-            {
-                foreach (var op in block.DoubleEndorsings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLossesOwn += op.OffenderLossOwn;
-                        offenderCycle.DoubleEndorsingLossesShared += op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
-                    }
-                }
-            }
-
-            if (block.DoublePreendorsings != null)
-            {
-                foreach (var op in block.DoublePreendorsings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Offender.Id);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLossesOwn += op.OffenderLossOwn;
-                        offenderCycle.DoublePreendorsingLossesShared += op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards += op.AccuserReward;
-                    }
-                }
-            }
-
             if (block.Revelations != null)
             {
                 foreach (var op in block.Revelations)
@@ -352,69 +289,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                     bakerCycle.MissedEndorsements -= (int)er.Slots;
                 else
                     throw new Exception("Unexpected future rights");
-            }
-
-            if (block.DoubleBakings != null)
-            {
-                foreach (var op in block.DoubleBakings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoubleBakingLossesShared -= op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards -= op.AccuserReward;
-                    }
-                }
-            }
-
-            if (block.DoubleEndorsings != null)
-            {
-                foreach (var op in block.DoubleEndorsings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoubleEndorsingLossesShared -= op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
-                    }
-                }
-            }
-
-            if (block.DoublePreendorsings != null)
-            {
-                foreach (var op in block.DoublePreendorsings)
-                {
-                    var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
-                    if (offenderCycle != null)
-                    {
-                        Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoublePreendorsingLossesShared -= op.OffenderLossShared;
-                    }
-
-                    var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
-                    if (accuserCycle != null)
-                    {
-                        Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
-                    }
-                }
             }
 
             if (block.Revelations != null)

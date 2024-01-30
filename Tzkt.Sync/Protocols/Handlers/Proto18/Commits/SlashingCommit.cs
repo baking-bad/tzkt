@@ -20,48 +20,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .RequiredArray("balance_updates")
                 .EnumerateArray()
                 .Where(x => x.RequiredString("origin") == "delayed_operation")
-                .GroupBy(x => x.RequiredString("delayed_operation_hash"));
+                .GroupBy(x => x.RequiredString("delayed_operation_hash"))
+                .Reverse(); // slashings are reversed in block balance updates for some reason ¯\_(ツ)_/¯
 
             foreach (var slashing in slashings)
             {
-                if (slashing.Any(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "unstaked_deposits"))
-                    // there are also ("freezer", "unstaked_deposits") updates, but they don't work properly in oxford,
-                    // so we count slashed unstaked deposits at the moment of finalize_update
-                    // TODO: count slashing here, when all protocol bugs are fixed
-                    throw new NotImplementedException();
-
-                var freezerUpdates = slashing.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
-                var contractUpdates = slashing.Where(x => x.RequiredString("kind") == "contract");
-
-                var accuserAddr = contractUpdates.Any()
-                    ? contractUpdates.First().RequiredString("contract")
-                    : block.Proposer.Address; // this is wrong, but no big deal
-                var accuser = Cache.Accounts.GetDelegate(accuserAddr);
-                var accuserReward = contractUpdates.Any()
-                    ? contractUpdates.Sum(x => x.RequiredInt64("change"))
-                    : 0;
-
-                Db.TryAttach(accuser);
-                accuser.Balance += accuserReward;
-                accuser.StakingBalance += accuserReward;
-
-                var offenderAddr = freezerUpdates.Any()
-                    ? freezerUpdates.First().Required("staker").RequiredString("baker")
-                    : block.Proposer.Address; // this is wrong, but no big deal
-                var offender = Cache.Accounts.GetDelegate(offenderAddr);
-                var offenderLoss = freezerUpdates.Any()
-                    ? freezerUpdates.Sum(x => -x.RequiredInt64("change"))
-                    : 0;
-                var offenderLossOwn = offender.TotalStakedBalance == 0 ? offenderLoss : (long)((BigInteger)offenderLoss * offender.StakedBalance / offender.TotalStakedBalance);
-                var offenderLossShared = offenderLoss - offenderLossOwn;
-
-                Db.TryAttach(offender);
-                offender.Balance -= offenderLossOwn;
-                offender.StakingBalance -= offenderLossOwn + offenderLossShared;
-                offender.StakedBalance -= offenderLossOwn;
-                offender.ExternalStakedBalance -= offenderLossShared;
-                offender.TotalStakedBalance -= offenderLossOwn + offenderLossShared;
-
                 var opHash = slashing.Key;
                 var accusation = block.DoubleBakings?.FirstOrDefault(x => x.OpHash == opHash)
                     ?? block.DoubleEndorsings?.FirstOrDefault(x => x.OpHash == opHash)
@@ -70,86 +33,201 @@ namespace Tzkt.Sync.Protocols.Proto18
                     ?? Db.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? (BaseOperation)Db.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? throw new Exception($"Cannot find delayed operation '{opHash}'");
+                
+                var (accusedLevel, accuserId, offenderId) = accusation switch
+                {
+                    DoubleBakingOperation op => (op.AccusedLevel, op.AccuserId, op.OffenderId),
+                    DoubleEndorsingOperation op => (op.AccusedLevel, op.AccuserId, op.OffenderId),
+                    DoublePreendorsingOperation op => (op.AccusedLevel, op.AccuserId, op.OffenderId),
+                    _ => throw new InvalidOperationException()
+                };
+                var accuser = Cache.Accounts.GetDelegate(accuserId);
+                var offender = Cache.Accounts.GetDelegate(offenderId);
+                
+                var contractUpdates = slashing.Where(x => x.RequiredString("kind") == "contract");
+                var reward = contractUpdates.Any()
+                    ? contractUpdates.Sum(x => x.RequiredInt64("change"))
+                    : 0;
+
+                Db.TryAttach(accuser);
+                accuser.Balance += reward;
+                accuser.StakingBalance += reward;
+
+                var depositsUpdates = slashing.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "deposits");
+                var lostStaked = depositsUpdates.Any()
+                    ? depositsUpdates.Sum(x => -x.RequiredInt64("change"))
+                    : 0;
+                var lostOwnStaked = offender.TotalStakedBalance == 0 ? lostStaked : (long)((BigInteger)lostStaked * offender.StakedBalance / offender.TotalStakedBalance);
+                var lostExternalStaked = lostStaked - lostOwnStaked;
+
+                var unstakedDepositsUpdates = slashing.Where(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "unstaked_deposits");
+                var lostUnstaked = unstakedDepositsUpdates.Any()
+                    ? unstakedDepositsUpdates.Sum(x => -x.RequiredInt64("change"))
+                    : 0;
+                var lostOwnUnstaked = offender.TotalStakedBalance == 0 ? lostUnstaked : (long)((BigInteger)lostUnstaked * offender.StakedBalance / offender.TotalStakedBalance);
+                var lostExternalUnstaked = lostUnstaked - lostOwnUnstaked;
+
+                var preservedCycle = Math.Max(0, block.Cycle - block.Protocol.PreservedCycles);
+                var accusedCycle = await Cache.Protocols.GetCycle(accusedLevel);
+                var autostakingOps = await Db.AutostakingOps
+                    .AsNoTracking()
+                    .Where(x => x.BakerId == offender.Id &&
+                                x.Cycle >= preservedCycle &&
+                                x.Cycle <= accusedCycle)
+                    .ToListAsync();
+
+                var unstakeRequests = new Dictionary<int, long>();
+                foreach (var op in autostakingOps)
+                {
+                    if (op.Action == AutostakingAction.Unstake)
+                        unstakeRequests.Add(op.Cycle, op.Amount);
+                    else if (op.Action == AutostakingAction.Restake)
+                        if (unstakeRequests.ContainsKey(op.Cycle))
+                            unstakeRequests[op.Cycle] -= op.Amount;
+                }
+
+                var roundingLoss = 0L;
+                foreach (var (cycle, deposits) in unstakeRequests)
+                {
+                    var cycleStart = (await Cache.Protocols.FindByCycleAsync(cycle)).GetCycleStart(cycle);
+                    var unstakedDeposits = deposits;
+
+                    var prevSlashings = (await Db.DoubleBakingOps
+                        .AsNoTracking()
+                        .Where(x => x.OffenderId == offender.Id && x.AccusedLevel >= cycleStart && x.Id < accusation.Id)
+                        .Select(x => new { x.Id, x.Level, Type = 0 })
+                        .ToListAsync())
+                        .Concat(await Db.DoubleEndorsingOps
+                        .AsNoTracking()
+                        .Where(x => x.OffenderId == offender.Id && x.AccusedLevel >= cycleStart && x.Id < accusation.Id)
+                        .Select(x => new { x.Id, x.Level, Type = 1 })
+                        .ToListAsync())
+                        .Concat(await Db.DoublePreendorsingOps
+                        .AsNoTracking()
+                        .Where(x => x.OffenderId == offender.Id && x.AccusedLevel >= cycleStart && x.Id < accusation.Id)
+                        .Select(x => new { x.Id, x.Level, Type = 2 })
+                        .ToListAsync())
+                        .OrderBy(x => x.Id);
+
+                    foreach (var prevSlashing in prevSlashings)
+                    {
+                        var protocol = await Cache.Protocols.FindByLevelAsync(prevSlashing.Level);
+                        var percentage = prevSlashing.Type switch
+                        {
+                            0 => protocol.DoubleBakingSlashedPercentage,
+                            _ => protocol.DoubleEndorsingSlashedPercentage
+                        };
+                        unstakedDeposits -= (deposits * percentage + 99) / 100;
+                    }
+
+                    if (unstakedDeposits > 0)
+                    {
+                        var slashedPercentage = accusation switch
+                        {
+                            DoubleBakingOperation => block.Protocol.DoubleBakingSlashedPercentage,
+                            _ => block.Protocol.DoubleEndorsingSlashedPercentage
+                        };
+                        roundingLoss += (deposits * slashedPercentage + 99) / 100 - deposits * slashedPercentage / 100;
+                    }
+                }
+
+                Db.TryAttach(offender);
+                offender.Balance -= lostOwnStaked + lostOwnUnstaked;
+                offender.StakingBalance -= lostOwnStaked + lostOwnUnstaked + lostExternalStaked + lostExternalUnstaked;
+                offender.StakedBalance -= lostOwnStaked;
+                offender.UnstakedBalance -= lostOwnUnstaked;
+                offender.ExternalStakedBalance -= lostExternalStaked;
+                offender.ExternalUnstakedBalance -= lostExternalUnstaked;
+                offender.TotalStakedBalance -= lostOwnStaked + lostExternalStaked;
+                offender.DelegatedBalance -= lostExternalUnstaked;
+                offender.LostBalance += roundingLoss;
+
                 var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                 var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, offender.Id);
 
                 switch (accusation)
                 {
                     case DoubleBakingOperation op:
-                        #region temp check
-                        if (op.SlashedLevel != block.Level ||
-                            op.AccuserId != accuser.Id && accuserReward > 0 ||
-                            op.OffenderId != offender.Id && offenderLoss > 0)
-                            throw new Exception("Unexpected slashing conditions");
-                        #endregion
-                        op.AccuserReward = accuserReward;
-                        op.OffenderLossOwn = offenderLossOwn;
-                        op.OffenderLossShared = offenderLossShared;
+                        op.SlashedLevel = block.Level;
+                        op.Reward = reward;
+                        op.LostStaked = lostOwnStaked;
+                        op.LostUnstaked = lostOwnUnstaked;
+                        op.LostExternalStaked = lostExternalStaked;
+                        op.LostExternalUnstaked = lostExternalUnstaked;
+                        op.RoundingLoss = roundingLoss;
                         if (accuserCycle != null)
                         {
                             Db.TryAttach(accuserCycle);
-                            accuserCycle.DoubleBakingRewards += accuserReward;
+                            accuserCycle.DoubleBakingRewards += reward;
                         }
                         if (offenderCycle != null)
                         {
                             Db.TryAttach(offenderCycle);
-                            offenderCycle.DoubleBakingLossesOwn += offenderLossOwn;
-                            offenderCycle.DoubleBakingLossesShared += offenderLossShared;
+                            offenderCycle.DoubleBakingLostStaked += lostOwnStaked;
+                            offenderCycle.DoubleBakingLostUnstaked += lostOwnUnstaked;
+                            offenderCycle.DoubleBakingLostExternalStaked += lostExternalStaked;
+                            offenderCycle.DoubleBakingLostExternalUnstaked += lostExternalUnstaked;
                         }
+                        Db.TryAttach(block);
                         block.Events |= BlockEvents.DoubleBakingSlashing;
                         break;
                     case DoubleEndorsingOperation op:
-                        #region temp check
-                        if (op.SlashedLevel != block.Level ||
-                            op.AccuserId != accuser.Id && accuserReward > 0 ||
-                            op.OffenderId != offender.Id && offenderLoss > 0)
-                            throw new Exception("Unexpected slashing conditions");
-                        #endregion
-                        op.AccuserReward = accuserReward;
-                        op.OffenderLossOwn = offenderLossOwn;
-                        op.OffenderLossShared = offenderLossShared;
+                        op.SlashedLevel = block.Level;
+                        op.Reward = reward;
+                        op.LostStaked = lostOwnStaked;
+                        op.LostUnstaked = lostOwnUnstaked;
+                        op.LostExternalStaked = lostExternalStaked;
+                        op.LostExternalUnstaked = lostExternalUnstaked;
+                        op.RoundingLoss = roundingLoss;
                         if (accuserCycle != null)
                         {
                             Db.TryAttach(accuserCycle);
-                            accuserCycle.DoubleEndorsingRewards += accuserReward;
+                            accuserCycle.DoubleEndorsingRewards += reward;
                         }
                         if (offenderCycle != null)
                         {
                             Db.TryAttach(offenderCycle);
-                            offenderCycle.DoubleEndorsingLossesOwn += offenderLossOwn;
-                            offenderCycle.DoubleEndorsingLossesShared += offenderLossShared;
+                            offenderCycle.DoubleEndorsingLostStaked += lostOwnStaked;
+                            offenderCycle.DoubleEndorsingLostUnstaked += lostOwnUnstaked;
+                            offenderCycle.DoubleEndorsingLostExternalStaked += lostExternalStaked;
+                            offenderCycle.DoubleEndorsingLostExternalUnstaked += lostExternalUnstaked;
                         }
+                        Db.TryAttach(block);
                         block.Events |= BlockEvents.DoubleEndorsingSlashing;
                         break;
                     case DoublePreendorsingOperation op:
-                        #region temp check
-                        if (op.SlashedLevel != block.Level ||
-                            op.AccuserId != accuser.Id && accuserReward > 0 ||
-                            op.OffenderId != offender.Id && offenderLoss > 0)
-                            throw new Exception("Unexpected slashing conditions");
-                        #endregion
-                        op.AccuserReward = accuserReward;
-                        op.OffenderLossOwn = offenderLossOwn;
-                        op.OffenderLossShared = offenderLossShared;
+                        op.SlashedLevel = block.Level;
+                        op.Reward = reward;
+                        op.LostStaked = lostOwnStaked;
+                        op.LostUnstaked = lostOwnUnstaked;
+                        op.LostExternalStaked = lostExternalStaked;
+                        op.LostExternalUnstaked = lostExternalUnstaked;
+                        op.RoundingLoss = roundingLoss;
                         if (accuserCycle != null)
                         {
                             Db.TryAttach(accuserCycle);
-                            accuserCycle.DoublePreendorsingRewards += accuserReward;
+                            accuserCycle.DoublePreendorsingRewards += reward;
                         }
                         if (offenderCycle != null)
                         {
                             Db.TryAttach(offenderCycle);
-                            offenderCycle.DoublePreendorsingLossesOwn += offenderLossOwn;
-                            offenderCycle.DoublePreendorsingLossesShared += offenderLossShared;
+                            offenderCycle.DoublePreendorsingLostStaked += lostOwnStaked;
+                            offenderCycle.DoublePreendorsingLostUnstaked += lostOwnUnstaked;
+                            offenderCycle.DoublePreendorsingLostExternalStaked += lostExternalStaked;
+                            offenderCycle.DoublePreendorsingLostExternalUnstaked += lostExternalUnstaked;
                         }
+                        Db.TryAttach(block);
                         block.Events |= BlockEvents.DoublePreendorsingSlashing;
                         break;
                     default:
                         throw new InvalidOperationException();
                 }
 
-                Cache.Statistics.Current.TotalBurned += offenderLossOwn + offenderLossShared - accuserReward;
-                Cache.Statistics.Current.TotalFrozen -= offenderLossOwn + offenderLossShared;
+                var stats = Cache.Statistics.Current;
+                Db.TryAttach(stats);
+                stats.TotalBurned += lostOwnStaked + lostExternalStaked + lostOwnUnstaked + lostExternalUnstaked - reward;
+                stats.TotalFrozen -= lostOwnStaked + lostExternalStaked;
+                stats.TotalLost += roundingLoss;
             }
         }
 
@@ -161,38 +239,44 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
-                    accuser.Balance -= op.AccuserReward;
-                    accuser.StakingBalance -= op.AccuserReward;
+                    accuser.Balance -= op.Reward;
+                    accuser.StakingBalance -= op.Reward;
 
                     var offender = Cache.Accounts.GetDelegate(op.OffenderId);
                     Db.TryAttach(offender);
-                    offender.Balance += op.OffenderLossOwn;
-                    offender.StakingBalance += op.OffenderLossOwn + op.OffenderLossShared;
-                    offender.StakedBalance += op.OffenderLossOwn;
-                    offender.ExternalStakedBalance += op.OffenderLossShared;
-                    offender.TotalStakedBalance += op.OffenderLossOwn + op.OffenderLossShared;
+                    offender.Balance += op.LostStaked + op.LostUnstaked;
+                    offender.StakingBalance += op.LostStaked + op.LostUnstaked + op.LostExternalStaked + op.LostExternalUnstaked;
+                    offender.StakedBalance += op.LostStaked;
+                    offender.UnstakedBalance += op.LostUnstaked;
+                    offender.ExternalStakedBalance += op.LostExternalStaked;
+                    offender.ExternalUnstakedBalance += op.LostExternalUnstaked;
+                    offender.TotalStakedBalance += op.LostStaked + op.LostExternalStaked;
+                    offender.DelegatedBalance += op.LostExternalUnstaked;
+                    offender.LostBalance -= op.RoundingLoss;
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleBakingRewards -= op.Reward;
                     }
 
                     var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, offender.Id);
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoubleBakingLossesShared -= op.OffenderLossShared;
+                        offenderCycle.DoubleBakingLostStaked -= op.LostStaked;
+                        offenderCycle.DoubleBakingLostUnstaked -= op.LostUnstaked;
+                        offenderCycle.DoubleBakingLostExternalStaked -= op.LostExternalStaked;
+                        offenderCycle.DoubleBakingLostExternalUnstaked -= op.LostExternalUnstaked;
                     }
 
-                    op.AccuserReward = 0;
-                    op.OffenderLossOwn = 0;
-                    op.OffenderLossShared = 0;
-
-                    Cache.Statistics.Current.TotalBurned -= op.OffenderLossOwn + op.OffenderLossShared - op.AccuserReward;
-                    Cache.Statistics.Current.TotalFrozen += op.OffenderLossOwn + op.OffenderLossShared;
+                    op.Reward = 0;
+                    op.LostStaked = 0;
+                    op.LostUnstaked = 0;
+                    op.LostExternalStaked = 0;
+                    op.LostExternalUnstaked = 0;
+                    op.RoundingLoss = 0;
                 }
             }
 
@@ -202,38 +286,44 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
-                    accuser.Balance -= op.AccuserReward;
-                    accuser.StakingBalance -= op.AccuserReward;
+                    accuser.Balance -= op.Reward;
+                    accuser.StakingBalance -= op.Reward;
 
                     var offender = Cache.Accounts.GetDelegate(op.OffenderId);
                     Db.TryAttach(offender);
-                    offender.Balance += op.OffenderLossOwn;
-                    offender.StakingBalance += op.OffenderLossOwn + op.OffenderLossShared;
-                    offender.StakedBalance += op.OffenderLossOwn;
-                    offender.ExternalStakedBalance += op.OffenderLossShared;
-                    offender.TotalStakedBalance += op.OffenderLossOwn + op.OffenderLossShared;
+                    offender.Balance += op.LostStaked + op.LostUnstaked;
+                    offender.StakingBalance += op.LostStaked + op.LostUnstaked + op.LostExternalStaked + op.LostExternalUnstaked;
+                    offender.StakedBalance += op.LostStaked;
+                    offender.UnstakedBalance += op.LostUnstaked;
+                    offender.ExternalStakedBalance += op.LostExternalStaked;
+                    offender.ExternalUnstakedBalance += op.LostExternalUnstaked;
+                    offender.TotalStakedBalance += op.LostStaked + op.LostExternalStaked;
+                    offender.DelegatedBalance += op.LostExternalUnstaked;
+                    offender.LostBalance -= op.RoundingLoss;
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleEndorsingRewards -= op.Reward;
                     }
 
                     var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, offender.Id);
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoubleEndorsingLossesShared -= op.OffenderLossShared;
+                        offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
+                        offenderCycle.DoubleEndorsingLostUnstaked -= op.LostUnstaked;
+                        offenderCycle.DoubleEndorsingLostExternalStaked -= op.LostExternalStaked;
+                        offenderCycle.DoubleEndorsingLostExternalUnstaked -= op.LostExternalUnstaked;
                     }
 
-                    op.AccuserReward = 0;
-                    op.OffenderLossOwn = 0;
-                    op.OffenderLossShared = 0;
-
-                    Cache.Statistics.Current.TotalBurned -= op.OffenderLossOwn + op.OffenderLossShared - op.AccuserReward;
-                    Cache.Statistics.Current.TotalFrozen += op.OffenderLossOwn + op.OffenderLossShared;
+                    op.Reward = 0;
+                    op.LostStaked = 0;
+                    op.LostUnstaked = 0;
+                    op.LostExternalStaked = 0;
+                    op.LostExternalUnstaked = 0;
+                    op.RoundingLoss = 0;
                 }
             }
 
@@ -243,38 +333,44 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
-                    accuser.Balance -= op.AccuserReward;
-                    accuser.StakingBalance -= op.AccuserReward;
+                    accuser.Balance -= op.Reward;
+                    accuser.StakingBalance -= op.Reward;
 
                     var offender = Cache.Accounts.GetDelegate(op.OffenderId);
                     Db.TryAttach(offender);
-                    offender.Balance += op.OffenderLossOwn;
-                    offender.StakingBalance += op.OffenderLossOwn + op.OffenderLossShared;
-                    offender.StakedBalance += op.OffenderLossOwn;
-                    offender.ExternalStakedBalance += op.OffenderLossShared;
-                    offender.TotalStakedBalance += op.OffenderLossOwn + op.OffenderLossShared;
+                    offender.Balance += op.LostStaked + op.LostUnstaked;
+                    offender.StakingBalance += op.LostStaked + op.LostUnstaked + op.LostExternalStaked + op.LostExternalUnstaked;
+                    offender.StakedBalance += op.LostStaked;
+                    offender.UnstakedBalance += op.LostUnstaked;
+                    offender.ExternalStakedBalance += op.LostExternalStaked;
+                    offender.ExternalUnstakedBalance += op.LostExternalUnstaked;
+                    offender.TotalStakedBalance += op.LostStaked + op.LostExternalStaked;
+                    offender.DelegatedBalance += op.LostExternalUnstaked;
+                    offender.LostBalance -= op.RoundingLoss;
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoublePreendorsingRewards -= op.Reward;
                     }
 
                     var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, offender.Id);
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLossesOwn -= op.OffenderLossOwn;
-                        offenderCycle.DoublePreendorsingLossesShared -= op.OffenderLossShared;
+                        offenderCycle.DoublePreendorsingLostStaked -= op.LostStaked;
+                        offenderCycle.DoublePreendorsingLostUnstaked -= op.LostUnstaked;
+                        offenderCycle.DoublePreendorsingLostExternalStaked -= op.LostExternalStaked;
+                        offenderCycle.DoublePreendorsingLostExternalUnstaked -= op.LostExternalUnstaked;
                     }
 
-                    op.AccuserReward = 0;
-                    op.OffenderLossOwn = 0;
-                    op.OffenderLossShared = 0;
-
-                    Cache.Statistics.Current.TotalBurned -= op.OffenderLossOwn + op.OffenderLossShared - op.AccuserReward;
-                    Cache.Statistics.Current.TotalFrozen += op.OffenderLossOwn + op.OffenderLossShared;
+                    op.Reward = 0;
+                    op.LostStaked = 0;
+                    op.LostUnstaked = 0;
+                    op.LostExternalStaked = 0;
+                    op.LostExternalUnstaked = 0;
+                    op.RoundingLoss = 0;
                 }
             }
         }

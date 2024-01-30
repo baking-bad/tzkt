@@ -168,12 +168,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLossesOwn += op.OffenderLossOwn;
+                    offenderCycle.DoubleBakingLostStaked += op.LostStaked;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleBakingRewards += op.AccuserReward;
+                    accuserCycle.DoubleBakingRewards += op.Reward;
                 }
             }
 
@@ -185,12 +185,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                     var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
                     Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLossesOwn += op.OffenderLossOwn;
+                    offenderCycle.DoubleEndorsingLostStaked += op.LostStaked;
 
                     var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
                     Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
+                    accuserCycle.DoubleEndorsingRewards += op.Reward;
                 }
             }
 

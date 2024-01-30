@@ -39,8 +39,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
-                AccuserReward = accuserReward,
-                OffenderLossOwn = offenderLoss
+                Reward = accuserReward,
+                LostStaked = offenderLoss,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 
@@ -52,19 +57,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleEndorsing.AccuserReward;
-            accuser.StakingBalance += doubleEndorsing.AccuserReward;
+            accuser.Balance += doubleEndorsing.Reward;
+            accuser.StakingBalance += doubleEndorsing.Reward;
 
-            offender.Balance -= doubleEndorsing.OffenderLossOwn;
-            offender.StakingBalance -= doubleEndorsing.OffenderLossOwn;
+            offender.Balance -= doubleEndorsing.LostStaked;
+            offender.StakingBalance -= doubleEndorsing.LostStaked;
 
             accuser.DoubleEndorsingCount++;
             if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
 
-            Cache.Statistics.Current.TotalBurned += doubleEndorsing.OffenderLossOwn - doubleEndorsing.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.OffenderLossOwn;
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.LostStaked - doubleEndorsing.Reward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.LostStaked;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);
@@ -88,11 +93,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleEndorsing.AccuserReward;
-            accuser.StakingBalance -= doubleEndorsing.AccuserReward;
+            accuser.Balance -= doubleEndorsing.Reward;
+            accuser.StakingBalance -= doubleEndorsing.Reward;
 
-            offender.Balance += doubleEndorsing.OffenderLossOwn;
-            offender.StakingBalance += doubleEndorsing.OffenderLossOwn;
+            offender.Balance += doubleEndorsing.LostStaked;
+            offender.StakingBalance += doubleEndorsing.LostStaked;
 
             accuser.DoubleEndorsingCount--;
             if (offender != accuser) offender.DoubleEndorsingCount--;

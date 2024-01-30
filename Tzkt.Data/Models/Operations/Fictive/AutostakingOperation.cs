@@ -8,6 +8,7 @@ namespace Tzkt.Data.Models
         public int Level { get; set; }
         public int BakerId { get; set; }
         public AutostakingAction Action { get; set; }
+        public int Cycle { get; set; }
         public long Amount { get; set; }
     }
 

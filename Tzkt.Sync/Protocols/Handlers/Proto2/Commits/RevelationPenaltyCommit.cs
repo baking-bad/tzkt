@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToListAsync();
 
                     var slashedBakers = bakerCycles
-                        .Where(x => x.DoubleBakingLossesOwn > 0 || x.DoubleEndorsingLossesOwn > 0)
+                        .Where(x => x.DoubleBakingLostStaked > 0 || x.DoubleEndorsingLostStaked > 0)
                         .Select(x => x.BakerId)
                         .ToHashSet();
 

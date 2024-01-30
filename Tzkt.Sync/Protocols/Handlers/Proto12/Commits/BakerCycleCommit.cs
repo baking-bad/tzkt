@@ -100,14 +100,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLossesOwn += op.OffenderLossOwn;
+                        offenderCycle.DoubleBakingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards += op.AccuserReward;
+                        accuserCycle.DoubleBakingRewards += op.Reward;
                     }
                 }
             }
@@ -120,14 +120,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLossesOwn += op.OffenderLossOwn;
+                        offenderCycle.DoubleEndorsingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
+                        accuserCycle.DoubleEndorsingRewards += op.Reward;
                     }
                 }
             }
@@ -140,14 +140,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLossesOwn += op.OffenderLossOwn;
+                        offenderCycle.DoublePreendorsingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards += op.AccuserReward;
+                        accuserCycle.DoublePreendorsingRewards += op.Reward;
                     }
                 }
             }
@@ -342,14 +342,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLossesOwn -= op.OffenderLossOwn;
+                        offenderCycle.DoubleBakingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleBakingRewards -= op.Reward;
                     }
                 }
             }
@@ -362,14 +362,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLossesOwn -= op.OffenderLossOwn;
+                        offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleEndorsingRewards -= op.Reward;
                     }
                 }
             }
@@ -382,14 +382,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLossesOwn -= op.OffenderLossOwn;
+                        offenderCycle.DoublePreendorsingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoublePreendorsingRewards -= op.Reward;
                     }
                 }
             }

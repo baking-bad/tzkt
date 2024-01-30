@@ -81,6 +81,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
+                    b.Property<long>("LostBalance")
+                        .HasColumnType("bigint");
+
                     b.Property<string>("Metadata")
                         .HasColumnType("jsonb");
 
@@ -275,6 +278,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("ActivationOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AutostakingOpsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("BallotOpsCount")
@@ -552,6 +558,7 @@ namespace Tzkt.Data.Migrations
                             AccountCounter = 0,
                             AccountsCount = 0,
                             ActivationOpsCount = 0,
+                            AutostakingOpsCount = 0,
                             BallotOpsCount = 0,
                             BigMapCounter = 0,
                             BigMapKeyCounter = 0,
@@ -638,6 +645,38 @@ namespace Tzkt.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.AutostakingOperation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("Action")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Amount")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("AutostakingOps");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.BakerCycle", b =>
                 {
                     b.Property<int>("Id")
@@ -673,28 +712,46 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
 
-                    b.Property<long>("DoubleBakingLossesOwn")
+                    b.Property<long>("DoubleBakingLostExternalStaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoubleBakingLossesShared")
+                    b.Property<long>("DoubleBakingLostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleBakingLostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleBakingLostUnstaked")
                         .HasColumnType("bigint");
 
                     b.Property<long>("DoubleBakingRewards")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoubleEndorsingLossesOwn")
+                    b.Property<long>("DoubleEndorsingLostExternalStaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoubleEndorsingLossesShared")
+                    b.Property<long>("DoubleEndorsingLostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingLostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoubleEndorsingLostUnstaked")
                         .HasColumnType("bigint");
 
                     b.Property<long>("DoubleEndorsingRewards")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreendorsingLossesOwn")
+                    b.Property<long>("DoublePreendorsingLostExternalStaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreendorsingLossesShared")
+                    b.Property<long>("DoublePreendorsingLostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoublePreendorsingLostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DoublePreendorsingLostUnstaked")
                         .HasColumnType("bigint");
 
                     b.Property<long>("DoublePreendorsingRewards")
@@ -1554,26 +1611,38 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("AccuserId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("AccuserReward")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<long>("LostExternalStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostUnstaked")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("OffenderId")
                         .HasColumnType("integer");
-
-                    b.Property<long>("OffenderLossOwn")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("OffenderLossShared")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength();
+
+                    b.Property<long>("Reward")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RoundingLoss")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SlashedLevel")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -1605,26 +1674,38 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("AccuserId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("AccuserReward")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<long>("LostExternalStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostUnstaked")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("OffenderId")
                         .HasColumnType("integer");
-
-                    b.Property<long>("OffenderLossOwn")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("OffenderLossShared")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength();
+
+                    b.Property<long>("Reward")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RoundingLoss")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SlashedLevel")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -1656,26 +1737,38 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("AccuserId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("AccuserReward")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
+                    b.Property<long>("LostExternalStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostExternalUnstaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostStaked")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("LostUnstaked")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("OffenderId")
                         .HasColumnType("integer");
-
-                    b.Property<long>("OffenderLossOwn")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("OffenderLossShared")
-                        .HasColumnType("bigint");
 
                     b.Property<string>("OpHash")
                         .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength();
+
+                    b.Property<long>("Reward")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RoundingLoss")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SlashedLevel")
+                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -2341,39 +2434,6 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int>("AdaptiveIssuanceCenterDzDenominator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceCenterDzNumerator")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("AdaptiveIssuanceGrowthRate")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("AdaptiveIssuanceLaunchEmaThreshold")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("AdaptiveIssuanceMaxBonus")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("AdaptiveIssuanceRadiusDzDenominator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceRadiusDzNumerator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceRatioMaxDenominator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceRatioMaxNumerator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceRatioMinDenominator")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AdaptiveIssuanceRatioMinNumerator")
-                        .HasColumnType("integer");
-
                     b.Property<int>("BallotQuorumMax")
                         .HasColumnType("integer");
 
@@ -2421,6 +2481,12 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<string>("Dictator")
                         .HasColumnType("text");
+
+                    b.Property<int>("DoubleBakingSlashedPercentage")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DoubleEndorsingSlashedPercentage")
+                        .HasColumnType("integer");
 
                     b.Property<long>("EndorsementDeposit")
                         .HasColumnType("bigint");
@@ -3776,6 +3842,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<long>("TotalFrozen")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("TotalLost")
                         .HasColumnType("bigint");
 
                     b.Property<long>("TotalRollupBonds")
@@ -5478,6 +5547,9 @@ namespace Tzkt.Data.Migrations
                     b.HasBaseType("Tzkt.Data.Models.User");
 
                     b.Property<int>("ActivationLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AutostakingOpsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("BallotsCount")

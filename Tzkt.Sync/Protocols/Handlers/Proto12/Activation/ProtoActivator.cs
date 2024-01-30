@@ -145,7 +145,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                 INSERT INTO "SnapshotBalances" (
                     "Level",
-                    "AccountId"
+                    "AccountId",
                     "BakerId",
                     "OwnDelegatedBalance",
                     "ExternalDelegatedBalance",

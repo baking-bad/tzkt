@@ -36,8 +36,6 @@ namespace Tzkt.Sync.Protocols
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
-            await new SlashingCommit(this).Apply(blockCommit.Block, block);
-
             var cycleCommit = new CycleCommit(this);
             await cycleCommit.Apply(blockCommit.Block);
 
@@ -336,7 +334,6 @@ namespace Tzkt.Sync.Protocols
                 brCommit.CurrentRights);
 
             await new EndorsingRewardCommit(this).Apply(blockCommit.Block, block);
-            await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
 
@@ -344,6 +341,8 @@ namespace Tzkt.Sync.Protocols
         {
             var block = await Cache.Blocks.CurrentAsync();
             await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
+            await new SlashingCommit(this).Apply(block, rawBlock);
+            await new VotingCommit(this).Apply(block, rawBlock);
             new AutostakingCommit(this).Apply(block, rawBlock);
         }
 
@@ -351,6 +350,8 @@ namespace Tzkt.Sync.Protocols
         {
             var block = await Cache.Blocks.CurrentAsync();
             await new AutostakingCommit(this).Revert(block);
+            await new VotingCommit(this).Revert(block);
+            await new SlashingCommit(this).Revert(block);
             await new SnapshotBalanceCommit(this).Revert(block);
         }
 
@@ -462,7 +463,6 @@ namespace Tzkt.Sync.Protocols
 
             await new StakingCommit(this).DeactivateStakingParameters(currBlock);
 
-            await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new EndorsingRewardCommit(this).Revert(currBlock);
@@ -584,7 +584,6 @@ namespace Tzkt.Sync.Protocols
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
             await new CycleCommit(this).Revert(currBlock);
-            await new SlashingCommit(this).Revert(currBlock);
             new BlockCommit(this).Revert(currBlock);
 
             await new StateCommit(this).Revert(currBlock);

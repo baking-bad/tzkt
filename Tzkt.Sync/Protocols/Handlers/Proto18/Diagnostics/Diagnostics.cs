@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -10,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance;
+            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance + delegat.LostBalance;
         }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
@@ -59,8 +60,11 @@ namespace Tzkt.Sync.Protocols.Proto18
             foreach (var baker in bakers)
             {
                 var remote = await Rpc.GetDelegateParticipationAsync(state.Level, baker.Address);
+                
+                if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
+                    bakerCycle = await Db.BakerCycles.FirstOrDefaultAsync(x => x.Cycle == state.Cycle && x.BakerId == baker.Id);
 
-                if (bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
+                if (bakerCycle != null)
                 {
                     // Endorsing rewards are wrong for the first preserved+1 cycles after AI activation 
                     if (state.Cycle >= state.AIActivationCycle && state.Cycle <= state.AIActivationCycle + 6)
@@ -71,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                     if (bakerCycle.FutureEndorsementRewards != remote.RequiredInt64("expected_attesting_rewards"))
                     {
-                        if (remote.RequiredInt64("expected_attesting_rewards") != 0 || remote.RequiredInt32("missed_slots") < remote.RequiredInt32("minimal_cycle_activity"))
+                        if (remote.RequiredInt64("expected_attesting_rewards") != 0 || remote.RequiredInt32("expected_cycle_activity") - remote.RequiredInt32("missed_slots") >= remote.RequiredInt32("minimal_cycle_activity"))
                             throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
                     }
 

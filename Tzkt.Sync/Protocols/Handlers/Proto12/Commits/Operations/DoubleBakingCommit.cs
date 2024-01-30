@@ -39,8 +39,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
-                AccuserReward = accuserReward,
-                OffenderLossOwn = offenderLoss
+                Reward = accuserReward,
+                LostStaked = offenderLoss,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 
@@ -52,19 +57,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleBaking.AccuserReward;
-            accuser.StakingBalance += doubleBaking.AccuserReward;
+            accuser.Balance += doubleBaking.Reward;
+            accuser.StakingBalance += doubleBaking.Reward;
 
-            offender.Balance -= doubleBaking.OffenderLossOwn;
-            offender.StakingBalance -= doubleBaking.OffenderLossOwn;
+            offender.Balance -= doubleBaking.LostStaked;
+            offender.StakingBalance -= doubleBaking.LostStaked;
 
             accuser.DoubleBakingCount++;
             if (offender != accuser) offender.DoubleBakingCount++;
 
             block.Operations |= Operations.DoubleBakings;
 
-            Cache.Statistics.Current.TotalBurned += doubleBaking.OffenderLossOwn - doubleBaking.AccuserReward;
-            Cache.Statistics.Current.TotalFrozen -= doubleBaking.OffenderLossOwn;
+            Cache.Statistics.Current.TotalBurned += doubleBaking.LostStaked - doubleBaking.Reward;
+            Cache.Statistics.Current.TotalFrozen -= doubleBaking.LostStaked;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
@@ -88,11 +93,11 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleBaking.AccuserReward;
-            accuser.StakingBalance -= doubleBaking.AccuserReward;
+            accuser.Balance -= doubleBaking.Reward;
+            accuser.StakingBalance -= doubleBaking.Reward;
 
-            offender.Balance += doubleBaking.OffenderLossOwn;
-            offender.StakingBalance += doubleBaking.OffenderLossOwn;
+            offender.Balance += doubleBaking.LostStaked;
+            offender.StakingBalance += doubleBaking.LostStaked;
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;

@@ -18,6 +18,7 @@ namespace Tzkt.Data.Models
         public long TotalCreated { get; set; }
         public long TotalBurned { get; set; }
         public long TotalBanished { get; set; }
+        public long TotalLost { get; set; }
 
         public long TotalFrozen { get; set; }
         public long TotalRollupBonds { get; set; }
