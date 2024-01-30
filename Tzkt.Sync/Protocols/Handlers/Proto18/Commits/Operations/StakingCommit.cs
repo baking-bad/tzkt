@@ -292,20 +292,20 @@ namespace Tzkt.Sync.Protocols.Proto18
                     Cache.AppState.Get().PendingStakingParameters++;
                 }
 
-                #region temporary diagnostics
-                if (sender.Type == AccountType.User)
-                {
-                    var remoteSender = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/contracts/index/{sender.Address}");
+                //#region temporary diagnostics
+                //if (sender.Type == AccountType.User)
+                //{
+                //    var remoteSender = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/contracts/index/{sender.Address}");
 
-                    if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != sender.StakedPseudotokens)
-                        throw new Exception("Wrong sender.StakedPseudotokens");
-                }
+                //    if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != sender.StakedPseudotokens)
+                //        throw new Exception("Wrong sender.StakedPseudotokens");
+                //}
 
-                var remoteDelegate = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/contracts/index/{senderDelegate.Address}");
+                //var remoteDelegate = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/contracts/index/{senderDelegate.Address}");
 
-                if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != senderDelegate.IssuedPseudotokens)
-                    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-                #endregion
+                //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != senderDelegate.IssuedPseudotokens)
+                //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
+                //#endregion
             }
             #endregion
 
@@ -434,20 +434,20 @@ namespace Tzkt.Sync.Protocols.Proto18
                     Cache.AppState.Get().PendingStakingParameters--;
                 }
 
-                #region temporary diagnostics
-                if (sender.Type == AccountType.User)
-                {
-                    var remoteSender = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level - 1}/context/raw/json/contracts/index/{sender.Address}");
+                //#region temporary diagnostics
+                //if (sender.Type == AccountType.User)
+                //{
+                //    var remoteSender = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level - 1}/context/raw/json/contracts/index/{sender.Address}");
 
-                    if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != sender.StakedPseudotokens)
-                        throw new Exception("Wrong sender.StakedPseudotokens");
-                }
+                //    if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != sender.StakedPseudotokens)
+                //        throw new Exception("Wrong sender.StakedPseudotokens");
+                //}
 
-                var remoteDelegate = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level - 1}/context/raw/json/contracts/index/{senderDelegate.Address}");
+                //var remoteDelegate = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level - 1}/context/raw/json/contracts/index/{senderDelegate.Address}");
 
-                if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != senderDelegate.IssuedPseudotokens)
-                    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-                #endregion
+                //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != senderDelegate.IssuedPseudotokens)
+                //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
+                //#endregion
             }
             #endregion
 

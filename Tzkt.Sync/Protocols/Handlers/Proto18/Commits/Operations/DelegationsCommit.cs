@@ -39,17 +39,17 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             Cache.Statistics.Current.TotalFrozen -= unstakedAmount;
 
-            #region temporary diagnostics
-            var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{user.Address}").Result;
+            //#region temporary diagnostics
+            //var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{user.Address}").Result;
 
-            if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
-                throw new Exception("Wrong sender.StakedPseudotokens");
+            //if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
+            //    throw new Exception("Wrong sender.StakedPseudotokens");
 
-            var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{baker.Address}").Result;
+            //var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{baker.Address}").Result;
 
-            if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
-                throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-            #endregion
+            //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
+            //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
+            //#endregion
         }
 
         protected override void RevertUnstake(Account sender, Data.Models.Delegate baker, DelegationOperation op)
@@ -73,17 +73,17 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (user.UnstakedBalance == 0)
                 user.UnstakedBakerId = null;
 
-            #region temporary diagnostics
-            var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{user.Address}").Result;
+            //#region temporary diagnostics
+            //var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{user.Address}").Result;
 
-            if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
-                throw new Exception("Wrong sender.StakedPseudotokens");
+            //if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
+            //    throw new Exception("Wrong sender.StakedPseudotokens");
 
-            var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{baker.Address}").Result;
+            //var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{baker.Address}").Result;
 
-            if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
-                throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-            #endregion
+            //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
+            //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
+            //#endregion
         }
     }
 }
