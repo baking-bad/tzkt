@@ -70,6 +70,11 @@ namespace Tzkt.Api.Models
         public long MinimalStake { get; set; }
 
         /// <summary>
+        /// Required number of tokens to be frozen by bakers (micro tez)
+        /// </summary>
+        public long MinimalFrozenStake { get; set; }
+
+        /// <summary>
         /// Security deposit for baking (producing) a block (micro tez)
         /// </summary>
         public long BlockDeposit { get; set; }
@@ -144,6 +149,11 @@ namespace Tzkt.Api.Models
         /// The ratio of delegated tez over the baker’s frozen stake
         /// </summary>
         public int MaxDelegatedOverFrozenRatio { get; set; }
+
+        /// <summary>
+        /// The ratio of external staked balance over the baker’s own staked balance
+        /// </summary>
+        public int MaxExternalOverOwnStakeRatio { get; set; }
 
         /// <summary>
         /// Initial storage size of an originated (created) smart rollup (bytes)

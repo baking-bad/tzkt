@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
+﻿using Dapper;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
@@ -67,12 +63,14 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
+                    MinimalFrozenStake = row.MinimalFrozenStake,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
+                    MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
@@ -132,12 +130,14 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
+                    MinimalFrozenStake = row.MinimalFrozenStake,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
+                    MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
@@ -197,12 +197,14 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
+                    MinimalFrozenStake = row.MinimalFrozenStake,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
+                    MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
@@ -263,12 +265,14 @@ namespace Tzkt.Api.Repositories
                     PreservedCycles = row.PreservedCycles,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
+                    MinimalFrozenStake = row.MinimalFrozenStake,
                     ProposalQuorum = row.ProposalQuorum / 100.0,
                     BallotQuorumMin = row.BallotQuorumMin / 100.0,
                     BallotQuorumMax = row.BallotQuorumMax / 100.0,
                     LBToggleThreshold = row.LBToggleThreshold,
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
+                    MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
