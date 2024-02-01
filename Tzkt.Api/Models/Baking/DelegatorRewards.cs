@@ -8,9 +8,15 @@
         public int Cycle { get; set; }
 
         /// <summary>
-        /// Delegator balance at the snapshot time.
+        /// Amount delegated to the baker at the snapshot time (micro tez).
+        /// This amount doesn't include staked amount.
         /// </summary>
-        public long Balance { get; set; }
+        public long DelegatedBalance { get; set; }
+
+        /// <summary>
+        /// Amount staked to the baker at the snapshot time (micro tez).
+        /// </summary>
+        public long StakedBalance { get; set; }
 
         /// <summary>
         /// Baker at the snapshot time.
@@ -18,19 +24,36 @@
         public Alias Baker { get; set; }
 
         /// <summary>
-        /// Staking balance of the baker at the snapshot time.
+        /// Baker's baking power
         /// </summary>
-        public long StakingBalance { get; set; }
+        public long BakingPower { get; set; }
 
         /// <summary>
-        /// Active stake of the baker participating in rights distribution.
+        /// Sum of baking power of all active bakers
         /// </summary>
-        public long ActiveStake { get; set; }
+        public long TotalBakingPower { get; set; }
 
         /// <summary>
-        /// Total active stake among all selected bakers.
+        /// Amount delegated from the baker's own balance (micro tez).
+        /// This amount doesn't include staked amount.
         /// </summary>
-        public long SelectedStake { get; set; }
+        public long BakerDelegatedBalance { get; set; }
+
+        /// <summary>
+        /// Amount delegated from external delegators (micro tez).
+        /// This amount doesn't include external staked amount.
+        /// </summary>
+        public long ExternalDelegatedBalance { get; set; }
+
+        /// <summary>
+        /// Amount staked from the baker's own balance (micro tez).
+        /// </summary>
+        public long BakerStakedBalance { get; set; }
+
+        /// <summary>
+        /// Amount staked from external stakers (micro tez).
+        /// </summary>
+        public long ExternalStakedBalance { get; set; }
 
         /// <summary>
         /// Expected value of how many blocks baker should produce based on baker's active stake, selected stake and blocks per cycle.
@@ -58,9 +81,21 @@
         public int Blocks { get; set; }
 
         /// <summary>
-        /// Rewards received for baked blocks (both proposed and re-proposed blocks).
+        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
         /// </summary>
-        public long BlockRewards { get; set; }
+        public long BlockRewardsLiquid { get; set; }
+
+        /// <summary>
+        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's staked balance (i.e. they are frozen).
+        /// </summary>
+        public long BlockRewardsStakedOwn { get; set; }
+
+        /// <summary>
+        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long BlockRewardsStakedShared { get; set; }
 
         /// <summary>
         /// Number of missed opportunities to bake block.
@@ -88,9 +123,21 @@
         public int Endorsements { get; set; }
 
         /// <summary>
-        /// Rewards received for endorsed slots.
+        /// Rewards received for endorsed slots on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
         /// </summary>
-        public long EndorsementRewards { get; set; }
+        public long EndorsementRewardsLiquid { get; set; }
+
+        /// <summary>
+        /// Rewards received for endorsed slots on baker's staked balance (i.e. they are frozen).
+        /// </summary>
+        public long EndorsementRewardsStakedOwn { get; set; }
+
+        /// <summary>
+        /// Rewards received for endorsed slots on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long EndorsementRewardsStakedShared { get; set; }
 
         /// <summary>
         /// Number of not endorsed (missed) slots.
@@ -118,9 +165,24 @@
         public long DoubleBakingRewards { get; set; }
 
         /// <summary>
-        /// Amount of frozen deposits lost due to double baking
+        /// Amount of baker's own staked balance lost due to double baking
         /// </summary>
-        public long DoubleBakingLosses { get; set; }
+        public long DoubleBakingLostStaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's own unstaked balance lost due to double baking
+        /// </summary>
+        public long DoubleBakingLostUnstaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external staked balance lost due to double baking
+        /// </summary>
+        public long DoubleBakingLostExternalStaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external unstaked balance lost due to double baking
+        /// </summary>
+        public long DoubleBakingLostExternalUnstaked { get; set; }
 
         /// <summary>
         /// Rewards for detecting double endorsing (accusing someone of validating two different blocks at the same level).
@@ -128,9 +190,24 @@
         public long DoubleEndorsingRewards { get; set; }
 
         /// <summary>
-        /// Amount of frozen deposits lost due to double endorsing
+        /// Amount of baker's own staked balance lost due to double endorsing
         /// </summary>
-        public long DoubleEndorsingLosses { get; set; }
+        public long DoubleEndorsingLostStaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's own unstaked balance lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostUnstaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external staked balance lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostExternalStaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external unstaked balance lost due to double endorsing
+        /// </summary>
+        public long DoubleEndorsingLostExternalUnstaked { get; set; }
 
         /// <summary>
         /// Rewards for detecting double preendorsing (accusing someone of pre-validating two different blocks at the same level).
@@ -138,19 +215,63 @@
         public long DoublePreendorsingRewards { get; set; }
 
         /// <summary>
-        /// Amount of frozen deposits lost due to double preendorsing
+        /// Amount of baker's own staked balance lost due to double preendorsing
         /// </summary>
-        public long DoublePreendorsingLosses { get; set; }
+        public long DoublePreendorsingLostStaked { get; set; }
 
         /// <summary>
-        /// Rewards for including into a block seed nonce revelation operations.
+        /// Amount of baker's own unstaked balance lost due to double preendorsing
         /// </summary>
-        public long RevelationRewards { get; set; }
+        public long DoublePreendorsingLostUnstaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external staked balance lost due to double preendorsing
+        /// </summary>
+        public long DoublePreendorsingLostExternalStaked { get; set; }
+
+        /// <summary>
+        /// Amount of baker's external unstaked balance lost due to double preendorsing
+        /// </summary>
+        public long DoublePreendorsingLostExternalUnstaked { get; set; }
+
+        /// <summary>
+        /// Rewards for including vdf revelations, received on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
+        /// </summary>
+        public long VdfRevelationRewardsLiquid { get; set; }
+
+        /// <summary>
+        /// Rewards for including vdf revelations, received on baker's staked balance (i.e. they are frozen).
+        /// </summary>
+        public long VdfRevelationRewardsStakedOwn { get; set; }
+
+        /// <summary>
+        /// Rewards for including vdf revelations, received on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long VdfRevelationRewardsStakedShared { get; set; }
+
+        /// <summary>
+        /// Rewards for including seed nonce revelations, received on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
+        /// </summary>
+        public long NonceRevelationRewardsLiquid { get; set; }
+
+        /// <summary>
+        /// Rewards for including seed nonce revelations, received on baker's staked balance (i.e. they are frozen).
+        /// </summary>
+        public long NonceRevelationRewardsStakedOwn { get; set; }
+
+        /// <summary>
+        /// Rewards for including seed nonce revelations, received on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long NonceRevelationRewardsStakedShared { get; set; }
 
         /// <summary>
         /// Amount of frozen deposits lost due to missing seed nonce revelation (always zero after Ithaca).
         /// </summary>
-        public long RevelationLosses { get; set; }
+        public long NonceRevelationLosses { get; set; }
 
         #region injecting
         /// <summary>
@@ -160,6 +281,61 @@
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long RevelationRewards => NonceRevelationRewardsLiquid + NonceRevelationRewardsStakedOwn + NonceRevelationRewardsStakedShared + VdfRevelationRewardsLiquid + VdfRevelationRewardsStakedOwn + VdfRevelationRewardsStakedShared;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long RevelationLosses => NonceRevelationLosses;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long DoublePreendorsingLosses => DoublePreendorsingLostStaked + DoublePreendorsingLostExternalStaked + DoublePreendorsingLostUnstaked + DoublePreendorsingLostExternalUnstaked;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long DoubleEndorsingLosses => DoubleEndorsingLostStaked + DoubleEndorsingLostExternalStaked + DoubleEndorsingLostUnstaked + DoubleEndorsingLostExternalUnstaked;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long DoubleBakingLosses => DoubleBakingLostStaked + DoubleBakingLostExternalStaked + DoubleBakingLostUnstaked + DoubleBakingLostExternalUnstaked;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long EndorsementRewards => EndorsementRewardsLiquid + EndorsementRewardsStakedOwn + EndorsementRewardsStakedShared;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long BlockRewards => BlockRewardsLiquid + BlockRewardsStakedOwn + BlockRewardsStakedShared;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long StakingBalance => BakerDelegatedBalance + ExternalDelegatedBalance + BakerStakedBalance + ExternalStakedBalance;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long ActiveStake => BakingPower;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long SelectedStake => BakingPower;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Balance => DelegatedBalance + StakedBalance;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
