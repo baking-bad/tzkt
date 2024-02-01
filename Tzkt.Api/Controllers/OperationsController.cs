@@ -5030,6 +5030,63 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region staking
+        /// <summary>
+        /// Get staking ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of staking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("staking")]
+        public async Task<ActionResult<IEnumerable<StakingOperation>>> GetStakingOps(
+            [FromQuery] StakingOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetStakingOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetStakingOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get staking ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of staking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("staking/count")]
+        public async Task<ActionResult<int>> GetStakingOpsCount([FromQuery] StakingOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.StakingOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetStakingOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
         #region migrations
         /// <summary>
         /// Get migrations
@@ -5626,7 +5683,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("autostaking")]
         public async Task<ActionResult<IEnumerable<AutostakingOperation>>> GetAutostakingOps(
-            [FromQuery] AutostakingOpFilter filter,
+            [FromQuery] AutostakingOperationFilter filter,
             [FromQuery] Pagination pagination,
             [FromQuery] Selection selection,
             [FromQuery] Symbols quote = Symbols.None)
@@ -5655,7 +5712,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="filter">Filter</param>
         /// <returns></returns>
         [HttpGet("autostaking/count")]
-        public async Task<ActionResult<int>> GetAutostakingOpsCount([FromQuery] AutostakingOpFilter filter)
+        public async Task<ActionResult<int>> GetAutostakingOpsCount([FromQuery] AutostakingOperationFilter filter)
         {
             if (filter.Empty)
                 return Ok(State.Current.AutostakingOpsCount);

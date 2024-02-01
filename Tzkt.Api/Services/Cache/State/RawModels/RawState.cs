@@ -45,6 +45,7 @@
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
+        public int StakingOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
         public int SetDepositsLimitOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }

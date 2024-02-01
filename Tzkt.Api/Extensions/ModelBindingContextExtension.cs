@@ -1502,6 +1502,66 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetStakingOperationKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!StakingOperationKinds.TryParse(valueObject.FirstValue, out var value))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid staking operation kind.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = value;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetStakingOperationKindsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<int>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!StakingOperationKinds.TryParse(rawValue, out var value))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid staking operation kind.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(value);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetSrMessageType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

@@ -781,6 +781,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetSmartRollupRefuteOps(new() { level = block.Level }, new() { limit = -1 }, quote)
                 : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+            var staking = operations.HasFlag(Data.Models.Operations.Staking)
+                ? Operations.GetStakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -833,6 +837,7 @@ namespace Tzkt.Api.Repositories
                 srPublishOps,
                 srRecoverBondOps,
                 srRefuteOps,
+                staking,
                 migrations,
                 penalties,
                 endorsingRewards,
@@ -873,6 +878,7 @@ namespace Tzkt.Api.Repositories
             block.SrPublishOps = srPublishOps.Result;
             block.SrRecoverBondOps = srRecoverBondOps.Result;
             block.SrRefuteOps = srRefuteOps.Result;
+            block.StakingOps = staking.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;

@@ -48,6 +48,7 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupPublishOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupRefuteOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.StakingOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupFinalizeCommitmentOps), hash)
@@ -108,6 +109,7 @@ namespace Tzkt.Api.Repositories
             var srPublish = GetSmartRollupPublishOps(new() { hash = hash }, new() { limit = -1 }, quote);
             var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash }, new() { limit = -1 }, quote);
             var srRefute = GetSmartRollupRefuteOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var staking = GetStakingOps(new() { hash = hash }, new() { limit = -1 }, quote);
 
             await Task.WhenAll(
                 srAddMessages,
@@ -116,7 +118,8 @@ namespace Tzkt.Api.Repositories
                 srOriginate,
                 srPublish,
                 srRecoverBond,
-                srRefute);
+                srRefute,
+                staking);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
@@ -141,7 +144,8 @@ namespace Tzkt.Api.Repositories
                 .Concat(srOriginate.Result)
                 .Concat(srPublish.Result)
                 .Concat(srRecoverBond.Result)
-                .Concat(srRefute.Result);
+                .Concat(srRefute.Result)
+                .Concat(staking.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -214,6 +218,7 @@ namespace Tzkt.Api.Repositories
             var srPublish = GetSmartRollupPublishOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srRefute = GetSmartRollupRefuteOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var staking = GetStakingOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
 
             await Task.WhenAll(
                 increasePaidStorageOps,
@@ -223,7 +228,8 @@ namespace Tzkt.Api.Repositories
                 srOriginate,
                 srPublish,
                 srRecoverBond,
-                srRefute);
+                srRefute,
+                staking);
 
             if (increasePaidStorageOps.Result.Any())
                 return increasePaidStorageOps.Result;
@@ -248,6 +254,9 @@ namespace Tzkt.Api.Repositories
 
             if (srRefute.Result.Any())
                 return srRefute.Result;
+
+            if (staking.Result.Any())
+                return staking.Result;
 
             var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);

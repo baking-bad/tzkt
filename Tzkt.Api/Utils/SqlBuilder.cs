@@ -218,6 +218,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, StakingOperationKindParameter value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($"{column} != {value.Ne}");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)})");
+
+            if (value.Ni != null && value.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(value.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BigMapActionParameter action)
         {
             if (action == null) return this;

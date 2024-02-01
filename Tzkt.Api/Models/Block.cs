@@ -312,6 +312,11 @@
         public IEnumerable<SmartRollupRefuteOperation> SrRefuteOps { get; set; }
 
         /// <summary>
+        /// List of staking operations, included in the block
+        /// </summary>
+        public IEnumerable<StakingOperation> StakingOps { get; set; }
+
+        /// <summary>
         /// List of migration operations, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<MigrationOperation> Migrations { get; set; }

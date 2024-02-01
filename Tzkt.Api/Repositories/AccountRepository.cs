@@ -2303,6 +2303,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+                    var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id } }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2359,6 +2363,7 @@ namespace Tzkt.Api.Repositories
                         srPublishOps,
                         srRecoverBondOps,
                         srRefuteOps,
+                        stakingOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
@@ -2400,6 +2405,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(srPublishOps.Result);
                     result.AddRange(srRecoverBondOps.Result);
                     result.AddRange(srRefuteOps.Result);
+                    result.AddRange(stakingOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
@@ -2510,6 +2516,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+                    var userStakingOps = user.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id } }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2540,6 +2550,7 @@ namespace Tzkt.Api.Repositories
                         userSrPublishOps,
                         userSrRecoverBondOps,
                         userSrRefuteOps,
+                        userStakingOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -2567,6 +2578,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userSrPublishOps.Result);
                     result.AddRange(userSrRecoverBondOps.Result);
                     result.AddRange(userSrRefuteOps.Result);
+                    result.AddRange(userStakingOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;

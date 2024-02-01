@@ -228,6 +228,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetSmartRollupRefuteOps(new() { level = level }, new() { limit = -1 }, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.SmartRollupRefuteOperation>());
 
+                var stakingOps = TypeSubs.TryGetValue(Operations.Staking, out var stakingSubs)
+                    ? Repo.GetStakingOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.StakingOperation>());
+
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -284,6 +288,7 @@ namespace Tzkt.Api.Websocket.Processors
                     srPublishOps,
                     srRecoverBondOps,
                     srRefuteOps,
+                    stakingOps,
                     migrations,
                     penalties,
                     baking,
@@ -958,6 +963,22 @@ namespace Tzkt.Api.Websocket.Processors
 
                             if (op.Game != null && srRefuteSubs.AddressSubs.TryGetValue(op.Game.Opponent.Address, out var opponentSubs))
                                 Add(opponentSubs.Subs, op);
+                        }
+                }
+
+                if (stakingOps.Result.Any())
+                {
+                    if (stakingSubs.Subs != null)
+                        AddRange(srRefuteSubs.Subs, stakingOps.Result);
+
+                    if (stakingSubs.AddressSubs != null)
+                        foreach (var op in stakingOps.Result)
+                        {
+                            if (stakingSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+
+                            if (op.Baker != null && stakingSubs.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
                         }
                 }
 
