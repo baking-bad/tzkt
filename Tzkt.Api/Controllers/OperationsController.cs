@@ -5038,7 +5038,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
         /// <param name="account">Filters migration operations by account. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`, `origination`, `subsidy`).</param>
+        /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`, `origination`, `subsidy`, `remove_bigmap_key`).</param>
         /// <param name="balanceChange">Filters migration operations by amount.</param>
         /// <param name="id">Filters migration operations by internal TzKT id.</param>
         /// <param name="level">Filters migration operations by level.</param>

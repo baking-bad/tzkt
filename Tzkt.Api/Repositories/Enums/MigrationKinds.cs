@@ -1,5 +1,4 @@
-﻿using System;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Api
 {
@@ -12,6 +11,7 @@ namespace Tzkt.Api
         public const string CodeChange = "code_change";
         public const string Origination = "origination";
         public const string Subsidy = "subsidy";
+        public const string RemoveBigMapKey = "remove_bigmap_key";
 
         public static bool TryParse(string value, out int res)
         {
@@ -24,6 +24,7 @@ namespace Tzkt.Api
                 CodeChange => (int)MigrationKind.CodeChange,
                 Origination => (int)MigrationKind.Origination,
                 Subsidy => (int)MigrationKind.Subsidy,
+                RemoveBigMapKey => (int)MigrationKind.RemoveBigMapKey,
                 _ => -1
             };
             return res != -1;
@@ -38,6 +39,7 @@ namespace Tzkt.Api
             (int)MigrationKind.CodeChange => CodeChange,
             (int)MigrationKind.Origination => Origination,
             (int)MigrationKind.Subsidy => Subsidy,
+            (int)MigrationKind.RemoveBigMapKey => RemoveBigMapKey,
             _ => throw new Exception("invalid migration kind value")
         };
     }

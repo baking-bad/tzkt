@@ -89,6 +89,21 @@ namespace Tzkt.Api.Models
         public long Amount { get; set; }
 
         /// <summary>
+        /// Amount of pseudotokens unstaked due to re-delegating.
+        /// </summary>
+        public long? UnstakedPseudotokens { get; set; }
+
+        /// <summary>
+        /// Amount staked balance unstaked due to re-delegating.
+        /// </summary>
+        public long? UnstakedBalance { get; set; }
+
+        /// <summary>
+        /// Amount of pending rewards unstaked due to re-delegating.
+        /// </summary>
+        public long? UnstakedRewards { get; set; }
+
+        /// <summary>
         /// Information about the previous delegate of the account. `null` if there is no previous delegate
         /// </summary>
         public Alias PrevDelegate { get; set; }

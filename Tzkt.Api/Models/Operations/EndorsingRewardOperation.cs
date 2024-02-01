@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class EndorsingRewardOperation : Operation
     {
@@ -40,15 +38,32 @@ namespace Tzkt.Api.Models
         public long Expected { get; set; }
 
         /// <summary>
-        /// Actually received endorsing reward (micro tez)
+        /// Reward received on baker's liquid balance (micro tez)
         /// </summary>
-        public long Received { get; set; }
+        public long RewardLiquid { get; set; }
+
+        /// <summary>
+        /// Reward received on baker's staked balance (micro tez)
+        /// </summary>
+        public long RewardStakedOwn { get; set; }
+
+        /// <summary>
+        /// Reward received on baker's external staked balance (micro tez)
+        /// </summary>
+        public long RewardStakedShared { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Received => RewardLiquid + RewardStakedOwn + RewardStakedShared;
         #endregion
     }
 }

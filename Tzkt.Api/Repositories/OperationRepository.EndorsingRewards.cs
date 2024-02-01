@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
@@ -43,7 +39,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 Expected = row.Expected,
-                Received = row.Received,
+                RewardLiquid = row.RewardLiquid,
+                RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             };
         }
@@ -76,7 +74,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 Expected = row.Expected,
-                Received = row.Received,
+                RewardLiquid = row.RewardLiquid,
+                RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -104,12 +104,21 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "baker": columns.Add(@"o.""BakerId"""); break;
                     case "expected": columns.Add(@"o.""Expected"""); break;
-                    case "received": columns.Add(@"o.""Received"""); break;
+                    case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                    case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                    case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
+                    #region deprecated
+                    case "received":
+                        columns.Add(@"o.""RewardLiquid""");
+                        columns.Add(@"o.""RewardStakedOwn""");
+                        columns.Add(@"o.""RewardStakedShared""");
+                        break;
+                    #endregion
                 }
             }
 
@@ -158,14 +167,28 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Expected;
                         break;
-                    case "received":
+                    case "rewardLiquid":
                         foreach (var row in rows)
-                            result[j++][i] = row.Received;
+                            result[j++][i] = row.RewardLiquid;
+                        break;
+                    case "rewardStakedOwn":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedOwn;
+                        break;
+                    case "rewardStakedShared":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedShared;
                         break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+                    #region deprecated
+                    case "received":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                        break;
+                    #endregion
                 }
             }
 
@@ -193,12 +216,21 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "baker": columns.Add(@"o.""BakerId"""); break;
                 case "expected": columns.Add(@"o.""Expected"""); break;
-                case "received": columns.Add(@"o.""Received"""); break;
+                case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
+                #region deprecated
+                case "received":
+                    columns.Add(@"o.""RewardLiquid""");
+                    columns.Add(@"o.""RewardStakedOwn""");
+                    columns.Add(@"o.""RewardStakedShared""");
+                    break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -244,14 +276,28 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Expected;
                     break;
-                case "received":
+                case "rewardLiquid":
                     foreach (var row in rows)
-                        result[j++] = row.Received;
+                        result[j++] = row.RewardLiquid;
+                    break;
+                case "rewardStakedOwn":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedOwn;
+                    break;
+                case "rewardStakedShared":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedShared;
                     break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
+                #region deprecated
+                case "received":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                    break;
+                    #endregion
             }
 
             return result;

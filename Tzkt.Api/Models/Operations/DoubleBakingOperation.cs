@@ -41,6 +41,11 @@ namespace Tzkt.Api.Models
         public int AccusedLevel { get; set; }
 
         /// <summary>
+        /// Height of the block from the genesis, at which the offender was slashed
+        /// </summary>
+        public int SlashedLevel { get; set; }
+
+        /// <summary>
         /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
         public Alias Accuser { get; set; }
@@ -48,7 +53,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Reward of the baker, produced the block, in which the accusation was included
         /// </summary>
-        public long AccuserReward { get; set; }
+        public long Reward { get; set; }
 
         /// <summary>
         /// Information about the baker, accused for producing two different blocks at the same level
@@ -56,9 +61,29 @@ namespace Tzkt.Api.Models
         public Alias Offender { get; set; }
 
         /// <summary>
-        /// Amount of frozen deposits lost by accused baker
+        /// Amount slashed from baker's own staked balance
         /// </summary>
-        public long OffenderLoss { get; set; }
+        public long LostStaked { get; set; }
+
+        /// <summary>
+        /// Amount slashed from baker's own unstaked balance
+        /// </summary>
+        public long LostUnstaked { get; set; }
+
+        /// <summary>
+        /// Amount slashed from baker's external staked balance
+        /// </summary>
+        public long LostExternalStaked { get; set; }
+
+        /// <summary>
+        /// Amount slashed from baker's external unstaked balance
+        /// </summary>
+        public long LostExternalUnstaked { get; set; }
+
+        /// <summary>
+        /// Amount lost due to inaccuracy of the economic protocol introduced in Oxford.
+        /// </summary>
+        public long RoundingLoss { get; set; }
 
         #region injecting
         /// <summary>
@@ -68,6 +93,16 @@ namespace Tzkt.Api.Models
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLoss => LostStaked + LostUnstaked + LostExternalStaked + LostExternalUnstaked + RoundingLoss;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long AccuserReward => Reward;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
