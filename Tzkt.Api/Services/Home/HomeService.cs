@@ -262,6 +262,7 @@ namespace Tzkt.Api.Services
                 TotalFrozen = row.TotalFrozen,
                 TotalRollupBonds = row.TotalRollupBonds,
                 TotalSmartRollupBonds = row.TotalSmartRollupBonds,
+                TotalLost = row.TotalLost,
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
                             - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated

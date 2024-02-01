@@ -50,6 +50,7 @@ namespace Tzkt.Api
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
         public const string EndorsingReward = "endorsing_reward";
+        public const string Autostaking = "autostaking";
 
         public static bool TryParse(string type, out Operations res)
         {
@@ -95,6 +96,7 @@ namespace Tzkt.Api
                 case SmartRollupPublish: res = Operations.SmartRollupPublish; break;
                 case SmartRollupRecoverBond: res = Operations.SmartRollupRecoverBond; break;
                 case SmartRollupRefute: res = Operations.SmartRollupRefute; break;
+                case Autostaking: res = Operations.Autostaking; break;
                 default: return false;
             }
             return true;

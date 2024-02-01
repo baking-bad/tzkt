@@ -2319,6 +2319,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetEndorsingRewards(null, _delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
+                    var autostakingOps = delegat.AutostakingOpsCount > 0 && types.Contains(OpTypes.Autostaking)
+                        ? Operations.GetAutostakingOps(new() { baker = _delegat }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
+
                     await Task.WhenAll(
                         endorsements,
                         preendorsements,
@@ -2358,7 +2362,8 @@ namespace Tzkt.Api.Repositories
                         migrations,
                         revelationPenalties,
                         bakingOps,
-                        endorsingRewards);
+                        endorsingRewards,
+                        autostakingOps);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(preendorsements.Result);
@@ -2399,6 +2404,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
                     result.AddRange(endorsingRewards.Result);
+                    result.AddRange(autostakingOps.Result);
 
                     break;
                 case RawUser user:

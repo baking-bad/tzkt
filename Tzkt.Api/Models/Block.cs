@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class Block
     {
@@ -328,6 +325,11 @@ namespace Tzkt.Api.Models
         /// List of endorsing rewards, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<EndorsingRewardOperation> EndorsingRewards { get; set; }
+
+        /// <summary>
+        /// List of autostaking operations, implicitly applied at the end of the block
+        /// </summary>
+        public IEnumerable<AutostakingOperation> AutostakingOps { get; set; }
         #endregion
 
         #region injecting

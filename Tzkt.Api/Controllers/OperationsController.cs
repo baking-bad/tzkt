@@ -5611,5 +5611,62 @@ namespace Tzkt.Api.Controllers
             return this.Bytes(cached);
         }
         #endregion
+
+        #region autostaking
+        /// <summary>
+        /// Get autostaking ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of autostaking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("autostaking")]
+        public async Task<ActionResult<IEnumerable<AutostakingOperation>>> GetAutostakingOps(
+            [FromQuery] AutostakingOpFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetAutostakingOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetAutostakingOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get autostaking ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of autostaking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("autostaking/count")]
+        public async Task<ActionResult<int>> GetAutostakingOpsCount([FromQuery] AutostakingOpFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.AutostakingOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetAutostakingOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
     }
 }

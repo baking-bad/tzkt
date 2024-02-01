@@ -51,6 +51,7 @@
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
         public int EndorsingRewardOpsCount { get; set; }
+        public int AutostakingOpsCount { get; set; }
 
         public int TxRollupOriginationOpsCount { get; set; }
         public int TxRollupSubmitBatchOpsCount { get; set; }

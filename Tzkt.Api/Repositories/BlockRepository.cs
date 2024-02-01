@@ -793,6 +793,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetEndorsingRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
+            var autostakingOps = operations.HasFlag(Data.Models.Operations.Autostaking)
+                ? Operations.GetAutostakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
+
             await Task.WhenAll(
                 endorsements,
                 preendorsements,
@@ -831,7 +835,8 @@ namespace Tzkt.Api.Repositories
                 srRefuteOps,
                 migrations,
                 penalties,
-                endorsingRewards);
+                endorsingRewards,
+                autostakingOps);
 
             block.Endorsements = endorsements.Result;
             block.Preendorsements = preendorsements.Result;
@@ -871,6 +876,7 @@ namespace Tzkt.Api.Repositories
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;
+            block.AutostakingOps = autostakingOps.Result;
         }
     }
 }

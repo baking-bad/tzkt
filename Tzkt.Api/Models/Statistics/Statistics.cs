@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class Statistics
     {
@@ -79,6 +77,12 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long TotalSmartRollupBonds { get; set; }
 
+        /// <summary>
+        /// Total amount lost due to inaccuracy of the economic protocol introduced in Oxford.
+        /// This amount is literally lost, because it is no longer available for the account in any mean, but for some reason it is counted as delegated.
+        /// </summary>
+        public long TotalLost { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of the block at which the statistics has been calculated
@@ -90,7 +94,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long TotalVested { get; set; }
+        public long TotalVested => 0;
         #endregion
     }
 }

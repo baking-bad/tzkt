@@ -199,6 +199,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, AutostakingActionParameter action)
+        {
+            if (action == null) return this;
+
+            if (action.Eq != null)
+                AppendFilter($"{column} = {action.Eq}");
+
+            if (action.Ne != null)
+                AppendFilter($"{column} != {action.Ne}");
+
+            if (action.In != null)
+                AppendFilter($"{column} = ANY ({Param(action.In)})");
+
+            if (action.Ni != null && action.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(action.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BigMapActionParameter action)
         {
             if (action == null) return this;

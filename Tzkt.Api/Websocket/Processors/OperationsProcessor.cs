@@ -244,6 +244,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetEndorsingRewards(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
 
+                var autostakingOps = TypeSubs.TryGetValue(Operations.Autostaking, out var autostakingOpsSub)
+                    ? Repo.GetAutostakingOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.AutostakingOperation>());
+
                 await Task.WhenAll(
                     endorsements,
                     preendorsements,
@@ -283,7 +287,8 @@ namespace Tzkt.Api.Websocket.Processors
                     migrations,
                     penalties,
                     baking,
-                    endorsingRewards);
+                    endorsingRewards,
+                    autostakingOps);
                 #endregion
 
                 #region prepare to send
@@ -1002,6 +1007,17 @@ namespace Tzkt.Api.Websocket.Processors
                     if (endorsingRewardsSub.AddressSubs != null)
                         foreach (var op in endorsingRewards.Result)
                             if (endorsingRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
+                }
+
+                if (autostakingOps.Result.Any())
+                {
+                    if (autostakingOpsSub.Subs != null)
+                        AddRange(autostakingOpsSub.Subs, autostakingOps.Result);
+
+                    if (autostakingOpsSub.AddressSubs != null)
+                        foreach (var op in autostakingOps.Result)
+                            if (autostakingOpsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
                                 Add(bakerSubs.Subs, op);
                 }
                 #endregion
