@@ -504,6 +504,7 @@ namespace Tzkt.Api.Services
                 AND "StakingBalance" >= {protocol.MinimalStake}
                 """);
 
+            // TODO: use current cycle rewards
             var lbSubsidy = 80_000_000 * protocol.TimeBetweenBlocks / 60 / 16;
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.MaxBakingReward + protocol.MaxEndorsingReward; //microtez

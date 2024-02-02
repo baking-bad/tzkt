@@ -301,7 +301,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
                         break;
-                        #endregion
+                    #endregion
                 }
             }
 
@@ -461,7 +461,7 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
                     break;
-                    #endregion
+                #endregion
             }
 
             return result;
