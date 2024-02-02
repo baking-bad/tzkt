@@ -463,7 +463,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long FrozenDeposit => TotalStakedBalance;
+        public long FrozenDeposit => StakedBalance;
 
         /// <summary>
         /// [DEPRECATED]

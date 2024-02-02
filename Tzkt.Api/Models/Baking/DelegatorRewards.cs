@@ -329,7 +329,7 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long SelectedStake => BakingPower;
+        public long SelectedStake => TotalBakingPower;
 
         /// <summary>
         /// [DEPRECATED]

@@ -323,12 +323,12 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long SelectedStake => BakingPower;
+        public long SelectedStake => TotalBakingPower;
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long DelegatedBalance => ExternalDelegatedBalance;
+        public long DelegatedBalance => ExternalStakedBalance + ExternalDelegatedBalance;
 
         /// <summary>
         /// [DEPRECATED]

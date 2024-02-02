@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class RewardSplit
     {
@@ -322,12 +320,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long SelectedStake => BakingPower;
+        public long SelectedStake => TotalBakingPower;
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long DelegatedBalance => ExternalDelegatedBalance;
+        public long DelegatedBalance => ExternalStakedBalance + ExternalDelegatedBalance;
 
         /// <summary>
         /// [DEPRECATED]
