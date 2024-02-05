@@ -100,6 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                     .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId)
                     ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId);
                 bondOp.BondStatus = SmartRollupBondStatus.Returned;
+
+                Cache.Statistics.Current.TotalSmartRollupBonds -= operation.Bond;
             }
             #endregion
 

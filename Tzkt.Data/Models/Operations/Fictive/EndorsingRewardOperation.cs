@@ -11,7 +11,9 @@ namespace Tzkt.Data.Models
 
         public int BakerId { get; set; }
         public long Expected { get; set; }
-        public long Received { get; set; }
+        public long RewardLiquid { get; set; }
+        public long RewardStakedOwn { get; set; }
+        public long RewardStakedShared { get; set; }
     }
 
     public static class EndorsingRewardOperationModel

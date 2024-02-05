@@ -17,6 +17,14 @@ namespace Tzkt.Data.Models
         public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
+        // it's needed to handle negligent Oxford implementation
+        public long LostBalance { get; set; }
+
+        public int? DelegateId { get; set; }
+        public int? DelegationLevel { get; set; }
+        public bool Staked { get; set; }
+
+        #region counters
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
         public int SmartRollupsCount { get; set; }
@@ -59,10 +67,7 @@ namespace Tzkt.Data.Models
 
         public int RefutationGamesCount { get; set; }
         public int ActiveRefutationGamesCount { get; set; }
-
-        public int? DelegateId { get; set; }
-        public int? DelegationLevel { get; set; }
-        public bool Staked { get; set; }
+        #endregion
 
         #region relations
         [ForeignKey(nameof(DelegateId))]

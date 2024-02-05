@@ -7,7 +7,6 @@ namespace Tzkt.Data.Models
     {
         public PvmKind PvmKind { get; set; }
         public byte[] Kernel { get; set; }
-        public byte[] OriginationProof { get; set; }
         public byte[] ParameterType { get; set; }
         public string GenesisCommitment { get; set; }
         public int? SmartRollupId { get; set; }

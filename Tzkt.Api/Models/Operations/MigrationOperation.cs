@@ -43,6 +43,7 @@ namespace Tzkt.Api.Models
         /// `code_change` - changing contract scripts during Babylon protocol upgrade
         /// `origination` - implicit (hardcoded in the protocol) origination of liquidity baking contracts
         /// `subsidy` - liquidity baking subsidy
+        /// `remove_bigmap_key` - removing the key from the bigmap
         /// </summary>
         public string Kind { get; set; }
 

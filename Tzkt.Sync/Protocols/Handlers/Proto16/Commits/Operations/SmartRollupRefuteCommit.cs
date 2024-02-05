@@ -204,11 +204,18 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.InitiatorReward = initiatorChange;
                         }
+                        else if (initiatorChange == 0)
+                        {
+                            if (operation.GameStatus == RefutationGameStatus.Draw || result.Required("game_status").Required("result").RequiredString("player") == initiator.Address)
+                                game.InitiatorLoss = 0;
+                            else 
+                                game.InitiatorReward = 0;
+                        }
                         else
                         {
                             game.InitiatorLoss = -initiatorChange;
-                            initiator.SmartRollupBonds += initiatorChange;
-                            rollup.SmartRollupBonds += initiatorChange;
+                            initiator.SmartRollupBonds -= game.InitiatorLoss.Value;
+                            rollup.SmartRollupBonds -= game.InitiatorLoss.Value;
                             rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, initiator, block);
@@ -242,11 +249,18 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.OpponentReward = opponentChange;
                         }
+                        else if (opponentChange == 0)
+                        {
+                            if (operation.GameStatus == RefutationGameStatus.Draw || result.Required("game_status").Required("result").RequiredString("player") == opponent.Address)
+                                game.OpponentLoss = 0;
+                            else
+                                game.OpponentReward = 0;
+                        }
                         else
                         {
                             game.OpponentLoss = -opponentChange;
-                            opponent.SmartRollupBonds += opponentChange;
-                            rollup.SmartRollupBonds += opponentChange;
+                            opponent.SmartRollupBonds -= game.OpponentLoss.Value;
+                            rollup.SmartRollupBonds -= game.OpponentLoss.Value;
                             rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, opponent, block);
@@ -295,6 +309,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                         initiator.ActiveRefutationGamesCount--;
                         opponent.ActiveRefutationGamesCount--;
                         rollup.ActiveRefutationGamesCount--;
+
+                        var totalLoss = (game.InitiatorLoss ?? 0) + (game.OpponentLoss ?? 0);
+                        var totalReward = (game.InitiatorReward ?? 0) + (game.OpponentReward ?? 0);
+                        Cache.Statistics.Current.TotalBurned += totalLoss - totalReward;
+                        Cache.Statistics.Current.TotalSmartRollupBonds -= totalLoss;
                     }
                 }
             }

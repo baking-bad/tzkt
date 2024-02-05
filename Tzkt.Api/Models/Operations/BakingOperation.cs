@@ -55,14 +55,38 @@ namespace Tzkt.Api.Models
         public long Deposit { get; set; }
 
         /// <summary>
-        /// Fixed reward paid to the payload proposer (micro tez)
+        /// Fixed reward paid to the payload proposer (micro tez) on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
         /// </summary>
-        public long Reward { get; set; }
+        public long RewardLiquid { get; set; }
 
         /// <summary>
-        /// Bonus reward paid to the block producer (micro tez)
+        /// Fixed reward paid to the payload proposer (micro tez) on baker's staked balance (i.e. they are frozen).
         /// </summary>
-        public long Bonus { get; set; }
+        public long RewardStakedOwn { get; set; }
+
+        /// <summary>
+        /// Fixed reward paid to the payload proposer (micro tez) on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long RewardStakedShared { get; set; }
+
+        /// <summary>
+        /// Bonus reward paid to the block producer (micro tez) on baker's liquid balance
+        /// (i.e. they are not frozen and can be spent immediately).
+        /// </summary>
+        public long BonusLiquid { get; set; }
+
+        /// <summary>
+        /// Bonus reward paid to the block producer (micro tez) on baker's staked balance (i.e. they are frozen).
+        /// </summary>
+        public long BonusStakedOwn { get; set; }
+
+        /// <summary>
+        /// Bonus reward paid to the block producer (micro tez) on baker's external staked balance
+        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// </summary>
+        public long BonusStakedShared { get; set; }
 
         /// <summary>
         /// Total fee gathered from operations, included into the block
@@ -77,6 +101,16 @@ namespace Tzkt.Api.Models
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Reward => RewardLiquid + RewardStakedOwn + RewardStakedShared;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Bonus => BonusLiquid + BonusStakedOwn + BonusStakedShared;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

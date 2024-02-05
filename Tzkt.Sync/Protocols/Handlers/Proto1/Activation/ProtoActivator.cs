@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
@@ -17,11 +16,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var accounts = await BootstrapAccounts(protocol, parameters);
                 var cycles = BootstrapCycles(protocol, accounts, parameters);
                 var (bakingRights, endorsingRights) = await BootstrapBakingRights(protocol, accounts, cycles);
-                BootstrapDelegatorCycles(protocol, accounts);
-                BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
                 BootstrapSnapshotBalances(accounts);
+                BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, endorsingRights);
+                BootstrapDelegatorCycles(protocol, accounts);
                 BootstrapVoting(protocol, accounts);
-                await BootstrapCommitments(parameters);
+                BootstrapCommitments(parameters);
                 await ActivateContext(state);
             }
             else // upgrade

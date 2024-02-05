@@ -14,6 +14,8 @@ namespace Tzkt.Api.Services.Cache
         public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
+        public long LostBalance { get; set; }
+
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
         public int SmartRollupsCount { get; set; }

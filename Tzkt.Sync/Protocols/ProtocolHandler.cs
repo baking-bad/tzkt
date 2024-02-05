@@ -88,18 +88,12 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Touch accounts");
                 TouchAccounts();
 
-                if (Config.Diagnostics)
-                {
-                    Logger.LogDebug("Diagnostics");
-                    using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTime))
-                    {
-                        await nextProtocol.Diagnostics.Run(block);
-                    }
-                }
-
                 Logger.LogDebug("Save changes");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.SaveChangesTime))
                 {
+                    if (Config.Diagnostics)
+                        nextProtocol.Diagnostics.TrackChanges();
+
                     await Db.SaveChangesAsync();
                 }
 
@@ -107,6 +101,11 @@ namespace Tzkt.Sync
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.PostProcessingTime))
                 {
                     await AfterCommit(block);
+
+                    if (Config.Diagnostics)
+                        nextProtocol.Diagnostics.TrackChanges();
+
+                    await Db.SaveChangesAsync();
                 }
 
                 Logger.LogDebug("Process quotes");
@@ -119,6 +118,15 @@ namespace Tzkt.Sync
                 {
                     Logger.LogDebug("Run post activation");
                     await nextProtocol.PostActivation(state);
+                }
+
+                if (Config.Diagnostics)
+                {
+                    Logger.LogDebug("Diagnostics");
+                    using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTime))
+                    {
+                        await nextProtocol.Diagnostics.Run(block);
+                    }
                 }
 
                 Logger.LogDebug("Commit DB transaction");
@@ -184,6 +192,7 @@ namespace Tzkt.Sync
                     Logger.LogDebug("Diagnostics");
                     using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertDiagnosticsTime))
                     {
+                        Diagnostics.TrackChanges();
                         await Diagnostics.Run(state.Level);
                     }
                 }
@@ -361,6 +370,7 @@ namespace Tzkt.Sync
                         b.SetDepositsLimits = null;
                         b.Revelation = null;
                         b.Revelations = null;
+                        b.StakingOps = null;
                         b.Transactions = null;
                         b.Migrations = null;
                         b.RevelationPenalties = null;

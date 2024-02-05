@@ -53,6 +53,7 @@ namespace Tzkt.Api.Repositories
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
+                if (user.StakingOpsCount > 0) UnionStakingOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -187,6 +188,7 @@ namespace Tzkt.Api.Repositories
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
+                if (user.StakingOpsCount > 0) UnionStakingOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -355,6 +357,7 @@ namespace Tzkt.Api.Repositories
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
+                if (user.StakingOpsCount > 0) UnionStakingOps(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -498,7 +501,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""Received"" as ""Reward"", ");
+            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -509,7 +512,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND ""Received"" > 0 ");
+            sql.Append(@"AND (""RewardLiquid"" > 0 OR ""RewardStakedOwn"" > 0) ");
 
             sql.AppendLine();
         }
@@ -526,7 +529,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""Reward"" + ""Fees"") as ""Reward"", ");
+            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"" + ""Fees"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -537,7 +540,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProposerId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND (""Reward"" > 0 OR ""Fees"" > 0) ");
+            sql.Append(@"AND (""RewardLiquid"" > 0 OR ""RewardStakedOwn"" > 0 OR ""Fees"" > 0) ");
 
             sql.AppendLine();
             #endregion
@@ -552,7 +555,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""Bonus"" as ""Reward"", ");
+            sql.Append(@"(""BonusLiquid"" + ""BonusStakedOwn"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -563,7 +566,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProducerId"" = @account ");
             sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND ""Bonus"" > 0 ");
+            sql.Append(@"AND (""BonusLiquid"" > 0 OR ""BonusStakedOwn"" > 0) ");
 
             sql.AppendLine();
             #endregion
@@ -635,7 +638,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""AccuserReward"" as ""Reward"", ");
+            sql.Append(@"""Reward"" as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -661,7 +664,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
+            sql.Append(@"(""LostStaked"" + ""LostUnstaked"") as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -688,7 +691,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""AccuserReward"" as ""Reward"", ");
+            sql.Append(@"""Reward"" as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -714,7 +717,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
+            sql.Append(@"(""LostStaked"" + ""LostUnstaked"") as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -741,7 +744,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""AccuserReward"" as ""Reward"", ");
+            sql.Append(@"""Reward"" as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -767,7 +770,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
             sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"""OffenderLoss"" as ""Loss"", ");
+            sql.Append(@"(""LostStaked"" + ""LostUnstaked"") as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"null::integer as ""Sent"", ");
@@ -793,7 +796,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""Reward"" as ""Reward"", ");
+            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -819,7 +822,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""Reward"" as ""Reward"", ");
+            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -1785,6 +1788,33 @@ namespace Tzkt.Api.Repositories
             #endregion
         }
 
+        void UnionStakingOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"43 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"""BakerFee"" as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""StakingOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""BakerFee"" > 0 ");
+
+            sql.AppendLine();
+        }
+
         void UnionRevelationPenalties(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1890,7 +1920,8 @@ namespace Tzkt.Api.Repositories
             "smart rollup publish",             // 39
             "smart rollup recover bond",        // 40
             "smart rollup refute",              // 41
-            "smart rollup game"                 // 42
+            "smart rollup game",                // 42
+            "staking"                           // 43
         };
     }
 }

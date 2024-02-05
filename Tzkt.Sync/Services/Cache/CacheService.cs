@@ -60,7 +60,6 @@ namespace Tzkt.Sync.Services
             Protocols.Reset();
             Proposals.Reset();
             Periods.Reset();
-            Statistics.Reset();
             Software.Reset();
             Schemas.Reset();
             Storages.Reset();
@@ -76,6 +75,7 @@ namespace Tzkt.Sync.Services
 
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
+            await Statistics.ResetAsync();
         }
 
         public void Trim()

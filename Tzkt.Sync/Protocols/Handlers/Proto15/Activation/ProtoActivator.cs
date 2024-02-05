@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto15
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
-            protocol.TokensPerRoll = parameters["minimal_stake"]?.Value<long>() ?? 6_000_000L;
+            protocol.MinimalStake = parameters["minimal_stake"]?.Value<long>() ?? 6_000_000L;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev) { }
@@ -148,8 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += amount;
+            Cache.Statistics.Current.TotalCreated += amount;
         }
 
         async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
@@ -187,8 +186,8 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             #region apply new rights
             var sampler = GetOldSampler(bakerCycles.Values
-                .Where(x => x.ActiveStake > 0)
-                .Select(x => (x.BakerId, x.ActiveStake))
+                .Where(x => x.BakingPower > 0)
+                .Select(x => (x.BakerId, x.BakingPower))
                 .ToList());
 
             #region temporary diagnostics
@@ -269,8 +268,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             {
                 var bakerCycles = await Cache.BakerCycles.GetAsync(cycle.Index);
                 var sampler = GetOldSampler(bakerCycles.Values
-                    .Where(x => x.ActiveStake > 0)
-                    .Select(x => (x.BakerId, x.ActiveStake))
+                    .Where(x => x.BakingPower > 0)
+                    .Select(x => (x.BakerId, x.BakingPower))
                     .ToList());
 
                 #region temporary diagnostics

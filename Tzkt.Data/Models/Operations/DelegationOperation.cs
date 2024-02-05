@@ -4,7 +4,6 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    //TODO: add delegation amount
     public class DelegationOperation : InternalOperation
     {
         public int? SenderCodeHash { get; set; }
@@ -13,6 +12,10 @@ namespace Tzkt.Data.Models
         public int? ResetDeactivation { get; set; }
 
         public long Amount { get; set; }
+
+        public long? UnstakedPseudotokens { get; set; }
+        public long? UnstakedBalance { get; set; }
+        public long? UnstakedRewards { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]

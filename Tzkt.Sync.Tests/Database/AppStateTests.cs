@@ -63,6 +63,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.RevelationPenaltyOpsCount +
                 state.SetDepositsLimitOpsCount +
                 state.TransactionOpsCount +
+                state.StakingOpsCount +
                 state.TransferTicketOpsCount +
                 state.TxRollupCommitOpsCount +
                 state.TxRollupDispatchTicketsOpsCount +
@@ -74,13 +75,14 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupSubmitBatchOpsCount +
                 state.UpdateConsensusKeyOpsCount +
                 state.VdfRevelationOpsCount +
-                state.SmartRollupAddMessagesOpsCount + 
+                state.SmartRollupAddMessagesOpsCount +
                 state.SmartRollupCementOpsCount +
                 state.SmartRollupExecuteOpsCount +
                 state.SmartRollupOriginateOpsCount +
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
-                state.SmartRollupRefuteOpsCount;
+                state.SmartRollupRefuteOpsCount +
+                state.AutostakingOpsCount;
 
             if (state.OperationCounter != opsCount)
                 throw new Exception("Invalid AppState.OperationCounter");
@@ -88,6 +90,7 @@ namespace Tzkt.Sync.Tests.Database
             var managerOpsCount = await db.DelegationOps.CountAsync(x => x.InitiatorId == null) +
                 await db.OriginationOps.CountAsync(x => x.InitiatorId == null) +
                 await db.TransactionOps.CountAsync(x => x.InitiatorId == null) +
+                state.StakingOpsCount +
                 state.IncreasePaidStorageOpsCount +
                 state.RegisterConstantOpsCount +
                 state.RevealOpsCount +
@@ -196,6 +199,9 @@ namespace Tzkt.Sync.Tests.Database
             if (state.TransactionOpsCount != await db.TransactionOps.CountAsync())
                 throw new Exception("Invalid AppState.TransactionOpsCount");
 
+            if (state.StakingOpsCount != await db.StakingOps.CountAsync())
+                throw new Exception("Invalid AppState.StakingOpsCount");
+
             if (state.RegisterConstantOpsCount != await db.RegisterConstantOps.CountAsync())
                 throw new Exception("Invalid AppState.RegisterConstantOpsCount");
 
@@ -297,6 +303,9 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
                 throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
+
+            if (state.AutostakingOpsCount != await db.AutostakingOps.CountAsync())
+                throw new Exception("Invalid AppState.AutostakingOpsCount");
             #endregion
 
             #region quotes

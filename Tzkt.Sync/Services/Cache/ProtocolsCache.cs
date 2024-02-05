@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
@@ -98,6 +93,12 @@ namespace Tzkt.Sync.Services.Cache
             }
 
             return protocol;
+        }
+
+        public async Task<int> GetCycle(int level)
+        {
+            var protocol = await FindByLevelAsync(level);
+            return protocol.GetCycle(level);
         }
 
         public void Remove(Protocol protocol)

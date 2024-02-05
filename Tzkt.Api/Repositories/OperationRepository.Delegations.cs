@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Data;
 
@@ -31,8 +27,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""Counter"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                SELECT      o.*, b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -59,6 +54,9 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
+                UnstakedPseudotokens = row.UnstakedPseudotokens,
+                UnstakedBalance = row.UnstakedBalance,
+                UnstakedRewards = row.UnstakedRewards,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -70,8 +68,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Nonce"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                SELECT      o.*, b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -98,6 +95,9 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
+                UnstakedPseudotokens = row.UnstakedPseudotokens,
+                UnstakedBalance = row.UnstakedBalance,
+                UnstakedRewards = row.UnstakedRewards,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -109,8 +109,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(string hash, int counter, int nonce, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""SenderId"", o.""InitiatorId"", o.""BakerFee"",
-                            o.""GasLimit"", o.""GasUsed"", o.""StorageLimit"", o.""Status"", o.""Amount"", o.""PrevDelegateId"", o.""DelegateId"", o.""Errors"", b.""Hash""
+                SELECT      o.*, b.""Hash""
                 FROM        ""DelegationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -137,6 +136,9 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
+                UnstakedPseudotokens = row.UnstakedPseudotokens,
+                UnstakedBalance = row.UnstakedBalance,
+                UnstakedRewards = row.UnstakedRewards,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -148,8 +150,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT    ""Id"", ""Timestamp"", ""OpHash"", ""SenderId"", ""InitiatorId"", ""Counter"", ""BakerFee"",
-                          ""GasLimit"", ""GasUsed"", ""StorageLimit"", ""Status"", ""Nonce"", ""Amount"", ""PrevDelegateId"", ""DelegateId"", ""Errors""
+                SELECT    *
                 FROM      ""DelegationOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
@@ -174,6 +175,9 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
+                UnstakedPseudotokens = row.UnstakedPseudotokens,
+                UnstakedBalance = row.UnstakedBalance,
+                UnstakedRewards = row.UnstakedRewards,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -241,6 +245,9 @@ namespace Tzkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
+                UnstakedPseudotokens = row.UnstakedPseudotokens,
+                UnstakedBalance = row.UnstakedBalance,
+                UnstakedRewards = row.UnstakedRewards,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -286,6 +293,9 @@ namespace Tzkt.Api.Repositories
                     case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
+                    case "unstakedPseudotokens": columns.Add(@"o.""UnstakedPseudotokens"""); break;
+                    case "unstakedBalance": columns.Add(@"o.""UnstakedBalance"""); break;
+                    case "unstakedRewards": columns.Add(@"o.""UnstakedRewards"""); break;
                     case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
                     case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
@@ -396,6 +406,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Amount;
                         break;
+                    case "unstakedPseudotokens":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UnstakedPseudotokens;
+                        break;
+                    case "unstakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UnstakedBalance;
+                        break;
+                    case "unstakedRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UnstakedRewards;
+                        break;
                     case "prevDelegate":
                         foreach (var row in rows)
                             result[j++][i] = row.PrevDelegateId != null ? await Accounts.GetAliasAsync(row.PrevDelegateId) : null;
@@ -457,6 +479,9 @@ namespace Tzkt.Api.Repositories
                 case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
+                case "unstakedPseudotokens": columns.Add(@"o.""UnstakedPseudotokens"""); break;
+                case "unstakedBalance": columns.Add(@"o.""UnstakedBalance"""); break;
+                case "unstakedRewards": columns.Add(@"o.""UnstakedRewards"""); break;
                 case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
                 case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
@@ -563,6 +588,18 @@ namespace Tzkt.Api.Repositories
                 case "amount":
                     foreach (var row in rows)
                         result[j++] = row.Amount;
+                    break;
+                case "unstakedPseudotokens":
+                    foreach (var row in rows)
+                        result[j++] = row.UnstakedPseudotokens;
+                    break;
+                case "unstakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.UnstakedBalance;
+                    break;
+                case "unstakedRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.UnstakedRewards;
                     break;
                 case "prevDelegate":
                     foreach (var row in rows)

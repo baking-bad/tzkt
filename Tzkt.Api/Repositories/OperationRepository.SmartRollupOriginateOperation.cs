@@ -55,7 +55,6 @@ namespace Tzkt.Api.Repositories
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "pvmKind": columns.Add(@"o.""PvmKind"""); break;
                         case "kernel": columns.Add(@"o.""Kernel"""); break;
-                        case "originationProof": columns.Add(@"o.""OriginationProof"""); break;
                         case "parameterType": columns.Add(@"o.""ParameterType"""); break;
                         case "genesisCommitment": columns.Add(@"o.""GenesisCommitment"""); break;
                         case "rollup": columns.Add(@"o.""SmartRollupId"""); break;
@@ -105,7 +104,6 @@ namespace Tzkt.Api.Repositories
                 Status = OpStatuses.ToString(row.Status),
                 PvmKind = PvmKinds.ToString((int)row.PvmKind),
                 Kernel = row.Kernel,
-                OriginationProof = row.OriginationProof,
                 ParameterType = row.ParameterType is not byte[] bytes ? null : micheline switch
                 {
                     MichelineFormat.JsonString => Schema.Create(Micheline.FromBytes(bytes) as MichelinePrim).Humanize(),
@@ -203,10 +201,6 @@ namespace Tzkt.Api.Repositories
                     case "kernel":
                         foreach (var row in rows)
                             result[j++][i] = row.Kernel;
-                        break;
-                    case "originationProof":
-                        foreach (var row in rows)
-                            result[j++][i] = row.OriginationProof;
                         break;
                     case "parameterType":
                         foreach (var row in rows)

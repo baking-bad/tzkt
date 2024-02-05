@@ -13,11 +13,31 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected readonly CacheService Cache;
         protected readonly IRpc Rpc;
 
+        int AddedOperations = 0;
+        readonly Dictionary<int, Account> ChangedAccounts = new();
+        readonly Dictionary<long, TicketBalance> ChangedTicketBalances = new();
+
         public Diagnostics(ProtocolHandler handler)
         {
             Db = handler.Db;
             Cache = handler.Cache;
             Rpc = handler.Rpc;
+        }
+
+        public void TrackChanges()
+        {
+            var entries = Db.ChangeTracker.Entries();
+            AddedOperations += entries.Count(x => x.Entity is BaseOperation or ContractEvent && x.State == EntityState.Added);
+
+            foreach (var account in entries.Where(x =>
+                x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
+                .Select(x => x.Entity as Account))
+                ChangedAccounts[account.Id] = account;
+
+            foreach (var ticket in entries.Where(x =>
+                x.Entity is TicketBalance && (x.State == EntityState.Modified || x.State == EntityState.Added))
+                .Select(x => x.Entity as TicketBalance))
+                ChangedTicketBalances[ticket.Id] = ticket;
         }
 
         public virtual Task Run(JsonElement block)
@@ -59,28 +79,20 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var entries = Db.ChangeTracker.Entries();
 
-            if (ops != -1 && ops != entries.Count(x => x.Entity is BaseOperation or ContractEvent && x.State == EntityState.Added))
+            if (ops != -1 && ops != AddedOperations)
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = Cache.AppState.Get();
             var proto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
-            var accounts = entries.Where(x =>
-                x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as Account);
-            
-            var ticketBalances = entries.Where(x =>
-                x.Entity is TicketBalance && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as TicketBalance);
-
-            foreach (var ticketBalance in ticketBalances)
+            foreach (var ticketBalance in ChangedTicketBalances.Values)
             {
                 await TestTicketBalance(level, ticketBalance);
             }
 
             await TestGlobalCounter(level, state);
 
-            foreach (var account in accounts)
+            foreach (var account in ChangedAccounts.Values)
             {
                 if (account is Data.Models.Delegate delegat)
                     await TestDelegate(level, delegat, proto);
@@ -172,7 +184,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var remote = await Rpc.GetContractAsync(level, account.Address);
 
-            if (account is not Data.Models.Delegate && remote.RequiredInt64("balance") != account.Balance - account.RollupBonds - account.SmartRollupBonds)
+            if (account is not Data.Models.Delegate && remote.RequiredInt64("balance") != account.Balance - account.RollupBonds
+                - account.SmartRollupBonds - ((account as User)?.StakedBalance ?? 0) - ((account as User)?.UnstakedBalance ?? 0))
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
             TestAccountDelegate(remote, account);

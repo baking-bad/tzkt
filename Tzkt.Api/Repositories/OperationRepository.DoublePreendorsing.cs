@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
@@ -14,8 +10,8 @@ namespace Tzkt.Api.Repositories
             DateTimeParameter timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoublePreendorsingOps""")
-                .Filter(@"Level", level)
-                .Filter(@"Timestamp", timestamp);
+                .Filter("Level", level)
+                .Filter("Timestamp", timestamp);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -23,13 +19,14 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<DoublePreendorsingOperation>> GetDoublePreendorsings(string hash, Symbols quote)
         {
-            var sql = @"
-                SELECT      o.*, b.""Hash""
-                FROM        ""DoublePreendorsingOps"" as o
-                INNER JOIN  ""Blocks"" as b 
-                        ON  b.""Level"" = o.""Level""
-                WHERE       o.""OpHash"" = @hash::character(51)
-                LIMIT       1";
+            var sql = """
+                SELECT      o.*, b."Hash"
+                FROM        "DoublePreendorsingOps" as o
+                INNER JOIN  "Blocks" as b 
+                        ON  b."Level" = o."Level"
+                WHERE       o."OpHash" = @hash::character(51)
+                LIMIT       1
+                """;
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { hash });
@@ -42,21 +39,27 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
+                SlashedLevel = row.SlashedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserReward = row.AccuserReward,
+                Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLoss = row.OffenderLoss,
+                LostStaked = row.LostStaked,
+                LostUnstaked = row.LostUnstaked,
+                LostExternalStaked = row.LostExternalStaked,
+                LostExternalUnstaked = row.LostExternalUnstaked,
+                RoundingLoss = row.RoundingLoss,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
 
         public async Task<IEnumerable<DoublePreendorsingOperation>> GetDoublePreendorsings(Block block, Symbols quote)
         {
-            var sql = @"
+            var sql = """
                 SELECT      *
-                FROM        ""DoublePreendorsingOps""
-                WHERE       ""Level"" = @level
-                ORDER BY    ""Id""";
+                FROM        "DoublePreendorsingOps"
+                WHERE       "Level" = @level
+                ORDER BY    "Id"
+                """;
 
             using var db = GetConnection();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
@@ -69,10 +72,15 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
+                SlashedLevel = row.SlashedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserReward = row.AccuserReward,
+                Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLoss = row.OffenderLoss,
+                LostStaked = row.LostStaked,
+                LostUnstaked = row.LostUnstaked,
+                LostExternalStaked = row.LostExternalStaked,
+                LostExternalUnstaked = row.LostExternalUnstaked,
+                RoundingLoss = row.RoundingLoss,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -88,7 +96,12 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DoublePreendorsingOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+            var sql = new SqlBuilder("""
+                SELECT      o.*, b."Hash"
+                FROM        "DoublePreendorsingOps" AS o
+                INNER JOIN  "Blocks" as b
+                        ON  b."Level" = o."Level"
+                """)
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
@@ -98,8 +111,11 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserReward" => ("AccuserReward", "AccuserReward"),
-                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
+                    "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
+                    #region deprecated
+                    "accuserReward" => ("Reward", "Reward"),
+                    "offenderLoss" => ("LostStaked", "LostStaked"),
+                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -114,10 +130,15 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
+                SlashedLevel = row.SlashedLevel,
                 Accuser = Accounts.GetAlias(row.AccuserId),
-                AccuserReward = row.AccuserReward,
+                Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
-                OffenderLoss = row.OffenderLoss,
+                LostStaked = row.LostStaked,
+                LostUnstaked = row.LostUnstaked,
+                LostExternalStaked = row.LostExternalStaked,
+                LostExternalUnstaked = row.LostExternalUnstaked,
+                RoundingLoss = row.RoundingLoss,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -146,15 +167,32 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                    case "slashedLevel": columns.Add(@"o.""SlashedLevel"""); break;
                     case "accuser": columns.Add(@"o.""AccuserId"""); break;
-                    case "accuserReward": columns.Add(@"o.""AccuserReward"""); break;
+                    case "reward": columns.Add(@"o.""Reward"""); break;
                     case "offender": columns.Add(@"o.""OffenderId"""); break;
-                    case "offenderLoss": columns.Add(@"o.""OffenderLoss"""); break;
+                    case "lostStaked": columns.Add(@"o.""LostStaked"""); break;
+                    case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
+                    case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
+                    case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
+                    case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
+                    #region deprecated
+                    case "accuserReward":
+                        columns.Add(@"o.""Reward""");
+                        break;
+                    case "offenderLoss":
+                        columns.Add(@"o.""LostStaked""");
+                        columns.Add(@"o.""LostUnstaked""");
+                        columns.Add(@"o.""LostExternalStaked""");
+                        columns.Add(@"o.""LostExternalUnstaked""");
+                        columns.Add(@"o.""RoundingLoss""");
+                        break;
+                    #endregion
                 }
             }
 
@@ -171,8 +209,11 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserReward" => ("AccuserReward", "AccuserReward"),
-                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
+                    "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
+                    #region deprecated
+                    "accuserReward" => ("Reward", "Reward"),
+                    "offenderLoss" => ("LostStaked", "LostStaked"),
+                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -211,26 +252,56 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.AccusedLevel;
                         break;
+                    case "slashedLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SlashedLevel;
+                        break;
                     case "accuser":
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.AccuserId);
                         break;
-                    case "accuserReward":
+                    case "reward":
                         foreach (var row in rows)
-                            result[j++][i] = row.AccuserReward;
+                            result[j++][i] = row.Reward;
                         break;
                     case "offender":
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.OffenderId);
                         break;
-                    case "offenderLoss":
+                    case "lostStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.OffenderLoss;
+                            result[j++][i] = row.LostStaked;
+                        break;
+                    case "lostUnstaked":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LostUnstaked;
+                        break;
+                    case "lostExternalStaked":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LostExternalStaked;
+                        break;
+                    case "lostExternalUnstaked":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LostExternalUnstaked;
+                        break;
+                    case "roundingLoss":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RoundingLoss;
                         break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+                    #region deprecated
+                    case "accuserReward":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Reward;
+                        break;
+                    case "offenderLoss":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                        break;
+                    #endregion
                 }
             }
 
@@ -259,15 +330,32 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
+                case "slashedLevel": columns.Add(@"o.""SlashedLevel"""); break;
                 case "accuser": columns.Add(@"o.""AccuserId"""); break;
-                case "accuserReward": columns.Add(@"o.""AccuserReward"""); break;
+                case "reward": columns.Add(@"o.""Reward"""); break;
                 case "offender": columns.Add(@"o.""OffenderId"""); break;
-                case "offenderLoss": columns.Add(@"o.""OffenderLoss"""); break;
+                case "lostStaked": columns.Add(@"o.""LostStaked"""); break;
+                case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
+                case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
+                case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
+                case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
+                #region deprecated
+                case "accuserReward":
+                    columns.Add(@"o.""Reward""");
+                    break;
+                case "offenderLoss":
+                    columns.Add(@"o.""LostStaked""");
+                    columns.Add(@"o.""LostUnstaked""");
+                    columns.Add(@"o.""LostExternalStaked""");
+                    columns.Add(@"o.""LostExternalUnstaked""");
+                    columns.Add(@"o.""RoundingLoss""");
+                    break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -283,8 +371,11 @@ namespace Tzkt.Api.Repositories
                 {
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
-                    "accuserReward" => ("AccuserReward", "AccuserReward"),
-                    "offenderLoss" => ("OffenderLoss", "OffenderLoss"),
+                    "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
+                    #region deprecated
+                    "accuserReward" => ("Reward", "Reward"),
+                    "offenderLoss" => ("LostStaked", "LostStaked"),
+                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -321,26 +412,56 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.AccusedLevel;
                     break;
+                case "slashedLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.SlashedLevel;
+                    break;
                 case "accuser":
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.AccuserId);
                     break;
-                case "accuserReward":
+                case "reward":
                     foreach (var row in rows)
-                        result[j++] = row.AccuserReward;
+                        result[j++] = row.Reward;
                     break;
                 case "offender":
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.OffenderId);
                     break;
-                case "offenderLoss":
+                case "lostStaked":
                     foreach (var row in rows)
-                        result[j++] = row.OffenderLoss;
+                        result[j++] = row.LostStaked;
+                    break;
+                case "lostUnstaked":
+                    foreach (var row in rows)
+                        result[j++] = row.LostUnstaked;
+                    break;
+                case "lostExternalStaked":
+                    foreach (var row in rows)
+                        result[j++] = row.LostExternalStaked;
+                    break;
+                case "lostExternalUnstaked":
+                    foreach (var row in rows)
+                        result[j++] = row.LostExternalUnstaked;
+                    break;
+                case "roundingLoss":
+                    foreach (var row in rows)
+                        result[j++] = row.RoundingLoss;
                     break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
+                #region deprecated
+                case "accuserReward":
+                    foreach (var row in rows)
+                        result[j++] = row.Reward;
+                    break;
+                case "offenderLoss":
+                    foreach (var row in rows)
+                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                    break;
+                #endregion
             }
 
             return result;

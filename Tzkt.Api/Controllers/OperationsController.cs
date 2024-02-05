@@ -5030,6 +5030,63 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region staking
+        /// <summary>
+        /// Get staking ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of staking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("staking")]
+        public async Task<ActionResult<IEnumerable<StakingOperation>>> GetStakingOps(
+            [FromQuery] StakingOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetStakingOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetStakingOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get staking ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of staking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("staking/count")]
+        public async Task<ActionResult<int>> GetStakingOpsCount([FromQuery] StakingOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.StakingOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetStakingOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
         #region migrations
         /// <summary>
         /// Get migrations
@@ -5038,7 +5095,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of migration operations (synthetic type).
         /// </remarks>
         /// <param name="account">Filters migration operations by account. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`, `origination`, `subsidy`).</param>
+        /// <param name="kind">Filters migration operations by kind (`bootstrap`, `activate_delegate`, `airdrop`, `proposal_invoice`, `origination`, `subsidy`, `remove_bigmap_key`).</param>
         /// <param name="balanceChange">Filters migration operations by amount.</param>
         /// <param name="id">Filters migration operations by internal TzKT id.</param>
         /// <param name="level">Filters migration operations by level.</param>
@@ -5609,6 +5666,63 @@ namespace Tzkt.Api.Controllers
             var res = await Operations.GetEndorsingRewardsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
+        }
+        #endregion
+
+        #region autostaking
+        /// <summary>
+        /// Get autostaking ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of autostaking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("autostaking")]
+        public async Task<ActionResult<IEnumerable<AutostakingOperation>>> GetAutostakingOps(
+            [FromQuery] AutostakingOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetAutostakingOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetAutostakingOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get autostaking ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of autostaking operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("autostaking/count")]
+        public async Task<ActionResult<int>> GetAutostakingOpsCount([FromQuery] AutostakingOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.AutostakingOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetAutostakingOpsCount(filter));
+
+            return this.Bytes(res);
         }
         #endregion
     }

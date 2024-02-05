@@ -1,5 +1,4 @@
-﻿using System;
-using NJsonSchema.Annotations;
+﻿using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -56,14 +55,72 @@ namespace Tzkt.Api.Models
         public long SmartRollupBonds { get; set; }
 
         /// <summary>
-        /// Amount of security deposit, currently locked for baked (produced) blocks and (or) given endorsements (micro tez)
+        /// Amount staked from the own balance (micro tez).
+        /// Like delegated amount, except for it is frozen and can be slashed.
         /// </summary>
-        public long FrozenDeposit { get; set; }
+        public long StakedBalance { get; set; }
+
+        /// <summary>
+        /// Amount of "pseudo-tokens" received after staking. These pseudotokens are used for unstaking.
+        /// </summary>
+        public long StakedPseudotokens { get; set; }
+
+        /// <summary>
+        /// Amount that was unstaked, but not yet finalized (i.e. it is still frozen) (micro tez).
+        /// </summary>
+        public long UnstakedBalance { get; set; }
+
+        /// <summary>
+        /// Information about the baker, for which there are pending unstake requests.
+        /// </summary>
+        public Alias UnstakedBaker { get; set; }
+
+        /// <summary>
+        /// Amount staked from external stakers (micro tez).
+        /// Like delegated amount, except for it is frozen and can be slashed.
+        /// </summary>
+        public long ExternalStakedBalance { get; set; }
+
+        /// <summary>
+        /// Amount that was unstaked by external stakers, but not yet finalized (i.e. it is still frozen) (micro tez).
+        /// </summary>
+        public long ExternalUnstakedBalance { get; set; }
+
+        /// <summary>
+        /// Total staked balance, which is `stakedBalance + externalStakedBalance`.
+        /// </summary>
+        public long TotalStakedBalance { get; set; }
+
+        /// <summary>
+        /// Total amount of issued "pseudo-tokens". These pseudotokens are used for unstaking.
+        /// </summary>
+        public long IssuedPseudotokens { get; set; }
+
+        /// <summary>
+        /// Number of external stakers.
+        /// </summary>
+        public int StakersCount { get; set; }
+
+        /// <summary>
+        /// Amount lost due to inaccuracy of the economic protocol introduced in Oxford.
+        /// This amount is literally lost, because it is no longer available for the account in any mean, but for some reason it is counted as delegated.
+        /// </summary>
+        public long LostBalance { get; set; }
 
         /// <summary>
         /// Configured max amount allowed to be locked as a security deposit (micro tez)
         /// </summary>
         public long? FrozenDepositLimit { get; set; }
+
+        /// <summary>
+        /// This parameter determines the maximum portion (millionth) of external stake by stakers over the baker's own staked funds.
+        /// </summary>
+        public long? LimitOfStakingOverBaking { get; set; }
+
+        /// <summary>
+        /// This parameter determines the fraction (billionth) of the rewards that accrue to the baker's liquid spendable balance — the remainder accrues to frozen stakes.
+        /// </summary>
+        public long? EdgeOfBakingOverStaking { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -362,6 +419,16 @@ namespace Tzkt.Api.Models
         public int ActiveRefutationGamesCount { get; set; }
 
         /// <summary>
+        /// Number of staking operations related to the account
+        /// </summary>
+        public int StakingOpsCount { get; set; }
+
+        /// <summary>
+        /// Number of autostaking operations related to the account
+        /// </summary>
+        public int AutostakingOpsCount { get; set; }
+
+        /// <summary>
         /// Block height of the first operation, related to the delegate (baker)
         /// </summary>
         public int FirstActivity { get; set; }
@@ -393,6 +460,11 @@ namespace Tzkt.Api.Models
         public SoftwareAlias Software { get; set; }
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long FrozenDeposit => StakedBalance;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

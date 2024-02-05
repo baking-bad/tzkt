@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-
+using NSwag.Annotations;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 
@@ -88,20 +85,12 @@ namespace Tzkt.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Get baker cycle rewards by cycle
-        /// </summary>
-        /// <remarks>
-        /// Returns baker cycle rewards for the specified cycle.
-        /// </remarks>
-        /// <param name="address">Baker address</param>
-        /// <param name="cycle">Rewards cycle</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <returns></returns>
+        // deprecated
+        [OpenApiIgnore]
         [HttpGet("bakers/{address}/{cycle:int}")]
-        public Task<BakerRewards> GetBakerRewardsByCycle([Required][TzAddress] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
+        public async Task<BakerRewards> GetBakerRewardsByCycle([Required][TzAddress] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
-            return Rewards.GetBakerRewards(address, cycle, quote);
+            return (await Rewards.GetBakerRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
         }
 
         /// <summary>
@@ -172,20 +161,12 @@ namespace Tzkt.Api.Controllers
             }
         }
 
-        /// <summary>
-        /// Get delegator cycle rewards by cycle
-        /// </summary>
-        /// <remarks>
-        /// Returns delegator cycle rewards for the specified cycle.
-        /// </remarks>
-        /// <param name="address">Delegator address</param>
-        /// <param name="cycle">Rewards cycle</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <returns></returns>
+        // deprecated
+        [OpenApiIgnore]
         [HttpGet("delegators/{address}/{cycle:int}")]
-        public Task<DelegatorRewards> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
+        public async Task<DelegatorRewards> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
-            return Rewards.GetDelegatorRewards(address, cycle, quote);
+            return (await Rewards.GetDelegatorRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
         }
 
         /// <summary>

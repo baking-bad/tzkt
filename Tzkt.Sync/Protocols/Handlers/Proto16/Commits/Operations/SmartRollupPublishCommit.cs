@@ -120,6 +120,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup.ActiveStakers++;
 
                     operation.BondStatus = SmartRollupBondStatus.Active;
+
+                    Cache.Statistics.Current.TotalSmartRollupBonds += operation.Bond;
                 }
 
                 if (commitment == null)

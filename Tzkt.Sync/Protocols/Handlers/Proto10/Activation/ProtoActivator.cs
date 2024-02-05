@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
@@ -31,8 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
             protocol.PreservedCycles = parameters["preserved_cycles"]?.Value<int>() ?? 5;
-            protocol.RevelationReward = parameters["seed_nonce_revelation_tip"]?.Value<long>() ?? 125_000;
-            protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
+            protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
             protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
             protocol.ProposalQuorum = parameters["min_proposal_quorum"]?.Value<int>() ?? 500;
@@ -57,7 +52,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 5_200_000;
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
 
-            protocol.LBSubsidy = parameters["liquidity_baking_subsidy"]?.Value<int>() ?? 2_500_000;
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 1_000_000) * 1000;
         }
 
@@ -79,7 +73,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardBlockGasLimit = 5_200_000;
             protocol.TimeBetweenBlocks /= 2;
 
-            protocol.LBSubsidy = 2_500_000;
             protocol.LBToggleThreshold = 1_000_000_000;
         }
 
@@ -273,7 +266,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                 foreach (var bc in bakerCycles.Values)
                 {
-                    var share = (double)bc.StakingBalance / cycle.TotalStaking;
+                    var share = (double)bc.BakingPower / cycle.TotalBakingPower;
                     bc.ExpectedBlocks = nextProto.BlocksPerCycle * share;
                     bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * share;
                     bc.FutureBlockRewards = 0;
@@ -394,18 +387,22 @@ namespace Tzkt.Sync.Protocols.Proto10
                         .Where(x => x != baker.Address);
 
                     var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
-                    var activeStake = stakingBalance - stakingBalance % protocol.TokensPerRoll;
-                    var share = (double)activeStake / cycle.SelectedStake;
+                    var delegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance");
+                    var bakingPower = stakingBalance - stakingBalance % protocol.MinimalStake;
+                    var share = (double)bakingPower / cycle.TotalBakingPower;
 
                     bakerCycle = new BakerCycle
                     {
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
-                        StakingBalance = stakingBalance,
-                        ActiveStake = activeStake,
-                        SelectedStake = cycle.SelectedStake,
-                        DelegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance"),
+                        OwnDelegatedBalance = stakingBalance - delegatedBalance,
+                        ExternalDelegatedBalance = delegatedBalance,
                         DelegatorsCount = delegators.Count(),
+                        OwnStakedBalance = 0,
+                        ExternalStakedBalance = 0,
+                        StakersCount = 0,
+                        BakingPower = bakingPower,
+                        TotalBakingPower = cycle.TotalBakingPower,
                         ExpectedBlocks = protocol.BlocksPerCycle * share,
                         ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
                     };
@@ -417,10 +414,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                         var snapshottedDelegator = await Proto.Rpc.GetContractAsync(cycle.SnapshotLevel, delegatorAddress);
                         Db.DelegatorCycles.Add(new DelegatorCycle
                         {
-                            BakerId = baker.Id,
-                            Balance = snapshottedDelegator.RequiredInt64("balance"),
                             Cycle = cycle.Index,
-                            DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id
+                            DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id,
+                            BakerId = baker.Id,
+                            DelegatedBalance = snapshottedDelegator.RequiredInt64("balance"),
+                            StakedBalance = 0
                         });
                     }
                     #endregion
@@ -576,8 +574,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             var state = Cache.AppState.Get();
             state.MigrationOpsCount++;
 
-            var statistics = await Cache.Statistics.GetAsync(state.Level);
-            statistics.TotalCreated += contract.Balance;
+            Cache.Statistics.Current.TotalCreated += contract.Balance;
 
             Db.MigrationOps.Add(migration);
             #endregion

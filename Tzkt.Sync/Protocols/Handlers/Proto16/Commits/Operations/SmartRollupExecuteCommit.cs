@@ -114,6 +114,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 rollup.ExecutedCommitments++;
 
                 commitment.Status = SmartRollupCommitmentStatus.Executed;
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

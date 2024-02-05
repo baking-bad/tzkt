@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -40,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                         .ToListAsync();
 
                     var slashedBakers = bakerCycles
-                        .Where(x => x.DoubleBakingLosses > 0 || x.DoubleEndorsingLosses > 0)
+                        .Where(x => x.DoubleBakingLostStaked > 0 || x.DoubleEndorsingLostStaked > 0)
                         .Select(x => x.BakerId)
                         .ToHashSet();
 
@@ -56,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
-                            Loss = slashed ? 0 : missedBlock.Reward + missedBlock.Fees
+                            Loss = slashed ? 0 : missedBlock.RewardLiquid + missedBlock.Fees
                         });
                     }
                 }
@@ -81,6 +77,9 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 delegat.RevelationPenaltiesCount++;
                 block.Operations |= Operations.RevelationPenalty;
+
+                Cache.Statistics.Current.TotalBurned += penalty.Loss;
+                Cache.Statistics.Current.TotalFrozen -= penalty.Loss;
 
                 Db.RevelationPenaltyOps.Add(penalty);
             }

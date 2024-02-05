@@ -70,7 +70,7 @@ namespace Tzkt.Sync.Protocols
             #region add empty stats
             var stats = new Statistics { Level = block.Level };
             Db.Statistics.Add(stats);
-            Cache.Statistics.Add(stats);
+            Cache.Statistics.SetCurrent(stats);
             #endregion
 
             #region update state
@@ -103,7 +103,7 @@ namespace Tzkt.Sync.Protocols
                 DELETE FROM ""Protocols"" WHERE ""FirstLevel"" = {curr.Level};
                 DELETE FROM ""Blocks"" WHERE ""Level"" = {curr.Level};");
 
-            Cache.Statistics.Reset();
+            await Cache.Statistics.ResetAsync();
             Cache.Protocols.Reset();
             Cache.Blocks.Reset();
 

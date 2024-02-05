@@ -124,7 +124,7 @@ namespace Tzkt.Api.Websocket.Processors
                     #endregion
 
                     #region tag subs
-                    if (TagSubs.TryGetValue(e.Tag, out var tagSubs))
+                    if (e.Tag != null && TagSubs.TryGetValue(e.Tag, out var tagSubs))
                         Add(tagSubs, e);
                     #endregion
 
@@ -135,7 +135,7 @@ namespace Tzkt.Api.Websocket.Processors
                             Add(contractSubs.All, e);
 
                         if (contractSubs.Tags != null)
-                            if (contractSubs.Tags.TryGetValue(e.Tag, out var contractTagSubs))
+                            if (e.Tag != null && contractSubs.Tags.TryGetValue(e.Tag, out var contractTagSubs))
                                 Add(contractTagSubs, e);
                     }
                     #endregion
@@ -147,7 +147,7 @@ namespace Tzkt.Api.Websocket.Processors
                             Add(codeHashSubs.All, e);
 
                         if (codeHashSubs.Tags != null)
-                            if (codeHashSubs.Tags.TryGetValue(e.Tag, out var codeHashTagSubs))
+                            if (e.Tag != null && codeHashSubs.Tags.TryGetValue(e.Tag, out var codeHashTagSubs))
                                 Add(codeHashTagSubs, e);
                     }
                     #endregion

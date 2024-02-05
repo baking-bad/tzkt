@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     Expected = bakerCycle.FutureEndorsementRewards,
-                    Received = bakerCycle.FutureEndorsementRewards
+                    RewardLiquid = bakerCycle.FutureEndorsementRewards
                 });
 
                 Db.TryAttach(bakerCycle);
@@ -46,13 +46,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (bakerCycle.FutureEndorsementRewards != loss)
                         throw new Exception("FutureEndorsementRewards != loss");
 
-                    Ops[^1].Received = 0; 
+                    Ops[^1].RewardLiquid = 0; 
                     bakerCycle.MissedEndorsementRewards += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
                 else
                 {
-                    bakerCycle.EndorsementRewards += bakerCycle.FutureEndorsementRewards;
+                    bakerCycle.EndorsementRewardsLiquid += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
             }
@@ -62,11 +62,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance += op.Received;
-                baker.StakingBalance += op.Received;
+                baker.Balance += op.RewardLiquid;
+                baker.StakingBalance += op.RewardLiquid;
                 baker.EndorsingRewardsCount++;
 
                 block.Operations |= Operations.EndorsingRewards;
+
+                Cache.Statistics.Current.TotalCreated += op.RewardLiquid;
             }
 
             Cache.AppState.Get().EndorsingRewardOpsCount += Ops.Count;
@@ -86,16 +88,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance -= op.Received;
-                baker.StakingBalance -= op.Received;
+                baker.Balance -= op.RewardLiquid;
+                baker.StakingBalance -= op.RewardLiquid;
                 baker.EndorsingRewardsCount--;
 
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, baker.Id);
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureEndorsementRewards = op.Expected;
-                if (op.Expected == op.Received)
-                    bakerCycle.EndorsementRewards -= op.Expected;
+                if (op.Expected == op.RewardLiquid)
+                    bakerCycle.EndorsementRewardsLiquid -= op.Expected;
                 else
                     bakerCycle.MissedEndorsementRewards -= op.Expected;
             }

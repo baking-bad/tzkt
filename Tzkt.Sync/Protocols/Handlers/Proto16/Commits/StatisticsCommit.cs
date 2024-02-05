@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Sync.Protocols.Proto16
 {
-    class StatisticsCommit : Proto12.StatisticsCommit
+    class StatisticsCommit : Proto1.StatisticsCommit
     {
         public StatisticsCommit(ProtocolHandler protocol) : base(protocol) { }
     }

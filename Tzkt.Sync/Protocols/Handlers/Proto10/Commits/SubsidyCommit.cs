@@ -30,6 +30,8 @@ namespace Tzkt.Sync.Protocols.Proto10
             Db.MigrationOps.Add(op);
             Cache.AppState.Get().MigrationOpsCount++;
 
+            Cache.Statistics.Current.TotalCreated += op.BalanceChange;
+
             contract.MigrationsCount++;
             contract.Balance += op.BalanceChange;
 

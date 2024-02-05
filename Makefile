@@ -5,7 +5,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db apt update
 	docker-compose exec -T db apt install -y wget
-	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.12_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O tzkt_db.backup
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose exec -T db rm tzkt_db.backup
 	docker-compose exec -T db apt autoremove --purge -y wget
@@ -52,7 +52,7 @@ ghost-init:
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.12_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
@@ -67,49 +67,27 @@ ghost-stop:
 ghost-db-start:
 	docker-compose -f docker-compose.ghost.yml up -d ghost-db
 
-nairobi-init:
-	docker-compose -f docker-compose.nairobi.yml up   -d nairobi-db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt update
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt install -y wget
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db wget "https://snapshots.tzkt.io/tzkt_v1.12_nairobinet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db rm tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt autoremove --purge -y wget
+oxford-init:
+	docker-compose -f docker-compose.oxford.yml up   -d oxford-db
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt update
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt install -y wget
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db wget "https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db rm tzkt_db.backup
+	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-nairobi-start:
-	docker-compose -f docker-compose.nairobi.yml up -d
+oxford-start:
+	docker-compose -f docker-compose.oxford.yml up -d
 
-nairobi-stop:
-	docker-compose -f docker-compose.nairobi.yml down
+oxford-stop:
+	docker-compose -f docker-compose.oxford.yml down
 
-nairobi-db-start:
-	docker-compose -f docker-compose.nairobi.yml up -d nairobi-db
-
-mumbai-init:
-	docker-compose -f docker-compose.mumbai.yml up   -d mumbai-db
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt update
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt install -y wget
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db wget "https://snapshots.tzkt.io/tzkt_v1.12_mumbainet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db rm tzkt_db.backup
-	docker-compose -f docker-compose.mumbai.yml exec -T mumbai-db apt autoremove --purge -y wget
-	docker-compose pull	
-	
-mumbai-start:
-	docker-compose -f docker-compose.mumbai.yml up -d
-
-mumbai-stop:
-	docker-compose -f docker-compose.mumbai.yml down
-
-mumbai-db-start:
-	docker-compose -f docker-compose.mumbai.yml up -d mumbai-db
+oxford-db-start:
+	docker-compose -f docker-compose.oxford.yml up -d oxford-db
 reset:
-	docker-compose -f docker-compose.mumbai.yml down --volumes
-	docker-compose -f docker-compose.mumbai.yml up -d mumbai-db
+	docker-compose -f docker-compose.oxford.yml down --volumes
+	docker-compose -f docker-compose.oxford.yml up -d oxford-db

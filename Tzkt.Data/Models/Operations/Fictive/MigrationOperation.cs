@@ -44,7 +44,8 @@ namespace Tzkt.Data.Models
         ProposalInvoice,
         CodeChange,
         Origination,
-        Subsidy
+        Subsidy,
+        RemoveBigMapKey
     }
 
     public static class MigrationOperationModel

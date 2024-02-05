@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -12,6 +11,13 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
+            var balanceUpdate = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray()
+                   .FirstOrDefault(x => x.RequiredString("kind") == "freezer" && x.RequiredString("category") == "rewards");
+
+            var reward = balanceUpdate.ValueKind != JsonValueKind.Undefined
+                ? balanceUpdate.RequiredInt64("change")
+                : 0;
+
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));
             var revelation = new NonceRevelationOperation
             {
@@ -26,7 +32,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce")),
-                Reward = block.Protocol.RevelationReward
+                RewardLiquid = reward,
+                RewardStakedOwn = 0,
+                RewardStakedShared = 0
             };
             #endregion
 
@@ -40,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.Reward;
+            blockBaker.Balance += revelation.RewardLiquid;
 
             sender.NonceRevelationsCount++;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount++;
@@ -48,6 +56,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Revelations;
 
             revealedBlock.Revelation = revelation;
+
+            Cache.Statistics.Current.TotalCreated += revelation.RewardLiquid;
+            Cache.Statistics.Current.TotalFrozen += revelation.RewardLiquid;
             #endregion
 
             Db.NonceRevelationOps.Add(revelation);
@@ -76,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.Reward;
+            blockBaker.Balance -= revelation.RewardLiquid;
 
             sender.NonceRevelationsCount--;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount--;

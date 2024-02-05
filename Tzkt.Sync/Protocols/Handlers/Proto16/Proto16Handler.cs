@@ -31,6 +31,8 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
+            await new StatisticsCommit(this).Apply(block);
+
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
@@ -340,13 +342,8 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
-            var freezerCommit = new FreezerCommit(this);
-            freezerCommit.Apply(blockCommit.Block, block);
-
-            var endorsingRewardCommit = new EndorsingRewardCommit(this);
-            await endorsingRewardCommit.Apply(blockCommit.Block, block);
-
-            await new StatisticsCommit(this).Apply(blockCommit.Block, endorsingRewardCommit.Ops, freezerCommit.FreezerChange);
+            new FreezerCommit(this).Apply(blockCommit.Block, block);
+            await new EndorsingRewardCommit(this).Apply(blockCommit.Block, block);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -354,7 +351,7 @@ namespace Tzkt.Sync.Protocols
         public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Apply(block, rawBlock);
+            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
         }
 
         public override async Task BeforeRevert()
@@ -494,7 +491,7 @@ namespace Tzkt.Sync.Protocols
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new EndorsingRewardCommit(this).Revert(currBlock);
-            await new FreezerCommit(this).Revert(currBlock);
+            new FreezerCommit(this).Revert();
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);

@@ -28,11 +28,12 @@ namespace Tzkt.Api.Repositories
 
         public async Task<Block> Get(int level, bool operations, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
+            var sql = """
                 SELECT  *
-                FROM    ""Blocks""
-                WHERE   ""Level"" = @level
-                LIMIT   1";
+                FROM    "Blocks"
+                WHERE   "Level" = @level
+                LIMIT   1
+                """;
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { level });
@@ -49,8 +50,12 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                Reward = row.Reward,
-                Bonus = row.Bonus,
+                RewardLiquid = row.RewardLiquid,
+                RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedShared = row.RewardStakedShared,
+                BonusLiquid = row.BonusLiquid,
+                BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
@@ -58,6 +63,8 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
+                AIToggle = row.AIToggle,
+                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, level)
             };
 
@@ -69,11 +76,12 @@ namespace Tzkt.Api.Repositories
 
         public async Task<Block> Get(string hash, bool operations, MichelineFormat format, Symbols quote)
         {
-            var sql = @"
+            var sql = """
                 SELECT  *
-                FROM    ""Blocks""
-                WHERE   ""Hash"" = @hash::character(51)
-                LIMIT   1";
+                FROM    "Blocks"
+                WHERE   "Hash" = @hash::character(51)
+                LIMIT   1
+                """;
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { hash });
@@ -90,8 +98,12 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                Reward = row.Reward,
-                Bonus = row.Bonus,
+                RewardLiquid = row.RewardLiquid,
+                RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedShared = row.RewardStakedShared,
+                BonusLiquid = row.BonusLiquid,
+                BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Proposer = row.ProposerId != null ? await Accounts.GetAliasAsync(row.ProposerId) : null,
@@ -99,6 +111,8 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
+                AIToggle = row.AIToggle,
+                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             };
 
@@ -133,8 +147,14 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "reward" => ("Reward", "Reward"),
-                    "bonus" => ("Bonus", "Bonus"),
+                    "reward" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
+                    "bonus" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
                     _ => ("Id", "Id")
                 });
@@ -153,8 +173,12 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                Reward = row.Reward,
-                Bonus = row.Bonus,
+                RewardLiquid = row.RewardLiquid,
+                RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedShared = row.RewardStakedShared,
+                BonusLiquid = row.BonusLiquid,
+                BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
                 Proposer = row.ProposerId != null ? Accounts.GetAlias(row.ProposerId) : null,
@@ -162,6 +186,8 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
+                AIToggle = row.AIToggle,
+                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -193,8 +219,12 @@ namespace Tzkt.Api.Repositories
                     case "blockRound": columns.Add(@"""BlockRound"""); break;
                     case "validations": columns.Add(@"""Validations"""); break;
                     case "deposit": columns.Add(@"""Deposit"""); break;
-                    case "reward": columns.Add(@"""Reward"""); break;
-                    case "bonus": columns.Add(@"""Bonus"""); break;
+                    case "rewardLiquid": columns.Add(@"""RewardLiquid"""); break;
+                    case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
+                    case "rewardStakedShared": columns.Add(@"""RewardStakedShared"""); break;
+                    case "bonusLiquid": columns.Add(@"""BonusLiquid"""); break;
+                    case "bonusStakedOwn": columns.Add(@"""BonusStakedOwn"""); break;
+                    case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                     case "proposer": columns.Add(@"""ProposerId"""); break;
@@ -202,7 +232,21 @@ namespace Tzkt.Api.Repositories
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
                     case "lbToggle": columns.Add(@"""LBToggle"""); break; 
-                    case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break; 
+                    case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break;
+                    case "aiToggle": columns.Add(@"""AIToggle"""); break;
+                    case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
+                    #region deprecated
+                    case "reward":
+                        columns.Add(@"""RewardLiquid""");
+                        columns.Add(@"""RewardStakedOwn""");
+                        columns.Add(@"""RewardStakedShared""");
+                        break;
+                    case "bonus":
+                        columns.Add(@"""BonusLiquid""");
+                        columns.Add(@"""BonusStakedOwn""");
+                        columns.Add(@"""BonusStakedShared""");
+                        break;
+                    #endregion
                 }
             }
 
@@ -222,9 +266,17 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "reward" => ("Reward", "Reward"),
-                    "bonus" => ("Bonus", "Bonus"),
+                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
+                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
+                    #region deprecated
+                    "reward" => ("RewardLiquid", "RewardLiquid"),
+                    "bonus" => ("BonusLiquid", "BonusLiquid"),
+                    #endregion
                     _ => ("Id", "Id")
                 });
 
@@ -275,13 +327,29 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Deposit;
                         break;
-                    case "reward":
+                    case "rewardLiquid":
                         foreach (var row in rows)
-                            result[j++][i] = row.Reward;
+                            result[j++][i] = row.RewardLiquid;
                         break;
-                    case "bonus":
+                    case "rewardStakedOwn":
                         foreach (var row in rows)
-                            result[j++][i] = row.Bonus;
+                            result[j++][i] = row.RewardStakedOwn;
+                        break;
+                    case "rewardStakedShared":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedShared;
+                        break;
+                    case "bonusLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusLiquid;
+                        break;
+                    case "bonusStakedOwn":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusStakedOwn;
+                        break;
+                    case "bonusStakedShared":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusStakedShared;
                         break;
                     case "fees":
                         foreach (var row in rows)
@@ -311,10 +379,29 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LBToggleEma;
                         break;
+                    case "aiToggle":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AIToggle;
+                        break;
+                    case "aiToggleEma":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AIToggleEma;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+
+                    #region deprecated
+                    case "reward":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                        break;
+                    case "bonus":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusLiquid + row.BonusStakedOwn + row.BonusStakedShared;
+                        break;
+                    #endregion
                 }
             }
 
@@ -346,8 +433,12 @@ namespace Tzkt.Api.Repositories
                 case "blockRound": columns.Add(@"""BlockRound"""); break;
                 case "validations": columns.Add(@"""Validations"""); break;
                 case "deposit": columns.Add(@"""Deposit"""); break;
-                case "reward": columns.Add(@"""Reward"""); break;
-                case "bonus": columns.Add(@"""Bonus"""); break;
+                case "rewardLiquid": columns.Add(@"""RewardLiquid"""); break;
+                case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
+                case "rewardStakedShared": columns.Add(@"""RewardStakedShared"""); break;
+                case "bonusLiquid": columns.Add(@"""BonusLiquid"""); break;
+                case "bonusStakedOwn": columns.Add(@"""BonusStakedOwn"""); break;
+                case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
                 case "proposer": columns.Add(@"""ProposerId"""); break;
@@ -356,6 +447,20 @@ namespace Tzkt.Api.Repositories
                 case "quote": columns.Add(@"""Level"""); break;
                 case "lbToggle": columns.Add(@"""LBToggle"""); break;
                 case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break;
+                case "aiToggle": columns.Add(@"""AIToggle"""); break;
+                case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
+                #region deprecated
+                case "reward":
+                    columns.Add(@"""RewardLiquid""");
+                    columns.Add(@"""RewardStakedOwn""");
+                    columns.Add(@"""RewardStakedShared""");
+                    break;
+                case "bonus":
+                    columns.Add(@"""BonusLiquid""");
+                    columns.Add(@"""BonusStakedOwn""");
+                    columns.Add(@"""BonusStakedShared""");
+                    break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -374,8 +479,14 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "reward" => ("Reward", "Reward"),
-                    "bonus" => ("Bonus", "Bonus"),
+                    "reward" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
+                    "bonus" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
                     _ => ("Id", "Id")
                 });
@@ -425,9 +536,29 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Deposit;
                     break;
-                case "reward":
+                case "rewardLiquid":
                     foreach (var row in rows)
-                        result[j++] = row.Reward;
+                        result[j++] = row.RewardLiquid;
+                    break;
+                case "rewardStakedOwn":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedOwn;
+                    break;
+                case "rewardStakedShared":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedShared;
+                    break;
+                case "bonusLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusLiquid;
+                    break;
+                case "bonusStakedOwn":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusStakedOwn;
+                    break;
+                case "bonusStakedShared":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusStakedShared;
                     break;
                 case "fees":
                     foreach (var row in rows)
@@ -457,10 +588,29 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.LBToggleEma;
                     break;
+                case "aiToggle":
+                    foreach (var row in rows)
+                        result[j++] = row.AIToggle;
+                    break;
+                case "aiToggleEma":
+                    foreach (var row in rows)
+                        result[j++] = row.AIToggleEma;
+                    break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
+
+                #region deprecated
+                case "reward":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                    break;
+                case "bonus":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusLiquid + row.BonusStakedOwn + row.BonusStakedShared;
+                    break;
+                #endregion
             }
 
             return result;
@@ -631,6 +781,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetSmartRollupRefuteOps(new() { level = block.Level }, new() { limit = -1 }, quote)
                 : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+            var staking = operations.HasFlag(Data.Models.Operations.Staking)
+                ? Operations.GetStakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -642,6 +796,10 @@ namespace Tzkt.Api.Repositories
             var endorsingRewards = operations.HasFlag(Data.Models.Operations.EndorsingRewards)
                 ? Operations.GetEndorsingRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+
+            var autostakingOps = operations.HasFlag(Data.Models.Operations.Autostaking)
+                ? Operations.GetAutostakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
 
             await Task.WhenAll(
                 endorsements,
@@ -679,9 +837,11 @@ namespace Tzkt.Api.Repositories
                 srPublishOps,
                 srRecoverBondOps,
                 srRefuteOps,
+                staking,
                 migrations,
                 penalties,
-                endorsingRewards);
+                endorsingRewards,
+                autostakingOps);
 
             block.Endorsements = endorsements.Result;
             block.Preendorsements = preendorsements.Result;
@@ -718,9 +878,11 @@ namespace Tzkt.Api.Repositories
             block.SrPublishOps = srPublishOps.Result;
             block.SrRecoverBondOps = srRecoverBondOps.Result;
             block.SrRefuteOps = srRefuteOps.Result;
+            block.StakingOps = staking.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;
+            block.AutostakingOps = autostakingOps.Result;
         }
     }
 }

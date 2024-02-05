@@ -40,12 +40,18 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
+                SlashedLevel = block.Level,
                 AccusedLevel = content.Required("bh1").RequiredInt32("level"),
                 Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
-                AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
-                OffenderLoss = lostDepositsValue + lostRewardsValue + lostFeesValue
+                Reward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
+                LostStaked = lostDepositsValue + lostRewardsValue + lostFeesValue,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 
@@ -60,8 +66,8 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleBaking.AccuserReward;
-            offender.Balance -= doubleBaking.OffenderLoss;
+            accuser.Balance += doubleBaking.Reward;
+            offender.Balance -= doubleBaking.LostStaked;
             offender.StakingBalance -= lostDepositsValue;
             offender.StakingBalance -= lostFeesValue;
 
@@ -69,6 +75,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (offender != accuser) offender.DoubleBakingCount++;
 
             block.Operations |= Operations.DoubleBakings;
+
+            Cache.Statistics.Current.TotalBurned += doubleBaking.LostStaked - doubleBaking.Reward;
+            Cache.Statistics.Current.TotalFrozen -= doubleBaking.LostStaked - doubleBaking.Reward;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
@@ -96,9 +105,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleBaking.AccuserReward;
-            offender.Balance += doubleBaking.OffenderLoss;
-            offender.StakingBalance += doubleBaking.AccuserReward * 2;
+            accuser.Balance -= doubleBaking.Reward;
+            offender.Balance += doubleBaking.LostStaked;
+            offender.StakingBalance += doubleBaking.Reward * 2;
             // here we can miss 1 mutez, but this may happen only in legacy protocols
             // TODO: replace it with NotImplementedException after Ithaca
 

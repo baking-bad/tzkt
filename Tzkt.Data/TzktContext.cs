@@ -40,6 +40,7 @@ namespace Tzkt.Data
         public DbSet<OriginationOperation> OriginationOps { get; set; }
         public DbSet<ProposalOperation> ProposalOps { get; set; }
         public DbSet<RevealOperation> RevealOps { get; set; }
+        public DbSet<StakingOperation> StakingOps { get; set; }
         public DbSet<TransactionOperation> TransactionOps { get; set; }
         public DbSet<RegisterConstantOperation> RegisterConstantOps { get; set; }
         public DbSet<SetDepositsLimitOperation> SetDepositsLimitOps { get; set; }
@@ -61,6 +62,7 @@ namespace Tzkt.Data
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
+        public DbSet<AutostakingOperation> AutostakingOps { get; set; }
 
         public DbSet<SmartRollupAddMessagesOperation> SmartRollupAddMessagesOps { get; set; }
         public DbSet<SmartRollupCementOperation> SmartRollupCementOps { get; set; }
@@ -85,7 +87,6 @@ namespace Tzkt.Data
         public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
-        public DbSet<FreezerUpdate> FreezerUpdates { get; set; }
         #endregion
 
         #region statistics
@@ -164,6 +165,7 @@ namespace Tzkt.Data
             modelBuilder.BuildOriginationOperationModel();
             modelBuilder.BuildProposalOperationModel();
             modelBuilder.BuildRevealOperationModel();
+            modelBuilder.BuildStakingOperationModel();
             modelBuilder.BuildTransactionOperationModel();
             modelBuilder.BuildRegisterConstantOperationModel();
             modelBuilder.BuildSetDepositsLimitOperationModel();
@@ -185,6 +187,7 @@ namespace Tzkt.Data
             modelBuilder.BuildEndorsingRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
+            modelBuilder.BuildAutostakingOperationModel();
 
             modelBuilder.BuildSmartRollupAddMessagesOperationModel();
             modelBuilder.BuildSmartRollupCementOperationModel();
@@ -209,7 +212,6 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
-            modelBuilder.BuildFreezerUpdateModel();
             #endregion
 
             #region statistics

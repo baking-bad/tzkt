@@ -31,7 +31,8 @@ namespace Tzkt.Api.Services
         public static object[][] BlocksTab { get; private set; } = Array.Empty<object[]>();
         public static readonly string[] BlockFields = new[]
         {
-            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees", "hash"
+            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees", "hash",
+            "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared" // TODO: remove deprecated reward and bonus
         };
         #endregion
 
@@ -205,7 +206,10 @@ namespace Tzkt.Api.Services
                 new Int32NullParameter { Eq = 0 },
                 null,
                 new SortParameter { Desc = "level" },
-                null, 5, new string[] { "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash" });
+                null, 5, new string[] {
+                    "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash",
+                    "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared" // TODO: remove deprecated reward and bonus
+                });
 
             var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 
                 new SortParameter { Desc = "level" }, null, 7, BlockFields, Symbols.None);
@@ -258,6 +262,7 @@ namespace Tzkt.Api.Services
                 TotalFrozen = row.TotalFrozen,
                 TotalRollupBonds = row.TotalRollupBonds,
                 TotalSmartRollupBonds = row.TotalSmartRollupBonds,
+                TotalLost = row.TotalLost,
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
                             - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
@@ -496,13 +501,15 @@ namespace Tzkt.Api.Services
                 FROM "Accounts"
                 WHERE "Type" = 1
                 AND "Staked" = true
-                AND "StakingBalance" >= {protocol.TokensPerRoll}
+                AND "StakingBalance" >= {protocol.MinimalStake}
                 """);
 
+            // TODO: use current cycle rewards after Oxford2 activation
+            var lbSubsidy = 80_000_000 * protocol.TimeBetweenBlocks / 60 / 16;
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var maxBlockReward = protocol.MaxBakingReward + protocol.MaxEndorsingReward; //microtez
             var totalRewardsPerYear = maxBlockReward * blocksPerYear;
-            var maxBlockCreated = maxBlockReward + protocol.LBSubsidy; //microtez
+            var maxBlockCreated = maxBlockReward + lbSubsidy; //microtez
             var totalCreatedPerYear = maxBlockCreated * blocksPerYear;
 
             return new StakingData

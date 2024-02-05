@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -6,12 +7,28 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Level { get; set; }
-        public long Balance { get; set; }
         public int AccountId { get; set; }
-        public int? DelegateId { get; set; }
-        public int? DelegatorsCount { get; set; }
-        public long? DelegatedBalance { get; set; }
-        public long? StakingBalance { get; set; }
+
+        public int BakerId { get; set; }
+        
+        public long OwnDelegatedBalance { get; set; }
+        public long ExternalDelegatedBalance { get; set; }
+        public int DelegatorsCount { get; set; }
+
+        public long OwnStakedBalance { get; set; }
+        public long ExternalStakedBalance { get; set; }
+        public int StakersCount { get; set; }
+
+        public long StakedPseudotokens { get; set; }
+        public long IssuedPseudotokens { get; set; }
+
+        #region helpers
+        [NotMapped]
+        public long StakingBalance => OwnDelegatedBalance + ExternalDelegatedBalance + OwnStakedBalance + ExternalStakedBalance;
+
+        [NotMapped]
+        public long TotalStakedBalance => OwnStakedBalance + ExternalStakedBalance;
+        #endregion
     }
 
     public static class SnapshotBalanceModel
@@ -28,8 +45,11 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level)
-                .HasFilter(@"""DelegateId"" IS NULL");
+                .HasIndex(x => x.Level, "IX_SnapshotBalance_Level_Partial")
+                .HasFilter(@"""AccountId"" = ""BakerId""");
+
+            modelBuilder.Entity<SnapshotBalance>()
+                .HasIndex(x => new { x.Level, x.AccountId, x.BakerId });
             #endregion
         }
     }

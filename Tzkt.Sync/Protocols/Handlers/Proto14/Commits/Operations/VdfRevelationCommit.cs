@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -28,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 OpHash = op.RequiredString("hash"),
                 Baker = block.Proposer,
                 Cycle = block.Cycle,
-                Reward = reward,
+                RewardLiquid = reward,
                 Solution = Hex.Parse(content.RequiredArray("solution", 2)[0].RequiredString()),
                 Proof = Hex.Parse(content.RequiredArray("solution", 2)[1].RequiredString())
             };
@@ -40,13 +38,15 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.Reward;
-            blockBaker.StakingBalance += revelation.Reward;
+            blockBaker.Balance += revelation.RewardLiquid;
+            blockBaker.StakingBalance += revelation.RewardLiquid;
 
             blockBaker.VdfRevelationsCount++;
             Cache.AppState.Get().VdfRevelationOpsCount++;
 
             block.Operations |= Operations.VdfRevelation;
+
+            Cache.Statistics.Current.TotalCreated += revelation.RewardLiquid;
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);
@@ -65,8 +65,8 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.Reward;
-            blockBaker.StakingBalance -= revelation.Reward;
+            blockBaker.Balance -= revelation.RewardLiquid;
+            blockBaker.StakingBalance -= revelation.RewardLiquid;
 
             blockBaker.VdfRevelationsCount--;
             Cache.AppState.Get().VdfRevelationOpsCount--;

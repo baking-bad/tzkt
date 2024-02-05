@@ -54,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
         {
-            return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
+            return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
         }
     }
 }

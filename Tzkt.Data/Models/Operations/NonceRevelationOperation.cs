@@ -10,7 +10,9 @@ namespace Tzkt.Data.Models
         public int SenderId { get; set; }
         public int RevealedLevel { get; set; }
         public int RevealedCycle { get; set; }
-        public long Reward { get; set; }
+        public long RewardLiquid { get; set; }
+        public long RewardStakedOwn { get; set; }
+        public long RewardStakedShared { get; set; }
         public byte[] Nonce { get; set; }
 
         #region relations

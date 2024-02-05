@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -14,14 +13,14 @@ namespace Tzkt.Sync.Protocols.Proto4
             base.SetParameters(protocol, parameters);
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 8_000_000;
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 800_000;
-            protocol.TokensPerRoll = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
+            protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             protocol.HardBlockGasLimit = 8_000_000;
             protocol.HardOperationGasLimit = 800_000;
-            protocol.TokensPerRoll = 8_000_000_000;
+            protocol.MinimalStake = 8_000_000_000;
         }
 
         // Proposal invoice
@@ -50,8 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             state.MigrationOpsCount++;
 
-            var stats = await Cache.Statistics.GetAsync(state.Level);
-            stats.TotalCreated += 100_000_000;
+            Cache.Statistics.Current.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

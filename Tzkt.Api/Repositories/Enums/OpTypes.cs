@@ -24,6 +24,7 @@ namespace Tzkt.Api
         public const string Reveal = "reveal";
         public const string RegisterConstant = "register_constant";
         public const string SetDepositsLimit = "set_deposits_limit";
+        public const string Staking = "staking";
 
         public const string TxRollupOrigination = "tx_rollup_origination";
         public const string TxRollupSubmitBatch = "tx_rollup_submit_batch";
@@ -50,6 +51,7 @@ namespace Tzkt.Api
         public const string RevelationPenalty = "revelation_penalty";
         public const string Baking = "baking";
         public const string EndorsingReward = "endorsing_reward";
+        public const string Autostaking = "autostaking";
 
         public static bool TryParse(string type, out Operations res)
         {
@@ -73,6 +75,7 @@ namespace Tzkt.Api
                 case Reveal: res = Operations.Reveals; break;
                 case RegisterConstant: res = Operations.RegisterConstant; break;
                 case SetDepositsLimit: res = Operations.SetDepositsLimits; break;
+                case Staking: res = Operations.Staking; break;
                 case Migration: res = Operations.Migrations; break;
                 case RevelationPenalty: res = Operations.RevelationPenalty; break;
                 case Baking: res = Operations.Baking; break;
@@ -95,6 +98,7 @@ namespace Tzkt.Api
                 case SmartRollupPublish: res = Operations.SmartRollupPublish; break;
                 case SmartRollupRecoverBond: res = Operations.SmartRollupRecoverBond; break;
                 case SmartRollupRefute: res = Operations.SmartRollupRefute; break;
+                case Autostaking: res = Operations.Autostaking; break;
                 default: return false;
             }
             return true;
@@ -116,6 +120,7 @@ namespace Tzkt.Api
             Reveal,
             RegisterConstant,
             SetDepositsLimit,
+            Staking,
             Migration,
             RevelationPenalty,
             TransferTicket,

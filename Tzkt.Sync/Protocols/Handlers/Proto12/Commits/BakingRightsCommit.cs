@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Npgsql;
 using Tzkt.Data.Models;
@@ -50,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var cycle = await Db.Cycles.FirstAsync(x => x.Index == block.Cycle);
                     var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
                     var sampler = GetSampler(
-                        bakerCycles.Values.Where(x => x.ActiveStake > 0).Select(x => (x.BakerId, x.ActiveStake)),
+                        bakerCycles.Values.Where(x => x.BakingPower > 0).Select(x => (x.BakerId, x.BakingPower)),
                         block.ProtoCode > 1 && block.Cycle <= block.Protocol.FirstCycle + block.Protocol.PreservedCycles); //TODO: remove this crutch after ithaca is gone
                     #region temporary diagnostics
                     await sampler.Validate(Proto, block.Level, block.Cycle);

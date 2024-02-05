@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Netezos.Keys;
@@ -25,11 +21,20 @@ namespace Tzkt.Sync.Protocols.Proto1
                     x["amount"].Value<long>(),
                     x["delegate"]?.Value<string>() ?? null,
                     x["script"]["code"].ToString(),
-                    x["script"]["storage"].ToString())
-                )
+                    x["script"]["storage"].ToString(),
+                    x["hash"]?.Value<string>() ?? null
+                ))
                 .ToList() ?? new(0);
 
-            var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count);
+            var bootstrapSmartRollups = parameters["bootstrap_smart_rollups"]?
+                .Select(x =>
+                (
+                    x["address"].Value<string>(),
+                    x["pvm_kind"].Value<string>()
+                ))
+                .ToList() ?? new(0);
+
+            var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count + bootstrapSmartRollups.Count);
 
             #region allocate null-address
             var nullAddress = (User)await Cache.Accounts.GetAsync(NullAddress.Address);
@@ -48,8 +53,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Address = PubKey.FromBase58(pubKey).Address,
                     Balance = balance,
                     StakingBalance = balance,
-                    DelegatedBalance = 0,
-                    Counter = 0,
                     PublicKey = pubKey,
                     FirstLevel = 1,
                     LastLevel = 1,
@@ -74,15 +77,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Id = Cache.AppState.NextAccountId(),
                     Address = PubKey.FromBase58(pubKey).Address,
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User,
                     PublicKey = pubKey,
-                    Revealed = true, 
+                    Revealed = true,
                     Staked = true,
                     DelegationLevel = 1,
-                    Delegate = delegat
+                    Delegate = delegat,
+                    DelegateId = delegat.Id
                 };
 
                 delegat.DelegatorsCount++;
@@ -102,7 +105,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Id = Cache.AppState.NextAccountId(),
                     Address = pkh,
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User
@@ -114,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region bootstrap contracts
             var index = 0;
-            foreach (var (balance, delegatePkh, codeStr, storageStr) in bootstrapContracts)
+            foreach (var (balance, delegatePkh, codeStr, storageStr, hash) in bootstrapContracts)
             {
                 #region contract
                 var delegat = Cache.Accounts.GetDelegate(delegatePkh);
@@ -123,9 +125,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var contract = new Contract
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = OriginationNonce.GetContractAddress(index++),
+                    Address = hash ?? OriginationNonce.GetContractAddress(index++),
                     Balance = balance,
-                    Counter = 0,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Spendable = false,
@@ -216,6 +217,45 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
+            #region bootstrap smart rollups
+            foreach (var (address, pvmKind) in bootstrapSmartRollups)
+            {
+                var creator = nullAddress;
+                var rollup = new SmartRollup()
+                {
+                    Id = Cache.AppState.NextAccountId(),
+                    FirstLevel = 1,
+                    LastLevel = 1,
+                    Address = address,
+                    Balance = 0,
+                    CreatorId = creator.Id,
+                    Staked = false,
+                    Type = AccountType.SmartRollup,
+                    PvmKind = pvmKind switch
+                    {
+                        "arith" => PvmKind.Arith,
+                        "wasm_2_0_0" => PvmKind.Wasm,
+                        _ => throw new NotImplementedException()
+                    },
+                    GenesisCommitment = "genesis_commitment_hash", // this should be calculated from Machine.install_boot_sector and Machine.state_hash,
+                    LastCommitment = "genesis_commitment_hash",    // but that cannot be done on the indexer side, so we set a random string
+                    InboxLevel = 2,
+                    TotalStakers = 0,
+                    ActiveStakers = 0,
+                    ExecutedCommitments = 0,
+                    CementedCommitments = 0,
+                    PendingCommitments = 0,
+                    RefutedCommitments = 0,
+                    OrphanCommitments = 0,
+                    SmartRollupBonds = 0
+                };
+                Cache.Accounts.Add(rollup);
+                accounts.Add(rollup);
+
+                creator.SmartRollupsCount++;
+            }
+            #endregion
+
             Db.Accounts.AddRange(accounts);
 
             #region migration ops
@@ -260,8 +300,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region statistics
-            var stats = await Cache.Statistics.GetAsync(1);
-            stats.TotalBootstrapped = accounts.Sum(x => x.Balance);
+            Cache.Statistics.Current.TotalBootstrapped = accounts.Sum(x => x.Balance);
             #endregion
 
             return accounts;

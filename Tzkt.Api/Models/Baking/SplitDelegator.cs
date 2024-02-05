@@ -8,19 +8,43 @@
         public string Address { get; set; }
 
         /// <summary>
-        /// Balance of the delegator at the snapshot time
+        /// Amount delegated to the baker at the snapshot time (micro tez).
+        /// This amount doesn't include staked amount.
         /// </summary>
-        public long Balance { get; set; }
+        public long DelegatedBalance { get; set; }
 
         /// <summary>
-        /// Balance of the delegator at the moment
+        /// Amount staked to the baker at the snapshot time (micro tez).
         /// </summary>
-        public long CurrentBalance { get; set; }
+        public long StakedBalance { get; set; }
+
+        /// <summary>
+        /// Amount delegated to the baker at the moment (micro tez).
+        /// This amount doesn't include staked amount.
+        /// </summary>
+        public long CurrentDelegatedBalance { get; set; }
+
+        /// <summary>
+        /// Amount staked to the baker at the moment (micro tez).
+        /// </summary>
+        public long CurrentStakedBalance { get; set; }
 
         /// <summary>
         /// Indicates whether the delegator is emptied (at the moment, not at the snapshot time).
-        /// Emptied accounts (users with zero balance) should be re-allocated, so if you make payment to emptied account you will pay (burn) `0.257 tez` allocation fee.
+        /// Emptied accounts (users with zero balance) should be re-allocated, so if you make payment to the emptied account you will pay allocation fee.
         /// </summary>
         public bool Emptied { get; set; }
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Balance => DelegatedBalance + StakedBalance;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long CurrentBalance => CurrentDelegatedBalance + CurrentStakedBalance;
+        #endregion
     }
 }

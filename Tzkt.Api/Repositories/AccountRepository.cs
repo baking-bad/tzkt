@@ -55,6 +55,16 @@ namespace Tzkt.Api.Repositories
                         Balance = delegat.Balance,
                         RollupBonds = delegat.RollupBonds,
                         RollupsCount = delegat.RollupsCount,
+                        StakedBalance = delegat.StakedBalance,
+                        StakedPseudotokens = delegat.StakedPseudotokens,
+                        UnstakedBalance = delegat.UnstakedBalance,
+                        UnstakedBaker = delegat.UnstakedBakerId == null ? null : Accounts.GetAlias(delegat.UnstakedBakerId.Value),
+                        TotalStakedBalance = delegat.TotalStakedBalance,
+                        ExternalStakedBalance = delegat.ExternalStakedBalance,
+                        ExternalUnstakedBalance = delegat.ExternalUnstakedBalance,
+                        IssuedPseudotokens = delegat.IssuedPseudotokens,
+                        StakersCount = delegat.StakersCount,
+                        LostBalance = delegat.LostBalance,
                         TransferTicketCount = delegat.TransferTicketCount,
                         TxRollupCommitCount = delegat.TxRollupCommitCount,
                         TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
@@ -68,8 +78,9 @@ namespace Tzkt.Api.Repositories
                         VdfRevelationsCount = delegat.VdfRevelationsCount,
                         UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
                         DrainDelegateCount = delegat.DrainDelegateCount,
-                        FrozenDeposit = delegat.FrozenDeposit,
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
+                        LimitOfStakingOverBaking = delegat.LimitOfStakingOverBaking,
+                        EdgeOfBakingOverStaking = delegat.EdgeOfBakingOverStaking,
                         DelegatedBalance = delegat.DelegatedBalance,
                         Counter = delegat.Counter,
                         ActivationLevel = delegat.ActivationLevel,
@@ -119,6 +130,8 @@ namespace Tzkt.Api.Repositories
                         SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
                         RefutationGamesCount = delegat.RefutationGamesCount,
                         ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
+                        StakingOpsCount = delegat.StakingOpsCount,
+                        AutostakingOpsCount = delegat.AutostakingOpsCount,
                         Metadata = legacy ? delegat.Profile : null,
                         Extras = legacy ? null : delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
@@ -137,6 +150,11 @@ namespace Tzkt.Api.Repositories
                         Balance = user.Balance,
                         RollupBonds = user.RollupBonds,
                         RollupsCount = user.RollupsCount,
+                        StakedBalance = user.StakedBalance,
+                        StakedPseudotokens = user.StakedPseudotokens,
+                        UnstakedBalance = user.UnstakedBalance,
+                        UnstakedBaker = user.UnstakedBakerId == null ? null : Accounts.GetAlias(user.UnstakedBakerId.Value),
+                        LostBalance = user.LostBalance,
                         TransferTicketCount = user.TransferTicketCount,
                         TxRollupCommitCount = user.TxRollupCommitCount,
                         TxRollupDispatchTicketsCount = user.TxRollupDispatchTicketsCount,
@@ -189,6 +207,7 @@ namespace Tzkt.Api.Repositories
                         SmartRollupRefuteCount = user.SmartRollupRefuteCount,
                         RefutationGamesCount = user.RefutationGamesCount,
                         ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
+                        StakingOpsCount = user.StakingOpsCount,
                         Metadata = legacy ? user.Profile : null,
                         Extras = legacy ? null : user.Extras
                     };
@@ -427,6 +446,11 @@ namespace Tzkt.Api.Repositories
                             Balance = row.Balance,
                             RollupBonds = row.RollupBonds,
                             RollupsCount = row.RollupsCount,
+                            StakedBalance = row.StakedBalance,
+                            StakedPseudotokens = row.StakedPseudotokens,
+                            UnstakedBalance = row.UnstakedBalance,
+                            UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
+                            LostBalance = row.LostBalance,
                             TransferTicketCount = row.TransferTicketCount,
                             TxRollupCommitCount = row.TxRollupCommitCount,
                             TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
@@ -478,7 +502,8 @@ namespace Tzkt.Api.Repositories
                             SmartRollupRecoverBondCount = row.SmartRollupRecoverBondCount,
                             SmartRollupRefuteCount = row.SmartRollupRefuteCount,
                             RefutationGamesCount = row.RefutationGamesCount,
-                            ActiveRefutationGamesCount = row.ActiveRefutationGamesCount
+                            ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
+                            StakingOpsCount = row.StakingOpsCount
                         });
                         #endregion
                         break;
@@ -495,6 +520,16 @@ namespace Tzkt.Api.Repositories
                             Balance = row.Balance,
                             RollupBonds = row.RollupBonds,
                             RollupsCount = row.RollupsCount,
+                            StakedBalance = row.StakedBalance,
+                            StakedPseudotokens = row.StakedPseudotokens,
+                            UnstakedBalance = row.UnstakedBalance,
+                            UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
+                            TotalStakedBalance = row.TotalStakedBalance,
+                            ExternalStakedBalance = row.ExternalStakedBalance,
+                            ExternalUnstakedBalance = row.ExternalUnstakedBalance,
+                            IssuedPseudotokens = row.IssuedPseudotokens,
+                            StakersCount = row.StakersCount,
+                            LostBalance = row.LostBalance,
                             TransferTicketCount = row.TransferTicketCount,
                             TxRollupCommitCount = row.TxRollupCommitCount,
                             TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
@@ -508,8 +543,9 @@ namespace Tzkt.Api.Repositories
                             VdfRevelationsCount = row.VdfRevelationsCount,
                             UpdateConsensusKeyCount = row.UpdateConsensusKeyCount,
                             DrainDelegateCount = row.DrainDelegateCount,
-                            FrozenDeposit = row.FrozenDeposit,
                             FrozenDepositLimit = row.FrozenDepositLimit,
+                            LimitOfStakingOverBaking = row.LimitOfStakingOverBaking,
+                            EdgeOfBakingOverStaking = row.EdgeOfBakingOverStaking,
                             DelegatedBalance = row.DelegatedBalance,
                             Counter = row.Counter,
                             ActivationLevel = row.ActivationLevel,
@@ -559,6 +595,8 @@ namespace Tzkt.Api.Repositories
                             SmartRollupRefuteCount = row.SmartRollupRefuteCount,
                             RefutationGamesCount = row.RefutationGamesCount,
                             ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
+                            StakingOpsCount = row.StakingOpsCount,
+                            AutostakingOpsCount = row.AutostakingOpsCount,
                             Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                         });
                         #endregion
@@ -754,9 +792,11 @@ namespace Tzkt.Api.Repositories
                     case "address": columns.Add(@"""Address"""); break;
                     case "publicKey": columns.Add(@"""PublicKey"""); break;
                     case "revealed": columns.Add(@"""Revealed"""); break;
-                    case "balance": columns.Add(@"""Balance"""); break; 
-                    case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break;
+                    case "balance": columns.Add(@"""Balance"""); break;
+                    case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
                     case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
+                    case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
+                    case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
                     case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                     case "counter": columns.Add(@"""Counter"""); break;
                     case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
@@ -798,6 +838,16 @@ namespace Tzkt.Api.Repositories
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                     case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                    case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
+                    case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
+                    case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
+                    case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
+                    case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
+                    case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
+                    case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
+                    case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
+                    case "stakersCount": columns.Add(@"""StakersCount"""); break;
+                    case "lostBalance": columns.Add(@"""LostBalance"""); break;
                     case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
                     case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
                     case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
@@ -822,6 +872,8 @@ namespace Tzkt.Api.Repositories
                     case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
                     case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
                     case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
+                    case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
+                    case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
 
                     case "delegate": columns.Add(@"""DelegateId"""); break;
                     case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -917,11 +969,19 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "frozenDeposit":
                         foreach (var row in rows)
-                            result[j++][i] = row.FrozenDeposit;
+                            result[j++][i] = row.TotalStakedBalance;
                         break;
                     case "frozenDepositLimit":
                         foreach (var row in rows)
                             result[j++][i] = row.FrozenDepositLimit;
+                        break;
+                    case "limitOfStakingOverBaking":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LimitOfStakingOverBaking;
+                        break;
+                    case "edgeOfBakingOverStaking":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EdgeOfBakingOverStaking;
                         break;
                     case "delegatedBalance":
                         foreach (var row in rows)
@@ -1087,6 +1147,46 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.RollupsCount;
                         break;
+                    case "stakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakedBalance;
+                        break;
+                    case "stakedPseudotokens":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakedPseudotokens;
+                        break;
+                    case "unstakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UnstakedBalance;
+                        break;
+                    case "unstakedBaker":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId);
+                        break;
+                    case "totalStakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalStakedBalance;
+                        break;
+                    case "externalStakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExternalStakedBalance;
+                        break;
+                    case "externalUnstakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExternalUnstakedBalance;
+                        break;
+                    case "issuedPseudotokens":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IssuedPseudotokens;
+                        break;
+                    case "stakersCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakersCount;
+                        break;
+                    case "lostBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LostBalance;
+                        break;
                     case "transferTicketCount":
                         foreach (var row in rows)
                             result[j++][i] = row.TransferTicketCount;
@@ -1182,6 +1282,14 @@ namespace Tzkt.Api.Repositories
                     case "activeRefutationGamesCount":
                         foreach (var row in rows)
                             result[j++][i] = row.ActiveRefutationGamesCount;
+                        break;
+                    case "stakingOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakingOpsCount;
+                        break;
+                    case "autostakingOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AutostakingOpsCount;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -1321,8 +1429,10 @@ namespace Tzkt.Api.Repositories
                 case "publicKey": columns.Add(@"""PublicKey"""); break;
                 case "revealed": columns.Add(@"""Revealed"""); break;
                 case "balance": columns.Add(@"""Balance"""); break;
-                case "frozenDeposit": columns.Add(@"""FrozenDeposit"""); break;
+                case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
                 case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
+                case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
+                case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
                 case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
                 case "counter": columns.Add(@"""Counter"""); break;
                 case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
@@ -1364,6 +1474,16 @@ namespace Tzkt.Api.Repositories
                 case "software": columns.Add(@"""SoftwareId"""); break;
                 case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                 case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
+                case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
+                case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
+                case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
+                case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
+                case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
+                case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
+                case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
+                case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
+                case "stakersCount": columns.Add(@"""StakersCount"""); break;
+                case "lostBalance": columns.Add(@"""LostBalance"""); break;
                 case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
                 case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
                 case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
@@ -1388,6 +1508,8 @@ namespace Tzkt.Api.Repositories
                 case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
                 case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
                 case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
+                case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
+                case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
 
                 case "delegate": columns.Add(@"""DelegateId"""); break;
                 case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
@@ -1479,11 +1601,19 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "frozenDeposit":
                     foreach (var row in rows)
-                        result[j++] = row.FrozenDeposit;
+                        result[j++] = row.TotalStakedBalance;
                     break;
                 case "frozenDepositLimit":
                     foreach (var row in rows)
                         result[j++] = row.FrozenDepositLimit;
+                    break;
+                case "limitOfStakingOverBaking":
+                    foreach (var row in rows)
+                        result[j++] = row.LimitOfStakingOverBaking;
+                    break;
+                case "edgeOfBakingOverStaking":
+                    foreach (var row in rows)
+                        result[j++] = row.EdgeOfBakingOverStaking;
                     break;
                 case "delegatedBalance":
                     foreach (var row in rows)
@@ -1649,6 +1779,46 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.RollupsCount;
                     break;
+                case "stakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.StakedBalance;
+                    break;
+                case "stakedPseudotokens":
+                    foreach (var row in rows)
+                        result[j++] = row.StakedPseudotokens;
+                    break;
+                case "unstakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.UnstakedBalance;
+                    break;
+                case "unstakedBaker":
+                    foreach (var row in rows)
+                        result[j++] = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId);
+                    break;
+                case "totalStakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalStakedBalance;
+                    break;
+                case "externalStakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.ExternalStakedBalance;
+                    break;
+                case "externalUnstakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.ExternalUnstakedBalance;
+                    break;
+                case "issuedPseudotokens":
+                    foreach (var row in rows)
+                        result[j++] = row.IssuedPseudotokens;
+                    break;
+                case "stakersCount":
+                    foreach (var row in rows)
+                        result[j++] = row.StakersCount;
+                    break;
+                case "lostBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.LostBalance;
+                    break;
                 case "transferTicketCount":
                     foreach (var row in rows)
                         result[j++] = row.TransferTicketCount;
@@ -1744,6 +1914,14 @@ namespace Tzkt.Api.Repositories
                 case "activeRefutationGamesCount":
                     foreach (var row in rows)
                         result[j++] = row.ActiveRefutationGamesCount;
+                    break;
+                case "stakingOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.StakingOpsCount;
+                    break;
+                case "autostakingOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.AutostakingOpsCount;
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -2125,6 +2303,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+                    var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id } }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2140,6 +2322,10 @@ namespace Tzkt.Api.Repositories
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
                         ? Operations.GetEndorsingRewards(null, _delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+
+                    var autostakingOps = delegat.AutostakingOpsCount > 0 && types.Contains(OpTypes.Autostaking)
+                        ? Operations.GetAutostakingOps(new() { baker = _delegat }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
 
                     await Task.WhenAll(
                         endorsements,
@@ -2177,10 +2363,12 @@ namespace Tzkt.Api.Repositories
                         srPublishOps,
                         srRecoverBondOps,
                         srRefuteOps,
+                        stakingOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
-                        endorsingRewards);
+                        endorsingRewards,
+                        autostakingOps);
 
                     result.AddRange(endorsements.Result);
                     result.AddRange(preendorsements.Result);
@@ -2217,10 +2405,12 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(srPublishOps.Result);
                     result.AddRange(srRecoverBondOps.Result);
                     result.AddRange(srRefuteOps.Result);
+                    result.AddRange(stakingOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
                     result.AddRange(endorsingRewards.Result);
+                    result.AddRange(autostakingOps.Result);
 
                     break;
                 case RawUser user:
@@ -2326,6 +2516,10 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
+                    var userStakingOps = user.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id } }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2356,6 +2550,7 @@ namespace Tzkt.Api.Repositories
                         userSrPublishOps,
                         userSrRecoverBondOps,
                         userSrRefuteOps,
+                        userStakingOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -2383,6 +2578,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(userSrPublishOps.Result);
                     result.AddRange(userSrRecoverBondOps.Result);
                     result.AddRange(userSrRefuteOps.Result);
+                    result.AddRange(userStakingOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;

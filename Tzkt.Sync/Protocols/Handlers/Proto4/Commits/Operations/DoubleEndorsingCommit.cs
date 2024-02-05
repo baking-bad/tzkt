@@ -40,12 +40,18 @@ namespace Tzkt.Sync.Protocols.Proto4
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
+                SlashedLevel = block.Level,
                 AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level"),
                 Accuser = block.Proposer,
                 Offender = Cache.Accounts.GetDelegate(offenderAddr),
 
-                AccuserReward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
-                OffenderLoss = lostDepositsValue + lostRewardsValue + lostFeesValue
+                Reward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
+                LostStaked = lostDepositsValue + lostRewardsValue + lostFeesValue,
+                LostUnstaked = 0,
+                LostExternalStaked = 0,
+                LostExternalUnstaked = 0,
+
+                RoundingLoss = 0
             };
             #endregion
 
@@ -60,8 +66,8 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleEndorsing.AccuserReward;
-            offender.Balance -= doubleEndorsing.OffenderLoss;
+            accuser.Balance += doubleEndorsing.Reward;
+            offender.Balance -= doubleEndorsing.LostStaked;
             offender.StakingBalance -= lostDepositsValue;
             offender.StakingBalance -= lostFeesValue;
 
@@ -69,6 +75,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             if (offender != accuser) offender.DoubleEndorsingCount++;
 
             block.Operations |= Operations.DoubleEndorsings;
+
+            Cache.Statistics.Current.TotalBurned += doubleEndorsing.LostStaked - doubleEndorsing.Reward;
+            Cache.Statistics.Current.TotalFrozen -= doubleEndorsing.LostStaked - doubleEndorsing.Reward;
             #endregion
 
             Db.DoubleEndorsingOps.Add(doubleEndorsing);
@@ -96,9 +105,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleEndorsing.AccuserReward;
-            offender.Balance += doubleEndorsing.OffenderLoss;
-            offender.StakingBalance += doubleEndorsing.AccuserReward * 2;
+            accuser.Balance -= doubleEndorsing.Reward;
+            offender.Balance += doubleEndorsing.LostStaked;
+            offender.StakingBalance += doubleEndorsing.Reward * 2;
             // here we can miss 1 mutez, but this may happen only in legacy protocols, so let's ignore
             // TODO: replace it with NotImplementedException after Ithaca
 

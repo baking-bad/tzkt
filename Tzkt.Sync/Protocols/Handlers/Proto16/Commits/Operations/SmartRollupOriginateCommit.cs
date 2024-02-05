@@ -114,7 +114,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 Sender = sender,
                 PvmKind = pvmKind,
                 Kernel = Hex.Parse(content.RequiredString("kernel")),
-                OriginationProof = Hex.Parse(content.RequiredString("origination_proof")),
                 GenesisCommitment = result.OptionalString("genesis_commitment_hash"),
                 SmartRollupId = rollup?.Id,
                 Status = result.RequiredString("status") switch
@@ -188,6 +187,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 }
 
                 sender.SmartRollupsCount++;
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

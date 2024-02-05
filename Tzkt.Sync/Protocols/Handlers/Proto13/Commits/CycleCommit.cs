@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto13
@@ -51,31 +47,10 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Snapshots = await Db.SnapshotBalances
                 .AsNoTracking()
-                .Where(x => x.Level == snapshotLevel && x.DelegateId == null)
+                .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
-            var endorsingRewards = await Db.BakerCycles
-                .AsNoTracking()
-                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewards > 0)
-                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewards);
-
-            SelectedStakes = Snapshots
-                .Where(x => x.StakingBalance >= block.Protocol.TokensPerRoll)
-                .ToDictionary(x => x.AccountId, x =>
-                {
-                    var baker = Cache.Accounts.GetDelegate(x.AccountId);
-
-                    var lastBalance = baker.Balance;
-                    if (endorsingRewards.TryGetValue(baker.Id, out var reward))
-                        lastBalance -= reward;
-                    if (block.ProposerId == baker.Id)
-                        lastBalance -= block.Reward;
-                    if (block.ProducerId == baker.Id)
-                        lastBalance -= block.Bonus;
-
-                    var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                    return Math.Min((long)x.StakingBalance, depositCap * 100 / block.Protocol.FrozenDepositsPercentage);
-                });
+            SelectedStakes = await GetSelectedStakes(block);
 
             FutureCycle = new Cycle
             {
@@ -84,12 +59,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                 LastLevel = block.Protocol.GetCycleEnd(futureCycle),
                 SnapshotIndex = snapshotIndex,
                 SnapshotLevel = snapshotLevel,
-                TotalStaking = Snapshots.Sum(x => (long)x.StakingBalance),
-                TotalDelegated = Snapshots.Sum(x => (long)x.DelegatedBalance),
-                TotalDelegators = Snapshots.Sum(x => (int)x.DelegatorsCount),
-                SelectedBakers = SelectedStakes.Count,
-                SelectedStake = SelectedStakes.Values.Sum(),
-                TotalBakers = Snapshots.Count,
+                TotalBakers = SelectedStakes.Count,
+                TotalBakingPower = SelectedStakes.Values.Sum(),
                 Seed = futureSeed
             };
 
@@ -110,5 +81,31 @@ namespace Tzkt.Sync.Protocols.Proto13
         }
 
         protected virtual Task<byte[]> GetVdfSolution(Block block) => Task.FromResult<byte[]>(null);
+
+        protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block)
+        {
+            var endorsingRewards = await Db.BakerCycles
+                .AsNoTracking()
+                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsLiquid > 0)
+                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsLiquid);
+
+            return Snapshots
+                .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
+                .ToDictionary(x => x.AccountId, x =>
+                {
+                    var baker = Cache.Accounts.GetDelegate(x.AccountId);
+
+                    var lastBalance = baker.Balance;
+                    if (endorsingRewards.TryGetValue(baker.Id, out var reward))
+                        lastBalance -= reward;
+                    if (block.ProposerId == baker.Id)
+                        lastBalance -= block.RewardLiquid;
+                    if (block.ProducerId == baker.Id)
+                        lastBalance -= block.BonusLiquid;
+
+                    var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+                    return Math.Min((long)x.StakingBalance, depositCap * (block.Protocol.MaxDelegatedOverFrozenRatio + 1));
+                });
+        }
     }
 }

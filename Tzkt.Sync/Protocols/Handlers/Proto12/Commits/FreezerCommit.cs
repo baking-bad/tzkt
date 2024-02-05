@@ -1,18 +1,13 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
     class FreezerCommit : ProtocolCommit
     {
-        public long FreezerChange { get; private set; }
-
         public FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public virtual void Apply(Block block, JsonElement rawBlock)
+        public void Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
@@ -22,38 +17,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                             x.RequiredString("kind") == "freezer" &&
                             x.RequiredString("category") == "deposits"))
             {
-                var baker = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
-                var freezerUpdate = new FreezerUpdate
-                {
-                    BakerId = baker.Id,
-                    Cycle = block.Cycle,
-                    Change = update.RequiredInt64("change")
-                };
-
-                Db.TryAttach(baker);
-                baker.FrozenDeposit += freezerUpdate.Change;
-
-                FreezerChange += freezerUpdate.Change;
-
-                Db.FreezerUpdates.Add(freezerUpdate);
+                Cache.Statistics.Current.TotalFrozen += update.RequiredInt64("change");
             }
         }
 
-        public virtual async Task Revert(Block block)
+        public void Revert()
         {
-            if (!block.Events.HasFlag(BlockEvents.CycleEnd))
-                return;
-
-            foreach (var freezerUpdate in await Db.FreezerUpdates.Where(x => x.Cycle == block.Cycle).ToListAsync())
-            {
-                var baker = Cache.Accounts.GetDelegate(freezerUpdate.BakerId);
-                Db.TryAttach(baker);
-                baker.FrozenDeposit -= freezerUpdate.Change;
-
-                FreezerChange -= freezerUpdate.Change;
-
-                Db.FreezerUpdates.Remove(freezerUpdate);
-            }
+            // there is nothing to revert
         }
     }
 }

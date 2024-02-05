@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -97,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                AllocationFee = block.Protocol.TxRollupOriginationSize * block.Protocol.ByteCost
+                AllocationFee = 4_000 * block.Protocol.ByteCost
             };
             #endregion
 
@@ -143,6 +141,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                 }
 
                 sender.RollupsCount++;
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

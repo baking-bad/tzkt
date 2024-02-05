@@ -8,11 +8,16 @@ namespace Tzkt.Data.Models
         public int Cycle { get; set; }
         public int BakerId { get; set; }
 
+        public long OwnDelegatedBalance { get; set; }
+        public long ExternalDelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
-        public long DelegatedBalance { get; set; }
-        public long StakingBalance { get; set; }
-        public long ActiveStake { get; set; }
-        public long SelectedStake { get; set; }
+
+        public long OwnStakedBalance { get; set; }
+        public long ExternalStakedBalance { get; set; }
+        public int StakersCount { get; set; }
+
+        public long BakingPower { get; set; }
+        public long TotalBakingPower { get; set; }
 
         #region rights
         public int FutureBlocks { get; set; }
@@ -26,27 +31,46 @@ namespace Tzkt.Data.Models
 
         #region rewards
         public long FutureBlockRewards { get; set; }
-        public long BlockRewards { get; set; }
         public long MissedBlockRewards { get; set; }
+        public long BlockRewardsLiquid { get; set; }
+        public long BlockRewardsStakedOwn { get; set; }
+        public long BlockRewardsStakedShared { get; set; }
 
         public long FutureEndorsementRewards { get; set; }
-        public long EndorsementRewards { get; set; }
         public long MissedEndorsementRewards { get; set; }
+        public long EndorsementRewardsLiquid { get; set; }
+        public long EndorsementRewardsStakedOwn { get; set; }
+        public long EndorsementRewardsStakedShared { get; set; }
 
         public long BlockFees { get; set; }
         public long MissedBlockFees { get; set; }
 
         public long DoubleBakingRewards { get; set; }
-        public long DoubleBakingLosses { get; set; }
+        public long DoubleBakingLostStaked { get; set; }
+        public long DoubleBakingLostUnstaked { get; set; }
+        public long DoubleBakingLostExternalStaked { get; set; }
+        public long DoubleBakingLostExternalUnstaked { get; set; }
 
         public long DoubleEndorsingRewards { get; set; }
-        public long DoubleEndorsingLosses { get; set; }
+        public long DoubleEndorsingLostStaked { get; set; }
+        public long DoubleEndorsingLostUnstaked { get; set; }
+        public long DoubleEndorsingLostExternalStaked { get; set; }
+        public long DoubleEndorsingLostExternalUnstaked { get; set; }
 
         public long DoublePreendorsingRewards { get; set; }
-        public long DoublePreendorsingLosses { get; set; }
+        public long DoublePreendorsingLostStaked { get; set; }
+        public long DoublePreendorsingLostUnstaked { get; set; }
+        public long DoublePreendorsingLostExternalStaked { get; set; }
+        public long DoublePreendorsingLostExternalUnstaked { get; set; }
 
-        public long RevelationRewards { get; set; }
-        public long RevelationLosses { get; set; }
+        public long VdfRevelationRewardsLiquid { get; set; }
+        public long VdfRevelationRewardsStakedOwn { get; set; }
+        public long VdfRevelationRewardsStakedShared { get; set; }
+
+        public long NonceRevelationRewardsLiquid { get; set; }
+        public long NonceRevelationRewardsStakedOwn { get; set; }
+        public long NonceRevelationRewardsStakedShared { get; set; }
+        public long NonceRevelationLosses { get; set; }
         #endregion
 
         #region expected
@@ -66,18 +90,10 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => x.Id)
-                .IsUnique(true);
-
-            modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => x.Cycle);
+                .HasIndex(x => new { x.Cycle, x.BakerId });
 
             modelBuilder.Entity<BakerCycle>()
                 .HasIndex(x => x.BakerId);
-
-            modelBuilder.Entity<BakerCycle>()
-                .HasIndex(x => new { x.Cycle, x.BakerId })
-                .IsUnique(true);
             #endregion
         }
     }

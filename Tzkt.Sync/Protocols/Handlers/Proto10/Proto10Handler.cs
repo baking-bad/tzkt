@@ -1,13 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using App.Metrics;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -36,14 +29,13 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Commit(JsonElement block)
         {
+            await new StatisticsCommit(this).Apply(block);
+
             var blockCommit = new BlockCommit(this);
             await blockCommit.Apply(block);
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
-
-            var freezerCommit = new FreezerCommit(this);
-            await freezerCommit.Apply(blockCommit.Block, block);
-
+            new FreezerCommit(this).Apply(blockCommit.Block, block);
             await new RevelationPenaltyCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
 
@@ -200,10 +192,9 @@ namespace Tzkt.Sync.Protocols
                 cycleCommit.FutureCycle,
                 brCommit.FutureBakingRights,
                 brCommit.FutureEndorsingRights,
-                cycleCommit.Snapshots,
+                cycleCommit.BakerSnapshots,
                 brCommit.CurrentRights);
 
-            await new StatisticsCommit(this).Apply(blockCommit.Block, freezerCommit.FreezerUpdates);
             await new VotingCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -211,7 +202,7 @@ namespace Tzkt.Sync.Protocols
         public override async Task AfterCommit(JsonElement rawBlock)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Apply(block, rawBlock);
+            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
         }
 
         public override async Task BeforeRevert()

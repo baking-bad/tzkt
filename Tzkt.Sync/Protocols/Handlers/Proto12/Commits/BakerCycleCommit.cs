@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -30,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bakerCycle.FutureBlocks--;
                 bakerCycle.FutureBlockRewards -= block.Protocol.MaxBakingReward;
                 bakerCycle.Blocks++;
-                bakerCycle.BlockRewards += block.Reward + block.Bonus;
+                bakerCycle.BlockRewardsLiquid += block.RewardLiquid + block.BonusLiquid;
                 bakerCycle.BlockFees += block.Fees;
             }
             else
@@ -60,22 +56,22 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                         if (br.BakerId == block.ProposerId)
                         {
-                            bakerCycle.BlockRewards += block.Reward;
+                            bakerCycle.BlockRewardsLiquid += block.RewardLiquid;
                             bakerCycle.BlockFees += block.Fees;
                         }
                         else if (br.Round < block.PayloadRound)
                         {
-                            bakerCycle.MissedBlockRewards += block.Reward;
+                            bakerCycle.MissedBlockRewards += block.RewardLiquid;
                             bakerCycle.MissedBlockFees += block.Fees;
                         }
 
                         if (br.BakerId == block.ProducerId)
                         {
-                            bakerCycle.BlockRewards += block.Bonus;
+                            bakerCycle.BlockRewardsLiquid += block.BonusLiquid;
                         }
                         else
                         {
-                            bakerCycle.MissedBlockRewards += block.Bonus;
+                            bakerCycle.MissedBlockRewards += block.BonusLiquid;
                         }
                     }
                 }
@@ -104,14 +100,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLosses += op.OffenderLoss;
+                        offenderCycle.DoubleBakingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards += op.AccuserReward;
+                        accuserCycle.DoubleBakingRewards += op.Reward;
                     }
                 }
             }
@@ -124,14 +120,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLosses += op.OffenderLoss;
+                        offenderCycle.DoubleEndorsingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards += op.AccuserReward;
+                        accuserCycle.DoubleEndorsingRewards += op.Reward;
                     }
                 }
             }
@@ -144,14 +140,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLosses += op.OffenderLoss;
+                        offenderCycle.DoublePreendorsingLostStaked += op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Accuser.Id);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards += op.AccuserReward;
+                        accuserCycle.DoublePreendorsingRewards += op.Reward;
                     }
                 }
             }
@@ -164,7 +160,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (bakerCycle != null)
                     {
                         Db.TryAttach(bakerCycle);
-                        bakerCycle.RevelationRewards += op.Reward;
+                        bakerCycle.NonceRevelationRewardsLiquid += op.RewardLiquid;
                     }
                 }
             }
@@ -176,7 +172,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.RevelationRewards += op.Reward;
+                    bakerCycle.VdfRevelationRewardsLiquid += op.RewardLiquid;
                 }
             }
             #endregion
@@ -190,19 +186,22 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {
                         BakerId = snapshot.AccountId,
                         Cycle = futureCycle.Index,
-                        DelegatedBalance = (long)snapshot.DelegatedBalance,
-                        DelegatorsCount = (int)snapshot.DelegatorsCount,
-                        StakingBalance = (long)snapshot.StakingBalance,
-                        ActiveStake = 0,
-                        SelectedStake = futureCycle.SelectedStake
+                        OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
+                        ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
+                        DelegatorsCount = snapshot.DelegatorsCount,
+                        OwnStakedBalance = snapshot.OwnStakedBalance,
+                        ExternalStakedBalance = snapshot.ExternalStakedBalance,
+                        StakersCount = snapshot.StakersCount,
+                        BakingPower = 0,
+                        TotalBakingPower = futureCycle.TotalBakingPower
                     };
-                    if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var activeStake))
+                    if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                     {
-                        var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * activeStake / futureCycle.SelectedStake);
-                        bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * activeStake / futureCycle.SelectedStake;
+                        var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                        bakerCycle.BakingPower = bakingPower;
+                        bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                         bakerCycle.ExpectedEndorsements = expectedEndorsements;
                         bakerCycle.FutureEndorsementRewards = expectedEndorsements * block.Protocol.EndorsementReward0;
-                        bakerCycle.ActiveStake = activeStake;
                     }
                     return bakerCycle;
                 });
@@ -263,7 +262,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bakerCycle.FutureBlocks++;
                 bakerCycle.FutureBlockRewards += block.Protocol.MaxBakingReward;
                 bakerCycle.Blocks--;
-                bakerCycle.BlockRewards -= block.Reward + block.Bonus;
+                bakerCycle.BlockRewardsLiquid -= block.RewardLiquid + block.BonusLiquid;
                 bakerCycle.BlockFees -= block.Fees;
             }
             else
@@ -299,22 +298,22 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                         if (br.BakerId == block.ProposerId)
                         {
-                            bakerCycle.BlockRewards -= block.Reward;
+                            bakerCycle.BlockRewardsLiquid -= block.RewardLiquid;
                             bakerCycle.BlockFees -= block.Fees;
                         }
                         else if (br.Round < bakerRound)
                         {
-                            bakerCycle.MissedBlockRewards -= block.Reward;
+                            bakerCycle.MissedBlockRewards -= block.RewardLiquid;
                             bakerCycle.MissedBlockFees -= block.Fees;
                         }
 
                         if (br.BakerId == block.ProducerId)
                         {
-                            bakerCycle.BlockRewards -= block.Bonus;
+                            bakerCycle.BlockRewardsLiquid -= block.BonusLiquid;
                         }
                         else
                         {
-                            bakerCycle.MissedBlockRewards -= block.Bonus;
+                            bakerCycle.MissedBlockRewards -= block.BonusLiquid;
                         }
                     }
                 }
@@ -343,14 +342,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleBakingLosses -= op.OffenderLoss;
+                        offenderCycle.DoubleBakingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleBakingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleBakingRewards -= op.Reward;
                     }
                 }
             }
@@ -363,14 +362,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLosses -= op.OffenderLoss;
+                        offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoubleEndorsingRewards -= op.Reward;
                     }
                 }
             }
@@ -383,14 +382,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLosses -= op.OffenderLoss;
+                        offenderCycle.DoublePreendorsingLostStaked -= op.LostStaked;
                     }
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards -= op.AccuserReward;
+                        accuserCycle.DoublePreendorsingRewards -= op.Reward;
                     }
                 }
             }
@@ -403,7 +402,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (bakerCycle != null)
                     {
                         Db.TryAttach(bakerCycle);
-                        bakerCycle.RevelationRewards -= op.Reward;
+                        bakerCycle.NonceRevelationRewardsLiquid -= op.RewardLiquid;
                     }
                 }
             }
@@ -415,7 +414,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.RevelationRewards -= op.Reward;
+                    bakerCycle.VdfRevelationRewardsLiquid -= op.RewardLiquid;
                 }
             }
             #endregion
@@ -423,9 +422,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE  FROM ""BakerCycles""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles}");
+                await Db.Database.ExecuteSqlRawAsync($"""
+                    DELETE FROM "BakerCycles"
+                    WHERE "Cycle" = {block.Cycle + block.Protocol.PreservedCycles}
+                    """);
             }
             #endregion
         }

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class Cycle
     {
@@ -50,29 +48,39 @@ namespace Tzkt.Api.Models
         public int TotalBakers { get; set; }
 
         /// <summary>
-        /// Total staking balance of all active in this cycle bakers
+        /// Total baking power of all active in this cycle bakers
         /// </summary>
-        public long TotalStaking { get; set; }
+        public long TotalBakingPower { get; set; }
 
         /// <summary>
-        /// Total number of active bakers' delegators
+        /// Fixed reward paid to the block payload proposer in this cycle (micro tez)
         /// </summary>
-        public int TotalDelegators { get; set; }
+        public long BlockReward { get; set; }
 
         /// <summary>
-        /// Total balance delegated to active bakers
+        /// Bonus reward paid to the block producer in this cycle (micro tez)
         /// </summary>
-        public long TotalDelegated { get; set; }
+        public long BlockBonusPerSlot { get; set; }
 
         /// <summary>
-        /// Total number of bakers in stake distribution for the cycle
+        /// Reward for endorsing in this cycle (micro tez)
         /// </summary>
-        public int SelectedBakers { get; set; }
+        public long EndorsementRewardPerSlot { get; set; }
 
         /// <summary>
-        /// Total stake of bakers in stake distribution for the cycle
+        /// Reward for seed nonce revelation in this cycle (micro tez)
         /// </summary>
-        public long SelectedStake { get; set; }
+        public long NonceRevelationReward { get; set; }
+
+        /// <summary>
+        /// Reward for vdf revelation in this cycle (micro tez)
+        /// </summary>
+        public long VdfRevelationReward { get; set; }
+
+        /// <summary>
+        /// Liquidity baking subsidy in this cycle (micro tez)
+        /// </summary>
+        public long LBSubsidy { get; set; }
 
         #region injecting
         /// <summary>
@@ -82,6 +90,31 @@ namespace Tzkt.Api.Models
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long TotalStaking => TotalBakingPower;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int TotalDelegators => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long TotalDelegated => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int SelectedBakers => TotalBakers;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long SelectedStake => TotalBakingPower;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

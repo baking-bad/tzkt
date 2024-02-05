@@ -121,6 +121,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                 }
                 
                 TicketUpdates = ParseTicketUpdates(result);
+
+                Cache.Statistics.Current.TotalBurned += burned;
             }
             #endregion
 

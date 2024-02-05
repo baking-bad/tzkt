@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
@@ -11,7 +6,9 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class StatisticsCache
     {
-        static Statistics CachedStatistics;
+        static Statistics _Current;
+
+        public Statistics Current => _Current;
 
         readonly TzktContext Db;
 
@@ -20,22 +17,14 @@ namespace Tzkt.Sync.Services.Cache
             Db = db;
         }
 
-        public void Reset()
+        public async Task ResetAsync()
         {
-            CachedStatistics = null;
+            _Current = await Db.Statistics.OrderByDescending(x => x.Id).FirstOrDefaultAsync();
         }
 
-        public void Add(Statistics stats)
+        public void SetCurrent(Statistics stats)
         {
-            CachedStatistics = stats;
-        }
-
-        public async Task<Statistics> GetAsync(int level)
-        {
-            if (CachedStatistics?.Level != level)
-                CachedStatistics = await Db.Statistics.FirstAsync(x => x.Level == level);
-
-            return CachedStatistics;
+            _Current = stats;
         }
     }
 }

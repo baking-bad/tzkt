@@ -45,12 +45,14 @@
         public int OriginationOpsCount { get; set; }
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
+        public int StakingOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
         public int SetDepositsLimitOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
         public int EndorsingRewardOpsCount { get; set; }
+        public int AutostakingOpsCount { get; set; }
 
         public int TxRollupOriginationOpsCount { get; set; }
         public int TxRollupSubmitBatchOpsCount { get; set; }

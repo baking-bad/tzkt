@@ -9,7 +9,8 @@ namespace Tzkt.Data.Models
         public int DelegatorId { get; set; }
 
         public int BakerId { get; set; }
-        public long Balance { get; set; }
+        public long DelegatedBalance { get; set; }
+        public long StakedBalance { get; set; }
     }
 
     public static class DelegatorCycleModel
@@ -23,17 +24,13 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<DelegatorCycle>()
-                .HasIndex(x => x.Cycle);
+                .HasIndex(x => new { x.Cycle, x.BakerId });
+
+            modelBuilder.Entity<DelegatorCycle>()
+                .HasIndex(x => new { x.Cycle, x.DelegatorId });
 
             modelBuilder.Entity<DelegatorCycle>()
                 .HasIndex(x => x.DelegatorId);
-
-            modelBuilder.Entity<DelegatorCycle>()
-                .HasIndex(x => new { x.Cycle, x.DelegatorId })
-                .IsUnique(true);
-
-            modelBuilder.Entity<DelegatorCycle>()
-                .HasIndex(x => new { x.Cycle, x.BakerId });
             #endregion
         }
     }

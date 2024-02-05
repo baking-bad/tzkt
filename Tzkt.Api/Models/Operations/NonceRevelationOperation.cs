@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class NonceRevelationOperation : Operation
     {
@@ -60,9 +58,19 @@ namespace Tzkt.Api.Models
         public string Nonce { get; set; }
 
         /// <summary>
-        /// Baker reward for including seed nonce revelation into a block
+        /// Reward received on baker's liquid balance (micro tez)
         /// </summary>
-        public long Reward { get; set; }
+        public long RewardLiquid { get; set; }
+
+        /// <summary>
+        /// Reward received on baker's staked balance (micro tez)
+        /// </summary>
+        public long RewardStakedOwn { get; set; }
+
+        /// <summary>
+        /// Reward received on baker's external staked balance (micro tez)
+        /// </summary>
+        public long RewardStakedShared { get; set; }
 
         #region injecting
         /// <summary>
@@ -72,6 +80,11 @@ namespace Tzkt.Api.Models
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Reward => RewardLiquid + RewardStakedOwn + RewardStakedShared;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

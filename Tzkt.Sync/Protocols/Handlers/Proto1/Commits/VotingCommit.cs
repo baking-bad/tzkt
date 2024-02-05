@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -169,19 +166,32 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                .Where(x => BakerIsListed(x, block, block.Protocol))
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, proto),
+                    VotingPower = GetVotingPower(x, block, proto),
                     Status = VoterStatus.None
                 });
 
             period.TotalBakers = snapshots.Count();
             period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
             #endregion
+
+            //#region temporary diagnostics
+            //var listing = Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/votes/listings?depth=1").Result
+            //    .EnumerateArray()
+            //    .ToDictionary(x => x[0].RequiredString(), x => x[1].RequiredInt64());
+
+            //if (snapshots.Count() != listing.Count)
+            //    throw new Exception("Wrong voting snapshots");
+
+            //foreach (var snapshot in snapshots)
+            //    if (!listing.TryGetValue(Cache.Accounts.GetDelegate(snapshot.BakerId).Address, out var votingPower) || snapshot.VotingPower != votingPower)
+            //        throw new Exception("Wrong voting snapshot");
+            //#endregion
 
             #region quorum
             period.UpvotesQuorum = proto.ProposalQuorum;
@@ -212,19 +222,32 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                .Where(x => BakerIsListed(x, block, block.Protocol))
                 .Select(x => new VotingSnapshot
                 {
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, proto),
+                    VotingPower = GetVotingPower(x, block, proto),
                     Status = VoterStatus.None
                 });
 
             period.TotalBakers = snapshots.Count();
             period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
             #endregion
+
+            //#region temporary diagnostics
+            //var listing = Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/votes/listings?depth=1").Result
+            //    .EnumerateArray()
+            //    .ToDictionary(x => x[0].RequiredString(), x => x[1].RequiredInt64());
+
+            //if (snapshots.Count() != listing.Count)
+            //    throw new Exception("Wrong voting snapshots");
+
+            //foreach (var snapshot in snapshots)
+            //    if (!listing.TryGetValue(Cache.Accounts.GetDelegate(snapshot.BakerId).Address, out var votingPower) || snapshot.VotingPower != votingPower)
+            //        throw new Exception("Wrong voting snapshot");
+            //#endregion
 
             #region quorum
             period.ParticipationEma = GetParticipationEma(period, proto);
@@ -262,16 +285,40 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region snapshot
                 Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
-                    .Where(x => x.Staked && x.StakingBalance >= proto.TokensPerRoll)
+                    .Where(x => BakerIsListed(x, block, block.Protocol))
                     .Select(x => new VotingSnapshot
                     {
                         Level = block.Level,
                         Period = period.Index,
                         BakerId = x.Id,
-                        VotingPower = GetVotingPower(x, proto),
+                        VotingPower = GetVotingPower(x, block, proto),
                         Status = VoterStatus.None
                     }));
                 #endregion
+
+                //#region temporary diagnostics
+                //var snapshots = Cache.Accounts.GetDelegates()
+                //    .Where(x => BakerIsListed(x, block, block.Protocol))
+                //    .Select(x => new VotingSnapshot
+                //    {
+                //        Level = block.Level,
+                //        Period = period.Index,
+                //        BakerId = x.Id,
+                //        VotingPower = GetVotingPower(x, block, proto),
+                //        Status = VoterStatus.None
+                //    });
+
+                //var listing = Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/votes/listings?depth=1").Result
+                //    .EnumerateArray()
+                //    .ToDictionary(x => x[0].RequiredString(), x => x[1].RequiredInt64());
+
+                //if (snapshots.Count() != listing.Count)
+                //    throw new Exception("Wrong voting snapshots");
+
+                //foreach (var snapshot in snapshots)
+                //    if (!listing.TryGetValue(Cache.Accounts.GetDelegate(snapshot.BakerId).Address, out var votingPower) || snapshot.VotingPower != votingPower)
+                //        throw new Exception("Wrong voting snapshot");
+                //#endregion
             }
 
             Db.VotingPeriods.Add(period);
@@ -311,9 +358,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             return 8000;
         }
 
-        protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
+        protected virtual long GetVotingPower(Data.Models.Delegate baker, Block block, Protocol protocol)
         {
-            return baker.StakingBalance - baker.StakingBalance % protocol.TokensPerRoll;
+            return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
+        }
+
+        protected virtual bool BakerIsListed(Data.Models.Delegate baker, Block block, Protocol protocol)
+        {
+            return baker.Staked && baker.StakingBalance >= protocol.MinimalStake;
         }
     }
 }

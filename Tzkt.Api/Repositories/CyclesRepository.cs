@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
+﻿using Dapper;
 using Netezos.Encoding;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -30,11 +24,12 @@ namespace Tzkt.Api.Repositories
 
         public async Task<Cycle> Get(int index, Symbols quote)
         {
-            var sql = @"
+            var sql = """
                 SELECT  *
-                FROM    ""Cycles""
-                WHERE   ""Index"" = @index
-                LIMIT   1";
+                FROM    "Cycles"
+                WHERE   "Index" = @index
+                LIMIT   1
+                """;
 
             using var db = GetConnection();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { index });
@@ -51,11 +46,13 @@ namespace Tzkt.Api.Repositories
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
-                TotalDelegated = row.TotalDelegated,
-                TotalDelegators = row.TotalDelegators,
-                TotalStaking = row.TotalStaking,
-                SelectedBakers = row.SelectedBakers,
-                SelectedStake = row.SelectedStake,
+                TotalBakingPower = row.TotalBakingPower,
+                BlockReward = row.BlockReward,
+                BlockBonusPerSlot = row.BlockBonusPerSlot,
+                EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
+                NonceRevelationReward = row.NonceRevelationReward,
+                VdfRevelationReward = row.VdfRevelationReward,
+                LBSubsidy = row.LBSubsidy,
                 Quote = Quotes.Get(quote, row.LastLevel)
             };
         }
@@ -85,11 +82,13 @@ namespace Tzkt.Api.Repositories
                 SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
-                TotalDelegated = row.TotalDelegated,
-                TotalDelegators = row.TotalDelegators,
-                TotalStaking = row.TotalStaking,
-                SelectedBakers = row.SelectedBakers,
-                SelectedStake = row.SelectedStake,
+                TotalBakingPower = row.TotalBakingPower,
+                BlockReward = row.BlockReward,
+                BlockBonusPerSlot = row.BlockBonusPerSlot,
+                EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
+                NonceRevelationReward = row.NonceRevelationReward,
+                VdfRevelationReward = row.VdfRevelationReward,
+                LBSubsidy = row.LBSubsidy,
                 Quote = Quotes.Get(quote, row.LastLevel)
             });
         }
@@ -116,12 +115,21 @@ namespace Tzkt.Api.Repositories
                     case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                     case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
-                    case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
-                    case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
-                    case "totalStaking": columns.Add(@"""TotalStaking"""); break;
-                    case "selectedBakers": columns.Add(@"""SelectedBakers"""); break;
-                    case "selectedStake": columns.Add(@"""SelectedStake"""); break;
+                    case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
+                    case "blockReward": columns.Add(@"""BlockReward"""); break;
+                    case "blockBonusPerSlot": columns.Add(@"""BlockBonusPerSlot"""); break;
+                    case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
+                    case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
+                    case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
+                    case "lbSubsidy": columns.Add(@"""LBSubsidy"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
+                    #region deprecated
+                    case "totalDelegated": columns.Add(@"0"); break;
+                    case "totalDelegators": columns.Add(@"0"); break;
+                    case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
+                    case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
+                    case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
+                    #endregion
                 }
             }
 
@@ -179,30 +187,60 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalBakers;
                         break;
-                    case "totalDelegated":
+                    case "totalBakingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalDelegated;
+                            result[j++][i] = row.TotalBakingPower;
                         break;
-                    case "totalDelegators":
+                    case "blockReward":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalDelegators;
+                            result[j++][i] = row.BlockReward;
                         break;
-                    case "totalStaking":
+                    case "blockBonusPerSlot":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalStaking;
+                            result[j++][i] = row.BlockBonusPerSlot;
                         break;
-                    case "selectedBakers":
+                    case "endorsementRewardPerSlot":
                         foreach (var row in rows)
-                            result[j++][i] = row.SelectedBakers;
+                            result[j++][i] = row.EndorsementRewardPerSlot;
                         break;
-                    case "selectedStake":
+                    case "nonceRevelationReward":
                         foreach (var row in rows)
-                            result[j++][i] = row.SelectedStake;
+                            result[j++][i] = row.NonceRevelationReward;
+                        break;
+                    case "vdfRevelationReward":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationReward;
+                        break;
+                    case "lbSubsidy":
+                        foreach (var row in rows)
+                            result[j++][i] = row.LBSubsidy;
                         break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.LastLevel);
                         break;
+                    #region deprecated
+                    case "totalDelegated":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
+                    case "totalDelegators":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
+                    case "totalStaking":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalBakingPower;
+                        break;
+                    case "selectedBakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalBakers;
+                        break;
+                    case "selectedStake":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalBakingPower;
+                        break;
+                    #endregion
                 }
             }
 
@@ -229,12 +267,21 @@ namespace Tzkt.Api.Repositories
                 case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                 case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
-                case "totalDelegated": columns.Add(@"""TotalDelegated"""); break;
-                case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
-                case "totalStaking": columns.Add(@"""TotalStaking"""); break;
-                case "selectedBakers": columns.Add(@"""SelectedBakers"""); break;
-                case "selectedStake": columns.Add(@"""SelectedStake"""); break;
+                case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
+                case "blockReward": columns.Add(@"""BlockReward"""); break;
+                case "blockBonusPerSlot": columns.Add(@"""BlockBonusPerSlot"""); break;
+                case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
+                case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
+                case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
+                case "lbSubsidy": columns.Add(@"""LBSubsidy"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
+                #region deprecated
+                case "totalDelegated": columns.Add(@"0"); break;
+                case "totalDelegators": columns.Add(@"0"); break;
+                case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
+                case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
+                case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -289,30 +336,60 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.TotalBakers;
                     break;
-                case "totalDelegated":
+                case "totalBakingPower":
                     foreach (var row in rows)
-                        result[j++] = row.TotalDelegated;
+                        result[j++] = row.TotalBakingPower;
                     break;
-                case "totalDelegators":
+                case "blockReward":
                     foreach (var row in rows)
-                        result[j++] = row.TotalDelegators;
+                        result[j++] = row.BlockReward;
                     break;
-                case "totalStaking":
+                case "blockBonusPerSlot":
                     foreach (var row in rows)
-                        result[j++] = row.TotalStaking;
+                        result[j++] = row.BlockBonusPerSlot;
                     break;
-                case "selectedBakers":
+                case "endorsementRewardPerSlot":
                     foreach (var row in rows)
-                        result[j++] = row.SelectedBakers;
+                        result[j++] = row.EndorsementRewardPerSlot;
                     break;
-                case "selectedStake":
+                case "nonceRevelationReward":
                     foreach (var row in rows)
-                        result[j++] = row.SelectedStake;
+                        result[j++] = row.NonceRevelationReward;
+                    break;
+                case "vdfRevelationReward":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationReward;
+                    break;
+                case "lbSubsidy":
+                    foreach (var row in rows)
+                        result[j++] = row.LBSubsidy;
                     break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.LastLevel);
                     break;
+                #region deprecated
+                case "totalDelegated":
+                    foreach (var row in rows)
+                        result[j++] = 0;
+                    break;
+                case "totalDelegators":
+                    foreach (var row in rows)
+                        result[j++] = 0;
+                    break;
+                case "totalStaking":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalBakingPower;
+                    break;
+                case "selectedBakers":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalBakers;
+                    break;
+                case "selectedStake":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalBakingPower;
+                    break;
+                #endregion
             }
 
             return result;
