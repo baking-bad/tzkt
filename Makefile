@@ -67,28 +67,6 @@ ghost-stop:
 ghost-db-start:
 	docker-compose -f docker-compose.ghost.yml up -d ghost-db
 
-nairobi-init:
-	docker-compose -f docker-compose.nairobi.yml up   -d nairobi-db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt update
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt install -y wget
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db wget "https://snapshots.tzkt.io/tzkt_v1.12_nairobinet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db rm tzkt_db.backup
-	docker-compose -f docker-compose.nairobi.yml exec -T nairobi-db apt autoremove --purge -y wget
-	docker-compose pull	
-	
-nairobi-start:
-	docker-compose -f docker-compose.nairobi.yml up -d
-
-nairobi-stop:
-	docker-compose -f docker-compose.nairobi.yml down
-
-nairobi-db-start:
-	docker-compose -f docker-compose.nairobi.yml up -d nairobi-db
-
 oxford-init:
 	docker-compose -f docker-compose.oxford.yml up   -d oxford-db
 	docker-compose -f docker-compose.oxford.yml exec -T oxford-db psql -U tzkt postgres -c '\l'

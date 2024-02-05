@@ -66,7 +66,7 @@ sudo apt install -y dotnet-sdk-7.0
 sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 sudo apt update
-sudo apt -y install postgresql-16 postgresql-contrib
+sudo apt -y install postgresql-16 postgresql-contrib-16
 ````
 
 ---
@@ -262,9 +262,6 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Oxfordnet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup
    - RPC node: https://rpc.tzkt.io/oxfordnet/
- - Nairobinet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_nairobinet.backup
-   - RPC node: https://rpc.tzkt.io/nairobinet/
 
 ### Testnets & docker
 
