@@ -100,6 +100,15 @@ Notes:
 - to speed up the restoration replace `-1` with `-e -j {n}`, where `{n}` is a number of parallel workers (e.g., `-e -j 8`);
 - in case of Docker use you may need to add `-U tzkt` parameter.
 
+#### Grant access to the database to our user
+
+````
+sudo -u postgres psql tzkt_db
+
+tzkt_db=# grant all privileges on all tables in schema public to tzkt;
+tzkt_db=# \q
+````
+
 ---
 
 ### Build, configure and run TzKT Indexer
