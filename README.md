@@ -63,8 +63,10 @@ sudo apt install -y dotnet-sdk-7.0
 #### Install Postgresql
 
 ````
+sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
 sudo apt update
-sudo apt -y install postgresql postgresql-contrib
+sudo apt -y install postgresql-16 postgresql-contrib
 ````
 
 ---
@@ -85,7 +87,7 @@ postgres=# \q
 #### Download fresh snapshot (example for mainnet)
 
 ````
-wget "https://snapshots.tzkt.io/tzkt_v1.12_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -255,11 +257,11 @@ That's it. If you want to run the API as a daemon, take a look at this guide: ht
 
 In general the steps are the same as for the mainnet, you will just need to use a different RPC endpoint and DB snapshot. Here are presets for the current testnets:
  - Ghostnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_ghostnet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Mumbainet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_mumbainet.backup
-   - RPC node: https://rpc.tzkt.io/mumbainet/
+ - Oxfordnet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup
+   - RPC node: https://rpc.tzkt.io/oxfordnet/
  - Nairobinet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.12_nairobinet.backup
    - RPC node: https://rpc.tzkt.io/nairobinet/
