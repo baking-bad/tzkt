@@ -50,7 +50,7 @@ namespace Tzkt.Api.Repositories
             var sql = $@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
-                INNER JOIN  ""Blocks"" as b 
+                INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
@@ -126,7 +126,7 @@ namespace Tzkt.Api.Repositories
             var sql = $@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
-                INNER JOIN  ""Blocks"" as b 
+                INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
@@ -202,7 +202,7 @@ namespace Tzkt.Api.Repositories
             var sql = $@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" as o
-                INNER JOIN  ""Blocks"" as b 
+                INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
@@ -352,12 +352,15 @@ namespace Tzkt.Api.Repositories
             bool includeStorage = false,
             bool includeBigmaps = false)
         {
-            var sql = new SqlBuilder(@"
+            var transactionsQuery =
+                new SqlBuilder(@"SELECT * FROM ""TransactionOps""")
+                    .FilterWithUnion(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId");
+
+            var sql = new SqlBuilder($@"
                 SELECT      o.*, b.""Hash""
-                FROM        ""TransactionOps"" AS o
+                FROM        ({transactionsQuery.Query}) AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
-                .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
