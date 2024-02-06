@@ -13,7 +13,7 @@ namespace Tzkt.Api
     {
         public DynamicParameters Params { get; private set; }
         public string Query => Builder.ToString();
-        
+
         readonly StringBuilder Builder;
         bool Filters;
         int Counter;
@@ -262,7 +262,7 @@ namespace Tzkt.Api
 
             if (standard.Eq != null)
                 AppendFilter($@"""{column}"" & {standard.Eq} = {standard.Eq}");
-            
+
             if (standard.Ne != null)
                 AppendFilter($@"""{column}"" & {standard.Ne} != {standard.Ne}");
 
@@ -622,7 +622,7 @@ namespace Tzkt.Api
                     AppendFilter($@"""{column}"" = ANY ({Param(account.In)})");
                 else if (account.In.Count == 0)
                     AppendFilter($@"""{column}"" IS NULL");
-                else 
+                else
                     AppendFilter($@"(""{column}"" = ANY ({Param(account.In)}) OR ""{column}"" IS NULL)");
             }
 
@@ -1875,7 +1875,7 @@ namespace Tzkt.Api
 
             if (pagination.limit != -1)
                 Builder.AppendLine($"LIMIT {pagination.limit}");
-            
+
             return this;
         }
 
@@ -1956,7 +1956,7 @@ namespace Tzkt.Api
 
             if (offset?.Cr != null)
             {
-                AppendFilter(sortAsc 
+                AppendFilter(sortAsc
                     ? $@"""{cursorColumn}"" > {offset.Cr}"
                     : $@"""{cursorColumn}"" < {offset.Cr}");
             }
@@ -2054,6 +2054,42 @@ namespace Tzkt.Api
 
             Builder.AppendLine($"LIMIT {limit}");
             return this;
+        }
+
+         public SqlBuilder FilterWithUnion(AnyOfParameter anyof, Func<string, string> map)
+        {
+            if (anyof == null)
+            {
+                return this;
+            }
+
+            var currentRelation = Builder.ToString();
+
+            var subqueries = new List<SqlBuilder>();
+
+            if (anyof.Null != null || anyof.InHasNull || anyof.In != null && anyof.In.Count == 0)
+            {
+                var nullFilter = anyof.Null == false ? "IS NOT NULL" : "IS NULL";
+
+                subqueries.AddRange(
+                    anyof.Fields.Select(field => new SqlBuilder(currentRelation).Filter($@"""{map(field)}"" {nullFilter}")));
+            }
+
+            if (anyof.Eq != null)
+            {
+                anyof.In = new List<int> { (int)anyof.Eq };
+            }
+
+            if (anyof.In != null)
+            {
+
+                subqueries.AddRange(anyof.Fields.SelectMany(field =>
+                {
+                    return anyof.In.Select(value => new SqlBuilder(currentRelation).Filter($@"""{map(field)}"" = {value}"));
+                }));
+            }
+
+            return new SqlBuilder(string.Join("\nUNION\n", subqueries.Select(x => x.Query.ToString())));
         }
 
         void AppendFilter(string filter)
