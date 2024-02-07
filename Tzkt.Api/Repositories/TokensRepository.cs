@@ -116,10 +116,10 @@ namespace Tzkt.Api.Repositories
                     "lastLevel" => (@"""LastLevel""", @"""LastLevel"""),
                     "metadata" => (@"""Metadata""", @"""Metadata"""),
                     _ => TryMetaSort(x)
-                });
+                }, @"""Id""", 100);
 
             using var db = GetConnection();
-            return await db.QueryAsync(sql.Query, sql.Params);
+            return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
         public async Task<int> GetTokensCount(TokenFilter filter)
@@ -411,9 +411,9 @@ namespace Tzkt.Api.Repositories
                     "lastLevel" => (new string[1] { @"tb.""LastLevel""" }, @"tb.""LastLevel"""),
                     "token.metadata" => (new string[1] { @"t.""Metadata""" }, @"t.""Metadata"""),
                     _ => TryMetaSort(x)
-                }, @"tb.""Id""");
+                }, @"tb.""Id""", 100);
 
-            return await db.QueryAsync(sql.Query, sql.Params);
+            return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
         public async Task<int> GetTokenBalancesCount(TokenBalanceFilter filter)
@@ -691,10 +691,10 @@ namespace Tzkt.Api.Repositories
                     "amount" => (@"tr.""Amount""::numeric", @"tr.""Amount""::numeric"),
                     "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => TryMetaSort(x)
-                }, @"tr.""Id""");
+                }, @"tr.""Id""", 100);
 
             using var db = GetConnection();
-            return await db.QueryAsync(sql.Query, sql.Params);
+            return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
         public async Task<int> GetTokenTransfersCount(TokenTransferFilter filter)
@@ -981,10 +981,10 @@ namespace Tzkt.Api.Repositories
                     "balance" => (@"""Balance""::numeric", @"""Balance""::numeric"),
                     "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => TryMetaSort(x)
-                }, @"tb.""Id""");
+                }, @"tb.""Id""", 100);
 
             using var db = GetConnection();
-            return await db.QueryAsync(sql.Query, sql.Params);
+            return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
         public async Task<IEnumerable<TokenBalanceShort>> GetHistoricalTokenBalances(int level, TokenBalanceShortFilter filter, Pagination pagination)

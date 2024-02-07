@@ -1826,7 +1826,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(Pagination pagination, Func<string, (string, string)> map, string id = @"""Id""")
+        public SqlBuilder Take(Pagination pagination, Func<string, (string, string)> map, string id = @"""Id""", int minLimit = 0)
         {
             var sortAsc = true;
             var sortColumn = id;
@@ -1874,12 +1874,12 @@ namespace Tzkt.Api
             }
 
             if (pagination.limit != -1)
-                Builder.AppendLine($"LIMIT {pagination.limit}");
+                Builder.AppendLine($"LIMIT {Math.Max(pagination.limit, minLimit)}");
             
             return this;
         }
 
-        public SqlBuilder Take(Pagination pagination, Func<string, (string[], string)> map, string id = @"""Id""")
+        public SqlBuilder Take(Pagination pagination, Func<string, (string[], string)> map, string id = @"""Id""", int minLimit = 0)
         {
             var sortAsc = true;
             var sortColumns = new string[1] { id };
@@ -1930,7 +1930,7 @@ namespace Tzkt.Api
             }
 
             if (pagination.limit != -1)
-                Builder.AppendLine($"LIMIT {pagination.limit}");
+                Builder.AppendLine($"LIMIT {Math.Max(pagination.limit, minLimit)}");
 
             return this;
         }
