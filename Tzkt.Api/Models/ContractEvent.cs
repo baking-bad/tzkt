@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class ContractEvent
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }
@@ -44,7 +44,7 @@ namespace Tzkt.Api.Models
         public object Payload { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the transaction operation, caused the event.
+        /// Internal MvKT id of the transaction operation, caused the event.
         /// </summary>
         public long TransactionId { get; set; }
 

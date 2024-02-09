@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
@@ -398,7 +398,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="id">Bigmap Id</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/keys/{key}")]
@@ -441,7 +441,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="id">Bigmap Id</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="sort">Sorts bigmap updates by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -573,7 +573,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Bigmap Id</param>
         /// <param name="level">Level of the block at which you want to get bigmap key</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/historical_keys/{level:int}/{key}")]

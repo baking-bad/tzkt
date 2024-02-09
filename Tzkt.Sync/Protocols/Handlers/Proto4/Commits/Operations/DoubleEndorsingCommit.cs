@@ -108,7 +108,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             accuser.Balance -= doubleEndorsing.Reward;
             offender.Balance += doubleEndorsing.LostStaked;
             offender.StakingBalance += doubleEndorsing.Reward * 2;
-            // here we can miss 1 mutez, but this may happen only in legacy protocols, so let's ignore
+            // here we can miss 1 mumav, but this may happen only in legacy protocols, so let's ignore
             // TODO: replace it with NotImplementedException after Ithaca
 
             accuser.DoubleEndorsingCount--;

@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using System.Text.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto16

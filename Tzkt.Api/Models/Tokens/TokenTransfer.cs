@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class TokenTransfer
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }
@@ -46,17 +46,17 @@ namespace Tzkt.Api.Models
         public string Amount { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the transaction operation, caused the token transfer.
+        /// Internal MvKT id of the transaction operation, caused the token transfer.
         /// </summary>
         public long? TransactionId { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the origination operation, caused the token transfer.
+        /// Internal MvKT id of the origination operation, caused the token transfer.
         /// </summary>
         public long? OriginationId { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the migration operation, caused the token transfer.
+        /// Internal MvKT id of the migration operation, caused the token transfer.
         /// </summary>
         public long? MigrationId { get; set; }
     }

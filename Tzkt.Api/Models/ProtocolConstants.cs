@@ -161,7 +161,7 @@ namespace Tzkt.Api.Models
         public int SmartRollupOriginationSize { get; set; }
 
         /// <summary>
-        /// Smart rollup commitment bond (mutez)
+        /// Smart rollup commitment bond (mumav)
         /// </summary>
         public long SmartRollupStakeAmount { get; set; }
 

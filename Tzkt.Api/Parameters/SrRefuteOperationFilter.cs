@@ -6,7 +6,7 @@ namespace Tzkt.Api
     {
         /// <summary>
         /// Filter by any of the specified fields (`sender`, `initiator`, or `opponent`).
-        /// Example: `anyof.initiator.opponent=tz1...` will return operations where `initiator` OR `opponent` is equal to the specified value.
+        /// Example: `anyof.initiator.opponent=mv1...` will return operations where `initiator` OR `opponent` is equal to the specified value.
         /// This parameter is useful when you need to get all operations somehow related to the account in a single request.  
         /// Click on the parameter to expand more details.
         /// </summary>

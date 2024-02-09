@@ -2,7 +2,7 @@
 
 namespace Tzkt.Sync
 {
-    public static class TezosProtocols
+    public static class MavrykProtocols
     {
         static string Fallback = null;
 
@@ -11,7 +11,7 @@ namespace Tzkt.Sync
             return Fallback ??= services.GetRequiredService<IConfiguration>().GetValue<string>("Protocols:Fallback");
         }
 
-        public static void AddTezosProtocols(this IServiceCollection services)
+        public static void AddMavrykProtocols(this IServiceCollection services)
         {
             services.AddScoped<GenesisHandler>();
             services.AddScoped<InitiatorHandler>();

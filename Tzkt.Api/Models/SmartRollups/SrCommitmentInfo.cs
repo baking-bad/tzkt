@@ -3,7 +3,7 @@
     public class SrCommitmentInfo
     {
         /// <summary>
-        /// Internal TzKT id.
+        /// Internal MvKT id.
         /// </summary>
         public long Id { get; set; }
 

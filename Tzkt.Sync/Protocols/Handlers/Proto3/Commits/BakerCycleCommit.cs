@@ -288,7 +288,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (!bakerCycles.TryGetValue(baker.Address, out var bakerCycle))
                     {
                         #region shifting hack
-                        //shifting is actually a bad idea, but this is the lesser of two evils while Tezos protocol has bugs in the freezer.
+                        //shifting is actually a bad idea, but this is the lesser of two evils while Mavryk protocol has bugs in the freezer.
                         var snapshottedBaker = await Proto.Rpc.GetDelegateAsync(futureCycle.SnapshotLevel, baker.Address);
                         var delegators = snapshottedBaker
                             .RequiredArray("delegated_contracts")

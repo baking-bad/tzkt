@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 

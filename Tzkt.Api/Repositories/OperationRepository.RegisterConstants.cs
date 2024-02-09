@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Data;
 

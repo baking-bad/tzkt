@@ -1,22 +1,21 @@
 ﻿# Introduction
 
-TzKT is the most widely used tool in Tezos that provides you with convenient and flexible access to the Tezos blockchain data, processed and indexed by its own indexer. 
-You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. TzKT was built by the joint efforts of the entire Tezos community 
+MvKT is the most widely used tool in Tezos that provides you with convenient and flexible access to the Tezos blockchain data, processed and indexed by its own indexer. 
+You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. MvKT was built by the joint efforts of the entire Tezos community 
 to help developers build more services and dapps on top of Tezos.
 
-TzKT Indexer and API are [open-source](https://github.com/baking-bad/tzkt), so don't be afraid to depend on the third-party service,
+MvKT Indexer and API are [open-source](https://github.com/baking-bad/tzkt), so don't be afraid to depend on the third-party service,
 because you can always clone, build and run it yourself to have full control over all the components.
 
 Feel free to contact us if you have any questions or feature requests.
 Your feedback is much appreciated!
 
-- Discord: https://discord.gg/aG8XKuwsQd
-- Telegram: https://t.me/baking_bad_chat
-- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
-- Twitter: https://twitter.com/TezosBakingBad
-- Email: hello@bakingbad.dev
+- Discord: https://discord.gg/BDBYA4ASf2
+- Telegram: https://t.me/+skFJjewPdRU5ZGQ0
+- Twitter: https://x.com/MavrykDynamics
+- Email: info@mavryk.io
 
-And don't forget to star TzKT [on GitHub](https://github.com/baking-bad/tzkt) if you like it 😊
+And don't forget to star MvKT project [on GitHub](https://github.com/mavryk-network/mvkt) if you like it 😊
 
 # Get Started
 
@@ -26,14 +25,14 @@ There are two API services provided for public use:
 
 You can find more details about differences between available tiers [here](https://tzkt.io/api).
 
-## Free TzKT API
+## Free MvKT API
 
-Free-tier TzKT API is the best way to get started and explore available Tezos data and API functionality.
+Free-tier MvKT API is the best way to get started and explore available Tezos data and API functionality.
 It doesn't require authorization and is free for everyone and for both commercial and non-commercial use.
 
 > #### Note: attribution required
-If you use free-tier TzKT API, you **must** mention it on your website or application by placing the label
-"Powered by TzKT API", or "Built with TzKT API", or "Data provided by TzKT API" with a direct link to [tzkt.io](https://tzkt.io).
+If you use free-tier MvKT API, you **must** mention it on your website or application by placing the label
+"Powered by MvKT API", or "Built with MvKT API", or "Data provided by MvKT API" with a direct link to [tzkt.io](https://tzkt.io).
 
 It's available for the following Tezos networks with the following base URLs:
 
@@ -43,7 +42,7 @@ It's available for the following Tezos networks with the following base URLs:
 
 ### Sending requests
 
-To send a request to Free TzKT API you need literally nothing. Just take the base URL of the particular network
+To send a request to Free MvKT API you need literally nothing. Just take the base URL of the particular network
 (for example, Tezos mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
 (for example, chain's head: `/v1/head`), that's pretty much it: 
 
@@ -61,19 +60,19 @@ Please, refer to https://tzkt.io/api to check relevant rate limits.
 
 If you exceed the limit, the API will respond with `HTTP 429` status code.
 
-## TzKT Pro
+## MvKT Pro
 
-TzKT Pro is intended for professional use, for those who seek for extended capabilities, performance, reliability and business-level SLA.
-TzKT Pro service is provided via paid subscriptions. Please, refer to [Pricing Plans](https://tzkt.io/api) to check available tiers.
+MvKT Pro is intended for professional use, for those who seek for extended capabilities, performance, reliability and business-level SLA.
+MvKT Pro service is provided via paid subscriptions. Please, refer to [Pricing Plans](https://tzkt.io/api) to check available tiers.
 
 It's available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Testnets: *let us know if you need TzKT Pro for testnets*
+- Testnets: *let us know if you need MvKT Pro for testnets*
 
 ### Authorization
 
-To access TzKT Pro you will need to authorize requests with your personal API key, that you will receive on your email after purchasing a subscription.
+To access MvKT Pro you will need to authorize requests with your personal API key, that you will receive on your email after purchasing a subscription.
 This can be done by adding the query string parameter `?apikey={your_key}` or by adding the HTTP header `apikey: {your_key}`.
 
 Note that you can have multiple API keys within a single subscription.
@@ -103,7 +102,7 @@ curl https://pro.tzkt.io/v1/head \
 
 Please, refer to https://tzkt.io/api to check relevant rate limits for different pricing plans.
 
-Also, TzKT Pro provides you with the additional HTTP headers to show the allowed limits, number of available requests
+Also, MvKT Pro provides you with the additional HTTP headers to show the allowed limits, number of available requests
 and the time remaining (in seconds) until the quota is reset. Here's an example:
 
 ```

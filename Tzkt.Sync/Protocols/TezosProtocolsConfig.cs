@@ -2,17 +2,17 @@
 
 namespace Tzkt.Sync.Services
 {
-    public class TezosProtocolsConfig
+    public class MavrykProtocolsConfig
     {
         public bool Diagnostics { get; set; } = false;
         public bool Validation { get; set; } = true;
     }
 
-    public static class TezosProtocolsConfigExt
+    public static class MavrykProtocolsConfigExt
     {
-        public static TezosProtocolsConfig GetTezosProtocolsConfig(this IConfiguration config)
+        public static MavrykProtocolsConfig GetMavrykProtocolsConfig(this IConfiguration config)
         {
-            return config.GetSection("Protocols")?.Get<TezosProtocolsConfig>() ?? new TezosProtocolsConfig();
+            return config.GetSection("Protocols")?.Get<MavrykProtocolsConfig>() ?? new MavrykProtocolsConfig();
         }
     }
 }

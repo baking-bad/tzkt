@@ -1,6 +1,6 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;

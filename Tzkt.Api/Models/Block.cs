@@ -153,7 +153,7 @@
 
         /// <summary>
         /// List of activation (is used to activate accounts that were recommended allocations of
-        /// tezos tokens for donations to the Tezos Foundation’s fundraiser) operations, included in the block
+        /// mavryk tokens for donations to the Mavryk fundraiser) operations, included in the block
         /// </summary>
         public IEnumerable<ActivationOperation> Activations { get; set; }
         
@@ -196,7 +196,7 @@
         public IEnumerable<OriginationOperation> Originations { get; set; }
         
         /// <summary>
-        /// List of transaction (is a standard operation used to transfer tezos tokens to an account)
+        /// List of transaction (is a standard operation used to transfer mavryk tokens to an account)
         /// operations, included in the block
         /// </summary>
         public IEnumerable<TransactionOperation> Transactions { get; set; }

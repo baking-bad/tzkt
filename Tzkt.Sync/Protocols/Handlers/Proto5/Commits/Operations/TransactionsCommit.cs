@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -95,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (ticketType.Annots.Count == 0)
                         ticketType.Annots.Add(new FieldAnnotation("data"));
 
-                    var schema = Netezos.Contracts.Schema.Create(new MichelinePrim
+                    var schema = Netmavryk.Contracts.Schema.Create(new MichelinePrim
                     {
                         Prim = PrimType.pair,
                         Args = new List<IMicheline>(2)
@@ -149,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
         }
 
-        protected override IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, Netezos.Contracts.ContractScript schema)
+        protected override IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, Netmavryk.Contracts.ContractScript schema)
         {
             return storage;
         }

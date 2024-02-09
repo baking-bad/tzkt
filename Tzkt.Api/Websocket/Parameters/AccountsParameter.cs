@@ -15,7 +15,7 @@ namespace Tzkt.Api.Websocket
             {
                 if (Addresses.Any(string.IsNullOrEmpty))
                     throw new HubException("Empty address. Array should not contain nulls or empty strings");
-                if (Addresses.Any(x => !Regex.IsMatch(x, "^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")))
+                if (Addresses.Any(x => !Regex.IsMatch(x, "^(mv1|mv2|mv3|mv4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")))
                     throw new HubException("Array contains an invalid address");
             }
         }

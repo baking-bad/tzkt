@@ -1,12 +1,12 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(MichelineBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class MichelineParameter : INormalizable
     {
         /// <summary>

@@ -7,12 +7,12 @@ namespace Tzkt.Sync.Services
     {
         public AppState AppState { get; private set; }
 
-        readonly TezosNode Node;
+        readonly MavrykNode Node;
         readonly IServiceScopeFactory Services;
         readonly ILogger Logger;
         readonly IMetrics Metrics;
 
-        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger, IMetrics metrics)
+        public Observer(MavrykNode node, IServiceScopeFactory services, ILogger<Observer> logger, IMetrics metrics)
         {
             Node = node;
             Services = services;

@@ -13,7 +13,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync.Services
 {

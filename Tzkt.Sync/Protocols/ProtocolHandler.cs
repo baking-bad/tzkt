@@ -15,25 +15,25 @@ namespace Tzkt.Sync
         public abstract IRpc Rpc { get; }
         public abstract string Version { get; }
 
-        public readonly TezosNode Node;
+        public readonly MavrykNode Node;
         public readonly TzktContext Db;
         public readonly CacheService Cache;
         public readonly QuotesService Quotes;
         public readonly IServiceProvider Services;
-        public readonly TezosProtocolsConfig Config;
+        public readonly MavrykProtocolsConfig Config;
         public readonly ILogger Logger;
         public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
         public readonly InboxContext Inbox;
 
-        public ProtocolHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger, IMetrics metrics)
+        public ProtocolHandler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger, IMetrics metrics)
         {
             Node = node;
             Db = db;
             Cache = cache;
             Quotes = quotes;
             Services = services;
-            Config = config.GetTezosProtocolsConfig();
+            Config = config.GetMavrykProtocolsConfig();
             Logger = logger;
             Metrics = metrics;
             Manager = new(this);

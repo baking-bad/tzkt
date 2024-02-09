@@ -8,14 +8,14 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AccountBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class AccountParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
         /// Specify a `tz` or `KT` address to get items where the specified field is equal to the specified value.
         /// 
-        /// Example: `?sender=tz1WnfXMPaNTBmH7DBPwqCWs9cPDJdkGBTZ8`.
+        /// Example: `?sender=mv1VXHDHLA9dAKA8vpGuU7P8GXCVqSJ99obq`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Eq { get; set; }
@@ -24,7 +24,7 @@ namespace Tzkt.Api
         /// **Not equal** filter mode. \
         /// Specify a `tz` or `KT` address to get items where the specified field is not equal to the specified value.
         /// 
-        /// Example: `?sender.ne=tz1WnfXMPaNTBmH7DBPwqCWs9cPDJdkGBTZ8`.
+        /// Example: `?sender.ne=mv1VXHDHLA9dAKA8vpGuU7P8GXCVqSJ99obq`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }
@@ -33,7 +33,7 @@ namespace Tzkt.Api
         /// **In list** (any of) filter mode. \
         /// Specify a comma-separated list of addresses to get items where the specified field is equal to one of the specified values.
         /// 
-        /// Example: `?sender.in=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
+        /// Example: `?sender.in=mv1HeozQdwBYmdjaKoTaGfLc4qxYWkCTSEtL,mv1FABmn7c7rKWKgKh5RYBVQkBSv3sET36zt`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> In { get; set; }
@@ -42,7 +42,7 @@ namespace Tzkt.Api
         /// **Not in list** (none of) filter mode. \
         /// Specify a comma-separated list of addresses to get items where the specified field is not equal to all the specified values.
         /// 
-        /// Example: `?sender.ni=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
+        /// Example: `?sender.ni=mv1HeozQdwBYmdjaKoTaGfLc4qxYWkCTSEtL,mv1FABmn7c7rKWKgKh5RYBVQkBSv3sET36zt`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> Ni { get; set; }

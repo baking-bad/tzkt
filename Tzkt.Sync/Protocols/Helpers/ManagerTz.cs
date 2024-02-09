@@ -1,6 +1,6 @@
 ﻿using System.Linq;
 using System.Text.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols
@@ -23,10 +23,10 @@ namespace Tzkt.Sync.Protocols
                 if (bytes[0] > 2) return null;
 
                 var prefix = bytes[0] == 0
-                    ? new byte[] { 6, 161, 159 }
+                    ? new byte[] { 5, 186, 196 }
                     : bytes[0] == 1
-                        ? new byte[] { 6, 161, 161 }
-                        : new byte[] { 6, 161, 164 };
+                        ? new byte[] { 5, 186, 199 }
+                        : new byte[] { 5, 186, 201 };
 
                 return Base58.Convert(bytes.GetBytes(1, bytes.Length - 1), prefix);
             }

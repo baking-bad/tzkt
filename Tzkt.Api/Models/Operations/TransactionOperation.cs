@@ -6,12 +6,12 @@ namespace Tzkt.Api.Models
     public class TransactionOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `transaction` - is a standard operation used to transfer tezos tokens to an account
+        /// Type of the operation, `transaction` - is a standard operation used to transfer mavryk tokens to an account
         /// </summary>
         public override string Type => OpTypes.Transaction;
 
         /// <summary>
-        /// Unique ID of the operation, stored in the TzKT indexer database
+        /// Unique ID of the operation, stored in the MvKT indexer database
         /// </summary>
         public override long Id { get; set; }
 

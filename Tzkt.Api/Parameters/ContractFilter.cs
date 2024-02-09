@@ -5,7 +5,7 @@ namespace Tzkt.Api
     public class ContractFilter : INormalizable
     {
         /// <summary>
-        /// Filter by internal TzKT id.  
+        /// Filter by internal MvKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter id { get; set; }

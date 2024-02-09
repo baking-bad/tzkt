@@ -16,7 +16,7 @@ builder.Configuration.Sources.Clear();
 builder.Configuration.AddJsonFile("appsettings.json", true);
 builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true);
 builder.Configuration.AddEnvironmentVariables();
-builder.Configuration.AddEnvironmentVariables("TZKT_SYNC_");
+builder.Configuration.AddEnvironmentVariables("MVKT_SYNC_");
 builder.Configuration.AddCommandLine(args);
 #endregion
 
@@ -30,8 +30,8 @@ builder.Services.AddDbContext<TzktContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCaches();
-builder.Services.AddTezosNode();
-builder.Services.AddTezosProtocols();
+builder.Services.AddMavrykNode();
+builder.Services.AddMavrykProtocols();
 builder.Services.AddQuotes(builder.Configuration);
 builder.Services.AddHostedService<Observer>();
 

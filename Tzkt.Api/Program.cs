@@ -25,7 +25,7 @@ builder.Configuration.Sources.Clear();
 builder.Configuration.AddJsonFile("appsettings.json", true);
 builder.Configuration.AddJsonFile($"appsettings.{builder.Environment.EnvironmentName}.json", true);
 builder.Configuration.AddEnvironmentVariables();
-builder.Configuration.AddEnvironmentVariables("TZKT_API_");
+builder.Configuration.AddEnvironmentVariables("MVKT_API_");
 builder.Configuration.AddCommandLine(args);
 #endregion
 
@@ -256,10 +256,10 @@ app.UseCors(builder => builder
     .SetIsOriginAllowed(_ => true)
     .AllowCredentials()
     .WithExposedHeaders(
-        StateHeadersMiddleware.TZKT_VERSION,
-        StateHeadersMiddleware.TZKT_LEVEL,
-        StateHeadersMiddleware.TZKT_KNOWN_LEVEL,
-        StateHeadersMiddleware.TZKT_SYNCED_AT));
+        StateHeadersMiddleware.MVKT_VERSION,
+        StateHeadersMiddleware.MVKT_LEVEL,
+        StateHeadersMiddleware.MVKT_KNOWN_LEVEL,
+        StateHeadersMiddleware.MVKT_SYNCED_AT));
 
 app.UseOpenApi();
 

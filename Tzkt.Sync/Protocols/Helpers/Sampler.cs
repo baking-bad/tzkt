@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dynamic.Json;
-using Netezos.Keys;
+using Netmavryk.Keys;
 
 namespace Tzkt.Sync.Protocols
 {

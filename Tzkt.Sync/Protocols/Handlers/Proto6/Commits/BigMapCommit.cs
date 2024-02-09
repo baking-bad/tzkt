@@ -1,4 +1,4 @@
-﻿using Netezos.Contracts;
+﻿using Netmavryk.Contracts;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto6
