@@ -34,7 +34,7 @@ make start # Starts DB, indexer, and API. By default, the API will be available 
 make stop  # Stops DB, indexer, and API.
 ````
 
-You can configure MvKT via `Tzkt.Sync/appsettings.json` (indexer) and `Tzkt.Api/appsettings.json` (API). All the settings can also be passed via env vars or command line args. See an example of how to [provide settings via env vars](https://github.com/mavryk-network/mvkt/blob/master/docker-compose.yml#L25) and read some tips about [indexer configuration](#configure-indexer-example-for-mainnet) and [API configuration](#configure-api).
+You can configure MvKT via `Mvkt.Sync/appsettings.json` (indexer) and `Mvkt.Api/appsettings.json` (API). All the settings can also be passed via env vars or command line args. See an example of how to [provide settings via env vars](https://github.com/mavryk-network/mvkt/blob/master/docker-compose.yml#L25) and read some tips about [indexer configuration](#configure-indexer-example-for-mainnet) and [API configuration](#configure-api).
 
 ## Installation (from source)
 
@@ -122,7 +122,7 @@ git clone https://github.com/baking-bad/mvkt.git ~/mvkt
 #### Build indexer
 
 ````
-cd ~/mvkt/Tzkt.Sync/
+cd ~/mvkt/Mvkt.Sync/
 dotnet publish -o ~/mvkt-sync
 ````
 
@@ -169,7 +169,7 @@ You can enable/disable Prometheus metrics by setting `MetricsOptions.Enabled`. B
 
 ````c
 cd ~/mvkt-sync
-dotnet Tzkt.Sync.dll
+dotnet Mvkt.Sync.dll
 ````
 
 That's it. If you want to run the indexer as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
@@ -183,7 +183,7 @@ Suppose, you have already cloned the repo to `~/mvkt` during the steps above.
 #### Build API
 
 ````
-cd ~/mvkt/Tzkt.Api/
+cd ~/mvkt/Mvkt.Api/
 dotnet publish -o ~/mvkt-api
 ````
 
@@ -257,12 +257,12 @@ By default, the API is available at the port `5000`. You can configure it at `Ke
 
 ````
 cd ~/mvkt-api
-dotnet Tzkt.Api.dll
+dotnet Mvkt.Api.dll
 ````
 
 That's it. If you want to run the API as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
 
-## Install Tzkt Indexer and API for testnets
+## Install Mvkt Indexer and API for testnets
 
 In general the steps are the same as for the mainnet, you will just need to use a different RPC endpoint and DB snapshot. Here are presets for the current testnets:
  - Basenet:
