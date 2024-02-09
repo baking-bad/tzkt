@@ -4,12 +4,12 @@
     {
         /// <summary>
         /// Type of the operation, `activation` - is used to activate accounts that were recommended allocations of
-        /// tezos tokens for donations to the Tezos Foundation’s fundraiser.
+        /// mavryk tokens for donations to the Mavryk fundraiser.
         /// </summary>
         public override string Type => OpTypes.Activation;
 
         /// <summary>
-        /// Unique ID of the operation, stored in the TzKT indexer database
+        /// Unique ID of the operation, stored in the MvKT indexer database
         /// </summary>
         public override long Id { get; set; }
 
@@ -39,7 +39,7 @@
         public Alias Account { get; set; }
 
         /// <summary>
-        /// Account activation balance of tezos tokens that were recommended allocations for donations to the Tezos Foundation’s fundraiser
+        /// Account activation balance of mavryk tokens that were recommended allocations for donations to the Mavryk fundraiser
         /// </summary>
         public long Balance { get; set; }
 

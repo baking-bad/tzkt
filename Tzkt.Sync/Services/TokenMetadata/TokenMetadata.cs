@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync.Services
 {

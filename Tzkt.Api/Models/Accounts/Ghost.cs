@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class Ghost : Account
     {
         /// <summary>
-        /// Internal TzKT id
+        /// Internal MvKT id
         /// </summary>
         public int Id { get; set; }
 

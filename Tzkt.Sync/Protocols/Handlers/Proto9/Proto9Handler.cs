@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override string VersionName => "florence_009";
         public override int VersionNumber => 9;
 
-        public Proto9Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto9Handler> logger, IMetrics metrics)
+        public Proto9Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto9Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

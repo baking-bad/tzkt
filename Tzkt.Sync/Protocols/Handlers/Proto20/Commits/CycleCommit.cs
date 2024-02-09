@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto20

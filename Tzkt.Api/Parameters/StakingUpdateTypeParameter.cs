@@ -5,8 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(StakingUpdateTypeBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "stake,unstake,restake,finalize,slash_staked,slash_unstaked")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "stake,unstake,restake,finalize,slash_staked,slash_unstaked")]
     public class StakingUpdateTypeParameter : INormalizable
     {
         /// <summary>

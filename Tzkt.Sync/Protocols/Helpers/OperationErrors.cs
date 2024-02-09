@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync.Protocols
 {

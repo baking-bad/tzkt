@@ -1,4 +1,4 @@
-using Netezos.Keys;
+using Netmavryk.Keys;
 
 namespace Tzkt.Api.Services.Auth
 {

@@ -3,7 +3,7 @@
     public class Domain
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }

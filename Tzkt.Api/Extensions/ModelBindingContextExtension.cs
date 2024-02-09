@@ -2,7 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Api
 {

@@ -6,7 +6,7 @@ using Tzkt.Api.Services.Cache;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(TimestampBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class TimestampParameter : INormalizable
     {
         /// <summary>

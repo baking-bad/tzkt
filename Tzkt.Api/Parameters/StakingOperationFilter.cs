@@ -6,7 +6,7 @@ namespace Tzkt.Api
     {
         /// <summary>
         /// Filter by any of the specified fields (`sender`, or `baker`).
-        /// Example: `anyof.sender.baker=tz1...` will return operations where `sender` OR `baker` is equal to the specified value.
+        /// Example: `anyof.sender.baker=mv1...` will return operations where `sender` OR `baker` is equal to the specified value.
         /// This parameter is useful when you need to get all operations somehow related to the account in a single request.  
         /// Click on the parameter to expand more details.
         /// </summary>

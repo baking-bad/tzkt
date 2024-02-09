@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     public class Token
     {
         /// <summary>
-        /// Internal TzKT id (not the same as `tokenId`).  
+        /// Internal MvKT id (not the same as `tokenId`).  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }

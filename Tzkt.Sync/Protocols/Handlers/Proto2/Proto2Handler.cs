@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override string VersionName => "alpha_002";
         public override int VersionNumber => 2;
 
-        public Proto2Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto2Handler> logger, IMetrics metrics)
+        public Proto2Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto2Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

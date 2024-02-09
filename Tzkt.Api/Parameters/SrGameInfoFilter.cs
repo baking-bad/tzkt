@@ -6,7 +6,7 @@ namespace Tzkt.Api
     public class SrGameInfoFilter : INormalizable
     {
         /// <summary>
-        /// Filter by internal TzKT id.  
+        /// Filter by internal MvKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter id { get; set; }

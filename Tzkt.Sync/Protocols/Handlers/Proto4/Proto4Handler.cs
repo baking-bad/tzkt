@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override string VersionName => "athens_004";
         public override int VersionNumber => 4;
 
-        public Proto4Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto4Handler> logger, IMetrics metrics)
+        public Proto4Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto4Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

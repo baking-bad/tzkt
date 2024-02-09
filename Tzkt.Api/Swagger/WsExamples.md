@@ -25,7 +25,7 @@ namespace TestConsoleCore
         static async Task Main(string[] args)
         {
             var connection = new HubConnectionBuilder()
-                .WithUrl("https://api.tzkt.io/v1/ws")
+                .WithUrl("https://api.mavryk.network/v1/ws")
                 .Build();
 
             async Task Init(Exception arg = null)
@@ -89,7 +89,7 @@ See more details [here](https://docs.microsoft.com/aspnet/core/signalr/javascrip
 
 ````js
 const connection = new signalR.HubConnectionBuilder()
-	.withUrl("https://api.tzkt.io/v1/ws")
+	.withUrl("https://api.mavryk.network/v1/ws")
 	.build();
 
 async function init() {
@@ -158,7 +158,7 @@ async def on_error(message: CompletionMessage) -> None:
 
 
 async def main() -> None:
-    client = SignalRClient('https://api.tzkt.io/v1/ws')
+    client = SignalRClient('https://api.mavryk.network/v1/ws')
 
     client.on_open(on_open)
     client.on_close(on_close)

@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override string VersionName => "nairobi_017";
         public override int VersionNumber => 17;
 
-        public Proto17Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto17Handler> logger, IMetrics metrics)
+        public Proto17Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto17Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

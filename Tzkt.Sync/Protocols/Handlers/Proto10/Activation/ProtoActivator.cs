@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
 using Tzkt.Data.Models;

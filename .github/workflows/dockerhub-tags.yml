@@ -28,21 +28,21 @@ jobs:
           username: ${{ secrets.DOCKER_LOGIN }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Build and push TzKT Sync image
+      - name: Build and push MvKT Sync image
         uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           file: Tzkt.Sync/Dockerfile
           push: true
-          tags: bakingbad/tzkt-sync:${{ env.RELEASE_VERSION }}
+          tags: mavrykdynamics/mvkt-sync:${{ env.RELEASE_VERSION }}
 
 
-      - name: Build and push TzKT API image
+      - name: Build and push MvKT API image
         uses: docker/build-push-action@v3
         with:
           context: .
           platforms: linux/amd64,linux/arm64
           file: Tzkt.Api/Dockerfile
           push: true
-          tags: bakingbad/tzkt-api:${{ env.RELEASE_VERSION }}
+          tags: mavrykdynamics/mvkt-api:${{ env.RELEASE_VERSION }}

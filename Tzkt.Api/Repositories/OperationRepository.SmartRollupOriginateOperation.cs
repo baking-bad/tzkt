@@ -1,6 +1,6 @@
 ﻿using Dapper;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Data;
 

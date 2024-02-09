@@ -1,7 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;

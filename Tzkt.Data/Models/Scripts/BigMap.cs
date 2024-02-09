@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Data.Models
 {
@@ -66,7 +66,7 @@ namespace Tzkt.Data.Models
         Ledger9         = 0b_0000_0010_0000_0001_0000, // big_map (pair address nat) { ... balance ... }
         Ledger10        = 0b_0000_0100_0000_0001_0000, // big_map (pair nat address) { ... balance ... }
         Ledger11        = 0b_0000_1000_0000_0001_0000, // big_map address (pair (map nat nat) (set address)) (QUIPU)
-        Ledger12        = 0b_0001_0000_0000_0001_0000, // big_map bytes (pair ...) (Tezos Domains)
+        Ledger12        = 0b_0001_0000_0000_0001_0000, // big_map bytes (pair ...) (Mavryk Domains)
         LedgerTypes     = 0b_0001_1111_1111_1110_0000,
         LedgerMask      = 0b_0001_1111_1111_1111_0000,
         LedgerNft       = 0b_0001_0000_0000_0100_0000,

@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
@@ -7,7 +7,7 @@ namespace Tzkt.Api.Models
     public class Ticket
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }

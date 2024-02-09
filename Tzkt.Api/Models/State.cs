@@ -58,12 +58,12 @@
         public int KnownLevel { get; set; }
         
         /// <summary>
-        /// The datetime of last TzKT indexer synchronization (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
+        /// The datetime of last MvKT indexer synchronization (ISO 8601, e.g. `2020-02-20T02:40:57Z`)
         /// </summary>
         public DateTime LastSync { get; set; }
         
         /// <summary>
-        /// State of TzKT indexer synchronization
+        /// State of MvKT indexer synchronization
         /// </summary>
         public bool Synced => KnownLevel == Level;
 

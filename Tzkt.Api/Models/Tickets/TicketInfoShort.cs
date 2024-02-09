@@ -1,4 +1,4 @@
-﻿using Netezos.Encoding;
+﻿using Netmavryk.Encoding;
 using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     public class TicketInfoShort
     {
         /// <summary>
-        /// Internal TzKT id.
+        /// Internal MvKT id.
         /// </summary>
         public long Id { get; set; }
 

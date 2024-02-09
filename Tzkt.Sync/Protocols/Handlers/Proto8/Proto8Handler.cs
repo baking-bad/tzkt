@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols
         public override string VersionName => "edo_008";
         public override int VersionNumber => 8;
 
-        public Proto8Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto8Handler> logger, IMetrics metrics)
+        public Proto8Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto8Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

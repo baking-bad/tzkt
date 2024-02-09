@@ -3,7 +3,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -99,7 +99,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a contract account with the specified address.
         /// </remarks>
         /// <param name="address">Contract address (starting with KT)</param>
-        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing to switch to new functionality smoothly.</param>
+        /// <param name="legacy">If `true` (by default), the `metadata` field will contain mvkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing to switch to new functionality smoothly.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<ActionResult<Contract>> GetByAddress([Required][KTAddress] string address, bool legacy = true)
@@ -845,7 +845,7 @@ namespace Tzkt.Api.Controllers
         /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
         /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/keys/{key}")]
@@ -900,7 +900,7 @@ namespace Tzkt.Api.Controllers
         /// For example, if the storage path is `ledger` or `assets.ledger`, then the name is `ledger`.
         /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="sort">Sorts bigmap updates by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -1056,7 +1056,7 @@ namespace Tzkt.Api.Controllers
         /// If there are multiple bigmaps with the same name, for example `assets.ledger` and `tokens.ledger`, you can specify the full path.</param>
         /// <param name="level">Level of the block at which you want to get bigmap key</param>
         /// <param name="key">Either a key hash (`expr123...`) or a plain value (`foo...`).
-        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"tz123","nat":"123"}`.</param>
+        /// Even if the key is complex (an object or an array), you can specify it as is, for example, `/keys/{"address":"mv123","nat":"123"}`.</param>
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}/{key}")]

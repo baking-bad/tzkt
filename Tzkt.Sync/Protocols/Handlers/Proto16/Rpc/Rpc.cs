@@ -5,7 +5,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 {
     class Rpc : Proto12.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
 
         public override Task<JsonElement> GetTicketBalance(int level, string address, string ticket)
         {

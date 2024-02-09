@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync.Protocols.Proto14
 {

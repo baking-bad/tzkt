@@ -1,7 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Netezos.Contracts;
-using Netezos.Encoding;
-using Netezos.Keys;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
+using Netmavryk.Keys;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 

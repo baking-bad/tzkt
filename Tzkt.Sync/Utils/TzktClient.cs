@@ -33,7 +33,7 @@ namespace Tzkt.Sync
                         _HttpClient.DefaultRequestHeaders.Accept.Add(
                             new MediaTypeWithQualityHeaderValue("application/json"));
                         _HttpClient.DefaultRequestHeaders.UserAgent.Add(
-                            new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
+                            new ProductInfoHeaderValue("MvKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
                         _HttpClient.Timeout = RequestTimeout;
 
                         _Expiration = DateTime.UtcNow.AddMinutes(120);

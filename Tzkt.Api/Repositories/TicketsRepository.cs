@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;

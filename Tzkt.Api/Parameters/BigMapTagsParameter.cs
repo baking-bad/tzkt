@@ -5,8 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(BigMapTagsBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "metadata,token_metadata,ledger")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "metadata,token_metadata,ledger")]
     public class BigMapTagsParameter : INormalizable
     {
         /// <summary>

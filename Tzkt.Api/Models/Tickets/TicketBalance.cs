@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     public class TicketBalance
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }

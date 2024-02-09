@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
 using Dynamic.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Domains

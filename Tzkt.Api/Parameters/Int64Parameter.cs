@@ -5,7 +5,7 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(Int64Binder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class Int64Parameter : INormalizable
     {
         /// <summary>

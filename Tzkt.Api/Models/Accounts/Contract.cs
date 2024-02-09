@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class Contract : Account
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }
@@ -192,7 +192,7 @@ namespace Tzkt.Api.Models
         public int CodeHash { get; set; }
 
         /// <summary>
-        /// TZIP-16 metadata (with `?legacy=true` this field will contain tzkt profile info).
+        /// TZIP-16 metadata (with `?legacy=true` this field will contain mvkt profile info).
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson Metadata { get; set; }

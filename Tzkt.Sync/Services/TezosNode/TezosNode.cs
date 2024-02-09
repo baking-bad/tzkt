@@ -5,10 +5,10 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public sealed class TezosNode : IDisposable
+    public sealed class MavrykNode : IDisposable
     {
         public string BaseUrl { get; }
-        readonly TezosNodeConfig Config;
+        readonly MavrykNodeConfig Config;
         readonly TzktClient Rpc;
         readonly IServiceScopeFactory Services;
         readonly ILogger Logger;
@@ -18,9 +18,9 @@ namespace Tzkt.Sync.Services
         DateTime NextBlock;
         DateTime NextSyncStateUpdate;
 
-        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger)
+        public MavrykNode(IServiceScopeFactory services, IConfiguration config, ILogger<MavrykNode> logger)
         {
-            Config = config.GetTezosNodeConfig();
+            Config = config.GetMavrykNodeConfig();
             BaseUrl = $"{Config.Endpoint.TrimEnd('/')}/";
             Rpc = new TzktClient(BaseUrl, Config.Timeout);
             Services = services;
@@ -100,11 +100,11 @@ namespace Tzkt.Sync.Services
         public void Dispose() => Rpc.Dispose();
     }
 
-    public static class TezosNodeExt
+    public static class MavrykNodeExt
     {
-        public static void AddTezosNode(this IServiceCollection services)
+        public static void AddMavrykNode(this IServiceCollection services)
         {
-            services.AddSingleton<TezosNode>();
+            services.AddSingleton<MavrykNode>();
         }
     }
 }

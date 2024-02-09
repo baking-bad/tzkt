@@ -6,7 +6,7 @@ namespace Tzkt.Api
     public class TicketTransferFilter : INormalizable
     {
         /// <summary>
-        /// Filter by internal TzKT id.  
+        /// Filter by internal MvKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter id { get; set; }
@@ -31,7 +31,7 @@ namespace Tzkt.Api
 
         /// <summary>
         /// Filter by any of the specified fields (`from` or `to`).
-        /// Example: `anyof.from.to=tz1...` will return transfers where `from` OR `to` is equal to the specified value.
+        /// Example: `anyof.from.to=mv1...` will return transfers where `from` OR `to` is equal to the specified value.
         /// This parameter is useful when you need to get both incoming and outgoing transfers of the account at once.  
         /// Click on the parameter to expand more details.
         /// </summary>

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.Json;
 using System.Threading.Tasks;
-using Netezos.Keys;
+using Netmavryk.Keys;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 

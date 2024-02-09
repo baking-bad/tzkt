@@ -3,7 +3,7 @@
     public class SrGameInfo
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// </summary>
         public long Id { get; set; }
 
@@ -28,22 +28,22 @@
         public SrCommitmentInfo OpponentCommitment { get; set; }
 
         /// <summary>
-        /// In case the initiator won, this field will contain the reward amount (in mutez).
+        /// In case the initiator won, this field will contain the reward amount (in mumav).
         /// </summary>
         public long? InitiatorReward { get; set; }
 
         /// <summary>
-        /// In case the initiator lost (including a `draw`), this field will contain the loss amount (in mutez).
+        /// In case the initiator lost (including a `draw`), this field will contain the loss amount (in mumav).
         /// </summary>
         public long? InitiatorLoss { get; set; }
 
         /// <summary>
-        /// In case the opponent won, this field will contain the reward amount (in mutez).
+        /// In case the opponent won, this field will contain the reward amount (in mumav).
         /// </summary>
         public long? OpponentReward { get; set; }
 
         /// <summary>
-        /// In case the opponent lost (including a `draw`), this field will contain the loss amount (in mutez).
+        /// In case the opponent lost (including a `draw`), this field will contain the loss amount (in mumav).
         /// </summary>
         public long? OpponentLoss { get; set; }
     }

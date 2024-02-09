@@ -1,5 +1,5 @@
 ﻿using NJsonSchema.Annotations;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Api.Models
 {

@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     public class TokenBalance
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }
@@ -31,7 +31,7 @@ namespace Tzkt.Api.Models
         public BigInteger Balance { get; set; }
 
         /// <summary>
-        /// Balance value in mutez, based on the current token price.  
+        /// Balance value in mumav, based on the current token price.  
         /// **[sortable]**
         /// </summary>
         [JsonSchemaType(typeof(string), IsNullable = true)]

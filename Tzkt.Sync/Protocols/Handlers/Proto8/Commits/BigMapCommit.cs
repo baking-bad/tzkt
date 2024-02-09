@@ -1,5 +1,5 @@
-﻿using Netezos.Contracts;
-using Netezos.Encoding;
+﻿using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto8
@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto8
         {
             var tags = base.GetTags(contract, node);
 
-            // custom handler for Tezos Domains
+            // custom handler for Mavryk Domains
             if (contract.Address == "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS" &&
                 (node.Value as MichelineInt).Value == 1264) // %records
                 tags |= BigMapTag.Ledger12;

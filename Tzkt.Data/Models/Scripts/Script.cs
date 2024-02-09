@@ -1,8 +1,8 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Contracts;
-using Netezos.Encoding;
-using Netezos.Utils;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
+using Netmavryk.Utils;
 
 namespace Tzkt.Data.Models
 {

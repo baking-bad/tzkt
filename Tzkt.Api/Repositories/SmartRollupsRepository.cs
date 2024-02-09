@@ -1,8 +1,8 @@
 ﻿using System.Data;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
-using Netezos.Contracts;
+using Netmavryk.Encoding;
+using Netmavryk.Contracts;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 

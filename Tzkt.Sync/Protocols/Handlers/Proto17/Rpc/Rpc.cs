@@ -4,6 +4,6 @@ namespace Tzkt.Sync.Protocols.Proto17
 {
     class Rpc : Proto16.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
     }
 }

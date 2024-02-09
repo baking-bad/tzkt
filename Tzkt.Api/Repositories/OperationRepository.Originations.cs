@@ -1,5 +1,5 @@
-﻿using Dapper;
-using Netezos.Encoding;
+using Dapper;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Data;

@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Netezos.Rpc;
+using Netmavryk.Rpc;
 using Tzkt.Data;
 using Tzkt.Data.Models.Base;
 
@@ -7,7 +7,7 @@ namespace Tzkt.Sync.Tests.Database
 {
     internal class AppStateTests
     {
-        public static async Task RunAsync(TzktContext db, TezosRpc rpc)
+        public static async Task RunAsync(TzktContext db, MavrykRpc rpc)
         {
             var state = await db.AppState.SingleAsync();
             var block = await rpc.Blocks[state.Level].GetAsync();

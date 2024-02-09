@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync.Protocols
 {

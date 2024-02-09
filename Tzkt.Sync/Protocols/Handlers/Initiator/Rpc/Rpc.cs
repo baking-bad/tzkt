@@ -4,6 +4,6 @@ namespace Tzkt.Sync.Protocols.Initiator
 {
     sealed class Rpc : Proto1.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
     }
 }

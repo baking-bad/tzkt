@@ -168,7 +168,7 @@ namespace Tzkt.Api.Controllers
         /// Returns an account with the specified address.
         /// </remarks>
         /// <param name="address">Account address</param>
-        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
+        /// <param name="legacy">If `true` (by default), the `metadata` field will contain mvkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<ActionResult<Account>> GetByAddress(

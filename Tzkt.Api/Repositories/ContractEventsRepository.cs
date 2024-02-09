@@ -2,7 +2,7 @@
 using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 

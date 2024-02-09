@@ -8,7 +8,7 @@
         public override string Type => OpTypes.Autostaking;
 
         /// <summary>
-        /// Internal TzKT ID.  
+        /// Internal MvKT ID.  
         /// **[sortable]**
         /// </summary>
         public override long Id { get; set; }

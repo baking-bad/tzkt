@@ -5,8 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(ContractTagsBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "fa1,fa12,fa2")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "fa1,fa12,fa2")]
     public class ContractTagsParameter : INormalizable
     {
         /// <summary>

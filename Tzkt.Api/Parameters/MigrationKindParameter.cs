@@ -5,8 +5,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(MigrationKindBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "bootstrap,activate_delegate,airdrop,proposal_invoice,code_change,origination,subsidy,remove_bigmap_key")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "bootstrap,activate_delegate,airdrop,proposal_invoice,code_change,origination,subsidy,remove_bigmap_key")]
     public class MigrationKindParameter : INormalizable
     {
         /// <summary>

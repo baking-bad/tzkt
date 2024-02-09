@@ -137,7 +137,7 @@ State contains level (`int`) of the last processed block.
 ````js
 connection.on("accounts", (msg) => { console.log(msg); });
 // subscribe to an account
-await connection.invoke("SubscribeToAccounts", { addresses: [ 'tz1234...' ] });
+await connection.invoke("SubscribeToAccounts", { addresses: [ 'mv1234...' ] });
 ````
 
 ---			
@@ -187,8 +187,8 @@ connection.on("operations", (msg) => { console.log(msg); });
 await connection.invoke("SubscribeToOperations", { types: 'transaction' });
 // subscribe to all transactions of the entire contract family
 await connection.invoke("SubscribeToOperations", { types: 'transaction', codeHash: 1928472 });
-// subscribe to all delegations and originations related to the address 'tz1234...'
-await connection.invoke("SubscribeToOperations", { address: 'tz1234...', types: 'delegation,origination' });
+// subscribe to all delegations and originations related to the address 'mv1234...'
+await connection.invoke("SubscribeToOperations", { address: 'mv1234...', types: 'delegation,origination' });
 ````
 
 ---			
@@ -319,18 +319,18 @@ You can set various combinations of these fields to configure what you want to s
 
 // subscribe to token balance updates for the account
 {		
-	account: 'tz1...'
+	account: 'mv1...'
 } 	 
 
 // subscribe to balance updates of all tokens within the contract for the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	contract: 'KT1...'
 } 
 
 // subscribe to a particular token balance updates for the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	contract: 'KT1...',
 	tokenId: '0'
 }
@@ -350,8 +350,8 @@ State contains level (`int`) of the last processed block.
 
 ````js
 connection.on("token_balances", (msg) => { console.log(msg); });
-// subscribe to all token balances of the 'tz123...' account
-await connection.invoke("SubscribeToTokenBalances", { account: 'tz123...' });
+// subscribe to all token balances of the 'mv123...' account
+await connection.invoke("SubscribeToTokenBalances", { account: 'mv123...' });
 ````
 
 ---			
@@ -400,18 +400,18 @@ You can set various combinations of these fields to configure what you want to s
 
 // subscribe to transfers from/to the account
 {		
-	account: 'tz1...'
+	account: 'mv1...'
 } 	 
 
 // subscribe to transfers of all tokens within the contract from/to the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	contract: 'KT1...'
 } 
 
 // subscribe to transfers of a particular token from/to the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	contract: 'KT1...',
 	tokenId: '0'
 }
@@ -431,8 +431,8 @@ State contains level (`int`) of the last processed block.
 
 ````js
 connection.on("transfers", (msg) => { console.log(msg); });
-// subscribe to all transfers of the 'tz123...' account
-await connection.invoke("SubscribeToTokenTransfers", { account: 'tz123...' });
+// subscribe to all transfers of the 'mv123...' account
+await connection.invoke("SubscribeToTokenTransfers", { account: 'mv123...' });
 ````
 
 ---		
@@ -474,12 +474,12 @@ You can set various combinations of these fields to configure what you want to s
 
 // subscribe to ticket balance updates for the account
 {		
-	account: 'tz1...'
+	account: 'mv1...'
 } 	 
 
 // subscribe to balance updates of all tickets within the ticketer for the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	ticketer: 'KT1...'
 } 
 ````
@@ -498,8 +498,8 @@ State contains level (`int`) of the last processed block.
 
 ````js
 connection.on("ticket_balances", (msg) => { console.log(msg); });
-// subscribe to all ticket balances of the 'tz123...' account
-await connection.invoke("SubscribeToTicketBalances", { account: 'tz123...' });
+// subscribe to all ticket balances of the 'mv123...' account
+await connection.invoke("SubscribeToTicketBalances", { account: 'mv123...' });
 ````
 
 ---			
@@ -541,12 +541,12 @@ You can set various combinations of these fields to configure what you want to s
 
 // subscribe to transfers from/to the account
 {		
-	account: 'tz1...'
+	account: 'mv1...'
 } 	 
 
 // subscribe to transfers of all tickets within the ticketer from/to the account
 {		
-	account: 'tz1...',
+	account: 'mv1...',
 	ticketer: 'KT1...'
 }
 ````
@@ -565,8 +565,8 @@ State contains level (`int`) of the last processed block.
 
 ````js
 connection.on("ticket_transfers", (msg) => { console.log(msg); });
-// subscribe to all transfers of the 'tz123...' account
-await connection.invoke("SubscribeToTicketTransfers", { account: 'tz123...' });
+// subscribe to all transfers of the 'mv123...' account
+await connection.invoke("SubscribeToTicketTransfers", { account: 'mv123...' });
 ````
 
 ---		

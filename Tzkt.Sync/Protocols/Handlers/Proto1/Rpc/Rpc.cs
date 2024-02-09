@@ -5,9 +5,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     class Rpc : IRpc
     {
-        protected readonly TezosNode Node;
+        protected readonly MavrykNode Node;
 
-        public Rpc(TezosNode node) => Node = node;
+        public Rpc(MavrykNode node) => Node = node;
 
         #region indexer
         public virtual Task<JsonElement> GetBlockAsync(int level)

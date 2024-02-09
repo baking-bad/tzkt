@@ -5,14 +5,14 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AddressBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class AddressParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=` is the same as `param=`). \
         /// Specify an account address to get items where the specified field is equal to the specified value.
         /// 
-        /// Example: `?address=tz123..`.
+        /// Example: `?address=mv123..`.
         /// </summary>
         public string Eq { get; set; }
 
@@ -20,7 +20,7 @@ namespace Tzkt.Api
         /// **Not equal** filter mode. \
         /// Specify an account address to get items where the specified field is not equal to the specified value.
         /// 
-        /// Example: `?address.ne=tz123..`.
+        /// Example: `?address.ne=mv123..`.
         /// </summary>
         public string Ne { get; set; }
 
@@ -28,7 +28,7 @@ namespace Tzkt.Api
         /// **In list** (any of) filter mode. \
         /// Specify a comma-separated list of account addresses to get items where the specified field is equal to one of the specified values.
         /// 
-        /// Example: `?address.in=tz123..,tz345..`.
+        /// Example: `?address.in=mv123..,mv345..`.
         /// </summary>
         public List<string> In { get; set; }
 
@@ -36,7 +36,7 @@ namespace Tzkt.Api
         /// **Not in list** (none of) filter mode. \
         /// Specify a comma-separated list of account addresses to get items where the specified field is not equal to all the specified values.
         /// 
-        /// Example: `?address.ni=tz123..,tz345..`.
+        /// Example: `?address.ni=mv123..,mv345..`.
         /// </summary>
         public List<string> Ni { get; set; }
 
