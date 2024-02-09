@@ -7,7 +7,7 @@ using Microsoft.Extensions.Logging;
 using App.Metrics;
 using App.Metrics.Extensions.Configuration;
 using App.Metrics.Formatters.Prometheus;
-using Netezos.Rpc;
+using Netmavryk.Rpc;
 using Tzkt.Data;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Tests.Database;
@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Tests
             builder.Configuration.Sources.Clear();
             builder.Configuration.AddJsonFile("settings.json", true);
             builder.Configuration.AddEnvironmentVariables();
-            builder.Configuration.AddEnvironmentVariables("TZKT_SYNC_");
+            builder.Configuration.AddEnvironmentVariables("MVKT_SYNC_");
             builder.Configuration.AddCommandLine(args);
             #endregion
 
@@ -38,8 +38,8 @@ namespace Tzkt.Sync.Tests
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             builder.Services.AddCaches();
-            builder.Services.AddTezosNode();
-            builder.Services.AddTezosProtocols();
+            builder.Services.AddMavrykNode();
+            builder.Services.AddMavrykProtocols();
             builder.Services.AddSingleton<IQuoteProvider, DefaultQuotesProvider>();
             builder.Services.AddScoped<QuotesService>();
 
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Tests
 
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-                var rpc = new TezosRpc(builder.Configuration.GetSection("TezosNode").GetValue<string>("Endpoint"), 60);
+                var rpc = new MavrykRpc(builder.Configuration.GetSection("MavrykNode").GetValue<string>("Endpoint"), 60);
 
                 logger.LogInformation("Run AppStateTests");
                 await AppStateTests.RunAsync(db, rpc);

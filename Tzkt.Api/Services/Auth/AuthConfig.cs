@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Netezos.Keys;
+using Netmavryk.Keys;
 
 namespace Tzkt.Api.Services.Auth
 {

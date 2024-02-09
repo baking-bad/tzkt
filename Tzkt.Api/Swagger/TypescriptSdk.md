@@ -1,4 +1,4 @@
-TzKT API is accompanied by a Typescript SDK you can use both on the client side and on the backend.  
+MvKT API is accompanied by a Typescript SDK you can use both on the client side and on the backend.  
 It offers fully typed response models and a convenient query builder with autocompletion. Also it is designed to support tree-shaking and to introduce a minimal overhead to the bundle size.
 
 Check out the following resources:
@@ -60,11 +60,11 @@ Please refer to the [original documentation](https://github.com/cellular/oazapft
 
 ### Subscriptions
 
-Create an instance of events service specifying TzKT WebSocket endpoint.
+Create an instance of events service specifying MvKT WebSocket endpoint.
 ```js
 import { EventsService } from "@tzkt/sdk-events";
 
-const events = new EventsService({ url: "https://api.tzkt.io/v1/ws", reconnect: true });
+const events = new EventsService({ url: "https://api.mavryk.network/v1/ws", reconnect: true });
 ```
 
 Connection is not initiated until the first request (lazy connection):
@@ -73,7 +73,7 @@ const sub = events.operations({ types: [ 'origination' ] })
     .subscribe({ next: console.log });
 ```
 
-Events service implements subscription router internally (on TzKT your subscriptions are aggregated) hence you can always "unsubscribe" from new updates (however it does not change anything on the TzKT side, just stops firing your observer):
+Events service implements subscription router internally (on MvKT your subscriptions are aggregated) hence you can always "unsubscribe" from new updates (however it does not change anything on the MvKT side, just stops firing your observer):
 ```js
 sub.unsubscribe();
 ```
@@ -235,7 +235,7 @@ const r = await tokensGetTokens({
 ```ts
 import { tokensGetTokenBalances } from '@tzkt/sdk-api'
 
-const account = 'tz1SLgrDBpFWjGCnCwyNpCpQC1v8v2N8M2Ks'
+const account = 'mv1BdDLZpqki1TTHRFSTmnAX8RaYG4LVdBKx'
 const minBalance = 0
 const symbol = 'OBJKT'
 const limit = 10
@@ -316,7 +316,7 @@ import { operationsGetTransactions } from '@tzkt/sdk-api'
 const target = 'KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV'
 const parameter = {
   path: 'to',
-  value: 'tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a'
+  value: 'mv1SbSpDPADHWXhyr8nJSjJXNMwLirPQ9cyN'
 }
 
 const r = await operationsGetTransactions({
@@ -340,7 +340,7 @@ import { operationsGetTransactions } from '@tzkt/sdk-api'
 const target = 'KT1K9gCRgaLRFKTErYt1wVxA3Frb9FjasjTV'
 const parameter = {
   path: 'to',
-  value: 'tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a'
+  value: 'mv1SbSpDPADHWXhyr8nJSjJXNMwLirPQ9cyN'
 }
 
 const r = await operationsGetTransactions({
@@ -403,7 +403,7 @@ import { operationsGetTransactions } from '@tzkt/sdk-api'
 
 const target = 'KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn'
 const entrypoints = ['mint', 'transfer', 'burn']
-const parameter = '*tz1aKTCbAUuea2RV9kxqRVRg3HT7f1RKnp6a*'
+const parameter = '*mv1SbSpDPADHWXhyr8nJSjJXNMwLirPQ9cyN*'
 
 const r = await operationsGetTransactions({
   target: {

@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Numerics;
 using System.Text.Json;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols

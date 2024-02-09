@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols
         public override IRpc Rpc { get; }
         public override string Version => "genesis";
 
-        public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<GenesisHandler> logger, IMetrics metrics)
+        public GenesisHandler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<GenesisHandler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Diagnostics = new Diagnostics();

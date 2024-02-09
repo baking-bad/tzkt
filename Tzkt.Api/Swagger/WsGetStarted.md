@@ -1,4 +1,4 @@
-TzKT WebSocket API is based on [SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr)
+MvKT WebSocket API is based on [SignalR](https://docs.microsoft.com/aspnet/signalr/overview/getting-started/introduction-to-signalr)
 that enables receiving data from the Tezos blockchain in real-time.
 
 This is a very useful feature, especially when you need to receive updates immediately, as soon as they appear on the node and are indexed by the indexer.
@@ -44,7 +44,7 @@ After subscription is registered and state message is received, client will rece
 blocks, operations, or whatever you have subscribed to), that means you may receive multiple items in a single message,
 which is great for performance and network traffic.
 
-TzKT WebSocket API operates with the same data models as the REST API to achieve full compatibility and data consistency.
+MvKT WebSocket API operates with the same data models as the REST API to achieve full compatibility and data consistency.
 
 #### 3. Reorg message	
 

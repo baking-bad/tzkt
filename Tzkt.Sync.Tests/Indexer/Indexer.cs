@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Tests
         static async Task<Header> GetNodeHeadAsync(IHost host)
         {
             using var scope = host.Services.CreateScope();
-            var node = scope.ServiceProvider.GetRequiredService<TezosNode>();
+            var node = scope.ServiceProvider.GetRequiredService<MavrykNode>();
             return await node.GetHeaderAsync();
         }
     }

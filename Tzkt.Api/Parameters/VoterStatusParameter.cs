@@ -7,8 +7,8 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(VoterStatusBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "none,upvoted,voted_yay,voted_nay,voted_pass")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "none,upvoted,voted_yay,voted_nay,voted_pass")]
     public class VoterStatusParameter : INormalizable
     {
         /// <summary>

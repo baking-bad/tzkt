@@ -17,7 +17,7 @@
                 options.OperationProcessors.Add(new AnyOfExtensionProcessor("Tickets_GetTicketTransfersCount", "from,to"));
                 options.PostProcess = document =>
                 {
-                    document.Info.Title = "TzKT API";
+                    document.Info.Title = "MvKT API";
                     document.Info.Version = Version;
                     document.Info.Contact = new NSwag.OpenApiContact
                     {

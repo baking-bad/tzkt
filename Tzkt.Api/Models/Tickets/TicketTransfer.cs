@@ -3,7 +3,7 @@
     public class TicketTransfer
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }
@@ -44,17 +44,17 @@
         public string Amount { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the transaction operation, caused the ticket transfer.
+        /// Internal MvKT id of the transaction operation, caused the ticket transfer.
         /// </summary>
         public long? TransactionId { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the transfer_ticket operation, caused the ticket transfer.
+        /// Internal MvKT id of the transfer_ticket operation, caused the ticket transfer.
         /// </summary>
         public long? TransferTicketId { get; set; }
 
         /// <summary>
-        /// Internal TzKT id of the smart_rollup_execute operation, caused the ticket transfer.
+        /// Internal MvKT id of the smart_rollup_execute operation, caused the ticket transfer.
         /// </summary>
         public long? SmartRollupExecuteId { get; set; }
     }

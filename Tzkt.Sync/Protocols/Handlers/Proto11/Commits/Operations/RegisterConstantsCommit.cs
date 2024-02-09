@@ -1,4 +1,4 @@
-﻿using Netezos.Encoding;
+﻿using Netmavryk.Encoding;
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;

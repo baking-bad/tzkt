@@ -8,14 +8,14 @@ using NJsonSchema.Annotations;
 namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(AnyOfBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "anyof-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "anyof-parameter")]
     public class AnyOfParameter : INormalizable
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
         /// Specify a value to get items where any of the specified fields is equal to the specified value.
         /// 
-        /// Example: `?anyof.sender.target=tz1WnfXMPaNTBmH7DBPwqCWs9cPDJdkGBTZ8`.
+        /// Example: `?anyof.sender.target=mv1VXHDHLA9dAKA8vpGuU7P8GXCVqSJ99obq`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Eq { get; set; }
@@ -24,7 +24,7 @@ namespace Tzkt.Api
         /// **In list** (any of) filter mode. \
         /// Specify a comma-separated list of values to get items where any of the specified fields is equal to one of the specified values.
         /// 
-        /// Example: `?anyof.sender.target.in=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M,null`.
+        /// Example: `?anyof.sender.target.in=mv1HeozQdwBYmdjaKoTaGfLc4qxYWkCTSEtL,mv1FABmn7c7rKWKgKh5RYBVQkBSv3sET36zt,null`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         public List<int> In { get; set; }

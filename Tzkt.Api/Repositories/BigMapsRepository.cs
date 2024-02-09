@@ -6,8 +6,8 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Dapper;
-using Netezos.Encoding;
-using Netezos.Contracts;
+using Netmavryk.Encoding;
+using Netmavryk.Contracts;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 

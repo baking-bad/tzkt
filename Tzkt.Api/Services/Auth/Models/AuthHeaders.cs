@@ -4,16 +4,16 @@ namespace Tzkt.Api.Services.Auth
 {
     public class AuthHeaders
     {
-        [FromHeader(Name="X-TZKT-USER")]
+        [FromHeader(Name="X-MVKT-USER")]
         public string User { get; set; }
  
-        [FromHeader(Name="X-TZKT-NONCE")]
+        [FromHeader(Name="X-MVKT-NONCE")]
         public long? Nonce { get; set; }
 
-        [FromHeader(Name = "X-TZKT-PASSWORD")]
+        [FromHeader(Name = "X-MVKT-PASSWORD")]
         public string Password { get; set; }
 
-        [FromHeader(Name="X-TZKT-SIGNATURE")]
+        [FromHeader(Name="X-MVKT-SIGNATURE")]
         public string Signature { get; set; }
     }
 }

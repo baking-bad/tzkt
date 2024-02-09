@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using Dapper;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api

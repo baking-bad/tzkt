@@ -1,5 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 

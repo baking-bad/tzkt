@@ -28,13 +28,13 @@ namespace Tzkt.Api.Services.Auth
 
             if (string.IsNullOrEmpty(headers?.User))
             {
-                error = $"The X-TZKT-USER header is required";
+                error = $"The X-MVKT-USER header is required";
                 return false;
             }
 
             if (string.IsNullOrEmpty(headers.Password))
             {
-                error = $"The X-TZKT-PASSWORD header is required";
+                error = $"The X-MVKT-PASSWORD header is required";
                 return false;
             }
 

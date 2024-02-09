@@ -5,7 +5,7 @@ namespace Tzkt.Sync.Protocols.Proto6
 {
     class Rpc : Proto1.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
 
         public override Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?cycle={cycle}&max_priority=7&all=true");

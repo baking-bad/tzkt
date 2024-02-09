@@ -6,7 +6,7 @@ namespace Tzkt.Api
     public class TokenInfoFilter : INormalizable
     {
         /// <summary>
-        /// Filter by internal TzKT id. Note, this is not the same as `tokenId`.  
+        /// Filter by internal MvKT id. Note, this is not the same as `tokenId`.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter id { get; set; }

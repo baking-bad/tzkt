@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Api
 {

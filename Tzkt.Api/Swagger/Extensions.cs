@@ -31,7 +31,7 @@ namespace Tzkt.Api.Swagger
         private string OperationId { get; }
         private string AnyOfValues { get; }
         private const string AnyOfName = "anyof";
-        private const string AnyOfExtensionKey = "x-tzkt-anyof-parameter";
+        private const string AnyOfExtensionKey = "x-mvkt-anyof-parameter";
 
         public AnyOfExtensionProcessor(string operationId, string anyOfValues)
         {

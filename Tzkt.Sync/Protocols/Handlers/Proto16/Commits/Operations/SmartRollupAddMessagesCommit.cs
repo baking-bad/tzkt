@@ -1,5 +1,5 @@
 ﻿using System.Text.Json;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 

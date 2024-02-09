@@ -108,7 +108,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             accuser.Balance -= doubleBaking.Reward;
             offender.Balance += doubleBaking.LostStaked;
             offender.StakingBalance += doubleBaking.Reward * 2;
-            // here we can miss 1 mutez, but this may happen only in legacy protocols
+            // here we can miss 1 mumav, but this may happen only in legacy protocols
             // TODO: replace it with NotImplementedException after Ithaca
 
             accuser.DoubleBakingCount--;

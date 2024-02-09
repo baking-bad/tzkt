@@ -1,8 +1,8 @@
 ﻿using System.Text.Json;
-using Netezos.Encoding;
-using Netezos.Forging;
-using Netezos.Forging.Models;
-using Netezos.Keys;
+using Netmavryk.Encoding;
+using Netmavryk.Forging;
+using Netmavryk.Forging.Models;
+using Netmavryk.Keys;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18

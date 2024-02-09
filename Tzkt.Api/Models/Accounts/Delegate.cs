@@ -5,7 +5,7 @@ namespace Tzkt.Api.Models
     public class Delegate : Account
     {
         /// <summary>
-        /// Internal TzKT id
+        /// Internal MvKT id
         /// </summary>
         public int Id { get; set; }
 
@@ -234,7 +234,7 @@ namespace Tzkt.Api.Models
 
         /// <summary>
         /// Number of account activation operations. Are used to activate accounts that were recommended allocations of
-        /// tezos tokens for donations to the Tezos Foundation’s fundraiser
+        /// mavryk tokens for donations to the Mavryk fundraiser
         /// </summary>
         public int NumActivations { get; set; }
 

@@ -5,9 +5,9 @@ namespace Tzkt.Sync.Protocols.Genesis
 {
     class Rpc : IRpc
     {
-        readonly TezosNode Node;
+        readonly MavrykNode Node;
 
-        public Rpc(TezosNode node) => Node = node;
+        public Rpc(MavrykNode node) => Node = node;
 
         #region indexer
         public Task<JsonElement> GetBlockAsync(int level)

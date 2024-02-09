@@ -132,7 +132,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body);
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")))
+                if (extras.Any(x => !Regex.IsMatch(x.Key, "^(mv1|mv2|mv3|mv4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")))
                     return new BadRequest("body", "Invalid account address");
 
                 return Ok(await Extras.UpdateAccountExtras(extras, section));

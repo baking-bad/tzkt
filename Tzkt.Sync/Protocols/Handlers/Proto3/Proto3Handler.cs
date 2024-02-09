@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols
         public override IRpc Rpc { get; }
         public override string Version => "alpha_003";
 
-        public Proto3Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto3Handler> logger, IMetrics metrics)
+        public Proto3Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto3Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

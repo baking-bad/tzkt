@@ -4,8 +4,8 @@ using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Contracts;
-using Netezos.Encoding;
+using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -25,10 +25,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
-            // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
             Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
@@ -229,10 +227,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
-            // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
-            // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
             Db.TryAttach(sender);
             Db.TryAttach(sender.Delegate);

@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
-using Netezos.Encoding;
-using Netezos.Keys;
-using Netezos.Utils;
+using Netmavryk.Encoding;
+using Netmavryk.Keys;
+using Netmavryk.Utils;
 
 namespace Tzkt.Api.Services.Auth
 {
@@ -79,19 +79,19 @@ namespace Tzkt.Api.Services.Auth
             
             if (string.IsNullOrEmpty(headers?.User))
             {
-                error = "The X-TZKT-USER header is required";
+                error = "The X-MVKT-USER header is required";
                 return false;
             }
 
             if (headers.Nonce == null)
             {
-                error = "The X-TZKT-NONCE header is required";
+                error = "The X-MVKT-NONCE header is required";
                 return false;
             }
 
             if (string.IsNullOrEmpty(headers.Signature))
             {
-                error = "The X-TZKT-SIGNATURE header is required";
+                error = "The X-MVKT-SIGNATURE header is required";
                 return false;
             }
 

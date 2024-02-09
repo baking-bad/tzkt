@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols
         public override IRpc Rpc { get; }
         public override string Version => "delphi_007";
 
-        public Proto7Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto7Handler> logger, IMetrics metrics)
+        public Proto7Handler(MavrykNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto7Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

@@ -1,17 +1,17 @@
-﻿using Netezos.Encoding;
-using Netezos.Rpc;
+﻿using Netmavryk.Encoding;
+using Netmavryk.Rpc;
 
 namespace Tzkt.Api.Services
 {
     public sealed class RpcHelpers : IDisposable
     {
-        readonly TezosRpc Rpc;
+        readonly MavrykRpc Rpc;
         string ChainId;
 
         public RpcHelpers(IConfiguration config)
         {
             var _config = config.GetRpcHelpersConfig();
-            Rpc = _config.Enabled ? new TezosRpc(_config.Endpoint, _config.Timeout) : null;
+            Rpc = _config.Enabled ? new MavrykRpc(_config.Endpoint, _config.Timeout) : null;
         }
 
         public async Task<string> GetChainId()

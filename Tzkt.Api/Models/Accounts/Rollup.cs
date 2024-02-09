@@ -6,7 +6,7 @@ namespace Tzkt.Api.Models
     public class Rollup : Account
     {
         /// <summary>
-        /// Internal TzKT id
+        /// Internal MvKT id
         /// </summary>
         public int Id { get; set; }
 
@@ -31,7 +31,7 @@ namespace Tzkt.Api.Models
         public Alias Creator { get; set; }
 
         /// <summary>
-        /// Amount of mutez locked as bonds
+        /// Amount of mumav locked as bonds
         /// </summary>
         public long RollupBonds { get; set; }
 

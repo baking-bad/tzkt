@@ -1,11 +1,11 @@
-﻿using Netezos.Encoding;
+﻿using Netmavryk.Encoding;
 
 namespace Tzkt.Api.Models
 {
     public class TicketInfo
     {
         /// <summary>
-        /// Internal TzKT id.
+        /// Internal MvKT id.
         /// </summary>
         public long Id { get; set; }
 

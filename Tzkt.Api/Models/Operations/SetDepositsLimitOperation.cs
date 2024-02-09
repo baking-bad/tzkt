@@ -11,7 +11,7 @@ namespace Tzkt.Api.Models
         public override string Type => OpTypes.SetDepositsLimit;
 
         /// <summary>
-        /// Unique ID of the operation, stored in the TzKT indexer database
+        /// Unique ID of the operation, stored in the MvKT indexer database
         /// </summary>
         public override long Id { get; set; }
 
@@ -74,7 +74,7 @@ namespace Tzkt.Api.Models
         public string Status { get; set; }
 
         /// <summary>
-        /// Frozen deposits limit (mutez), or `null` if no limit.
+        /// Frozen deposits limit (mumav), or `null` if no limit.
         /// </summary>
         public string Limit { get; set; }
 

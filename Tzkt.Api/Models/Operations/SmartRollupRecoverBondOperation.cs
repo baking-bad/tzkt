@@ -8,7 +8,7 @@
         public override string Type => OpTypes.SmartRollupRecoverBond;
 
         /// <summary>
-        /// Unique ID of the operation, stored in the TzKT indexer database  
+        /// Unique ID of the operation, stored in the MvKT indexer database  
         /// **[sortable]**
         /// </summary>
         public override long Id { get; set; }

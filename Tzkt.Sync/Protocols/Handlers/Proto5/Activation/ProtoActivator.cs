@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Netezos.Encoding;
+using Netmavryk.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -125,7 +125,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                 var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
-                var newSchema = new Netezos.Contracts.ContractScript(code);
+                var newSchema = new Netmavryk.Contracts.ContractScript(code);
                 var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
                 var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 

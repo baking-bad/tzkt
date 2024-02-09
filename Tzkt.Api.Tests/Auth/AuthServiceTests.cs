@@ -2,9 +2,9 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
-using Netezos.Encoding;
-using Netezos.Keys;
-using Netezos.Utils;
+using Netmavryk.Encoding;
+using Netmavryk.Keys;
+using Netmavryk.Utils;
 using Tzkt.Api.Services.Auth;
 using Xunit;
 
@@ -37,17 +37,17 @@ public class AuthServiceTests
             var headers = new AuthHeaders();
 
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
-            expectedError = "The X-TZKT-USER header is required";
+            expectedError = "The X-MVKT-USER header is required";
             Assert.Equal(expectedError, error);
         
             headers.User = "wrongName";
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
-            expectedError = "The X-TZKT-NONCE header is required";
+            expectedError = "The X-MVKT-NONCE header is required";
             Assert.Equal(expectedError, error);
 
             headers.Nonce = 253402300800000;
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
-            expectedError = "The X-TZKT-SIGNATURE header is required";
+            expectedError = "The X-MVKT-SIGNATURE header is required";
             Assert.Equal(expectedError, error);
 
             headers.Signature = "wrongSignature";
@@ -143,12 +143,12 @@ public class AuthServiceTests
             var headers = new AuthHeaders();
             
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
-            expectedError = "The X-TZKT-USER header is required";
+            expectedError = "The X-MVKT-USER header is required";
             Assert.Equal(expectedError, error);
         
             headers.User = "wrongName";
             Assert.False(auth.TryAuthenticate(headers, rights, out error));
-            expectedError = "The X-TZKT-PASSWORD header is required";
+            expectedError = "The X-MVKT-PASSWORD header is required";
             Assert.Equal(expectedError, error);
 
             headers.Password = "wrongPassword";

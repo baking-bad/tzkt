@@ -3,7 +3,7 @@
     public class TokenBalance
     {
         /// <summary>
-        /// Internal TzKT id.  
+        /// Internal MvKT id.  
         /// **[sortable]**
         /// </summary>
         public long Id { get; set; }
@@ -27,7 +27,7 @@
         public string Balance { get; set; }
 
         /// <summary>
-        /// Balance value in mutez, based on the current token price.  
+        /// Balance value in mumav, based on the current token price.  
         /// **[sortable]**
         /// </summary>
         public decimal? BalanceValue { get; set; } // TODO: change to BigInteger, when migrating to .net7

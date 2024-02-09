@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  base-db:
+    container_name: base-db
+    restart: always
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mvkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-mvkt_db}
+    volumes:
+      - base_postgres:/var/lib/postgresql/data
+    ports:
+      - 127.0.0.1:5433:5432
+
+  base-api:
+    container_name: base-api
+    restart: always
+    image: mavrykdynamics/mvkt-api:latest
+    depends_on:
+      - base-db
+    environment:
+      ConnectionStrings__DefaultConnection: host=base-db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
+    ports:
+      - 0.0.0.0:5010:5000
+
+  base-sync:
+    container_name: base-sync
+    restart: always
+    image: mavrykdynamics/mvkt-sync:latest
+    environment:
+      ConnectionStrings__DefaultConnection: host=base-db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
+      MavrykNode__Endpoint: https://rpc.mavryk.network/basenet/
+      Protocols__Diagnostics: false
+    depends_on:
+      - base-db
+    ports:
+      - 0.0.0.0:5011:5001
+
+volumes:
+  base_postgres:

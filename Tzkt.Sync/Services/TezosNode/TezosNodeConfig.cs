@@ -2,18 +2,18 @@
 
 namespace Tzkt.Sync.Services
 {
-    public class TezosNodeConfig
+    public class MavrykNodeConfig
     {
         public string Endpoint { get; set; }
         public int Timeout { get; set; } = 60;
         public int Lag { get; set; } = 0;
     }
 
-    public static class TezosNodeConfigExt
+    public static class MavrykNodeConfigExt
     {
-        public static TezosNodeConfig GetTezosNodeConfig(this IConfiguration config)
+        public static MavrykNodeConfig GetMavrykNodeConfig(this IConfiguration config)
         {
-            return config.GetSection("TezosNode")?.Get<TezosNodeConfig>() ?? new TezosNodeConfig();
+            return config.GetSection("MavrykNode")?.Get<MavrykNodeConfig>() ?? new MavrykNodeConfig();
         }
     }
 }

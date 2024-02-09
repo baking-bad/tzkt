@@ -1,14 +1,14 @@
-﻿using Netezos.Contracts;
-using Netezos.Encoding;
+﻿using Netmavryk.Contracts;
+using Netmavryk.Encoding;
 
 namespace Tzkt.Sync
 {
-    static class NetezosExtension
+    static class NetmavrykExtension
     {
-        static readonly byte[] tz1 = new byte[] { 6, 161, 159 };
-        static readonly byte[] tz2 = new byte[] { 6, 161, 161 };
-        static readonly byte[] tz3 = new byte[] { 6, 161, 164 };
-        static readonly byte[] tz4 = new byte[] { 6, 161, 166 };
+        static readonly byte[] mv1 = new byte[] { 5, 186, 196 };
+        static readonly byte[] mv2 = new byte[] { 5, 186, 199 };
+        static readonly byte[] mv3 = new byte[] { 5, 186, 201 };
+        static readonly byte[] mv4 = new byte[] { 5, 186, 204 };
         static readonly byte[] KT1 = new byte[] { 2, 90, 121 };
         static readonly byte[] txr1 = new byte[] { 1, 128, 120, 31 };
         static readonly byte[] sr1 = new byte[] { 6, 124, 117 };
@@ -33,10 +33,10 @@ namespace Tzkt.Sync
             {
                 prefix = value[1] switch
                 {
-                    0 => tz1,
-                    1 => tz2,
-                    2 => tz3,
-                    _ => tz4
+                    0 => mv1,
+                    1 => mv2,
+                    2 => mv3,
+                    _ => mv4
                 };
                 bytes = value.GetBytes(2, 20);
             }
@@ -74,22 +74,22 @@ namespace Tzkt.Sync
                 {
                     if (value[1] == 0)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz1);
+                        res = Base58.Convert(value.GetBytes(2, 20), mv1);
                         return true;
                     }
                     else if (value[1] == 1)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz2);
+                        res = Base58.Convert(value.GetBytes(2, 20), mv2);
                         return true;
                     }
                     else if (value[1] == 2)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz3);
+                        res = Base58.Convert(value.GetBytes(2, 20), mv3);
                         return true;
                     }
                     else if (value[1] == 3)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz4);
+                        res = Base58.Convert(value.GetBytes(2, 20), mv4);
                         return true;
                     }
                 }
