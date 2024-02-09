@@ -62,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         opsCount++;
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalContents))
-                            opsCount += internalContents.Count();
+                            opsCount += internalContents.EnumerateArray().Count(x => x.RequiredString("kind") != "event" || x.Required("result").RequiredString("status") == "applied");
                     }
                 }
             }
