@@ -43,7 +43,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Tzkt.Api/Dockerfile
+          file: Mvkt.Api/Dockerfile
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -62,7 +62,7 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: Tzkt.Sync/Dockerfile
+          file: Mvkt.Sync/Dockerfile
           push: true
           cache-from: type=gha
           cache-to: type=gha,mode=max

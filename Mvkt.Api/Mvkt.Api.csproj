@@ -1,0 +1,63 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+	<PropertyGroup>
+		<AssemblyVersion>1.13.0</AssemblyVersion>
+	</PropertyGroup>
+
+    <PropertyGroup>
+        <TargetFramework>net7.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+    </PropertyGroup>
+
+	<PropertyGroup>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>$(NoWarn);1591</NoWarn>
+	</PropertyGroup>
+
+    <ItemGroup>
+        <None Remove="Swagger\Description.md" />
+        <None Remove="Swagger\TaquitoExt.md" />
+        <None Remove="Swagger\TypescriptSdk.md" />
+        <None Remove="Swagger\WsExamples.md" />
+        <None Remove="Swagger\WsGetStarted.md" />
+        <None Remove="Swagger\WsSubscriptions.md" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Content Include="Swagger\Description.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Swagger\TaquitoExt.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Swagger\TypescriptSdk.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Swagger\WsExamples.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Swagger\WsGetStarted.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+        <Content Include="Swagger\WsSubscriptions.md">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+        </Content>
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="App.Metrics.AspNetCore.Endpoints" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.AspNetCore.Hosting" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="4.3.0" />
+        <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="4.3.0" />
+        <PackageReference Include="Dapper" Version="2.0.123" />
+        <PackageReference Include="Npgsql" Version="7.0.4" />
+        <PackageReference Include="NSwag.AspNetCore" Version="13.19.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\Mvkt.Data\Mvkt.Data.csproj" />
+    </ItemGroup>
+
+</Project>
