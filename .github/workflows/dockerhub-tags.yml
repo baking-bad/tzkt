@@ -33,7 +33,7 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: Tzkt.Sync/Dockerfile
+          file: Mvkt.Sync/Dockerfile
           push: true
           tags: mavrykdynamics/mvkt-sync:${{ env.RELEASE_VERSION }}
 
@@ -43,6 +43,6 @@ jobs:
         with:
           context: .
           platforms: linux/amd64,linux/arm64
-          file: Tzkt.Api/Dockerfile
+          file: Mvkt.Api/Dockerfile
           push: true
           tags: mavrykdynamics/mvkt-api:${{ env.RELEASE_VERSION }}

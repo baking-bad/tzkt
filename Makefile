@@ -29,21 +29,21 @@ db-start:
 
 migration:
 	# Install EF: dotnet tool install --global dotnet-ef
-	export $$(cat .env | xargs) && cd Tzkt.Data && dotnet-ef database update -s ../Tzkt.Sync/Tzkt.Sync.csproj
+	export $$(cat .env | xargs) && cd Mvkt.Data && dotnet-ef database update -s ../Mvkt.Sync/Mvkt.Sync.csproj
 
 sync:
 	# Set up env file: cp .env.sample .env
-	export $$(cat .env | xargs) && dotnet run -p Tzkt.Sync -v normal
+	export $$(cat .env | xargs) && dotnet run -p Mvkt.Sync -v normal
 
 api:
 	# Set up env file: cp .env.sample .env
-	export $$(cat .env | xargs) && dotnet run -p Tzkt.Api -v normal
+	export $$(cat .env | xargs) && dotnet run -p Mvkt.Api -v normal
 
 api-image:
-	docker build -t bakingbad/mvkt-api:latest -f ./Tzkt.Api/Dockerfile .
+	docker build -t bakingbad/mvkt-api:latest -f ./Mvkt.Api/Dockerfile .
 
 sync-image:
-	docker build -t bakingbad/mvkt-sync:latest -f ./Tzkt.Sync/Dockerfile .
+	docker build -t bakingbad/mvkt-sync:latest -f ./Mvkt.Sync/Dockerfile .
 
 ghost-init:
 	docker compose -f docker-compose.ghost.yml up   -d ghost-db
