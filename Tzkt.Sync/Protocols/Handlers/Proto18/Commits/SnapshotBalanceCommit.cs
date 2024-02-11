@@ -110,7 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 : 0),
                             0,
                             0,
-                            (delegator as User)?.StakedBalance,
+                            (delegator as User)?.StakedBalance ?? 0,
                             0,
                             0,
                             (delegator as User)?.StakedPseudotokens ?? 0,
