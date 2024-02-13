@@ -12,5 +12,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         public override Task<JsonElement> GetDelegateParticipationAsync(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates/{address}/participation");
+
+        public override Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound)
+            => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?level={level}&max_round={maxRound}&all=true");
     }
 }

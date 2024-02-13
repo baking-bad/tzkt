@@ -14,10 +14,19 @@ namespace Tzkt.Sync.Protocols.Proto18
             #region init
             var accusedLevel = content.Required("bh1").RequiredInt32("level");
             var accusedRound = Hex.Parse(content.Required("bh1").RequiredArray("fitness", 5)[4].RequiredString()).ToInt32();
-            var accusedRight = await Db.BakingRights.FirstAsync(x => x.Level == accusedLevel && x.Round == accusedRound);
+            var accusedBakerId = (await Db.BakingRights.AsNoTracking().FirstOrDefaultAsync(x => x.Level == accusedLevel && x.Round == accusedRound))?.BakerId;
+            if (accusedBakerId == null)
+            {
+                var rpcRights = await Proto.Rpc.GetLevelBakingRightsAsync(block.Level, accusedLevel, accusedRound);
+                var accusedBaker = rpcRights
+                    .EnumerateArray()
+                    .First(x => x.RequiredInt32("level") == accusedLevel && x.RequiredInt32("round") == accusedRound)
+                    .RequiredString("delegate");
+                accusedBakerId = Cache.Accounts.GetDelegate(accusedBaker).Id;
+            }
 
             var accuser = block.Proposer;
-            var offender = Cache.Accounts.GetDelegate(accusedRight.BakerId);
+            var offender = Cache.Accounts.GetDelegate(accusedBakerId);
 
             var operation = new DoubleBakingOperation
             {
