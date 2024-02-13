@@ -198,6 +198,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             await RemoveDeadRefutationGames(state);
             await RemoveBigmapKeys(state);
             await MigrateBakers(state);
+            await MigrateCycles(state);
         }
 
         protected async Task RemoveDeadRefutationGames(AppState state)
@@ -384,6 +385,26 @@ namespace Tzkt.Sync.Protocols.Proto18
                 baker.StakedBalance = stakes.GetValueOrDefault(baker.Address);
                 baker.TotalStakedBalance = stakes.GetValueOrDefault(baker.Address);
             }
+        }
+
+        async Task MigrateCycles(AppState state)
+        {
+            var issuances = await Proto.Rpc.GetExpectedIssuance(state.Level);
+            var protocol = await Cache.Protocols.GetAsync(state.NextProtocol);
+            var cycles = await Db.Cycles.Where(x => x.Index > state.Cycle).ToListAsync();
+            foreach (var cycle in cycles)
+            {
+                var issuance = issuances.EnumerateArray().First(x => x.RequiredInt32("cycle") == cycle.Index);
+
+                cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
+                cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
+                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold);
+                cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
+                cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
+                cycle.LBSubsidy = issuance.RequiredInt64("liquidity_baking_subsidy");
+            }
+
         }
     }
 }
