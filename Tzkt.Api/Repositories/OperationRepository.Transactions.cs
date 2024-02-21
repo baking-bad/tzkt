@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Data;
@@ -24,7 +20,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
             OperationStatusParameter status)
@@ -36,7 +32,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TargetId", target, x => x == "sender" ? "SenderId" : "InitiatorId")
                 .Filter("Amount", amount)
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp)
+                .Filter("Level", timestamp)
                 .Filter("Entrypoint", entrypoint)
                 .Filter("JsonParameters", parameter)
                 .Filter("Status", status);
@@ -336,7 +332,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int64Parameter id,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter codeHash,
             Int32Parameter senderCodeHash,
             Int32Parameter targetCodeHash,
@@ -352,6 +348,19 @@ namespace Tzkt.Api.Repositories
             bool includeStorage = false,
             bool includeBigmaps = false)
         {
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder(@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""TransactionOps"" AS o
@@ -372,7 +381,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
@@ -466,7 +475,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int64Parameter id,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter codeHash,
             Int32Parameter senderCodeHash,
             Int32Parameter targetCodeHash,
@@ -544,6 +553,19 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Array.Empty<object[]>();
 
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -560,7 +582,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
@@ -750,7 +772,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter amount,
             Int64Parameter id,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter codeHash,
             Int32Parameter senderCodeHash,
             Int32Parameter targetCodeHash,
@@ -825,6 +847,19 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return Array.Empty<object>();
 
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransactionOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
@@ -841,7 +876,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)

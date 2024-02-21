@@ -2018,7 +2018,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter senderCodeHash,
             Int32Parameter anyCodeHash,
             OperationStatusParameter status,
@@ -2201,7 +2201,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("originations/count")]
         public async Task<ActionResult<int>> GetOriginationsCount(
             Int32Parameter level,
-            DateTimeParameter timestamp)
+            TimestampParameter timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.OriginationOpsCount);
@@ -2260,7 +2260,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter amount,
             Int64Parameter id,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter senderCodeHash,
             Int32Parameter targetCodeHash,
             Int32Parameter codeHash,
@@ -2501,7 +2501,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter target,
             Int64Parameter amount,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             StringParameter entrypoint,
             JsonParameter parameter,
             OperationStatusParameter status)

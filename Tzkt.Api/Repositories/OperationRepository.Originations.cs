@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
@@ -20,11 +16,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetOriginationsCount(
             Int32Parameter level,
-            DateTimeParameter timestamp)
+            TimestampParameter timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""OriginationOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             using var db = GetConnection();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -370,7 +366,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter anyCodeHash,
             Int32Parameter senderCodeHash,
             OperationStatusParameter status,
@@ -382,6 +378,19 @@ namespace Tzkt.Api.Repositories
             bool includeStorage = false,
             bool includeBigmaps = false)
         {
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"
                 SELECT      o.*, b.""Hash""
                 FROM        ""OriginationOps"" AS o
@@ -405,7 +414,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
@@ -502,7 +511,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter anyCodeHash,
             Int32Parameter senderCodeHash,
             OperationStatusParameter status,
@@ -569,6 +578,19 @@ namespace Tzkt.Api.Repositories
             if (typeHash != null || codeHash != null)
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
 
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
                 {
@@ -587,7 +609,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
@@ -779,7 +801,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter typeHash,
             Int32Parameter codeHash,
             Int32Parameter level,
-            DateTimeParameter timestamp,
+            TimestampParameter timestamp,
             Int32Parameter anyCodeHash,
             Int32Parameter senderCodeHash,
             OperationStatusParameter status,
@@ -843,6 +865,19 @@ namespace Tzkt.Api.Repositories
             if (typeHash != null || codeHash != null)
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
 
+            #region opts
+            if (ImplicitSortByLevel)
+            {
+                if ((level != null || timestamp != null) && offset?.Cr == null)
+                {
+                    if (sort == null || sort.Asc == "id")
+                        sort = new() { Asc = "level" };
+                    else if (sort.Desc == "id")
+                        sort = new() { Desc = "level" };
+                }
+            }
+            #endregion
+
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
                 {
@@ -861,7 +896,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)

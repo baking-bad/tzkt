@@ -11,12 +11,18 @@ namespace Tzkt.Api.Repositories
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
         readonly QuotesCache Quotes;
+        readonly IConfiguration Config;
+
+        #region options
+        bool ImplicitSortByLevel => Config.GetValue<bool?>("Opts:ImplicitSortByLevel") == true;
+        #endregion
 
         public OperationRepository(AccountsCache accounts, TimeCache times, QuotesCache quotes, IConfiguration config) : base(config)
         {
             Accounts = accounts;
             Times = times;
             Quotes = quotes;
+            Config = config;
         }
 
         static async Task<bool?> GetStatus(IDbConnection db, string table, string hash)
