@@ -178,7 +178,7 @@ namespace Tzkt.Sync.Protocols
                                                 bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         default:
-                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
+                                            throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");
                                     }
                                 }
                             }

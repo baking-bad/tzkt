@@ -215,7 +215,7 @@ namespace Tzkt.Sync.Protocols
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
                                             break;
                                         default:
-                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
+                                            throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");
                                     }
                                 }
                             }
@@ -239,8 +239,11 @@ namespace Tzkt.Sync.Protocols
                                             if (internalTx.TicketUpdates != null)
                                                 ticketsCommit.Append(parent1.Operation, internalTx.Transaction, internalTx.TicketUpdates);
                                             break;
+                                        case "event":
+                                            await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
+                                            break;
                                         default:
-                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
+                                            throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' inside 'transfer_ticket' is not expected");
                                     }
                                 }
                             }
@@ -283,7 +286,7 @@ namespace Tzkt.Sync.Protocols
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
                                             break;
                                         default:
-                                            throw new NotImplementedException($"internal '{content.RequiredString("kind")}' is not implemented");
+                                            throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");
                                     }
                                 }
                             }
