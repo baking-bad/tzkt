@@ -34,7 +34,7 @@ namespace Mvkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount == null)
-                return address[0] != 't' || address[1] != 'z' ? null : new EmptyAccount
+                return address[0] != 'm' || address[1] != 'v' ? null : new EmptyAccount
                 {
                     Address = address,
                     Counter = State.Current.ManagerCounter,

@@ -126,7 +126,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                     if (subsidy.Any(x => x.RequiredString("origin") != "subsidy"))
                         throw new ValidationException("invalid subsidy origin");
 
-                    if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.CpmmContract))
+                    if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.BufferContract))
                         throw new ValidationException("invalid subsidy recepient");
                 }
                 else if (kind == "origination" && Level == Protocol.FirstLevel)

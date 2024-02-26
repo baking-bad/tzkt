@@ -89,7 +89,7 @@ namespace Mvkt.Sync.Services.Cache
 
                 if (accounts.Count < missed.Count)
                 {
-                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't' && x[1] == 'z'))
+                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 'm' && x[1] == 'v'))
                     {
                         var account = CreateUser(address);
                         CachedById[account.Id] = account;
@@ -184,7 +184,7 @@ namespace Mvkt.Sync.Services.Cache
                 account = await Db.Accounts
                     .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
                     .FirstOrDefaultAsync()
-                    ?? (address[0] == 't' && address[1] == 'z' ? CreateUser(address) : null);
+                    ?? (address[0] == 'm' && address[1] == 'v' ? CreateUser(address) : null);
 
                 if (account != null) Add(account);
             }
