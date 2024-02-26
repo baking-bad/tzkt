@@ -30,7 +30,7 @@ namespace Mvkt.Sync.Protocols.Proto15
             await MigrateFutureRights(state, nextProto);
             await PatchContracts(state);
 
-            if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet: amend broken voting period
+            if (state.ChainId == "NetXnHfVqm9iesp") // basenet: amend broken voting period
             {
                 await RestartVotingPeriod(state, nextProto);
             }
