@@ -18,7 +18,7 @@ namespace Mvkt.Sync.Protocols.Proto14
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            if (Cache.AppState.GetChainId() == "NetXnHfVqm9iesp") // ghostnet
+            if (Cache.AppState.GetChainId() == "NetXnHfVqm9iesp") // basenet
             {
                 protocol.BlocksPerVoting = prev.BlocksPerCycle;
                 protocol.Dictator = "tz1Xf8zdT3DbAX9cHw3c3CXh79rc4nK4gCe8"; // oxhead_testnet_baker
@@ -52,7 +52,7 @@ namespace Mvkt.Sync.Protocols.Proto14
 
             Cache.Statistics.Current.TotalCreated += 3_000_000_000L;
 
-            if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet
+            if (state.ChainId == "NetXnHfVqm9iesp") // basenet
             {
                 var votingPeriod = await Cache.Periods.GetAsync(58);
                 Db.TryAttach(votingPeriod);
