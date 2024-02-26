@@ -27,33 +27,33 @@ namespace Mvkt.Sync.Protocols.Proto4
 
         protected override async Task MigrateContext(AppState state)
         {
-            var block = await Cache.Blocks.CurrentAsync();
-            Db.TryAttach(block);
+            var _block = await Cache.Blocks.CurrentAsync();
+            // Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
-            Db.TryAttach(account);
-            account.FirstLevel = account.LastLevel = state.Level;
-            account.Balance += 100_000_000;
-            account.MigrationsCount++;
+            // var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
+            // Db.TryAttach(account);
+            // account.FirstLevel = account.LastLevel = state.Level;
+            // account.Balance += 100_000_000;
+            // account.MigrationsCount++;
 
-            block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
-            {
-                Id = Cache.AppState.NextOperationId(),
-                Block = block,
-                Level = block.Level,
-                Timestamp = block.Timestamp,
-                Account = account,
-                Kind = MigrationKind.ProposalInvoice,
-                BalanceChange = 100_000_000
-            });
+            // block.Operations |= Operations.Migrations;
+            // Db.MigrationOps.Add(new MigrationOperation
+            // {
+            //     Id = Cache.AppState.NextOperationId(),
+            //     Block = block,
+            //     Level = block.Level,
+            //     Timestamp = block.Timestamp,
+            //     Account = account,
+            //     Kind = MigrationKind.ProposalInvoice,
+            //     BalanceChange = 100_000_000
+            // });
 
-            Db.TryAttach(state);
-            state.MigrationOpsCount++;
+            // Db.TryAttach(state);
+            // state.MigrationOpsCount++;
 
-            var stats = Cache.Statistics.Current;
-            Db.TryAttach(stats);
-            stats.TotalCreated += 100_000_000;
+            // var stats = Cache.Statistics.Current;
+            // Db.TryAttach(stats);
+            // stats.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

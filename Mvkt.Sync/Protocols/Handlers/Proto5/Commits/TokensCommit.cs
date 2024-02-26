@@ -584,7 +584,7 @@ namespace Mvkt.Sync.Protocols.Proto5
         {
             if (!Cache.Accounts.TryGetCached(address, out var account))
             {
-                account = address[0] == 't' && address[1] == 'z'
+                account = address[0] == 'm' && address[1] == 'v'
                     ? new User
                     {
                         Id = Cache.AppState.NextAccountId(),

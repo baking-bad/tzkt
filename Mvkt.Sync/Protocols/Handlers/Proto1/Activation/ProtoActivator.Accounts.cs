@@ -46,7 +46,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap bakers
-            foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 == null))
+            foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 'm' && x.Item3 == null))
             {
                 var baker = new Data.Models.Delegate
                 {
@@ -69,7 +69,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap delegated users
-            foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null))
+            foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 'm' && x.Item3 != null))
             {
                 var delegat = Cache.Accounts.GetDelegate(delegateTo);
 
@@ -99,7 +99,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap users
-            foreach (var (pkh, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] == 't'))
+            foreach (var (pkh, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] == 'm'))
             {
                 var user = new User
                 {

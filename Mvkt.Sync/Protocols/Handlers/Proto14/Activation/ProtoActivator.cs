@@ -19,40 +19,40 @@ namespace Mvkt.Sync.Protocols.Proto14
             if (Cache.AppState.GetChainId() == "NetXnHfVqm9iesp") // basenet
             {
                 protocol.BlocksPerVoting = prev.BlocksPerCycle;
-                protocol.Dictator = "tz1Xf8zdT3DbAX9cHw3c3CXh79rc4nK4gCe8"; // oxhead_testnet_baker
+                protocol.Dictator = "mv1Rck3MEfcu8zZ8GDtnu9LjknmYv8bBPJea"; // oxhead_testnet_baker
             }
         }
 
         protected override async Task MigrateContext(AppState state)
         {
-            var block = await Cache.Blocks.CurrentAsync();
-            Db.TryAttach(block);
+            // var block = await Cache.Blocks.CurrentAsync();
+            // Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
-            Db.TryAttach(account);
-            account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
-            account.LastLevel = state.Level;
-            account.Balance += 3_000_000_000L;
-            account.MigrationsCount++;
+            // var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
+            // Db.TryAttach(account);
+            // account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
+            // account.LastLevel = state.Level;
+            // account.Balance += 3_000_000_000L;
+            // account.MigrationsCount++;
 
-            block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
-            {
-                Id = Cache.AppState.NextOperationId(),
-                Block = block,
-                Level = block.Level,
-                Timestamp = block.Timestamp,
-                Account = account,
-                Kind = MigrationKind.ProposalInvoice,
-                BalanceChange = 3_000_000_000L
-            });
+            // block.Operations |= Operations.Migrations;
+            // Db.MigrationOps.Add(new MigrationOperation
+            // {
+            //     Id = Cache.AppState.NextOperationId(),
+            //     Block = block,
+            //     Level = block.Level,
+            //     Timestamp = block.Timestamp,
+            //     Account = account,
+            //     Kind = MigrationKind.ProposalInvoice,
+            //     BalanceChange = 3_000_000_000L
+            // });
 
-            Db.TryAttach(state);
-            state.MigrationOpsCount++;
+            // Db.TryAttach(state);
+            // state.MigrationOpsCount++;
 
-            var stats = Cache.Statistics.Current;
-            Db.TryAttach(stats);
-            stats.TotalCreated += 3_000_000_000L;
+            // var stats = Cache.Statistics.Current;
+            // Db.TryAttach(stats);
+            // stats.TotalCreated += 3_000_000_000L;
 
             if (state.ChainId == "NetXnHfVqm9iesp") // basenet
             {
