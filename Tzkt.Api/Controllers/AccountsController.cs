@@ -151,7 +151,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked), ("firstActivity", firstActivity));  
+                ("type", type), ("kind", kind), ("balance", balance), ("staked", staked), ("firstActivity", firstActivity));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -303,9 +303,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("{address}/operations")]
-        public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
-            [Required][Address] string address,
+        [HttpGet("operations")]
+        public async Task<ActionResult<IEnumerable<Operation>>> GetOperationsForMany(
+            // TODO: validate 
+            AccountParameter account,
             string type,
             AccountParameter initiator,
             AccountParameter sender,
@@ -331,6 +332,28 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
+            if (account == null) {
+                return new BadRequest($"{nameof(account)}", "This parameter is required.");
+            }
+            if (account.Ne != null) 
+                // TODO: add to doc
+                return new BadRequest($"{nameof(account)}.ne", "This parameter doesn't support .ne mode.");
+            
+            if (account.Ni != null) 
+                // TODO: add to doc
+                return new BadRequest($"{nameof(account)}.ni", "This parameter doesn't support .ni mode.");
+            
+            if (account.Null != null) 
+                // TODO: add to doc
+                return new BadRequest($"{nameof(account)}.null", "This parameter doesn't support .null mode.");
+            
+            if (account.Nex != null) 
+                // TODO: add to doc
+                return new BadRequest($"{nameof(account)}.nex", "This parameter doesn't support .nex mode.");
+
+            if (account.Eq == -1 || account.In?.Count == 0) 
+                return Ok(Enumerable.Empty<Operation>());
+            
             if (initiator != null)
             {
                 if (initiator.Eqx != null)
@@ -440,8 +463,15 @@ namespace Tzkt.Api.Controllers
             var _offset = lastId != null
                 ? new OffsetParameter { Cr = lastId }
                 : null;
-            
+
+            // it's easier to pass in the `In` parameter down to the repository
+            var accountParameterIn = account.In != null ? account : new AccountParameter{In = new List<int>{account.Eq.Value}};
+            // ensures that we have a stable cache key
+            accountParameterIn.In = accountParameterIn.In.ToHashSet().OrderBy(x => x).ToList();
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
+
+                ("account", accountParameterIn),
                 ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
                 ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
@@ -452,9 +482,99 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
+            var res = await Accounts.GetOperations(accountParameterIn.In, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get account operations
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of operations related to the specified account.
+        /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
+        /// so a particular filter may affect several operation types containing this filter.
+        /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
+        /// because all these types have an `initiator` field.  
+        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
+        /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
+        /// </remarks>
+        /// <param name="address">Account address</param>
+        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
+        /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
+        /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
+        /// `tx_rollup_finalize_commitment`, `tx_rollup_remove_commitment`, `tx_rollup_rejection`, `tx_rollup_dispatch_tickets`, `transfer_ticket`, `migration`,
+        /// `update_consensus_key`, `drain_delegate`, `sr_add_messages`, `sr_cement`, `sr_execute`, `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`,
+        /// `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
+        /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="accuser">Filters double baking and double endorsing by accuser. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="offender">Filters double baking and double endorsing by offender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="baker">Filters seed nonce revelation operations by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters operations by level.</param>
+        /// <param name="timestamp">Filters operations by timestamp.</param>
+        /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
+        /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
+        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
+        /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
+        /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
+        /// <param name="sort">Sort mode (0 - ascending, 1 - descending), operations of different types can only be sorted by ID.</param>
+        /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
+        /// <param name="limit">Number of items to return</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("{address}/operations")]
+        public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
+            [Required][Address] string address,
+            string type,
+            AccountParameter initiator,
+            AccountParameter sender,
+            AccountParameter target,
+            AccountParameter prevDelegate,
+            AccountParameter newDelegate,
+            AccountParameter contractManager,
+            AccountParameter contractDelegate,
+            AccountParameter originatedContract,
+            AccountParameter accuser,
+            AccountParameter offender,
+            AccountParameter baker,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            StringParameter entrypoint,
+            JsonParameter parameter,
+            BoolParameter hasInternals,
+            OperationStatusParameter status,
+            SortMode sort = SortMode.Descending,
+            long? lastId = null,
+            [Range(0, 1000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            Console.WriteLine("For ONE!");
+            return null;
+            // var account = await Accounts.GetAsync(address);
+            // return GetOperations(new AccountParameter{})
+            // TODO: convert address to int
+//             return GetOperations(
+//                 new AccountParameter{Eq = 0}, 
+//                 type, initiator, sender, target, prevDelegate, newDelegate, contractManager,originatedContract,
+// accuser,
+// offender,
+// baker,
+// level,
+// timestamp,
+// entrypoint,
+// parameter,
+// hasInternals,
+// status,
+// sort, lastId, limit, micheline, quote)
         }
 
         [OpenApiIgnore]
