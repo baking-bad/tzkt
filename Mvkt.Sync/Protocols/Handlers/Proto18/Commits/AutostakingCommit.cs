@@ -1,12 +1,6 @@
-<<<<<<< HEAD:Mvkt.Sync/Protocols/Handlers/Proto18/Commits/AutostakingCommit.cs
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Mvkt.Data.Models;
-=======
-﻿using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
-using Mvkt.Data.Models;
->>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Sync/Protocols/Handlers/Proto18/Commits/AutostakingCommit.cs
 
 namespace Mvkt.Sync.Protocols.Proto18
 {

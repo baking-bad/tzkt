@@ -1,12 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore.Migrations;
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115741_Triggers.cs
 #nullable disable
 
 namespace Mvkt.Data.Migrations
-========
-namespace Mvkt.Data.Migrations
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240130133108_Triggers.cs
 {
     /// <inheritdoc />
     public partial class Triggers : Migration

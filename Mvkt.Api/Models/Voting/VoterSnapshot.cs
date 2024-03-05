@@ -1,13 +1,4 @@
-<<<<<<< HEAD:Mvkt.Api/Models/Voting/VoterSnapshot.cs
 ﻿namespace Mvkt.Api.Models
-=======
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Mvkt.Api.Models
->>>>>>> 55fefaf8 (TzKT renamed to MvKT):Mvkt.Api/Models/Voting/VoterSnapshot.cs
 {
     public class VoterSnapshot
     {

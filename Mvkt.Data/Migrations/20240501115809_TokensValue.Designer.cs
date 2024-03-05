@@ -13,13 +13,8 @@ using Mvkt.Data;
 
 namespace Mvkt.Data.Migrations
 {
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
     [DbContext(typeof(MvktContext))]
     [Migration("20240501115809_TokensValue")]
-========
-    [DbContext(typeof(MvktContext))]
-    [Migration("20240201122141_TokensValue")]
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
     partial class TokensValue
     {
         /// <inheritdoc />
@@ -1397,7 +1392,6 @@ namespace Mvkt.Data.Migrations
                     b.ToTable("Cycles");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.DalPublishCommitmentOperation", b =>
                 {
                     b.Property<long>("Id")
@@ -1469,9 +1463,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.DelegationOperation", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.DelegationOperation", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -2984,7 +2975,6 @@ namespace Mvkt.Data.Migrations
                     b.ToTable("Scripts");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.SetDelegateParametersOperation", b =>
                 {
                     b.Property<long>("Id")
@@ -3061,9 +3051,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.SetDepositsLimitOperation", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.SetDepositsLimitOperation", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -3903,7 +3890,6 @@ namespace Mvkt.Data.Migrations
                     b.ToTable("StakingOps");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.StakingUpdate", b =>
                 {
                     b.Property<int>("Id")
@@ -3984,9 +3970,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.Statistics", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.Statistics", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -5282,7 +5265,6 @@ namespace Mvkt.Data.Migrations
                     b.ToTable("TxRollupSubmitBatchOps");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.UnstakeRequest", b =>
                 {
                     b.Property<int>("Id")
@@ -5334,9 +5316,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.UpdateConsensusKeyOperation", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.UpdateConsensusKeyOperation", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -5945,7 +5924,6 @@ namespace Mvkt.Data.Migrations
                     b.Navigation("Software");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.DalPublishCommitmentOperation", b =>
                 {
                     b.HasOne("Mvkt.Data.Models.Block", "Block")
@@ -5967,9 +5945,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.DelegationOperation", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.DelegationOperation", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.HasOne("Mvkt.Data.Models.Delegate", "Delegate")
                         .WithMany()
@@ -6367,7 +6342,6 @@ namespace Mvkt.Data.Migrations
                     b.Navigation("Block");
                 });
 
-<<<<<<<< HEAD:Mvkt.Data/Migrations/20240501115809_TokensValue.Designer.cs
             modelBuilder.Entity("Mvkt.Data.Models.SetDelegateParametersOperation", b =>
                 {
                     b.HasOne("Mvkt.Data.Models.Block", "Block")
@@ -6389,9 +6363,6 @@ namespace Mvkt.Data.Migrations
                 });
 
             modelBuilder.Entity("Mvkt.Data.Models.SetDepositsLimitOperation", b =>
-========
-            modelBuilder.Entity("Mvkt.Data.Models.SetDepositsLimitOperation", b =>
->>>>>>>> 55fefaf8 (Mvkt renamed to MvKT):Mvkt.Data/Migrations/20240201122141_TokensValue.Designer.cs
                 {
                     b.HasOne("Mvkt.Data.Models.Block", "Block")
                         .WithMany("SetDepositsLimits")

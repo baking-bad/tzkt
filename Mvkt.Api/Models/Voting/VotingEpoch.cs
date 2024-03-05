@@ -1,13 +1,4 @@
-<<<<<<< HEAD:Mvkt.Api/Models/Voting/VotingEpoch.cs
 ﻿namespace Mvkt.Api.Models
-=======
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace Mvkt.Api.Models
->>>>>>> 55fefaf8 (TzKT renamed to MvKT):Mvkt.Api/Models/Voting/VotingEpoch.cs
 {
     public class VotingEpoch
     {
