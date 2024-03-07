@@ -25,7 +25,7 @@ namespace Mvkt.Sync.Protocols.Proto14
 
         protected override async Task MigrateContext(AppState state)
         {
-            // var block = await Cache.Blocks.CurrentAsync();
+            var block = await Cache.Blocks.CurrentAsync();
             // Db.TryAttach(block);
 
             // var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
@@ -35,17 +35,17 @@ namespace Mvkt.Sync.Protocols.Proto14
             // account.Balance += 3_000_000_000L;
             // account.MigrationsCount++;
 
-            // block.Operations |= Operations.Migrations;
-            // Db.MigrationOps.Add(new MigrationOperation
-            // {
-            //     Id = Cache.AppState.NextOperationId(),
-            //     Block = block,
-            //     Level = block.Level,
-            //     Timestamp = block.Timestamp,
-            //     Account = account,
-            //     Kind = MigrationKind.ProposalInvoice,
-            //     BalanceChange = 3_000_000_000L
-            // });
+            block.Operations |= Operations.Migrations;
+            Db.MigrationOps.Add(new MigrationOperation
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Block = block,
+                Level = block.Level,
+                Timestamp = block.Timestamp,
+                Account = account,
+                Kind = MigrationKind.ProposalInvoice,
+                BalanceChange = 3_000_000_000L
+            });
 
             // Db.TryAttach(state);
             // state.MigrationOpsCount++;
