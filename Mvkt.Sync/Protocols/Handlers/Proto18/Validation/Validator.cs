@@ -483,7 +483,7 @@ namespace Mvkt.Sync.Protocols.Proto18
             {
                 var target = content.RequiredString("destination");
                 
-                if (source == target && source.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
+                if (source == target && source.StartsWith("mv") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
                 {
                     switch (entrypoint)
                     {

@@ -173,7 +173,7 @@ namespace Mvkt.Sync.Protocols
                             var src = content.RequiredString("source");
                             var dst = content.RequiredString("destination");
                             if (src == dst &&
-                                src.StartsWith("tz") &&
+                                src.StartsWith("mv") &&
                                 content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint &&
                                 StakingCommit.Entrypoints.Contains(entrypoint))
                             {

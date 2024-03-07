@@ -27,29 +27,29 @@ namespace Mvkt.Sync.Protocols.Proto4
 
         protected override async Task MigrateContext(AppState state)
         {
-            var _block = await Cache.Blocks.CurrentAsync();
-            // var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
+            var block = await Cache.Blocks.CurrentAsync();
+            var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
 
-            // Db.TryAttach(account);
-            // account.FirstLevel = account.LastLevel = state.Level;
-            // account.Balance += 100_000_000;
-            // account.MigrationsCount++;
+            Db.TryAttach(account);
+            account.FirstLevel = account.LastLevel = state.Level;
+            account.Balance += 100_000_000;
+            account.MigrationsCount++;
 
-            // block.Operations |= Operations.Migrations;
-            // Db.MigrationOps.Add(new MigrationOperation
-            // {
-            //     Id = Cache.AppState.NextOperationId(),
-            //     Block = block,
-            //     Level = block.Level,
-            //     Timestamp = block.Timestamp,
-            //     Account = account,
-            //     Kind = MigrationKind.ProposalInvoice,
-            //     BalanceChange = 100_000_000
-            // });
+            block.Operations |= Operations.Migrations;
+            Db.MigrationOps.Add(new MigrationOperation
+            {
+                Id = Cache.AppState.NextOperationId(),
+                Block = block,
+                Level = block.Level,
+                Timestamp = block.Timestamp,
+                Account = account,
+                Kind = MigrationKind.ProposalInvoice,
+                BalanceChange = 100_000_000
+            });
 
-            // state.MigrationOpsCount++;
+            state.MigrationOpsCount++;
 
-            // Cache.Statistics.Current.TotalCreated += 100_000_000;
+            Cache.Statistics.Current.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)
