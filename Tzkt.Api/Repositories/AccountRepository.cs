@@ -2366,13 +2366,6 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
-            Console.WriteLine(string.Join(",", delegates.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", users.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", contracts.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", rollups.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", smartRollups.Select(d => d.Id)));
-            Console.WriteLine(delegates.Any(acc => acc.EndorsementsCount > 0));
-
             var result = new List<Operation>(limit * 10);
 
             var _delegat = new AccountParameter { In = accountIds };
