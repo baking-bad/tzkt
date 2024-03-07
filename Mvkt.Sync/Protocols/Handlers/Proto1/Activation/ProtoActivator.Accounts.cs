@@ -44,6 +44,14 @@ namespace Mvkt.Sync.Protocols.Proto1
                 throw new Exception("Failed to allocate null-address");
             #endregion
 
+            #region allocate burn-address
+            var burnAddress = (User)await Cache.Accounts.GetAsync(BurnAddress.Address);
+            burnAddress.FirstLevel = 1;
+            burnAddress.LastLevel = 1;
+            if (burnAddress.Id != BurnAddress.Id)
+                throw new Exception("Failed to allocate burn-address");
+            #endregion
+
             #region bootstrap bakers
             foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 'm' && x.Item3 == null))
             {
