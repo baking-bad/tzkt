@@ -2181,7 +2181,7 @@ namespace Tzkt.Api.Repositories
             var contracts = new List<RawContract>();
             var rollups = new List<RawRollup>();
             var smartRollups = new List<RawSmartRollup>();
-            
+
             foreach (var account in accounts)
             {
                 switch (account)
@@ -2189,7 +2189,7 @@ namespace Tzkt.Api.Repositories
                     case RawDelegate delegat:
                         delegates.Add(delegat);
                         break;
-                     case RawUser user:
+                    case RawUser user:
                         users.Add(user);
                         break;
                     case RawContract contract:
@@ -2204,20 +2204,13 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
-            Console.WriteLine(string.Join(",", delegates.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", users.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", contracts.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", rollups.Select(d => d.Id)));
-            Console.WriteLine(string.Join(",", smartRollups.Select(d => d.Id)));
-            Console.WriteLine(delegates.Any(acc => acc.EndorsementsCount > 0));
-
             var result = new List<Operation>(limit * 10);
 
             var _delegat = new AccountParameter { In = accountIds };
 
             // TODO: filter out unneeded records to speed-up querying
             // TODO: doesn't really query endorsements even if the account has some?
-            // http://localhost:5000/v1/accounts/operations?account.in=tz1dqPQn5HXNJ7yjcqBx2w6sozjPXTV1kpfh,tz2P2UEjxQLWHvasvf2rR5LT8kbDgHJcxPqg,tz1dfZ89BDwFKCwkDR2QfMr9TWduZnVaHU8M,tz1edUYGqBtteStneTGDBrQWTFmq9cnEELiW 
+            // http://localhost:5000/v1/accounts/operations?account.in=tz1dqPQn5HXNJ7yjcqBx2w6sozjPXTV1kpfh,tz2P2UEjxQLWHvasvf2rR5LT8kbDgHJcxPqg,tz1dfZ89BDwFKCwkDR2QfMr9TWduZnVaHU8M,tz1edUYGqBtteStneTGDBrQWTFmq9cnEELiW
 
             var endorsements = delegates.Any(acc => acc.EndorsementsCount > 0) && operationTypes.Contains(OpTypes.Endorsement)
                 ? Operations.GetEndorsements(_delegat, level, timestamp, sort, offset, limit, quote)
@@ -2677,7 +2670,7 @@ namespace Tzkt.Api.Repositories
             result.AddRange(await contractReveals);
             result.AddRange(await contractTransferTicketOps);
             result.AddRange(await contractIncreasePaidStorageOps);
-            result.AddRange(await contractMigrations);            
+            result.AddRange(await contractMigrations);
 
             result.AddRange(await rollupTransactionOps);
             result.AddRange(await rollupTxRollupCommitOps);
@@ -2701,12 +2694,12 @@ namespace Tzkt.Api.Repositories
                 .DistinctBy(x => x.Id)
                 .OrderBy(x => sort?.Desc == null ? x.Id : -x.Id)
                 .Take(limit);
-    }
+        }
 
-    public async Task<RawJson> GetProfileInfo(string address)
-    {
-        var account = await Accounts.GetAsync(address);
-        return account?.Profile;
+        public async Task<RawJson> GetProfileInfo(string address)
+        {
+            var account = await Accounts.GetAsync(address);
+            return account?.Profile;
+        }
     }
-}
 }

@@ -82,9 +82,9 @@ namespace Tzkt.Api.Controllers
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };
             #endregion
-            
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("id", id), ("address", address),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
+                ("id", id), ("address", address), ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
                 ("lastActivity", lastActivity), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -172,7 +172,7 @@ namespace Tzkt.Api.Controllers
             [Required][Address] string address,
             bool legacy = true)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -204,9 +204,9 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("id", "balance", "creationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
-            
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("sort", sort), ("offset", offset), ("limit", limit));  
+                ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -244,10 +244,10 @@ namespace Tzkt.Api.Controllers
             if (sort != null && !sort.Validate("balance", "delegationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
-            
+
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("type", type), ("balance", balance), ("delegationLevel", delegationLevel),
-                ("sort", sort), ("offset", offset), ("limit", limit));  
+                ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -258,18 +258,18 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get account operations
+        /// Get account operations TODO: UPDATE!
         /// </summary>
         /// <remarks>
         /// Returns a list of operations related to the specified account.
         /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
         /// so a particular filter may affect several operation types containing this filter.
         /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
-        /// because all these types have an `initiator` field.  
+        /// because all these types have an `initiator` field.
         /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
         /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
-        /// <param name="address">Account address</param>
+        /// <param name="account">Account address</param>
         /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
         /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
         /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
@@ -302,7 +302,6 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperationsForMany(
-            // TODO: validate 
             AccountParameter account,
             string type,
             AccountParameter initiator,
@@ -329,28 +328,29 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
-            if (account == null) {
+            if (account == null)
+            {
                 return new BadRequest($"{nameof(account)}", "This parameter is required.");
             }
-            if (account.Ne != null) 
+            if (account.Ne != null)
                 // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.ne", "This parameter doesn't support .ne mode.");
-            
-            if (account.Ni != null) 
+
+            if (account.Ni != null)
                 // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.ni", "This parameter doesn't support .ni mode.");
-            
-            if (account.Null != null) 
+
+            if (account.Null != null)
                 // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.null", "This parameter doesn't support .null mode.");
-            
-            if (account.Nex != null) 
+
+            if (account.Nex != null)
                 // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.nex", "This parameter doesn't support .nex mode.");
 
-            if (account.Eq == -1 || account.In?.Count == 0) 
+            if (account.Eq == -1 || account.In?.Count == 0)
                 return Ok(Enumerable.Empty<Operation>());
-            
+
             if (initiator != null)
             {
                 if (initiator.Eqx != null)
@@ -462,7 +462,7 @@ namespace Tzkt.Api.Controllers
                 : null;
 
             // it's easier to pass in the `In` parameter down to the repository
-            var accountParameterIn = account.In != null ? account : new AccountParameter{In = new List<int>{account.Eq.Value}};
+            var accountParameterIn = account.In != null ? account : new AccountParameter { In = new List<int> { account.Eq.Value } };
             // ensures that we have a stable cache key
             accountParameterIn.In = accountParameterIn.In.ToHashSet().OrderBy(x => x).ToList();
 
@@ -474,7 +474,7 @@ namespace Tzkt.Api.Controllers
                 ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
                 ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
                 ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
-                ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));  
+                ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -492,7 +492,7 @@ namespace Tzkt.Api.Controllers
         /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
         /// so a particular filter may affect several operation types containing this filter.
         /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
-        /// because all these types have an `initiator` field.  
+        /// because all these types have an `initiator` field.
         /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
         /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
@@ -554,31 +554,41 @@ namespace Tzkt.Api.Controllers
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
         {
-            Console.WriteLine("For ONE!");
-            return null;
-            // var account = await Accounts.GetAsync(address);
-            // return GetOperations(new AccountParameter{})
-            // TODO: convert address to int
-//             return GetOperations(
-//                 new AccountParameter{Eq = 0}, 
-//                 type, initiator, sender, target, prevDelegate, newDelegate, contractManager,originatedContract,
-// accuser,
-// offender,
-// baker,
-// level,
-// timestamp,
-// entrypoint,
-// parameter,
-// hasInternals,
-// status,
-// sort, lastId, limit, micheline, quote)
+            var account = await Accounts.GetRawAsync(address);
+            return await GetOperationsForMany(
+                new AccountParameter { Eq = account.Id },
+                type,
+                initiator,
+                sender,
+                target,
+                prevDelegate,
+                newDelegate,
+                contractManager,
+                contractDelegate,
+                originatedContract,
+                accuser,
+                offender,
+                baker,
+                level,
+                timestamp,
+                entrypoint,
+                parameter,
+                hasInternals,
+                status,
+                sort,
+                lastId,
+                limit,
+                micheline,
+                quote
+            );
+
         }
 
         [OpenApiIgnore]
         [HttpGet("{address}/metadata")]
         public async Task<ActionResult<RawJson>> GetMetadata([Required][Address] string address)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -599,11 +609,11 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/counter")]
         public async Task<ActionResult<int>> GetCounter([Required][Address] string address)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
-            
+
             var rawAccount = await Accounts.GetRawAsync(address);
             var res = rawAccount == null || rawAccount is RawUser && rawAccount.Balance == 0
                 ? State.Current.ManagerCounter
@@ -623,7 +633,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/balance")]
         public async Task<ActionResult<long>> GetBalance([Required][Address] string address)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -647,7 +657,7 @@ namespace Tzkt.Api.Controllers
             [Required][Address] string address,
             [Min(0)] int level)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
