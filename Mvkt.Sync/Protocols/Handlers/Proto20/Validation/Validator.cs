@@ -90,7 +90,7 @@ namespace Mvkt.Sync.Protocols.Proto20
 
             #region balance updates
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
-            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && x.RequiredString("origin") == "block" && !Cache.Accounts.DelegateExists(x.RequiredString("contract"))))
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && x.RequiredString("origin") == "block" && !Cache.Accounts.DelegateExists(x.RequiredString("contract")) && x.RequiredString("contract") != Proto10.ProtoActivator.ProtocolTreasuryContract && x.RequiredString("contract") != BurnAddress.Address))
                 throw new ValidationException("non-existent delegate in block balance updates");
 
             if (Cycle < Protocol.NoRewardCycles)
@@ -103,10 +103,10 @@ namespace Mvkt.Sync.Protocols.Proto20
             }
             else
             {
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") > 4)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") > 2)
                     throw new ValidationException("invalid block reward");
                 
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 4)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 2)
                     throw new ValidationException("invalid block bonus");
             }
             #endregion
@@ -126,7 +126,7 @@ namespace Mvkt.Sync.Protocols.Proto20
                     if (subsidy.Any(x => x.RequiredString("origin") != "subsidy"))
                         throw new ValidationException("invalid subsidy origin");
 
-                    if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.CpmmContract))
+                    if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.ProtocolTreasuryContract))
                         throw new ValidationException("invalid subsidy recepient");
                 }
                 else if (kind == "origination" && Level == Protocol.FirstLevel)
@@ -415,7 +415,7 @@ namespace Mvkt.Sync.Protocols.Proto20
             {
                 var target = content.RequiredString("destination");
                 
-                if (source == target && source.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
+                if (source == target && source.StartsWith("mv") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
                 {
                     switch (entrypoint)
                     {

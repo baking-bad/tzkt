@@ -149,6 +149,9 @@ namespace Mvkt.Sync.Protocols.Proto1
                 Cache.Statistics.Current.TotalBurned += burned;
                 if (transaction.Target.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
+
+                if (transaction.Target.Id == BurnAddress.Id)
+                    Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
 
@@ -298,6 +301,9 @@ namespace Mvkt.Sync.Protocols.Proto1
 
                 Cache.Statistics.Current.TotalBurned += burned;
                 if (transaction.Target.Id == NullAddress.Id)
+                    Cache.Statistics.Current.TotalBanished += transaction.Amount;
+
+                if (transaction.Target.Id == BurnAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
