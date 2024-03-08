@@ -261,7 +261,7 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get account operations TODO: UPDATE!
+        /// Get accounts operations
         /// </summary>
         /// <remarks>
         /// Returns a list of operations related to the specified account.
@@ -272,7 +272,7 @@ namespace Tzkt.Api.Controllers
         /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
         /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
-        /// <param name="account">Account address</param>
+        /// <param name="account">Account addresses. Supports only `.in` and `.eq` modes</param>
         /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
         /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
         /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
@@ -305,7 +305,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperationsForMany(
-            AccountParameter account,
+            [Required] AccountParameter account,
             string type,
             AccountParameter initiator,
             AccountParameter sender,
@@ -331,24 +331,16 @@ namespace Tzkt.Api.Controllers
             Symbols quote = Symbols.None)
         {
             #region validate
-            if (account == null)
-            {
-                return new BadRequest($"{nameof(account)}", "This parameter is required.");
-            }
             if (account.Ne != null)
-                // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.ne", "This parameter doesn't support .ne mode.");
 
             if (account.Ni != null)
-                // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.ni", "This parameter doesn't support .ni mode.");
 
             if (account.Null != null)
-                // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.null", "This parameter doesn't support .null mode.");
 
             if (account.Nex != null)
-                // TODO: add to doc
                 return new BadRequest($"{nameof(account)}.nex", "This parameter doesn't support .nex mode.");
 
             if (account.Eq == -1 || account.In?.Count == 0)
@@ -464,14 +456,11 @@ namespace Tzkt.Api.Controllers
                 ? new OffsetParameter { Cr = lastId }
                 : null;
 
-            // it's easier to pass in the `In` parameter down to the repository
-            var accountParameterIn = account.In != null ? account : new AccountParameter { In = new List<int> { account.Eq.Value } };
             // ensures that we have a stable cache key
-            accountParameterIn.In = accountParameterIn.In.ToHashSet().OrderBy(x => x).ToList();
+            var accountIds = (account.In ?? new() { account.Eq.Value }).ToHashSet().OrderBy(x => x).ToList();
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-
-                ("account", accountParameterIn),
+                ("account", string.Join(",", accountIds)),
                 ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
                 ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
@@ -482,7 +471,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetOperations(accountParameterIn.In, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
+            var res = await Accounts.GetOperations(accountIds, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -559,7 +548,7 @@ namespace Tzkt.Api.Controllers
         {
             var account = await Accounts.GetRawAsync(address);
             return await GetOperationsForMany(
-                new AccountParameter { Eq = account.Id },
+                new () { Eq = account.Id },
                 type,
                 initiator,
                 sender,

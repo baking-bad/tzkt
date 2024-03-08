@@ -2268,7 +2268,7 @@ namespace Tzkt.Api.Repositories
 
 
         public async Task<IEnumerable<Operation>> GetOperations(
-            List<int> accountIds, // should always have only `In`
+            List<int> accountIds,
             HashSet<string> operationTypes,
             AccountParameter initiator,
             AccountParameter sender,
