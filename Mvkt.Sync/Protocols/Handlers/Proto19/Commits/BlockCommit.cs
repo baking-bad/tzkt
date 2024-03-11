@@ -16,6 +16,8 @@ namespace Mvkt.Sync.Protocols.Proto19
             var bonusStakedOwn = 0L;
             var bonusStakedEdge = 0L;
             var bonusStakedShared = 0L;
+            var feeProtocolTreasury = 0L;
+            var feeBurnAddress = 0L;
 
             for (int i = 0; i < balanceUpdates.Count; i++)
             {
@@ -100,7 +102,36 @@ namespace Mvkt.Sync.Protocols.Proto19
                         throw new Exception("Unexpected baking bonuses balance updates behavior");
                     }
                 }
+                else if (update.RequiredString("kind") == "accumulator" && update.RequiredString("category") == "block fees")
+                {
+                    if (i == balanceUpdates.Count - 1)
+                        throw new Exception("Unexpected baking rewards balance updates behavior");
+
+                    var change = -update.RequiredInt64("change");
+
+                    var nextUpdate = balanceUpdates[i + 1];
+                    if (nextUpdate.RequiredString("kind") == "contract" &&
+                        nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.ProtocolTreasuryContract &&
+                        nextUpdate.RequiredInt64("change") == change)
+                    {
+                        feeProtocolTreasury += change;
+                        rewardDelegated -= feeProtocolTreasury;
+                    }
+                    else if (nextUpdate.RequiredString("kind") == "contract" &&
+                        nextUpdate.RequiredString("contract") == BurnAddress.Address &&
+                        nextUpdate.RequiredInt64("change") == change)
+                    {
+                        feeBurnAddress += change;
+                        rewardDelegated -= feeBurnAddress;
+                    }
+                }
             }
+
+            Db.TryAttach(protocolTreasury);
+            protocolTreasury.Balance += feeProtocolTreasury;
+
+            Db.TryAttach(burnAddress);
+            burnAddress.Balance += feeBurnAddress;
 
             return (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared, bonusDelegated, bonusStakedOwn, bonusStakedEdge, bonusStakedShared);
         }
