@@ -24,8 +24,8 @@ namespace Mvkt.Sync.Protocols.Proto15
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
-            await AddInvoice(state, "tz1MidLyXXvKWMmbRvKKeusDtP95NDJ5gAUx", 10_000_000_000L);
-            await AddInvoice(state, "tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb", 15_000_000_000L);
+            // await AddInvoice(state, "tz1MidLyXXvKWMmbRvKKeusDtP95NDJ5gAUx", 10_000_000_000L);
+            // await AddInvoice(state, "tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb", 15_000_000_000L);
             await MigrateCurrentRights(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto);
             await PatchContracts(state);

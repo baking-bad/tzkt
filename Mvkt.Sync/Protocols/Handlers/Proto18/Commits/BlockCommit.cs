@@ -87,6 +87,8 @@ namespace Mvkt.Sync.Protocols.Proto18
         {
             var proposer = Cache.Accounts.GetDelegate(Block.ProposerId);
             var producer = Cache.Accounts.GetDelegate(Block.ProducerId);
+            var burnAddress = await Cache.Accounts.GetAsync(BurnAddress.Address);
+            var protocolTreasury = await Cache.Accounts.GetAsync(Proto10.ProtoActivator.ProtocolTreasuryContract);
 
             var balanceUpdates = rawBlock
                 .Required("metadata")
@@ -102,6 +104,8 @@ namespace Mvkt.Sync.Protocols.Proto18
             var bonusLiquid = 0L;
             var bonusStakedOwn = 0L;
             var bonusStakedShared = 0L;
+            var feeProtocolTreasury = 0L;
+            var feeBurnAddress = 0L;
 
             for (int i = 0; i < balanceUpdates.Count; i++)
             {
@@ -164,6 +168,29 @@ namespace Mvkt.Sync.Protocols.Proto18
                         throw new Exception("Unexpected baking bonuses balance updates behavior");
                     }
                 }
+                else if (update.RequiredString("kind") == "accumulator" && update.RequiredString("category") == "block fees")
+                {
+                    if (i == balanceUpdates.Count - 1)
+                        throw new Exception("Unexpected baking rewards balance updates behavior");
+
+                    var change = -update.RequiredInt64("change");
+
+                    var nextUpdate = balanceUpdates[i + 1];
+                    if (nextUpdate.RequiredString("kind") == "contract" &&
+                        nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.ProtocolTreasuryContract &&
+                        nextUpdate.RequiredInt64("change") == change)
+                    {
+                        feeProtocolTreasury += change;
+                        rewardLiquid -= feeProtocolTreasury;
+                    }
+                    else if (nextUpdate.RequiredString("kind") == "contract" &&
+                        nextUpdate.RequiredString("contract") == BurnAddress.Address &&
+                        nextUpdate.RequiredInt64("change") == change)
+                    {
+                        feeBurnAddress += change;
+                        rewardLiquid -= feeBurnAddress;
+                    }
+                }
             }
             #endregion
 
@@ -173,6 +200,12 @@ namespace Mvkt.Sync.Protocols.Proto18
             Block.BonusLiquid = bonusLiquid;
             Block.BonusStakedOwn = bonusStakedOwn;
             Block.BonusStakedShared = bonusStakedShared;
+
+            Db.TryAttach(protocolTreasury);
+            protocolTreasury.Balance += feeProtocolTreasury;
+
+            Db.TryAttach(burnAddress);
+            burnAddress.Balance += feeBurnAddress;
 
             Db.TryAttach(proposer);
             proposer.Balance += Block.RewardLiquid + Block.RewardStakedOwn;
