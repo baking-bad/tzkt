@@ -98,8 +98,9 @@ namespace Mvkt.Sync.Protocols
             dynamic raw = DJson.Create(await proto.Node.GetAsync($"chains/main/blocks/{block}/context/raw/json/cycle/{cycle}"));
             var state = raw.delegate_sampler_state;
 
-            if (state.total != Total)
+            if (state.total != Total){
                 throw new Exception("Invalid sampler 'total'");
+            }
 
             if (state.support.elements.length != Bakers.Length)
                 throw new Exception("Invalid sampler 'support'");
