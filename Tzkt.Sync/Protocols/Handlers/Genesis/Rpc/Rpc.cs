@@ -36,6 +36,9 @@ namespace Tzkt.Sync.Protocols.Genesis
 
         public Task<JsonElement> GetExpectedIssuance(int level)
             => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics

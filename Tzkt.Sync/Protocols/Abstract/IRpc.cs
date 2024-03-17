@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetDelegateAsync(int level, string address);
         Task<JsonElement> GetStakeDistribution(int block, int cycle);
         Task<JsonElement> GetExpectedIssuance(int level);
+        Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address);
         #endregion
 
         #region diagnostics

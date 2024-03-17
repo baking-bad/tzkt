@@ -10,6 +10,9 @@ namespace Tzkt.Sync.Protocols.Proto18
         public override Task<JsonElement> GetExpectedIssuance(int level)
             => Node.GetAsync($"chains/main/blocks/{level}/context/issuance/expected_issuance");
 
+        public override Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/smart_rollups/smart_rollup/{address}/genesis_info");
+
         public override Task<JsonElement> GetCurrentStakingBalance(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/staking_balance/current/{address}");
 

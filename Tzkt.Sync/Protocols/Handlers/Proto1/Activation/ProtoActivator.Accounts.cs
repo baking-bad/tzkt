@@ -220,6 +220,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap smart rollups
             foreach (var (address, pvmKind) in bootstrapSmartRollups)
             {
+                var genesisInfo = await Proto.Rpc.GetSmartRollupGenesisInfo(1, address);
+
                 var creator = nullAddress;
                 var rollup = new SmartRollup()
                 {
@@ -237,9 +239,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                         "wasm_2_0_0" => PvmKind.Wasm,
                         _ => throw new NotImplementedException()
                     },
-                    GenesisCommitment = "genesis_commitment_hash", // this should be calculated from Machine.install_boot_sector and Machine.state_hash,
-                    LastCommitment = "genesis_commitment_hash",    // but that cannot be done on the indexer side, so we set a random string
-                    InboxLevel = 2,
+                    GenesisCommitment = genesisInfo.RequiredString("commitment_hash"),
+                    LastCommitment = genesisInfo.RequiredString("commitment_hash"),
+                    InboxLevel = genesisInfo.RequiredInt32("level"),
                     TotalStakers = 0,
                     ActiveStakers = 0,
                     ExecutedCommitments = 0,

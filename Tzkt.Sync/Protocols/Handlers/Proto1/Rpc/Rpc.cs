@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         #region indexer
         public virtual Task<JsonElement> GetBlockAsync(int level)
-            => Node.GetAsync($"chains/main/blocks/{level}");
+            => Node.GetAsync($"chains/main/blocks/{level}?version=0");
 
         public virtual Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?cycle={cycle}&max_priority=8&all=true");
@@ -35,6 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             => throw new InvalidOperationException();
 
         public virtual Task<JsonElement> GetExpectedIssuance(int block)
+            => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address)
             => throw new InvalidOperationException();
         #endregion
 
