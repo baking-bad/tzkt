@@ -266,7 +266,7 @@ namespace Tzkt.Api.Services
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
                             - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
-                                  - row.TotalBurned - row.TotalBanished - row.TotalFrozen - row.TotalRollupBonds - row.TotalSmartRollupBonds,
+                                  - row.TotalBurned - row.TotalBanished - row.TotalLost,
             };
         }
 
