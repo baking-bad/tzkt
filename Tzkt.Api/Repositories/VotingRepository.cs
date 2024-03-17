@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
@@ -311,9 +305,11 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<VotingPeriod>> GetPeriods(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<VotingPeriod>> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""VotingPeriods""")
+                .Filter("FirstLevel", firstLevel)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             using var db = GetConnection();
@@ -347,7 +343,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetPeriods(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
 
@@ -385,6 +381,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
+                .Filter("FirstLevel", firstLevel)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             using var db = GetConnection();
@@ -496,7 +494,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetPeriods(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
 
@@ -531,6 +529,8 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
+                .Filter("FirstLevel", firstLevel)
+                .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             using var db = GetConnection();

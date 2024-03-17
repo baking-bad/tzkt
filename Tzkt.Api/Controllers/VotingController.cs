@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -112,6 +107,8 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of voting periods.
         /// </remarks>
+        /// <param name="firstLevel">Filter by level of the first block of the period.</param>
+        /// <param name="lastLevel">Filter by level of the last block of the period.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts voting periods by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -119,6 +116,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("periods")]
         public async Task<ActionResult<IEnumerable<VotingPeriod>>> GetPeriods(
+            Int32Parameter firstLevel,
+            Int32Parameter lastLevel,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -130,25 +129,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Voting.GetPeriods(sort, offset, limit));
+                return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Values[0]));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Values));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Voting.GetPeriods(sort, offset, limit, select.Fields[0]));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Voting.GetPeriods(sort, offset, limit, select.Fields)
+                        Rows = await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Fields)
                     });
                 }
             }
