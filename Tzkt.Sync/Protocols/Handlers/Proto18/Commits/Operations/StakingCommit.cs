@@ -261,6 +261,18 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 x.Level <= endLevel)
                             .SumAsync(x => x.UnstakedBalance + x.UnstakedRewards);
 
+                        // TODO: review in P
+                        if (sender is Data.Models.Delegate baker)
+                        {
+                            requestedAmount += await Db.AutostakingOps
+                                .Where(x =>
+                                    x.BakerId == baker.Id &&
+                                    x.Action == AutostakingAction.Unstake &&
+                                    x.Cycle >= operation.FirstCycleUnstaked.Value &&
+                                    x.Cycle <= operation.LastCycleUnstaked.Value)
+                                .SumAsync(x => x.Amount);
+                        }
+
                         if (operation.Amount != requestedAmount)
                             throw new NotImplementedException("Slashing of unstaked deposits cannot be implemented due to bugs in Oxford. Let's wait for fixes...");
 
@@ -401,8 +413,21 @@ namespace Tzkt.Sync.Protocols.Proto18
                             .ThenBy(x => x.Id)
                             .ToListAsync();
 
+                        // TODO: review in P
+                        var autostakingOps = await Db.AutostakingOps
+                            .AsNoTracking()
+                            .Where(x =>
+                                x.BakerId == sender.Id &&
+                                x.Action == AutostakingAction.Unstake &&
+                                x.Cycle >= operation.FirstCycleUnstaked.Value &&
+                                x.Cycle <= operation.LastCycleUnstaked.Value)
+                            .OrderBy(x => x.Level)
+                            .ThenBy(x => x.Id)
+                            .ToListAsync();
+
                         var unstakeOps = stakingOps.Select(x => (x.BakerId, x.Amount.Value))
-                            .Concat(delegationOps.Select(x => (x.PrevDelegateId, x.UnstakedBalance.Value + x.UnstakedRewards.Value)));
+                            .Concat(delegationOps.Select(x => (x.PrevDelegateId, x.UnstakedBalance.Value + x.UnstakedRewards.Value)))
+                            .Concat(autostakingOps.Select(x => ((int?)x.BakerId, x.Amount)));
 
                         foreach (var (prevBakerId, unstakedAmount) in unstakeOps)
                         {
