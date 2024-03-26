@@ -271,6 +271,14 @@ namespace Tzkt.Sync.Protocols.Proto18
                                     x.Cycle >= operation.FirstCycleUnstaked.Value &&
                                     x.Cycle <= operation.LastCycleUnstaked.Value)
                                 .SumAsync(x => x.Amount);
+
+                            requestedAmount -= await Db.AutostakingOps
+                                .Where(x =>
+                                    x.BakerId == baker.Id &&
+                                    x.Action == AutostakingAction.Restake &&
+                                    x.Cycle >= operation.FirstCycleUnstaked.Value &&
+                                    x.Cycle <= operation.LastCycleUnstaked.Value)
+                                .SumAsync(x => x.Amount);
                         }
 
                         if (operation.Amount != requestedAmount)
@@ -413,25 +421,45 @@ namespace Tzkt.Sync.Protocols.Proto18
                             .ThenBy(x => x.Id)
                             .ToListAsync();
 
-                        // TODO: review in P
-                        var autostakingOps = await Db.AutostakingOps
-                            .AsNoTracking()
-                            .Where(x =>
-                                x.BakerId == sender.Id &&
-                                x.Action == AutostakingAction.Unstake &&
-                                x.Cycle >= operation.FirstCycleUnstaked.Value &&
-                                x.Cycle <= operation.LastCycleUnstaked.Value)
-                            .OrderBy(x => x.Level)
-                            .ThenBy(x => x.Id)
-                            .ToListAsync();
-
                         var unstakeOps = stakingOps.Select(x => (x.BakerId, x.Amount.Value))
-                            .Concat(delegationOps.Select(x => (x.PrevDelegateId, x.UnstakedBalance.Value + x.UnstakedRewards.Value)))
-                            .Concat(autostakingOps.Select(x => ((int?)x.BakerId, x.Amount)));
+                            .Concat(delegationOps.Select(x => (x.PrevDelegateId, x.UnstakedBalance.Value + x.UnstakedRewards.Value)));
+
+                        // TODO: review in P
+                        if (sender is Data.Models.Delegate baker)
+                        {
+                            var autostakingOps = await Db.AutostakingOps
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.BakerId == baker.Id &&
+                                    x.Action == AutostakingAction.Unstake &&
+                                    x.Cycle >= operation.FirstCycleUnstaked.Value &&
+                                    x.Cycle <= operation.LastCycleUnstaked.Value)
+                                .OrderBy(x => x.Level)
+                                .ThenBy(x => x.Id)
+                                .ToListAsync();
+
+                            var autostakingOps2 = await Db.AutostakingOps
+                                .AsNoTracking()
+                                .Where(x =>
+                                    x.BakerId == baker.Id &&
+                                    x.Action == AutostakingAction.Restake &&
+                                    x.Cycle >= operation.FirstCycleUnstaked.Value &&
+                                    x.Cycle <= operation.LastCycleUnstaked.Value)
+                                .OrderBy(x => x.Level)
+                                .ThenBy(x => x.Id)
+                                .ToListAsync();
+
+                            unstakeOps = unstakeOps
+                                .Concat(autostakingOps.Select(x => ((int?)x.BakerId, x.Amount)))
+                                .Concat(autostakingOps2.Select(x => ((int?)x.BakerId, -x.Amount)));
+                        }
+
+                        if (unstakeOps.Any() && unstakeOps.Sum(x => x.Item2) != operation.Amount)
+                            throw new NotImplementedException("Manual staking is not fully implemented in O2, because it's partially forbidden...");
 
                         foreach (var (prevBakerId, unstakedAmount) in unstakeOps)
                         {
-                            if (sender.UnstakedBalance == 0 && unstakedAmount > 0)
+                            if (sender.UnstakedBalance == 0 && unstakedAmount != 0)
                                 sender.UnstakedBakerId = prevBakerId;
 
                             sender.UnstakedBalance += unstakedAmount;
