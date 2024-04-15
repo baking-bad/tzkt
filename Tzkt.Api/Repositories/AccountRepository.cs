@@ -2165,13 +2165,30 @@ namespace Tzkt.Api.Repositories
                 {
                     Eq = timestamp.Eq == null ? null : Time.FindLevel((DateTime)timestamp.Eq, SearchMode.Exact),
                     Ne = timestamp.Ne == null ? null : Time.FindLevel((DateTime)timestamp.Ne, SearchMode.Exact),
-                    Gt = timestamp.Gt == null ? null : Time.FindLevel((DateTime)timestamp.Gt, SearchMode.ExactOrLower),
-                    Ge = timestamp.Ge == null ? null : Time.FindLevel((DateTime)timestamp.Ge, SearchMode.ExactOrHigher),
-                    Lt = timestamp.Lt == null ? null : Time.FindLevel((DateTime)timestamp.Lt, SearchMode.ExactOrHigher),
-                    Le = timestamp.Le == null ? null : Time.FindLevel((DateTime)timestamp.Le, SearchMode.ExactOrLower),
                     In = timestamp.In?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
-                    Ni = timestamp.Ni?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
+                    Ni = timestamp.Ni?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList()
                 };
+
+                if (timestamp.Gt != null)
+                {
+                    var lvl = Time.FindLevel((DateTime)timestamp.Gt, SearchMode.ExactOrLower);
+                    _timestamp.Gt = lvl != -1 ? lvl : null;
+                }
+                if (timestamp.Ge != null)
+                {
+                    var lvl = Time.FindLevel((DateTime)timestamp.Ge, SearchMode.ExactOrHigher);
+                    _timestamp.Ge = lvl != -1 ? lvl : int.MaxValue;
+                }
+                if (timestamp.Lt != null)
+                {
+                    var lvl = Time.FindLevel((DateTime)timestamp.Lt, SearchMode.ExactOrHigher);
+                    _timestamp.Lt = lvl != -1 ? lvl : null;
+                }
+                if (timestamp.Le != null)
+                {
+                    var lvl = Time.FindLevel((DateTime)timestamp.Le, SearchMode.ExactOrLower);
+                    _timestamp.Le = lvl != -1 ? lvl : int.MinValue;
+                }
             }
 
             switch (account)

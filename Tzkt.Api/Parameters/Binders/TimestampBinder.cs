@@ -53,17 +53,36 @@ namespace Tzkt.Api
                 return Task.CompletedTask;
             }
 
-            bindingContext.Result = ModelBindingResult.Success(new TimestampParameter
+            var param = new TimestampParameter
             {
                 Eq = (value ?? eq) == null ? null : Time.FindLevel((DateTime)(value ?? eq), SearchMode.Exact),
                 Ne = ne == null ? null : Time.FindLevel((DateTime)ne, SearchMode.Exact),
-                Gt = gt == null ? null : Time.FindLevel((DateTime)gt, SearchMode.ExactOrLower),
-                Ge = ge == null ? null : Time.FindLevel((DateTime)ge, SearchMode.ExactOrHigher),
-                Lt = lt == null ? null : Time.FindLevel((DateTime)lt, SearchMode.ExactOrHigher),
-                Le = le == null ? null : Time.FindLevel((DateTime)le, SearchMode.ExactOrLower),
                 In = @in?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
                 Ni = ni?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
-            });
+            };
+
+            if (gt != null)
+            {
+                var level = Time.FindLevel((DateTime)gt, SearchMode.ExactOrLower);
+                param.Gt = level != -1 ? level : null;
+            }
+            if (ge != null)
+            {
+                var level = Time.FindLevel((DateTime)ge, SearchMode.ExactOrHigher);
+                param.Ge = level != -1 ? level : int.MaxValue;
+            }
+            if (lt != null)
+            {
+                var level = Time.FindLevel((DateTime)lt, SearchMode.ExactOrHigher);
+                param.Lt = level != -1 ? level : null;
+            }
+            if (le != null)
+            {
+                var level = Time.FindLevel((DateTime)le, SearchMode.ExactOrLower);
+                param.Le = level != -1 ? level : int.MinValue;
+            }
+
+            bindingContext.Result = ModelBindingResult.Success(param);
 
             return Task.CompletedTask;
         }

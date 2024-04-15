@@ -84,29 +84,6 @@ namespace Tzkt.Api
         [JsonSchemaType(typeof(List<DateTime>))]
         public List<int> Ni { get; set; }
 
-        #region static
-        public static Int32Parameter FromDateTimeParameter(DateTimeParameter timestamp, TimeCache time)
-        {
-            if (timestamp == null) return null;
-
-            var res = new Int32Parameter();
-
-            if (timestamp.Eq != null)
-                res.Eq = time.FindLevel((DateTime)timestamp.Eq, SearchMode.Exact);
-
-            if (timestamp.Ne != null)
-                res.Ne = time.FindLevel((DateTime)timestamp.Ne, SearchMode.Exact);
-
-            if (timestamp.Gt != null)
-                res.Gt = time.FindLevel((DateTime)timestamp.Gt, SearchMode.ExactOrLower);
-
-            if (timestamp.Ge != null)
-                res.Ge = time.FindLevel((DateTime)timestamp.Ge, SearchMode.ExactOrLower);
-
-            return res;
-        }
-        #endregion
-
         public string Normalize(string name)
         {
             var sb = new StringBuilder();
