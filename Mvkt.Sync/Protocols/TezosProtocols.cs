@@ -69,7 +69,7 @@ namespace Mvkt.Sync
         {
             return protocol switch
             {
-                "PtAtLasjh71tv2N8SDMtjajR42wTSAd9xFTvXvhDuYfRJPRLSL2" => services.GetRequiredService<Proto18Handler>(),
+                "PtAtLasomUEW99aVhVTrqjCHjJSpFUa8uHNEAEamx9v2SNeTaNp" => services.GetRequiredService<Proto18Handler>(),
                 _ => null,
             };
         }
