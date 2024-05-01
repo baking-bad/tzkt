@@ -33,7 +33,7 @@ services:
     environment:
       ConnectionStrings__DefaultConnection: host=base-db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
-      MavrykNode__Endpoint: https://rpc.mavryk.network/basenet/
+      MavrykNode__Endpoint: https://basenet.rpc.mavryk.network/
       Protocols__Diagnostics: false
     depends_on:
       - base-db

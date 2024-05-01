@@ -5,7 +5,7 @@ namespace Mvkt.Api.Services
     public class RpcHelpersConfig
     {
         public bool Enabled { get; set; } = false;
-        public string Endpoint { get; set; } = "https://rpc.mavryk.network/basenet";
+        public string Endpoint { get; set; } = "https://basenet.rpc.mavryk.network";
         public int Timeout { get; set; } = 60;
     }
 
