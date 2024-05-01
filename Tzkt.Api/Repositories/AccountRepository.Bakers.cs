@@ -154,7 +154,7 @@ namespace Tzkt.Api.Repositories
                     StakedBalance = row.StakedBalance,
                     StakedPseudotokens = row.StakedPseudotokens,
                     UnstakedBalance = row.UnstakedBalance,
-                    UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId.Value),
+                    UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
                     TotalStakedBalance = row.TotalStakedBalance,
                     ExternalStakedBalance = row.ExternalStakedBalance,
                     ExternalUnstakedBalance = row.ExternalUnstakedBalance,
