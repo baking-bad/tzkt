@@ -14,7 +14,7 @@ In order to enable routing enable the MvKT extension per each `TezosToolkit` ins
 import { TezosToolkit } from '@taquito/taquito';
 import { MvktExtension } from '@tzkt/ext-taquito';
 
-const Tezos = new TezosToolkit('https://rpc.mavryk.network/basenet');
+const Tezos = new TezosToolkit('https://basenet.rpc.mavryk.network');
 Tezos.addExtension(new MvktExtension());
 ```
 

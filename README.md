@@ -13,7 +13,7 @@ The indexer fetches raw data from the Mavryk blockchain, processes it, and saves
 - **Data quality comes first!** You will never see an incorrect account balance, or contract storage, or missed operations, etc. MvKT was built by professionals who know Mavryk from A to Z (or from mv to KT 😼).
 - **Advanced API.** MvKT provides a REST-like API, so you don't have to connect to the database directly (but you can, if you want). In addition to basic data access MvKT API has a lot of cool features such as "deep filtering", "deep selection", "deep sorting", exporting .csv statements, calculating historical data (at some block in the past) such as balances, storages, and bigmap keys, injecting historical quotes and metadata, built-in response cache, and much more. See the complete [API documentation](https://api.mavryk.network).
 - **WebSocket API.** MvKT allows to subscribe to real-time blockchain data, such as new blocks or new operations, etc. via WebSocket. MvKT uses SignalR, which is very easy to use and for which there are many client libraries for different languages.
-- **No local node needed.** There is no need to run your own local node. Also, the indexer does not create much load on the node RPC, so it's ok to use any public one. By default it uses [rpc.mavryk.network](https://rpc.mavryk.network/basenet/chains/main/blocks/head/header).
+- **No local node needed.** There is no need to run your own local node. Also, the indexer does not create much load on the node RPC, so it's ok to use any public one. By default it uses [rpc.mavryk.network](https://basenet.rpc.mavryk.network/chains/main/blocks/head/header).
 - **No archive node needed.** There is no need to use an archive node (running in "archive" mode). If you bootstrap the indexer from the most recent snapshot, using a simple rolling node will be enough.
 - **Easy to start.** Indexer bootstrap is very simple and quite fast, because you can easily restore it from a fresh snapshot, publicly available for all supported networks, so you don't need to index the whole blockchain from scratch. But of course, you can do that, if you want.
 - **Validation and diagnostics.** MvKT indexer validates all incoming data so you will never get to the wrong chain and will never commit corrupted data because of invalid response from the node. Also, the indexer performs self-diagnostics after each block, which guarantees the correctness of its state after committing new data.
@@ -133,7 +133,7 @@ Edit the configuration file `~/mvkt-sync/appsettings.json`. What you basically n
 ````json
 {
   "MavrykNode": {
-    "Endpoint": "https://rpc.mavryk.network/basenet/"
+    "Endpoint": "https://basenet.rpc.mavryk.network/"
   },
   "ConnectionStrings": {
     "DefaultConnection": "host=localhost;port=5432;database=mvkt_db;username=mvkt;password=qwerty;command timeout=600;"
@@ -222,7 +222,7 @@ The API provides RPC helpers - endpoints proxied directly to the node RPC, speci
 {
    "RpcHelpers": {
       "Enabled": true,
-      "Endpoint": "https://rpc.mavryk.network/basenet/"
+      "Endpoint": "https://basenet.rpc.mavryk.network/"
    }
 }
 `````
