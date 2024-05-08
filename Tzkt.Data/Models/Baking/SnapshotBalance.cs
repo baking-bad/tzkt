@@ -8,7 +8,6 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public int AccountId { get; set; }
-
         public int BakerId { get; set; }
         
         public long OwnDelegatedBalance { get; set; }
@@ -19,15 +18,9 @@ namespace Tzkt.Data.Models
         public long ExternalStakedBalance { get; set; }
         public int StakersCount { get; set; }
 
-        public long StakedPseudotokens { get; set; }
-        public long IssuedPseudotokens { get; set; }
-
         #region helpers
         [NotMapped]
         public long StakingBalance => OwnDelegatedBalance + ExternalDelegatedBalance + OwnStakedBalance + ExternalStakedBalance;
-
-        [NotMapped]
-        public long TotalStakedBalance => OwnStakedBalance + ExternalStakedBalance;
         #endregion
     }
 

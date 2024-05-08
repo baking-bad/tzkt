@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray()
                 .Where(x => x.RequiredString("kind")[0] == 'f' &&
                             x.RequiredInt64("change") < 0 &&
-                            GetFreezerCycle(x) == block.Cycle - block.Protocol.PreservedCycles);
+                            GetFreezerCycle(x) == block.Cycle - block.Protocol.ConsensusRightsDelay);
         }
     }
 }

@@ -76,7 +76,9 @@ namespace Tzkt.Sync.Tests
 
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-                var rpc = new TezosRpc(builder.Configuration.GetSection("TezosNode").GetValue<string>("Endpoint"), 60);
+                var rpcEndpoint = builder.Configuration.GetSection("TezosNode").GetValue<string>("Endpoint")
+                    ?? throw new Exception("TezosNode.Endpoint is not specified in the configuration");
+                var rpc = new TezosRpc(rpcEndpoint, 60);
 
                 logger.LogInformation("Run AppStateTests");
                 await AppStateTests.RunAsync(db, rpc);

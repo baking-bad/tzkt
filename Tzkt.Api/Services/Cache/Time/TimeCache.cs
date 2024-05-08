@@ -1,30 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 
 namespace Tzkt.Api.Services.Cache
 {
-    public class TimeCache : DbConnection
+    public class TimeCache
     {
         readonly List<DateTime> Times;
 
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly ProtocolsCache Protocols;
         readonly ILogger Logger;
 
-        public TimeCache(StateCache state, ProtocolsCache protocols, IConfiguration config, ILogger<TimeCache> logger) : base(config)
+        public TimeCache(NpgsqlDataSource dataSource, StateCache state, ProtocolsCache protocols, ILogger<TimeCache> logger)
         {
             logger.LogDebug("Initializing timestamps cache...");
 
+            DataSource = dataSource;
             State = state;
             Protocols = protocols;
             Logger = logger;
 
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             var times = db.Query<DateTime>(@"SELECT ""Timestamp"" FROM ""Blocks"" ORDER BY ""Level""");
 
             Times = new List<DateTime>(times.Count() + 130_000);
@@ -38,7 +35,7 @@ namespace Tzkt.Api.Services.Cache
             Logger.LogDebug("Updating timestamps cache...");
             var sql = @"SELECT ""Level"", ""Timestamp"" FROM ""Blocks"" WHERE ""Level"" > @fromLevel ORDER BY ""Level""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { fromLevel = Math.Min(Times.Count - 1, State.ValidLevel) });
 
             foreach (var row in rows)

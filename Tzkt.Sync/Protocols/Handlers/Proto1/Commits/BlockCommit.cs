@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ProposerId = baker.Id,
                 ProducerId = baker.Id,
                 Events = events,
-                RewardLiquid = reward,
+                RewardDelegated = reward,
                 Deposit = deposit,
                 LBToggle = GetLBToggleVote(rawBlock),
                 LBToggleEma = GetLBToggleEma(rawBlock)
@@ -62,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance += Block.RewardLiquid;
+            baker.Balance += Block.RewardDelegated;
             baker.BlocksCount++;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
@@ -78,8 +78,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 proto.LastLevel = Block.Level;
 
-            Cache.Statistics.Current.TotalCreated += Block.RewardLiquid;
-            Cache.Statistics.Current.TotalFrozen += Block.RewardLiquid + Block.Deposit + Block.Fees;
+            Cache.Statistics.Current.TotalCreated += Block.RewardDelegated;
+            Cache.Statistics.Current.TotalFrozen += Block.RewardDelegated + Block.Deposit + Block.Fees;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
@@ -99,7 +99,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance -= Block.RewardLiquid;
+            baker.Balance -= Block.RewardDelegated;
             baker.BlocksCount--;
 
             if (Block.ResetBakerDeactivation != null)

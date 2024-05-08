@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Api
 {

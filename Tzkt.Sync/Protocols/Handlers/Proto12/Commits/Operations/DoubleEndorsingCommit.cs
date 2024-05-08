@@ -43,9 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LostStaked = offenderLoss,
                 LostUnstaked = 0,
                 LostExternalStaked = 0,
-                LostExternalUnstaked = 0,
-
-                RoundingLoss = 0
+                LostExternalUnstaked = 0
             };
             #endregion
 

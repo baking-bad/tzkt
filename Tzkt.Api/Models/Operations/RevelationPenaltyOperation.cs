@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class RevelationPenaltyOperation : Operation
     {

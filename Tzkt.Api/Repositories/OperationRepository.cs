@@ -1,13 +1,15 @@
 ﻿using System.Data;
 using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
         readonly QuotesCache Quotes;
@@ -17,8 +19,9 @@ namespace Tzkt.Api.Repositories
         bool ImplicitSortByLevel => Config.GetValue<bool?>("Opts:ImplicitSortByLevel") == true;
         #endregion
 
-        public OperationRepository(AccountsCache accounts, TimeCache times, QuotesCache quotes, IConfiguration config) : base(config)
+        public OperationRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times, QuotesCache quotes, IConfiguration config)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
             Quotes = quotes;
@@ -37,7 +40,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<bool?> GetStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(TzktContext.TransactionOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.OriginationOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.DelegationOps), hash)
@@ -55,6 +58,8 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupRefuteOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.StakingOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.SetDelegateParametersOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.DalPublishCommitmentOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupCommitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupDispatchTicketsOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TxRollupFinalizeCommitmentOps), hash)
@@ -116,6 +121,8 @@ namespace Tzkt.Api.Repositories
             var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash }, new() { limit = -1 }, quote);
             var srRefute = GetSmartRollupRefuteOps(new() { hash = hash }, new() { limit = -1 }, quote);
             var staking = GetStakingOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var setDelegateParameters = GetSetDelegateParametersOps(new() { hash = hash }, new() { limit = -1 }, quote);
+            var dalPublishCommitment = GetDalPublishCommitmentOps(new() { hash = hash }, new() { limit = -1 }, quote);
 
             await Task.WhenAll(
                 srAddMessages,
@@ -125,7 +132,9 @@ namespace Tzkt.Api.Repositories
                 srPublish,
                 srRecoverBond,
                 srRefute,
-                staking);
+                staking,
+                setDelegateParameters,
+                dalPublishCommitment);
 
             var managerOps = ((IEnumerable<Operation>)delegations.Result)
                 .Concat(originations.Result)
@@ -151,7 +160,9 @@ namespace Tzkt.Api.Repositories
                 .Concat(srPublish.Result)
                 .Concat(srRecoverBond.Result)
                 .Concat(srRefute.Result)
-                .Concat(staking.Result);
+                .Concat(staking.Result)
+                .Concat(setDelegateParameters.Result)
+                .Concat(dalPublishCommitment.Result);
 
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
@@ -225,6 +236,8 @@ namespace Tzkt.Api.Repositories
             var srRecoverBond = GetSmartRollupRecoverBondOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srRefute = GetSmartRollupRefuteOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var staking = GetStakingOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var setDelegateParameters = GetSetDelegateParametersOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
+            var dalPublishCommitment = GetDalPublishCommitmentOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
 
             await Task.WhenAll(
                 increasePaidStorageOps,
@@ -235,7 +248,9 @@ namespace Tzkt.Api.Repositories
                 srPublish,
                 srRecoverBond,
                 srRefute,
-                staking);
+                staking,
+                setDelegateParameters,
+                dalPublishCommitment);
 
             if (increasePaidStorageOps.Result.Any())
                 return increasePaidStorageOps.Result;
@@ -263,6 +278,12 @@ namespace Tzkt.Api.Repositories
 
             if (staking.Result.Any())
                 return staking.Result;
+
+            if (setDelegateParameters.Result.Any())
+                return setDelegateParameters.Result;
+
+            if (dalPublishCommitment.Result.Any())
+                return dalPublishCommitment.Result;
 
             var txRollupCommitOps = GetTxRollupCommitOps(hash, counter, quote);
             var txRollupDispatchTicketsOps = GetTxRollupDispatchTicketsOps(hash, counter, quote);

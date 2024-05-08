@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
@@ -111,9 +112,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                 
                 TicketUpdates = ParseTicketUpdates(result);
 
-                rollup.ExecutedCommitments++;
-
-                commitment.Status = SmartRollupCommitmentStatus.Executed;
+                if (commitment.Status != SmartRollupCommitmentStatus.Executed)
+                {
+                    rollup.ExecutedCommitments++;
+                    commitment.Status = SmartRollupCommitmentStatus.Executed;
+                }
 
                 Cache.Statistics.Current.TotalBurned += burned;
             }
@@ -162,9 +165,14 @@ namespace Tzkt.Sync.Protocols.Proto16
                         senderDelegate.DelegatedBalance += spent;
                 }
 
-                rollup.ExecutedCommitments--;
+                var isFirstExecution = !await Db.SmartRollupExecuteOps
+                    .AnyAsync(x => x.Status == OperationStatus.Applied && x.CommitmentId == operation.CommitmentId && x.Id < operation.Id);
 
-                commitment.Status = SmartRollupCommitmentStatus.Cemented;
+                if (isFirstExecution)
+                {
+                    rollup.ExecutedCommitments--;
+                    commitment.Status = SmartRollupCommitmentStatus.Cemented;
+                }
             }
             #endregion
 

@@ -1,6 +1,4 @@
-﻿using System.Threading.Tasks;
-
-namespace Tzkt.Api.Websocket
+﻿namespace Tzkt.Api.Websocket
 {
     public interface IHubProcessor
     {

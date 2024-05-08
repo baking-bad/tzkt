@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
 using Netezos.Encoding;
 using Netezos.Keys;
 using Netezos.Utils;

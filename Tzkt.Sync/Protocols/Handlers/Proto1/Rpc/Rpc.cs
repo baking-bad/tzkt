@@ -39,6 +39,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address)
             => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetUnstakeRequests(int level, string address)
+            => throw new InvalidOperationException();
+
+        public virtual Task<JsonElement> GetContractRawAsync(int level, string address)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics

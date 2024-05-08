@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
@@ -12,12 +13,14 @@ namespace Tzkt.Data.Models
         public long StakingBalance { get; set; }
         public long DelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
-        
-        public long TotalStakedBalance { get; set; }
+
+        public long OwnStakedBalance { get; set; }
         public long ExternalStakedBalance { get; set; }
-        public long ExternalUnstakedBalance { get; set; }
-        public long IssuedPseudotokens { get; set; }
+        public BigInteger? IssuedPseudotokens { get; set; }
         public int StakersCount { get; set; }
+
+        public long ExternalUnstakedBalance { get; set; }
+        public long RoundingError { get; set; }
 
         public long? FrozenDepositLimit { get; set; }
         public long? LimitOfStakingOverBaking { get; set; }

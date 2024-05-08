@@ -1,4 +1,5 @@
-﻿using NJsonSchema.Annotations;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -56,7 +57,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount of "pseudo-tokens" received after staking. These pseudotokens are used for unstaking.
         /// </summary>
-        public long StakedPseudotokens { get; set; }
+        public BigInteger? StakedPseudotokens { get; set; }
 
         /// <summary>
         /// Amount that was unstaked, but not yet finalized (i.e. it is still frozen) (micro tez)
@@ -67,12 +68,6 @@ namespace Tzkt.Api.Models
         /// Information about the baker, for which there are pending unstake requests
         /// </summary>
         public Alias UnstakedBaker { get; set; }
-
-        /// <summary>
-        /// Amount lost due to inaccuracy of the economic protocol introduced in Oxford.
-        /// This amount is literally lost, because it is no longer available for the account in any mean, but for some reason it is counted as delegated.
-        /// </summary>
-        public long LostBalance { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -287,6 +282,21 @@ namespace Tzkt.Api.Models
         public int StakingOpsCount { get; set; }
 
         /// <summary>
+        /// Number of staking updates related to the account
+        /// </summary>
+        public int StakingUpdatesCount { get; set; }
+
+        /// <summary>
+        /// Number of set delegate parameters operations related to the account
+        /// </summary>
+        public int SetDelegateParametersOpsCount { get; set; }
+
+        /// <summary>
+        /// Number of DAL publish commitment operations related to the account
+        /// </summary>
+        public int DalPublishCommitmentOpsCount { get; set; }
+
+        /// <summary>
         /// Block height of the first operation, related to the account
         /// </summary>
         public int? FirstActivity { get; set; }
@@ -316,5 +326,12 @@ namespace Tzkt.Api.Models
         /// [DEPRECATED]
         /// </summary>
         public RawJson Metadata { get; set; }
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long LostBalance => 0;
+        #endregion
     }
 }

@@ -19,23 +19,23 @@ namespace Tzkt.Api
         public AccountParameter baker { get; set; }
 
         /// <summary>
-        /// Filter by operation kind (`stake`, `unstake`, `finalize`, or `set_parameters`).  
+        /// Filter by staking action (`stake`, `unstake`, `finalize`).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public StakingOperationKindParameter kind { get; set; }
+        public StakingActionParameter action { get; set; }
 
         public override bool Empty =>
             base.Empty &&
             anyof == null &&
             baker == null &&
-            kind == null;
+            action == null;
 
         public override string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("hash", hash), ("counter", counter), ("level", level),
                 ("timestamp", timestamp), ("status", status), ("sender", sender),
-                ("anyof", anyof), ("baker", baker), ("kind", kind));
+                ("anyof", anyof), ("baker", baker), ("action", action));
         }
     }
 }

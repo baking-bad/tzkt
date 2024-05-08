@@ -1,23 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class QuotesRepository : DbConnection
+    public class QuotesRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly QuotesCache Quotes;
         readonly StateCache State;
         readonly TimeCache Time;
 
-        public QuotesRepository(StateCache state, TimeCache time, QuotesCache quotes, IConfiguration config) : base(config)
+        public QuotesRepository(NpgsqlDataSource dataSource, StateCache state, TimeCache time, QuotesCache quotes)
         {
+            DataSource = dataSource;
             Quotes = quotes;
             State = state;
             Time = time;
@@ -26,12 +23,6 @@ namespace Tzkt.Api.Repositories
         public int GetCount()
         {
             return State.Current.QuoteLevel + 1;
-            //var sql = @"
-            //    SELECT   COUNT(*)
-            //    FROM     ""Quotes""";
-
-            //using var db = GetConnection();
-            //return await db.QueryFirstAsync<int>(sql);
         }
 
         public Quote GetLast()
@@ -68,7 +59,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Quote
@@ -125,7 +116,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -217,7 +208,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation

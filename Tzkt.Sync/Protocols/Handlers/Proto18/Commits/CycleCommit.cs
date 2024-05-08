@@ -24,18 +24,12 @@ namespace Tzkt.Sync.Protocols.Proto18
             FutureCycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
             FutureCycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
             FutureCycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
-            FutureCycle.LBSubsidy = issuance.RequiredInt64("liquidity_baking_subsidy");
         }
 
         protected override async Task<Dictionary<int, long>> GetSelectedStakes(Block block)
         {
             if (block.Cycle == block.Protocol.FirstCycle)
                 return await base.GetSelectedStakes(block);
-
-            //if (block.Cycle <= Cache.AppState.Get().AIActivationCycle)
-            //    return Task.FromResult(Snapshots
-            //        .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
-            //        .ToDictionary(x => x.AccountId, x => Math.Min(x.StakingBalance, x.TotalStakedBalance * (block.Protocol.MaxDelegatedOverFrozenRatio + 1))));
 
             var slashings = new Dictionary<int, int>();
             var prevBlock = Cache.Blocks.Get(block.Level - 1);
@@ -64,8 +58,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var externalStaked = x.ExternalStakedBalance;
                 if (slashings.TryGetValue(x.AccountId, out var percentage))
                 {
-                    ownStaked = ownStaked * Math.Max(0, 100 - percentage) / 100;
-                    externalStaked = externalStaked * Math.Max(0, 100 - percentage) / 100;
+                    ownStaked = ownStaked * Math.Max(0, 10_000 - percentage) / 10_000;
+                    externalStaked = externalStaked * Math.Max(0, 10_000 - percentage) / 10_000;
                 }
                 var totalStaked = ownStaked + externalStaked;
 

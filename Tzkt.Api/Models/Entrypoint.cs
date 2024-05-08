@@ -1,5 +1,4 @@
-﻿using System.Text.Json.Serialization;
-using NJsonSchema.Annotations;
+﻿using NJsonSchema.Annotations;
 using Netezos.Encoding;
 
 namespace Tzkt.Api.Models

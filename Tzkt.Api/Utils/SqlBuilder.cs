@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Dapper;
@@ -135,6 +133,19 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, AccountTypeParameter type)
+        {
+            if (type == null) return this;
+
+            if (type.Eq != null)
+                AppendFilter($@"{column} = {type.Eq}");
+
+            if (type.Ne != null)
+                AppendFilter($@"{column} != {type.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BakingRightTypeParameter type)
         {
             if (type == null) return this;
@@ -199,7 +210,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, AutostakingActionParameter action)
+        public SqlBuilder FilterA(string column, StakingActionParameter action)
         {
             if (action == null) return this;
 
@@ -218,7 +229,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, StakingOperationKindParameter value)
+        public SqlBuilder FilterA(string column, StakingUpdateTypeParameter value)
         {
             if (value == null) return this;
 
@@ -1219,6 +1230,44 @@ namespace Tzkt.Api
 
             if (value.Ni != null)
                 AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"NOT ({col} = ANY ({Param(value.Ni)}))"))})");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, BigIntegerNullableParameter value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = '{value.Eq}'::numeric");
+
+            if (value.Ne != null)
+                AppendFilter($"({column} IS NULL OR {column} != '{value.Ne}'::numeric)");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > '{value.Gt}'::numeric");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= '{value.Ge}'::numeric");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < '{value.Lt}'::numeric");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= '{value.Le}'::numeric");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)}::numeric[])");
+
+            if (value.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(value.Ni)}::numeric[])))");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
+            }
 
             return this;
         }

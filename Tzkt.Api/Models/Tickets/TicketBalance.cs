@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class TicketBalance
     {
@@ -24,7 +26,7 @@
         /// Balance.  
         /// **[sortable]**
         /// </summary>
-        public string Balance { get; set; }
+        public BigInteger Balance { get; set; }
 
         /// <summary>
         /// Total number of transfers, affecting the ticket balance.  

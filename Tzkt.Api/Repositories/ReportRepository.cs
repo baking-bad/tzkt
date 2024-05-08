@@ -1,25 +1,36 @@
 ﻿using System.Globalization;
 using System.Text;
 using Dapper;
+using Npgsql;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class ReportRepository : DbConnection
+    public class ReportRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly QuotesCache Quotes;
+        readonly TimeCache Times;
 
-        public ReportRepository(AccountsCache accounts, QuotesCache quotes, IConfiguration config) : base(config)
+        public ReportRepository(NpgsqlDataSource dataSource, AccountsCache accounts, QuotesCache quotes, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Quotes = quotes;
+            Times = times;
         }
 
         public async Task Write(StreamWriter csv, string address, DateTime from, DateTime to, int limit, string delimiter, string separator)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null) return;
+
+            if (from > Times[account.LastLevel]) return;
+            var fromLevel = Times.FindLevel(from, SearchMode.ExactOrHigher);
+
+            if (to < Times[account.FirstLevel]) return;
+            var toLevel = Times.FindLevel(to, SearchMode.ExactOrLower);
 
             var sql = new StringBuilder();
 
@@ -49,11 +60,14 @@ namespace Tzkt.Api.Repositories
 
             if (account is RawUser user)
             {
-                if (user.Activated == true) UnionActivations(sql);
+                if (user.ActivationsCount > 0) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
                 if (user.StakingOpsCount > 0) UnionStakingOps(sql);
+                if (user.SetDelegateParametersOpsCount > 0) UnionSetDelegateParametersOps(sql);
+                if (user.DalPublishCommitmentOpsCount > 0) UnionDalPublishCommitmentOps(sql);
+                if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -75,8 +89,8 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine(@"ORDER BY ""Id""");
             sql.AppendLine(@"LIMIT @limit");
 
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, fromLevel, toLevel, limit });
 
             #region write header
             csv.Write("Block level");
@@ -85,13 +99,10 @@ namespace Tzkt.Api.Repositories
             csv.Write(delimiter);
             csv.Write("Operation");
             csv.Write(delimiter);
-            if (account is RawDelegate)
-            {
-                csv.Write("Reward");
-                csv.Write(delimiter);
-                csv.Write("Loss");
-                csv.Write(delimiter);
-            }
+            csv.Write("Reward");
+            csv.Write(delimiter);
+            csv.Write("Loss");
+            csv.Write(delimiter);
             csv.Write("Received");
             csv.Write(delimiter);
             csv.Write("From address");
@@ -117,13 +128,10 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(Operations[row.Type]);
                 csv.Write(delimiter);
-                if (account is RawDelegate)
-                {
-                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                }
+                csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
                 // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
@@ -156,6 +164,12 @@ namespace Tzkt.Api.Repositories
             var account = await Accounts.GetAsync(address);
             if (account == null) return;
 
+            if (from > Times[account.LastLevel]) return;
+            var fromLevel = Times.FindLevel(from, SearchMode.ExactOrHigher);
+
+            if (to < Times[account.FirstLevel]) return;
+            var toLevel = Times.FindLevel(to, SearchMode.ExactOrLower);
+
             var sql = new StringBuilder();
 
             if (account.DelegationsCount > 0) UnionDelegations(sql);
@@ -184,11 +198,14 @@ namespace Tzkt.Api.Repositories
 
             if (account is RawUser user)
             {
-                if (user.Activated == true) UnionActivations(sql);
+                if (user.ActivationsCount > 0) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
                 if (user.StakingOpsCount > 0) UnionStakingOps(sql);
+                if (user.SetDelegateParametersOpsCount > 0) UnionSetDelegateParametersOps(sql);
+                if (user.DalPublishCommitmentOpsCount > 0) UnionDalPublishCommitmentOps(sql);
+                if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -210,8 +227,8 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine(@"ORDER BY ""Id""");
             sql.AppendLine(@"LIMIT @limit");
 
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, fromLevel, toLevel, limit });
 
             #region write header
             var symbolName = symbol switch
@@ -233,17 +250,14 @@ namespace Tzkt.Api.Repositories
             csv.Write(delimiter);
             csv.Write("Operation");
             csv.Write(delimiter);
-            if (account is RawDelegate)
-            {
-                csv.Write("Reward XTZ");
-                csv.Write(delimiter);
-                csv.Write($"Reward {symbolName}");
-                csv.Write(delimiter);
-                csv.Write("Loss XTZ");
-                csv.Write(delimiter);
-                csv.Write($"Loss {symbolName}");
-                csv.Write(delimiter);
-            }
+            csv.Write("Reward XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Reward {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("Loss XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Loss {symbolName}");
+            csv.Write(delimiter);
             csv.Write("Received XTZ");
             csv.Write(delimiter);
             csv.Write($"Received {symbolName}");
@@ -276,17 +290,14 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(Operations[row.Type]);
                 csv.Write(delimiter);
-                if (account is RawDelegate)
-                {
-                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
-                    csv.Write(delimiter);
-                }
+                csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
@@ -325,6 +336,12 @@ namespace Tzkt.Api.Repositories
             var account = await Accounts.GetAsync(address);
             if (account == null) return;
 
+            if (from > Times[account.LastLevel]) return;
+            var fromLevel = Times.FindLevel(from, SearchMode.ExactOrHigher);
+
+            if (to < Times[account.FirstLevel]) return;
+            var toLevel = Times.FindLevel(to, SearchMode.ExactOrLower);
+
             var sql = new StringBuilder();
 
             if (account.DelegationsCount > 0) UnionDelegations(sql);
@@ -353,11 +370,14 @@ namespace Tzkt.Api.Repositories
 
             if (account is RawUser user)
             {
-                if (user.Activated == true) UnionActivations(sql);
+                if (user.ActivationsCount > 0) UnionActivations(sql);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstant(sql);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(sql);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(sql);
                 if (user.StakingOpsCount > 0) UnionStakingOps(sql);
+                if (user.SetDelegateParametersOpsCount > 0) UnionSetDelegateParametersOps(sql);
+                if (user.DalPublishCommitmentOpsCount > 0) UnionDalPublishCommitmentOps(sql);
+                if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
             if (account is RawDelegate delegat)
@@ -379,8 +399,8 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine(@"ORDER BY ""Id""");
             sql.AppendLine(@"LIMIT @limit");
 
-            using var db = GetConnection();
-            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, from, to, limit });
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.ToString(), new { account = account.Id, fromLevel, toLevel, limit });
 
             #region write header
             var symbolName = symbol switch
@@ -402,17 +422,14 @@ namespace Tzkt.Api.Repositories
             csv.Write(delimiter);
             csv.Write("Operation");
             csv.Write(delimiter);
-            if (account is RawDelegate)
-            {
-                csv.Write("Reward XTZ");
-                csv.Write(delimiter);
-                csv.Write($"Reward {symbolName}");
-                csv.Write(delimiter);
-                csv.Write("Loss XTZ");
-                csv.Write(delimiter);
-                csv.Write($"Loss {symbolName}");
-                csv.Write(delimiter);
-            }
+            csv.Write("Reward XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Reward {symbolName}");
+            csv.Write(delimiter);
+            csv.Write("Loss XTZ");
+            csv.Write(delimiter);
+            csv.Write($"Loss {symbolName}");
+            csv.Write(delimiter);
             csv.Write("Received XTZ");
             csv.Write(delimiter);
             csv.Write($"Received {symbolName}");
@@ -446,17 +463,14 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(Operations[row.Type]);
                 csv.Write(delimiter);
-                if (account is RawDelegate)
-                {
-                    csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
-                    csv.Write(delimiter);
-                    csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
-                    csv.Write(delimiter);
-                }
+                csv.Write(row.Reward == null ? "" : ((decimal)row.Reward / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Reward == null ? "" : ((double)row.Reward / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Loss == null ? "" : ((decimal)-row.Loss / 1_000_000m).ToString(format));
+                csv.Write(delimiter);
+                csv.Write(row.Loss == null ? "" : ((double)-row.Loss / 1_000_000d * price).ToString(format));
+                csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
@@ -501,7 +515,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -511,8 +525,8 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND (""RewardLiquid"" > 0 OR ""RewardStakedOwn"" > 0) ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" > 0 OR ""RewardStakedEdge"" > 0) ");
 
             sql.AppendLine();
         }
@@ -529,7 +543,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"" + ""Fees"") as ""Reward"", ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"" + ""Fees"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -539,8 +553,8 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProposerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND (""RewardLiquid"" > 0 OR ""RewardStakedOwn"" > 0 OR ""Fees"" > 0) ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" OR ""RewardStakedEdge"" > 0 OR ""Fees"" > 0) ");
 
             sql.AppendLine();
             #endregion
@@ -555,7 +569,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""BonusLiquid"" + ""BonusStakedOwn"") as ""Reward"", ");
+            sql.Append(@"(""BonusDelegated"" + ""BonusStakedOwn"" + ""BonusStakedEdge"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -565,8 +579,8 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProducerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
-            sql.Append(@"AND (""BonusLiquid"" > 0 OR ""BonusStakedOwn"" > 0) ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND (""BonusDelegated"" > 0 OR ""BonusStakedOwn"" > 0 OR ""BonusStakedEdge"" > 0) ");
 
             sql.AppendLine();
             #endregion
@@ -593,7 +607,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""EndorsementOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Reward"" > 0 ");
 
             sql.AppendLine();
@@ -620,7 +634,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""ActivationOps"" ");
             sql.Append(@"WHERE ""AccountId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Balance"" > 0 ");
 
             sql.AppendLine();
@@ -648,7 +662,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoubleBakingOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -673,7 +687,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoubleBakingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -701,7 +715,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -726,7 +740,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoubleEndorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -754,7 +768,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoublePreendorsingOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -779,7 +793,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DoublePreendorsingOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -796,7 +810,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -806,7 +820,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
         }
@@ -822,7 +836,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Reward"", ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Reward"", ");
             sql.Append(@"null::integer as ""Loss"", ");
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
@@ -832,7 +846,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
         }
@@ -858,7 +872,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DelegationOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account AND ""Nonce"" IS NULL ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -886,7 +900,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""OriginationOps"" ");
             sql.Append(@"WHERE ""ContractId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Balance"" > 0 ");
 
             sql.AppendLine();
@@ -912,7 +926,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""OriginationOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (""Balance"" > 0 OR CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE 0 END > 0) ");
 
@@ -939,7 +953,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""OriginationOps"" ");
             sql.Append(@"WHERE ""InitiatorId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) > 0 ");
 
@@ -966,7 +980,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""OriginationOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" != 1 AND ""Nonce"" IS NULL ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
@@ -996,7 +1010,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TransactionOps"" ");
             sql.Append(@"WHERE ""TargetId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND ""Amount"" > 0 ");
 
@@ -1023,7 +1037,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TransactionOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (""Amount"" > 0 OR CASE WHEN ""Nonce"" is NULL THEN (""BakerFee"" + COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) ELSE 0 END > 0) ");
 
@@ -1050,7 +1064,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TransactionOps"" ");
             sql.Append(@"WHERE ""InitiatorId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" = 1 ");
             sql.Append(@"AND (COALESCE(""StorageFee"", 0) + COALESCE(""AllocationFee"", 0)) > 0 ");
 
@@ -1077,7 +1091,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TransactionOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""Status"" != 1 AND ""Nonce"" is NULL ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
@@ -1106,7 +1120,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""RevealOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1133,7 +1147,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""RegisterConstantOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1160,7 +1174,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SetDepositsLimitOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1187,7 +1201,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupOriginationOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""AllocationFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1214,7 +1228,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupSubmitBatchOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1241,7 +1255,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupCommitOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1268,7 +1282,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupFinalizeCommitmentOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1295,7 +1309,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupRemoveCommitmentOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1322,7 +1336,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupReturnBondOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1350,7 +1364,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupRejectionOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1375,7 +1389,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupRejectionOps"" ");
             sql.Append(@"WHERE ""CommitterId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1402,7 +1416,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TxRollupDispatchTicketsOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1429,7 +1443,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""TransferTicketOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1456,7 +1470,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""IncreasePaidStorageOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1483,7 +1497,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1511,7 +1525,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DrainDelegateOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1536,7 +1550,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""DrainDelegateOps"" ");
             sql.Append(@"WHERE ""TargetId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1563,7 +1577,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupAddMessagesOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1590,7 +1604,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupCementOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1617,7 +1631,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupExecuteOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1644,7 +1658,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupOriginateOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""BakerFee"" > 0 OR COALESCE(""StorageFee"", 0) > 0) ");
 
             sql.AppendLine();
@@ -1671,7 +1685,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupPublishOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1698,7 +1712,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupRecoverBondOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1725,7 +1739,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""SmartRollupRefuteOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
@@ -1755,7 +1769,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
             sql.Append(@"WHERE g.""InitiatorId"" = @account ");
             sql.Append(@"AND (g.""InitiatorReward"" IS NOT NULL OR g.""InitiatorLoss"" IS NOT NULL)");
-            sql.Append(@"AND o.""Timestamp"" >= @from AND o.""Timestamp"" < @to ");
+            sql.Append(@"AND o.""Level"" >= @fromLevel AND o.""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1782,7 +1796,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"INNER JOIN ""SmartRollupRefuteOps"" AS o ON o.""Id"" = g.""LastMoveId"" ");
             sql.Append(@"WHERE g.""OpponentId"" = @account ");
             sql.Append(@"AND (g.""OpponentReward"" IS NOT NULL OR g.""OpponentLoss"" IS NOT NULL)");
-            sql.Append(@"AND o.""Timestamp"" >= @from AND o.""Timestamp"" < @to ");
+            sql.Append(@"AND o.""Level"" >= @fromLevel AND o.""Level"" <= @toLevel ");
 
             sql.AppendLine();
             #endregion
@@ -1809,10 +1823,166 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""StakingOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");
 
             sql.AppendLine();
+        }
+
+        void UnionSetDelegateParametersOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"44 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"""BakerFee"" as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""SetDelegateParametersOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND ""BakerFee"" > 0 ");
+
+            sql.AppendLine();
+        }
+
+        void UnionDalPublishCommitmentOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"45 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"""OpHash"" as ""OpHash"", ");
+            sql.Append(@"""Counter"" as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"""BakerFee"" as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""DalPublishCommitmentOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND ""BakerFee"" > 0 ");
+
+            sql.AppendLine();
+        }
+
+        void UnionStakingUpdates(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region stake
+            sql.Append(@"46 as ""Type"", ");
+            sql.Append(@"b.""Id"" as ""Id"", ");
+            sql.Append(@"u.""Level"" as ""Level"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"u.""Amount"" as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"u.""BakerId"" as ""To"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" as u ");
+            sql.Append(@"LEFT JOIN ""Blocks"" as b ON b.""Level"" = u.""Level"" ");
+            sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleEndorsingOps"" as de ON s.""Id"" = u.""DoubleEndorsingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoublePreendorsingOps"" as dp ON s.""Id"" = u.""DoublePreendorsingOpId"" ");
+            sql.Append(@"WHERE u.""StakerId"" = @account ");
+            sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
+            sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.Stake} ");
+            sql.Append(@"AND u.""Level"" >= @fromLevel AND u.""Level"" <= @toLevel ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region unstake
+            sql.Append(@"47 as ""Type"", ");
+            sql.Append(@"b.""Id"" as ""Id"", ");
+            sql.Append(@"u.""Level"" as ""Level"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"u.""Amount"" as ""Received"", ");
+            sql.Append(@"u.""BakerId"" as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" as u ");
+            sql.Append(@"LEFT JOIN ""Blocks"" as b ON b.""Level"" = u.""Level"" ");
+            sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleEndorsingOps"" as de ON s.""Id"" = u.""DoubleEndorsingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoublePreendorsingOps"" as dp ON s.""Id"" = u.""DoublePreendorsingOpId"" ");
+            sql.Append(@"WHERE u.""StakerId"" = @account ");
+            sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
+            sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.Unstake} ");
+            sql.Append(@"AND u.""Level"" >= @fromLevel AND u.""Level"" <= @toLevel ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region slash unstaked
+            sql.Append(@"48 as ""Type"", ");
+            sql.Append(@"b.""Id"" as ""Id"", ");
+            sql.Append(@"u.""Level"" as ""Level"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"null::integer as ""Reward"", ");
+            sql.Append(@"u.""Amount"" as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" as u ");
+            sql.Append(@"LEFT JOIN ""Blocks"" as b ON b.""Level"" = u.""Level"" ");
+            sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleEndorsingOps"" as de ON s.""Id"" = u.""DoubleEndorsingOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoublePreendorsingOps"" as dp ON s.""Id"" = u.""DoublePreendorsingOpId"" ");
+            sql.Append(@"WHERE u.""StakerId"" = @account ");
+            sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
+            sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.SlashUnstaked} ");
+            sql.Append(@"AND u.""Level"" >= @fromLevel AND u.""Level"" <= @toLevel ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void UnionRevelationPenalties(StringBuilder sql)
@@ -1836,7 +2006,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""RevelationPenaltyOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
             sql.AppendLine();
         }
@@ -1862,7 +2032,7 @@ namespace Tzkt.Api.Repositories
 
             sql.Append(@"FROM ""MigrationOps"" ");
             sql.Append(@"WHERE ""AccountId"" = @account ");
-            sql.Append(@"AND ""Timestamp"" >= @from AND ""Timestamp"" < @to ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BalanceChange"" > 0 ");
 
             sql.AppendLine();
@@ -1921,7 +2091,12 @@ namespace Tzkt.Api.Repositories
             "smart rollup recover bond",        // 40
             "smart rollup refute",              // 41
             "smart rollup game",                // 42
-            "staking"                           // 43
+            "staking",                          // 43
+            "set delegate parameters",          // 44
+            "dal publish commitment",           // 45
+            "stake",                            // 46
+            "unstake",                          // 47
+            "slashing",                         // 48
         };
     }
 }

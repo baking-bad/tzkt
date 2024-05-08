@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Api
+﻿namespace Tzkt.Api
 {
     class ConfigurationException : Exception
     {

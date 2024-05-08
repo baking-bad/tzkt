@@ -4,11 +4,11 @@ using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetSmartRollupRecoverBondStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash);
         }
 
@@ -26,7 +26,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("StakerId", filter.staker)
                 .Filter(filter.anyof, x => x == "sender" ? "SenderId" : "StakerId");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -78,7 +78,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(filter.anyof, x => x == "sender" ? "SenderId" : "StakerId")
                 .Take(pagination, x => (@"""Id""", @"""Id"""));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 

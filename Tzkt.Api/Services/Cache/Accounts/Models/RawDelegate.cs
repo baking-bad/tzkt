@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Services.Cache
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Services.Cache
 {
     public class RawDelegate : RawUser
     {
@@ -9,11 +11,13 @@
         public long DelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
 
-        public long TotalStakedBalance { get; set; }
+        public long OwnStakedBalance { get; set; }
         public long ExternalStakedBalance { get; set; }
-        public long ExternalUnstakedBalance { get; set; }
-        public long IssuedPseudotokens { get; set; }
+        public BigInteger? IssuedPseudotokens { get; set; }
         public int StakersCount { get; set; }
+
+        public long ExternalUnstakedBalance { get; set; }
+        public long RoundingError { get; set; }
 
         public long? FrozenDepositLimit { get; set; }
         public long? LimitOfStakingOverBaking { get; set; }

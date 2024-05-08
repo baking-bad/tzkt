@@ -6,18 +6,11 @@ namespace Tzkt.Data.Models
     {
         public long Id { get; set; }
         public int Level { get; set; }
-        public int BakerId { get; set; }
-        public AutostakingAction Action { get; set; }
-        public int Cycle { get; set; }
-        public long Amount { get; set; }
-    }
+        public StakingAction Action { get; set; }
 
-    public enum AutostakingAction
-    {
-        Stake,
-        Unstake,
-        Finalize,
-        Restake
+        public long Amount { get; set; }
+        public int BakerId { get; set; }
+        public int StakingUpdatesCount { get; set; }
     }
 
     public static class AutostakingOperationModel

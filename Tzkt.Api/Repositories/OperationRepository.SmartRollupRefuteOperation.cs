@@ -4,11 +4,11 @@ using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetSmartRollupRefuteStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(TzktContext.SmartRollupRefuteOps), hash);
         }
 
@@ -43,7 +43,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Move""", filter.move)
                 .FilterA(@"o.""GameStatus""", filter.gameStatus);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -264,7 +264,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""GameStatus""", filter.gameStatus)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 

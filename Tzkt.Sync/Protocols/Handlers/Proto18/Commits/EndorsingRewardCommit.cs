@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -16,14 +15,18 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var state = Cache.AppState.Get();
             var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
-            var ops = bakerCycles.Where(x => x.Value.FutureEndorsementRewards > 0).ToDictionary(x => x.Key, bakerCycle => new EndorsingRewardOperation
-            {
-                Id = Cache.AppState.NextOperationId(),
-                BakerId = bakerCycle.Key,
-                Level = block.Level,
-                Timestamp = block.Timestamp,
-                Expected = bakerCycle.Value.FutureEndorsementRewards
-            });
+            var ops = bakerCycles
+                .Where(x => x.Value.FutureEndorsementRewards > 0)
+                .ToDictionary(
+                    x => x.Key,
+                    bakerCycle => new EndorsingRewardOperation
+                    {
+                        Id = Cache.AppState.NextOperationId(),
+                        BakerId = bakerCycle.Key,
+                        Level = block.Level,
+                        Timestamp = block.Timestamp,
+                        Expected = bakerCycle.Value.FutureEndorsementRewards
+                    });
 
             var balanceUpdates = rawBlock.Required("metadata").RequiredArray("balance_updates").EnumerateArray().Where(x => x.RequiredString("origin") == "block").ToList();
             for (int i = 0; i < balanceUpdates.Count; i++)
@@ -45,10 +48,10 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
-                        var changeOwn = baker.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * baker.StakedBalance / baker.TotalStakedBalance);
-                        var changeShared = change - changeOwn;
-                        op.RewardStakedOwn = changeOwn;
-                        op.RewardStakedShared = changeShared;
+                        if (baker.ExternalStakedBalance != 0)
+                            throw new Exception("Manual staking should be disabled in Oxford");
+
+                        op.RewardStakedOwn = change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract" &&
                         nextUpdate.RequiredInt64("change") == change)
@@ -57,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
-                        op.RewardLiquid = change;
+                        op.RewardDelegated = change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "burned" &&
                         nextUpdate.RequiredString("category") == "lost endorsing rewards" &&
@@ -67,15 +70,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
-                        // Endorsing rewards are wrong for the first preserved+1 cycles after AI activation 
-                        if (state.AIActivated && block.Cycle >= state.AIActivationCycle && block.Cycle <= state.AIActivationCycle + block.Protocol.PreservedCycles)
-                            op.Expected = change;
-
                         if (op.Expected != change)
                             throw new Exception("FutureEndorsementRewards != loss");
 
-                        op.RewardLiquid = 0;
+                        op.RewardDelegated = 0;
                         op.RewardStakedOwn = 0;
+                        op.RewardStakedEdge = 0;
                         op.RewardStakedShared = 0;
                     }
                     else
@@ -91,17 +91,14 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureEndorsementRewards = 0;
-                if (op.RewardLiquid != 0 || op.RewardStakedOwn != 0 || op.RewardStakedShared != 0)
+                if (op.RewardDelegated != 0 || op.RewardStakedOwn != 0 || op.RewardStakedEdge != 0 || op.RewardStakedShared != 0)
                 {
-                    // Endorsing rewards are wrong for the first preserved+1 cycles after AI activation 
-                    if (state.AIActivated && block.Cycle >= state.AIActivationCycle && block.Cycle <= state.AIActivationCycle + block.Protocol.PreservedCycles)
-                        op.Expected = op.RewardLiquid + op.RewardStakedOwn + op.RewardStakedShared;
+                    if (op.Expected != op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared)
+                        throw new Exception("ExpectedReward != RewardFrozen + RewardDelegated");
 
-                    if (op.Expected != op.RewardLiquid + op.RewardStakedOwn + op.RewardStakedShared)
-                        throw new Exception("ExpectedReward != RewardFrozen + RewardLiquid");
-
-                    bakerCycle.EndorsementRewardsLiquid = op.RewardLiquid;
+                    bakerCycle.EndorsementRewardsDelegated = op.RewardDelegated;
                     bakerCycle.EndorsementRewardsStakedOwn = op.RewardStakedOwn;
+                    bakerCycle.EndorsementRewardsStakedEdge = op.RewardStakedEdge;
                     bakerCycle.EndorsementRewardsStakedShared = op.RewardStakedShared;
                 }
                 else
@@ -113,17 +110,16 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance += op.RewardLiquid + op.RewardStakedOwn;
-                baker.StakingBalance += op.RewardLiquid + op.RewardStakedOwn + op.RewardStakedShared;
-                baker.StakedBalance += op.RewardStakedOwn;
+                baker.Balance += op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge;
+                baker.StakingBalance += op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared;
+                baker.OwnStakedBalance += op.RewardStakedOwn + op.RewardStakedEdge;
                 baker.ExternalStakedBalance += op.RewardStakedShared;
-                baker.TotalStakedBalance += op.RewardStakedOwn + op.RewardStakedShared;
                 baker.EndorsingRewardsCount++;
 
                 block.Operations |= Operations.EndorsingRewards;
 
-                Cache.Statistics.Current.TotalCreated += op.RewardLiquid + op.RewardStakedOwn + op.RewardStakedShared;
-                Cache.Statistics.Current.TotalFrozen += op.RewardStakedOwn + op.RewardStakedShared;
+                Cache.Statistics.Current.TotalCreated += op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared;
+                Cache.Statistics.Current.TotalFrozen += op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared;
             }
 
             Cache.AppState.Get().EndorsingRewardOpsCount += ops.Count;
@@ -145,18 +141,18 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 bakerCycle.FutureEndorsementRewards = op.Expected;
                 bakerCycle.MissedEndorsementRewards = 0;
-                bakerCycle.EndorsementRewardsLiquid = 0;
+                bakerCycle.EndorsementRewardsDelegated = 0;
                 bakerCycle.EndorsementRewardsStakedOwn = 0;
+                bakerCycle.EndorsementRewardsStakedEdge = 0;
                 bakerCycle.EndorsementRewardsStakedShared = 0;
 
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance -= op.RewardLiquid + op.RewardStakedOwn;
-                baker.StakingBalance -= op.RewardLiquid + op.RewardStakedOwn + op.RewardStakedShared;
-                baker.StakedBalance -= op.RewardStakedOwn;
+                baker.Balance -= op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge;
+                baker.StakingBalance -= op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared;
+                baker.OwnStakedBalance -= op.RewardStakedOwn + op.RewardStakedEdge;
                 baker.ExternalStakedBalance -= op.RewardStakedShared;
-                baker.TotalStakedBalance -= op.RewardStakedOwn + op.RewardStakedShared;
                 baker.EndorsingRewardsCount--;
             }
 

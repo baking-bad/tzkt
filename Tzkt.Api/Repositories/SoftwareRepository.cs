@@ -1,27 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class SoftwareRepository : DbConnection
+    public class SoftwareRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly TimeCache Time;
 
-        public SoftwareRepository(TimeCache time, IConfiguration config) : base(config)
+        public SoftwareRepository(NpgsqlDataSource dataSource, TimeCache time)
         {
+            DataSource = dataSource;
             Time = time;
         }
 
         public async Task<int> GetCount()
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""Software""");
         }
 
@@ -36,7 +33,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Software
@@ -80,7 +77,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -151,7 +148,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()];

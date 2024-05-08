@@ -1,19 +1,22 @@
 ﻿using System.Text;
 using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class BalanceHistoryRepository : DbConnection
+    public class BalanceHistoryRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly AccountsCache Accounts;
         readonly QuotesCache Quotes;
         readonly TimeCache Time;
 
-        public BalanceHistoryRepository(StateCache state, AccountsCache accounts, QuotesCache quotes, TimeCache time, IConfiguration config) : base(config)
+        public BalanceHistoryRepository(NpgsqlDataSource dataSource, StateCache state, AccountsCache accounts, QuotesCache quotes, TimeCache time)
         {
+            DataSource = dataSource;
             State = state;
             Accounts = accounts;
             Quotes = quotes;
@@ -49,7 +52,7 @@ namespace Tzkt.Api.Repositories
                     INNER JOIN  ""Accounts"" as acc
                             ON  acc.""Id"" = {account.Id}";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.ExecuteScalarAsync<long>(sql, new { account = account.Id, level });
         }
 
@@ -102,7 +105,7 @@ namespace Tzkt.Api.Repositories
                 OFFSET @offset
                 LIMIT @limit";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { account = account.Id, step, offset, limit });
 
             return rows.Select(row => new HistoricalBalance
@@ -148,7 +151,7 @@ namespace Tzkt.Api.Repositories
                 OFFSET @offset
                 LIMIT @limit";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { account = account.Id, step, offset, limit });
 
             var result = new object[rows.Count()][];
@@ -215,7 +218,7 @@ namespace Tzkt.Api.Repositories
                 OFFSET @offset
                 LIMIT @limit";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { account = account.Id, step, offset, limit });
 
             //TODO: optimize memory allocation
@@ -276,11 +279,14 @@ namespace Tzkt.Api.Repositories
 
             if (account is RawUser user)
             {
-                if (user.Activated == true) SumActivations(union, from, to);
+                if (user.ActivationsCount > 0) SumActivations(union, from, to);
                 if (user.RegisterConstantsCount > 0) SumRegisterConstants(union, from, to);
                 if (user.SetDepositsLimitsCount > 0) SumSetDepositsLimits(union, from, to);
                 if (user.DrainDelegateCount > 0) SumDrainDelegateOps(union, from, to);
                 if (user.StakingOpsCount > 0) SumStakingOps(union, from, to);
+                if (user.SetDelegateParametersOpsCount > 0) SumSetDelegateParametersOps(union, from, to);
+                if (user.DalPublishCommitmentOpsCount > 0) SumDalPublishCommitmentOps(union, from, to);
+                if (user.StakingUpdatesCount > 0) SumStakingUpdates(union, from, to);
             }
 
             if (account is RawDelegate delegat)
@@ -304,10 +310,10 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"SUM(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"SUM(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND (""RewardLiquid"" != 0 OR ""RewardStakedOwn"" != 0) ");
+            sql.Append(@"AND (""RewardDelegated"" != 0 OR ""RewardStakedOwn"" != 0 OR ""RewardStakedEdge"" != 0) ");
 
             if (from > 0)
                 sql.Append($@"AND ""Level"" > {from} ");
@@ -322,7 +328,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             #region proposer
-            sql.Append(@"SUM(""RewardLiquid"" + ""RewardStakedOwn"" + ""Fees"") as ""Change"" ");
+            sql.Append(@"SUM(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"" + ""Fees"") as ""Change"" ");
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProposerId"" = @account ");
 
@@ -337,7 +343,7 @@ namespace Tzkt.Api.Repositories
             sql.Append("UNION ALL SELECT ");
 
             #region producer
-            sql.Append(@"SUM(""BonusLiquid"" + ""BonusStakedOwn"") as ""Change"" ");
+            sql.Append(@"SUM(""BonusDelegated"" + ""BonusStakedOwn"" + ""BonusStakedEdge"") as ""Change"" ");
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProducerId"" = @account ");
 
@@ -486,7 +492,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"SUM(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"SUM(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
             sql.Append(@"FROM ""NonceRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
@@ -502,7 +508,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"SUM(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"SUM(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
             sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
 
@@ -953,6 +959,92 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
+        void SumSetDelegateParametersOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""SetDelegateParametersOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumDalPublishCommitmentOps(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
+            sql.Append(@"FROM ""DalPublishCommitmentOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+        }
+
+        void SumStakingUpdates(StringBuilder sql, int from, int to)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region staked by staker
+            sql.Append(@"SUM(-""Amount"") as ""Change"" ");
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.Stake} ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region unstaked by staker
+            sql.Append(@"SUM(""Amount"") as ""Change"" ");
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.Unstake} ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region slashed unstaked by staker
+            sql.Append(@"SUM(-""Amount"") as ""Change"" ");
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.SlashUnstaked} ");
+
+            if (from > 0)
+                sql.Append($@"AND ""Level"" > {from} ");
+            else if (to > 0)
+                sql.Append($@"AND ""Level"" <= {to} ");
+
+            sql.AppendLine();
+            #endregion
+        }        
+
         void SumSrAddMessagesOps(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
@@ -1164,11 +1256,14 @@ namespace Tzkt.Api.Repositories
 
             if (account is RawUser user)
             {
-                if (user.Activated == true) UnionActivations(union);
+                if (user.ActivationsCount > 0) UnionActivations(union);
                 if (user.RegisterConstantsCount > 0) UnionRegisterConstants(union);
                 if (user.SetDepositsLimitsCount > 0) UnionSetDepositsLimits(union);
                 if (user.DrainDelegateCount > 0) UnionDrainDelegateOps(union);
                 if (user.StakingOpsCount > 0) UnionStakingOps(union);
+                if (user.SetDelegateParametersOpsCount > 0) UnionSetDelegateParametersOps(union);
+                if (user.DalPublishCommitmentOpsCount > 0) UnionDalPublishCommitmentOps(union);
+                if (user.StakingUpdatesCount > 0) UnionStakingUpdates(union);
             }
 
             if (account is RawDelegate delegat)
@@ -1193,11 +1288,11 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
 
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
-            sql.Append(@"AND (""RewardLiquid"" != 0 OR ""RewardStakedOwn"" != 0) ");
+            sql.Append(@"AND (""RewardDelegated"" != 0 OR ""RewardStakedOwn"" != 0 OR ""RewardStakedEdge"" != 0) ");
 
             sql.AppendLine();
         }
@@ -1208,7 +1303,7 @@ namespace Tzkt.Api.Repositories
 
             #region proposer
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"" + ""Fees"") as ""Change"" ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"" + ""Fees"") as ""Change"" ");
 
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProposerId"" = @account ");
@@ -1220,7 +1315,7 @@ namespace Tzkt.Api.Repositories
 
             #region producer
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""BonusLiquid"" + ""BonusStakedOwn"") as ""Change"" ");
+            sql.Append(@"(""BonusDelegated"" + ""BonusStakedOwn"" + ""BonusStakedEdge"") as ""Change"" ");
 
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProducerId"" = @account ");
@@ -1342,7 +1437,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
 
             sql.Append(@"FROM ""NonceRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
@@ -1355,7 +1450,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(""RewardLiquid"" + ""RewardStakedOwn"") as ""Change"" ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Change"" ");
 
             sql.Append(@"FROM ""VdfRevelationOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
@@ -1719,6 +1814,78 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();
+        }
+
+        void UnionSetDelegateParametersOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""SetDelegateParametersOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+        void UnionDalPublishCommitmentOps(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""BakerFee"") as ""Change"" ");
+
+            sql.Append(@"FROM ""DalPublishCommitmentOps"" ");
+            sql.Append(@"WHERE ""SenderId"" = @account ");
+
+            sql.AppendLine();
+        }
+
+
+        void UnionStakingUpdates(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            #region staked by staker
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""Amount"") as ""Change"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.Stake} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region unstaked by staker
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(""Amount"") as ""Change"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.Unstake} ");
+
+            sql.AppendLine();
+            #endregion
+
+            sql.Append("UNION ALL SELECT ");
+
+            #region slashed unstaked by staker
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"(-""Amount"") as ""Change"" ");
+
+            sql.Append(@"FROM ""StakingUpdates"" ");
+            sql.Append(@"WHERE ""StakerId"" = @account ");
+            sql.Append(@"AND ""StakerId"" != ""BakerId"" ");
+            sql.Append($@"AND ""Type"" = {(int)Data.Models.StakingUpdateType.SlashUnstaked} ");
+
+            sql.AppendLine();
+            #endregion
         }
 
         void UnionSrAddMessagesOps(StringBuilder sql)

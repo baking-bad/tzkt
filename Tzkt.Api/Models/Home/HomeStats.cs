@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Tzkt.Api.Models
 {
     public class HomeStats

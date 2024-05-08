@@ -4,7 +4,7 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class AccountRepository : DbConnection
+    public partial class AccountRepository
     {
         public async Task<Models.Delegate> GetDelegate(string address)
         {
@@ -23,16 +23,15 @@ namespace Tzkt.Api.Repositories
                 Balance = delegat.Balance,
                 RollupBonds = delegat.RollupBonds,
                 RollupsCount = delegat.RollupsCount,
-                StakedBalance = delegat.StakedBalance,
-                StakedPseudotokens = delegat.StakedPseudotokens,
+                StakedBalance = delegat.OwnStakedBalance,
                 UnstakedBalance = delegat.UnstakedBalance,
                 UnstakedBaker = delegat.UnstakedBakerId == null ? null : Accounts.GetAlias(delegat.UnstakedBakerId.Value),
-                TotalStakedBalance = delegat.TotalStakedBalance,
+                TotalStakedBalance = delegat.OwnStakedBalance + delegat.ExternalStakedBalance,
                 ExternalStakedBalance = delegat.ExternalStakedBalance,
                 ExternalUnstakedBalance = delegat.ExternalUnstakedBalance,
                 IssuedPseudotokens = delegat.IssuedPseudotokens,
                 StakersCount = delegat.StakersCount,
-                LostBalance = delegat.LostBalance,
+                RoundingError = delegat.RoundingError,
                 TransferTicketCount = delegat.TransferTicketCount,
                 TxRollupCommitCount = delegat.TxRollupCommitCount,
                 TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
@@ -60,7 +59,7 @@ namespace Tzkt.Api.Repositories
                 FirstActivityTime = Time[delegat.FirstLevel],
                 LastActivity = delegat.LastLevel,
                 LastActivityTime = Time[delegat.LastLevel],
-                NumActivations = delegat.Activated == true ? 1 : 0,
+                NumActivations = delegat.ActivationsCount,
                 NumBallots = delegat.BallotsCount,
                 NumContracts = delegat.ContractsCount,
                 ActiveTokensCount = delegat.ActiveTokensCount,
@@ -100,6 +99,9 @@ namespace Tzkt.Api.Repositories
                 ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
                 StakingOpsCount = delegat.StakingOpsCount,
                 AutostakingOpsCount = delegat.AutostakingOpsCount,
+                StakingUpdatesCount = delegat.StakingUpdatesCount ?? 0,
+                SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
+                DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
                 Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
             };
         }
@@ -110,7 +112,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Type", 1)
                 .Filter("Staked", active);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -121,7 +123,7 @@ namespace Tzkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
+            var sql = new SqlBuilder($@"SELECT *, {AliasQuery} AS ""Alias"" FROM ""Accounts""")
                 .Filter("Type", 1)
                 .Filter("Staked", active)
                 .Filter("LastLevel", lastActivity)
@@ -135,7 +137,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row =>
@@ -151,16 +153,15 @@ namespace Tzkt.Api.Repositories
                     Balance = row.Balance,
                     RollupBonds = row.RollupBonds,
                     RollupsCount = row.RollupsCount,
-                    StakedBalance = row.StakedBalance,
-                    StakedPseudotokens = row.StakedPseudotokens,
+                    StakedBalance = row.OwnStakedBalance,
                     UnstakedBalance = row.UnstakedBalance,
                     UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
-                    TotalStakedBalance = row.TotalStakedBalance,
+                    TotalStakedBalance = row.OwnStakedBalance + row.ExternalStakedBalance,
                     ExternalStakedBalance = row.ExternalStakedBalance,
                     ExternalUnstakedBalance = row.ExternalUnstakedBalance,
                     IssuedPseudotokens = row.IssuedPseudotokens,
                     StakersCount = row.StakersCount,
-                    LostBalance = row.LostBalance,
+                    RoundingError = row.RoundingError,
                     TransferTicketCount = row.TransferTicketCount,
                     TxRollupCommitCount = row.TxRollupCommitCount,
                     TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
@@ -188,7 +189,7 @@ namespace Tzkt.Api.Repositories
                     FirstActivityTime = Time[row.FirstLevel],
                     LastActivity = row.LastLevel,
                     LastActivityTime = Time[row.LastLevel],
-                    NumActivations = row.Activated == true ? 1 : 0,
+                    NumActivations = row.ActivationsCount,
                     NumBallots = row.BallotsCount,
                     NumContracts = row.ContractsCount,
                     ActiveTokensCount = row.ActiveTokensCount,
@@ -228,6 +229,9 @@ namespace Tzkt.Api.Repositories
                     ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
                     StakingOpsCount = row.StakingOpsCount,
                     AutostakingOpsCount = row.AutostakingOpsCount,
+                    StakingUpdatesCount = row.StakingUpdatesCount ?? 0,
+                    SetDelegateParametersOpsCount = row.SetDelegateParametersOpsCount,
+                    DalPublishCommitmentOpsCount = row.DalPublishCommitmentOpsCount,
                     Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                 };
             });
@@ -247,14 +251,14 @@ namespace Tzkt.Api.Repositories
                 switch (field)
                 {
                     case "id": columns.Add(@"""Id"""); break;
-                    case "alias": columns.Add(AliasQuery); break;
+                    case "alias": columns.Add($@"{AliasQuery} AS ""Alias"""); break;
                     case "type": columns.Add(@"""Type"""); break;
                     case "active": columns.Add(@"""Staked"""); break;
                     case "address": columns.Add(@"""Address"""); break;
                     case "publicKey": columns.Add(@"""PublicKey"""); break;
                     case "revealed": columns.Add(@"""Revealed"""); break;
                     case "balance": columns.Add(@"""Balance"""); break;
-                    case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
+                    case "frozenDeposit": columns.Add(@"""OwnStakedBalance"""); columns.Add(@"""ExternalStakedBalance"""); break;
                     case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
                     case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
                     case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
@@ -269,7 +273,7 @@ namespace Tzkt.Api.Repositories
                     case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"""LastLevel"""); break;
                     case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
-                    case "numActivations": columns.Add(@"""Activated"""); break;
+                    case "numActivations": columns.Add(@"""ActivationsCount"""); break;
                     case "numBallots": columns.Add(@"""BallotsCount"""); break;
                     case "numContracts": columns.Add(@"""ContractsCount"""); break;
                     case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
@@ -299,16 +303,15 @@ namespace Tzkt.Api.Repositories
                     case "software": columns.Add(@"""SoftwareId"""); break;
                     case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                     case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
-                    case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
-                    case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
+                    case "stakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
                     case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
                     case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
-                    case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
+                    case "totalStakedBalance": columns.Add(@"""OwnStakedBalance"""); columns.Add(@"""ExternalStakedBalance"""); break;
                     case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                     case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
                     case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
                     case "stakersCount": columns.Add(@"""StakersCount"""); break;
-                    case "lostBalance": columns.Add(@"""LostBalance"""); break;
+                    case "roundingError": columns.Add(@"""RoundingError"""); break;
                     case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
                     case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
                     case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
@@ -335,6 +338,9 @@ namespace Tzkt.Api.Repositories
                     case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
                     case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
                     case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
+                    case "stakingUpdatesCount": columns.Add(@"""StakingUpdatesCount"""); break;
+                    case "setDelegateParametersOpsCount": columns.Add(@"""SetDelegateParametersOpsCount"""); break;
+                    case "dalPublishCommitmentOpsCount": columns.Add(@"""DalPublishCommitmentOpsCount"""); break;
                 }
             }
 
@@ -355,7 +361,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -400,7 +406,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "frozenDeposit":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
                         break;
                     case "frozenDepositLimit":
                         foreach (var row in rows)
@@ -460,7 +466,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "numActivations":
                         foreach (var row in rows)
-                            result[j++][i] = row.Activated == true ? 1 : 0;
+                            result[j++][i] = row.ActivationsCount;
                         break;
                     case "numBallots":
                         foreach (var row in rows)
@@ -580,11 +586,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "stakedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.StakedBalance;
-                        break;
-                    case "stakedPseudotokens":
-                        foreach (var row in rows)
-                            result[j++][i] = row.StakedPseudotokens;
+                            result[j++][i] = row.OwnStakedBalance;
                         break;
                     case "unstakedBalance":
                         foreach (var row in rows)
@@ -596,7 +598,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "totalStakedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
                         break;
                     case "externalStakedBalance":
                         foreach (var row in rows)
@@ -614,9 +616,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StakersCount;
                         break;
-                    case "lostBalance":
+                    case "roundingError":
                         foreach (var row in rows)
-                            result[j++][i] = row.LostBalance;
+                            result[j++][i] = row.RoundingError;
                         break;
                     case "transferTicketCount":
                         foreach (var row in rows)
@@ -722,6 +724,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.AutostakingOpsCount;
                         break;
+                    case "stakingUpdatesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakingUpdatesCount ?? 0;
+                        break;
+                    case "setDelegateParametersOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SetDelegateParametersOpsCount;
+                        break;
+                    case "dalPublishCommitmentOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalPublishCommitmentOpsCount;
+                        break;
                 }
             }
             
@@ -740,14 +754,14 @@ namespace Tzkt.Api.Repositories
             switch (field)
             {
                 case "id": columns.Add(@"""Id"""); break;
-                case "alias": columns.Add(AliasQuery); break;
+                case "alias": columns.Add($@"{AliasQuery} AS ""Alias"""); break;
                 case "type": columns.Add(@"""Type"""); break;
                 case "active": columns.Add(@"""Staked"""); break;
                 case "address": columns.Add(@"""Address"""); break;
                 case "publicKey": columns.Add(@"""PublicKey"""); break;
                 case "revealed": columns.Add(@"""Revealed"""); break;
                 case "balance": columns.Add(@"""Balance"""); break;
-                case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
+                case "frozenDeposit": columns.Add(@"""OwnStakedBalance"""); columns.Add(@"""ExternalStakedBalance"""); break;
                 case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
                 case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
                 case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
@@ -762,7 +776,7 @@ namespace Tzkt.Api.Repositories
                 case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"""LastLevel"""); break;
                 case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
-                case "numActivations": columns.Add(@"""Activated"""); break;
+                case "numActivations": columns.Add(@"""ActivationsCount"""); break;
                 case "numBallots": columns.Add(@"""BallotsCount"""); break;
                 case "numContracts": columns.Add(@"""ContractsCount"""); break;
                 case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
@@ -792,16 +806,15 @@ namespace Tzkt.Api.Repositories
                 case "software": columns.Add(@"""SoftwareId"""); break;
                 case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                 case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
-                case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
-                case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
+                case "stakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
                 case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
                 case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
-                case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
+                case "totalStakedBalance": columns.Add(@"""OwnStakedBalance"""); columns.Add(@"""ExternalStakedBalance"""); break;
                 case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                 case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
                 case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
                 case "stakersCount": columns.Add(@"""StakersCount"""); break;
-                case "lostBalance": columns.Add(@"""LostBalance"""); break;
+                case "roundingError": columns.Add(@"""RoundingError"""); break;
                 case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
                 case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
                 case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
@@ -828,6 +841,9 @@ namespace Tzkt.Api.Repositories
                 case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
                 case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
                 case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
+                case "stakingUpdatesCount": columns.Add(@"""StakingUpdatesCount"""); break;
+                case "setDelegateParametersOpsCount": columns.Add(@"""SetDelegateParametersOpsCount"""); break;
+                case "dalPublishCommitmentOpsCount": columns.Add(@"""DalPublishCommitmentOpsCount"""); break;
             }
 
             if (columns.Count == 0)
@@ -847,7 +863,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()];
@@ -889,7 +905,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "frozenDeposit":
                     foreach (var row in rows)
-                        result[j++] = row.TotalStakedBalance;
+                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
                     break;
                 case "frozenDepositLimit":
                     foreach (var row in rows)
@@ -949,7 +965,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "numActivations":
                     foreach (var row in rows)
-                        result[j++] = row.Activated == true ? 1 : 0;
+                        result[j++] = row.ActivationsCount;
                     break;
                 case "numBallots":
                     foreach (var row in rows)
@@ -1069,11 +1085,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "stakedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.StakedBalance;
-                    break;
-                case "stakedPseudotokens":
-                    foreach (var row in rows)
-                        result[j++] = row.StakedPseudotokens;
+                        result[j++] = row.OwnStakedBalance;
                     break;
                 case "unstakedBalance":
                     foreach (var row in rows)
@@ -1085,7 +1097,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "totalStakedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.TotalStakedBalance;
+                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
                     break;
                 case "externalStakedBalance":
                     foreach (var row in rows)
@@ -1103,9 +1115,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.StakersCount;
                     break;
-                case "lostBalance":
+                case "roundingError":
                     foreach (var row in rows)
-                        result[j++] = row.LostBalance;
+                        result[j++] = row.RoundingError;
                     break;
                 case "transferTicketCount":
                     foreach (var row in rows)
@@ -1210,6 +1222,18 @@ namespace Tzkt.Api.Repositories
                 case "autostakingOpsCount":
                     foreach (var row in rows)
                         result[j++] = row.AutostakingOpsCount;
+                    break;
+                case "stakingUpdatesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.StakingUpdatesCount ?? 0;
+                    break;
+                case "setDelegateParametersOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SetDelegateParametersOpsCount;
+                    break;
+                case "dalPublishCommitmentOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DalPublishCommitmentOpsCount;
                     break;
             }
 

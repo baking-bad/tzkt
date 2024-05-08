@@ -3,7 +3,7 @@ using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetDoubleEndorsingsCount(
             Int32Parameter level,
@@ -13,7 +13,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -28,7 +28,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT       1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -61,7 +61,7 @@ namespace Tzkt.Api.Repositories
                 ORDER BY    "Id"
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -80,7 +80,7 @@ namespace Tzkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -119,7 +119,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -138,7 +138,7 @@ namespace Tzkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -175,13 +175,14 @@ namespace Tzkt.Api.Repositories
                     case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
                     case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
                     case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
-                    case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
+                    case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                     #region deprecated
+                    case "roundingLoss": columns.Add("0"); break;
                     case "accuserReward":
                         columns.Add(@"o.""Reward""");
                         break;
@@ -190,7 +191,6 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"o.""LostUnstaked""");
                         columns.Add(@"o.""LostExternalStaked""");
                         columns.Add(@"o.""LostExternalUnstaked""");
-                        columns.Add(@"o.""RoundingLoss""");
                         break;
                     #endregion
                 }
@@ -217,7 +217,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -284,22 +284,26 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LostExternalUnstaked;
                         break;
-                    case "roundingLoss":
+                    case "stakingUpdatesCount":
                         foreach (var row in rows)
-                            result[j++][i] = row.RoundingLoss;
+                            result[j++][i] = row.StakingUpdatesCount;
                         break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
                     #region deprecated
+                    case "roundingLoss":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
                     case "accuserReward":
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
                         break;
                     case "offenderLoss":
                         foreach (var row in rows)
-                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
                         break;
                     #endregion
                 }
@@ -338,13 +342,14 @@ namespace Tzkt.Api.Repositories
                 case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
                 case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
                 case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
-                case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
+                case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
                 #region deprecated
+                case "roundingLoss": columns.Add("0"); break;
                 case "accuserReward":
                     columns.Add(@"o.""Reward""");
                     break;
@@ -353,7 +358,6 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"o.""LostUnstaked""");
                     columns.Add(@"o.""LostExternalStaked""");
                     columns.Add(@"o.""LostExternalUnstaked""");
-                    columns.Add(@"o.""RoundingLoss""");
                     break;
                 #endregion
             }
@@ -379,7 +383,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -444,22 +448,26 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.LostExternalUnstaked;
                     break;
-                case "roundingLoss":
+                case "stakingUpdatesCount":
                     foreach (var row in rows)
-                        result[j++] = row.RoundingLoss;
+                        result[j++] = row.StakingUpdatesCount;
                     break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
                 #region deprecated
+                case "roundingLoss":
+                    foreach (var row in rows)
+                        result[j++] = 0;
+                    break;
                 case "accuserReward":
                     foreach (var row in rows)
                         result[j++] = row.Reward;
                     break;
                 case "offenderLoss":
                     foreach (var row in rows)
-                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
                     break;
                 #endregion
             }

@@ -3,7 +3,7 @@ using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetEndorsingRewardsCount(
             Int32Parameter level,
@@ -13,7 +13,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -27,7 +27,7 @@ namespace Tzkt.Api.Repositories
                 WHERE       o.""Id"" = @id
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { id });
             if (row == null) return null;
 
@@ -39,8 +39,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 Expected = row.Expected,
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             };
@@ -63,7 +64,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new EndorsingRewardOperation
@@ -74,8 +75,9 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 Expected = row.Expected,
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -104,8 +106,9 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "baker": columns.Add(@"o.""BakerId"""); break;
                     case "expected": columns.Add(@"o.""Expected"""); break;
-                    case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                    case "rewardDelegated": columns.Add(@"o.""RewardDelegated"""); break;
                     case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                    case "rewardStakedEdge": columns.Add(@"o.""RewardStakedEdge"""); break;
                     case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -113,9 +116,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                     #region deprecated
+                    case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
                     case "received":
-                        columns.Add(@"o.""RewardLiquid""");
+                        columns.Add(@"o.""RewardDelegated""");
                         columns.Add(@"o.""RewardStakedOwn""");
+                        columns.Add(@"o.""RewardStakedEdge""");
                         columns.Add(@"o.""RewardStakedShared""");
                         break;
                     #endregion
@@ -132,7 +137,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -167,13 +172,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Expected;
                         break;
-                    case "rewardLiquid":
+                    case "rewardDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid;
+                            result[j++][i] = row.RewardDelegated;
                         break;
                     case "rewardStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.RewardStakedOwn;
+                        break;
+                    case "rewardStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedEdge;
                         break;
                     case "rewardStakedShared":
                         foreach (var row in rows)
@@ -184,9 +193,13 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
                     #region deprecated
+                    case "rewardLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardDelegated;
+                        break;
                     case "received":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                         break;
                     #endregion
                 }
@@ -216,8 +229,9 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "baker": columns.Add(@"o.""BakerId"""); break;
                 case "expected": columns.Add(@"o.""Expected"""); break;
-                case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                case "rewardDelegated": columns.Add(@"o.""RewardDelegated"""); break;
                 case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                case "rewardStakedEdge": columns.Add(@"o.""RewardStakedEdge"""); break;
                 case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -225,9 +239,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
                 #region deprecated
+                case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
                 case "received":
-                    columns.Add(@"o.""RewardLiquid""");
+                    columns.Add(@"o.""RewardDelegated""");
                     columns.Add(@"o.""RewardStakedOwn""");
+                    columns.Add(@"o.""RewardStakedEdge""");
                     columns.Add(@"o.""RewardStakedShared""");
                     break;
                 #endregion
@@ -243,7 +259,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -276,13 +292,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Expected;
                     break;
-                case "rewardLiquid":
+                case "rewardDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid;
+                        result[j++] = row.RewardDelegated;
                     break;
                 case "rewardStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.RewardStakedOwn;
+                    break;
+                case "rewardStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedEdge;
                     break;
                 case "rewardStakedShared":
                     foreach (var row in rows)
@@ -293,11 +313,15 @@ namespace Tzkt.Api.Repositories
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
                 #region deprecated
+                case "rewardLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardDelegated;
+                    break;
                 case "received":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                     break;
-                    #endregion
+                #endregion
             }
 
             return result;

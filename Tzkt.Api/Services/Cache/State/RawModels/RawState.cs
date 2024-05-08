@@ -14,6 +14,7 @@
         public DateTime Timestamp { get; set; }
         public int VotingEpoch { get; set; }
         public int VotingPeriod { get; set; }
+        public int AccountCounter { get; set; }
         public int ManagerCounter { get; set; }
         public long OperationCounter { get; set; }
         public int EventCounter { get; set; }
@@ -24,7 +25,6 @@
 
         #region entities count
         public int CommitmentsCount { get; set; }
-        public int AccountsCount { get; set; }
 
         public int BlocksCount { get; set; }
         public int ProtocolsCount { get; set; }
@@ -46,6 +46,8 @@
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
         public int StakingOpsCount { get; set; }
+        public int SetDelegateParametersOpsCount { get; set; }
+        public int DalPublishCommitmentOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
         public int SetDepositsLimitOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
@@ -83,6 +85,8 @@
         public int TicketBalancesCount { get; set; }
         public int TicketTransfersCount { get; set; }
         public int EventsCount { get; set; }
+        public int StakingUpdatesCount { get; set; }
+        public int UnstakeRequestsCount { get; set; }
         #endregion
 
         #region quotes

@@ -1,8 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using App.Metrics;
+﻿using App.Metrics;
 using Tzkt.Api.Websocket.Processors;
 
 namespace Tzkt.Api.Websocket.Hubs

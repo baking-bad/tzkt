@@ -1,24 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class BakingRightsRepository : DbConnection
+    public class BakingRightsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly ProtocolsCache Protocols;
         readonly TimeCache Time;
         readonly StateCache State;
 
-        public BakingRightsRepository(AccountsCache accounts, ProtocolsCache protocols, TimeCache time, StateCache state, IConfiguration config) : base(config)
+        public BakingRightsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, TimeCache time, StateCache state)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Protocols = protocols;
             Time = time;
@@ -43,7 +40,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Round", round)
                 .Filter("Slots", slots);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -69,7 +66,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new BakingRight
@@ -127,7 +124,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -215,7 +212,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Slots", slots)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -289,7 +286,7 @@ namespace Tzkt.Api.Repositories
                 AND   ""Level"" >= {fromLevel} AND ""Level"" <= {toLevel}
                 AND   NOT(""Status"" = 0 AND ""Round"" IS NOT NULL AND ""Round"" > {maxRound})";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql);
 
             var count = (int)Math.Ceiling((to - from).TotalHours);

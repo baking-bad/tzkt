@@ -1,24 +1,27 @@
 ﻿using Dapper;
+using Npgsql;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class CyclesRepository : DbConnection
+    public class CyclesRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly QuotesCache Quotes;
         readonly TimeCache Times;
 
-        public CyclesRepository(QuotesCache quotes, TimeCache times, IConfiguration config) : base(config)
+        public CyclesRepository(NpgsqlDataSource dataSource, QuotesCache quotes, TimeCache times)
         {
+            DataSource = dataSource;
             Quotes = quotes;
             Times = times;
         }
 
         public async Task<int> GetCount()
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""Cycles""");
         }
 
@@ -31,7 +34,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { index });
             if (row == null) return null;
 
@@ -43,7 +46,6 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 EndTime = Times[row.LastLevel],
                 RandomSeed = Hex.Convert(row.Seed),
-                SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
                 TotalBakingPower = row.TotalBakingPower,
@@ -52,23 +54,20 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
-                LBSubsidy = row.LBSubsidy,
                 Quote = Quotes.Get(quote, row.LastLevel)
             };
         }
 
         public async Task<IEnumerable<Cycle>> Get(
-            Int32Parameter snapshotIndex,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Cycles""")
-                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Cycle
@@ -79,7 +78,6 @@ namespace Tzkt.Api.Repositories
                 LastLevel = row.LastLevel,
                 EndTime = Times[row.LastLevel],
                 RandomSeed = Hex.Convert(row.Seed),
-                SnapshotIndex = row.SnapshotIndex,
                 SnapshotLevel = row.SnapshotLevel,
                 TotalBakers = row.TotalBakers,
                 TotalBakingPower = row.TotalBakingPower,
@@ -88,13 +86,11 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
-                LBSubsidy = row.LBSubsidy,
                 Quote = Quotes.Get(quote, row.LastLevel)
             });
         }
 
         public async Task<object[][]> Get(
-            Int32Parameter snapshotIndex,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -112,7 +108,6 @@ namespace Tzkt.Api.Repositories
                     case "lastLevel": columns.Add(@"""LastLevel"""); break;
                     case "endTime": columns.Add(@"""LastLevel"""); break;
                     case "randomSeed": columns.Add(@"""Seed"""); break;
-                    case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                     case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                     case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
@@ -121,11 +116,12 @@ namespace Tzkt.Api.Repositories
                     case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
                     case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                     case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
-                    case "lbSubsidy": columns.Add(@"""LBSubsidy"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
                     #region deprecated
-                    case "totalDelegated": columns.Add(@"0"); break;
-                    case "totalDelegators": columns.Add(@"0"); break;
+                    case "snapshotIndex": columns.Add("0"); break;
+                    case "lbSubsidy": columns.Add("0"); break;
+                    case "totalDelegated": columns.Add("0"); break;
+                    case "totalDelegators": columns.Add("0"); break;
                     case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
                     case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
                     case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
@@ -137,10 +133,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
-                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -175,10 +170,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Hex.Convert(row.Seed);
                         break;
-                    case "snapshotIndex":
-                        foreach (var row in rows)
-                            result[j++][i] = row.SnapshotIndex;
-                        break;
                     case "snapshotLevel":
                         foreach (var row in rows)
                             result[j++][i] = row.SnapshotLevel;
@@ -211,15 +202,19 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationReward;
                         break;
-                    case "lbSubsidy":
-                        foreach (var row in rows)
-                            result[j++][i] = row.LBSubsidy;
-                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.LastLevel);
                         break;
                     #region deprecated
+                    case "snapshotIndex":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
+                    case "lbSubsidy":
+                        foreach (var row in rows)
+                            result[j++][i] = 1249999;
+                        break;
                     case "totalDelegated":
                         foreach (var row in rows)
                             result[j++][i] = 0;
@@ -248,7 +243,6 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<object[]> Get(
-            Int32Parameter snapshotIndex,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -264,7 +258,6 @@ namespace Tzkt.Api.Repositories
                 case "lastLevel": columns.Add(@"""LastLevel"""); break;
                 case "endTime": columns.Add(@"""LastLevel"""); break;
                 case "randomSeed": columns.Add(@"""Seed"""); break;
-                case "snapshotIndex": columns.Add(@"""SnapshotIndex"""); break;
                 case "snapshotLevel": columns.Add(@"""SnapshotLevel"""); break;
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                 case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
@@ -273,11 +266,12 @@ namespace Tzkt.Api.Repositories
                 case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
                 case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                 case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
-                case "lbSubsidy": columns.Add(@"""LBSubsidy"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
                 #region deprecated
-                case "totalDelegated": columns.Add(@"0"); break;
-                case "totalDelegators": columns.Add(@"0"); break;
+                case "snapshotIndex": columns.Add("0"); break;
+                case "lbSubsidy": columns.Add("0"); break;
+                case "totalDelegated": columns.Add("0"); break;
+                case "totalDelegators": columns.Add("0"); break;
                 case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
                 case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
                 case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
@@ -288,10 +282,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Cycles""")
-                .Filter("SnapshotIndex", snapshotIndex)
                 .Take(sort ?? new SortParameter { Desc = "index" }, offset, limit, x => ("Index", "Index"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -323,10 +316,6 @@ namespace Tzkt.Api.Repositories
                 case "randomSeed":
                     foreach (var row in rows)
                         result[j++] = Hex.Convert(row.Seed);
-                    break;
-                case "snapshotIndex":
-                    foreach (var row in rows)
-                        result[j++] = row.SnapshotIndex;
                     break;
                 case "snapshotLevel":
                     foreach (var row in rows)
@@ -360,15 +349,19 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationReward;
                     break;
-                case "lbSubsidy":
-                    foreach (var row in rows)
-                        result[j++] = row.LBSubsidy;
-                    break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.LastLevel);
                     break;
                 #region deprecated
+                case "snapshotIndex":
+                    foreach (var row in rows)
+                        result[j++] = 0;
+                    break;
+                case "lbSubsidy":
+                    foreach (var row in rows)
+                        result[j++] = 1249999;
+                    break;
                 case "totalDelegated":
                     foreach (var row in rows)
                         result[j++] = 0;

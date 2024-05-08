@@ -321,9 +321,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Storages.Reset();
 
             var state = Cache.AppState.Get();
-            Cache.AppState.ReleaseAccountId(state.AccountsCount);
             Cache.AppState.ReleaseOperationId(state.MigrationOpsCount);
-            state.AccountsCount = 0;
+            state.AccountCounter = 0;
             state.MigrationOpsCount = 0;
             state.ScriptCounter = 0;
             state.StorageCounter = 0;

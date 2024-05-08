@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -35,15 +34,6 @@ namespace Tzkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
-
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<TransferTicketOperation>()
-                .Property(x => x.Amount)
-                .HasConversion(converter);
             #endregion
 
             #region indexes

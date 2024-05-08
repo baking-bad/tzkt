@@ -18,8 +18,7 @@ namespace Tzkt.Data.Models
         public long LostExternalStaked { get; set; }
         public long LostExternalUnstaked { get; set; }
 
-        // it's needed to handle negligent Oxford implementation
-        public long RoundingLoss { get; set; }
+        public int? StakingUpdatesCount { get; set; }
 
         #region relations
         [ForeignKey(nameof(AccuserId))]

@@ -1,17 +1,20 @@
 ﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class RewardsRepository : DbConnection
+    public class RewardsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly ProtocolsCache Protocols;
         readonly QuotesCache Quotes;
 
-        public RewardsRepository(AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes, IConfiguration config) : base(config)
+        public RewardsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Protocols = protocols;
             Quotes = quotes;
@@ -23,7 +26,7 @@ namespace Tzkt.Api.Repositories
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return 0;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""BakerCycles"" WHERE ""BakerId"" = {baker.Id}");
         }
 
@@ -43,7 +46,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new BakerRewards
@@ -62,16 +65,18 @@ namespace Tzkt.Api.Repositories
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
                 Blocks = row.Blocks,
-                BlockRewardsLiquid = row.BlockRewardsLiquid,
+                BlockRewardsDelegated = row.BlockRewardsDelegated,
                 BlockRewardsStakedOwn = row.BlockRewardsStakedOwn,
+                BlockRewardsStakedEdge = row.BlockRewardsStakedEdge,
                 BlockRewardsStakedShared = row.BlockRewardsStakedShared,
                 MissedBlocks = row.MissedBlocks,
                 MissedBlockRewards = row.MissedBlockRewards,
                 FutureEndorsements = row.FutureEndorsements,
                 FutureEndorsementRewards = row.FutureEndorsementRewards,
                 Endorsements = row.Endorsements,
-                EndorsementRewardsLiquid = row.EndorsementRewardsLiquid,
+                EndorsementRewardsDelegated = row.EndorsementRewardsDelegated,
                 EndorsementRewardsStakedOwn = row.EndorsementRewardsStakedOwn,
+                EndorsementRewardsStakedEdge = row.EndorsementRewardsStakedEdge,
                 EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
                 MissedEndorsements = row.MissedEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
@@ -92,11 +97,13 @@ namespace Tzkt.Api.Repositories
                 DoublePreendorsingLostUnstaked = row.DoublePreendorsingLostUnstaked,
                 DoublePreendorsingLostExternalStaked = row.DoublePreendorsingLostExternalStaked,
                 DoublePreendorsingLostExternalUnstaked = row.DoublePreendorsingLostExternalUnstaked,
-                VdfRevelationRewardsLiquid = row.VdfRevelationRewardsLiquid,
+                VdfRevelationRewardsDelegated = row.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = row.VdfRevelationRewardsStakedOwn,
+                VdfRevelationRewardsStakedEdge = row.VdfRevelationRewardsStakedEdge,
                 VdfRevelationRewardsStakedShared = row.VdfRevelationRewardsStakedShared,
-                NonceRevelationRewardsLiquid = row.NonceRevelationRewardsLiquid,
+                NonceRevelationRewardsDelegated = row.NonceRevelationRewardsDelegated,
                 NonceRevelationRewardsStakedOwn = row.NonceRevelationRewardsStakedOwn,
+                NonceRevelationRewardsStakedEdge = row.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = row.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = row.NonceRevelationLosses,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
@@ -134,16 +141,18 @@ namespace Tzkt.Api.Repositories
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                     case "blocks": columns.Add(@"""Blocks"""); break;
-                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsLiquid"""); break;
+                    case "blockRewardsDelegated": columns.Add(@"""BlockRewardsDelegated"""); break;
                     case "blockRewardsStakedOwn": columns.Add(@"""BlockRewardsStakedOwn"""); break;
+                    case "blockRewardsStakedEdge": columns.Add(@"""BlockRewardsStakedEdge"""); break;
                     case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                     case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                     case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
                     case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                     case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                     case "endorsements": columns.Add(@"""Endorsements"""); break;
-                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsLiquid"""); break;
+                    case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
                     case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
+                    case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
                     case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                     case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                     case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -164,22 +173,30 @@ namespace Tzkt.Api.Repositories
                     case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
                     case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
                     case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
-                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsLiquid"""); break;
+                    case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                     case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
+                    case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
                     case "vdfRevelationRewardsStakedShared": columns.Add(@"""VdfRevelationRewardsStakedShared"""); break;
-                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsLiquid"""); break;
+                    case "nonceRevelationRewardsDelegated": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                     case "nonceRevelationRewardsStakedOwn": columns.Add(@"""NonceRevelationRewardsStakedOwn"""); break;
+                    case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"""Cycle"""); break;
 
                     #region deprecated
+                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
+                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
+                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
+                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                     case "revelationRewards":
-                        columns.Add(@"""NonceRevelationRewardsLiquid""");
+                        columns.Add(@"""NonceRevelationRewardsDelegated""");
                         columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                        columns.Add(@"""NonceRevelationRewardsStakedEdge""");
                         columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                        columns.Add(@"""VdfRevelationRewardsLiquid""");
+                        columns.Add(@"""VdfRevelationRewardsDelegated""");
                         columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                        columns.Add(@"""VdfRevelationRewardsStakedEdge""");
                         columns.Add(@"""VdfRevelationRewardsStakedShared""");
                         break;
                     case "revelationLosses":
@@ -204,13 +221,15 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"""DoubleBakingLostExternalUnstaked""");
                         break;
                     case "endorsementRewards":
-                        columns.Add(@"""EndorsementRewardsLiquid""");
+                        columns.Add(@"""EndorsementRewardsDelegated""");
                         columns.Add(@"""EndorsementRewardsStakedOwn""");
+                        columns.Add(@"""EndorsementRewardsStakedEdge""");
                         columns.Add(@"""EndorsementRewardsStakedShared""");
                         break;
                     case "blockRewards":
-                        columns.Add(@"""BlockRewardsLiquid""");
+                        columns.Add(@"""BlockRewardsDelegated""");
                         columns.Add(@"""BlockRewardsStakedOwn""");
+                        columns.Add(@"""BlockRewardsStakedEdge""");
                         columns.Add(@"""BlockRewardsStakedShared""");
                         break;
                     case "stakingBalance":
@@ -243,7 +262,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -310,13 +329,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Blocks;
                         break;
-                    case "blockRewardsLiquid":
+                    case "blockRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsLiquid;
+                            result[j++][i] = row.BlockRewardsDelegated;
                         break;
                     case "blockRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.BlockRewardsStakedOwn;
+                        break;
+                    case "blockRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsStakedEdge;
                         break;
                     case "blockRewardsStakedShared":
                         foreach (var row in rows)
@@ -342,13 +365,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Endorsements;
                         break;
-                    case "endorsementRewardsLiquid":
+                    case "endorsementRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsLiquid;
+                            result[j++][i] = row.EndorsementRewardsDelegated;
                         break;
                     case "endorsementRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsementRewardsStakedOwn;
+                        break;
+                    case "endorsementRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndorsementRewardsStakedEdge;
                         break;
                     case "endorsementRewardsStakedShared":
                         foreach (var row in rows)
@@ -430,25 +457,33 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoublePreendorsingLostExternalUnstaked;
                         break;
-                    case "vdfRevelationRewardsLiquid":
+                    case "vdfRevelationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.VdfRevelationRewardsLiquid;
+                            result[j++][i] = row.VdfRevelationRewardsDelegated;
                         break;
                     case "vdfRevelationRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationRewardsStakedOwn;
                         break;
+                    case "vdfRevelationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationRewardsStakedEdge;
+                        break;
                     case "vdfRevelationRewardsStakedShared":
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationRewardsStakedShared;
                         break;
-                    case "nonceRevelationRewardsLiquid":
+                    case "nonceRevelationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsLiquid;
+                            result[j++][i] = row.NonceRevelationRewardsDelegated;
                         break;
                     case "nonceRevelationRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.NonceRevelationRewardsStakedOwn;
+                        break;
+                    case "nonceRevelationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.NonceRevelationRewardsStakedEdge;
                         break;
                     case "nonceRevelationRewardsStakedShared":
                         foreach (var row in rows)
@@ -464,9 +499,25 @@ namespace Tzkt.Api.Repositories
                         break;
 
                     #region deprecated
+                    case "blockRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsDelegated;
+                        break;
+                    case "endorsementRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndorsementRewardsDelegated;
+                        break;
+                    case "vdfRevelationRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationRewardsDelegated;
+                        break;
+                    case "nonceRevelationRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.NonceRevelationRewardsDelegated;
+                        break;
                     case "revelationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsLiquid + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsLiquid + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedShared;
+                            result[j++][i] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
                         break;
                     case "revelationLosses":
                         foreach (var row in rows)
@@ -486,11 +537,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "endorsementRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsLiquid + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedShared;
+                            result[j++][i] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
                         break;
                     case "blockRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsLiquid + row.BlockRewardsStakedOwn + row.BlockRewardsStakedShared;
+                            result[j++][i] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
                         break;
                     case "stakingBalance":
                         foreach (var row in rows)
@@ -548,16 +599,18 @@ namespace Tzkt.Api.Repositories
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                 case "blocks": columns.Add(@"""Blocks"""); break;
-                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsLiquid"""); break;
+                case "blockRewardsDelegated": columns.Add(@"""BlockRewardsDelegated"""); break;
                 case "blockRewardsStakedOwn": columns.Add(@"""BlockRewardsStakedOwn"""); break;
+                case "blockRewardsStakedEdge": columns.Add(@"""BlockRewardsStakedEdge"""); break;
                 case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                 case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                 case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
                 case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                 case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                 case "endorsements": columns.Add(@"""Endorsements"""); break;
-                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsLiquid"""); break;
+                case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
                 case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
+                case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
                 case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                 case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                 case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -578,22 +631,30 @@ namespace Tzkt.Api.Repositories
                 case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
                 case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
                 case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
-                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsLiquid"""); break;
+                case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                 case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
+                case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
                 case "vdfRevelationRewardsStakedShared": columns.Add(@"""VdfRevelationRewardsStakedShared"""); break;
-                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsLiquid"""); break;
+                case "nonceRevelationRewardsDelegated": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                 case "nonceRevelationRewardsStakedOwn": columns.Add(@"""NonceRevelationRewardsStakedOwn"""); break;
+                case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"""Cycle"""); break;
 
                 #region deprecated
+                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
+                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
+                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
+                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                 case "revelationRewards":
-                    columns.Add(@"""NonceRevelationRewardsLiquid""");
+                    columns.Add(@"""NonceRevelationRewardsDelegated""");
                     columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                    columns.Add(@"""NonceRevelationRewardsStakedEdge""");
                     columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                    columns.Add(@"""VdfRevelationRewardsLiquid""");
+                    columns.Add(@"""VdfRevelationRewardsDelegated""");
                     columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                    columns.Add(@"""VdfRevelationRewardsStakedEdge""");
                     columns.Add(@"""VdfRevelationRewardsStakedShared""");
                     break;
                 case "revelationLosses":
@@ -618,13 +679,15 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"""DoubleBakingLostExternalUnstaked""");
                     break;
                 case "endorsementRewards":
-                    columns.Add(@"""EndorsementRewardsLiquid""");
+                    columns.Add(@"""EndorsementRewardsDelegated""");
                     columns.Add(@"""EndorsementRewardsStakedOwn""");
+                    columns.Add(@"""EndorsementRewardsStakedEdge""");
                     columns.Add(@"""EndorsementRewardsStakedShared""");
                     break;
                 case "blockRewards":
-                    columns.Add(@"""BlockRewardsLiquid""");
+                    columns.Add(@"""BlockRewardsDelegated""");
                     columns.Add(@"""BlockRewardsStakedOwn""");
+                    columns.Add(@"""BlockRewardsStakedEdge""");
                     columns.Add(@"""BlockRewardsStakedShared""");
                     break;
                 case "stakingBalance":
@@ -645,7 +708,7 @@ namespace Tzkt.Api.Repositories
                 case "numDelegators":
                     columns.Add(@"""DelegatorsCount""");
                     break;
-                    #endregion
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -656,7 +719,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -721,13 +784,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Blocks;
                     break;
-                case "blockRewardsLiquid":
+                case "blockRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.BlockRewardsLiquid;
+                        result[j++] = row.BlockRewardsDelegated;
                     break;
                 case "blockRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.BlockRewardsStakedOwn;
+                    break;
+                case "blockRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsStakedEdge;
                     break;
                 case "blockRewardsStakedShared":
                     foreach (var row in rows)
@@ -753,13 +820,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Endorsements;
                     break;
-                case "endorsementRewardsLiquid":
+                case "endorsementRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsLiquid;
+                        result[j++] = row.EndorsementRewardsDelegated;
                     break;
                 case "endorsementRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.EndorsementRewardsStakedOwn;
+                    break;
+                case "endorsementRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.EndorsementRewardsStakedEdge;
                     break;
                 case "endorsementRewardsStakedShared":
                     foreach (var row in rows)
@@ -841,25 +912,33 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoublePreendorsingLostExternalUnstaked;
                     break;
-                case "vdfRevelationRewardsLiquid":
+                case "vdfRevelationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.VdfRevelationRewardsLiquid;
+                        result[j++] = row.VdfRevelationRewardsDelegated;
                     break;
                 case "vdfRevelationRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationRewardsStakedOwn;
                     break;
+                case "vdfRevelationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationRewardsStakedEdge;
+                    break;
                 case "vdfRevelationRewardsStakedShared":
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationRewardsStakedShared;
                     break;
-                case "nonceRevelationRewardsLiquid":
+                case "nonceRevelationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsLiquid;
+                        result[j++] = row.NonceRevelationRewardsDelegated;
                     break;
                 case "nonceRevelationRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.NonceRevelationRewardsStakedOwn;
+                    break;
+                case "nonceRevelationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.NonceRevelationRewardsStakedEdge;
                     break;
                 case "nonceRevelationRewardsStakedShared":
                     foreach (var row in rows)
@@ -875,9 +954,25 @@ namespace Tzkt.Api.Repositories
                     break;
 
                 #region deprecated
+                case "blockRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsDelegated;
+                    break;
+                case "endorsementRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.EndorsementRewardsDelegated;
+                    break;
+                case "vdfRevelationRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationRewardsDelegated;
+                    break;
+                case "nonceRevelationRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.NonceRevelationRewardsDelegated;
+                    break;
                 case "revelationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsLiquid + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsLiquid + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedShared;
+                        result[j++] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
                     break;
                 case "revelationLosses":
                     foreach (var row in rows)
@@ -897,11 +992,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "endorsementRewards":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsLiquid + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedShared;
+                        result[j++] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
                     break;
                 case "blockRewards":
                     foreach (var row in rows)
-                        result[j++] = row.BlockRewardsLiquid + row.BlockRewardsStakedOwn + row.BlockRewardsStakedShared;
+                        result[j++] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
                     break;
                 case "stakingBalance":
                     foreach (var row in rows)
@@ -936,7 +1031,7 @@ namespace Tzkt.Api.Repositories
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return 0;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""DelegatorCycles"" WHERE ""DelegatorId"" = {acc.Id}");
         }
 
@@ -962,7 +1057,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DelegatorRewards
@@ -982,16 +1077,18 @@ namespace Tzkt.Api.Repositories
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
                 Blocks = row.Blocks,
-                BlockRewardsLiquid = row.BlockRewardsLiquid,
+                BlockRewardsDelegated = row.BlockRewardsDelegated,
                 BlockRewardsStakedOwn = row.BlockRewardsStakedOwn,
+                BlockRewardsStakedEdge = row.BlockRewardsStakedEdge,
                 BlockRewardsStakedShared = row.BlockRewardsStakedShared,
                 MissedBlocks = row.MissedBlocks,
                 MissedBlockRewards = row.MissedBlockRewards,
                 FutureEndorsements = row.FutureEndorsements,
                 FutureEndorsementRewards = row.FutureEndorsementRewards,
                 Endorsements = row.Endorsements,
-                EndorsementRewardsLiquid = row.EndorsementRewardsLiquid,
+                EndorsementRewardsDelegated = row.EndorsementRewardsDelegated,
                 EndorsementRewardsStakedOwn = row.EndorsementRewardsStakedOwn,
+                EndorsementRewardsStakedEdge = row.EndorsementRewardsStakedEdge,
                 EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
                 MissedEndorsements = row.MissedEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
@@ -1012,11 +1109,13 @@ namespace Tzkt.Api.Repositories
                 DoublePreendorsingLostUnstaked = row.DoublePreendorsingLostUnstaked,
                 DoublePreendorsingLostExternalStaked = row.DoublePreendorsingLostExternalStaked,
                 DoublePreendorsingLostExternalUnstaked = row.DoublePreendorsingLostExternalUnstaked,
-                VdfRevelationRewardsLiquid = row.VdfRevelationRewardsLiquid,
+                VdfRevelationRewardsDelegated = row.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = row.VdfRevelationRewardsStakedOwn,
+                VdfRevelationRewardsStakedEdge = row.VdfRevelationRewardsStakedEdge,
                 VdfRevelationRewardsStakedShared = row.VdfRevelationRewardsStakedShared,
-                NonceRevelationRewardsLiquid = row.NonceRevelationRewardsLiquid,
+                NonceRevelationRewardsDelegated = row.NonceRevelationRewardsDelegated,
                 NonceRevelationRewardsStakedOwn = row.NonceRevelationRewardsStakedOwn,
+                NonceRevelationRewardsStakedEdge = row.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = row.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = row.NonceRevelationLosses,
                 Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
@@ -1055,16 +1154,18 @@ namespace Tzkt.Api.Repositories
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                     case "blocks": columns.Add(@"""Blocks"""); break;
-                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsLiquid"""); break;
+                    case "blockRewardsDelegated": columns.Add(@"""BlockRewardsDelegated"""); break;
                     case "blockRewardsStakedOwn": columns.Add(@"""BlockRewardsStakedOwn"""); break;
+                    case "blockRewardsStakedEdge": columns.Add(@"""BlockRewardsStakedEdge"""); break;
                     case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                     case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                     case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
                     case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                     case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                     case "endorsements": columns.Add(@"""Endorsements"""); break;
-                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsLiquid"""); break;
+                    case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
                     case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
+                    case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
                     case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                     case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                     case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -1085,22 +1186,30 @@ namespace Tzkt.Api.Repositories
                     case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
                     case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
                     case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
-                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsLiquid"""); break;
+                    case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                     case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
+                    case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
                     case "vdfRevelationRewardsStakedShared": columns.Add(@"""VdfRevelationRewardsStakedShared"""); break;
-                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsLiquid"""); break;
+                    case "nonceRevelationRewardsDelegated": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                     case "nonceRevelationRewardsStakedOwn": columns.Add(@"""NonceRevelationRewardsStakedOwn"""); break;
+                    case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"""Cycle"""); break;
 
                     #region deprecated
+                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
+                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
+                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
+                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                     case "revelationRewards":
-                        columns.Add(@"""NonceRevelationRewardsLiquid""");
+                        columns.Add(@"""NonceRevelationRewardsDelegated""");
                         columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                        columns.Add(@"""NonceRevelationRewardsStakedEdge""");
                         columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                        columns.Add(@"""VdfRevelationRewardsLiquid""");
+                        columns.Add(@"""VdfRevelationRewardsDelegated""");
                         columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                        columns.Add(@"""VdfRevelationRewardsStakedEdge""");
                         columns.Add(@"""VdfRevelationRewardsStakedShared""");
                         break;
                     case "revelationLosses":
@@ -1125,13 +1234,15 @@ namespace Tzkt.Api.Repositories
                         columns.Add(@"""DoubleBakingLostExternalUnstaked""");
                         break;
                     case "endorsementRewards":
-                        columns.Add(@"""EndorsementRewardsLiquid""");
+                        columns.Add(@"""EndorsementRewardsDelegated""");
                         columns.Add(@"""EndorsementRewardsStakedOwn""");
+                        columns.Add(@"""EndorsementRewardsStakedEdge""");
                         columns.Add(@"""EndorsementRewardsStakedShared""");
                         break;
                     case "blockRewards":
-                        columns.Add(@"""BlockRewardsLiquid""");
+                        columns.Add(@"""BlockRewardsDelegated""");
                         columns.Add(@"""BlockRewardsStakedOwn""");
+                        columns.Add(@"""BlockRewardsStakedEdge""");
                         columns.Add(@"""BlockRewardsStakedShared""");
                         break;
                     case "stakingBalance":
@@ -1168,7 +1279,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -1239,13 +1350,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Blocks;
                         break;
-                    case "blockRewardsLiquid":
+                    case "blockRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsLiquid;
+                            result[j++][i] = row.BlockRewardsDelegated;
                         break;
                     case "blockRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.BlockRewardsStakedOwn;
+                        break;
+                    case "blockRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsStakedEdge;
                         break;
                     case "blockRewardsStakedShared":
                         foreach (var row in rows)
@@ -1271,13 +1386,17 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Endorsements;
                         break;
-                    case "endorsementRewardsLiquid":
+                    case "endorsementRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsLiquid;
+                            result[j++][i] = row.EndorsementRewardsDelegated;
                         break;
                     case "endorsementRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsementRewardsStakedOwn;
+                        break;
+                    case "endorsementRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndorsementRewardsStakedEdge;
                         break;
                     case "endorsementRewardsStakedShared":
                         foreach (var row in rows)
@@ -1359,25 +1478,33 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoublePreendorsingLostExternalUnstaked;
                         break;
-                    case "vdfRevelationRewardsLiquid":
+                    case "vdfRevelationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.VdfRevelationRewardsLiquid;
+                            result[j++][i] = row.VdfRevelationRewardsDelegated;
                         break;
                     case "vdfRevelationRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationRewardsStakedOwn;
                         break;
+                    case "vdfRevelationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationRewardsStakedEdge;
+                        break;
                     case "vdfRevelationRewardsStakedShared":
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationRewardsStakedShared;
                         break;
-                    case "nonceRevelationRewardsLiquid":
+                    case "nonceRevelationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsLiquid;
+                            result[j++][i] = row.NonceRevelationRewardsDelegated;
                         break;
                     case "nonceRevelationRewardsStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.NonceRevelationRewardsStakedOwn;
+                        break;
+                    case "nonceRevelationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.NonceRevelationRewardsStakedEdge;
                         break;
                     case "nonceRevelationRewardsStakedShared":
                         foreach (var row in rows)
@@ -1393,9 +1520,25 @@ namespace Tzkt.Api.Repositories
                         break;
 
                     #region deprecated
+                    case "blockRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsDelegated;
+                        break;
+                    case "endorsementRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.EndorsementRewardsDelegated;
+                        break;
+                    case "vdfRevelationRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VdfRevelationRewardsDelegated;
+                        break;
+                    case "nonceRevelationRewardsLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.NonceRevelationRewardsDelegated;
+                        break;
                     case "revelationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsLiquid + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsLiquid + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedShared;
+                            result[j++][i] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
                         break;
                     case "revelationLosses":
                         foreach (var row in rows)
@@ -1415,11 +1558,11 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "endorsementRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsLiquid + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedShared;
+                            result[j++][i] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
                         break;
                     case "blockRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsLiquid + row.BlockRewardsStakedOwn + row.BlockRewardsStakedShared;
+                            result[j++][i] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
                         break;
                     case "stakingBalance":
                         foreach (var row in rows)
@@ -1476,16 +1619,18 @@ namespace Tzkt.Api.Repositories
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                 case "blocks": columns.Add(@"""Blocks"""); break;
-                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsLiquid"""); break;
+                case "blockRewardsDelegated": columns.Add(@"""BlockRewardsDelegated"""); break;
                 case "blockRewardsStakedOwn": columns.Add(@"""BlockRewardsStakedOwn"""); break;
+                case "blockRewardsStakedEdge": columns.Add(@"""BlockRewardsStakedEdge"""); break;
                 case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                 case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                 case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
                 case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
                 case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
                 case "endorsements": columns.Add(@"""Endorsements"""); break;
-                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsLiquid"""); break;
+                case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
                 case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
+                case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
                 case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                 case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                 case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
@@ -1506,22 +1651,30 @@ namespace Tzkt.Api.Repositories
                 case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
                 case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
                 case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
-                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsLiquid"""); break;
+                case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                 case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
+                case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
                 case "vdfRevelationRewardsStakedShared": columns.Add(@"""VdfRevelationRewardsStakedShared"""); break;
-                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsLiquid"""); break;
+                case "nonceRevelationRewardsDelegated": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                 case "nonceRevelationRewardsStakedOwn": columns.Add(@"""NonceRevelationRewardsStakedOwn"""); break;
+                case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"""Cycle"""); break;
 
                 #region deprecated
+                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
+                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
+                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
+                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
                 case "revelationRewards":
-                    columns.Add(@"""NonceRevelationRewardsLiquid""");
+                    columns.Add(@"""NonceRevelationRewardsDelegated""");
                     columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                    columns.Add(@"""NonceRevelationRewardsStakedEdge""");
                     columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                    columns.Add(@"""VdfRevelationRewardsLiquid""");
+                    columns.Add(@"""VdfRevelationRewardsDelegated""");
                     columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                    columns.Add(@"""VdfRevelationRewardsStakedEdge""");
                     columns.Add(@"""VdfRevelationRewardsStakedShared""");
                     break;
                 case "revelationLosses":
@@ -1546,13 +1699,15 @@ namespace Tzkt.Api.Repositories
                     columns.Add(@"""DoubleBakingLostExternalUnstaked""");
                     break;
                 case "endorsementRewards":
-                    columns.Add(@"""EndorsementRewardsLiquid""");
+                    columns.Add(@"""EndorsementRewardsDelegated""");
                     columns.Add(@"""EndorsementRewardsStakedOwn""");
+                    columns.Add(@"""EndorsementRewardsStakedEdge""");
                     columns.Add(@"""EndorsementRewardsStakedShared""");
                     break;
                 case "blockRewards":
-                    columns.Add(@"""BlockRewardsLiquid""");
+                    columns.Add(@"""BlockRewardsDelegated""");
                     columns.Add(@"""BlockRewardsStakedOwn""");
+                    columns.Add(@"""BlockRewardsStakedEdge""");
                     columns.Add(@"""BlockRewardsStakedShared""");
                     break;
                 case "stakingBalance":
@@ -1586,7 +1741,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -1655,13 +1810,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Blocks;
                     break;
-                case "blockRewardsLiquid":
+                case "blockRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.BlockRewardsLiquid;
+                        result[j++] = row.BlockRewardsDelegated;
                     break;
                 case "blockRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.BlockRewardsStakedOwn;
+                    break;
+                case "blockRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsStakedEdge;
                     break;
                 case "blockRewardsStakedShared":
                     foreach (var row in rows)
@@ -1687,13 +1846,17 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Endorsements;
                     break;
-                case "endorsementRewardsLiquid":
+                case "endorsementRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsLiquid;
+                        result[j++] = row.EndorsementRewardsDelegated;
                     break;
                 case "endorsementRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.EndorsementRewardsStakedOwn;
+                    break;
+                case "endorsementRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.EndorsementRewardsStakedEdge;
                     break;
                 case "endorsementRewardsStakedShared":
                     foreach (var row in rows)
@@ -1775,25 +1938,33 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoublePreendorsingLostExternalUnstaked;
                     break;
-                case "vdfRevelationRewardsLiquid":
+                case "vdfRevelationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.VdfRevelationRewardsLiquid;
+                        result[j++] = row.VdfRevelationRewardsDelegated;
                     break;
                 case "vdfRevelationRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationRewardsStakedOwn;
                     break;
+                case "vdfRevelationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationRewardsStakedEdge;
+                    break;
                 case "vdfRevelationRewardsStakedShared":
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationRewardsStakedShared;
                     break;
-                case "nonceRevelationRewardsLiquid":
+                case "nonceRevelationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsLiquid;
+                        result[j++] = row.NonceRevelationRewardsDelegated;
                     break;
                 case "nonceRevelationRewardsStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.NonceRevelationRewardsStakedOwn;
+                    break;
+                case "nonceRevelationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.NonceRevelationRewardsStakedEdge;
                     break;
                 case "nonceRevelationRewardsStakedShared":
                     foreach (var row in rows)
@@ -1809,9 +1980,25 @@ namespace Tzkt.Api.Repositories
                     break;
 
                 #region deprecated
+                case "blockRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsDelegated;
+                    break;
+                case "endorsementRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.EndorsementRewardsDelegated;
+                    break;
+                case "vdfRevelationRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.VdfRevelationRewardsDelegated;
+                    break;
+                case "nonceRevelationRewardsLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.NonceRevelationRewardsDelegated;
+                    break;
                 case "revelationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsLiquid + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsLiquid + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedShared;
+                        result[j++] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
                     break;
                 case "revelationLosses":
                     foreach (var row in rows)
@@ -1831,11 +2018,11 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "endorsementRewards":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsLiquid + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedShared;
+                        result[j++] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
                     break;
                 case "blockRewards":
                     foreach (var row in rows)
-                        result[j++] = row.BlockRewardsLiquid + row.BlockRewardsStakedOwn + row.BlockRewardsStakedShared;
+                        result[j++] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
                     break;
                 case "stakingBalance":
                     foreach (var row in rows)
@@ -1884,7 +2071,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT       {limit}
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             using var result = await db.QueryMultipleAsync($"""
                 {sqlRewards};
                 {sqlDelegators};
@@ -1911,16 +2098,18 @@ namespace Tzkt.Api.Repositories
                 FutureBlocks = rewards.FutureBlocks,
                 FutureBlockRewards = rewards.FutureBlockRewards,
                 Blocks = rewards.Blocks,
-                BlockRewardsLiquid = rewards.BlockRewardsLiquid,
+                BlockRewardsDelegated = rewards.BlockRewardsDelegated,
                 BlockRewardsStakedOwn = rewards.BlockRewardsStakedOwn,
+                BlockRewardsStakedEdge = rewards.BlockRewardsStakedEdge,
                 BlockRewardsStakedShared = rewards.BlockRewardsStakedShared,
                 MissedBlocks = rewards.MissedBlocks,
                 MissedBlockRewards = rewards.MissedBlockRewards,
                 FutureEndorsements = rewards.FutureEndorsements,
                 FutureEndorsementRewards = rewards.FutureEndorsementRewards,
                 Endorsements = rewards.Endorsements,
-                EndorsementRewardsLiquid = rewards.EndorsementRewardsLiquid,
+                EndorsementRewardsDelegated = rewards.EndorsementRewardsDelegated,
                 EndorsementRewardsStakedOwn = rewards.EndorsementRewardsStakedOwn,
+                EndorsementRewardsStakedEdge = rewards.EndorsementRewardsStakedEdge,
                 EndorsementRewardsStakedShared = rewards.EndorsementRewardsStakedShared,
                 MissedEndorsements = rewards.MissedEndorsements,
                 MissedEndorsementRewards = rewards.MissedEndorsementRewards,
@@ -1941,11 +2130,13 @@ namespace Tzkt.Api.Repositories
                 DoublePreendorsingLostUnstaked = rewards.DoublePreendorsingLostUnstaked,
                 DoublePreendorsingLostExternalStaked = rewards.DoublePreendorsingLostExternalStaked,
                 DoublePreendorsingLostExternalUnstaked = rewards.DoublePreendorsingLostExternalUnstaked,
-                VdfRevelationRewardsLiquid = rewards.VdfRevelationRewardsLiquid,
+                VdfRevelationRewardsDelegated = rewards.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = rewards.VdfRevelationRewardsStakedOwn,
+                VdfRevelationRewardsStakedEdge = rewards.VdfRevelationRewardsStakedEdge,
                 VdfRevelationRewardsStakedShared = rewards.VdfRevelationRewardsStakedShared,
-                NonceRevelationRewardsLiquid = rewards.NonceRevelationRewardsLiquid,
+                NonceRevelationRewardsDelegated = rewards.NonceRevelationRewardsDelegated,
                 NonceRevelationRewardsStakedOwn = rewards.NonceRevelationRewardsStakedOwn,
+                NonceRevelationRewardsStakedEdge = rewards.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = rewards.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = rewards.NonceRevelationLosses,
                 Delegators = delegators.Select(x => 
@@ -1956,42 +2147,39 @@ namespace Tzkt.Api.Repositories
                         Address = delegator.Address,
                         DelegatedBalance = x.DelegatedBalance,
                         StakedBalance = x.StakedBalance,
-                        CurrentDelegatedBalance = delegator.Balance - ((delegator as RawUser)?.StakedBalance ?? 0),
-                        CurrentStakedBalance = (delegator as RawUser)?.StakedBalance ?? 0,
-                        Emptied = delegator is RawUser && delegator.Balance == 0
+                        Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null
                     };
                 })
             };
         }
 
-        public async Task<SplitDelegator> GetRewardSplitDelegator(string baker, int cycle, string delegator)
+        public async Task<SplitDelegator> GetRewardSplitDelegator(string bakerAddress, int cycle, string delegatorAddress)
         {
-            if (await Accounts.GetAsync(baker) is not RawDelegate bakerAccount)
+            if (await Accounts.GetAsync(bakerAddress) is not RawDelegate baker)
                 return null;
 
-            if (await Accounts.GetAsync(delegator) is not RawAccount delegatorAccount)
+            if (await Accounts.GetAsync(delegatorAddress) is not RawAccount delegator)
                 return null;
 
             var sql = $"""
                 SELECT  "DelegatedBalance", "StakedBalance"
                 FROM    "DelegatorCycles"
-                WHERE   "BakerId" = {bakerAccount.Id}
+                WHERE   "BakerId" = {baker.Id}
                 AND     "Cycle" = {cycle}
-                AND     "DelegatorId" = {delegatorAccount.Id}
+                AND     "DelegatorId" = {delegator.Id}
                 LIMIT   1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
             return new SplitDelegator
             {
+                Address = delegator.Address,
                 DelegatedBalance = row.DelegatedBalance,
                 StakedBalance = row.StakedBalance,
-                CurrentDelegatedBalance = delegatorAccount.Balance - ((delegatorAccount as RawUser)?.StakedBalance ?? 0),
-                CurrentStakedBalance = (delegatorAccount as RawUser)?.StakedBalance ?? 0,
-                Emptied = delegatorAccount is RawUser && delegatorAccount.Balance == 0
+                Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null
             };
         }
         #endregion

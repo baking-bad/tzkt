@@ -1,5 +1,3 @@
-using System;
-using System.Collections.Generic;
 using Netezos.Encoding;
 
 namespace Tzkt.Api

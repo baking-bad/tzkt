@@ -232,6 +232,14 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetStakingOps(new() { level = level }, new() { limit = -1 }, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.StakingOperation>());
 
+                var setDelegateParametersOps = TypeSubs.TryGetValue(Operations.SetDelegateParameters, out var setDelegateParametersSubs)
+                    ? Repo.GetSetDelegateParametersOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.SetDelegateParametersOperation>());
+
+                var dalPublishCommitmentOps = TypeSubs.TryGetValue(Operations.DalPublishCommitment, out var dalPublishCommitmentSubs)
+                    ? Repo.GetDalPublishCommitmentOps(new() { level = level }, new() { limit = -1 }, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DalPublishCommitmentOperation>());
+
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
                     ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
@@ -289,6 +297,8 @@ namespace Tzkt.Api.Websocket.Processors
                     srRecoverBondOps,
                     srRefuteOps,
                     stakingOps,
+                    setDelegateParametersOps,
+                    dalPublishCommitmentOps,
                     migrations,
                     penalties,
                     baking,
@@ -969,7 +979,7 @@ namespace Tzkt.Api.Websocket.Processors
                 if (stakingOps.Result.Any())
                 {
                     if (stakingSubs.Subs != null)
-                        AddRange(srRefuteSubs.Subs, stakingOps.Result);
+                        AddRange(stakingSubs.Subs, stakingOps.Result);
 
                     if (stakingSubs.AddressSubs != null)
                         foreach (var op in stakingOps.Result)
@@ -980,6 +990,28 @@ namespace Tzkt.Api.Websocket.Processors
                             if (op.Baker != null && stakingSubs.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
                                 Add(bakerSubs.Subs, op);
                         }
+                }
+
+                if (setDelegateParametersOps.Result.Any())
+                {
+                    if (setDelegateParametersSubs.Subs != null)
+                        AddRange(setDelegateParametersSubs.Subs, setDelegateParametersOps.Result);
+
+                    if (setDelegateParametersSubs.AddressSubs != null)
+                        foreach (var op in setDelegateParametersOps.Result)
+                            if (setDelegateParametersSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
+                }
+
+                if (dalPublishCommitmentOps.Result.Any())
+                {
+                    if (dalPublishCommitmentSubs.Subs != null)
+                        AddRange(dalPublishCommitmentSubs.Subs, dalPublishCommitmentOps.Result);
+
+                    if (dalPublishCommitmentSubs.AddressSubs != null)
+                        foreach (var op in dalPublishCommitmentOps.Result)
+                            if (dalPublishCommitmentSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs))
+                                Add(senderSubs.Subs, op);
                 }
 
                 if (migrations.Result.Any())

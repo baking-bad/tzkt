@@ -38,17 +38,26 @@
         public long Expected { get; set; }
 
         /// <summary>
-        /// Reward received on baker's liquid balance (micro tez)
+        /// Reward, corresponding to delegated stake, paid to baker's liquid balance (micro tez)
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long RewardLiquid { get; set; }
+        public long RewardDelegated { get; set; }
 
         /// <summary>
-        /// Reward received on baker's staked balance (micro tez)
+        /// Reward, corresponding to baker's own stake, paid to baker's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long RewardStakedOwn { get; set; }
 
         /// <summary>
-        /// Reward received on baker's external staked balance (micro tez)
+        /// Reward, corresponding to baker's edge from external stake, paid to baker's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long RewardStakedEdge { get; set; }
+
+        /// <summary>
+        /// Reward, corresponding to baker's external stake, paid to baker's external staked balance (micro tez)
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long RewardStakedShared { get; set; }
 
@@ -63,7 +72,12 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long Received => RewardLiquid + RewardStakedOwn + RewardStakedShared;
+        public long RewardLiquid => RewardDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Received => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
         #endregion
     }
 }

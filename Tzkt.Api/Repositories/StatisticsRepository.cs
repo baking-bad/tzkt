@@ -1,16 +1,19 @@
 ﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class StatisticsRepository : DbConnection
+    public class StatisticsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly TimeCache Time;
         readonly QuotesCache Quotes;
 
-        public StatisticsRepository(TimeCache time, QuotesCache quotes, IConfiguration config) : base(config)
+        public StatisticsRepository(NpgsqlDataSource dataSource, TimeCache time, QuotesCache quotes)
         {
+            DataSource = dataSource;
             Time = time;
             Quotes = quotes;
         }
@@ -45,7 +48,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Statistics
@@ -146,7 +149,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -304,7 +307,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()];

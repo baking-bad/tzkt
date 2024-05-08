@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Tzkt.Api.Services.Auth
+﻿namespace Tzkt.Api.Services.Auth
 {
     public interface IAuthService
     {

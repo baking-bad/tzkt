@@ -1,26 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 
 namespace Tzkt.Api.Services.Cache
 {
-    public class BigMapsCache : DbConnection
+    public class BigMapsCache
     {
         const int MaxPtrs = 4096;
         readonly Dictionary<string, RawBigMap> Cached = new(MaxPtrs);
         readonly SemaphoreSlim Sema = new(1);
         int LastUpdate;
 
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly ILogger Logger;
 
-        public BigMapsCache(StateCache state, IConfiguration config, ILogger<BigMapsCache> logger) : base(config)
+        public BigMapsCache(NpgsqlDataSource dataSource, StateCache state, ILogger<BigMapsCache> logger)
         {
+            DataSource = dataSource;
             State = state;
             Logger = logger;
             LastUpdate = state.Current.Level;
@@ -54,7 +50,7 @@ namespace Tzkt.Api.Services.Cache
                     FROM    ""BigMaps""
                     WHERE   ""LastLevel"" > @from";
 
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 var rows = await db.QueryAsync(sql, new { from });
                 if (!rows.Any()) return;
 
@@ -94,7 +90,7 @@ namespace Tzkt.Api.Services.Cache
                         AND 	""Active"" = true
                         AND     ""StoragePath"" LIKE @name";
 
-                        using var db = GetConnection();
+                        await using var db = await DataSource.OpenConnectionAsync();
                         var rows = await db.QueryAsync(sql, new { id = contractId, name = $"%{path}" });
                         if (!rows.Any()) return null;
 

@@ -33,19 +33,19 @@ namespace Tzkt.Api
         /// Filter by autostaking action.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AutostakingActionParameter action { get; set; }
-
-        /// <summary>
-        /// Filter by cycle.  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public Int32Parameter cycle { get; set; }
+        public StakingActionParameter action { get; set; }
 
         /// <summary>
         /// Filter by amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter amount { get; set; }
+
+        /// <summary>
+        /// Filter by number of staking updates.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter stakingUpdatesCount { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>
@@ -54,14 +54,14 @@ namespace Tzkt.Api
             timestamp == null &&
             baker == null &&
             action == null &&
-            cycle == null &&
-            amount == null;
+            amount == null &&
+            stakingUpdatesCount == null;
 
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("level", level), ("timestamp", timestamp), ("baker", baker),
-                ("action", action), ("cycle", cycle), ("amount", amount));
+                ("action", action), ("amount", amount), ("stakingUpdatesCount", stakingUpdatesCount));
         }
     }
 }

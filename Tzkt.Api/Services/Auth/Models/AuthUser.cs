@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Tzkt.Api.Services.Auth
 {
     public class AuthUser

@@ -18,7 +18,8 @@ namespace Tzkt.Data.Models
         public int RampUpCycles { get; set; }
         public int NoRewardCycles { get; set; }
 
-        public int PreservedCycles { get; set; }
+        public int ConsensusRightsDelay { get; set; }
+        public int DelegateParametersActivationDelay { get; set; }
 
         public int BlocksPerCycle { get; set; }
         public int BlocksPerCommitment { get; set; }
@@ -72,14 +73,6 @@ namespace Tzkt.Data.Models
         public int SmartRollupTimeoutPeriod { get; set; }
 
         public string Dictator { get; set; }
-
-        public long BaseIssuedPerMinute { get; set; }
-        public int BlockRewardWeight { get; set; }
-        public int BlockBonusWeight { get; set; }
-        public int EndorsingRewardWeight { get; set; }
-        public int NonceRevelationRewardWeight { get; set; }
-        public int VdfRevelationRewardWeight { get; set; }
-        public int LBSubsidyWeight { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }
         public int DoubleEndorsingSlashedPercentage { get; set; }

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using NSwag.Generation.Processors;
 using NSwag.Generation.Processors.Contexts;
 

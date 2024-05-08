@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
@@ -35,7 +31,10 @@ namespace Tzkt.Sync.Protocols.Proto5
         protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
+            Db.TryAttach(block);
+
             var statistics = Cache.Statistics.Current;
+            Db.TryAttach(statistics);
 
             #region airdrop
             var emptiedManagers = await Db.Contracts
@@ -60,6 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 manager.Balance = 1;
                 manager.Counter = state.ManagerCounter;
                 manager.MigrationsCount++;
+                manager.LastLevel = block.Level;
 
                 block.Operations |= Operations.Migrations;
                 Db.MigrationOps.Add(new MigrationOperation
@@ -80,10 +80,10 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region invoice
             var account = await Cache.Accounts.GetAsync("KT1DUfaMfTRZZkvZAYQT5b3byXnvqoAykc43");
-
             Db.TryAttach(account);
             account.Balance += 500_000_000;
             account.MigrationsCount++;
+            account.LastLevel = block.Level;
 
             block.Operations |= Operations.Migrations;
             Db.MigrationOps.Add(new MigrationOperation
@@ -189,6 +189,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 migration.Storage = newStorage;
 
                 contract.MigrationsCount++;
+                contract.LastLevel = block.Level;
+
                 state.MigrationOpsCount++;
 
                 Db.MigrationOps.Add(migration);
