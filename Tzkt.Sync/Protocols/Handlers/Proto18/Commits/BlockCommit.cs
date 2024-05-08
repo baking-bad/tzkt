@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -35,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (metadata.RequiredArray("deactivated").Count() > 0)
                 events |= BlockEvents.Deactivations;
 
-            if (level % protocol.BlocksPerSnapshot == 0)
+            if ((level - protocol.GetCycleStart(protocol.GetCycle(level)) + 1) % protocol.BlocksPerSnapshot == 0)
                 events |= BlockEvents.BalanceSnapshot;
 
             var payloadRound = header.RequiredInt32("payload_round");
@@ -68,21 +67,13 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 protocol.LastLevel = Block.Level;
 
-            var state = Cache.AppState.Get();
-            if (!state.AIActivated && metadata.OptionalInt32("adaptive_issuance_activation_cycle") is int aiActivationCycle)
-            {
-                state.AIActivated = true;
-                state.AIActivationCycle = aiActivationCycle;
-                state.AIFinalUpvoteLevel = Block.Level;
-            }
-
             Db.TryAttach(proposer); // if we don't attach it, ef will recognize it as 'added'
             Db.TryAttach(producer); // if we don't attach it, ef will recognize it as 'added'
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
         }
-
+        
         public async Task ApplyRewards(JsonElement rawBlock)
         {
             var proposer = Cache.Accounts.GetDelegate(Block.ProposerId);
@@ -95,13 +86,130 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.RequiredString("origin") == "block")
                 .ToList();
 
-            #region parse rewards
-            var rewardLiquid = 0L;
+            var (
+                rewardDelegated,
+                rewardStakedOwn,
+                rewardStakedEdge,
+                rewardStakedShared,
+                bonusDelegated,
+                bonusStakedOwn,
+                bonusStakedEdge,
+                bonusStakedShared
+            ) = ParseRewards(proposer, producer, balanceUpdates);
+
+            Block.RewardDelegated = rewardDelegated;
+            Block.RewardStakedOwn = rewardStakedOwn;
+            Block.RewardStakedEdge = rewardStakedEdge;
+            Block.RewardStakedShared = rewardStakedShared;
+            Block.BonusDelegated = bonusDelegated;
+            Block.BonusStakedOwn = bonusStakedOwn;
+            Block.BonusStakedEdge = bonusStakedEdge;
+            Block.BonusStakedShared = bonusStakedShared;
+
+            Db.TryAttach(proposer);
+            proposer.Balance += Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge;
+            proposer.StakingBalance += Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge + Block.RewardStakedShared;
+            proposer.OwnStakedBalance += Block.RewardStakedOwn + Block.RewardStakedEdge;
+            proposer.ExternalStakedBalance += Block.RewardStakedShared;
+            proposer.BlocksCount++;
+
+            #region set baker active
+            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            if (proposer.DeactivationLevel < newDeactivationLevel)
+            {
+                if (proposer.DeactivationLevel <= Block.Level)
+                    await UpdateDelegate(proposer, true);
+
+                Block.ResetBakerDeactivation = proposer.DeactivationLevel;
+                proposer.DeactivationLevel = newDeactivationLevel;
+            }
+            #endregion
+
+            Db.TryAttach(producer);
+            producer.Balance += Block.BonusDelegated + Block.BonusStakedOwn + Block.BonusStakedEdge;
+            producer.StakingBalance += Block.BonusDelegated + Block.BonusStakedOwn + Block.BonusStakedEdge + Block.BonusStakedShared;
+            producer.OwnStakedBalance += Block.BonusStakedOwn + Block.BonusStakedEdge;
+            producer.ExternalStakedBalance += Block.BonusStakedShared;
+            if (producer != proposer)
+            {
+                producer.BlocksCount++;
+
+                #region set proposer active
+                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+                if (producer.DeactivationLevel < newDeactivationLevel)
+                {
+                    if (producer.DeactivationLevel <= Block.Level)
+                        await UpdateDelegate(producer, true);
+
+                    Block.ResetProposerDeactivation = producer.DeactivationLevel;
+                    producer.DeactivationLevel = newDeactivationLevel;
+                }
+                #endregion
+            }
+
+            Cache.Statistics.Current.TotalCreated +=
+                Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge + Block.RewardStakedShared +
+                Block.BonusDelegated + Block.BonusStakedOwn + Block.BonusStakedEdge + Block.BonusStakedShared;
+
+            Cache.Statistics.Current.TotalFrozen +=
+                Block.RewardStakedOwn + Block.RewardStakedEdge + Block.RewardStakedShared +
+                Block.BonusStakedOwn + Block.BonusStakedEdge + Block.BonusStakedShared;
+        }
+
+        public virtual void Revert(Block block)
+        {
+            Db.Blocks.Remove(block);
+            Cache.AppState.ReleaseOperationId();
+        }
+
+        public async Task RevertRewards(Block block)
+        {
+            var proposer = Cache.Accounts.GetDelegate(block.ProposerId);
+            Db.TryAttach(proposer);
+            proposer.Balance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge;
+            proposer.StakingBalance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge + block.RewardStakedShared;
+            proposer.OwnStakedBalance -= block.RewardStakedOwn + block.RewardStakedEdge;
+            proposer.ExternalStakedBalance -= block.RewardStakedShared;
+            proposer.BlocksCount--;
+
+            #region reset baker activity
+            if (block.ResetBakerDeactivation != null)
+            {
+                if (block.ResetBakerDeactivation <= block.Level)
+                    await UpdateDelegate(proposer, false);
+
+                proposer.DeactivationLevel = (int)block.ResetBakerDeactivation;
+            }
+            #endregion
+
+            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
+            Db.TryAttach(producer);
+            producer.Balance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge;
+            producer.StakingBalance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge + block.BonusStakedShared;
+            producer.OwnStakedBalance -= block.BonusStakedOwn + block.BonusStakedEdge;
+            producer.ExternalStakedBalance -= block.BonusStakedShared;
+            if (producer != proposer)
+            {
+                producer.BlocksCount--;
+
+                #region reset proposer activity
+                if (block.ResetProposerDeactivation != null)
+                {
+                    if (block.ResetProposerDeactivation <= block.Level)
+                        await UpdateDelegate(producer, false);
+
+                    producer.DeactivationLevel = (int)block.ResetProposerDeactivation;
+                }
+                #endregion
+            }
+        }
+
+        protected virtual (long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
+        {
+            var rewardDelegated = 0L;
             var rewardStakedOwn = 0L;
-            var rewardStakedShared = 0L;
-            var bonusLiquid = 0L;
+            var bonusDelegated = 0L;
             var bonusStakedOwn = 0L;
-            var bonusStakedShared = 0L;
 
             for (int i = 0; i < balanceUpdates.Count; i++)
             {
@@ -119,16 +227,16 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.Required("staker").RequiredString("baker") == proposer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var changeOwn = proposer.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * proposer.StakedBalance / proposer.TotalStakedBalance);
-                        var changeShared = change - changeOwn;
-                        rewardStakedOwn += changeOwn;
-                        rewardStakedShared += changeShared;
+                        if (proposer.ExternalStakedBalance != 0)
+                            throw new Exception("Manual staking should be disabled in Oxford");
+
+                        rewardStakedOwn += change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract" &&
                         nextUpdate.RequiredString("contract") == proposer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        rewardLiquid += change;
+                        rewardDelegated += change;
                     }
                     else
                     {
@@ -148,16 +256,16 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.Required("staker").RequiredString("baker") == producer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var changeOwn = producer.TotalStakedBalance == 0 ? change : (long)((BigInteger)change * producer.StakedBalance / producer.TotalStakedBalance);
-                        var changeShared = change - changeOwn;
-                        bonusStakedOwn += changeOwn;
-                        bonusStakedShared += changeShared;
+                        if (producer.ExternalStakedBalance != 0)
+                            throw new Exception("Manual staking should be disabled in Oxford");
+
+                        bonusStakedOwn += change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract" &&
                         nextUpdate.RequiredString("contract") == producer.Address &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        bonusLiquid += change;
+                        bonusDelegated += change;
                     }
                     else
                     {
@@ -165,123 +273,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                     }
                 }
             }
-            #endregion
 
-            Block.RewardLiquid = rewardLiquid;
-            Block.RewardStakedOwn = rewardStakedOwn;
-            Block.RewardStakedShared = rewardStakedShared;
-            Block.BonusLiquid = bonusLiquid;
-            Block.BonusStakedOwn = bonusStakedOwn;
-            Block.BonusStakedShared = bonusStakedShared;
-
-            Db.TryAttach(proposer);
-            proposer.Balance += Block.RewardLiquid + Block.RewardStakedOwn;
-            proposer.StakingBalance += Block.RewardLiquid + Block.RewardStakedOwn + Block.RewardStakedShared;
-            proposer.StakedBalance += Block.RewardStakedOwn;
-            proposer.ExternalStakedBalance += Block.RewardStakedShared;
-            proposer.TotalStakedBalance += Block.RewardStakedOwn + Block.RewardStakedShared;
-            proposer.BlocksCount++;
-
-            #region set baker active
-            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
-            if (proposer.DeactivationLevel < newDeactivationLevel)
-            {
-                if (proposer.DeactivationLevel <= Block.Level)
-                    await UpdateDelegate(proposer, true);
-
-                Block.ResetBakerDeactivation = proposer.DeactivationLevel;
-                proposer.DeactivationLevel = newDeactivationLevel;
-            }
-            #endregion
-
-            Db.TryAttach(producer);
-            producer.Balance += Block.BonusLiquid + Block.BonusStakedOwn;
-            producer.StakingBalance += Block.BonusLiquid + Block.BonusStakedOwn + Block.BonusStakedShared;
-            producer.StakedBalance += Block.BonusStakedOwn;
-            producer.ExternalStakedBalance += Block.BonusStakedShared;
-            producer.TotalStakedBalance += Block.BonusStakedOwn + Block.BonusStakedShared;
-            if (producer != proposer)
-            {
-                producer.BlocksCount++;
-
-                #region set proposer active
-                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
-                if (producer.DeactivationLevel < newDeactivationLevel)
-                {
-                    if (producer.DeactivationLevel <= Block.Level)
-                        await UpdateDelegate(producer, true);
-
-                    Block.ResetProposerDeactivation = producer.DeactivationLevel;
-                    producer.DeactivationLevel = newDeactivationLevel;
-                }
-                #endregion
-            }
-
-            Cache.Statistics.Current.TotalCreated +=
-                Block.RewardLiquid + Block.RewardStakedOwn + Block.RewardStakedShared +
-                Block.BonusLiquid + Block.BonusStakedOwn + Block.BonusStakedShared;
-
-            Cache.Statistics.Current.TotalFrozen +=
-                Block.RewardStakedOwn + Block.RewardStakedShared +
-                Block.BonusStakedOwn + Block.BonusStakedShared;
-        }
-
-        public virtual void Revert(Block block)
-        {
-            var state = Cache.AppState.Get();
-            if (state.AIFinalUpvoteLevel == block.Level)
-            {
-                state.AIActivated = false;
-                state.AIActivationCycle = 0;
-                state.AIFinalUpvoteLevel = 0;
-            }
-
-            Db.Blocks.Remove(block);
-            Cache.AppState.ReleaseOperationId();
-        }
-
-        public async Task RevertRewards(Block block)
-        {
-            var proposer = Cache.Accounts.GetDelegate(block.ProposerId);
-            Db.TryAttach(proposer);
-            proposer.Balance -= block.RewardLiquid + block.RewardStakedOwn;
-            proposer.StakingBalance -= block.RewardLiquid + block.RewardStakedOwn + block.RewardStakedShared;
-            proposer.StakedBalance -= block.RewardStakedOwn;
-            proposer.ExternalStakedBalance -= block.RewardStakedShared;
-            proposer.TotalStakedBalance -= block.RewardStakedOwn + block.RewardStakedShared;
-            proposer.BlocksCount--;
-
-            #region reset baker activity
-            if (block.ResetBakerDeactivation != null)
-            {
-                if (block.ResetBakerDeactivation <= block.Level)
-                    await UpdateDelegate(proposer, false);
-
-                proposer.DeactivationLevel = (int)block.ResetBakerDeactivation;
-            }
-            #endregion
-
-            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
-            Db.TryAttach(producer);
-            producer.Balance -= block.BonusLiquid + block.BonusStakedOwn;
-            producer.StakingBalance -= block.BonusLiquid + block.BonusStakedOwn + block.BonusStakedShared;
-            producer.StakedBalance -= block.BonusStakedOwn;
-            producer.ExternalStakedBalance -= block.BonusStakedShared;
-            producer.TotalStakedBalance -= block.BonusStakedOwn + block.BonusStakedShared;
-            if (producer != proposer)
-            {
-                producer.BlocksCount--;
-
-                #region reset proposer activity
-                if (block.ResetProposerDeactivation != null)
-                {
-                    if (block.ResetProposerDeactivation <= block.Level)
-                        await UpdateDelegate(producer, false);
-
-                    producer.DeactivationLevel = (int)block.ResetProposerDeactivation;
-                }
-                #endregion
-            }
+            return (rewardDelegated, rewardStakedOwn, 0L, 0L, bonusDelegated, bonusStakedOwn, 0L, 0L);
         }
     }
 }

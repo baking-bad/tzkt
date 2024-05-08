@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class TicketTransfer
     {
@@ -41,7 +43,7 @@
         /// Amount of tickets transferred.  
         /// **[sortable]**
         /// </summary>
-        public string Amount { get; set; }
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// Internal TzKT id of the transaction operation, caused the ticket transfer.

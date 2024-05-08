@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public virtual List<Cycle> BootstrapCycles(Protocol protocol, List<Account> accounts, JToken parameters)
         {
-            var cycles = new List<Cycle>(protocol.PreservedCycles + 1);
+            var cycles = new List<Cycle>(protocol.ConsensusRightsDelay + 1);
             var delegates = accounts
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => x as Data.Models.Delegate);
@@ -21,15 +21,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!Base58.TryParse(base58Seed, new byte[3], out var initialSeed) || initialSeed.Length != 32)
                 initialSeed = Array.Empty<byte>();
 
-            var seeds = Seed.GetInitialSeeds(protocol.PreservedCycles + 1, initialSeed);
-            for (int index = 0; index <= protocol.PreservedCycles; index++)
+            var seeds = Seed.GetInitialSeeds(protocol.ConsensusRightsDelay + 1, initialSeed);
+            for (int index = 0; index <= protocol.ConsensusRightsDelay; index++)
             {
                 var cycle = new Cycle
                 {
                     Index = index,
                     FirstLevel = protocol.GetCycleStart(index),
                     LastLevel = protocol.GetCycleEnd(index),
-                    SnapshotIndex = 0,
                     SnapshotLevel = 1,
                     TotalBakers = selectedBakers,
                     TotalBakingPower = selectedStaking,
@@ -40,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             var state = Cache.AppState.Get();
-            state.CyclesCount += protocol.PreservedCycles + 1;
+            state.CyclesCount += protocol.ConsensusRightsDelay + 1;
 
             return cycles;
         }

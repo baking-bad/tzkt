@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Tzkt.Data.Models
 {
@@ -42,23 +41,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Ticket>()
                 .Property(x => x.JsonContent)
                 .HasColumnType("jsonb");
-
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-            
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalMinted)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalBurned)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalSupply)
-                .HasConversion(converter);
             #endregion
 
             #region indexes

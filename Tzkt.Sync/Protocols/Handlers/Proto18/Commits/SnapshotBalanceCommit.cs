@@ -20,31 +20,52 @@ namespace Tzkt.Sync.Protocols.Proto18
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
-                    "StakersCount",
-                    "StakedPseudotokens",
-                    "IssuedPseudotokens"
+                    "StakersCount"
                 )
-
+                
                 SELECT
                     {block.Level},
                     "Id",
-                    COALESCE("DelegateId", "Id"),
-                    "Balance" - COALESCE("StakedBalance", 0) - (CASE
-                                                                WHEN "UnstakedBakerId" IS NOT NULL
-                                                                AND "UnstakedBakerId" != "DelegateId"
-                                                                AND "UnstakedBakerId" != "Id"
-                                                                THEN "UnstakedBalance"
-                                                                ELSE 0
-                                                                END),
-                    COALESCE("DelegatedBalance", 0),
-                    COALESCE("DelegatorsCount", 0),
-                    COALESCE("StakedBalance", 0),
-                    COALESCE("ExternalStakedBalance", 0),
-                    COALESCE("StakersCount", 0),
-                    COALESCE("StakedPseudotokens", 0),
-                    COALESCE("IssuedPseudotokens", 0)
+                    "Id",
+                    "Balance" - "OwnStakedBalance" - (CASE
+                                                      WHEN "UnstakedBakerId" IS NOT NULL
+                                                      AND  "UnstakedBakerId" != "Id"
+                                                      THEN "UnstakedBalance"
+                                                      ELSE 0
+                                                      END),
+                    "DelegatedBalance",
+                    "DelegatorsCount",
+                    "OwnStakedBalance",
+                    "ExternalStakedBalance",
+                    "StakersCount"
                 FROM "Accounts"
                 WHERE "Staked" = true
+                AND "Type" = {(int)AccountType.Delegate}
+                
+                UNION ALL
+
+                SELECT
+                    {block.Level},
+                    staker."Id",
+                    staker."DelegateId",
+                    staker."Balance" - (CASE
+                                        WHEN staker."UnstakedBakerId" IS NOT NULL
+                                        AND  staker."UnstakedBakerId" != staker."DelegateId"
+                                        THEN staker."UnstakedBalance"
+                                        ELSE 0
+                                        END),
+                    0,
+                    0,
+                    FLOOR(baker."ExternalStakedBalance"
+                        * COALESCE(staker."StakedPseudotokens", 0::numeric)
+                        / COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint,
+                    0,
+                    0
+                FROM "Accounts" AS staker
+                INNER JOIN "Accounts" AS baker
+                ON baker."Id" = staker."DelegateId"
+                WHERE staker."Staked" = true
+                AND staker."Type" != {(int)AccountType.Delegate}
 
                 UNION ALL
                 
@@ -53,8 +74,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                     account."Id",
                     account."UnstakedBakerId",
                     account."UnstakedBalance",
-                    0,
-                    0,
                     0,
                     0,
                     0,
@@ -83,21 +102,24 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var delegators = await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync();
                     var unstakers = baker.ExternalUnstakedBalance > 0
-                        ? await Db.Users.Where(x => x.UnstakedBakerId == baker.Id).ToListAsync()
+                        ? await Db.Users
+                            .Where(x =>
+                                x.UnstakedBakerId == baker.Id &&
+                                x.UnstakedBakerId != x.DelegateId &&
+                                x.UnstakedBakerId != x.Id)
+                            .ToListAsync()
                         : new(0);
 
                     values.Add("(" + string.Join(',',
                         block.Level,
                         baker.Id,
                         baker.Id,
-                        baker.Balance - baker.StakedBalance - (baker.UnstakedBakerId != null && baker.UnstakedBakerId != baker.Id ? baker.UnstakedBalance : 0),
+                        baker.Balance - baker.OwnStakedBalance - (baker.UnstakedBakerId != null && baker.UnstakedBakerId != baker.Id ? baker.UnstakedBalance : 0),
                         baker.DelegatedBalance,
                         baker.DelegatorsCount,
-                        baker.StakedBalance,
+                        baker.OwnStakedBalance,
                         baker.ExternalStakedBalance,
-                        baker.StakersCount,
-                        baker.StakedPseudotokens,
-                        baker.IssuedPseudotokens) + ")");
+                        baker.StakersCount) + ")");
 
                     foreach (var delegator in delegators)
                     {
@@ -105,16 +127,14 @@ namespace Tzkt.Sync.Protocols.Proto18
                             block.Level,
                             delegator.Id,
                             delegator.DelegateId,
-                            delegator.Balance - (delegator is User user
-                                ? (user.StakedBalance - (user.UnstakedBakerId != null && user.UnstakedBakerId != user.DelegateId ? user.UnstakedBalance : 0))
-                                : 0),
+                            delegator.Balance - (delegator is User user && user.UnstakedBakerId != null && user.UnstakedBakerId != user.DelegateId ? user.UnstakedBalance : 0),
                             0,
                             0,
-                            (delegator as User)?.StakedBalance ?? 0,
+                            delegator is User u && u.StakedPseudotokens != null
+                                ? (long)(baker.ExternalStakedBalance * u.StakedPseudotokens / baker.IssuedPseudotokens)
+                                : 0L,
                             0,
-                            0,
-                            (delegator as User)?.StakedPseudotokens ?? 0,
-                            (delegator as Data.Models.Delegate)?.IssuedPseudotokens ?? 0) + ")");
+                            0) + ")");
                     }
 
                     foreach (var unstaker in unstakers)
@@ -124,8 +144,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                             unstaker.Id,
                             unstaker.UnstakedBakerId,
                             unstaker.UnstakedBalance,
-                            0,
-                            0,
                             0,
                             0,
                             0,
@@ -145,9 +163,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                             "DelegatorsCount",
                             "OwnStakedBalance",
                             "ExternalStakedBalance",
-                            "StakersCount",
-                            "StakedPseudotokens",
-                            "IssuedPseudotokens"
+                            "StakersCount"
                         )
                         VALUES
                         {string.Join(",\n", values)}
@@ -164,14 +180,14 @@ namespace Tzkt.Sync.Protocols.Proto18
             await Db.Database.ExecuteSqlRawAsync($"""
                 UPDATE "SnapshotBalances" as sb
                 SET 
-                    "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsLiquid",
-                    "OwnStakedBalance" = "OwnStakedBalance" - bc."EndorsementRewardsStakedOwn",
+                    "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated",
+                    "OwnStakedBalance" = "OwnStakedBalance" - bc."EndorsementRewardsStakedOwn" - bc."EndorsementRewardsStakedEdge",
                     "ExternalStakedBalance" = "ExternalStakedBalance" - bc."EndorsementRewardsStakedShared"
                 FROM (
-                    SELECT "BakerId", "EndorsementRewardsLiquid", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedShared"
+                    SELECT "BakerId", "EndorsementRewardsDelegated", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedEdge", "EndorsementRewardsStakedShared"
                     FROM "BakerCycles"
                     WHERE "Cycle" = {block.Cycle}
-                    AND ("EndorsementRewardsLiquid" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedShared" != 0)
+                    AND ("EndorsementRewardsDelegated" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedEdge" != 0 OR "EndorsementRewardsStakedShared" != 0)
                 ) as bc
                 WHERE sb."Level" = {block.Level}
                 AND sb."AccountId" = bc."BakerId"

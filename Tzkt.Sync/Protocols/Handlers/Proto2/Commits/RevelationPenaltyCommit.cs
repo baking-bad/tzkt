@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
-                            Loss = slashed ? 0 : missedBlock.RewardLiquid + missedBlock.Fees
+                            Loss = slashed ? 0 : missedBlock.RewardDelegated + missedBlock.Fees
                         });
                     }
                 }
@@ -134,7 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .EnumerateArray()
                 .Any(x => x.RequiredString("kind")[0] == 'f' &&
                           x.RequiredInt64("change") < 0 &&
-                          GetFreezerCycle(x) != block.Cycle - block.Protocol.PreservedCycles);
+                          GetFreezerCycle(x) != block.Cycle - block.Protocol.ConsensusRightsDelay);
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Dapper;
+using Npgsql;
 using Netezos.Encoding;
 using Netezos.Contracts;
 using Tzkt.Api.Models;
@@ -7,13 +8,15 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class SmartRollupsRepository : DbConnection
+    public class SmartRollupsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public SmartRollupsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public SmartRollupsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -137,7 +140,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"r.""Id""", @"r.""Id""")
                 }, @"r.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -154,7 +157,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"r.""LastLevel""", filter.lastActivity)
                 .FilterA(@"r.""LastLevel""", filter.lastActivityTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -212,7 +215,7 @@ namespace Tzkt.Api.Repositories
             if (rawAccount is not RawSmartRollup rollup)
                 return null;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
 
             var origination = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""ParameterType""
@@ -500,7 +503,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"s.""SenderId""", @"s.""SenderId""")
                 }, @"s.""SenderId""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -679,7 +682,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"c.""Id""", @"c.""Id""")
                 }, @"c.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -701,7 +704,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
                 .FilterA(@"p.""Hash""", filter.predecessor?.hash);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1055,7 +1058,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"g.""Id""", @"g.""Id""")
                 }, @"g.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -1078,7 +1081,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
                 .FilterA(@"g.""LastLevel""", filter.lastTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1447,7 +1450,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"m.""Id""", @"m.""Id""")
                 }, @"m.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -1460,7 +1463,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"m.""Level""", filter.timestamp)
                 .FilterA(@"m.""Type""", filter.type);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 

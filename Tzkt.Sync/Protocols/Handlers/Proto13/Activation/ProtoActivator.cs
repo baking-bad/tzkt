@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -49,10 +44,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             await Db.Database.ExecuteSqlRawAsync($@"
                 DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {state.VotingPeriod}");
 
-            Db.VotingSnapshots.RemoveRange(Db.ChangeTracker.Entries()
-                .Where(x => x.Entity is VotingSnapshot)
-                .Select(x => x.Entity as VotingSnapshot));
-
             var snapshots = Cache.Accounts.GetDelegates()
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .Select(x => new VotingSnapshot
@@ -74,6 +65,9 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region patch contracts
+            Db.TryAttach(block);
+            Db.TryAttach(state);
+
             var patched = File.ReadAllLines("./Protocols/Handlers/Proto13/Activation/patched.contracts");
             foreach (var address in patched)
             {
@@ -156,7 +150,11 @@ namespace Tzkt.Sync.Protocols.Proto13
                     migration.Storage = newStorage;
 
                     contract.MigrationsCount++;
+                    contract.LastLevel = migration.Level;
+                    
                     state.MigrationOpsCount++;
+                    
+                    block.Operations |= Operations.Migrations;
 
                     Db.MigrationOps.Add(migration);
 

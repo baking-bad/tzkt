@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class TokenBalance
     {
@@ -24,13 +26,13 @@
         /// Balance (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
-        public string Balance { get; set; }
+        public BigInteger Balance { get; set; }
 
         /// <summary>
         /// Balance value in mutez, based on the current token price.  
         /// **[sortable]**
         /// </summary>
-        public decimal? BalanceValue { get; set; } // TODO: change to BigInteger, when migrating to .net7
+        public BigInteger? BalanceValue { get; set; }
 
         /// <summary>
         /// Total number of transfers, affecting the token balance.  

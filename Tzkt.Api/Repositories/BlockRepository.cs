@@ -1,19 +1,22 @@
 ﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class BlockRepository : DbConnection
+    public class BlockRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly OperationRepository Operations;
         readonly QuotesCache Quotes;
         readonly StateCache State;
         readonly SoftwareCache Software;
 
-        public BlockRepository(AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, SoftwareCache software, IConfiguration config) : base(config)
+        public BlockRepository(NpgsqlDataSource dataSource, AccountsCache accounts, OperationRepository operations, QuotesCache quotes, StateCache state, SoftwareCache software)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Operations = operations;
             Quotes = quotes;
@@ -35,7 +38,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { level });
             if (row == null) return null;
 
@@ -50,11 +53,13 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
-                BonusLiquid = row.BonusLiquid,
+                BonusDelegated = row.BonusDelegated,
                 BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedEdge = row.BonusStakedEdge,
                 BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -83,7 +88,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { hash });
             if (row == null) return null;
 
@@ -98,11 +103,13 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
-                BonusLiquid = row.BonusLiquid,
+                BonusDelegated = row.BonusDelegated,
                 BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedEdge = row.BonusStakedEdge,
                 BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -147,19 +154,23 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "reward" => ("RewardLiquid", "RewardLiquid"),
-                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
                     "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
-                    "bonus" => ("BonusLiquid", "BonusLiquid"),
-                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusDelegated" => ("BonusDelegated", "BonusDelegated"),
                     "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedEdge" => ("BonusStakedEdge", "BonusStakedEdge"),
                     "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
+                    #region deprecated
+                    "reward" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "bonus" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    #endregion
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Block
@@ -173,11 +184,13 @@ namespace Tzkt.Api.Repositories
                 BlockRound = row.BlockRound,
                 Validations = row.Validations,
                 Deposit = row.Deposit,
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
-                BonusLiquid = row.BonusLiquid,
+                BonusDelegated = row.BonusDelegated,
                 BonusStakedOwn = row.BonusStakedOwn,
+                BonusStakedEdge = row.BonusStakedEdge,
                 BonusStakedShared = row.BonusStakedShared,
                 Fees = row.Fees,
                 NonceRevealed = row.RevelationId != null,
@@ -219,11 +232,13 @@ namespace Tzkt.Api.Repositories
                     case "blockRound": columns.Add(@"""BlockRound"""); break;
                     case "validations": columns.Add(@"""Validations"""); break;
                     case "deposit": columns.Add(@"""Deposit"""); break;
-                    case "rewardLiquid": columns.Add(@"""RewardLiquid"""); break;
+                    case "rewardDelegated": columns.Add(@"""RewardDelegated"""); break;
                     case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
+                    case "rewardStakedEdge": columns.Add(@"""RewardStakedEdge"""); break;
                     case "rewardStakedShared": columns.Add(@"""RewardStakedShared"""); break;
-                    case "bonusLiquid": columns.Add(@"""BonusLiquid"""); break;
+                    case "bonusDelegated": columns.Add(@"""BonusDelegated"""); break;
                     case "bonusStakedOwn": columns.Add(@"""BonusStakedOwn"""); break;
+                    case "bonusStakedEdge": columns.Add(@"""BonusStakedEdge"""); break;
                     case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
@@ -236,14 +251,18 @@ namespace Tzkt.Api.Repositories
                     case "aiToggle": columns.Add(@"""AIToggle"""); break;
                     case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
                     #region deprecated
+                    case "rewardLiquid": columns.Add(@"""RewardDelegated"""); break;
+                    case "bonusLiquid": columns.Add(@"""BonusDelegated"""); break;
                     case "reward":
-                        columns.Add(@"""RewardLiquid""");
+                        columns.Add(@"""RewardDelegated""");
                         columns.Add(@"""RewardStakedOwn""");
+                        columns.Add(@"""RewardStakedEdge""");
                         columns.Add(@"""RewardStakedShared""");
                         break;
                     case "bonus":
-                        columns.Add(@"""BonusLiquid""");
+                        columns.Add(@"""BonusDelegated""");
                         columns.Add(@"""BonusStakedOwn""");
+                        columns.Add(@"""BonusStakedEdge""");
                         columns.Add(@"""BonusStakedShared""");
                         break;
                     #endregion
@@ -266,21 +285,23 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
                     "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
-                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusDelegated" => ("BonusDelegated", "BonusDelegated"),
                     "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedEdge" => ("BonusStakedEdge", "BonusStakedEdge"),
                     "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
                     #region deprecated
-                    "reward" => ("RewardLiquid", "RewardLiquid"),
-                    "bonus" => ("BonusLiquid", "BonusLiquid"),
+                    "reward" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "bonus" => ("BonusStakedOwn", "BonusStakedOwn"),
                     #endregion
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -327,25 +348,33 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Deposit;
                         break;
-                    case "rewardLiquid":
+                    case "rewardDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid;
+                            result[j++][i] = row.RewardDelegated;
                         break;
                     case "rewardStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.RewardStakedOwn;
                         break;
+                    case "rewardStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedEdge;
+                        break;
                     case "rewardStakedShared":
                         foreach (var row in rows)
                             result[j++][i] = row.RewardStakedShared;
                         break;
-                    case "bonusLiquid":
+                    case "bonusDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.BonusLiquid;
+                            result[j++][i] = row.BonusDelegated;
                         break;
                     case "bonusStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.BonusStakedOwn;
+                        break;
+                    case "bonusStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusStakedEdge;
                         break;
                     case "bonusStakedShared":
                         foreach (var row in rows)
@@ -393,13 +422,21 @@ namespace Tzkt.Api.Repositories
                         break;
 
                     #region deprecated
+                    case "rewardLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardDelegated;
+                        break;
+                    case "bonusLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BonusDelegated;
+                        break;
                     case "reward":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                         break;
                     case "bonus":
                         foreach (var row in rows)
-                            result[j++][i] = row.BonusLiquid + row.BonusStakedOwn + row.BonusStakedShared;
+                            result[j++][i] = row.BonusDelegated + row.BonusStakedOwn + row.BonusStakedEdge + row.BonusStakedShared;
                         break;
                     #endregion
                 }
@@ -433,11 +470,13 @@ namespace Tzkt.Api.Repositories
                 case "blockRound": columns.Add(@"""BlockRound"""); break;
                 case "validations": columns.Add(@"""Validations"""); break;
                 case "deposit": columns.Add(@"""Deposit"""); break;
-                case "rewardLiquid": columns.Add(@"""RewardLiquid"""); break;
+                case "rewardDelegated": columns.Add(@"""RewardDelegated"""); break;
                 case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
+                case "rewardStakedEdge": columns.Add(@"""RewardStakedEdge"""); break;
                 case "rewardStakedShared": columns.Add(@"""RewardStakedShared"""); break;
-                case "bonusLiquid": columns.Add(@"""BonusLiquid"""); break;
+                case "bonusDelegated": columns.Add(@"""BonusDelegated"""); break;
                 case "bonusStakedOwn": columns.Add(@"""BonusStakedOwn"""); break;
+                case "bonusStakedEdge": columns.Add(@"""BonusStakedEdge"""); break;
                 case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "nonceRevealed": columns.Add(@"""RevelationId"""); break;
@@ -450,17 +489,21 @@ namespace Tzkt.Api.Repositories
                 case "aiToggle": columns.Add(@"""AIToggle"""); break;
                 case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
                 #region deprecated
+                case "rewardLiquid": columns.Add(@"""RewardDelegated"""); break;
+                case "bonusLiquid": columns.Add(@"""BonusDelegated"""); break;
                 case "reward":
-                    columns.Add(@"""RewardLiquid""");
+                    columns.Add(@"""RewardDelegated""");
                     columns.Add(@"""RewardStakedOwn""");
+                    columns.Add(@"""RewardStakedEdge""");
                     columns.Add(@"""RewardStakedShared""");
                     break;
                 case "bonus":
-                    columns.Add(@"""BonusLiquid""");
+                    columns.Add(@"""BonusDelegated""");
                     columns.Add(@"""BonusStakedOwn""");
+                    columns.Add(@"""BonusStakedEdge""");
                     columns.Add(@"""BonusStakedShared""");
                     break;
-                #endregion
+                    #endregion
             }
 
             if (columns.Count == 0)
@@ -479,19 +522,23 @@ namespace Tzkt.Api.Repositories
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
                     "validations" => ("Validations", "Validations"),
-                    "reward" => ("RewardLiquid", "RewardLiquid"),
-                    "rewardLiquid" => ("RewardLiquid", "RewardLiquid"),
+                    "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
                     "rewardStakedShared" => ("RewardStakedShared", "RewardStakedShared"),
-                    "bonus" => ("BonusLiquid", "BonusLiquid"),
-                    "bonusLiquid" => ("BonusLiquid", "BonusLiquid"),
+                    "bonusDelegated" => ("BonusDelegated", "BonusDelegated"),
                     "bonusStakedOwn" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    "bonusStakedEdge" => ("BonusStakedEdge", "BonusStakedEdge"),
                     "bonusStakedShared" => ("BonusStakedShared", "BonusStakedShared"),
                     "fees" => ("Fees", "Fees"),
+                    #region deprecated
+                    "reward" => ("RewardStakedOwn", "RewardStakedOwn"),
+                    "bonus" => ("BonusStakedOwn", "BonusStakedOwn"),
+                    #endregion
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -536,25 +583,33 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Deposit;
                     break;
-                case "rewardLiquid":
+                case "rewardDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid;
+                        result[j++] = row.RewardDelegated;
                     break;
                 case "rewardStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.RewardStakedOwn;
                     break;
+                case "rewardStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedEdge;
+                    break;
                 case "rewardStakedShared":
                     foreach (var row in rows)
                         result[j++] = row.RewardStakedShared;
                     break;
-                case "bonusLiquid":
+                case "bonusDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.BonusLiquid;
+                        result[j++] = row.BonusDelegated;
                     break;
                 case "bonusStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.BonusStakedOwn;
+                    break;
+                case "bonusStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusStakedEdge;
                     break;
                 case "bonusStakedShared":
                     foreach (var row in rows)
@@ -600,15 +655,23 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-
+                    
                 #region deprecated
+                case "rewardLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardDelegated;
+                    break;
+                case "bonusLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.BonusDelegated;
+                    break;
                 case "reward":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                     break;
                 case "bonus":
                     foreach (var row in rows)
-                        result[j++] = row.BonusLiquid + row.BonusStakedOwn + row.BonusStakedShared;
+                        result[j++] = row.BonusDelegated + row.BonusStakedOwn + row.BonusStakedEdge + row.BonusStakedShared;
                     break;
                 #endregion
             }
@@ -622,7 +685,7 @@ namespace Tzkt.Api.Repositories
                 .Filter($@"""Events"" & {(int)@event} > 0")
                 .Take(new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync<int>(sql.Query, sql.Params);
         }
 
@@ -635,7 +698,7 @@ namespace Tzkt.Api.Repositories
                 OFFSET   @offset
                 LIMIT    @limit";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync<DateTime>(sql, new { limit, offset });
         }
 
@@ -785,6 +848,14 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetStakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
                 : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
+            var setDelegateParameters = operations.HasFlag(Data.Models.Operations.SetDelegateParameters)
+                ? Operations.GetSetDelegateParametersOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
+
+            var dalPublishCommitment = operations.HasFlag(Data.Models.Operations.DalPublishCommitment)
+                ? Operations.GetDalPublishCommitmentOps(new() { level = block.Level }, new() { limit = -1 }, quote)
+                : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
+
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
                 ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -838,6 +909,8 @@ namespace Tzkt.Api.Repositories
                 srRecoverBondOps,
                 srRefuteOps,
                 staking,
+                setDelegateParameters,
+                dalPublishCommitment,
                 migrations,
                 penalties,
                 endorsingRewards,
@@ -879,6 +952,8 @@ namespace Tzkt.Api.Repositories
             block.SrRecoverBondOps = srRecoverBondOps.Result;
             block.SrRefuteOps = srRefuteOps.Result;
             block.StakingOps = staking.Result;
+            block.SetDelegateParametersOps = setDelegateParameters.Result;
+            block.DalPublishCommitmentOps = dalPublishCommitment.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;

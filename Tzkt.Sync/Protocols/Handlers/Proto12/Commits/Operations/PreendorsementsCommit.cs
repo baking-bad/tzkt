@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Slots = metadata.RequiredInt32("preendorsement_power"),
+                Slots = GetPreendorsedSlots(metadata),
                 Delegate = baker,
                 DelegateId = baker.Id
             };
@@ -46,5 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Db.PreendorsementOps.Remove(preendorsement);
             Cache.AppState.ReleaseOperationId();
         }
+
+        protected virtual int GetPreendorsedSlots(JsonElement metadata) => metadata.RequiredInt32("preendorsement_power");
     }
 }

@@ -14,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             List<Account> accounts,
             List<Cycle> cycles)
         {
-            var bakingRights = new List<IEnumerable<RightsGenerator.BR>>(protocol.PreservedCycles + 1);
-            var endorsingRights = new List<IEnumerable<RightsGenerator.ER>>(protocol.PreservedCycles + 1);
+            var bakingRights = new List<IEnumerable<RightsGenerator.BR>>(protocol.ConsensusRightsDelay + 1);
+            var endorsingRights = new List<IEnumerable<RightsGenerator.ER>>(protocol.ConsensusRightsDelay + 1);
 
             foreach (var cycle in cycles)
             {

@@ -46,6 +46,8 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(SmartRollupRefuteOperation))]
     [KnownType(typeof(AutostakingOperation))]
     [KnownType(typeof(StakingOperation))]
+    [KnownType(typeof(SetDelegateParametersOperation))]
+    [KnownType(typeof(DalPublishCommitmentOperation))]
     public abstract class Operation
     {
         /// <summary>
@@ -187,6 +189,12 @@ namespace Tzkt.Api.Models
 
             if (type == typeof(StakingOperation))
                 return OpTypes.Staking;
+
+            if (type == typeof(SetDelegateParametersOperation))
+                return OpTypes.SetDelegateParameters;
+
+            if (type == typeof(DalPublishCommitmentOperation))
+                return OpTypes.DalPublishCommitment;
 
             return base.GetDiscriminatorValue(type);
         }

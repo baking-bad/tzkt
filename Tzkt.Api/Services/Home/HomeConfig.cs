@@ -1,5 +1,3 @@
-using Microsoft.Extensions.Configuration;
-
 namespace Tzkt.Api.Services
 {
     public class HomeConfig

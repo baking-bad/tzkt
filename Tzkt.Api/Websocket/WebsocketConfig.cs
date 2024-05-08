@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Api.Websocket
+﻿namespace Tzkt.Api.Websocket
 {
     public class WebsocketConfig
     {

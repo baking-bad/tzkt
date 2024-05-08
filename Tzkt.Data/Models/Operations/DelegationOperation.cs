@@ -13,9 +13,7 @@ namespace Tzkt.Data.Models
 
         public long Amount { get; set; }
 
-        public long? UnstakedPseudotokens { get; set; }
-        public long? UnstakedBalance { get; set; }
-        public long? UnstakedRewards { get; set; }
+        public int? StakingUpdatesCount { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]

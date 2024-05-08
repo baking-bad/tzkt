@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
@@ -28,8 +26,9 @@ namespace Tzkt.Sync.Protocols.Proto14
         protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
+            Db.TryAttach(block);
 
+            var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
             Db.TryAttach(account);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
@@ -48,9 +47,12 @@ namespace Tzkt.Sync.Protocols.Proto14
                 BalanceChange = 3_000_000_000L
             });
 
+            Db.TryAttach(state);
             state.MigrationOpsCount++;
 
-            Cache.Statistics.Current.TotalCreated += 3_000_000_000L;
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+            stats.TotalCreated += 3_000_000_000L;
 
             if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet
             {

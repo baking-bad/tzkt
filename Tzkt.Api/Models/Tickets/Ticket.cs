@@ -1,4 +1,5 @@
-﻿using Netezos.Encoding;
+﻿using System.Numerics;
+using Netezos.Encoding;
 
 namespace Tzkt.Api.Models
 {
@@ -88,16 +89,16 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Total amount minted.
         /// </summary>
-        public string TotalMinted { get; set; }
+        public BigInteger TotalMinted { get; set; }
 
         /// <summary>
         /// Total amount burned.
         /// </summary>
-        public string TotalBurned { get; set; }
+        public BigInteger TotalBurned { get; set; }
 
         /// <summary>
         /// Total amount exists.
         /// </summary>
-        public string TotalSupply { get; set; }
+        public BigInteger TotalSupply { get; set; }
     }
 }

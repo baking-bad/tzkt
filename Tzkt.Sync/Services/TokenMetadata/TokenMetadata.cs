@@ -1,16 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
@@ -269,7 +260,7 @@ namespace Tzkt.Sync.Services
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             return (await conn.QueryAsync($@"
-                SELECT t.""Id"", c.""Address"", t.""TokenId"", t.""IndexedAt""
+                SELECT t.""Id"", c.""Address"", t.""TokenId""::text, t.""IndexedAt""
                 FROM ""Tokens"" as t
                 INNER JOIN ""Accounts"" as c
                 ON c.""Id"" = t.""ContractId""
@@ -284,7 +275,7 @@ namespace Tzkt.Sync.Services
         {
             using var conn = new NpgsqlConnection(ConnectionString);
             return (await conn.QueryAsync($@"
-                SELECT t.""Id"", c.""Address"", t.""TokenId""
+                SELECT t.""Id"", c.""Address"", t.""TokenId""::text
                 FROM ""Tokens"" as t
                 INNER JOIN ""Accounts"" as c
                 ON c.""Id"" = t.""ContractId""
@@ -390,7 +381,7 @@ namespace Tzkt.Sync.Services
                         if (any) sql.AppendLine(",");
                         else any = true;
                         param.Add($"@p{j}", Regex.Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
-                        sql.Append($"({contractId}, '{item.TokenId}', @p{j}::jsonb)");
+                        sql.Append($"({contractId}, '{item.TokenId}'::numeric, @p{j}::jsonb)");
                     }
                 }
                 sql.AppendLine();

@@ -126,8 +126,9 @@ namespace Tzkt.Sync.Protocols.Proto15
         async Task AddInvoice(AppState state, string address, long amount)
         {
             var block = await Cache.Blocks.CurrentAsync();
-            var account = await Cache.Accounts.GetAsync(address);
+            Db.TryAttach(block);
 
+            var account = await Cache.Accounts.GetAsync(address);
             Db.TryAttach(account);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
@@ -146,9 +147,12 @@ namespace Tzkt.Sync.Protocols.Proto15
                 BalanceChange = amount
             });
 
+            Db.TryAttach(state);
             state.MigrationOpsCount++;
 
-            Cache.Statistics.Current.TotalCreated += amount;
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+            stats.TotalCreated += amount;
         }
 
         async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
@@ -464,6 +468,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                     migration.Storage = newStorage;
 
                     contract.MigrationsCount++;
+                    contract.LastLevel = migration.Level;
+
                     state.MigrationOpsCount++;
 
                     Db.MigrationOps.Add(migration);

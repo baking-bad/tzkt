@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 OpHash = op.RequiredString("hash"),
                 Baker = block.Proposer,
                 Cycle = block.Cycle,
-                RewardLiquid = reward,
+                RewardDelegated = reward,
                 Solution = Hex.Parse(content.RequiredArray("solution", 2)[0].RequiredString()),
                 Proof = Hex.Parse(content.RequiredArray("solution", 2)[1].RequiredString())
             };
@@ -38,15 +38,15 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.RewardLiquid;
-            blockBaker.StakingBalance += revelation.RewardLiquid;
+            blockBaker.Balance += revelation.RewardDelegated;
+            blockBaker.StakingBalance += revelation.RewardDelegated;
 
             blockBaker.VdfRevelationsCount++;
             Cache.AppState.Get().VdfRevelationOpsCount++;
 
             block.Operations |= Operations.VdfRevelation;
 
-            Cache.Statistics.Current.TotalCreated += revelation.RewardLiquid;
+            Cache.Statistics.Current.TotalCreated += revelation.RewardDelegated;
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);
@@ -65,8 +65,8 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.RewardLiquid;
-            blockBaker.StakingBalance -= revelation.RewardLiquid;
+            blockBaker.Balance -= revelation.RewardDelegated;
+            blockBaker.StakingBalance -= revelation.RewardDelegated;
 
             blockBaker.VdfRevelationsCount--;
             Cache.AppState.Get().VdfRevelationOpsCount--;

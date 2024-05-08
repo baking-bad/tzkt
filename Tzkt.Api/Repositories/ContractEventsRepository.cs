@@ -1,23 +1,22 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using System.Linq;
+﻿using System.Data;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Dapper;
+using Npgsql;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class ContractEventsRepository : DbConnection
+    public class ContractEventsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public ContractEventsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public ContractEventsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -97,7 +96,7 @@ namespace Tzkt.Api.Repositories
                     _ => TryMetaSort(x)
                 }, @"""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -114,7 +113,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("JsonPayload", filter.payload)
                 .Filter("TransactionId", filter.transactionId);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 

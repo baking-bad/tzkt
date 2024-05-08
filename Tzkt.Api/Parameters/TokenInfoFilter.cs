@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Tzkt.Api.Services;
+﻿using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {

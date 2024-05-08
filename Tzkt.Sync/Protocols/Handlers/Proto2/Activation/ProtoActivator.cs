@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
@@ -35,13 +31,19 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             var activatedDelegates = new Dictionary<int, Data.Models.Delegate>(weirdDelegates.Count());
 
+            Db.TryAttach(block);
+            Db.TryAttach(state);
+
             foreach (var weirds in weirdDelegates)
             {
-                var delegat = await UpgradeUser(weirds.First().Delegate, block.Level, protocol);
+                var delegat = UpgradeUser(weirds.First().Delegate, block.Level, protocol);
                 activatedDelegates.Add(delegat.Id, delegat);
 
                 delegat.MigrationsCount++;
+                delegat.LastLevel = block.Level;
+
                 block.Operations |= Operations.Migrations;
+
                 Db.MigrationOps.Add(new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
@@ -51,6 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     Account = delegat,
                     Kind = MigrationKind.ActivateDelegate
                 });
+                
                 state.MigrationOpsCount++;
 
                 foreach (var weird in weirds)
@@ -93,7 +96,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 Db.TryAttach(op.Origination);
                 op.Origination.Delegate = delegat;
-                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId) delegat.OriginationsCount++;
+                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId)
+                    delegat.OriginationsCount++;
             }
         }
 
@@ -106,6 +110,28 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .Include(x => x.DelegatedAccounts)
                 .Where(x => x.ActivationLevel == block.Level)
                 .ToListAsync();
+
+            var ids = delegates.Select(x => x.Id).ToList();
+            var weirdOriginations = await Db.OriginationOps
+                .AsNoTracking()
+                .Where(x => x.Contract != null && ids.Contains((int)x.Contract.WeirdDelegateId))
+                .Select(x => new
+                {
+                    x.Contract.WeirdDelegateId,
+                    Origination = x
+                })
+                .ToListAsync();
+
+            foreach (var op in weirdOriginations)
+            {
+                Db.TryAttach(op.Origination);
+                op.Origination.DelegateId = null;
+
+                var delegat = delegates.First(x => x.Id == op.WeirdDelegateId);
+                Db.TryAttach(delegat);
+                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId)
+                    delegat.OriginationsCount--;
+            }
 
             foreach (var delegat in delegates)
             {
@@ -145,29 +171,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             Cache.AppState.ReleaseOperationId(migrationOps.Count);
 
             state.MigrationOpsCount -= migrationOps.Count;
-
-            var ids = delegates.Select(x => x.Id).ToList();
-            var weirdOriginations = await Db.OriginationOps
-                .AsNoTracking()
-                .Where(x => x.Contract != null && ids.Contains((int)x.Contract.WeirdDelegateId))
-                .Select(x => new
-                {
-                    x.Contract.WeirdDelegateId,
-                    Origination = x
-                })
-                .ToListAsync();
-
-            foreach (var op in weirdOriginations)
-            {
-                var delegat = delegates.First(x => x.Id == op.WeirdDelegateId);
-
-                Db.TryAttach(op.Origination);
-                op.Origination.DelegateId = null;
-                if (delegat.Id != op.Origination.SenderId && delegat.Id != op.Origination.ManagerId) delegat.OriginationsCount--;
-            }
         }
 
-        Task<Data.Models.Delegate> UpgradeUser(User user, int level, Protocol proto)
+        Data.Models.Delegate UpgradeUser(User user, int level, Protocol proto)
         {
             var delegat = new Data.Models.Delegate
             {
@@ -182,7 +188,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                Activated = user.Activated,
+                ActivationsCount = user.ActivationsCount,
                 DelegationsCount = user.DelegationsCount,
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
@@ -197,12 +203,10 @@ namespace Tzkt.Sync.Protocols.Proto2
                 StakingBalance = user.Balance - user.UnstakedBalance,
                 DelegatedBalance = 0,
                 Type = AccountType.Delegate,
-                StakedBalance = user.StakedBalance,
                 StakedPseudotokens = user.StakedPseudotokens,
                 UnstakedBalance = user.UnstakedBalance,
                 UnstakedBakerId = user.UnstakedBakerId,
                 StakingOpsCount = user.StakingOpsCount,
-                TotalStakedBalance = user.StakedBalance,
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,
                 TokenTransfersCount = user.TokenTransfersCount,
@@ -232,6 +236,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 SmartRollupPublishCount = user.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
+                SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                 RefutationGamesCount = user.RefutationGamesCount,
                 ActiveRefutationGamesCount = user.ActiveRefutationGamesCount
             };
@@ -240,7 +246,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             Db.Entry(delegat).State = EntityState.Modified;
             Cache.Accounts.Add(delegat);
 
-            return Task.FromResult(delegat);
+            return delegat;
         }
 
         User DowngradeDelegate(Data.Models.Delegate delegat)
@@ -255,13 +261,12 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
-                StakedBalance = delegat.StakedBalance,
                 StakedPseudotokens = delegat.StakedPseudotokens,
                 UnstakedBalance = delegat.UnstakedBalance,
                 UnstakedBakerId = delegat.UnstakedBakerId,
                 StakingOpsCount = delegat.StakingOpsCount,
                 Id = delegat.Id,
-                Activated = delegat.Activated,
+                ActivationsCount = delegat.ActivationsCount,
                 DelegationsCount = delegat.DelegationsCount,
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
@@ -303,6 +308,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 SmartRollupPublishCount = delegat.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
+                SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
                 RefutationGamesCount = delegat.RefutationGamesCount,
                 ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount
             };

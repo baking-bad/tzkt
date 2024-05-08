@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Numerics;
 
 namespace Tzkt.Api.Models
 {
@@ -43,7 +43,7 @@ namespace Tzkt.Api.Models
         /// Amount of tokens transferred (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
-        public string Amount { get; set; }
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// Internal TzKT id of the transaction operation, caused the token transfer.

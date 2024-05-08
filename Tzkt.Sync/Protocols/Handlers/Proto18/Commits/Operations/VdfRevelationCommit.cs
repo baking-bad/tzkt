@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -12,18 +11,13 @@ namespace Tzkt.Sync.Protocols.Proto18
         public virtual Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
-            var freezerUpdate = balanceUpdates.SingleOrDefault(x => x.RequiredString("kind") == "freezer");
-            var contractUpdate = balanceUpdates.SingleOrDefault(x => x.RequiredString("kind") == "contract");
+            var balanceUpdates = content
+                .Required("metadata")
+                .RequiredArray("balance_updates")
+                .EnumerateArray()
+                .ToList();
 
-            var rewardLiquid = contractUpdate.ValueKind != JsonValueKind.Undefined
-                ? contractUpdate.RequiredInt64("change")
-                : 0;
-            var rewardStaked = freezerUpdate.ValueKind != JsonValueKind.Undefined
-                ? freezerUpdate.RequiredInt64("change")
-                : 0;
-            var rewardStakedOwn = block.Proposer.TotalStakedBalance == 0 ? rewardStaked : (long)((BigInteger)rewardStaked * block.Proposer.StakedBalance / block.Proposer.TotalStakedBalance);
-            var rewardStakedShared = rewardStaked - rewardStakedOwn;
+            var (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared) = ParseRewards(block.Proposer, balanceUpdates);
 
             var revelation = new VdfRevelationOperation
             {
@@ -36,26 +30,26 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Cycle = block.Cycle,
                 Solution = Hex.Parse(content.RequiredArray("solution", 2)[0].RequiredString()),
                 Proof = Hex.Parse(content.RequiredArray("solution", 2)[1].RequiredString()),
-                RewardLiquid = rewardLiquid,
+                RewardDelegated = rewardDelegated,
                 RewardStakedOwn = rewardStakedOwn,
+                RewardStakedEdge = rewardStakedEdge,
                 RewardStakedShared = rewardStakedShared
             };
             #endregion
 
             #region apply operation
-            block.Proposer.Balance += revelation.RewardLiquid + revelation.RewardStakedOwn;
-            block.Proposer.StakingBalance += revelation.RewardLiquid + revelation.RewardStakedOwn + revelation.RewardStakedShared;
-            block.Proposer.StakedBalance += revelation.RewardStakedOwn;
+            block.Proposer.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            block.Proposer.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            block.Proposer.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
             block.Proposer.ExternalStakedBalance += revelation.RewardStakedShared;
-            block.Proposer.TotalStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedShared;
             block.Proposer.VdfRevelationsCount++;
 
             Cache.AppState.Get().VdfRevelationOpsCount++;
 
             block.Operations |= Operations.VdfRevelation;
 
-            Cache.Statistics.Current.TotalCreated += revelation.RewardLiquid + revelation.RewardStakedOwn + revelation.RewardStakedShared;
-            Cache.Statistics.Current.TotalFrozen += revelation.RewardStakedOwn + revelation.RewardStakedShared;
+            Cache.Statistics.Current.TotalCreated += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            Cache.Statistics.Current.TotalFrozen += revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);
@@ -74,11 +68,10 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region apply operation
-            block.Proposer.Balance -= revelation.RewardLiquid + revelation.RewardStakedOwn;
-            block.Proposer.StakingBalance -= revelation.RewardLiquid + revelation.RewardStakedOwn + revelation.RewardStakedShared;
-            block.Proposer.StakedBalance -= revelation.RewardStakedOwn;
+            block.Proposer.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            block.Proposer.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            block.Proposer.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
             block.Proposer.ExternalStakedBalance -= revelation.RewardStakedShared;
-            block.Proposer.TotalStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedShared;
             block.Proposer.VdfRevelationsCount--;
 
             Cache.AppState.Get().VdfRevelationOpsCount--;
@@ -87,6 +80,21 @@ namespace Tzkt.Sync.Protocols.Proto18
             Db.VdfRevelationOps.Remove(revelation);
             Cache.AppState.ReleaseOperationId();
             return Task.CompletedTask;
+        }
+
+        protected virtual (long, long, long, long) ParseRewards(Data.Models.Delegate proposer, List<JsonElement> balanceUpdates)
+        {
+            var freezerUpdate = balanceUpdates.SingleOrDefault(x => x.RequiredString("kind") == "freezer");
+            var contractUpdate = balanceUpdates.SingleOrDefault(x => x.RequiredString("kind") == "contract");
+
+            var rewardDelegated = contractUpdate.ValueKind != JsonValueKind.Undefined
+                ? contractUpdate.RequiredInt64("change")
+                : 0;
+            var rewardStakedOwn = freezerUpdate.ValueKind != JsonValueKind.Undefined
+                ? freezerUpdate.RequiredInt64("change")
+                : 0;
+
+            return (rewardDelegated, rewardStakedOwn, 0L, 0L);
         }
     }
 }

@@ -71,7 +71,10 @@ namespace Tzkt.Data
         public DbSet<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
         public DbSet<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
         public DbSet<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
-        
+
+        public DbSet<SetDelegateParametersOperation> SetDelegateParametersOps { get; set; }
+        public DbSet<DalPublishCommitmentOperation> DalPublishCommitmentOps { get; set; }
+
         public DbSet<ContractEvent> Events { get; set; }
         #endregion
 
@@ -87,6 +90,8 @@ namespace Tzkt.Data
         public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
+        public DbSet<StakingUpdate> StakingUpdates { get; set; }
+        public DbSet<UnstakeRequest> UnstakeRequests { get; set; }
         #endregion
 
         #region statistics
@@ -197,6 +202,9 @@ namespace Tzkt.Data
             modelBuilder.BuildSmartRollupRecoverBondOperationModel();
             modelBuilder.BuildSmartRollupRefuteOperationModel();
 
+            modelBuilder.BuildSetDelegateParametersOperationModel();
+            modelBuilder.BuildDalPublishCommitmentOperationModel();
+
             modelBuilder.BuildContractEventModel();
             #endregion
 
@@ -212,6 +220,8 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
+            modelBuilder.BuildStakingUpdateModel();
+            modelBuilder.BuildUnstakeRequestModel();
             #endregion
 
             #region statistics

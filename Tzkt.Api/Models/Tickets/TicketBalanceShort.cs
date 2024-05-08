@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class TicketBalanceShort
     {
@@ -23,6 +25,6 @@
         /// <summary>
         /// Balance.  
         /// </summary>
-        public string Balance { get; set; }
+        public BigInteger Balance { get; set; }
     }
 }

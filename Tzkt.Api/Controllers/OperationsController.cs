@@ -5725,5 +5725,119 @@ namespace Tzkt.Api.Controllers
             return this.Bytes(res);
         }
         #endregion
+
+        #region set delegate parameters
+        /// <summary>
+        /// Get set_delegate_parameters ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of set_delegate_parameters operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("set_delegate_parameters")]
+        public async Task<ActionResult<IEnumerable<SetDelegateParametersOperation>>> GetSetDelegateParametersOps(
+            [FromQuery] ManagerOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetSetDelegateParametersOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetSetDelegateParametersOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get set_delegate_parameters ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of set_delegate_parameters operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("set_delegate_parameters/count")]
+        public async Task<ActionResult<int>> GetSetDelegateParametersOpsCount([FromQuery] ManagerOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.SetDelegateParametersOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetSetDelegateParametersOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
+
+        #region dal publish commitment
+        /// <summary>
+        /// Get dal_publish_commitment ops
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of dal_publish_commitment operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("dal_publish_commitment")]
+        public async Task<ActionResult<IEnumerable<DalPublishCommitmentOperation>>> GetDalPublishCommitmentOps(
+            [FromQuery] ManagerOperationFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            [FromQuery] Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, selection.select == null
+                    ? await Operations.GetDalPublishCommitmentOps(filter, pagination, quote)
+                    : new SelectionResponse
+                    {
+                        Cols = selection.Cols,
+                        Rows = await Operations.GetDalPublishCommitmentOps(filter, pagination, selection, quote)
+                    });
+
+            return this.Bytes(res);
+        }
+
+        /// <summary>
+        /// Get dal_publish_commitment ops count
+        /// </summary>
+        /// <remarks>
+        /// Returns a total number of dal_publish_commitment operations.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("dal_publish_commitment/count")]
+        public async Task<ActionResult<int>> GetDalPublishCommitmentOpsCount([FromQuery] ManagerOperationFilter filter)
+        {
+            if (filter.Empty)
+                return Ok(State.Current.DalPublishCommitmentOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (!ResponseCache.TryGet(query, out var res))
+                res = ResponseCache.Set(query, await Operations.GetDalPublishCommitmentOpsCount(filter));
+
+            return this.Bytes(res);
+        }
+        #endregion
     }
 }

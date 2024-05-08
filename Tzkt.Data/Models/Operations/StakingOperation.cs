@@ -5,28 +5,19 @@ namespace Tzkt.Data.Models
 {
     public class StakingOperation : ManagerOperation
     {
-        public StakingOperationKind Kind { get; set; }
+        public StakingAction Action { get; set; }
+        public long RequestedAmount { get; set; }
 
-        public int? BakerId { get; set; }
         public long? Amount { get; set; }
-        public long? Pseudotokens { get; set; }
-
-        public long? PrevStakedBalance { get; set; }
-
-        public int? FirstCycleUnstaked { get; set; }
-        public int? LastCycleUnstaked { get; set; }
-
-        public long? LimitOfStakingOverBaking { get; set; }
-        public long? EdgeOfBakingOverStaking { get; set; }
-        public int? ActivationCycle { get; set; }
+        public int? BakerId { get; set; }
+        public int? StakingUpdatesCount { get; set; }
     }
 
-    public enum StakingOperationKind
+    public enum StakingAction
     {
         Stake,
         Unstake,
-        FinalizeUnstake,
-        SetDelegateParameter
+        Finalize
     }
 
     public static class StakingOperationModel

@@ -1,17 +1,20 @@
 ﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class VotingRepository : DbConnection
+    public class VotingRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly TimeCache Time;
         readonly AccountsCache Accounts;
 
-        public VotingRepository(StateCache state, TimeCache time, AccountsCache accounts, IConfiguration config) : base(config)
+        public VotingRepository(NpgsqlDataSource dataSource, StateCache state, TimeCache time, AccountsCache accounts)
         {
+            DataSource = dataSource;
             State = state;
             Time = time;
             Accounts = accounts;
@@ -24,7 +27,7 @@ namespace Tzkt.Api.Repositories
                 SELECT   COUNT(*)
                 FROM     ""Proposals""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql);
         }
 
@@ -37,7 +40,7 @@ namespace Tzkt.Api.Repositories
                 ORDER BY    ""Epoch"" DESC
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { hash });
             if (row == null) return null;
 
@@ -72,7 +75,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Proposal
@@ -128,7 +131,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -217,7 +220,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -273,7 +276,7 @@ namespace Tzkt.Api.Repositories
                 WHERE   ""Index"" = {index}
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
@@ -312,7 +315,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new VotingPeriod
@@ -385,7 +388,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -533,7 +536,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("LastLevel", lastLevel)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -651,7 +654,7 @@ namespace Tzkt.Api.Repositories
                 AND     ""BakerId"" = {baker.Id}
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
@@ -675,7 +678,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x == "votingPower" ? ("VotingPower", "VotingPower") : ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new VoterSnapshot
@@ -696,7 +699,7 @@ namespace Tzkt.Api.Repositories
                 WHERE    ""Epoch"" = {index}
                 ORDER BY ""Index""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql);
             if (!rows.Any()) return null;
 
@@ -762,7 +765,7 @@ namespace Tzkt.Api.Repositories
                 ON true
                 ORDER BY ""Id""{(sort.Desc != null ? " DESC" : "")}";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(query, sql.Params);
             if (!rows.Any()) return Enumerable.Empty<VotingEpoch>();
 
@@ -830,7 +833,7 @@ namespace Tzkt.Api.Repositories
                 ORDER BY p.""Index"" DESC
                 LIMIT 5";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql);
             if (!rows.Any()) return null;
 

@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Numerics;
 
 namespace Tzkt.Api.Models
 {
@@ -76,7 +75,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Frozen deposits limit (mutez), or `null` if no limit.
         /// </summary>
-        public string Limit { get; set; }
+        public BigInteger? Limit { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors

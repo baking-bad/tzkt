@@ -49,9 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 LostStaked = lostDepositsValue + lostRewardsValue + lostFeesValue,
                 LostUnstaked = 0,
                 LostExternalStaked = 0,
-                LostExternalUnstaked = 0,
-
-                RoundingLoss = 0
+                LostExternalUnstaked = 0
             };
             #endregion
 

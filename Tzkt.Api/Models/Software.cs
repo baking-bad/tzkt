@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using NJsonSchema.Annotations;
+﻿using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {

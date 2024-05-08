@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class TokenBalanceShort
     {
@@ -12,12 +14,12 @@
         /// Token info.  
         /// Click on the field to expand more details.
         /// </summary>
-        public TokenInfo Token { get; set; }
+        public TokenInfoShort Token { get; set; }
 
         /// <summary>
         /// Balance (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
-        public string Balance { get; set; }
+        public BigInteger Balance { get; set; }
     }
 }

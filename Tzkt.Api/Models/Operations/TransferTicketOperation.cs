@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Numerics;
 
 namespace Tzkt.Api.Models
 {
@@ -88,7 +87,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount sent
         /// </summary>
-        public string Amount { get; set; }
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// Entrypoint

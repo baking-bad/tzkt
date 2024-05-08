@@ -59,9 +59,19 @@
         public long BakerFee { get; set; }
 
         /// <summary>
-        /// Staking operation kind (`stake`, `unstake`, `finalize`, `set_parameters`)
+        /// Staking action (`stake`, `unstake`, `finalize`)
         /// </summary>
-        public string Kind { get; set; }
+        public string Action { get; set; }
+
+        /// <summary>
+        /// Amount passed as the staking operation parameter (micro tez)
+        /// </summary>
+        public long RequestedAmount { get; set; }
+
+        /// <summary>
+        /// Actually processed amount (micro tez)
+        /// </summary>
+        public long? Amount { get; set; }
 
         /// <summary>
         /// Information about the baker
@@ -69,29 +79,9 @@
         public Alias Baker { get; set; }
 
         /// <summary>
-        /// Amount (micro tez)
+        /// Number of staking updates happened internally
         /// </summary>
-        public long? Amount { get; set; }
-
-        /// <summary>
-        /// Pseudotokens
-        /// </summary>
-        public long? Pseudotokens { get; set; }
-
-        /// <summary>
-        /// This parameter determines the maximum portion (millionth) of external stake by stakers over the baker's own staked funds.
-        /// </summary>
-        public long? LimitOfStakingOverBaking { get; set; }
-
-        /// <summary>
-        /// This parameter determines the fraction (billionth) of the rewards that accrue to the baker's liquid spendable balance — the remainder accrues to frozen stakes.
-        /// </summary>
-        public long? EdgeOfBakingOverStaking { get; set; }
-
-        /// <summary>
-        /// Cycle from which the specified staking parameters are activated
-        /// </summary>
-        public int? ActivationCycle { get; set; }
+        public long? StakingUpdatesCount { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -111,6 +101,33 @@
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public string Kind => Action;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? Pseudotokens => null;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? LimitOfStakingOverBaking => null;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? EdgeOfBakingOverStaking => null;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int? ActivationCycle => null;
         #endregion
     }
 }

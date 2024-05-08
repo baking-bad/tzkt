@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance + delegat.LostBalance;
+            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance;
         }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
@@ -20,13 +20,13 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var stakingBalance = await Rpc.GetCurrentStakingBalance(level, delegat.Address);
 
-            if (stakingBalance.RequiredInt64("own_frozen") != delegat.StakedBalance)
+            if (stakingBalance.RequiredInt64("own_frozen") != delegat.OwnStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong own_frozen balance for {delegat.Address}");
 
             if (stakingBalance.RequiredInt64("staked_frozen") != delegat.ExternalStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong staked_frozen balance for {delegat.Address}");
 
-            if (stakingBalance.RequiredInt64("delegated") != delegat.StakingBalance - delegat.TotalStakedBalance)
+            if (stakingBalance.RequiredInt64("delegated") != delegat.StakingBalance - delegat.OwnStakedBalance - delegat.ExternalStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong delegated balance for {delegat.Address}");
 
             if (level > proto.FirstLevel)
@@ -66,10 +66,6 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 if (bakerCycle != null)
                 {
-                    // Endorsing rewards are wrong for the first preserved+1 cycles after AI activation 
-                    if (state.Cycle >= state.AIActivationCycle && state.Cycle <= state.AIActivationCycle + 6)
-                        continue;
-
                     if ((long)bakerCycle.ExpectedEndorsements != remote.RequiredInt64("expected_cycle_activity"))
                         throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
 
@@ -102,8 +98,6 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected override async Task TestCycle(AppState state, Cycle cycle)
         {
-            var proto = await Cache.Protocols.GetAsync(state.Protocol);
-
             var level = Math.Min(state.Level, cycle.FirstLevel);
             var remote = await Rpc.GetCycleAsync(level, cycle.Index);
 
@@ -113,23 +107,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (remote.RequiredArray("selected_stake_distribution").Count() != cycle.TotalBakers)
                 throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.TotalBakers}");
 
-            if (state.AIActivated && cycle.Index > state.AIActivationCycle + proto.PreservedCycles)
-            {
-                var totalPower = remote.RequiredArray("selected_stake_distribution").EnumerateArray().Sum(x =>
-                {
-                    var frozen = x.Required("active_stake").RequiredInt64("frozen");
-                    var delegated = x.Required("active_stake").RequiredInt64("delegated");
-                    return frozen + delegated / 2;
-                });
-
-                if (totalPower != cycle.TotalBakingPower)
-                    throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.TotalBakingPower}");
-            }
-            else
-            {
-                if (remote.Required("total_active_stake").RequiredInt64("frozen") + remote.Required("total_active_stake").RequiredInt64("delegated") != cycle.TotalBakingPower)
-                    throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.TotalBakingPower}");
-            }
+            if (remote.Required("total_active_stake").RequiredInt64("frozen") + remote.Required("total_active_stake").RequiredInt64("delegated") != cycle.TotalBakingPower)
+                throw new Exception($"Invalid cycle {cycle.Index} selected stake {cycle.TotalBakingPower}");
         }
     }
 }

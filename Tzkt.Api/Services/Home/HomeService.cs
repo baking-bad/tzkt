@@ -1,13 +1,14 @@
 using System.Data;
 using Dapper;
 using Dynamic.Json;
+using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Services
 {
-    public class HomeService : DbConnection
+    public class HomeService
     {
         #region static
         public static object[][] AccountsTab { get; private set; } = Array.Empty<object[]>();
@@ -32,7 +33,8 @@ namespace Tzkt.Api.Services
         public static readonly string[] BlockFields = new[]
         {
             "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees", "hash",
-            "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared" // TODO: remove deprecated reward and bonus
+            "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
+            "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge"// TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
         };
         #endregion
 
@@ -46,6 +48,8 @@ namespace Tzkt.Api.Services
         static MarketData MarketData;
         static List<Quote> MarketChart;
         #endregion
+
+        readonly NpgsqlDataSource DataSource;
 
         readonly AccountRepository AccountsRepo;
         readonly BakingRightsRepository RightsRepo;
@@ -62,10 +66,11 @@ namespace Tzkt.Api.Services
         readonly ILogger Logger;
         static int LastUpdate;
 
-        public HomeService(BakingRightsRepository rights, TimeCache times, BlockRepository blocks,
-            VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
-            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger) : base(config)
+        public HomeService(NpgsqlDataSource dataSource, BakingRightsRepository rights, TimeCache times,
+            BlockRepository blocks, VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
+            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger)
         {
+            DataSource = dataSource;
             RightsRepo = rights;
             Times = times;
             BlocksRepo = blocks;
@@ -155,7 +160,7 @@ namespace Tzkt.Api.Services
                 await Sema.WaitAsync();
                 Logger.LogDebug("Update home");
 
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 
                 BlocksTab = await GetBlocks(); // 60
                 CycleData = GetCycleData(); // 1
@@ -208,7 +213,8 @@ namespace Tzkt.Api.Services
                 new SortParameter { Desc = "level" },
                 null, 5, new string[] {
                     "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash",
-                    "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared" // TODO: remove deprecated reward and bonus
+                    "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
+                    "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge" // TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
                 });
 
             var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 
@@ -219,7 +225,7 @@ namespace Tzkt.Api.Services
 
         async Task<object[][]> GetAccounts()
         {
-            return await AccountsRepo.Get(null, null, null, null, null, null, null, null,
+            return await AccountsRepo.Get(null, null, null, null, null, null, null, null, null,
                 new SortParameter { Desc = "balance" }, null, 10, AccountFields);
         }
 
@@ -234,7 +240,7 @@ namespace Tzkt.Api.Services
             return (await AccountsRepo.Get(
                     null, null,
                     new AccountTypeParameter { Eq = 2 }, new ContractKindParameter { Eq = 2 }, 
-                    null, null, null, null,
+                    null, null, null, null, null,
                     new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))
                 .OrderBy(x => x[0] == null)
                 .ThenByDescending(x => (int)x[6])
@@ -529,7 +535,7 @@ namespace Tzkt.Api.Services
 
             return new AccountsData
             {
-                TotalAccounts = State.Current.AccountsCount,
+                TotalAccounts = State.Current.AccountCounter,
                 FundedAccounts = await AccountsRepo.GetCount(null, null, new Int64Parameter { Ge = 1_000_000 }, null, null),
                 ActiveAccounts = await db.ExecuteScalarAsync<int>(
                     $@"SELECT COUNT(*)::integer FROM ""Accounts"" WHERE ""LastLevel"" >= {currPeriod}"),

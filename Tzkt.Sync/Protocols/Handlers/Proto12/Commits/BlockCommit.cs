@@ -58,15 +58,15 @@ namespace Tzkt.Sync.Protocols.Proto12
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
                 Events = events,
-                RewardLiquid = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
-                BonusLiquid = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),
+                RewardDelegated = rewardUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -rewardUpdate.RequiredInt64("change"),
+                BonusDelegated = bonusUpdate.ValueKind == JsonValueKind.Undefined ? 0 : -bonusUpdate.RequiredInt64("change"),
                 LBToggle = GetLBToggleVote(rawBlock),
                 LBToggleEma = GetLBToggleEma(rawBlock)
             };
 
             Db.TryAttach(proposer);
-            proposer.Balance += Block.RewardLiquid;
-            proposer.StakingBalance += Block.RewardLiquid;
+            proposer.Balance += Block.RewardDelegated;
+            proposer.StakingBalance += Block.RewardDelegated;
             proposer.BlocksCount++;
 
             #region set baker active
@@ -82,8 +82,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.TryAttach(producer);
-            producer.Balance += Block.BonusLiquid;
-            producer.StakingBalance += Block.BonusLiquid;
+            producer.Balance += Block.BonusDelegated;
+            producer.StakingBalance += Block.BonusDelegated;
             if (producer.Id != proposer.Id)
             {
                 producer.BlocksCount++;
@@ -105,7 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 protocol.LastLevel = Block.Level;
 
-            Cache.Statistics.Current.TotalCreated += Block.RewardLiquid + Block.BonusLiquid;
+            Cache.Statistics.Current.TotalCreated += Block.RewardDelegated + Block.BonusDelegated;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
@@ -119,8 +119,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             
             var proposer = Block.Proposer;
             Db.TryAttach(proposer);
-            proposer.Balance -= Block.RewardLiquid;
-            proposer.StakingBalance -= Block.RewardLiquid;
+            proposer.Balance -= Block.RewardDelegated;
+            proposer.StakingBalance -= Block.RewardDelegated;
             proposer.BlocksCount--;
 
             #region reset baker activity
@@ -135,8 +135,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var producer = Cache.Accounts.GetDelegate(block.ProducerId);
             Db.TryAttach(producer);
-            producer.Balance -= Block.BonusLiquid;
-            producer.StakingBalance -= Block.BonusLiquid;
+            producer.Balance -= Block.BonusDelegated;
+            producer.StakingBalance -= Block.BonusDelegated;
             if (producer.Id != proposer.Id)
             {
                 producer.BlocksCount--;

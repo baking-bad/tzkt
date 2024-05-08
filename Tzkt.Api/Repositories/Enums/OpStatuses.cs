@@ -1,5 +1,4 @@
-﻿using System;
-using Tzkt.Data.Models.Base;
+﻿using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Api
 {

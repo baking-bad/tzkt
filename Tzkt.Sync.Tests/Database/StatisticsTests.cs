@@ -21,26 +21,37 @@ namespace Tzkt.Sync.Tests.Database
             if (stats.TotalActivated != totalActivated)
                 throw new Exception("Invalid Statistics.TotalActivated");
 
-            var totalCreated = await db.Blocks.SumAsync(x => x.RewardLiquid + x.RewardStakedOwn + x.RewardStakedShared + x.BonusLiquid + x.BonusStakedOwn + x.BonusStakedShared);
+            var totalCreated = await db.Blocks.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared + x.BonusDelegated + x.BonusStakedOwn + x.BonusStakedEdge + x.BonusStakedShared);
             totalCreated += await db.EndorsementOps.SumAsync(x => x.Reward);
-            totalCreated += await db.EndorsingRewardOps.SumAsync(x => x.RewardLiquid + x.RewardStakedOwn + x.RewardStakedShared);
-            totalCreated += await db.NonceRevelationOps.SumAsync(x => x.RewardLiquid + x.RewardStakedOwn + x.RewardStakedShared);
-            totalCreated += await db.VdfRevelationOps.SumAsync(x => x.RewardLiquid + x.RewardStakedOwn + x.RewardStakedShared);
+            totalCreated += await db.EndorsingRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
+            totalCreated += await db.NonceRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
+            totalCreated += await db.VdfRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.MigrationOps.Where(x => x.Kind != MigrationKind.Bootstrap).SumAsync(x => x.BalanceChange);
 
             if (stats.TotalCreated != totalCreated)
                 throw new Exception("Invalid Statistics.TotalCreated");
 
-            var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.LostStaked + x.LostUnstaked + x.LostExternalStaked + x.LostExternalUnstaked - x.Reward);
+            var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.RevelationPenaltyOps.SumAsync(x => x.Loss);
+            totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));
+            totalBurned += await db.DalPublishCommitmentOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.DelegationOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.IncreasePaidStorageOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.OriginationOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.RegisterConstantOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.RevealOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SetDelegateParametersOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.SetDepositsLimitOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupAddMessagesOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupCementOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupExecuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupOriginateOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupPublishOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupRecoverBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.SmartRollupRefuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
+            totalBurned += await db.StakingOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.TransactionOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.TransferTicketOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.TxRollupCommitOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
@@ -52,21 +63,11 @@ namespace Tzkt.Sync.Tests.Database
             totalBurned += await db.TxRollupReturnBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.TxRollupSubmitBatchOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.UpdateConsensusKeyOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupAddMessagesOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupCementOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupExecuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupOriginateOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupPublishOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupRecoverBondOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.SmartRollupRefuteOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
-            totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));
 
             if (stats.TotalBurned != totalBurned)
                 throw new Exception("Invalid Statistics.TotalBurned");
 
-            var totalLost = await db.DoubleBakingOps.SumAsync(x => x.RoundingLoss);
-            totalLost += await db.DoubleEndorsingOps.SumAsync(x => x.RoundingLoss);
-            totalLost += await db.DoublePreendorsingOps.SumAsync(x => x.RoundingLoss);
+            var totalLost = await db.UnstakeRequests.Where(x => x.RoundingError != null).SumAsync(x => x.RoundingError);
 
             if (stats.TotalLost != totalLost)
                 throw new Exception("Invalid Statistics.TotalLost");
@@ -76,7 +77,7 @@ namespace Tzkt.Sync.Tests.Database
             if (stats.TotalBanished != totalBanished)
                 throw new Exception("Invalid Statistics.TotalBanished");
 
-            var totalFrozen = await db.Delegates.SumAsync(x => x.StakedBalance + x.ExternalStakedBalance);
+            var totalFrozen = await db.Delegates.SumAsync(x => x.OwnStakedBalance + x.ExternalStakedBalance);
 
             if (stats.TotalFrozen != totalFrozen)
                 throw new Exception("Invalid Statistics.TotalFrozen");
@@ -93,11 +94,10 @@ namespace Tzkt.Sync.Tests.Database
             if (stats.TotalSmartRollupBonds != totalSmartRollupBonds || stats.TotalSmartRollupBonds != totalSmartRollupBonds2)
                 throw new Exception("Invalid Statistics.TotalSmartRollupBonds");
 
-            var totalBalances = await db.Accounts.SumAsync(x => x.Balance);
-            var pendingRewards = await db.Delegates.SumAsync(x => x.ExternalStakedBalance) - await db.Users.Where(x => x.Type == AccountType.User).SumAsync(x => x.StakedBalance);
+            var totalBalances = await db.Accounts.SumAsync(x => x.Balance) + await db.Delegates.SumAsync(x => x.ExternalStakedBalance);
             var totalBalancesStats = stats.TotalBootstrapped + stats.TotalActivated + stats.TotalCreated - stats.TotalBurned;
 
-            if (totalBalancesStats != totalBalances + pendingRewards)
+            if (totalBalancesStats != totalBalances)
                 throw new Exception("Invalid Statistics.TotalBalances");
         }
     }

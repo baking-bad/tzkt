@@ -28,11 +28,6 @@
         public DateTime EndTime { get; set; }
 
         /// <summary>
-        /// Index of the snapshot
-        /// </summary>
-        public int SnapshotIndex { get; set; }
-
-        /// <summary>
         /// Height of the block where the snapshot was taken
         /// </summary>
         public int SnapshotLevel { get; set; }
@@ -77,11 +72,6 @@
         /// </summary>
         public long VdfRevelationReward { get; set; }
 
-        /// <summary>
-        /// Liquidity baking subsidy in this cycle (micro tez)
-        /// </summary>
-        public long LBSubsidy { get; set; }
-
         #region injecting
         /// <summary>
         /// Injected historical quote at the end of the cycle
@@ -90,6 +80,16 @@
         #endregion
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int SnapshotIndex => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long LBSubsidy => 1249999;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

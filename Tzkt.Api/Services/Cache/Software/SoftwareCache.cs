@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Services.Cache
 {
-    public class SoftwareCache : DbConnection
+    public class SoftwareCache
     {
         #region static
         const string SelectQuery = @"
@@ -26,7 +22,7 @@ namespace Tzkt.Api.Services.Cache
                 {
                     if (!Software.TryGetValue(id, out var software))
                     {
-                        using var db = GetConnection();
+                        using var db = DataSource.OpenConnection();
                         var row = db.QueryFirst($@"{SelectQuery} WHERE ""Id"" = {id}");
                         software = Parse(row);
                         Software.Add(id, software);
@@ -38,17 +34,19 @@ namespace Tzkt.Api.Services.Cache
         }
 
         readonly Dictionary<int, SoftwareAlias> Software;
+        readonly NpgsqlDataSource DataSource;
         readonly TimeCache Time;
         readonly ILogger Logger;
 
-        public SoftwareCache(TimeCache time, IConfiguration config, ILogger<SoftwareCache> logger) : base(config)
+        public SoftwareCache(NpgsqlDataSource dataSource, TimeCache time, ILogger<SoftwareCache> logger)
         {
+            DataSource = dataSource;
             Logger = logger;
             Time = time;
 
             Logger.LogDebug("Initializing software cache...");
 
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             var rows = db.Query(SelectQuery);
 
             Software = rows.ToDictionary(row => (int)row.Id, row => (SoftwareAlias)Parse(row));
@@ -60,7 +58,7 @@ namespace Tzkt.Api.Services.Cache
         {
             lock (this)
             {
-                using var db = GetConnection();
+                using var db = DataSource.OpenConnection();
                 var row = db.QueryFirstOrDefault($@"{SelectQuery} WHERE ""ShortHash"" = @shortHash::character(8)", new { shortHash });
                 if (row != null) Software[(int)row.Id] = Parse(row);
             }

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Tzkt.Api
+﻿namespace Tzkt.Api
 {
     static class ContractTags
     {

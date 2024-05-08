@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Api.Services
+﻿namespace Tzkt.Api.Services
 {
     class HealthChecksConfig
     {

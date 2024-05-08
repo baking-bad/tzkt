@@ -1,16 +1,15 @@
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Dapper;
+using Npgsql;
 using Tzkt.Api.Services.Auth;
 using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Repositories
 {
-    public class ExtrasRepository : DbConnection
+    public class ExtrasRepository
     {
-        public ExtrasRepository(IConfiguration config) : base(config) {}
+        readonly NpgsqlDataSource DataSource;
+
+        public ExtrasRepository(NpgsqlDataSource dataSource) => DataSource = dataSource;
 
         #region get
         public Task<RawJson> GetStateExtras(string section = null)
@@ -40,7 +39,7 @@ namespace Tzkt.Api.Repositories
                 ? " -> @section::text"
                 : string.Empty;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT ""Extras""{path} as extras
                 FROM ""{table}""
@@ -120,7 +119,7 @@ namespace Tzkt.Api.Repositories
             sql.Filter("Extras", extras);
             sql.Take(offset, limit);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new ExtrasUpdate<T>
@@ -168,7 +167,7 @@ namespace Tzkt.Api.Repositories
         async Task<List<ExtrasUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<ExtrasUpdate<T>> extras, string section)
         {
             var res = new List<ExtrasUpdate<T>>(extras.Count);
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             foreach (var update in extras)
             {
                 var value = (section == null, update.Extras == null) switch

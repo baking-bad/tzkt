@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Tzkt.Data.Models
 {
@@ -28,17 +27,6 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<TokenTransfer>()
                 .HasKey(x => x.Id);
-            #endregion
-
-            #region props
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<TokenTransfer>()
-                .Property(x => x.Amount)
-                .HasConversion(converter);
             #endregion
 
             #region indexes

@@ -87,7 +87,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     if (sender.Type == AccountType.User)
                     {
-                        Unstake(sender, prevDelegate, delegation);
+                        if (result.TryGetProperty("balance_updates", out var updates))
+                            await Unstake(delegation, updates.EnumerateArray().ToList());
                         ResetDelegate(sender, prevDelegate);
                         UpgradeUser(delegation);
 
@@ -123,7 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
                 else
                 {
-                    Unstake(sender, prevDelegate, delegation);
+                    if (result.TryGetProperty("balance_updates", out var updates))
+                        await Unstake(delegation, updates.EnumerateArray().ToList());
                     ResetDelegate(sender, prevDelegate);
                     if (newDelegate != null)
                         SetDelegate(sender, newDelegate, block.Level);
@@ -311,7 +313,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (prevDelegate != null && prevDelegate.Id != sender.Id)
                         {
                             SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
-                            RevertUnstake(sender, prevDelegate, delegation);
+                            await RevertUnstake(delegation);
                         }
                     }
                     else
@@ -325,7 +327,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (prevDelegate != null && prevDelegate.Id != sender.Id)
                     {
                         SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
-                        RevertUnstake(sender, prevDelegate, delegation);
+                        await RevertUnstake(delegation);
                     }
                 }
             }
@@ -443,14 +445,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FirstLevel = user.FirstLevel,
                 LastLevel = user.LastLevel,
                 Balance = user.Balance,
-                LostBalance = user.LostBalance,
                 Counter = user.Counter,
                 DeactivationLevel = GracePeriod.Init(delegation.Block),
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                Activated = user.Activated,
+                ActivationsCount = user.ActivationsCount,
                 DelegationsCount = user.DelegationsCount,
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
@@ -463,12 +464,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Revealed = user.Revealed,
                 Staked = true,
                 StakingBalance = user.Balance - user.UnstakedBalance,
-                StakedBalance = user.StakedBalance,
                 StakedPseudotokens = user.StakedPseudotokens,
                 UnstakedBalance = user.UnstakedBalance,
                 UnstakedBakerId = user.UnstakedBakerId,
                 StakingOpsCount = user.StakingOpsCount,
-                TotalStakedBalance = user.StakedBalance,
                 DelegatedBalance = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
@@ -500,6 +499,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupPublishCount = user.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
+                SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                 RefutationGamesCount = user.RefutationGamesCount,
                 ActiveRefutationGamesCount = user.ActiveRefutationGamesCount
             };
@@ -713,18 +714,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FirstLevel = delegat.FirstLevel,
                 LastLevel = delegat.LastLevel,
                 Balance = delegat.Balance,
-                LostBalance = delegat.LostBalance,
                 Counter = delegat.Counter,
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
-                StakedBalance = delegat.StakedBalance,
                 StakedPseudotokens = delegat.StakedPseudotokens,
                 UnstakedBalance = delegat.UnstakedBalance,
                 UnstakedBakerId = delegat.UnstakedBakerId,
                 StakingOpsCount = delegat.StakingOpsCount,
                 Id = delegat.Id,
-                Activated = delegat.Activated,
+                ActivationsCount = delegat.ActivationsCount,
                 DelegationsCount = delegat.DelegationsCount,
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
@@ -766,6 +765,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupPublishCount = delegat.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
+                DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
                 RefutationGamesCount = delegat.RefutationGamesCount,
                 ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount
             };
@@ -1040,9 +1041,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Staked = false;
         }
 
-        protected virtual void Unstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
+        protected virtual Task Unstake(DelegationOperation op, List<JsonElement> balanceUpdates) => Task.CompletedTask;
 
-        protected virtual void RevertUnstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
+        protected virtual Task RevertUnstake(DelegationOperation op) => Task.CompletedTask;
 
         async Task<OriginationOperation> GetOriginationAsync(Contract contract)
         {

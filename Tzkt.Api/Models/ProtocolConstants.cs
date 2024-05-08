@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Tzkt.Api.Models
+﻿namespace Tzkt.Api.Models
 {
     public class ProtocolConstants
     {
@@ -15,9 +13,14 @@ namespace Tzkt.Api.Models
         public int NoRewardCycles { get; set; }
 
         /// <summary>
-        /// A number of cycles in which baker's security deposit and rewards are frozen
+        /// Delay in cycles after which baking rights are assigned
         /// </summary>
-        public int PreservedCycles { get; set; }
+        public int ConsensusRightsDelay { get; set; }
+
+        /// <summary>
+        /// Delay in cycles after which the parameters from `set_delegate_parameters` operations take effect
+        /// </summary>
+        public int DelegateParametersActivationDelay { get; set; }
 
         /// <summary>
         /// A number of blocks the cycle contains
@@ -186,6 +189,11 @@ namespace Tzkt.Api.Models
         public string Dictator { get; set; }
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int PreservedCycles => ConsensusRightsDelay;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

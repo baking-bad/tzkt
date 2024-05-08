@@ -1,7 +1,4 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using Newtonsoft.Json.Converters;
-using System.Text.Json.Serialization;
-using Tzkt.Api.Models;
 
 namespace Tzkt.Api.Websocket
 {

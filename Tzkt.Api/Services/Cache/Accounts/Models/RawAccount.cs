@@ -14,8 +14,6 @@ namespace Tzkt.Api.Services.Cache
         public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
-        public long LostBalance { get; set; }
-
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
         public int SmartRollupsCount { get; set; }
@@ -63,6 +61,7 @@ namespace Tzkt.Api.Services.Cache
 
         public string Extras { get; set; }
 
+        #region helpers
         public string Alias { get; set; }
         public string Profile { get; set; }
         public Alias Info => new()
@@ -70,5 +69,6 @@ namespace Tzkt.Api.Services.Cache
             Name = Alias,
             Address = Address
         };
+        #endregion
     }
 }

@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 1_040_000;
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
-            protocol.PreservedCycles = parameters["preserved_cycles"]?.Value<int>() ?? 5;
+            protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
             protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
@@ -568,13 +568,17 @@ namespace Tzkt.Sync.Protocols.Proto10
             script.MigrationId = migration.Id;
             storage.MigrationId = migration.Id;
 
+            Db.TryAttach(block);
             block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
 
             var state = Cache.AppState.Get();
+            Db.TryAttach(state);
             state.MigrationOpsCount++;
 
-            Cache.Statistics.Current.TotalCreated += contract.Balance;
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+            stats.TotalCreated += contract.Balance;
 
             Db.MigrationOps.Add(migration);
             #endregion
@@ -709,6 +713,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     contract.Creator.ActiveTokensCount++;
                     contract.Creator.TokenBalancesCount++;
                     contract.Creator.TokenTransfersCount++;
+                    contract.Creator.LastLevel = tokenTransfer.Level;
 
                     block.Events |= BlockEvents.Tokens;
                     #endregion
@@ -724,11 +729,14 @@ namespace Tzkt.Sync.Protocols.Proto10
         async Task RemoveContract(string address)
         {
             var contract = await Cache.Accounts.GetAsync(address) as Contract;
+            Db.TryAttach(contract);
+
             var bigmaps = await Db.BigMaps.AsNoTracking()
                 .Where(x => x.ContractId == contract.Id)
                 .ToListAsync();
 
             var state = Cache.AppState.Get();
+            Db.TryAttach(state);
             state.MigrationOpsCount--;
 
             var creator = await Cache.Accounts.GetAsync(contract.CreatorId);
@@ -753,6 +761,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 state.TokensCount--;
 
                 contract.TokensCount--;
+
                 creator.ActiveTokensCount--;
                 creator.TokenBalancesCount--;
                 creator.TokenTransfersCount--;

@@ -8,12 +8,12 @@ namespace Tzkt.Sync.Protocols
             => Init(block.Level, block.Protocol);
 
         public static int Init(int level, Protocol proto)
-            => proto.GetCycleStart(proto.GetCycle(level) + proto.PreservedCycles * 2 + 2);
+            => proto.GetCycleStart(proto.GetCycle(level) + proto.ConsensusRightsDelay * 2 + 2);
 
         public static int Reset(Block block)
             => Reset(block.Level, block.Protocol);
 
         public static int Reset(int level, Protocol proto)
-            => proto.GetCycleStart(proto.GetCycle(level) + proto.PreservedCycles + 2);
+            => proto.GetCycleStart(proto.GetCycle(level) + proto.ConsensusRightsDelay + 2);
     }
 }

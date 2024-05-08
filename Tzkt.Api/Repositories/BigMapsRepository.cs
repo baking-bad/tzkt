@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
+﻿using System.Data;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Dapper;
+using Npgsql;
 using Netezos.Encoding;
 using Netezos.Contracts;
 using Tzkt.Api.Models;
@@ -13,14 +9,16 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class BigMapsRepository : DbConnection
+    public class BigMapsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly BigMapsCache BigMaps;
         readonly TimeCache Times;
 
-        public BigMapsRepository(AccountsCache accounts, BigMapsCache bigMaps, TimeCache times, IConfiguration config) : base(config)
+        public BigMapsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, BigMapsCache bigMaps, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             BigMaps = bigMaps;
             Times = times;
@@ -29,7 +27,7 @@ namespace Tzkt.Api.Repositories
         #region bigmaps
         public async Task<int> GetCount()
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""BigMaps""");
         }
 
@@ -41,7 +39,7 @@ namespace Tzkt.Api.Repositories
                 WHERE   ""Ptr"" = @ptr
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { ptr });
             if (row == null) return null;
 
@@ -64,7 +62,7 @@ namespace Tzkt.Api.Repositories
                 WHERE   ""Ptr"" = @ptr
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { ptr });
             if (row == null) return null;
 
@@ -80,7 +78,7 @@ namespace Tzkt.Api.Repositories
                 AND 	""Active"" = true
                 AND     ""StoragePath"" LIKE @path";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { id = contractId, path = $"%{path.Replace("_", "\\_")}" });
             if (!rows.Any()) return null;
 
@@ -121,7 +119,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => (BigMap)ReadBigMap(row, micheline));
@@ -179,7 +177,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -297,7 +295,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -464,7 +462,7 @@ namespace Tzkt.Api.Repositories
                     _ => DeepSort(x)
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -568,7 +566,7 @@ namespace Tzkt.Api.Repositories
                 AND     ""JsonKey"" = @key::jsonb
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { ptr, key });
             if (row == null) return null;
 
@@ -587,7 +585,7 @@ namespace Tzkt.Api.Repositories
                 AND     ""KeyHash"" = @hash::character(54)
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { ptr, hash });
             if (row == null) return null;
 
@@ -619,7 +617,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => (BigMapKey)ReadBigMapKey(row, micheline));
@@ -673,7 +671,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -763,7 +761,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -835,7 +833,7 @@ namespace Tzkt.Api.Repositories
                 ORDER BY ""Level"" DESC, ""Id"" DESC
                 LIMIT    1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
@@ -899,7 +897,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("JsonValue", value)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => (BigMapKeyHistorical)ReadBigMapKeyShort(row, micheline));
@@ -954,7 +952,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("JsonValue", value)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -1037,7 +1035,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("JsonValue", value)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -1081,7 +1079,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             MichelineFormat micheline)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var keyRow = await db.QueryFirstOrDefaultAsync(@"
                 SELECT  ""Id""
                 FROM    ""BigMapKeys""
@@ -1108,7 +1106,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             MichelineFormat micheline)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var keyRow = await db.QueryFirstOrDefaultAsync(@"
                 SELECT  ""Id""
                 FROM    ""BigMapKeys""
@@ -1153,7 +1151,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Level", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1182,7 +1180,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var updateRows = await db.QueryAsync(sql.Query, sql.Params);
             if (!updateRows.Any())
                 return Enumerable.Empty<BigMapUpdate>();
@@ -1275,7 +1273,7 @@ namespace Tzkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "uu");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var updateRows = await db.QueryAsync(sql.Query, sql.Params);
             if (!updateRows.Any())
                 return Enumerable.Empty<BigMapUpdate>();
