@@ -14,7 +14,8 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "edo_008";
+        public override string VersionName => "edo_008";
+        public override int VersionNumber => 8;
 
         public Proto8Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto8Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

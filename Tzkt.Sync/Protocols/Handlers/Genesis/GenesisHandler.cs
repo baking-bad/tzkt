@@ -1,11 +1,6 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
 using App.Metrics;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
@@ -18,7 +13,8 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "genesis";
+        public override string VersionName => "genesis";
+        public override int VersionNumber => -1;
 
         public GenesisHandler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<GenesisHandler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
@@ -37,6 +33,7 @@ namespace Tzkt.Sync.Protocols
             {
                 Hash = rawBlock.RequiredString("protocol"),
                 Code = -1,
+                Version = VersionNumber,
                 FirstLevel = 0,
                 LastLevel = 0,
                 FirstCycle = 0,

@@ -10,6 +10,7 @@ namespace Tzkt.Data.Models
         public int Id { get; set; }
         public int Code { get; set; }
         public string Hash { get; set; }
+        public int Version { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
         public int FirstCycle { get; set; }

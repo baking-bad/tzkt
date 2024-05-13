@@ -2646,6 +2646,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("TimeBetweenBlocks")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Version")
+                        .HasColumnType("integer");
+
                     b.HasKey("Id");
 
                     b.ToTable("Protocols");

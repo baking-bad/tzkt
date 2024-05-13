@@ -459,6 +459,7 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Code = table.Column<int>(type: "integer", nullable: false),
                     Hash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    Version = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     FirstCycle = table.Column<int>(type: "integer", nullable: false),

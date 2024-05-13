@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto17
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
-            writer.Write(Proto.Version, NpgsqlTypes.NpgsqlDbType.Text);
+            writer.Write(Proto.VersionName, NpgsqlTypes.NpgsqlDbType.Text);
         }
     }
 }

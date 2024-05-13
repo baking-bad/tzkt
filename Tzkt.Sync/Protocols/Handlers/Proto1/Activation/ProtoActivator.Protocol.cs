@@ -13,6 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var protocol = new Protocol
             {
                 Code = 1,
+                Version = Proto.VersionNumber,
                 Hash = rawBlock.Required("metadata").RequiredString("next_protocol"),
                 FirstLevel = 2,
                 LastLevel = -1,
@@ -74,7 +75,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var protocol = new Protocol
             {
-                Code = await Db.Protocols.CountAsync() - 1,
+                Code = prev.Code + 1,
+                Version = Proto.VersionNumber,
                 Hash = state.NextProtocol,
                 FirstLevel = state.Level + 1,
                 LastLevel = -1,

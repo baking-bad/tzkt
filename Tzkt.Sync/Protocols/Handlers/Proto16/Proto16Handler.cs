@@ -14,7 +14,8 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "mumbai_016";
+        public override string VersionName => "mumbai_016";
+        public override int VersionNumber => 16;
 
         public Proto16Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto16Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
