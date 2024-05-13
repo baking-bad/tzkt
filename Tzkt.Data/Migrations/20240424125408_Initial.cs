@@ -996,6 +996,7 @@ namespace Tzkt.Data.Migrations
                     ManagerId = table.Column<int>(type: "integer", nullable: true),
                     WeirdDelegateId = table.Column<int>(type: "integer", nullable: true),
                     PvmKind = table.Column<int>(type: "integer", nullable: true),
+                    ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: true),
                     GenesisCommitment = table.Column<string>(type: "text", nullable: true),
                     LastCommitment = table.Column<string>(type: "text", nullable: true),
                     InboxLevel = table.Column<int>(type: "integer", nullable: true),

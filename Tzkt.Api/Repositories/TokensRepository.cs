@@ -499,7 +499,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "balanceValue":
                         foreach (var row in rows)
-                            result[j++][i] = row.BalanceValue == 0M ? null : row.BalanceValue;
+                            result[j++][i] = row.BalanceValue == BigInteger.Zero ? null : row.BalanceValue;
                         break;
                     case "firstLevel":
                         foreach (var row in rows)

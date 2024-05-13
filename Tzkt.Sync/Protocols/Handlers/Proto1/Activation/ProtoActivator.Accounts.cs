@@ -30,7 +30,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Select(x =>
                 (
                     x["address"].Value<string>(),
-                    x["pvm_kind"].Value<string>()
+                    x["pvm_kind"].Value<string>(),
+                    x["parameters_ty"].ToString()
                 ))
                 .ToList() ?? new(0);
 
@@ -218,7 +219,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap smart rollups
-            foreach (var (address, pvmKind) in bootstrapSmartRollups)
+            foreach (var (address, pvmKind, parameterType) in bootstrapSmartRollups)
             {
                 var genesisInfo = await Proto.Rpc.GetSmartRollupGenesisInfo(1, address);
 
@@ -239,6 +240,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         "wasm_2_0_0" => PvmKind.Wasm,
                         _ => throw new NotImplementedException()
                     },
+                    ParameterSchema = Micheline.FromJson(parameterType).ToBytes(),
                     GenesisCommitment = genesisInfo.RequiredString("commitment_hash"),
                     LastCommitment = genesisInfo.RequiredString("commitment_hash"),
                     InboxLevel = genesisInfo.RequiredInt32("level"),
