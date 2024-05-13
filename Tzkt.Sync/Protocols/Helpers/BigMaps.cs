@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text.Json;
 using Netezos.Contracts;
 using Netezos.Encoding;
@@ -13,35 +10,35 @@ namespace Tzkt.Sync.Protocols
     {
         public static BigMapTag GetTags(Contract contract, TreeView bigmap)
         {
+            var schema = bigmap.Schema as BigMapSchema;
             var tags = BigMapTag.None;
+
             if (IsPersistent(bigmap))
             {
                 tags |= BigMapTag.Persistent;
-                var schema = bigmap.Schema as BigMapSchema;
                 if (schema.Field == "metadata")
                 {
                     if (schema.Key is StringSchema &&
                         schema.Value is BytesSchema)
                         tags |= BigMapTag.Metadata;
                 }
-                else if (contract.Kind == ContractKind.Asset)
+                else if (contract.Kind == ContractKind.Asset && schema.Field == "token_metadata")
                 {
-                    if (schema.Field == "token_metadata")
-                    {
-                        if (schema.Key is NatSchema &&
-                            schema.Value is PairSchema pair &&
-                                pair.Left is NatSchema &&
-                                pair.Right is MapSchema map &&
-                                    map.Key is StringSchema &&
-                                    map.Value is BytesSchema)
-                            tags |= BigMapTag.TokenMetadata;
-                    }
-                    else if (schema.Field == "ledger")
-                    {
-                        tags |= GetLedgerType(schema);
-                    }
+                    if (schema.Key is NatSchema &&
+                        schema.Value is PairSchema pair &&
+                            pair.Left is NatSchema &&
+                            pair.Right is MapSchema map &&
+                                map.Key is StringSchema &&
+                                map.Value is BytesSchema)
+                        tags |= BigMapTag.TokenMetadata;
                 }
             }
+
+            if (contract.Kind == ContractKind.Asset && schema.Field == "ledger")
+            {
+                tags |= GetLedgerType(schema);
+            }
+
             return tags;
         }
 
