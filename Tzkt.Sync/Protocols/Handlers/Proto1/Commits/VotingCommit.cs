@@ -281,46 +281,36 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Status = PeriodStatus.Active
             };
 
-            if (proto.HasDictator)
-            {
-                #region snapshot
-                Db.VotingSnapshots.AddRange(Cache.Accounts.GetDelegates()
-                    .Where(x => BakerIsListed(x, block, block.Protocol))
-                    .Select(x => new VotingSnapshot
-                    {
-                        Level = block.Level,
-                        Period = period.Index,
-                        BakerId = x.Id,
-                        VotingPower = GetVotingPower(x, block, proto),
-                        Status = VoterStatus.None
-                    }));
-                #endregion
+            #region snapshot
+            var snapshots = Cache.Accounts.GetDelegates()
+                .Where(x => BakerIsListed(x, block, block.Protocol))
+                .Select(x => new VotingSnapshot
+                {
+                    Level = block.Level,
+                    Period = period.Index,
+                    BakerId = x.Id,
+                    VotingPower = GetVotingPower(x, block, proto),
+                    Status = VoterStatus.None
+                });
 
-                //#region temporary diagnostics
-                //var snapshots = Cache.Accounts.GetDelegates()
-                //    .Where(x => BakerIsListed(x, block, block.Protocol))
-                //    .Select(x => new VotingSnapshot
-                //    {
-                //        Level = block.Level,
-                //        Period = period.Index,
-                //        BakerId = x.Id,
-                //        VotingPower = GetVotingPower(x, block, proto),
-                //        Status = VoterStatus.None
-                //    });
+            period.TotalBakers = snapshots.Count();
+            period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
+            #endregion
 
-                //var listing = Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/votes/listings?depth=1").Result
-                //    .EnumerateArray()
-                //    .ToDictionary(x => x[0].RequiredString(), x => x[1].RequiredInt64());
+            //#region temporary diagnostics
+            //var listing = Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/context/raw/json/votes/listings?depth=1").Result
+            //    .EnumerateArray()
+            //    .ToDictionary(x => x[0].RequiredString(), x => x[1].RequiredInt64());
 
-                //if (snapshots.Count() != listing.Count)
-                //    throw new Exception("Wrong voting snapshots");
+            //if (snapshots.Count() != listing.Count)
+            //    throw new Exception("Wrong voting snapshots");
 
-                //foreach (var snapshot in snapshots)
-                //    if (!listing.TryGetValue(Cache.Accounts.GetDelegate(snapshot.BakerId).Address, out var votingPower) || snapshot.VotingPower != votingPower)
-                //        throw new Exception("Wrong voting snapshot");
-                //#endregion
-            }
+            //foreach (var snapshot in snapshots)
+            //    if (!listing.TryGetValue(Cache.Accounts.GetDelegate(snapshot.BakerId).Address, out var votingPower) || snapshot.VotingPower != votingPower)
+            //        throw new Exception("Wrong voting snapshot");
+            //#endregion
 
+            Db.VotingSnapshots.AddRange(snapshots);
             Db.VotingPeriods.Add(period);
             Cache.Periods.Add(period);
             return period;
