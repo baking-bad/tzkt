@@ -5692,6 +5692,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("OrphanCommitments")
                         .HasColumnType("integer");
 
+                    b.Property<byte[]>("ParameterSchema")
+                        .HasColumnType("bytea");
+
                     b.Property<int>("PendingCommitments")
                         .HasColumnType("integer");
 
