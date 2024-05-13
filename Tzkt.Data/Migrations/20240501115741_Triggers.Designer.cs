@@ -5533,10 +5533,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long?>("TopVotingPower")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("TotalBakers")
+                    b.Property<int>("TotalBakers")
                         .HasColumnType("integer");
 
-                    b.Property<long?>("TotalVotingPower")
+                    b.Property<long>("TotalVotingPower")
                         .HasColumnType("bigint");
 
                     b.Property<int?>("UpvotesQuorum")

@@ -133,8 +133,8 @@ namespace Tzkt.Sync.Protocols.Proto14
                 period.Kind = PeriodKind.Adoption;
                 period.Dictator = DictatorStatus.Submit;
 
-                period.TotalBakers = null;
-                period.TotalVotingPower = null;
+                period.TotalBakers = snapshots.Count;
+                period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
 
                 period.UpvotesQuorum = null;
                 period.ProposalsCount = null;
