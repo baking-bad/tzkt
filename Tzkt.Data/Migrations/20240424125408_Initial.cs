@@ -419,6 +419,7 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
+                    Index = table.Column<int>(type: "integer", nullable: false),
                     Type = table.Column<int>(type: "integer", nullable: false),
                     PredecessorLevel = table.Column<int>(type: "integer", nullable: true),
                     OperationId = table.Column<long>(type: "bigint", nullable: true),

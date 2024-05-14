@@ -28,8 +28,8 @@ namespace Tzkt.Sync.Protocols.Proto19
             protocol.BlocksPerCommitment = protocol.BlocksPerCommitment * 3 / 2;
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
             protocol.BlocksPerVoting = protocol.BlocksPerVoting * 3 / 2;
-            protocol.TimeBetweenBlocks = protocol.TimeBetweenBlocks * 3 / 2;
-            protocol.HardBlockGasLimit = prev.HardBlockGasLimit * 3 / 2;
+            protocol.TimeBetweenBlocks = protocol.TimeBetweenBlocks * 2 / 3;
+            protocol.HardBlockGasLimit = prev.HardBlockGasLimit * 2 / 3;
         }
 
         protected override async Task MigrateContext(AppState state)
