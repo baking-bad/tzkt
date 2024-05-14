@@ -6,6 +6,7 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public int Level { get; set; }
+        public int Index { get; set; }
         public InboxMessageType Type { get; set; }
         public int? PredecessorLevel { get; set; } // only for LevelInfo
         public long? OperationId { get; set; } // only for Internal and External

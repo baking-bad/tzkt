@@ -7,11 +7,12 @@ namespace Tzkt.Sync.Protocols.Proto17
     {
         public InboxCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override void WriteMigrationMessage(NpgsqlBinaryImporter writer, Block block)
+        protected override void WriteMigrationMessage(NpgsqlBinaryImporter writer, Block block, ref int index)
         {
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.Migration, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();

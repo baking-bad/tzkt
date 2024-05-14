@@ -2007,6 +2007,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<byte[]>("Payload")
                         .HasColumnType("bytea");
 
+                    b.Property<int>("Index")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("PredecessorLevel")
                         .HasColumnType("integer");
 
