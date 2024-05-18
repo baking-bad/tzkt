@@ -31,12 +31,11 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Commitment>()
-                .HasIndex(x => x.Id)
+                .HasIndex(x => x.Address)
                 .IsUnique();
 
             modelBuilder.Entity<Commitment>()
-                .HasIndex(x => x.Address)
-                .IsUnique();
+                .HasIndex(x => x.AccountId);
             #endregion
         }
     }

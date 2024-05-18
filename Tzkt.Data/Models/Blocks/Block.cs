@@ -120,9 +120,6 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<Block>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Block>()
-                .HasAlternateKey(x => x.Level);
             #endregion
 
             #region props

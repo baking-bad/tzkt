@@ -49,7 +49,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.BakerId);
 
             modelBuilder.Entity<VdfRevelationOperation>()
-                .HasIndex(x => x.Cycle);
+                .HasIndex(x => new { x.Cycle, x.Id });
             #endregion
 
             #region relations

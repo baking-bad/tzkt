@@ -49,7 +49,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<DelegationOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.SenderCodeHash)

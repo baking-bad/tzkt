@@ -18,6 +18,14 @@ namespace Tzkt.Data.Models
                 .HasKey(x => x.Id);
             #endregion
 
+            #region props
+            modelBuilder.Entity<SetDepositsLimitOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+            #endregion
+
             #region indexes
             modelBuilder.Entity<SetDepositsLimitOperation>()
                 .HasIndex(x => x.Level);
@@ -26,7 +34,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<SetDepositsLimitOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
             #endregion
 
             #region relations

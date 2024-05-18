@@ -44,30 +44,26 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<BigMapUpdate>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
+                .HasIndex(x => new { x.BigMapPtr, x.Id });
 
             modelBuilder.Entity<BigMapUpdate>()
-                .HasIndex(x => x.BigMapPtr);
-
-            modelBuilder.Entity<BigMapUpdate>()
-                .HasIndex(x => x.BigMapKeyId)
-                .HasFilter($@"""{nameof(BigMapUpdate.BigMapKeyId)}"" is not null");
+                .HasIndex(x => new { x.BigMapKeyId, x.Id })
+                .HasFilter($@"""{nameof(BigMapUpdate.BigMapKeyId)}"" IS NOT NULL");
 
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.OriginationId)
-                .HasFilter($@"""{nameof(BigMapUpdate.OriginationId)}"" is not null");
+                .HasFilter($@"""{nameof(BigMapUpdate.OriginationId)}"" IS NOT NULL");
 
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.TransactionId)
-                .HasFilter($@"""{nameof(BigMapUpdate.TransactionId)}"" is not null");
+                .HasFilter($@"""{nameof(BigMapUpdate.TransactionId)}"" IS NOT NULL");
 
             modelBuilder.Entity<BigMapUpdate>()
                 .HasIndex(x => x.MigrationId)
-                .HasFilter($@"""{nameof(BigMapUpdate.MigrationId)}"" is not null");
+                .HasFilter($@"""{nameof(BigMapUpdate.MigrationId)}"" IS NOT NULL");
             #endregion
         }
     }

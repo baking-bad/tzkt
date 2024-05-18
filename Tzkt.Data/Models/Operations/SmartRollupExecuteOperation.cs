@@ -43,7 +43,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.SmartRollupId);
 
             modelBuilder.Entity<SmartRollupExecuteOperation>()
-                .HasIndex(x => x.CommitmentId);
+                .HasIndex(x => new { x.CommitmentId, x.Id });
             #endregion
 
             #region relations
