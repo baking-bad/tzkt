@@ -35,10 +35,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level, "IX_SnapshotBalance_Level_Partial")
+                .HasIndex(x => x.Level, $"IX_{nameof(TzktContext.SnapshotBalances)}_{nameof(SnapshotBalance.Level)}_Partial")
                 .HasFilter(@"""AccountId"" = ""BakerId""");
 
             modelBuilder.Entity<SnapshotBalance>()

@@ -35,7 +35,10 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<SetDelegateParametersOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
+
+            modelBuilder.Entity<SetDelegateParametersOperation>()
+                .HasIndex(x => x.ActivationCycle);
             #endregion
 
             #region relations

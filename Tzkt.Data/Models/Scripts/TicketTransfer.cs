@@ -30,11 +30,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.Level);
+                .HasIndex(x => new { x.Level, x.Id });
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TicketerId);
@@ -50,15 +46,15 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransactionId)
-                .HasFilter($@"""{nameof(TicketTransfer.TransactionId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.TransactionId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransferTicketId)
-                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.SmartRollupExecuteId)
-                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" IS NOT NULL");
             #endregion
         }
     }

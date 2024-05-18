@@ -45,13 +45,6 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.TicketerId);
-
-            modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.FirstMinterId);
 
             modelBuilder.Entity<Ticket>()

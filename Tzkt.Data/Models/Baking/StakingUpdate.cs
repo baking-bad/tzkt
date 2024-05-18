@@ -45,7 +45,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<StakingUpdate>()
-                .HasIndex(x => x.Level);
+                .HasIndex(x => new { x.Level, x.Id });
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => new { x.BakerId, x.Cycle, x.Id });
@@ -55,27 +55,27 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.AutostakingOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.AutostakingOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.AutostakingOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.StakingOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.StakingOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.StakingOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.DelegationOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DelegationOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.DelegationOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.DoubleBakingOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DoubleBakingOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.DoubleBakingOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.DoubleEndorsingOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DoubleEndorsingOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.DoubleEndorsingOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
                 .HasIndex(x => x.DoublePreendorsingOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DoublePreendorsingOpId)}"" is not null");
+                .HasFilter($@"""{nameof(StakingUpdate.DoublePreendorsingOpId)}"" IS NOT NULL");
             #endregion
         }
     }

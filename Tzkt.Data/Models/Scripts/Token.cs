@@ -60,13 +60,6 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Token>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Token>()
-                .HasIndex(x => x.ContractId);
-
-            modelBuilder.Entity<Token>()
                 .HasIndex(x => new { x.ContractId, x.TokenId })
                 .IsUnique();
 
@@ -78,7 +71,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Token>()
                 .HasIndex(x => x.IndexedAt)
-                .HasFilter($@"""{nameof(Token.IndexedAt)}"" is not null");
+                .HasFilter($@"""{nameof(Token.IndexedAt)}"" IS NOT NULL");
 
             // shadow property
             modelBuilder.Entity<Token>()

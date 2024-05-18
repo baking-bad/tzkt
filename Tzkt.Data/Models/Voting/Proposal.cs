@@ -43,6 +43,16 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Proposal>()
                 .HasIndex(x => x.Hash);
+
+            modelBuilder.Entity<Proposal>()
+                .HasIndex(x => x.LastPeriod);
+
+            modelBuilder.Entity<Proposal>()
+                .HasIndex(x => x.FirstPeriod);
+
+            modelBuilder.Entity<Proposal>()
+                .HasIndex(x => x.Status, $"IX_{nameof(TzktContext.Proposals)}_{nameof(Proposal.Status)}_Partial")
+                .HasFilter($@"""{nameof(Proposal.Status)}"" = {(int)ProposalStatus.Active}");
             #endregion
         }
     }

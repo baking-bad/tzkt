@@ -55,9 +55,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.InboxLevel);
 
             modelBuilder.Entity<SmartRollupCommitment>()
-                .HasIndex(x => x.Hash);
-
-            modelBuilder.Entity<SmartRollupCommitment>()
                 .HasIndex(x => new { x.Hash, x.SmartRollupId });
             #endregion
         }

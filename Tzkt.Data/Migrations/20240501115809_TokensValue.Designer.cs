@@ -195,9 +195,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("FirstLevel");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("Metadata");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("Metadata"), "gin");
@@ -892,8 +889,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Cycle");
-
                     b.HasIndex("Level");
 
                     b.HasIndex("Cycle", "BakerId");
@@ -1002,12 +997,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasAlternateKey("Ptr");
-
                     b.HasIndex("ContractId");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
 
                     b.HasIndex("Ptr")
                         .IsUnique();
@@ -1040,7 +1030,8 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<string>("KeyHash")
                         .HasMaxLength(54)
-                        .HasColumnType("character varying(54)");
+                        .HasColumnType("character(54)")
+                        .IsFixedLength();
 
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
@@ -1056,11 +1047,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BigMapPtr");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("JsonKey");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonKey"), "gin");
@@ -1073,10 +1059,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("LastLevel");
 
-                    b.HasIndex("BigMapPtr", "Active")
-                        .HasFilter("\"Active\" = true");
-
                     b.HasIndex("BigMapPtr", "KeyHash");
+
+                    b.HasIndex(new[] { "BigMapPtr" }, "IX_BigMapKeys_BigMapPtr_Partial")
+                        .HasFilter("\"Active\" = true");
 
                     b.ToTable("BigMapKeys");
                 });
@@ -1118,24 +1104,21 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BigMapKeyId")
-                        .HasFilter("\"BigMapKeyId\" is not null");
-
-                    b.HasIndex("BigMapPtr");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("Level");
 
                     b.HasIndex("MigrationId")
-                        .HasFilter("\"MigrationId\" is not null");
+                        .HasFilter("\"MigrationId\" IS NOT NULL");
 
                     b.HasIndex("OriginationId")
-                        .HasFilter("\"OriginationId\" is not null");
+                        .HasFilter("\"OriginationId\" IS NOT NULL");
 
                     b.HasIndex("TransactionId")
-                        .HasFilter("\"TransactionId\" is not null");
+                        .HasFilter("\"TransactionId\" IS NOT NULL");
+
+                    b.HasIndex("BigMapKeyId", "Id")
+                        .HasFilter("\"BigMapKeyId\" IS NOT NULL");
+
+                    b.HasIndex("BigMapPtr", "Id");
 
                     b.ToTable("BigMapUpdates");
                 });
@@ -1291,10 +1274,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Address")
-                        .IsUnique();
+                    b.HasIndex("AccountId");
 
-                    b.HasIndex("Id")
+                    b.HasIndex("Address")
                         .IsUnique();
 
                     b.ToTable("Commitments");
@@ -1333,13 +1315,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ContractCodeHash");
-
-                    b.HasIndex("ContractId");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
 
                     b.HasIndex("JsonPayload");
 
@@ -1410,8 +1385,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
-
-                    b.HasAlternateKey("Index");
 
                     b.HasIndex("Index")
                         .IsUnique();
@@ -1581,7 +1554,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SenderCodeHash")
                         .HasFilter("\"SenderCodeHash\" IS NOT NULL");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId", "Id");
 
                     b.ToTable("DelegationOps");
                 });
@@ -2001,6 +1974,9 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int>("Index")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
@@ -2009,9 +1985,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<byte[]>("Payload")
                         .HasColumnType("bytea");
-
-                    b.Property<int>("Index")
-                        .HasColumnType("integer");
 
                     b.Property<int?>("PredecessorLevel")
                         .HasColumnType("integer");
@@ -2207,8 +2180,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
-
-                    b.HasAlternateKey("RevealedLevel");
 
                     b.HasIndex("BakerId");
 
@@ -2425,7 +2396,14 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Epoch");
 
+                    b.HasIndex("FirstPeriod");
+
                     b.HasIndex("Hash");
+
+                    b.HasIndex("LastPeriod");
+
+                    b.HasIndex(new[] { "Status" }, "IX_Proposals_Status_Partial")
+                        .HasFilter("\"Status\" = 0");
 
                     b.ToTable("Proposals");
                 });
@@ -2654,6 +2632,12 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("Hash")
+                        .IsUnique();
+
                     b.ToTable("Protocols");
                 });
 
@@ -2761,7 +2745,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpponentId");
 
-                    b.HasIndex("SmartRollupId");
+                    b.HasIndex("SmartRollupId", "Id");
 
                     b.ToTable("RefutationGames");
                 });
@@ -2803,7 +2787,10 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("OpHash")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength();
 
                     b.Property<int?>("Refs")
                         .HasColumnType("integer");
@@ -2832,8 +2819,7 @@ namespace Tzkt.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Address")
-                        .IsUnique()
-                        .HasFilter("\"Address\" is not null");
+                        .HasFilter("\"Address\" IS NOT NULL");
 
                     b.HasIndex("Level");
 
@@ -2983,10 +2969,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("ContractId", "Current")
+                    b.HasIndex(new[] { "ContractId" }, "IX_Scripts_ContractId_Partial")
                         .HasFilter("\"Current\" = true");
 
                     b.ToTable("Scripts");
@@ -3056,11 +3039,13 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ActivationCycle");
+
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId", "Id");
 
                     b.ToTable("SetDelegateParametersOps");
                 });
@@ -3098,7 +3083,10 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("numeric");
 
                     b.Property<string>("OpHash")
-                        .HasColumnType("text");
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength();
 
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
@@ -3124,7 +3112,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.HasIndex("SenderId");
+                    b.HasIndex("SenderId", "Id");
 
                     b.ToTable("SetDepositsLimitOps");
                 });
@@ -3257,11 +3245,15 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("CommitmentId");
+
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
 
                     b.HasIndex("SenderId");
+
+                    b.HasIndex("SmartRollupId", "Id");
 
                     b.ToTable("SmartRollupCementOps");
                 });
@@ -3314,8 +3306,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Hash");
 
                     b.HasIndex("InboxLevel");
 
@@ -3397,8 +3387,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CommitmentId");
-
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
@@ -3406,6 +3394,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SenderId");
 
                     b.HasIndex("SmartRollupId");
+
+                    b.HasIndex("CommitmentId", "Id");
 
                     b.ToTable("SmartRollupExecuteOps");
                 });
@@ -3569,10 +3559,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("SmartRollupId");
-
                     b.HasIndex("SmartRollupId", "BondStatus", "SenderId")
                         .HasFilter("\"BondStatus\" IS NOT NULL");
+
+                    b.HasIndex("SmartRollupId", "SenderId", "Id");
 
                     b.ToTable("SmartRollupPublishOps");
                 });
@@ -3730,8 +3720,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("GameId");
-
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
@@ -3739,6 +3727,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SenderId");
 
                     b.HasIndex("SmartRollupId");
+
+                    b.HasIndex("GameId", "Id");
 
                     b.ToTable("SmartRollupRefuteOps");
                 });
@@ -3780,11 +3770,9 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Level");
-
                     b.HasIndex("Level", "AccountId", "BakerId");
 
-                    b.HasIndex(new[] { "Level" }, "IX_SnapshotBalance_Level_Partial")
+                    b.HasIndex(new[] { "Level" }, "IX_SnapshotBalances_Level_Partial")
                         .HasFilter("\"AccountId\" = \"BakerId\"");
 
                     b.ToTable("SnapshotBalances");
@@ -3955,24 +3943,24 @@ namespace Tzkt.Data.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AutostakingOpId")
-                        .HasFilter("\"AutostakingOpId\" is not null");
+                        .HasFilter("\"AutostakingOpId\" IS NOT NULL");
 
                     b.HasIndex("DelegationOpId")
-                        .HasFilter("\"DelegationOpId\" is not null");
+                        .HasFilter("\"DelegationOpId\" IS NOT NULL");
 
                     b.HasIndex("DoubleBakingOpId")
-                        .HasFilter("\"DoubleBakingOpId\" is not null");
+                        .HasFilter("\"DoubleBakingOpId\" IS NOT NULL");
 
                     b.HasIndex("DoubleEndorsingOpId")
-                        .HasFilter("\"DoubleEndorsingOpId\" is not null");
+                        .HasFilter("\"DoubleEndorsingOpId\" IS NOT NULL");
 
                     b.HasIndex("DoublePreendorsingOpId")
-                        .HasFilter("\"DoublePreendorsingOpId\" is not null");
-
-                    b.HasIndex("Level");
+                        .HasFilter("\"DoublePreendorsingOpId\" IS NOT NULL");
 
                     b.HasIndex("StakingOpId")
-                        .HasFilter("\"StakingOpId\" is not null");
+                        .HasFilter("\"StakingOpId\" IS NOT NULL");
+
+                    b.HasIndex("Level", "Id");
 
                     b.HasIndex("BakerId", "Cycle", "Id");
 
@@ -4078,14 +4066,11 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("Level");
 
-                    b.HasIndex("ContractId", "Current")
+                    b.HasIndex("ContractId", "Id");
+
+                    b.HasIndex(new[] { "ContractId" }, "IX_Storages_ContractId_Partial")
                         .HasFilter("\"Current\" = true");
 
                     b.ToTable("Storages");
@@ -4152,17 +4137,12 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("FirstMinterId");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("JsonContent");
 
                     NpgsqlIndexBuilderExtensions.HasMethod(b.HasIndex("JsonContent"), "gin");
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("JsonContent"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("LastLevel");
-
-                    b.HasIndex("TicketerId");
 
                     b.HasIndex("TypeHash");
 
@@ -4202,12 +4182,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId");
-
                     b.HasIndex("FirstLevel");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
 
                     b.HasIndex("LastLevel");
 
@@ -4262,13 +4237,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("FromId");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
-                    b.HasIndex("Level");
-
                     b.HasIndex("SmartRollupExecuteId")
-                        .HasFilter("\"SmartRollupExecuteId\" is not null");
+                        .HasFilter("\"SmartRollupExecuteId\" IS NOT NULL");
 
                     b.HasIndex("TicketId");
 
@@ -4277,10 +4247,12 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ToId");
 
                     b.HasIndex("TransactionId")
-                        .HasFilter("\"TransactionId\" is not null");
+                        .HasFilter("\"TransactionId\" IS NOT NULL");
 
                     b.HasIndex("TransferTicketId")
-                        .HasFilter("\"TransferTicketId\" is not null");
+                        .HasFilter("\"TransferTicketId\" IS NOT NULL");
+
+                    b.HasIndex("Level", "Id");
 
                     b.ToTable("TicketTransfers");
                 });
@@ -4340,15 +4312,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ContractId");
-
                     b.HasIndex("FirstMinterId");
 
-                    b.HasIndex("Id")
-                        .IsUnique();
-
                     b.HasIndex("IndexedAt")
-                        .HasFilter("\"IndexedAt\" is not null");
+                        .HasFilter("\"IndexedAt\" IS NOT NULL");
 
                     b.HasIndex("LastLevel");
 
@@ -4397,27 +4364,28 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AccountId")
-                        .HasFilter("\"Balance\" != '0'");
-
-                    b.HasIndex("ContractId")
-                        .HasFilter("\"Balance\" != '0'");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
+                    b.HasIndex("ContractId");
 
                     b.HasIndex("IndexedAt")
-                        .HasFilter("\"IndexedAt\" is not null");
+                        .HasFilter("\"IndexedAt\" IS NOT NULL");
 
                     b.HasIndex("LastLevel");
 
-                    b.HasIndex("TokenId")
-                        .HasFilter("\"Balance\" != '0'");
+                    b.HasIndex("TokenId");
 
                     b.HasIndex("AccountId", "ContractId");
 
                     b.HasIndex("AccountId", "TokenId")
                         .IsUnique();
+
+                    b.HasIndex(new[] { "AccountId" }, "IX_TokenBalances_AccountId_Partial")
+                        .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex(new[] { "ContractId" }, "IX_TokenBalances_ContractId_Partial")
+                        .HasFilter("\"Balance\" != '0'");
+
+                    b.HasIndex(new[] { "TokenId" }, "IX_TokenBalances_TokenId_Partial")
+                        .HasFilter("\"Balance\" != '0'");
 
                     b.ToTable("TokenBalances");
                 });
@@ -4465,29 +4433,26 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("ContractId");
 
                     b.HasIndex("FromId")
-                        .HasFilter("\"FromId\" is not null");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
+                        .HasFilter("\"FromId\" IS NOT NULL");
 
                     b.HasIndex("IndexedAt")
-                        .HasFilter("\"IndexedAt\" is not null");
-
-                    b.HasIndex("Level");
+                        .HasFilter("\"IndexedAt\" IS NOT NULL");
 
                     b.HasIndex("MigrationId")
-                        .HasFilter("\"MigrationId\" is not null");
+                        .HasFilter("\"MigrationId\" IS NOT NULL");
 
                     b.HasIndex("OriginationId")
-                        .HasFilter("\"OriginationId\" is not null");
+                        .HasFilter("\"OriginationId\" IS NOT NULL");
 
                     b.HasIndex("ToId")
-                        .HasFilter("\"ToId\" is not null");
+                        .HasFilter("\"ToId\" IS NOT NULL");
 
                     b.HasIndex("TokenId");
 
                     b.HasIndex("TransactionId")
-                        .HasFilter("\"TransactionId\" is not null");
+                        .HasFilter("\"TransactionId\" IS NOT NULL");
+
+                    b.HasIndex("Level", "Id");
 
                     b.ToTable("TokenTransfers");
                 });
@@ -4629,6 +4594,9 @@ namespace Tzkt.Data.Migrations
                         .HasFilter("\"TargetCodeHash\" IS NOT NULL");
 
                     b.HasIndex("TargetId");
+
+                    b.HasIndex(new[] { "TargetId" }, "IX_TransactionOps_TargetId_Partial")
+                        .HasFilter("\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
 
                     b.ToTable("TransactionOps");
                 });
@@ -5468,11 +5436,11 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("BakerId");
 
-                    b.HasIndex("Cycle");
-
                     b.HasIndex("Level");
 
                     b.HasIndex("OpHash");
+
+                    b.HasIndex("Cycle", "Id");
 
                     b.ToTable("VdfRevelationOps");
                 });
@@ -5556,12 +5524,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasAlternateKey("Index");
-
                     b.HasIndex("Epoch");
-
-                    b.HasIndex("Id")
-                        .IsUnique();
 
                     b.HasIndex("Index")
                         .IsUnique();
@@ -5593,8 +5556,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("Period");
 
                     b.HasIndex("Period", "BakerId")
                         .IsUnique();
@@ -5649,9 +5610,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("TypeHash");
 
-                    b.HasIndex("WeirdDelegateId");
+                    b.HasIndex("WeirdDelegateId")
+                        .HasFilter("\"WeirdDelegateId\" IS NOT NULL");
 
-                    b.HasIndex("Type", "Kind")
+                    b.HasIndex(new[] { "Kind" }, "IX_Accounts_Kind_Partial")
                         .HasFilter("\"Type\" = 2");
 
                     b.HasDiscriminator().HasValue((byte)2);
@@ -5857,7 +5819,10 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SoftwareId");
 
-                    b.HasIndex("Type", "Staked")
+                    b.HasIndex(new[] { "DeactivationLevel" }, "IX_Accounts_DeactivationLevel_Partial")
+                        .HasFilter("\"Type\" = 1");
+
+                    b.HasIndex(new[] { "Staked" }, "IX_Accounts_Staked_Partial")
                         .HasFilter("\"Type\" = 1");
 
                     b.HasDiscriminator().HasValue((byte)1);

@@ -31,9 +31,6 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<Cycle>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Cycle>()
-                .HasAlternateKey(x => x.Index);
             #endregion
 
             #region props

@@ -104,6 +104,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     var unstakers = baker.ExternalUnstakedBalance > 0
                         ? await Db.Users
                             .Where(x =>
+                                x.UnstakedBakerId != null &&
                                 x.UnstakedBakerId == baker.Id &&
                                 x.UnstakedBakerId != x.DelegateId &&
                                 x.UnstakedBakerId != x.Id)

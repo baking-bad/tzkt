@@ -58,8 +58,12 @@ namespace Tzkt.Data.Models
         {
             #region indexes
             modelBuilder.Entity<Delegate>()
-                .HasIndex(x => new { x.Type, x.Staked })
-                .HasFilter(@"""Type"" = 1");
+                .HasIndex(x => x.Staked, $"IX_{nameof(TzktContext.Accounts)}_{nameof(Delegate.Staked)}_Partial")
+                .HasFilter($@"""{nameof(Account.Type)}"" = {(int)AccountType.Delegate}");
+
+            modelBuilder.Entity<Delegate>()
+                .HasIndex(x => x.DeactivationLevel, $"IX_{nameof(TzktContext.Accounts)}_{nameof(Delegate.DeactivationLevel)}_Partial")
+                .HasFilter($@"""{nameof(Account.Type)}"" = {(int)AccountType.Delegate}");
             #endregion
 
             #region relations

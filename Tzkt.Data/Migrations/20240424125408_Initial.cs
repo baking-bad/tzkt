@@ -235,7 +235,7 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     Updates = table.Column<int>(type: "integer", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
-                    KeyHash = table.Column<string>(type: "character varying(54)", maxLength: 54, nullable: true),
+                    KeyHash = table.Column<string>(type: "character(54)", fixedLength: true, maxLength: 54, nullable: true),
                     RawKey = table.Column<byte[]>(type: "bytea", nullable: true),
                     JsonKey = table.Column<string>(type: "jsonb", nullable: true),
                     RawValue = table.Column<byte[]>(type: "bytea", nullable: true),
@@ -268,7 +268,6 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BigMaps", x => x.Id);
-                    table.UniqueConstraint("AK_BigMaps_Ptr", x => x.Ptr);
                 });
 
             migrationBuilder.CreateTable(
@@ -331,7 +330,6 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Cycles", x => x.Id);
-                    table.UniqueConstraint("AK_Cycles_Index", x => x.Index);
                 });
 
             migrationBuilder.CreateTable(
@@ -912,7 +910,6 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VotingPeriods", x => x.Id);
-                    table.UniqueConstraint("AK_VotingPeriods_Index", x => x.Index);
                 });
 
             migrationBuilder.CreateTable(
@@ -1589,7 +1586,6 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
-                    table.UniqueConstraint("AK_NonceRevelationOps_RevealedLevel", x => x.RevealedLevel);
                     table.ForeignKey(
                         name: "FK_NonceRevelationOps_Accounts_BakerId",
                         column: x => x.BakerId,
@@ -1772,7 +1768,7 @@ namespace Tzkt.Data.Migrations
                     Extras = table.Column<string>(type: "jsonb", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "text", nullable: true),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
                     SenderId = table.Column<int>(type: "integer", nullable: false),
                     Counter = table.Column<int>(type: "integer", nullable: false),
                     BakerFee = table.Column<long>(type: "bigint", nullable: false),
@@ -1919,7 +1915,7 @@ namespace Tzkt.Data.Migrations
                     Limit = table.Column<BigInteger>(type: "numeric", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "text", nullable: true),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
                     SenderId = table.Column<int>(type: "integer", nullable: false),
                     Counter = table.Column<int>(type: "integer", nullable: false),
                     BakerFee = table.Column<long>(type: "bigint", nullable: false),
@@ -2820,6 +2816,12 @@ namespace Tzkt.Data.Migrations
                 column: "CreatorId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Accounts_DeactivationLevel_Partial",
+                table: "Accounts",
+                column: "DeactivationLevel",
+                filter: "\"Type\" = 1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Accounts_DelegateId",
                 table: "Accounts",
                 column: "DelegateId");
@@ -2837,10 +2839,10 @@ namespace Tzkt.Data.Migrations
                 column: "FirstLevel");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Accounts_Id",
+                name: "IX_Accounts_Kind_Partial",
                 table: "Accounts",
-                column: "Id",
-                unique: true);
+                column: "Kind",
+                filter: "\"Type\" = 2");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_ManagerId",
@@ -2860,6 +2862,12 @@ namespace Tzkt.Data.Migrations
                 column: "SoftwareId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Accounts_Staked_Partial",
+                table: "Accounts",
+                column: "Staked",
+                filter: "\"Type\" = 1");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Staked_Type",
                 table: "Accounts",
                 columns: new[] { "Staked", "Type" },
@@ -2869,18 +2877,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Accounts_Type",
                 table: "Accounts",
                 column: "Type");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Accounts_Type_Kind",
-                table: "Accounts",
-                columns: new[] { "Type", "Kind" },
-                filter: "\"Type\" = 2");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Accounts_Type_Staked",
-                table: "Accounts",
-                columns: new[] { "Type", "Staked" },
-                filter: "\"Type\" = 1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_TypeHash",
@@ -2896,7 +2892,8 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_WeirdDelegateId",
                 table: "Accounts",
-                column: "WeirdDelegateId");
+                column: "WeirdDelegateId",
+                filter: "\"WeirdDelegateId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ActivationOps_AccountId",
@@ -2933,11 +2930,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_BakerCycles_Cycle_BakerId",
                 table: "BakerCycles",
                 columns: new[] { "Cycle", "BakerId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BakingRights_Cycle",
-                table: "BakingRights",
-                column: "Cycle");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BakingRights_Cycle_BakerId",
@@ -2980,26 +2972,15 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BigMapKeys_BigMapPtr",
-                table: "BigMapKeys",
-                column: "BigMapPtr");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BigMapKeys_BigMapPtr_Active",
-                table: "BigMapKeys",
-                columns: new[] { "BigMapPtr", "Active" },
-                filter: "\"Active\" = true");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BigMapKeys_BigMapPtr_KeyHash",
                 table: "BigMapKeys",
                 columns: new[] { "BigMapPtr", "KeyHash" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_BigMapKeys_Id",
+                name: "IX_BigMapKeys_BigMapPtr_Partial",
                 table: "BigMapKeys",
-                column: "Id",
-                unique: true);
+                column: "BigMapPtr",
+                filter: "\"Active\" = true");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BigMapKeys_JsonKey",
@@ -3026,33 +3007,21 @@ namespace Tzkt.Data.Migrations
                 column: "ContractId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BigMaps_Id",
-                table: "BigMaps",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_BigMaps_Ptr",
                 table: "BigMaps",
                 column: "Ptr",
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_BigMapUpdates_BigMapKeyId",
+                name: "IX_BigMapUpdates_BigMapKeyId_Id",
                 table: "BigMapUpdates",
-                column: "BigMapKeyId",
-                filter: "\"BigMapKeyId\" is not null");
+                columns: new[] { "BigMapKeyId", "Id" },
+                filter: "\"BigMapKeyId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_BigMapUpdates_BigMapPtr",
+                name: "IX_BigMapUpdates_BigMapPtr_Id",
                 table: "BigMapUpdates",
-                column: "BigMapPtr");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_BigMapUpdates_Id",
-                table: "BigMapUpdates",
-                column: "Id",
-                unique: true);
+                columns: new[] { "BigMapPtr", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_BigMapUpdates_Level",
@@ -3063,19 +3032,19 @@ namespace Tzkt.Data.Migrations
                 name: "IX_BigMapUpdates_MigrationId",
                 table: "BigMapUpdates",
                 column: "MigrationId",
-                filter: "\"MigrationId\" is not null");
+                filter: "\"MigrationId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BigMapUpdates_OriginationId",
                 table: "BigMapUpdates",
                 column: "OriginationId",
-                filter: "\"OriginationId\" is not null");
+                filter: "\"OriginationId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_BigMapUpdates_TransactionId",
                 table: "BigMapUpdates",
                 column: "TransactionId",
-                filter: "\"TransactionId\" is not null");
+                filter: "\"TransactionId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blocks_Hash",
@@ -3116,15 +3085,14 @@ namespace Tzkt.Data.Migrations
                 column: "SoftwareId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Commitments_AccountId",
+                table: "Commitments",
+                column: "AccountId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Commitments_Address",
                 table: "Commitments",
                 column: "Address",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Commitments_Id",
-                table: "Commitments",
-                column: "Id",
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -3180,9 +3148,9 @@ namespace Tzkt.Data.Migrations
                 filter: "\"SenderCodeHash\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DelegationOps_SenderId",
+                name: "IX_DelegationOps_SenderId_Id",
                 table: "DelegationOps",
-                column: "SenderId");
+                columns: new[] { "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_DelegatorCycles_Cycle_BakerId",
@@ -3335,30 +3303,14 @@ namespace Tzkt.Data.Migrations
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_ContractCodeHash",
-                table: "Events",
-                column: "ContractCodeHash");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Events_ContractCodeHash_Tag",
                 table: "Events",
                 columns: new[] { "ContractCodeHash", "Tag" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Events_ContractId",
-                table: "Events",
-                column: "ContractId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Events_ContractId_Tag",
                 table: "Events",
                 columns: new[] { "ContractId", "Tag" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Events_Id",
-                table: "Events",
-                column: "Id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_JsonPayload",
@@ -3570,9 +3522,37 @@ namespace Tzkt.Data.Migrations
                 column: "Epoch");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Proposals_FirstPeriod",
+                table: "Proposals",
+                column: "FirstPeriod");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Proposals_Hash",
                 table: "Proposals",
                 column: "Hash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Proposals_LastPeriod",
+                table: "Proposals",
+                column: "LastPeriod");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Proposals_Status_Partial",
+                table: "Proposals",
+                column: "Status",
+                filter: "\"Status\" = 0");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Protocols_Code",
+                table: "Protocols",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Protocols_Hash",
+                table: "Protocols",
+                column: "Hash",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Quotes_Level",
@@ -3611,16 +3591,15 @@ namespace Tzkt.Data.Migrations
                 column: "OpponentId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_RefutationGames_SmartRollupId",
+                name: "IX_RefutationGames_SmartRollupId_Id",
                 table: "RefutationGames",
-                column: "SmartRollupId");
+                columns: new[] { "SmartRollupId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_RegisterConstantOps_Address",
                 table: "RegisterConstantOps",
                 column: "Address",
-                unique: true,
-                filter: "\"Address\" is not null");
+                filter: "\"Address\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_RegisterConstantOps_Level",
@@ -3663,16 +3642,15 @@ namespace Tzkt.Data.Migrations
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Scripts_ContractId_Current",
+                name: "IX_Scripts_ContractId_Partial",
                 table: "Scripts",
-                columns: new[] { "ContractId", "Current" },
+                column: "ContractId",
                 filter: "\"Current\" = true");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Scripts_Id",
-                table: "Scripts",
-                column: "Id",
-                unique: true);
+                name: "IX_SetDelegateParametersOps_ActivationCycle",
+                table: "SetDelegateParametersOps",
+                column: "ActivationCycle");
 
             migrationBuilder.CreateIndex(
                 name: "IX_SetDelegateParametersOps_Level",
@@ -3685,9 +3663,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SetDelegateParametersOps_SenderId",
+                name: "IX_SetDelegateParametersOps_SenderId_Id",
                 table: "SetDelegateParametersOps",
-                column: "SenderId");
+                columns: new[] { "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SetDepositsLimitOps_Level",
@@ -3700,9 +3678,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SetDepositsLimitOps_SenderId",
+                name: "IX_SetDepositsLimitOps_SenderId_Id",
                 table: "SetDepositsLimitOps",
-                column: "SenderId");
+                columns: new[] { "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupAddMessagesOps_Level",
@@ -3720,6 +3698,11 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_SmartRollupCementOps_CommitmentId",
+                table: "SmartRollupCementOps",
+                column: "CommitmentId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupCementOps_Level",
                 table: "SmartRollupCementOps",
                 column: "Level");
@@ -3735,9 +3718,9 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SmartRollupCommitments_Hash",
-                table: "SmartRollupCommitments",
-                column: "Hash");
+                name: "IX_SmartRollupCementOps_SmartRollupId_Id",
+                table: "SmartRollupCementOps",
+                columns: new[] { "SmartRollupId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupCommitments_Hash_SmartRollupId",
@@ -3765,9 +3748,9 @@ namespace Tzkt.Data.Migrations
                 column: "SmartRollupId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SmartRollupExecuteOps_CommitmentId",
+                name: "IX_SmartRollupExecuteOps_CommitmentId_Id",
                 table: "SmartRollupExecuteOps",
-                column: "CommitmentId");
+                columns: new[] { "CommitmentId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupExecuteOps_Level",
@@ -3830,15 +3813,15 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SmartRollupPublishOps_SmartRollupId",
-                table: "SmartRollupPublishOps",
-                column: "SmartRollupId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupPublishOps_SmartRollupId_BondStatus_SenderId",
                 table: "SmartRollupPublishOps",
                 columns: new[] { "SmartRollupId", "BondStatus", "SenderId" },
                 filter: "\"BondStatus\" IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SmartRollupPublishOps_SmartRollupId_SenderId_Id",
+                table: "SmartRollupPublishOps",
+                columns: new[] { "SmartRollupId", "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupRecoverBondOps_Level",
@@ -3866,9 +3849,9 @@ namespace Tzkt.Data.Migrations
                 column: "StakerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SmartRollupRefuteOps_GameId",
+                name: "IX_SmartRollupRefuteOps_GameId_Id",
                 table: "SmartRollupRefuteOps",
-                column: "GameId");
+                columns: new[] { "GameId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_SmartRollupRefuteOps_Level",
@@ -3891,20 +3874,15 @@ namespace Tzkt.Data.Migrations
                 column: "SmartRollupId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SnapshotBalance_Level_Partial",
-                table: "SnapshotBalances",
-                column: "Level",
-                filter: "\"AccountId\" = \"BakerId\"");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_SnapshotBalances_Level",
-                table: "SnapshotBalances",
-                column: "Level");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SnapshotBalances_Level_AccountId_BakerId",
                 table: "SnapshotBalances",
                 columns: new[] { "Level", "AccountId", "BakerId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_SnapshotBalances_Level_Partial",
+                table: "SnapshotBalances",
+                column: "Level",
+                filter: "\"AccountId\" = \"BakerId\"");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingOps_BakerId",
@@ -3930,7 +3908,7 @@ namespace Tzkt.Data.Migrations
                 name: "IX_StakingUpdates_AutostakingOpId",
                 table: "StakingUpdates",
                 column: "AutostakingOpId",
-                filter: "\"AutostakingOpId\" is not null");
+                filter: "\"AutostakingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_BakerId_Cycle_Id",
@@ -3941,30 +3919,30 @@ namespace Tzkt.Data.Migrations
                 name: "IX_StakingUpdates_DelegationOpId",
                 table: "StakingUpdates",
                 column: "DelegationOpId",
-                filter: "\"DelegationOpId\" is not null");
+                filter: "\"DelegationOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_DoubleBakingOpId",
                 table: "StakingUpdates",
                 column: "DoubleBakingOpId",
-                filter: "\"DoubleBakingOpId\" is not null");
+                filter: "\"DoubleBakingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_DoubleEndorsingOpId",
                 table: "StakingUpdates",
                 column: "DoubleEndorsingOpId",
-                filter: "\"DoubleEndorsingOpId\" is not null");
+                filter: "\"DoubleEndorsingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_DoublePreendorsingOpId",
                 table: "StakingUpdates",
                 column: "DoublePreendorsingOpId",
-                filter: "\"DoublePreendorsingOpId\" is not null");
+                filter: "\"DoublePreendorsingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StakingUpdates_Level",
+                name: "IX_StakingUpdates_Level_Id",
                 table: "StakingUpdates",
-                column: "Level");
+                columns: new[] { "Level", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_StakerId_Cycle_Id",
@@ -3975,7 +3953,7 @@ namespace Tzkt.Data.Migrations
                 name: "IX_StakingUpdates_StakingOpId",
                 table: "StakingUpdates",
                 column: "StakingOpId",
-                filter: "\"StakingOpId\" is not null");
+                filter: "\"StakingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Statistics_Cycle",
@@ -3998,31 +3976,20 @@ namespace Tzkt.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_Storages_ContractId",
+                name: "IX_Storages_ContractId_Id",
                 table: "Storages",
-                column: "ContractId");
+                columns: new[] { "ContractId", "Id" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_Storages_ContractId_Current",
+                name: "IX_Storages_ContractId_Partial",
                 table: "Storages",
-                columns: new[] { "ContractId", "Current" },
+                column: "ContractId",
                 filter: "\"Current\" = true");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Storages_Id",
-                table: "Storages",
-                column: "Id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Storages_Level",
                 table: "Storages",
                 column: "Level");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TicketBalances_AccountId",
-                table: "TicketBalances",
-                column: "AccountId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_AccountId_TicketerId",
@@ -4039,12 +4006,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TicketBalances_FirstLevel",
                 table: "TicketBalances",
                 column: "FirstLevel");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TicketBalances_Id",
-                table: "TicketBalances",
-                column: "Id",
-                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketBalances_LastLevel",
@@ -4077,12 +4038,6 @@ namespace Tzkt.Data.Migrations
                 column: "FirstMinterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tickets_Id",
-                table: "Tickets",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Tickets_JsonContent",
                 table: "Tickets",
                 column: "JsonContent")
@@ -4093,11 +4048,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Tickets_LastLevel",
                 table: "Tickets",
                 column: "LastLevel");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tickets_TicketerId",
-                table: "Tickets",
-                column: "TicketerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tickets_TicketerId_TypeHash_ContentHash",
@@ -4115,21 +4065,15 @@ namespace Tzkt.Data.Migrations
                 column: "FromId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TicketTransfers_Id",
+                name: "IX_TicketTransfers_Level_Id",
                 table: "TicketTransfers",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TicketTransfers_Level",
-                table: "TicketTransfers",
-                column: "Level");
+                columns: new[] { "Level", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_SmartRollupExecuteId",
                 table: "TicketTransfers",
                 column: "SmartRollupExecuteId",
-                filter: "\"SmartRollupExecuteId\" is not null");
+                filter: "\"SmartRollupExecuteId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_TicketerId",
@@ -4150,24 +4094,24 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TicketTransfers_TransactionId",
                 table: "TicketTransfers",
                 column: "TransactionId",
-                filter: "\"TransactionId\" is not null");
+                filter: "\"TransactionId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TicketTransfers_TransferTicketId",
                 table: "TicketTransfers",
                 column: "TransferTicketId",
-                filter: "\"TransferTicketId\" is not null");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TokenBalances_AccountId",
-                table: "TokenBalances",
-                column: "AccountId",
-                filter: "\"Balance\" != '0'");
+                filter: "\"TransferTicketId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_AccountId_ContractId",
                 table: "TokenBalances",
                 columns: new[] { "AccountId", "ContractId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TokenBalances_AccountId_Partial",
+                table: "TokenBalances",
+                column: "AccountId",
+                filter: "\"Balance\" != '0'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_AccountId_TokenId",
@@ -4178,20 +4122,19 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_ContractId",
                 table: "TokenBalances",
-                column: "ContractId",
-                filter: "\"Balance\" != '0'");
+                column: "ContractId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TokenBalances_Id",
+                name: "IX_TokenBalances_ContractId_Partial",
                 table: "TokenBalances",
-                column: "Id",
-                unique: true);
+                column: "ContractId",
+                filter: "\"Balance\" != '0'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_IndexedAt",
                 table: "TokenBalances",
                 column: "IndexedAt",
-                filter: "\"IndexedAt\" is not null");
+                filter: "\"IndexedAt\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_LastLevel",
@@ -4201,13 +4144,13 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_TokenBalances_TokenId",
                 table: "TokenBalances",
-                column: "TokenId",
-                filter: "\"Balance\" != '0'");
+                column: "TokenId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_ContractId",
-                table: "Tokens",
-                column: "ContractId");
+                name: "IX_TokenBalances_TokenId_Partial",
+                table: "TokenBalances",
+                column: "TokenId",
+                filter: "\"Balance\" != '0'");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_ContractId_TokenId",
@@ -4221,16 +4164,10 @@ namespace Tzkt.Data.Migrations
                 column: "FirstMinterId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tokens_Id",
-                table: "Tokens",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Tokens_IndexedAt",
                 table: "Tokens",
                 column: "IndexedAt",
-                filter: "\"IndexedAt\" is not null");
+                filter: "\"IndexedAt\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tokens_LastLevel",
@@ -4253,42 +4190,36 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TokenTransfers_FromId",
                 table: "TokenTransfers",
                 column: "FromId",
-                filter: "\"FromId\" is not null");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TokenTransfers_Id",
-                table: "TokenTransfers",
-                column: "Id",
-                unique: true);
+                filter: "\"FromId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_IndexedAt",
                 table: "TokenTransfers",
                 column: "IndexedAt",
-                filter: "\"IndexedAt\" is not null");
+                filter: "\"IndexedAt\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TokenTransfers_Level",
+                name: "IX_TokenTransfers_Level_Id",
                 table: "TokenTransfers",
-                column: "Level");
+                columns: new[] { "Level", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_MigrationId",
                 table: "TokenTransfers",
                 column: "MigrationId",
-                filter: "\"MigrationId\" is not null");
+                filter: "\"MigrationId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_OriginationId",
                 table: "TokenTransfers",
                 column: "OriginationId",
-                filter: "\"OriginationId\" is not null");
+                filter: "\"OriginationId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_ToId",
                 table: "TokenTransfers",
                 column: "ToId",
-                filter: "\"ToId\" is not null");
+                filter: "\"ToId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TokenTransfers_TokenId",
@@ -4299,7 +4230,7 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TokenTransfers_TransactionId",
                 table: "TokenTransfers",
                 column: "TransactionId",
-                filter: "\"TransactionId\" is not null");
+                filter: "\"TransactionId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_InitiatorId",
@@ -4349,6 +4280,12 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TransactionOps_TargetId",
                 table: "TransactionOps",
                 column: "TargetId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TransactionOps_TargetId_Partial",
+                table: "TransactionOps",
+                column: "TargetId",
+                filter: "\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransferTicketOps_Level",
@@ -4571,9 +4508,9 @@ namespace Tzkt.Data.Migrations
                 column: "BakerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VdfRevelationOps_Cycle",
+                name: "IX_VdfRevelationOps_Cycle_Id",
                 table: "VdfRevelationOps",
-                column: "Cycle");
+                columns: new[] { "Cycle", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_VdfRevelationOps_Level",
@@ -4591,21 +4528,10 @@ namespace Tzkt.Data.Migrations
                 column: "Epoch");
 
             migrationBuilder.CreateIndex(
-                name: "IX_VotingPeriods_Id",
-                table: "VotingPeriods",
-                column: "Id",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "IX_VotingPeriods_Index",
                 table: "VotingPeriods",
                 column: "Index",
                 unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_VotingSnapshots_Period",
-                table: "VotingSnapshots",
-                column: "Period");
 
             migrationBuilder.CreateIndex(
                 name: "IX_VotingSnapshots_Period_BakerId",

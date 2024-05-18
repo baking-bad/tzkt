@@ -71,11 +71,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Script>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Script>()
-                .HasIndex(x => new { x.ContractId, x.Current })
+                .HasIndex(x => x.ContractId, $"IX_{nameof(TzktContext.Scripts)}_{nameof(Script.ContractId)}_Partial")
                 .HasFilter($@"""{nameof(Script.Current)}"" = true");
             #endregion
         }

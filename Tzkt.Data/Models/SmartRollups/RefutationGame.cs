@@ -32,7 +32,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<RefutationGame>()
-                .HasIndex(x => x.SmartRollupId);
+                .HasIndex(x => new { x.SmartRollupId, x.Id });
 
             modelBuilder.Entity<RefutationGame>()
                 .HasIndex(x => x.InitiatorId);

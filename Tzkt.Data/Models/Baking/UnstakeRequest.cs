@@ -26,7 +26,7 @@ namespace Tzkt.Data.Models
         public static void BuildUnstakeRequestModel(this ModelBuilder modelBuilder)
         {
             #region keys
-            modelBuilder.Entity<StakingUpdate>()
+            modelBuilder.Entity<UnstakeRequest>()
                 .HasKey(x => x.Id);
             #endregion
 

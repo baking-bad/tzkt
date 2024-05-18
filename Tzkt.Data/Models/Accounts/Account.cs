@@ -128,10 +128,6 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Address)
                 .IsUnique();
 

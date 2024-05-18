@@ -133,9 +133,6 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<Protocol>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Protocol>()
-                .HasAlternateKey(x => x.Code);
             #endregion
 
             #region props
@@ -149,6 +146,16 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Protocol>()
                 .Property<string>("Extras")
                 .HasColumnType("jsonb");
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Protocol>()
+                .HasIndex(x => x.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Protocol>()
+                .HasIndex(x => x.Hash)
+                .IsUnique();
             #endregion
         }
     }

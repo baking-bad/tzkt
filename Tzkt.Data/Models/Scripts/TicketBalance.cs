@@ -26,17 +26,10 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.TicketerId);
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.TicketId);
-
-            modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.AccountId);
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => new { x.AccountId, x.TicketerId });

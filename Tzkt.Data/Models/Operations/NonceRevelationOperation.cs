@@ -36,9 +36,6 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasAlternateKey(x => x.RevealedLevel);
             #endregion
             
             #region props

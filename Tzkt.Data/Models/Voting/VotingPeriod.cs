@@ -48,16 +48,9 @@ namespace Tzkt.Data.Models
             #region keys
             modelBuilder.Entity<VotingPeriod>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<VotingPeriod>()
-                .HasAlternateKey(x => x.Index);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<VotingPeriod>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
             modelBuilder.Entity<VotingPeriod>()
                 .HasIndex(x => x.Index)
                 .IsUnique();
