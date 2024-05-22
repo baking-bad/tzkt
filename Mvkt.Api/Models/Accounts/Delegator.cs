@@ -3,7 +3,7 @@
     public class Delegator
     {
         /// <summary>
-        /// Delegator type ('contract' for KT.. address or 'user' for tz.. address)
+        /// Delegator type ('contract' for KT.. address or 'user' for mv.. address)
         /// </summary>
         public string Type { get; set; }
 

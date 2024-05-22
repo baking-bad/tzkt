@@ -1,8 +1,8 @@
 ﻿# Introduction
 
-MvKT is the most widely used tool in Tezos that provides you with convenient and flexible access to the Tezos blockchain data, processed and indexed by its own indexer. 
-You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. MvKT was built by the joint efforts of the entire Tezos community 
-to help developers build more services and dapps on top of Tezos.
+MvKT is the most widely used tool in Mavryk that provides you with convenient and flexible access to the Mavryk blockchain data, processed and indexed by its own indexer. 
+You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. MvKT was built by the joint efforts of the entire Mavryk community 
+to help developers build more services and dapps on top of Mavryk.
 
 MvKT Indexer and API are [open-source](https://github.com/baking-bad/tzkt), so don't be afraid to depend on the third-party service,
 because you can always clone, build and run it yourself to have full control over all the components.
@@ -27,14 +27,14 @@ You can find more details about differences between available tiers [here](https
 
 ## Free MvKT API
 
-Free-tier MvKT API is the best way to get started and explore available Tezos data and API functionality.
+Free-tier MvKT API is the best way to get started and explore available Mavryk data and API functionality.
 It doesn't require authorization and is free for everyone and for both commercial and non-commercial use.
 
 > #### Note: attribution required
 If you use free-tier MvKT API, you **must** mention it on your website or application by placing the label
 "Powered by MvKT API", or "Built with MvKT API", or "Data provided by MvKT API" with a direct link to [tzkt.io](https://tzkt.io).
 
-It's available for the following Tezos networks with the following base URLs:
+It's available for the following Mavryk networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
 - Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
@@ -43,7 +43,7 @@ It's available for the following Tezos networks with the following base URLs:
 ### Sending Requests
 
 To send a request to Free MvKT API you need literally nothing. Just take the base URL of the particular network
-(for example, Tezos mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
+(for example, Mavryk mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
 (for example, chain's head: `/v1/head`), that's pretty much it: 
 
 ```bash
@@ -52,7 +52,7 @@ curl https://api.tzkt.io/v1/head
 
 Read through this documentation to explore available endpoints, query parameters
 (note, if you click on a query parameter, you will see available modes, such as `.eq`, `.in`, etc.)
-and response models. If you have any questions, do not hesitate to ask for support, Tezos community has always been very friendly! 😉
+and response models. If you have any questions, do not hesitate to ask for support, Mavryk community has always been very friendly! 😉
 
 ### Rate Limits
 
@@ -65,7 +65,7 @@ If you exceed the limit, the API will respond with `HTTP 429` status code.
 MvKT Pro is intended for professional use, for those who seek for extended capabilities, performance, reliability and business-level SLA.
 MvKT Pro service is provided via paid subscriptions. Please, refer to [Pricing Plans](https://tzkt.io/api) to check available tiers.
 
-It's available for the following Tezos networks with the following base URLs:
+It's available for the following Mavryk networks with the following base URLs:
 
 - Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.tzkt.io))
 - Testnets: *let us know if you need MvKT Pro for testnets*

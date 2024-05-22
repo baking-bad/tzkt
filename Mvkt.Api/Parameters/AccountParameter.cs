@@ -11,7 +11,7 @@ namespace Mvkt.Api
     {
         /// <summary>
         /// **Equal** filter mode (optional, i.e. `param.eq=123` is the same as `param=123`). \
-        /// Specify a `tz` or `KT` address to get items where the specified field is equal to the specified value.
+        /// Specify a `mv` or `KT` address to get items where the specified field is equal to the specified value.
         /// 
         /// Example: `?sender=mv1VXHDHLA9dAKA8vpGuU7P8GXCVqSJ99obq`.
         /// </summary>
@@ -20,7 +20,7 @@ namespace Mvkt.Api
 
         /// <summary>
         /// **Not equal** filter mode. \
-        /// Specify a `tz` or `KT` address to get items where the specified field is not equal to the specified value.
+        /// Specify a `mv` or `KT` address to get items where the specified field is not equal to the specified value.
         /// 
         /// Example: `?sender.ne=mv1VXHDHLA9dAKA8vpGuU7P8GXCVqSJ99obq`.
         /// </summary>
