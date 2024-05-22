@@ -188,7 +188,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns a list of contracts created by (or related to) the specified account.
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="sort">Sorts contracts by specified field. Supported fields: `id` (default, desc), `balance`, `creationLevel`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
@@ -222,7 +222,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns a list of accounts delegated to the specified account.
         /// </remarks>
-        /// <param name="address">Account address (starting with tz)</param>
+        /// <param name="address">Account address (starting with mv)</param>
         /// <param name="type">Filters delegators by type (`user`, `delegate`, `contract`, `rollup`, `smart_rollup`, `ghost`).</param>
         /// <param name="balance">Filters delegators by balance.</param>
         /// <param name="delegationLevel">Number of items to skip</param>
@@ -474,7 +474,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns account counter
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/counter")]
         public async Task<ActionResult<int>> GetCounter([Required][Address] string address)
@@ -498,7 +498,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns account balance
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance")]
         public async Task<ActionResult<long>> GetBalance([Required][Address] string address)
@@ -519,7 +519,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns account balance at the specified block
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="level">Block height at which you want to know account balance</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{level:int}")]
@@ -543,7 +543,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns account balance at the specified datetime
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
         /// <returns></returns>
         [HttpGet("{address}/balance_history/{datetime:DateTime}")]
@@ -567,7 +567,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns time series with historical balances (only changes, without duplicates).
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="step">Step of the time series, for example if `step = 1000` you will get balances at blocks `1000, 2000, 3000, ...`.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts historical balances by specified field. Supported fields: `level`.</param>
@@ -631,7 +631,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Exports account balance report in .csv format
         /// </remarks>
-        /// <param name="address">Account address (starting with tz or KT)</param>
+        /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="from">Start of the datetime range to filter by (ISO 8601, e.g. 2019-11-31)</param>
         /// <param name="to">End of the datetime range to filter by (ISO 8601, e.g. 2019-12-31)</param>
         /// <param name="delimiter">Column delimiter (`comma`, `semicolon`)</param>

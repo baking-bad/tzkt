@@ -38,7 +38,7 @@ namespace Mvkt.Data.Models
         }
         #endregion
 
-        #region manager.tz
+        #region manager.mv
         public static readonly byte[] ManagerTzBytes = new byte[]
         {
             99, 144, 0, 160, 100, 161, 94, 128, 108, 144, 95, 128, 109, 66, 100, 111, 129, 108, 71, 100, 101, 102, 97,

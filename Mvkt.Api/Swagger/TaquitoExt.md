@@ -1,4 +1,4 @@
-MvKT extension for the [Taquito](https://tezostaquito.io/) library can significantly speed up your application by reducing the number of requests made to a Tezos node. Instead, most of the queries are routed through MvKT API which is much more scalable. The best thing is that you don't have to change anything in your code (almost).
+MvKT extension for the [Taquito](https://tezostaquito.io/) library can significantly speed up your application by reducing the number of requests made to a Mavryk node. Instead, most of the queries are routed through MvKT API which is much more scalable. The best thing is that you don't have to change anything in your code (almost).
 
 ## Installation
 
@@ -14,8 +14,8 @@ In order to enable routing enable the MvKT extension per each `TezosToolkit` ins
 import { TezosToolkit } from '@taquito/taquito';
 import { MvktExtension } from '@tzkt/ext-taquito';
 
-const Tezos = new TezosToolkit('https://basenet.rpc.mavryk.network');
-Tezos.addExtension(new MvktExtension());
+const Mavryk = new TezosToolkit('https://basenet.rpc.mavryk.network');
+Mavryk.addExtension(new MvktExtension());
 ```
 
 MvKT extension will route the following requests:
@@ -41,5 +41,5 @@ All other requests will be executed against the specified node URI, as usual.
 You may override base URL used by the package in the following manner. This may come useful should you want to make requests to a test network or to your custom server.
 
 ```
-Tezos.addExtension(new MvktExtension({url: 'https://api.mavryk.network'}));
+Mavryk.addExtension(new MvktExtension({url: 'https://api.mavryk.network'}));
 ```

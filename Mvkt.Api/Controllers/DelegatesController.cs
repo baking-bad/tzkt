@@ -86,7 +86,7 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns a delegate with the specified address.
         /// </remarks>
-        /// <param name="address">Delegate address (starting with tz)</param>
+        /// <param name="address">Delegate address (starting with mv)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public Task<Models.Delegate> GetByAddress([Required][TzAddress] string address)

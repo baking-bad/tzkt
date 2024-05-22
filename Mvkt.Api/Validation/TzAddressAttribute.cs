@@ -6,8 +6,8 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^tz[0-9A-Za-z]{34}$")
-                ? new ValidationResult("Invalid tz-address.")
+            return value != null && !Regex.IsMatch((string)value, "^mv[0-9A-Za-z]{34}$")
+                ? new ValidationResult("Invalid mv-address.")
                 : ValidationResult.Success;
         }
     }
