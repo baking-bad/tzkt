@@ -37,6 +37,7 @@ namespace Tzkt.Api.Repositories
             {
                 Code = row.Code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -105,6 +106,7 @@ namespace Tzkt.Api.Repositories
             {
                 Code = code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -173,6 +175,7 @@ namespace Tzkt.Api.Repositories
             {
                 Code = row.Code,
                 Hash = hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -242,6 +245,7 @@ namespace Tzkt.Api.Repositories
             {
                 Code = row.Code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,

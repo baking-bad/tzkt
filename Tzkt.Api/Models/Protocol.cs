@@ -15,6 +15,11 @@ namespace Tzkt.Api.Models
         public string Hash { get; set; }
 
         /// <summary>
+        /// Global version number
+        /// </summary>
+        public int Version { get; set; }
+
+        /// <summary>
         /// Block height where the protocol was applied
         /// </summary>
         public int  FirstLevel { get; set; }
