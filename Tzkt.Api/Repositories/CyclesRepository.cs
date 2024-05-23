@@ -213,7 +213,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "lbSubsidy":
                         foreach (var row in rows)
-                            result[j++][i] = 1249999;
+                            result[j++][i] = 833_333;
                         break;
                     case "totalDelegated":
                         foreach (var row in rows)
@@ -360,7 +360,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "lbSubsidy":
                     foreach (var row in rows)
-                        result[j++] = 1249999;
+                        result[j++] = 833_333;
                     break;
                 case "totalDelegated":
                     foreach (var row in rows)
