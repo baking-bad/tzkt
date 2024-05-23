@@ -83,18 +83,19 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var branch = op.RequiredString("branch");
             var content = op.Required("operations");
-            var endorsement = new EndorsementContent
+            var attestation = new AttestationContent
             {
                 Level = content.RequiredInt32("level"),
                 Round = content.RequiredInt32("round"),
                 Slot = content.RequiredInt32("slot"),
-                PayloadHash = content.RequiredString("block_payload_hash")
+                PayloadHash = content.RequiredString("block_payload_hash"),
+                DalAttestation = content.OptionalBigInteger("dal_attestation")
             };
             var signature = Base58.Parse(op.RequiredString("signature"), 3);
 
             var bytes = new byte[1] { 19 }
                 .Concat(Base58.Parse(chainId, 3))
-                .Concat(await new LocalForge().ForgeOperationAsync(branch, endorsement))
+                .Concat(await new LocalForge().ForgeOperationAsync(branch, attestation))
                 .ToArray();
 
             foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))

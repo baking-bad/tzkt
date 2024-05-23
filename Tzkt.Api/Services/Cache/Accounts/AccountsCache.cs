@@ -45,7 +45,7 @@ namespace Tzkt.Api.Services.Cache
                 : (int)(limit * 1.1);
 
             using var db = DataSource.OpenConnection();
-            using var reader = db.ExecuteReader($@"{SelectQuery} ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
+            using IDataReader reader = db.ExecuteReader($@"{SelectQuery} ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
 
             AccountsById = new Dictionary<int, RawAccount>(capacity);
             AccountsByAddress = new Dictionary<string, RawAccount>(capacity);
@@ -98,7 +98,7 @@ namespace Tzkt.Api.Services.Cache
             #endregion
 
             await using var db = await DataSource.OpenConnectionAsync();
-            using var reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
+            using IDataReader reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
 
             var parsers = new Func<IDataReader, RawAccount>[6]
             {

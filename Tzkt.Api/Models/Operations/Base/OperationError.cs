@@ -20,7 +20,7 @@ namespace Tzkt.Api.Models
         public abstract string Type { get; set; }
     }
 
-    public class OperationErrorJsonInheritanceConverter : JsonInheritanceConverter
+    public class OperationErrorJsonInheritanceConverter : JsonInheritanceConverter<OperationError>
     {
         public OperationErrorJsonInheritanceConverter(string name) : base(name) { }
 

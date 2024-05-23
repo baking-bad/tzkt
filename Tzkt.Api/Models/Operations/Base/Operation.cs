@@ -61,7 +61,7 @@ namespace Tzkt.Api.Models
         public abstract long Id { get; set; }
     }
 
-    public class OperationJsonInheritanceConverter : JsonInheritanceConverter
+    public class OperationJsonInheritanceConverter : JsonInheritanceConverter<Operation>
     {
         public OperationJsonInheritanceConverter(string name) : base(name) { }
 
