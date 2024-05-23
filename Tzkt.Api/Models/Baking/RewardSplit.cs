@@ -295,7 +295,7 @@
         public long NonceRevelationLosses { get; set; }
 
         /// <summary>
-        /// List of delegators at the snapshot time
+        /// List of delegators (including stakers) at the snapshot time
         /// </summary>
         public IEnumerable<SplitDelegator> Delegators { get; set; }
 

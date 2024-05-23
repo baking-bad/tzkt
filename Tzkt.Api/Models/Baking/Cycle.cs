@@ -88,7 +88,7 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long LBSubsidy => 1249999;
+        public long LBSubsidy => 833_333;
 
         /// <summary>
         /// [DEPRECATED]

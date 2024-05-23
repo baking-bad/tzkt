@@ -242,7 +242,7 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public int LBSubsidy => 80_000_000 * TimeBetweenBlocks / 60 / 16;
+        public int LBSubsidy => 5_000_000 * TimeBetweenBlocks / 60;
 
         /// <summary>
         /// [DEPRECATED]

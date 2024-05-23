@@ -351,41 +351,23 @@ namespace Tzkt.Api.Services
             var fees = await db.QueryFirstOrDefaultAsync($@"
                 SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DalPublishCommitmentOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""RevealOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""RegisterConstantOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""RevealOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SetDelegateParametersOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SetDepositsLimitOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0))::bigint AS burn FROM ""TxRollupOriginationOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupCommitOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupFinalizeCommitmentOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRemoveCommitmentOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupReturnBondOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRejectionOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupDispatchTicketsOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupAddMessagesOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
@@ -400,6 +382,30 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRecoverBondOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRefuteOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""StakingOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupCommitOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupDispatchTicketsOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupFinalizeCommitmentOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0))::bigint AS burn FROM ""TxRollupOriginationOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRejectionOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRemoveCommitmentOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupReturnBondOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
@@ -423,41 +429,23 @@ namespace Tzkt.Api.Services
             var prevFees = await db.QueryFirstOrDefaultAsync($@"
                 SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DalPublishCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""RevealOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""OriginationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""RegisterConstantOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""RevealOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SetDelegateParametersOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SetDepositsLimitOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0))::bigint AS burn FROM ""TxRollupOriginationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupCommitOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupFinalizeCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRemoveCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupReturnBondOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRejectionOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupDispatchTicketsOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
-                    UNION ALL
-                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupAddMessagesOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
@@ -472,6 +460,30 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRecoverBondOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""SmartRollupRefuteOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""StakingOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0) + COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransactionOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TransferTicketOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupCommitOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupDispatchTicketsOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupFinalizeCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""AllocationFee"", 0))::bigint AS burn FROM ""TxRollupOriginationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRejectionOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupRemoveCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""TxRollupReturnBondOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(
@@ -510,13 +522,22 @@ namespace Tzkt.Api.Services
                 AND "StakingBalance" >= {protocol.MinimalStake}
                 """);
 
-            // TODO: use current cycle rewards after Oxford2 activation
-            var lbSubsidy = 80_000_000 * protocol.TimeBetweenBlocks / 60 / 16;
+            var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
+                SELECT *
+                FROM "Cycles"
+                ORDER BY "Index" DESC
+                LIMIT 1
+                """);
+
+            var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
+            
+            var maxRewardsPerBlock = futureCycle.BlockReward
+                + futureCycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold)
+                + futureCycle.EndorsementRewardPerSlot * protocol.EndorsersPerBlock;
+
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
-            var maxBlockReward = protocol.MaxBakingReward + protocol.MaxEndorsingReward; //microtez
-            var totalRewardsPerYear = maxBlockReward * blocksPerYear;
-            var maxBlockCreated = maxBlockReward + lbSubsidy; //microtez
-            var totalCreatedPerYear = maxBlockCreated * blocksPerYear;
+            var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
+            var totalCreatedPerYear = (maxRewardsPerBlock + lbSubsidyPerBlock) * blocksPerYear;
 
             return new StakingData
             {

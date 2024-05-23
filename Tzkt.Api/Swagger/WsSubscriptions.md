@@ -165,12 +165,7 @@ Sends operations of specified types or related to specified accounts, included i
                  // (can be used with 'transaction', 'origination', 'delegation' types only)
 
     types: ''    // comma-separated list of operation types, any of:
-                 // 'transaction', 'origination', 'delegation', 'reveal', 'register_constant', 'set_deposits_limit', 'increase_paid_storage'
-				 // 'update_consensus_key', 'tx_rollup_origination', 'tx_rollup_submit_batch', 'tx_rollup_commit', 'tx_rollup_return_bond',
-				 // 'tx_rollup_finalize_commitment', 'tx_rollup_remove_commitment', 'tx_rollup_rejection', 'tx_rollup_dispatch_tickets',
-				 // 'transfer_ticket', `sr_add_messages`, `sr_cement`, `sr_execute`, `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`,
-                 // 'double_baking', 'double_endorsing', 'double_preendorsing', 'nonce_revelation', 'vdf_revelation', 'activation', 'drain_delegate',
-                 // 'proposal', 'ballot', 'endorsement', 'preendorsement'.
+                 // 'transaction', 'origination', 'delegation', 'reveal', etc.
 }
 ````
 																	 
