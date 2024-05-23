@@ -30,6 +30,9 @@ namespace Tzkt.Sync.Protocols.Proto19
             protocol.BlocksPerVoting = protocol.BlocksPerVoting * 3 / 2;
             protocol.TimeBetweenBlocks = protocol.TimeBetweenBlocks * 2 / 3;
             protocol.HardBlockGasLimit = prev.HardBlockGasLimit * 2 / 3;
+            protocol.SmartRollupCommitmentPeriod = 15 * 60 / protocol.TimeBetweenBlocks;
+            protocol.SmartRollupChallengeWindow = 14 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
+            protocol.SmartRollupTimeoutPeriod = 7 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
         }
 
         protected override async Task MigrateContext(AppState state)
