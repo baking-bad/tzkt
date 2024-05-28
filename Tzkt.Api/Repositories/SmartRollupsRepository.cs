@@ -209,6 +209,42 @@ namespace Tzkt.Api.Repositories
             };
         }
 
+        public async Task<IEnumerable<Entrypoint>> GetSmartRollupEntrypoints(string address, bool all, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return Enumerable.Empty<Entrypoint>();
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Accounts"" WHERE ""Id"" = {rollup.Id}");
+            if (row == null)
+                return Enumerable.Empty<Entrypoint>();
+
+            var param = new ContractParameter(new MichelinePrim
+            {
+                Prim = PrimType.parameter,
+                Args = new List<IMicheline>
+                {
+                    Micheline.FromBytes(row.ParameterSchema)
+                }
+            });
+
+            return param.Entrypoints
+                .Where(x => all || param.IsEntrypointUseful(x.Key))
+                .Select(x =>
+                {
+                    var mich = micheline ? x.Value.ToMicheline() : null;
+                    return new Entrypoint
+                    {
+                        Name = x.Key,
+                        JsonParameters = json ? (RawJson)x.Value.Humanize() : null,
+                        MichelineParameters = mich,
+                        MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
+                        Unused = all && !param.IsEntrypointUseful(x.Key)
+                    };
+                });
+        }
+
         public async Task<RawJson> GetSmartRollupInterface(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
