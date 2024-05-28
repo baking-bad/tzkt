@@ -93,6 +93,40 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get smart rollup entrypoints
+        /// </summary>
+        /// <remarks>
+        /// Returns entrypoints of the specified smart rollup.
+        /// </remarks>
+        /// <param name="address">Smart rollup address (starting with sr1)</param>
+        /// <param name="all">If true, returns all entrypoints, including unused ones.
+        /// Unused means that the entrypoint can be normalized to a more specific one.
+        /// For example here `(or %entry1 (unit %entry2) (nat %entry3))` the `%entry1` is unused entrypoint
+        /// because it can be normalized to `%entry2` or `%entry3`</param>
+        /// <param name="json">Include parameters schema in human-readable JSON format</param>
+        /// <param name="micheline">Include parameters schema in micheline format</param>
+        /// <param name="michelson">Include parameters schema in michelson format</param>
+        /// <returns></returns>
+        [HttpGet("{address}/entrypoints")]
+        public async Task<ActionResult<IEnumerable<Entrypoint>>> GetEntrypoints(
+            [Required][Address] string address,
+            bool all = false,
+            bool json = true,
+            bool micheline = false,
+            bool michelson = false)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("all", all), ("json", json), ("micheline", micheline), ("michelson", michelson));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await SmartRollups.GetSmartRollupEntrypoints(address, all, json, micheline, michelson);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get JSON Schema [2020-12] interface for the smart rollup
         /// </summary>
         /// <remarks>
