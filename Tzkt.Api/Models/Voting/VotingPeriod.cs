@@ -65,12 +65,12 @@
         /// <summary>
         /// The number of bakers on the voters list
         /// </summary>
-        public int? TotalBakers { get; set; }
+        public int TotalBakers { get; set; }
 
         /// <summary>
         /// Total voting power of bakers on the voters list
         /// </summary>
-        public long? TotalVotingPower { get; set; }
+        public long TotalVotingPower { get; set; }
 
         #region proposal
         /// <summary>
@@ -140,7 +140,7 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public int? TotalRolls => TotalVotingPower == null ? null : (int)(TotalVotingPower / 6_000_000_000);
+        public int TotalRolls => (int)(TotalVotingPower / 6_000_000_000);
 
         /// <summary>
         /// [DEPRECATED]
