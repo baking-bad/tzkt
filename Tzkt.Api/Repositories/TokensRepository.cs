@@ -370,7 +370,7 @@ namespace Tzkt.Api.Repositories
                     SELECT "Id"
                     FROM "Tokens"
                     WHERE "ContractId" = @contractId
-                    AND "TokenId" = @tokenId
+                    AND "TokenId" = @tokenId::numeric
                     LIMIT 1
                     """, new { contractId = filter.token.contract.Eq.Value, tokenId = filter.token.tokenId.Eq });
 
