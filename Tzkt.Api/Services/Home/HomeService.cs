@@ -592,7 +592,7 @@ namespace Tzkt.Api.Services
                         Hash = x.Hash,
                         Extras = x.Extras,
                         VotingPower = x.VotingPower,
-                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / (long)period.TotalVotingPower!, 2)
+                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / period.TotalVotingPower, 2)
                     }).ToList(),
                     UpvotesQuorum = period.UpvotesQuorum,
                     PeriodEndTime = period.EndTime,
@@ -622,7 +622,7 @@ namespace Tzkt.Api.Services
                     : 0;
 
                 result.Participation = period.TotalVotingPower > 0
-                    ? Math.Round(100.0 * totalVoted / (long)period.TotalVotingPower, 2)
+                    ? Math.Round(100.0 * totalVoted / period.TotalVotingPower, 2)
                     : 0;
 
                 result.BallotsQuorum = Math.Round((double)period.BallotsQuorum!, 2);
