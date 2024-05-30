@@ -5,7 +5,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db apt update
 	docker-compose exec -T db apt install -y wget
-	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.14_mainnet.backup" -O tzkt_db.backup
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose exec -T db rm tzkt_db.backup
 	docker-compose exec -T db apt autoremove --purge -y wget
@@ -52,7 +52,7 @@ ghost-init:
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.14_ghostnet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
@@ -67,27 +67,27 @@ ghost-stop:
 ghost-db-start:
 	docker-compose -f docker-compose.ghost.yml up -d ghost-db
 
-oxford-init:
-	docker-compose -f docker-compose.oxford.yml up   -d oxford-db
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt update
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt install -y wget
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db wget "https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db rm tzkt_db.backup
-	docker-compose -f docker-compose.oxford.yml exec -T oxford-db apt autoremove --purge -y wget
+paris-init:
+	docker-compose -f docker-compose.paris.yml up   -d paris-db
+	docker-compose -f docker-compose.paris.yml exec -T paris-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.paris.yml exec -T paris-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.paris.yml exec -T paris-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.paris.yml exec -T paris-db apt update
+	docker-compose -f docker-compose.paris.yml exec -T paris-db apt install -y wget
+	docker-compose -f docker-compose.paris.yml exec -T paris-db wget "https://snapshots.tzkt.io/tzkt_v1.14_parisnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.paris.yml exec -T paris-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.paris.yml exec -T paris-db rm tzkt_db.backup
+	docker-compose -f docker-compose.paris.yml exec -T paris-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-oxford-start:
-	docker-compose -f docker-compose.oxford.yml up -d
+paris-start:
+	docker-compose -f docker-compose.paris.yml up -d
 
-oxford-stop:
-	docker-compose -f docker-compose.oxford.yml down
+paris-stop:
+	docker-compose -f docker-compose.paris.yml down
 
-oxford-db-start:
-	docker-compose -f docker-compose.oxford.yml up -d oxford-db
+paris-db-start:
+	docker-compose -f docker-compose.paris.yml up -d paris-db
 reset:
-	docker-compose -f docker-compose.oxford.yml down --volumes
-	docker-compose -f docker-compose.oxford.yml up -d oxford-db
+	docker-compose -f docker-compose.paris.yml down --volumes
+	docker-compose -f docker-compose.paris.yml up -d paris-db
