@@ -1421,6 +1421,7 @@ namespace Tzkt.Api.Repositories
             var select = """
                 m."Id",
                 m."Level",
+                m."Index",
                 m."Type",
                 m."Payload",
                 m."Protocol",
@@ -1445,6 +1446,7 @@ namespace Tzkt.Api.Repositories
                     {
                         case "id": columns.Add(@"m.""Id"""); break;
                         case "level": columns.Add(@"m.""Level"""); break;
+                        case "index": columns.Add(@"m.""Index"""); break;
                         case "timestamp": columns.Add(@"m.""Level"""); break;
                         case "type": columns.Add(@"m.""Type"""); break;
                         case "payload": columns.Add(@"m.""Payload"""); break;
@@ -1510,6 +1512,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Index = row.Index,
                 Timestamp = Times[(int)row.Level],
                 Type = SrMessageTypes.ToString((int)row.Type),
                 PredecessorHash = row.pHash,
@@ -1550,6 +1553,10 @@ namespace Tzkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "index":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Index;
                         break;
                     case "timestamp":
                         foreach (var row in rows)
