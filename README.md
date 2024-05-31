@@ -26,7 +26,7 @@ The indexer fetches raw data from the Tezos blockchain, processes it, and saves 
 First of all, install `git`, `make`, `docker`, `docker-compose`, then run the following commands:
 
 ````sh
-git clone https://github.com/baking-bad/tzkt.git
+git clone https://github.com/baking-bad/tzkt
 cd tzkt/
 
 make init  # Restores DB from the latest snapshot. Skip it, if you want to index from scratch.
@@ -87,7 +87,7 @@ postgres=# \q
 #### Download fresh snapshot (example for mainnet)
 
 ````
-wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O /tmp/tzkt_db.backup
+wget "https://snapshots.tzkt.io/tzkt_v1.14_mainnet.backup" -O /tmp/tzkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -266,11 +266,11 @@ That's it. If you want to run the API as a daemon, take a look at this guide: ht
 
 In general the steps are the same as for the mainnet, you will just need to use a different RPC endpoint and DB snapshot. Here are presets for the current testnets:
  - Ghostnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Oxfordnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup
-   - RPC node: https://rpc.tzkt.io/oxfordnet/
+ - Parisnet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_parisnet.backup
+   - RPC node: https://rpc.tzkt.io/parisnet/
 
 ### Testnets & docker
 
