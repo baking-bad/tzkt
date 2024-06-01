@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             await RemoveOutdated(block, block.Protocol);
             await TakeSnapshot(block);
+            await TakeDeactivatedSnapshot(block);
         }
     }
 }
