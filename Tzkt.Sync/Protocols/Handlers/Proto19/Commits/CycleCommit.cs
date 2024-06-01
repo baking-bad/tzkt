@@ -19,8 +19,12 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             if (block.Cycle == block.Protocol.FirstCycle)
             {
-                Cache.AppState.Get().CyclesCount--;
-                return;
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                {
+                    Cache.AppState.Get().CyclesCount--;
+                    return;
+                }
             }
 
             var index = block.Cycle + block.Protocol.ConsensusRightsDelay;
@@ -75,8 +79,12 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             if (block.Cycle == block.Protocol.FirstCycle)
             {
-                Cache.AppState.Get().CyclesCount++;
-                return;
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                {
+                    Cache.AppState.Get().CyclesCount++;
+                    return;
+                }
             }
 
             await Db.Database.ExecuteSqlRawAsync($"""

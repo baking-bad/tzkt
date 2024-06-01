@@ -6,12 +6,16 @@ namespace Tzkt.Sync.Protocols.Proto19
     {
         public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public override Task Apply(Block block, Cycle futureCycle)
+        public override async Task Apply(Block block, Cycle futureCycle)
         {
             if (block.Cycle == block.Protocol.FirstCycle)
-                return Task.CompletedTask;
+            {
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                    return;
+            }
 
-            return base.Apply(block, futureCycle);
+            await base.Apply(block, futureCycle);
         }
 
         public override async Task Revert(Block block)
@@ -22,7 +26,11 @@ namespace Tzkt.Sync.Protocols.Proto19
             block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
 
             if (block.Cycle == block.Protocol.FirstCycle)
-                return;
+            {
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                    return;
+            }
 
             await base.Revert(block);
         }

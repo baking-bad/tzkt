@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Proto19
     {
         public BakerCycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override Task ApplyNewCycle(
+        protected override async Task ApplyNewCycle(
             Block block,
             Cycle futureCycle,
             IEnumerable<RightsGenerator.BR> futureBakingRights,
@@ -15,17 +15,25 @@ namespace Tzkt.Sync.Protocols.Proto19
             Dictionary<int, long> selectedStakes)
         {
             if (block.Cycle == block.Protocol.FirstCycle)
-                return Task.CompletedTask;
+            {
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                    return;
+            }
 
-            return base.ApplyNewCycle(block, futureCycle, futureBakingRights, futureEndorsingRights, snapshots, selectedStakes);
+            await base.ApplyNewCycle(block, futureCycle, futureBakingRights, futureEndorsingRights, snapshots, selectedStakes);
         }
 
         protected override async Task RevertNewCycle(Block block)
         {
             block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            
+
             if (block.Cycle == block.Protocol.FirstCycle)
-                return;
+            {
+                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                    return;
+            }
 
             await base.RevertNewCycle(block);
         }
