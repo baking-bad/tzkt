@@ -1,7 +1,7 @@
 {
-  "url": "https://staging.api.mavryk.network/",
-  "baker": "tz1S7GgVV4FPEGUVzepKBwx22DyNikdpa4X6",
-  "originator": "KT1Aq4wWmVanpQhq4TTfjZXB5AjFpx15iQMM",
-  "delegator": "KT1GbVHbEXqEnu18FaobkExQgAJbUfoWbcWR",
-  "cycle": 10
+  "url": "https://atlasnet.api.mavryk.network/",
+  "baker": "mv1V4h45W3p4e1sjSBvRkK2uYbvkTnSuHg8g",
+  "originator": "KT1WdbBw5DXF9fXN378v8VgrPqTsCKu2BPgD",
+  "delegator": "mv1LDJuokdPMX8AYoYbiz6Dor3SKn9Y87wcS",
+  "cycle": 55
 }
