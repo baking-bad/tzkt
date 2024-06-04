@@ -1,0 +1,47 @@
+{
+  "Tests": {
+    "RunIndexer": false
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "host=db;port=5432;database=mvkt_db;username=mvkt;password=qwerty;command timeout=0;"
+  },
+  "MavrykNode": {
+    "Endpoint": "https://basenet.rpc.mavryk.network/"
+  },
+  "Protocols": {
+    "Diagnostics": true,
+    "Validation": true
+  },
+  "Quotes": {
+    "Provider": null
+  },
+  "HealthChecks": {
+    "Enabled": false
+  },
+  "ContractMetadata": {
+    "Enabled": false
+  },
+  "TokenMetadata": {
+    "Enabled": false
+  },
+  "MetricsOptions": {
+    "Enabled": false
+  },
+  "MetricEndpointsOptions": {
+    "MetricsEndpointEnabled": false,
+    "MetricsTextEndpointEnabled": false
+  },
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    },
+    "Console": {
+      "FormatterName": "simple",
+      "FormatterOptions": {
+        "UseUtcTimestamp": true
+      }
+    }
+  }
+}

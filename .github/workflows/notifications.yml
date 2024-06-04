@@ -22,15 +22,15 @@ jobs:
           to: ${{ secrets.TELEGRAM_TO }}
           token: ${{ secrets.TELEGRAM_TOKEN }}
           message: |
-            TzKT ${{ env.RELEASE_VERSION }} has been released 😻
+            MvKT ${{ env.RELEASE_VERSION }} has been released 😻
             Docker images will be available in a few minutes.
-            More info at https://github.com/baking-bad/tzkt/releases/tag/${{ env.RELEASE_VERSION }}
+            More info at https://github.com/mavryk-network/mvkt/releases/tag/${{ env.RELEASE_VERSION }}
       - name: Slack notification
         uses: Ilshidur/action-slack@master
         env:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
         with:
           args: |
-            TzKT ${{ env.RELEASE_VERSION }} has been released 😻
+            MvKT ${{ env.RELEASE_VERSION }} has been released 😻
             Docker images will be available in a few minutes.
-            More info at https://github.com/baking-bad/tzkt/releases/tag/${{ env.RELEASE_VERSION }}
+            More info at https://github.com/mavryk-network/mvkt/releases/tag/${{ env.RELEASE_VERSION }}

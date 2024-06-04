@@ -2,38 +2,38 @@ version: '3'
 
 services:
   db:
-    container_name: tzkt-db
+    container_name: mvkt-db
     restart: always
     image: postgres:16
     environment:
-      POSTGRES_USER: ${POSTGRES_USER:-tzkt}
+      POSTGRES_USER: ${POSTGRES_USER:-mvkt}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
-      POSTGRES_DB: ${POSTGRES_DB:-tzkt_db}
+      POSTGRES_DB: ${POSTGRES_DB:-mvkt_db}
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
       - 127.0.0.1:5432:5432
 
   api:
-    container_name: tzkt-api
+    container_name: mvkt-api
     restart: always
-    image: bakingbad/tzkt-api:latest
+    image: mavrykdynamics/mvkt-api:latest
     depends_on:
       - db
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
       - 0.0.0.0:5000:5000
 
   sync:
-    container_name: tzkt-sync
+    container_name: mvkt-sync
     restart: always
-    image: bakingbad/tzkt-sync:latest
+    image: mavrykdynamics/mvkt-sync:latest
     environment:
-      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-tzkt_db};username=${POSTGRES_USER:-tzkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
-      TezosNode__Endpoint: ${NODE_RPC:-https://rpc.tzkt.io/mainnet/}
+      MavrykNode__Endpoint: ${NODE_RPC:-https://basenet.rpc.mavryk.network/}
     depends_on:
       - db
     ports:
