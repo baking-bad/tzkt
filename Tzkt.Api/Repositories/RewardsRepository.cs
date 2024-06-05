@@ -1139,7 +1139,7 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "cycle": columns.Add(@"""Cycle"""); break;
+                    case "cycle": columns.Add(@"dc.""Cycle"""); break;
                     case "delegatedBalance": columns.Add(@"dc.""DelegatedBalance"""); break;
                     case "stakedBalance": columns.Add(@"dc.""StakedBalance"""); break;
                     case "baker": columns.Add(@"dc.""BakerId"""); break;
@@ -1195,7 +1195,7 @@ namespace Tzkt.Api.Repositories
                     case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
-                    case "quote": columns.Add(@"""Cycle"""); break;
+                    case "quote": columns.Add(@"dc.""Cycle"""); break;
 
                     #region deprecated
                     case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
@@ -1604,7 +1604,7 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "cycle": columns.Add(@"""Cycle"""); break;
+                case "cycle": columns.Add(@"dc.""Cycle"""); break;
                 case "delegatedBalance": columns.Add(@"dc.""DelegatedBalance"""); break;
                 case "stakedBalance": columns.Add(@"dc.""StakedBalance"""); break;
                 case "baker": columns.Add(@"dc.""BakerId"""); break;
@@ -1660,7 +1660,7 @@ namespace Tzkt.Api.Repositories
                 case "nonceRevelationRewardsStakedEdge": columns.Add(@"""NonceRevelationRewardsStakedEdge"""); break;
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
-                case "quote": columns.Add(@"""Cycle"""); break;
+                case "quote": columns.Add(@"dc.""Cycle"""); break;
 
                 #region deprecated
                 case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;

@@ -943,7 +943,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder()
                 .Append($@"SELECT {select} FROM (")
-                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"")::text AS ""Balance"" FROM (")
+                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"") AS ""Balance"" FROM (")
                         
                         .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
                         .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
