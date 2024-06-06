@@ -184,6 +184,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -205,6 +206,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
@@ -252,6 +254,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -316,6 +319,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
@@ -449,6 +453,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -510,6 +515,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)

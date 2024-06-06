@@ -58,6 +58,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -70,6 +71,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter(@"""ProducerId"" IS NOT NULL")
+                .Filter("Id", id)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
@@ -105,6 +107,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -164,6 +167,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter(@"""ProducerId"" IS NOT NULL")
+                .Filter("Id", id)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
@@ -284,6 +288,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -340,6 +345,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter(@"""ProducerId"" IS NOT NULL")
+                .Filter("Id", id)
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));

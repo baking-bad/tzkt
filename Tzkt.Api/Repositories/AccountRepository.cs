@@ -2362,15 +2362,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
-                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
@@ -2382,7 +2382,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
@@ -2502,7 +2502,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
@@ -2611,7 +2611,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
@@ -2788,7 +2788,7 @@ namespace Tzkt.Api.Repositories
                     var _contract = new AccountParameter { Eq = contract.Id };
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)

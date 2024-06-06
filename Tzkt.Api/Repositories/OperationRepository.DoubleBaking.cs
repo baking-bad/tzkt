@@ -89,6 +89,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -105,6 +106,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -147,6 +149,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -203,6 +206,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -316,6 +320,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -369,6 +374,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch

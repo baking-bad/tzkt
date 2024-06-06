@@ -839,6 +839,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters double baking operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double baking operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double baking operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters double baking operations by level.</param>
         /// <param name="timestamp">Filters double baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -854,6 +855,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -901,7 +903,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -910,25 +912,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleBakings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1000,6 +1002,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters double endorsing operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters double endorsing operations by level.</param>
         /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1015,6 +1018,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -1062,7 +1066,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -1071,25 +1075,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1161,6 +1165,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1176,6 +1181,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -1223,7 +1229,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("level", level), ("timestamp", timestamp),
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -1232,25 +1238,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoublePreendorsings(anyof, accuser, offender, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1775,6 +1781,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="sender">Filters delegations by sender. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters delegations by level.</param>
         /// <param name="timestamp">Filters delegations by timestamp.</param>
         /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
@@ -1794,6 +1801,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -1868,7 +1876,7 @@ namespace Tzkt.Api.Controllers
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("prevDelegate", prevDelegate), 
-                ("newDelegate", newDelegate), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash),
+                ("newDelegate", newDelegate), ("id", id), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash),
                 ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -1877,25 +1885,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
+                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -5379,6 +5387,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=tz1...`.</param>
         /// <param name="proposer">Filters by block proposer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="producer">Filters by block producer. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters baking operations by level.</param>
         /// <param name="timestamp">Filters baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -5395,6 +5404,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter anyof,
             AccountParameter proposer,
             AccountParameter producer,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SelectParameter select,
@@ -5444,7 +5454,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("baker", baker), ("anyof", anyof), ("proposer", proposer), ("producer", producer), ("level", level),
+                ("baker", baker), ("anyof", anyof), ("proposer", proposer), ("producer", producer), ("id", id), ("level", level),
                 ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -5453,25 +5463,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetBakings(anyof, proposer, producer, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }

@@ -109,15 +109,15 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.ActivationOperation>());
 
                 var doubleBaking = TypeSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
-                    ? Repo.GetDoubleBakings(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoubleBakings(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
                 var doubleEndorsing = TypeSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
-                    ? Repo.GetDoubleEndorsings(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoubleEndorsings(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
 
                 var doublePreendorsing = TypeSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
-                    ? Repo.GetDoublePreendorsings(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoublePreendorsings(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoublePreendorsingOperation>());
 
                 var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
@@ -129,7 +129,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.VdfRevelationOperation>());
 
                 var delegations = TypeSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
-                    ? Repo.GetDelegations(null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetDelegations(null, null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
                 var originations = TypeSubs.TryGetValue(Operations.Originations, out var originationsSub)
@@ -249,7 +249,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
                 var baking = TypeSubs.TryGetValue(Operations.Baking, out var bakingSub)
-                    ? Repo.GetBakings(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetBakings(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
                 var endorsingRewards = TypeSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
