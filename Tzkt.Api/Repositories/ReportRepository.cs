@@ -554,7 +554,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"FROM ""Blocks"" ");
             sql.Append(@"WHERE ""ProposerId"" = @account ");
             sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
-            sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" OR ""RewardStakedEdge"" > 0 OR ""Fees"" > 0) ");
+            sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" > 0 OR ""RewardStakedEdge"" > 0 OR ""Fees"" > 0) ");
 
             sql.AppendLine();
             #endregion
