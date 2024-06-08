@@ -6,96 +6,102 @@ namespace Tzkt.Api
     public class UnstakeRequestFilter : INormalizable
     {
         /// <summary>
-        /// Filter by internal TzKT id.
+        /// Filter by internal TzKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter id { get; set; }
 
         /// <summary>
-        /// Filter by cycle.
+        /// Filter by cycle.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter cycle { get; set; }
 
         /// <summary>
-        /// Filter by related baker.
+        /// Filter by related baker.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AccountParameter baker { get; set; }
 
         /// <summary>
         /// Filter by related staker.
-        /// If staker is null, then it's aggregated unstaked deposits for the baker.
+        /// If staker is null, then it's aggregated unstaked deposits for the baker.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public AccountParameter staker { get; set; }
 
         /// <summary>
-        /// Filter by requested amount.
+        /// Filter by requested amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter requestedAmount { get; set; }
 
         /// <summary>
-        /// Filter by restaked amount.
+        /// Filter by restaked amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter restakedAmount { get; set; }
 
         /// <summary>
-        /// Filter by finalized amount.
+        /// Filter by finalized amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter finalizedAmount { get; set; }
 
         /// <summary>
-        /// Filter by slashed amount.
+        /// Filter by slashed amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64Parameter slashedAmount { get; set; }
 
         /// <summary>
-        /// Filter by protocol rounding error.
+        /// Filter by protocol rounding error.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter roundingError { get; set; }
 
         /// <summary>
-        /// Filter by staking updates count.
+        /// Filter by staking updates count.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter updatesCount { get; set; }
 
         /// <summary>
-        /// Filter by level of the block where the unstake request was created.
+        /// Filter by level of the block where the unstake request was created.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter firstLevel { get; set; }
 
         /// <summary>
-        /// Filter by timestamp (ISO 8601) of the block where the unstake request was created.
+        /// Filter by timestamp (ISO 8601) of the block where the unstake request was created.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public TimestampParameter firstTime { get; set; }
 
         /// <summary>
-        /// Filter by level of the block where the unstake request was last updated.
+        /// Filter by level of the block where the unstake request was last updated.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int32Parameter lastLevel { get; set; }
 
         /// <summary>
-        /// Filter by timestamp (ISO 8601) of the block where the unstake request was last updated.
+        /// Filter by timestamp (ISO 8601) of the block where the unstake request was last updated.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public TimestampParameter lastTime { get; set; }
 
 
         /// <summary>
-        /// Filter by whether an operation has been finalized yet.
+        /// Filter by whether an operation has been finalized yet.  
         /// Click on the parameter to expand more details.
         /// </summary>
         public BoolParameter isFinalized { get; set; }
+
+        /// <summary>
+        /// Filter by finalizable amount.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter finalizableAmount { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>
@@ -113,7 +119,8 @@ namespace Tzkt.Api
             firstTime == null &&
             lastLevel == null &&
             lastTime == null &&
-            isFinalized == null;
+            isFinalized == null &&
+            finalizableAmount == null;
 
         public string Normalize(string name)
         {
@@ -121,7 +128,7 @@ namespace Tzkt.Api
                 ("id", id), ("cycle", cycle), ("baker", baker), ("staker", staker), ("requestedAmount", requestedAmount),
                 ("restakedAmount", restakedAmount), ("finalizedAmount", finalizedAmount), ("slashedAmount", slashedAmount),
                 ("roundingError", roundingError), ("updatesCount", updatesCount), ("firstLevel", firstLevel),
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("isFinalized", isFinalized));
+                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("isFinalized", isFinalized), ("finalizableAmount", finalizableAmount));
         }
     }
 }

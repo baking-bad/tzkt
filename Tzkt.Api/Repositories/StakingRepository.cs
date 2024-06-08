@@ -10,10 +10,14 @@ namespace Tzkt.Api.Repositories
     {
         #region static
         const string UnstakeRequestsQuery = @"
-            WITH ""UnstakeRequestsWithStatus"" AS (
-                SELECT *, (""RequestedAmount"" - ""FinalizedAmount"" - ""SlashedAmount"" - ""RoundingError"" = 0) AS ""IsFinalized""
-                FROM ""UnstakeRequests""
-            )";
+        WITH ""UnstakeRequestsWithFinalizableAmount"" AS NOT MATERIALIZED (
+            SELECT *, (""RequestedAmount"" - ""FinalizedAmount"" - ""RestakedAmount"" - ""SlashedAmount"" - COALESCE(""RoundingError"", 0)) AS ""FinalizableAmount""
+            FROM ""UnstakeRequests""
+        ),
+        ""UnstakeRequestsWithStatus"" AS NOT MATERIALIZED (
+            SELECT *, ""FinalizableAmount"" = 0 AS ""IsFinalized""
+            FROM ""UnstakeRequestsWithFinalizableAmount""
+        )";
         #endregion
 
         readonly NpgsqlDataSource DataSource;
@@ -266,6 +270,7 @@ namespace Tzkt.Api.Repositories
                         case "lastLevel": columns.Add(@"""LastLevel"""); break;
                         case "lastTime": columns.Add(@"""LastLevel"""); break;
                         case "isFinalized": columns.Add(@"""IsFinalized"""); break;
+                        case "finalizableAmount": columns.Add(@"""FinalizableAmount"""); break;
                     }
                 }
 
@@ -293,6 +298,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""LastLevel""", filter.lastLevel)
                 .FilterA(@"""LastLevel""", filter.lastTime)
                 .FilterA(@"""IsFinalized""", filter.isFinalized)
+                .FilterA(@"""FinalizableAmount""", filter.finalizableAmount)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"""Id""", @"""Id"""),
@@ -349,7 +355,8 @@ namespace Tzkt.Api.Repositories
                 FirstTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
                 LastTime = Times[row.LastLevel],
-                IsFinalized = row.IsFinalized
+                IsFinalized = row.IsFinalized,
+                FinalizableAmount = row.FinalizableAmount
             });
         }
 
@@ -436,6 +443,14 @@ namespace Tzkt.Api.Repositories
                     case "lastTime":
                         foreach (var row in rows)
                             result[j++][i] = Times[row.LastLevel];
+                        break;
+                    case "isFinalized":
+                        foreach (var row in rows)
+                            result[j++][i] = row.IsFinalized;
+                        break;
+                    case "finalizableAmount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FinalizableAmount;
                         break;
                 }
             }
