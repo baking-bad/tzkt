@@ -3,13 +3,13 @@
     public class UnstakeRequest
     {
         /// <summary>
-        /// Internal TzKT ID.  
+        /// Internal TzKT ID.
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }
 
         /// <summary>
-        /// Cycle at which the unstake request was created.  
+        /// Cycle at which the unstake request was created.
         /// **[sortable]**
         /// </summary>
         public int Cycle { get; set; }
@@ -55,7 +55,7 @@
         public int UpdatesCount { get; set; }
 
         /// <summary>
-        /// Level of the block where the unstake request was created.  
+        /// Level of the block where the unstake request was created.
         /// **[sortable]**
         /// </summary>
         public int FirstLevel { get; set; }
@@ -66,7 +66,7 @@
         public DateTime FirstTime { get; set; }
 
         /// <summary>
-        /// Level of the block where the unstake request was last updated.  
+        /// Level of the block where the unstake request was last updated.
         /// **[sortable]**
         /// </summary>
         public int LastLevel { get; set; }
@@ -75,5 +75,10 @@
         /// Timestamp of the block where the unstake request was last updated.
         /// </summary>
         public DateTime LastTime { get; set; }
+
+        /// <summary>
+        /// Has the unstake request been finalized.
+        /// </summary>
+        public bool IsFinalized { get; set; }
     }
 }

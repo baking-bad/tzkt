@@ -8,6 +8,14 @@ namespace Tzkt.Api.Repositories
 {
     public class StakingRepository
     {
+        #region static
+        const string UnstakeRequestsQuery = @"
+            WITH ""UnstakeRequestsWithStatus"" AS (
+                SELECT *, (""RequestedAmount"" - ""FinalizedAmount"" - ""SlashedAmount"" - ""RoundingError"" = 0) AS ""IsFinalized""
+                FROM ""UnstakeRequests""
+            )";
+        #endregion
+
         readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
@@ -257,6 +265,7 @@ namespace Tzkt.Api.Repositories
                         case "firstTime": columns.Add(@"""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"""LastLevel"""); break;
                         case "lastTime": columns.Add(@"""LastLevel"""); break;
+                        case "isFinalized": columns.Add(@"""IsFinalized"""); break;
                     }
                 }
 
@@ -267,7 +276,8 @@ namespace Tzkt.Api.Repositories
             }
 
             var sql = new SqlBuilder($@"
-                SELECT {select} FROM ""UnstakeRequests""")
+                {UnstakeRequestsQuery}
+                SELECT {select} FROM ""UnstakeRequestsWithStatus""")
                 .FilterA(@"""Id""", filter.id)
                 .FilterA(@"""Cycle""", filter.cycle)
                 .FilterA(@"""BakerId""", filter.baker)
@@ -282,6 +292,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""FirstLevel""", filter.firstTime)
                 .FilterA(@"""LastLevel""", filter.lastLevel)
                 .FilterA(@"""LastLevel""", filter.lastTime)
+                .FilterA(@"""IsFinalized""", filter.isFinalized)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"""Id""", @"""Id"""),
@@ -297,8 +308,9 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetUnstakeRequestsCount(UnstakeRequestFilter filter)
         {
-            var sql = new SqlBuilder(@"
-                SELECT COUNT(*) FROM ""UnstakeRequests""")
+            var sql = new SqlBuilder($@"
+                {UnstakeRequestsQuery}
+                SELECT COUNT(*) FROM ""UnstakeRequestsWithStatus""")
                 .FilterA(@"""Id""", filter.id)
                 .FilterA(@"""Cycle""", filter.cycle)
                 .FilterA(@"""BakerId""", filter.baker)
@@ -336,7 +348,8 @@ namespace Tzkt.Api.Repositories
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
-                LastTime = Times[row.LastLevel]
+                LastTime = Times[row.LastLevel],
+                IsFinalized = row.IsFinalized
             });
         }
 
