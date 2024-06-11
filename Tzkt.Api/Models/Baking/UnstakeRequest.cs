@@ -50,6 +50,16 @@
         public long? RoundingError { get; set; }
 
         /// <summary>
+        /// Actual amount that was/is/will be available for finalizing. 
+        /// </summary>
+        public long ActualAmount { get; set; }
+
+        /// <summary>
+        /// Status of the unstake request (`pending`, `finalizable`, `finalized`).
+        /// </summary>
+        public string Status { get; set; }
+
+        /// <summary>
         /// Number of staking updates related to the unstake request.
         /// </summary>
         public int UpdatesCount { get; set; }

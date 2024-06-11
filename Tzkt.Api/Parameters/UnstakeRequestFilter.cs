@@ -61,6 +61,18 @@ namespace Tzkt.Api
         public Int64NullParameter roundingError { get; set; }
 
         /// <summary>
+        /// Filter by actual amount.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int64Parameter actualAmount { get; set; }
+
+        /// <summary>
+        /// Filter by status.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public UnstakeRequestStatusParameter status { get; set; }
+
+        /// <summary>
         /// Filter by staking updates count.  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -102,6 +114,8 @@ namespace Tzkt.Api
             slashedAmount == null &&
             roundingError == null &&
             updatesCount == null &&
+            actualAmount == null &&
+            status == null &&
             firstLevel == null &&
             firstTime == null &&
             lastLevel == null &&
@@ -112,8 +126,8 @@ namespace Tzkt.Api
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("cycle", cycle), ("baker", baker), ("staker", staker), ("requestedAmount", requestedAmount),
                 ("restakedAmount", restakedAmount), ("finalizedAmount", finalizedAmount), ("slashedAmount", slashedAmount),
-                ("roundingError", roundingError), ("updatesCount", updatesCount), ("firstLevel", firstLevel),
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
+                ("roundingError", roundingError), ("actualAmount", actualAmount), ("status", status), ("updatesCount", updatesCount),
+                ("firstLevel", firstLevel), ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime));
         }
     }
 }

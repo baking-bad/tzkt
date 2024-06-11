@@ -1380,6 +1380,29 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!UnstakeRequestStatuses.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid unstake request status.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetSrCommitmentStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

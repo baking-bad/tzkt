@@ -382,6 +382,45 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, UnstakeRequestStatusParameter status, int unfrozenCycle)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+            {
+                switch (status.Eq)
+                {
+                    case UnstakeRequestStatuses.Pending:
+                        AppendFilter($"{cycleCol} > {unfrozenCycle}");
+                        break;
+                    case UnstakeRequestStatuses.Finalizable:
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} != 0)");
+                        break;
+                    case UnstakeRequestStatuses.Finalized:
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} = 0)");
+                        break;
+                }
+            }
+
+            if (status.Ne != null)
+            {
+                switch (status.Ne)
+                {
+                    case UnstakeRequestStatuses.Pending:
+                        AppendFilter($"{cycleCol} <= {unfrozenCycle}");
+                        break;
+                    case UnstakeRequestStatuses.Finalizable:
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} = 0)");
+                        break;
+                    case UnstakeRequestStatuses.Finalized:
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} != 0)");
+                        break;
+                }
+            }
+
+            return this;
+        }
+
         public SqlBuilder FilterA(string column, RefutationGameStatusParameter status)
         {
             if (status == null) return this;

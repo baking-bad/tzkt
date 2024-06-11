@@ -10,12 +10,16 @@ namespace Tzkt.Api.Repositories
     {
         readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
+        readonly ProtocolsCache Protocols;
+        readonly StateCache State;
         readonly TimeCache Times;
 
-        public StakingRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
+        public StakingRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, StateCache state, TimeCache times)
         {
             DataSource = dataSource;
             Accounts = accounts;
+            Protocols = protocols;
+            State = state;
             Times = times;
         }
 
@@ -233,7 +237,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region unstake requests
-        async Task<IEnumerable<dynamic>> QueryUnstakeRequestsAsync(UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryUnstakeRequestsAsync(int unfrozenCycle, UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -257,6 +261,14 @@ namespace Tzkt.Api.Repositories
                         case "firstTime": columns.Add(@"""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"""LastLevel"""); break;
                         case "lastTime": columns.Add(@"""LastLevel"""); break;
+
+                        case "actualAmount":
+                            columns.Add(@"""ActualAmount""");
+                            break;
+                        case "status":
+                            columns.Add(@"""Cycle""");
+                            columns.Add(@"""RemainingAmount""");
+                            break;
                     }
                 }
 
@@ -266,8 +278,16 @@ namespace Tzkt.Api.Repositories
                 select = string.Join(',', columns);
             }
 
-            var sql = new SqlBuilder($@"
-                SELECT {select} FROM ""UnstakeRequests""")
+
+            var sql = new SqlBuilder($"""
+                WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
+                	SELECT 	*,
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                	FROM "UnstakeRequests"
+                )
+                SELECT {select} FROM "UnstakeRequestsExt"
+                """)
                 .FilterA(@"""Id""", filter.id)
                 .FilterA(@"""Cycle""", filter.cycle)
                 .FilterA(@"""BakerId""", filter.baker)
@@ -277,6 +297,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""FinalizedAmount""", filter.finalizedAmount)
                 .FilterA(@"""SlashedAmount""", filter.slashedAmount)
                 .FilterA(@"""RoundingError""", filter.roundingError)
+                .FilterA(@"""ActualAmount""", filter.actualAmount)
+                .FilterA(@"""Cycle""", @"""RemainingAmount""", filter.status, unfrozenCycle)
                 .FilterA(@"""UpdatesCount""", filter.updatesCount)
                 .FilterA(@"""FirstLevel""", filter.firstLevel)
                 .FilterA(@"""FirstLevel""", filter.firstTime)
@@ -297,8 +319,17 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetUnstakeRequestsCount(UnstakeRequestFilter filter)
         {
-            var sql = new SqlBuilder(@"
-                SELECT COUNT(*) FROM ""UnstakeRequests""")
+            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+
+            var sql = new SqlBuilder("""
+                WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
+                	SELECT 	*,
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                	FROM "UnstakeRequests"
+                )
+                SELECT COUNT(*) FROM "UnstakeRequestsExt"
+                """)
                 .FilterA(@"""Id""", filter.id)
                 .FilterA(@"""Cycle""", filter.cycle)
                 .FilterA(@"""BakerId""", filter.baker)
@@ -308,6 +339,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""FinalizedAmount""", filter.finalizedAmount)
                 .FilterA(@"""SlashedAmount""", filter.slashedAmount)
                 .FilterA(@"""RoundingError""", filter.roundingError)
+                .FilterA(@"""ActualAmount""", filter.actualAmount)
+                .FilterA(@"""Cycle""", @"""RemainingAmount""", filter.status, unfrozenCycle)
                 .FilterA(@"""UpdatesCount""", filter.updatesCount)
                 .FilterA(@"""FirstLevel""", filter.firstLevel)
                 .FilterA(@"""FirstLevel""", filter.firstTime)
@@ -320,7 +353,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<UnstakeRequest>> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination)
         {
-            var rows = await QueryUnstakeRequestsAsync(filter, pagination);
+            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+            var rows = await QueryUnstakeRequestsAsync(unfrozenCycle, filter, pagination);
             return rows.Select(row => new UnstakeRequest
             {
                 Id = row.Id,
@@ -332,6 +366,8 @@ namespace Tzkt.Api.Repositories
                 FinalizedAmount = row.FinalizedAmount,
                 SlashedAmount = row.SlashedAmount,
                 RoundingError = row.RoundingError,
+                ActualAmount = row.ActualAmount,
+                Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle),
                 UpdatesCount = row.UpdatesCount,
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
@@ -342,7 +378,8 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object[][]> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var rows = await QueryUnstakeRequestsAsync(filter, pagination, fields);
+            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+            var rows = await QueryUnstakeRequestsAsync(unfrozenCycle, filter, pagination, fields);
 
             var result = new object[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
@@ -403,6 +440,14 @@ namespace Tzkt.Api.Repositories
                     case "roundingError":
                         foreach (var row in rows)
                             result[j++][i] = row.RoundingError;
+                        break;
+                    case "actualAmount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ActualAmount;
+                        break;
+                    case "status":
+                        foreach (var row in rows)
+                            result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle);
                         break;
                     case "updatesCount":
                         foreach (var row in rows)
