@@ -17,7 +17,7 @@
             "NetXgbcrNtXD2yA" => "mumbainet",
             "NetXyuzvDo2Ugzb" => "nairobinet",
             "NetXxWsskGahzQB" => "oxfordnet",
-            "NetXR64bNAYkP4S" => "parisnet",
+            "NetXXWAHLEvre9b" => "parisnet",
             _ => "private"
         };
     }

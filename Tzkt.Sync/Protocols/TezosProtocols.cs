@@ -34,6 +34,7 @@ namespace Tzkt.Sync
             services.AddScoped<Proto17Handler>();
             services.AddScoped<Proto18Handler>();
             services.AddScoped<Proto19Handler>();
+            services.AddScoped<Proto20Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -91,6 +92,7 @@ namespace Tzkt.Sync
                 "ProxfordYmVfjWnRcgjWH36fW6PArwqykTFzotUxRs6gmTcZDuH" => services.GetRequiredService<Proto18Handler>(),
                 "PtParisBQscdCm6Cfow6ndeU6wKJyA3aV1j4D3gQBQMsTQyJCrz" => services.GetRequiredService<Proto19Handler>(),
                 "PtParisBxoLz5gzMmn3d9WBQNoPSZakgnkMC2VNuQ3KXfUtUQeZ" => services.GetRequiredService<Proto19Handler>(),
+                "PsParisCZo7KAh1Z1smVd9ZMZ1HHn5gkzbM94V3PLCpknFWhUAi" => services.GetRequiredService<Proto20Handler>(),
                 _ => null,
             };
         }
