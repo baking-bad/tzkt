@@ -511,8 +511,17 @@ namespace Tzkt.Api.Services
         {
             var protocol = Protocols.Current;
 
-            var total = await db.QueryFirstOrDefaultAsync(
-                $@"SELECT COUNT(*)::integer as bakers, COALESCE(SUM(""StakingBalance""), 0)::bigint AS staking FROM ""Accounts"" WHERE ""Type"" = 1 AND ""Staked"" = true");
+            var total = await db.QueryFirstOrDefaultAsync($"""
+                SELECT  COUNT(*)::integer as "ActiveBakers",
+                        COALESCE(SUM("StakingBalance"), 0)::bigint AS "TotalStaking",
+                        COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
+                        COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
+                        COALESCE(SUM("Balance" - "OwnStakedBalance"), 0)::bigint AS "OwnDelegated",
+                        COALESCE(SUM("DelegatedBalance"), 0)::bigint AS "ExternalDelegated"
+                FROM "Accounts"
+                WHERE "Type" = 1
+                AND "Staked" = true
+            """);
 
             var funded = await db.ExecuteScalarAsync<int>($"""
                 SELECT COUNT(*)
@@ -539,14 +548,32 @@ namespace Tzkt.Api.Services
             var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
             var totalCreatedPerYear = (maxRewardsPerBlock + lbSubsidyPerBlock) * blocksPerYear;
 
+            var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
+            var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
+            var totalBakingPower = totalStaked + totalDelegated / protocol.StakePowerMultiplier;
+
             return new StakingData
             {
-                TotalStaking = total.staking,
-                StakingPercentage = Math.Round(100.0 * total.staking / totalSupply, 2),
-                AvgRoi = Math.Round(100.0 * totalRewardsPerYear / total.staking, 2),
+                TotalStaking = total.TotalStaking,
+                StakingPercentage = Math.Round(100.0 * total.TotalStaking / totalSupply, 2),
+                AvgRoi = Math.Round(100.0 * totalRewardsPerYear / total.TotalStaking, 2),
                 Inflation = Math.Round(100.0 * totalCreatedPerYear / totalSupply, 2),
-                Bakers = total.bakers,
-                FundedBakers = funded
+                Bakers = total.ActiveBakers,
+                FundedBakers = funded,
+                OwnStaked = total.OwnStaked,
+                OwnStakedPercentage = Math.Round(100.0 * total.OwnStaked / totalSupply, 2),
+                ExternalStaked = total.ExternalStaked,
+                ExternalStakedPercentage = Math.Round(100.0 * total.ExternalStaked / totalSupply, 2),
+                TotalStaked = totalStaked,
+                TotalStakedPercentage = Math.Round(100.0 * totalStaked / totalSupply, 2),
+                OwnDelegated = total.OwnDelegated,
+                OwnDelegatedPercentage = Math.Round(100.0 * total.OwnDelegated / totalSupply, 2),
+                ExternalDelegated = total.ExternalDelegated,
+                ExternalDelegatedPercentage = Math.Round(100.0 * total.ExternalDelegated / totalSupply, 2),
+                TotalDelegated = totalDelegated,
+                TotalDelegatedPercentage = Math.Round(100.0 * totalDelegated / totalSupply, 2),
+                StakingApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2),
+                DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier
             };
         }
 
