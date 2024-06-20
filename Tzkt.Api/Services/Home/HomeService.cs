@@ -322,13 +322,11 @@ namespace Tzkt.Api.Services
         CycleData GetCycleData()
         {
             var state = State.Current;
-            var proto = Protocols.Current;
-
             var cycle = state.Cycle;
             var level = state.Level;
-            var cycleSize = proto.BlocksPerCycle;
-            var firstLevel = proto.GetCycleStart(cycle);
-            var lastLevel = proto.GetCycleEnd(cycle);
+            var cycleSize = Protocols.FindByCycle(cycle).BlocksPerCycle;
+            var firstLevel = Protocols.FindByCycle(cycle).GetCycleStart(cycle);
+            var lastLevel = Protocols.FindByCycle(cycle).GetCycleEnd(cycle);
 
             return new CycleData
             {

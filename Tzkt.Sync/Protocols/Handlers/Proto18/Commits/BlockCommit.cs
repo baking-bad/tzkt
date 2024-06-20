@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (metadata.RequiredArray("deactivated").Count() > 0)
                 events |= BlockEvents.Deactivations;
 
-            if ((level - protocol.GetCycleStart(protocol.GetCycle(level)) + 1) % protocol.BlocksPerSnapshot == 0)
+            if ((level - Cache.Protocols.GetCycleStart(protocol.GetCycle(level)) + 1) % protocol.BlocksPerSnapshot == 0)
                 events |= BlockEvents.BalanceSnapshot;
 
             var payloadRound = header.RequiredInt32("payload_round");

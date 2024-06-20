@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task ClearProtocol()
         {
             await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Protocols"" WHERE ""Code"" = 1");
-            Cache.Protocols.Reset();
+            await Cache.Protocols.ResetAsync();
         }
 
         protected virtual void SetParameters(Protocol protocol, JToken parameters)
@@ -142,7 +142,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(prev);
             prev.LastLevel = -1;
 
-            Cache.Protocols.Reset();
+            await Cache.Protocols.ResetAsync();
         }
 
         protected virtual void UpgradeParameters(Protocol protocol, Protocol prev) { }

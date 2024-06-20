@@ -107,7 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
         {
-            return protocol.GetCycleEnd(block.Cycle);
+            return Cache.Protocols.GetCycleEnd(block.Cycle);
         }
     }
 }

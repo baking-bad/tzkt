@@ -101,7 +101,7 @@ namespace Tzkt.Sync.Protocols
                 DELETE FROM ""Blocks"" WHERE ""Level"" = {curr.Level};");
 
             await Cache.Statistics.ResetAsync();
-            Cache.Protocols.Reset();
+            await Cache.Protocols.ResetAsync();
             Cache.Blocks.Reset();
 
             #region update state

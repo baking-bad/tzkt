@@ -59,7 +59,6 @@ namespace Tzkt.Sync.Services
             BakerCycles.Reset();
             BakingRights.Reset();
             Blocks.Reset();
-            Protocols.Reset();
             Proposals.Reset();
             Periods.Reset();
             Software.Reset();
@@ -76,6 +75,7 @@ namespace Tzkt.Sync.Services
             RefutationGames.Reset();
             UnstakeRequests.Reset();
 
+            await Protocols.ResetAsync();
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
             await Statistics.ResetAsync();

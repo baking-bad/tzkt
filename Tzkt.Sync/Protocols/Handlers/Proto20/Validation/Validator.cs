@@ -266,7 +266,7 @@ namespace Tzkt.Sync.Protocols.Proto20
             var level = content.RequiredInt32("level");
             var proto = await Cache.Protocols.FindByLevelAsync(level);
 
-            if ((level - proto.GetCycleStart(proto.GetCycle(level)) + 1) % proto.BlocksPerCommitment != 0)
+            if ((level - Cache.Protocols.GetCycleStart(proto.GetCycle(level)) + 1) % proto.BlocksPerCommitment != 0)
                 throw new ValidationException("invalid seed nonce revelation level");
 
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
