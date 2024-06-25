@@ -349,6 +349,9 @@ namespace Tzkt.Api.Repositories
             bool includeBigmaps = false)
         {
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
@@ -554,6 +557,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
@@ -848,6 +854,9 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
