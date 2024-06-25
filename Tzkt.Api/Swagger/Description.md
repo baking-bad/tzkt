@@ -41,7 +41,7 @@ It's available for the following Tezos networks with the following base URLs:
 - Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
 - Parisnet: `https://api.parisnet.tzkt.io/` ([view docs](https://api.parisnet.tzkt.io))
 
-### Sending requests
+### Sending Requests
 
 To send a request to Free TzKT API you need literally nothing. Just take the base URL of the particular network
 (for example, Tezos mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
@@ -84,7 +84,7 @@ If your key was compromised, just let us know and we will issue a new one.
 Also note that passing the API key via HTTP headers is more secure, because in HTTPS headers are encrypted,
 but query string is not, so the key can be unintentionally exposed to third parties.
 
-### Sending requests
+### Sending Requests
 
 Sending a request with the API key passed as a query string parameter:
 

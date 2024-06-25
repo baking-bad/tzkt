@@ -131,9 +131,13 @@ namespace Tzkt.Api.Repositories
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
                     "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakedBalance" => ("OwnStakedBalance", "OwnStakedBalance"),
+                    "externalStakedBalance" => ("ExternalStakedBalance", "ExternalStakedBalance"),
+                    "delegatedBalance" => ("DelegatedBalance", "DelegatedBalance"),
                     "stakingBalance" => ("StakingBalance", "StakingBalance"),
                     "balance" => ("Balance", "Balance"),
                     "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    "stakersCount" => ("StakersCount", "StakersCount"),
                     _ => ("Id", "Id")
                 });
 
@@ -355,9 +359,13 @@ namespace Tzkt.Api.Repositories
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
                     "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakedBalance" => ("OwnStakedBalance", "OwnStakedBalance"),
+                    "externalStakedBalance" => ("ExternalStakedBalance", "ExternalStakedBalance"),
+                    "delegatedBalance" => ("DelegatedBalance", "DelegatedBalance"),
                     "stakingBalance" => ("StakingBalance", "StakingBalance"),
                     "balance" => ("Balance", "Balance"),
                     "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    "stakersCount" => ("StakersCount", "StakersCount"),
                     _ => ("Id", "Id")
                 });
 
@@ -857,9 +865,13 @@ namespace Tzkt.Api.Repositories
                 {
                     "activationLevel" => ("ActivationLevel", "ActivationLevel"),
                     "deactivationLevel" => ("DeactivationLevel", "DeactivationLevel"),
+                    "stakedBalance" => ("OwnStakedBalance", "OwnStakedBalance"),
+                    "externalStakedBalance" => ("ExternalStakedBalance", "ExternalStakedBalance"),
+                    "delegatedBalance" => ("DelegatedBalance", "DelegatedBalance"),
                     "stakingBalance" => ("StakingBalance", "StakingBalance"),
                     "balance" => ("Balance", "Balance"),
                     "numDelegators" => ("DelegatorsCount", "DelegatorsCount"),
+                    "stakersCount" => ("StakersCount", "StakersCount"),
                     _ => ("Id", "Id")
                 });
 
