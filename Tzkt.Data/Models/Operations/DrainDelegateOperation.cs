@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public int TargetId { get; set; }
         public long Amount { get; set; }
         public long Fee { get; set; }
+        public long AllocationFee { get; set; }
     }
 
     public static class DrainDelegateOperationModel

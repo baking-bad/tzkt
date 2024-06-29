@@ -915,7 +915,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             #region delegate
-            sql.Append(@"SUM(-""Amount"" - ""Fee"") as ""Change"" ");
+            sql.Append(@"SUM(-""Amount"" - ""Fee"" - ""AllocationFee"") as ""Change"" ");
             sql.Append(@"FROM ""DrainDelegateOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");
 
@@ -1782,7 +1782,7 @@ namespace Tzkt.Api.Repositories
 
             #region delegate
             sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(-""Amount"" - ""Fee"") as ""Change"" ");
+            sql.Append(@"(-""Amount"" - ""Fee"" - ""AllocationFee"") as ""Change"" ");
 
             sql.Append(@"FROM ""DrainDelegateOps"" ");
             sql.Append(@"WHERE ""DelegateId"" = @account ");

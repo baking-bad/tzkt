@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto15
@@ -17,15 +15,37 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
 
-            var amountUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("contract") == target.Address);
-            var amount = amountUpdate.ValueKind != JsonValueKind.Undefined
-                ? amountUpdate.RequiredInt64("change")
+            var allocationFeeUpdate = balanceUpdates.SingleOrDefault(x => x.RequiredString("kind") == "burned");
+            var allocationFee = allocationFeeUpdate.ValueKind != JsonValueKind.Undefined
+                ? allocationFeeUpdate.RequiredInt64("change")
                 : 0;
 
-            var feeUpdate = balanceUpdates.FirstOrDefault(x => x.RequiredString("contract") == block.Proposer.Address);
-            var fee = feeUpdate.ValueKind != JsonValueKind.Undefined
-                ? feeUpdate.RequiredInt64("change")
-                : 0;
+            var deposits = balanceUpdates
+                .Where(x => x.RequiredString("kind") == "contract" && x.RequiredInt64("change") > 0)
+                .OrderByDescending(x => x.RequiredInt64("change"))
+                .ToList();
+
+            var amount = 0L;
+            var fee = 0L;
+
+            if (deposits.Count == 2)
+            {
+                amount = deposits.First(x => x.RequiredString("contract") == target.Address).RequiredInt64("change");
+                fee = deposits.Last(x => x.RequiredString("contract") == block.Proposer.Address).RequiredInt64("change");
+            }
+            else if (deposits.Count == 1)
+            {
+                if (deposits[0].RequiredString("contract") == target.Address)
+                    amount = deposits[0].RequiredInt64("change");
+                else if (deposits[0].RequiredString("contract") == block.Proposer.Address)
+                    fee = deposits[0].RequiredInt64("change");
+                else
+                    throw new Exception("Unexpected balance updates behavior");
+            }
+            else if (deposits.Count != 0)
+            {
+                throw new Exception("Unexpected balance updates behavior");
+            }
 
             var operation = new DrainDelegateOperation
             {
@@ -37,7 +57,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                 DelegateId = delegat.Id,
                 TargetId = target.Id,
                 Amount = amount,
-                Fee = fee
+                Fee = fee,
+                AllocationFee = allocationFee
             };
             #endregion
 
@@ -58,6 +79,9 @@ namespace Tzkt.Sync.Protocols.Proto15
             delegat.Balance -= operation.Fee;
             delegat.StakingBalance -= operation.Fee;
 
+            delegat.Balance -= operation.AllocationFee;
+            delegat.StakingBalance -= operation.AllocationFee;
+
             target.Balance += operation.Amount;
             if (targetDelegate != null)
             {
@@ -76,6 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             block.Fees += operation.Fee;
 
             Cache.AppState.Get().DrainDelegateOpsCount++;
+
+            Cache.Statistics.Current.TotalBurned += operation.AllocationFee;
             #endregion
 
             Db.DrainDelegateOps.Add(operation);
@@ -103,6 +129,9 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             delegat.Balance += operation.Fee;
             delegat.StakingBalance += operation.Fee;
+
+            delegat.Balance += operation.AllocationFee;
+            delegat.StakingBalance += operation.AllocationFee;
 
             target.Balance -= operation.Amount;
             if (targetDelegate != null)

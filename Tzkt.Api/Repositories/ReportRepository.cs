@@ -1520,7 +1520,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Received"", ");
             sql.Append(@"null::integer as ""From"", ");
             sql.Append(@"""Amount"" as ""Sent"", ");
-            sql.Append(@"""Fee"" as ""Fee"", ");
+            sql.Append(@"(""Fee"" + ""AllocationFee"") as ""Fee"", ");
             sql.Append(@"""TargetId"" as ""To"" ");
 
             sql.Append(@"FROM ""DrainDelegateOps"" ");

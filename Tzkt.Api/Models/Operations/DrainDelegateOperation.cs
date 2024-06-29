@@ -52,6 +52,11 @@
         /// </summary>
         public long Fee { get; set; }
 
+        /// <summary>
+        /// The amount of funds burned from the drained baker for account creation (micro tez)
+        /// </summary>
+        public long AllocationFee { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

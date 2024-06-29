@@ -353,7 +353,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""Fee"")::bigint AS fee, SUM(""AllocationFee"")::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
@@ -431,7 +431,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DelegationOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
-                    SELECT SUM(""Fee"")::bigint AS fee, 0::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    SELECT SUM(""Fee"")::bigint AS fee, SUM(""AllocationFee"")::bigint AS burn FROM ""DrainDelegateOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""IncreasePaidStorageOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL

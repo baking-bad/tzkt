@@ -41,6 +41,7 @@ namespace Tzkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -67,6 +68,7 @@ namespace Tzkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -108,6 +110,7 @@ namespace Tzkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -139,6 +142,7 @@ namespace Tzkt.Api.Repositories
                     case "target": columns.Add(@"o.""TargetId"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
                     case "fee": columns.Add(@"o.""Fee"""); break;
+                    case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -209,6 +213,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Fee;
                         break;
+                    case "allocationFee":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AllocationFee;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -244,6 +252,7 @@ namespace Tzkt.Api.Repositories
                 case "target": columns.Add(@"o.""TargetId"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
                 case "fee": columns.Add(@"o.""Fee"""); break;
+                case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -310,6 +319,10 @@ namespace Tzkt.Api.Repositories
                 case "fee":
                     foreach (var row in rows)
                         result[j++] = row.Fee;
+                    break;
+                case "allocationFee":
+                    foreach (var row in rows)
+                        result[j++] = row.AllocationFee;
                     break;
                 case "quote":
                     foreach (var row in rows)

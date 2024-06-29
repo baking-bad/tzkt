@@ -35,6 +35,7 @@ namespace Tzkt.Sync.Tests.Database
             totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.RevelationPenaltyOps.SumAsync(x => x.Loss);
+            totalBurned += await db.DrainDelegateOps.SumAsync(x => x.AllocationFee);
             totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));
             totalBurned += await db.DalPublishCommitmentOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
             totalBurned += await db.DelegationOps.Where(x => x.Status == OperationStatus.Applied).SumAsync(x => (x.StorageFee ?? 0) + (x.AllocationFee ?? 0));
