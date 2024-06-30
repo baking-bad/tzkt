@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Netezos.Encoding;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -89,16 +90,19 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Total amount minted.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalMinted { get; set; }
 
         /// <summary>
         /// Total amount burned.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalBurned { get; set; }
 
         /// <summary>
         /// Total amount exists.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalSupply { get; set; }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -20,6 +21,7 @@ namespace Tzkt.Api.Models
         /// Balance (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger Balance { get; set; }
     }
 }

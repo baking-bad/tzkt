@@ -18,6 +18,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Token id, unique within the contract.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TokenId { get; set; }
 
         /// <summary>
@@ -28,6 +29,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Total number of existing tokens (raw value, not divided by `decimals`).
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalSupply { get; set; }
 
         /// <summary>

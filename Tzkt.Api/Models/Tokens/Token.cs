@@ -20,6 +20,7 @@ namespace Tzkt.Api.Models
         /// Token id, unique within the contract.  
         /// **[sortable]**
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TokenId { get; set; }
 
         /// <summary>
@@ -75,16 +76,19 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Total number of minted tokens (raw value, not divided by `decimals`).
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalMinted { get; set; }
 
         /// <summary>
         /// Total number of burned tokens (raw value, not divided by `decimals`).
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalBurned { get; set; }
 
         /// <summary>
         /// Total number of existing tokens (raw value, not divided by `decimals`).
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalSupply { get; set; }
 
         /// <summary>

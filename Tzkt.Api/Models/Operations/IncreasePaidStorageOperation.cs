@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -90,6 +91,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount of storage in bytes prepaid.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger Amount { get; set; }
 
         /// <summary>

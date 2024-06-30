@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -75,6 +76,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Frozen deposits limit (mutez), or `null` if no limit.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Limit { get; set; }
 
         /// <summary>

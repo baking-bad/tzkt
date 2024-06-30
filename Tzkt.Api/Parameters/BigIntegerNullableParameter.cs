@@ -15,6 +15,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Eq { get; set; }
 
         /// <summary>
@@ -23,6 +24,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ne=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Ne { get; set; }
 
         /// <summary>
@@ -31,6 +33,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.gt=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Gt { get; set; }
 
         /// <summary>
@@ -39,6 +42,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ge=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Ge { get; set; }
 
         /// <summary>
@@ -47,6 +51,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.lt=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Lt { get; set; }
 
         /// <summary>
@@ -55,6 +60,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.le=1234`.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Le { get; set; }
 
         /// <summary>
@@ -63,6 +69,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
+        [JsonSchemaType(typeof(List<string>), IsNullable = true)]
         public List<BigInteger> In { get; set; }
 
         /// <summary>
@@ -71,6 +78,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
+        [JsonSchemaType(typeof(List<string>), IsNullable = true)]
         public List<BigInteger> Ni { get; set; }
 
         /// <summary>

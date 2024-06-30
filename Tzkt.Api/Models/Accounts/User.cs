@@ -57,6 +57,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount of "pseudo-tokens" received after staking. These pseudotokens are used for unstaking.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? StakedPseudotokens { get; set; }
 
         /// <summary>

@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using Netezos.Encoding;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -43,6 +44,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Total amount exists.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TotalSupply { get; set; }
     }
 }

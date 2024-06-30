@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -49,6 +50,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Amount of staking pseudotokens minted or burnt.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
         public BigInteger? Pseudotokens { get; set; }
 
         /// <summary>

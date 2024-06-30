@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Tzkt.Api.Models
 {
@@ -25,6 +26,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Balance.  
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger Balance { get; set; }
     }
 }

@@ -18,6 +18,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Token id, unique within the contract.
         /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = false)]
         public BigInteger TokenId { get; set; }
 
         /// <summary>
