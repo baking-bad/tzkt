@@ -302,6 +302,28 @@
         public QuoteShort Quote { get; set; }
         #endregion
 
+        /// <summary>
+        /// Rewards, corresponding to baker's stake
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long TotalStakedRewards => BlockRewardsStakedOwn + BlockRewardsStakedEdge + EndorsementRewardsStakedOwn + EndorsementRewardsStakedEdge + NonceRevelationRewardsStakedOwn + NonceRevelationRewardsStakedEdge + VdfRevelationRewardsStakedOwn + VdfRevelationRewardsStakedEdge;
+
+        /// <summary>
+        /// Rewards, corresponding to delegated stake
+        /// (it is not frozen and can be spent immediately).
+        /// </summary>
+        public long TotalDelegatedRewards => BlockRewardsDelegated + EndorsementRewardsDelegated + NonceRevelationRewardsDelegated + VdfRevelationRewardsDelegated;
+
+        /// <summary>
+        /// Amount of baker's own staked balance lost due to slashing
+        /// </summary>
+        public long TotalStakedLosses => DoubleBakingLostStaked + DoubleEndorsingLostStaked + DoublePreendorsingLostStaked;
+
+        /// <summary>
+        /// Amount of baker's unstaked balance lost due to slashing
+        /// </summary>
+        public long TotalUnstakedLosses => DoubleBakingLostUnstaked + DoubleEndorsingLostUnstaked + DoublePreendorsingLostUnstaked;
+
         #region deprecated
         /// <summary>
         /// [DEPRECATED]
