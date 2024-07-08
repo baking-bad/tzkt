@@ -6,7 +6,7 @@ using NJsonSchema.Annotations;
 namespace Mvkt.Api
 {
     [ModelBinder(BinderType = typeof(BigIntegerNullabletBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
     public class BigIntegerNullableParameter : INormalizable
     {
         /// <summary>

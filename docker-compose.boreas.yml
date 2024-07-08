@@ -1,0 +1,43 @@
+version: '3'
+
+services:
+  boreas-db:
+    container_name: boreas-db
+    restart: always
+    image: postgres:16
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-mvkt}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
+      POSTGRES_DB: ${POSTGRES_DB:-mvkt_db}
+    volumes:
+      - boreas-postgres:/var/lib/postgresql/data
+    ports:
+      - 127.0.0.1:5435:5432
+
+  boreas-api:
+    container_name: boreas-api
+    restart: always
+    image: mavrykdynamics/mvkt-api:latest
+    depends_on:
+      - boreas-db
+    environment:
+      ConnectionStrings__DefaultConnection: host=boreas-db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
+    ports:
+      - 0.0.0.0:5030:5000
+
+  boreas-sync:
+    container_name: boreas-sync
+    restart: always
+    image: mavrykdynamics/mvkt-api:latest
+    environment:
+      ConnectionStrings__DefaultConnection: host=boreas-db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
+      Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
+      MavrykNode__Endpoint: https://boreasnet.rpc.mavryk.network/
+    depends_on:
+      - boreas-db
+    ports:
+      - 0.0.0.0:5031:5001
+
+volumes:
+  boreas-postgres:

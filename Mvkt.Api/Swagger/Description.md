@@ -20,8 +20,8 @@ And don't forget to star MvKT project [on GitHub](https://github.com/mavryk-netw
 # Get Started
 
 There are two API services provided for public use:
-- **Free TzKT API** with free anonymous access;
-- **TzKT Pro** with paid subscriptions with increased rate limits, off-chain data, extended support and business-level SLA.
+- **Free MvKT API** with free anonymous access;
+- **MvKT Pro** with paid subscriptions with increased rate limits, off-chain data, extended support and business-level SLA.
 
 You can find more details about differences between available tiers [here](https://tzkt.io/api).
 

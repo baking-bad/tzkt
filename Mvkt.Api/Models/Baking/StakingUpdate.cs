@@ -6,7 +6,7 @@ namespace Mvkt.Api.Models
     public class StakingUpdate
     {
         /// <summary>
-        /// Internal TzKT ID.  
+        /// Internal MvKT ID.  
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }

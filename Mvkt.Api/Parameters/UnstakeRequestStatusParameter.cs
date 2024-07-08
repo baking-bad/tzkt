@@ -5,8 +5,8 @@ using NJsonSchema.Annotations;
 namespace Mvkt.Api
 {
     [ModelBinder(BinderType = typeof(UnstakeRequestStatusBinder))]
-    [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "pending,finalizable,finalized")]
+    [JsonSchemaExtensionData("x-mvkt-extension", "query-parameter")]
+    [JsonSchemaExtensionData("x-mvkt-query-parameter", "pending,finalizable,finalized")]
     public class UnstakeRequestStatusParameter : INormalizable
     {
         /// <summary>

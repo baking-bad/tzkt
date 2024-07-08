@@ -3,7 +3,7 @@
     public class UnstakeRequest
     {
         /// <summary>
-        /// Internal TzKT ID.  
+        /// Internal MvKT ID.  
         /// **[sortable]**
         /// </summary>
         public int Id { get; set; }

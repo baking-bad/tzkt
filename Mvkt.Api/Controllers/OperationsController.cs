@@ -839,7 +839,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="anyof">Filters double baking operations by any of the specified fields. Example: `anyof.accuser.offender=mv1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double baking operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double baking operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="id">Filters operations by internal MvKT id.</param>
         /// <param name="level">Filters double baking operations by level.</param>
         /// <param name="timestamp">Filters double baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1002,7 +1002,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="anyof">Filters double endorsing operations by any of the specified fields. Example: `anyof.accuser.offender=mv1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="id">Filters operations by internal MvKT id.</param>
         /// <param name="level">Filters double endorsing operations by level.</param>
         /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1165,7 +1165,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=mv1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
         /// <param name="offender">Filters by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="id">Filters operations by internal MvKT id.</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -1781,7 +1781,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="sender">Filters delegations by sender. Allowed fields for `.eqx` mode: `prevDelegate`, `newDelegate`.</param>
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `newDelegate`.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `prevDelegate`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="id">Filters operations by internal MvKT id.</param>
         /// <param name="level">Filters delegations by level.</param>
         /// <param name="timestamp">Filters delegations by timestamp.</param>
         /// <param name="senderCodeHash">Filters by `senderCodeHash`.</param>
@@ -5387,7 +5387,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=mv1...`.</param>
         /// <param name="proposer">Filters by block proposer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="producer">Filters by block producer. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="id">Filters operations by internal MvKT id.</param>
         /// <param name="level">Filters baking operations by level.</param>
         /// <param name="timestamp">Filters baking operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
