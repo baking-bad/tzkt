@@ -4,6 +4,6 @@ namespace Mvkt.Sync.Protocols.Proto20
 {
     class Rpc : Proto19.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
     }
 }

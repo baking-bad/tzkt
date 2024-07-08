@@ -5,7 +5,7 @@ namespace Mvkt.Sync.Protocols.Proto19
 {
     class Rpc : Proto18.Rpc
     {
-        public Rpc(TezosNode node) : base(node) { }
+        public Rpc(MavrykNode node) : base(node) { }
 
         public override Task<JsonElement> GetBlockAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}");

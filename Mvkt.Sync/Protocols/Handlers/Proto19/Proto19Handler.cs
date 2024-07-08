@@ -17,7 +17,7 @@ namespace Mvkt.Sync.Protocols
         public override string VersionName => "paris_019";
         public override int VersionNumber => 19;
 
-        public Proto19Handler(TezosNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto19Handler> logger, IMetrics metrics)
+        public Proto19Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto19Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Rpc = new Rpc(node);

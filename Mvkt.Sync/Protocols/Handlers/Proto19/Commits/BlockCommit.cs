@@ -6,7 +6,7 @@ namespace Mvkt.Sync.Protocols.Proto19
     {
         public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override (long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
+        protected override (long, long, long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
         {
             var rewardDelegated = 0L;
             var rewardStakedOwn = 0L;
@@ -127,13 +127,7 @@ namespace Mvkt.Sync.Protocols.Proto19
                 }
             }
 
-            Db.TryAttach(protocolTreasury);
-            protocolTreasury.Balance += feeProtocolTreasury;
-
-            Db.TryAttach(burnAddress);
-            burnAddress.Balance += feeBurnAddress;
-
-            return (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared, bonusDelegated, bonusStakedOwn, bonusStakedEdge, bonusStakedShared);
+            return (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared, bonusDelegated, bonusStakedOwn, bonusStakedEdge, bonusStakedShared, feeProtocolTreasury, feeBurnAddress);
         }
     }
 }

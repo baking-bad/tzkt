@@ -96,7 +96,9 @@ namespace Mvkt.Sync.Protocols.Proto18
                 bonusDelegated,
                 bonusStakedOwn,
                 bonusStakedEdge,
-                bonusStakedShared
+                bonusStakedShared,
+                feeProtocolTreasury,
+                feeBurnAddress
             ) = ParseRewards(proposer, producer, balanceUpdates);
 
             Block.RewardDelegated = rewardDelegated;
@@ -107,6 +109,12 @@ namespace Mvkt.Sync.Protocols.Proto18
             Block.BonusStakedOwn = bonusStakedOwn;
             Block.BonusStakedEdge = bonusStakedEdge;
             Block.BonusStakedShared = bonusStakedShared;
+
+            Db.TryAttach(protocolTreasury);
+            protocolTreasury.Balance += feeProtocolTreasury;
+
+            Db.TryAttach(burnAddress);
+            burnAddress.Balance += feeBurnAddress;
 
             Db.TryAttach(proposer);
             proposer.Balance += Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge;
@@ -206,7 +214,7 @@ namespace Mvkt.Sync.Protocols.Proto18
             }
         }
 
-        protected virtual (long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
+        protected virtual (long, long, long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
         {
             var rewardDelegated = 0L;
             var rewardStakedOwn = 0L;
@@ -301,13 +309,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                 }
             }
 
-            Db.TryAttach(protocolTreasury);
-            protocolTreasury.Balance += feeProtocolTreasury;
-
-            Db.TryAttach(burnAddress);
-            burnAddress.Balance += feeBurnAddress;
-
-            return (rewardDelegated, rewardStakedOwn, 0L, 0L, bonusDelegated, bonusStakedOwn, 0L, 0L);
+            return (rewardDelegated, rewardStakedOwn, 0L, 0L, bonusDelegated, bonusStakedOwn, 0L, 0L, feeProtocolTreasury, feeBurnAddress);
         }
     }
 }
