@@ -64,13 +64,13 @@ namespace Tzkt.Api
         public TimestampParameter lastTime { get; set; }
 
         [OpenApiIgnore]
-        public bool Empty => 
+        public bool Empty =>
             id == null &&
             rollup == null &&
             initiator == null &&
-            initiatorCommitment.Empty &&
+            (initiatorCommitment == null || initiatorCommitment.Empty) &&
             opponent == null &&
-            opponentCommitment.Empty &&
+            (opponentCommitment == null || opponentCommitment.Empty) &&
             firstLevel == null &&
             firstTime == null &&
             lastLevel == null &&

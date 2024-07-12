@@ -5196,7 +5196,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("migrations/{id:long}")]
         public async Task<ActionResult<MigrationOperation>> GetMigrationById(
-            [Required][Min(0)] long id,
+            [Required][Min64(0)] long id,
             MichelineFormat micheline = MichelineFormat.Json, 
             Symbols quote = Symbols.None)
         {
@@ -5333,7 +5333,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("revelation_penalties/{id:long}")]
         public async Task<ActionResult<RevelationPenaltyOperation>> GetRevelationPenaltyById(
-            [Required][Min(0)] long id,
+            [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -5500,7 +5500,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("baking/{id:long}")]
         public async Task<ActionResult<BakingOperation>> GetBakingById(
-            [Required][Min(0)] long id,
+            [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
@@ -5636,7 +5636,7 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsing_rewards/{id:long}")]
         public async Task<ActionResult<EndorsingRewardOperation>> GetEndorsingRewardById(
-            [Required][Min(0)] long id,
+            [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value,

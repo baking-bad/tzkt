@@ -83,7 +83,7 @@ namespace Tzkt.Api
             lastLevel == null &&
             lastTime == null &&
             status == null &&
-            predecessor.Empty;
+            (predecessor == null || predecessor.Empty);
 
         public string Normalize(string name)
         {

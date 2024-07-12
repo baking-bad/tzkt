@@ -37,9 +37,9 @@ namespace Tzkt.Api
         public bool Empty => 
             id == null &&
             initiator == null &&
-            initiatorCommitment.Empty &&
+            (initiatorCommitment == null || initiatorCommitment.Empty) &&
             opponent == null &&
-            opponentCommitment.Empty;
+            (opponentCommitment == null || opponentCommitment.Empty);
 
         public string Normalize(string name)
         {
