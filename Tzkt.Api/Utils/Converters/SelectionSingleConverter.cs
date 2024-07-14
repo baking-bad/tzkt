@@ -15,7 +15,7 @@ namespace Tzkt.Api
             writer.WriteStartObject();
             for (int j = 0; j < value.Cols.Length; j++)
             {
-                if (value.Vals[j] == null)
+                if (value.Vals?[j] == null)
                     writer.WriteNull(value.Cols[j]);
                 else
                 {
