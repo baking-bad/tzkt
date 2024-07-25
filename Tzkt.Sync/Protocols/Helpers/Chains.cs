@@ -18,6 +18,7 @@
             "NetXyuzvDo2Ugzb" => "nairobinet",
             "NetXxWsskGahzQB" => "oxfordnet",
             "NetXXWAHLEvre9b" => "parisnet",
+            "NetXyNQFuy15fmq" => "betanet",
             _ => "private"
         };
     }
