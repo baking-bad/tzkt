@@ -308,6 +308,22 @@
         public QuoteShort Quote { get; set; }
         #endregion
 
+        /// <summary>
+        /// Rewards, corresponding to staker's stake
+        /// (it is frozen and belongs to the staker).
+        /// </summary>
+        public long ?TotalStakedRewards { get; set; }
+
+        /// <summary>
+        /// Amount of staker's staked balance lost due to slashing
+        /// </summary>
+        public long TotalStakedLosses { get; set; }
+
+        /// <summary>
+        /// Amount of staker's unstaked balance lost due to slashing
+        /// </summary>
+        public long TotalUnstakedLosses { get; set; }
+
         #region deprecated
         /// <summary>
         /// [DEPRECATED]
