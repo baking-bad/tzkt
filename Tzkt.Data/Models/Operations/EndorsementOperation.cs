@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
@@ -10,6 +11,7 @@ namespace Tzkt.Data.Models
         public int Slots { get; set; }
         public long Reward { get; set; }
         public long Deposit { get; set; }
+        public BigInteger? DalAttestation { get; set; }
 
         public int? ResetDeactivation { get; set; }
 

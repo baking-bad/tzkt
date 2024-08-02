@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class EndorsementOperation : Operation
     {
@@ -53,6 +55,11 @@
         /// Reward of the baker for the operation
         /// </summary>
         public long Rewards { get; set; }
+
+        /// <summary>
+        /// BitSet of attested DAL slot indexes
+        /// </summary>
+        public BigInteger? DalAttestation { get; set; }
 
         #region injecting
         /// <summary>

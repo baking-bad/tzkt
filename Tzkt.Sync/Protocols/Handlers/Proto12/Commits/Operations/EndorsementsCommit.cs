@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Numerics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -21,6 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = GetEndorsedSlots(metadata),
+                DalAttestation = GetDalAttestation(content),
                 Delegate = baker,
                 DelegateId = baker.Id
             };
@@ -71,5 +73,6 @@ namespace Tzkt.Sync.Protocols.Proto12
         }
 
         protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
+        protected virtual BigInteger? GetDalAttestation(JsonElement content) => null;
     }
 }
