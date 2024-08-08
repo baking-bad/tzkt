@@ -187,6 +187,27 @@
         /// Governance dictator
         /// </summary>
         public string Dictator { get; set; }
+        
+        /// <summary>
+        /// Number of DAL slots per level. 
+        /// </summary>
+        public int DalSlotsPerLevel { get; set; }
+        
+        /// <summary>
+        /// Fixed Duration (in levels) between DAL commitment publication and expected attestation of that commitment.
+        /// </summary>
+        public int DalAttestationLag { get; set; }
+        
+        /// <summary>
+        /// Percentage of attested DAL shards required for DAL commitment to be attested. 
+        /// </summary>
+        public int DalAttestationThreshold { get; set; }
+        
+        /// <summary>
+        /// Number of DAL shards per DAL slot. 
+        /// </summary>
+        public int DalShardsPerSlot { get; set; }
+
 
         #region deprecated
         /// <summary>

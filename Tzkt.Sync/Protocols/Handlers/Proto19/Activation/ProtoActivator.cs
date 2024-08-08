@@ -19,6 +19,11 @@ namespace Tzkt.Sync.Protocols.Proto19
             protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 500;
             protocol.DoubleEndorsingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 5000;
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+            protocol.DalSlotsPerLevel = parameters["dal_parametric"]["number_of_slots"]?.Value<int>() ?? 32;
+            protocol.DalAttestationLag = parameters["dal_parametric"]["attestation_lag"]?.Value<int>() ?? 8;
+            protocol.DalAttestationThreshold = parameters["dal_parametric"]["attestation_threshold"]?.Value<int>() ?? 66;
+            protocol.DalShardsPerSlot = parameters["dal_parametric"]["number_of_shards"]?.Value<int>() ?? 512;
+             
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -39,6 +44,10 @@ namespace Tzkt.Sync.Protocols.Proto19
             }
 
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+            protocol.DalSlotsPerLevel = 32;
+            protocol.DalAttestationLag = 8;
+            protocol.DalAttestationThreshold = 66;
+            protocol.DalShardsPerSlot = 512;
         }
 
         protected override async Task MigrateContext(AppState state)

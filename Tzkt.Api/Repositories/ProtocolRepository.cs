@@ -79,11 +79,15 @@ namespace Tzkt.Api.Repositories
                     MaxSlashingPeriod = row.MaxSlashingPeriod,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
-                    SmartRollupChallengeWindow= row.SmartRollupChallengeWindow,
-                    SmartRollupCommitmentPeriod= row.SmartRollupCommitmentPeriod,
-                    SmartRollupOriginationSize= row.SmartRollupOriginationSize,
-                    SmartRollupStakeAmount= row.SmartRollupStakeAmount,
-                    SmartRollupTimeoutPeriod= row.SmartRollupTimeoutPeriod,
+                    SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
+                    SmartRollupCommitmentPeriod = row.SmartRollupCommitmentPeriod,
+                    SmartRollupOriginationSize = row.SmartRollupOriginationSize,
+                    SmartRollupStakeAmount = row.SmartRollupStakeAmount,
+                    SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalSlotsPerLevel = row.DalSlotsPerLevel,
+                    DalAttestationLag = row.DalAttestationLag,
+                    DalAttestationThreshold = row.DalAttestationThreshold,
+                    DalShardsPerSlot = row.DalShardsPerSlot,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -222,6 +226,10 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalSlotsPerLevel = row.DalSlotsPerLevel,
+                    DalAttestationLag = row.DalAttestationLag,
+                    DalAttestationThreshold = row.DalAttestationThreshold,
+                    DalShardsPerSlot = row.DalShardsPerSlot,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -292,6 +300,10 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalSlotsPerLevel = row.DalSlotsPerLevel,
+                    DalAttestationLag = row.DalAttestationLag,
+                    DalAttestationThreshold = row.DalAttestationThreshold,
+                    DalShardsPerSlot = row.DalShardsPerSlot,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
