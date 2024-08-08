@@ -7,6 +7,10 @@ namespace Tzkt.Data.Models
     {
         public int Slot { get; set; }
         public string Commitment {  get; set; }
+
+        #region indirect relations
+        public DalCommitmentStatus DalCommitmentStatus { get; set; }
+        #endregion
     }
 
     public static class DalPublishCommitmentOperationModel
