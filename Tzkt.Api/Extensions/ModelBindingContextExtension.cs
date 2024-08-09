@@ -878,6 +878,67 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetDalCommitmentHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regex.IsMatch(valueObject.FirstValue, "^sh[0-9A-Za-z]{72}$"))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid DAL commitment hash.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetDalCommitmentHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regex.IsMatch(rawValue, "^sh[0-9A-Za-z]{72}$"))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid DAL commitment hash.");
+                            return false;
+                        }
+
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetContractKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

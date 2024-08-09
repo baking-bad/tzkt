@@ -74,7 +74,11 @@ namespace Tzkt.Sync.Protocols.Proto19
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                // nothing to do
+                var commitmentStatus = new DalCommitmentStatus
+                {
+                    PublishmentId = operation.Id,
+                };
+                Db.DalCommitmentStatus.Add(commitmentStatus);
             }
             #endregion
 
@@ -93,7 +97,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                // nothing to do
+                Db.DalCommitmentStatus.Remove(operation.DalCommitmentStatus);
             }
             #endregion
 

@@ -127,6 +127,10 @@ namespace Tzkt.Data
         public DbSet<InboxMessage> InboxMessages { get; set; }
         #endregion
 
+        #region dal
+        public DbSet<DalCommitmentStatus> DalCommitmentStatus { get; set; }
+        #endregion
+
         #region plugins
         public DbSet<Quote> Quotes { get; set; }
         public DbSet<Domain> Domains { get; set; }
