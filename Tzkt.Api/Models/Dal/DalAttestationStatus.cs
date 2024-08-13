@@ -26,5 +26,10 @@ namespace Tzkt.Api.Models
         /// If the attester has attested the shards of the related commitment.
         /// </summary>
         public bool Attested { get; set; }
+
+        /// <summary>
+        /// Number of shards of the attestation.
+        /// </summary>
+        public int ShardsCount { get; set; }
     }
 }

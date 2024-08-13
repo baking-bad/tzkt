@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public int DalCommitmentStatusId { get; set; }
         public long AttestationId { get; set; }
         public bool Attested { get; set; }
+        public int ShardsCount { get; set; }
 
         #region relations
         [ForeignKey(nameof(DalCommitmentStatusId))]

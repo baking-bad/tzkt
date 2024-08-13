@@ -134,6 +134,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="publishLevel">Filters by level at which the commitment has been published</param>
         /// <param name="slotIndex">Filters by slot-index</param>
         /// <param name="attester">Filters by attester</param>
+        /// <param name="shardsCount">Filters by number of shards</param>
         /// <param name="attested">Filters by if the slot has been attested</param>
         /// <returns></returns>
         [HttpGet("attestations/count")]
@@ -141,10 +142,11 @@ namespace Tzkt.Api.Controllers
             DalCommitmentHashParameter commitment,
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
+            Int32Parameter shardsCount,
             AccountParameter attester,
             BoolParameter attested)
         {
-            return await Dal.GetAttestationsCount(commitment, publishLevel, slotIndex, attester, attested);
+            return await Dal.GetAttestationsCount(commitment, publishLevel, slotIndex, attester, shardsCount, attested);
         }
 
         /// <summary>
@@ -157,9 +159,10 @@ namespace Tzkt.Api.Controllers
         /// <param name="publishLevel">Filters by level at which the commitment has been published</param>
         /// <param name="slotIndex">Filters by slot-index</param>
         /// <param name="attester">Filters by attester</param>
+        /// <param name="shardsCount">Filters by number of shards</param>
         /// <param name="attested">Filters if the shards are attested</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts DAL commitments by specified field. Supported fields: `publishLevel` (default), `slotIndex`.</param>
+        /// <param name="sort">Sorts DAL commitments by specified field. Supported fields: `publishLevel` (default), `slotIndex`, `shardsCount`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
@@ -169,6 +172,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
             AccountParameter attester,
+            Int32Parameter shardsCount,
             BoolParameter attested,
             SelectParameter select,
             SortParameter sort,
@@ -176,30 +180,30 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("publishLevel", "slotIndex"))
+            if (sort != null && !sort.Validate("publishLevel", "slotIndex", "shardsCount"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
             if (select == null)
-                return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, attested, sort, offset, limit));
+                return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, shardsCount, attested, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, attested, sort, offset, limit, select.Values[0]));
+                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, shardsCount, attested, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, attested, sort, offset, limit, select.Values));
+                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, shardsCount, attested, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, attested, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, shardsCount, attested, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, attested, sort, offset, limit, select.Fields)
+                        Rows = await Dal.GetAttestations(commitment, publishLevel, slotIndex, attester, shardsCount, attested, sort, offset, limit, select.Fields)
                     });
                 }
             }

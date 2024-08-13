@@ -224,6 +224,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
             AccountParameter attester,
+            Int32Parameter shardsCount,
             BoolParameter attested)
         {
             var sql = new SqlBuilder($"""
@@ -236,6 +237,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
                 .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""ShardsCount""", shardsCount)
                 .FilterA(@"da.""Attested""", attested);
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -247,13 +249,14 @@ namespace Tzkt.Api.Repositories
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
             AccountParameter attester,
+            Int32Parameter shardsCount,
             BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
         {
             var sql = new SqlBuilder($"""
-                SELECT    dpco."Level", dpco."Slot", dpco."Commitment", eo."DelegateId", da."Attested"
+                SELECT    dpco."Level", dpco."Slot", dpco."Commitment", eo."DelegateId", da."ShardsCount", da."Attested"
                 FROM      "DalAttestationStatus" AS da
                 LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
                 LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
@@ -263,9 +266,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
                 .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""ShardsCount""", shardsCount)
                 .FilterA(@"da.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
+                    "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
                     "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
@@ -279,6 +284,7 @@ namespace Tzkt.Api.Repositories
                 SlotIndex = row.Slot,
                 Commitment = row.Commitment,
                 Attester = Accounts.GetAlias(row.DelegateId),
+                ShardsCount = row.ShardsCount,
                 Attested = row.Attested
             });
         }
@@ -288,6 +294,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
             AccountParameter attester,
+            Int32Parameter shardsCount,
             BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
@@ -306,6 +313,7 @@ namespace Tzkt.Api.Repositories
                     case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
                     case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
                     case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
+                    case "shardsCount": columns.Add(@"da.""ShardsCount"""); break;
                     case "attested": columns.Add(@"da.""Attested"""); break;
                 }
             }
@@ -343,9 +351,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
                 .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""ShardsCount""", shardsCount)
                 .FilterA(@"da.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
+                    "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
                     "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
@@ -377,6 +387,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.DelegateId);
                         break;
+                    case "shardsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ShardsCount;
+                        break;
                     case "attested":
                         foreach (var row in rows)
                             result[j++][i] = row.Attested;
@@ -392,6 +406,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
             AccountParameter attester,
+            Int32Parameter shardsCount,
             BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
@@ -408,6 +423,7 @@ namespace Tzkt.Api.Repositories
                 case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
                 case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
                 case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
+                case "shardsCount": columns.Add(@"da.""ShardsCount"""); break;
                 case "attested": columns.Add(@"da.""Attested"""); break;
             }
 
@@ -444,9 +460,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
                 .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""ShardsCount""", shardsCount)
                 .FilterA(@"da.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
+                    "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
                     "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
@@ -474,6 +492,10 @@ namespace Tzkt.Api.Repositories
                 case "attester":
                     foreach (var row in rows)
                         result[j++] = Accounts.GetAlias(row.DelegateId);
+                    break;
+                case "shardsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.ShardsCount;
                     break;
                 case "attested":
                     foreach (var row in rows)

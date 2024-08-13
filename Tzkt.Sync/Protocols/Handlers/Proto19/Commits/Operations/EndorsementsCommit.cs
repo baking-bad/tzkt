@@ -22,6 +22,10 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             if (endorsement.DalAttestation is BigInteger endorsementDalAttestation)
             {
+                var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+                var attesterRight = currentRights
+                    .FirstOrDefault(x => x.Type == BakingRightType.Endorsing && x.BakerId == endorsement.DelegateId)
+                    ?? throw new Exception($"No right found the for the attester {endorsement.Delegate.Address}");
                 var dalAttestationsStatus = new List<DalAttestationStatus>(block.Protocol.DalSlotsPerLevel);
 
                 for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
@@ -34,6 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                             DalCommitmentStatusId = commitmentStatus.Id,
                             AttestationId = endorsement.Id,
                             Attested = endorsementDalAttestation.Mem(slot),
+                            ShardsCount = attesterRight.DalShards ?? 0,
                         };
                         dalAttestationsStatus.Add(attestationsStatus);
                     }
