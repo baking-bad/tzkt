@@ -40,16 +40,20 @@ namespace Tzkt.Sync.Protocols
             return result;
         }
 
-        Dictionary<int, int> GetEndorsingRights(int position, int slots)
+        Dictionary<int, (int Slots, int DalShards)> GetEndorsingRights(int position, int slots, int shards)
         {
             WriteInt32(Seed, 32, position);
-            var result = new Dictionary<int, int>();
+            var result = new Dictionary<int, (int Slots, int DalShards)>();
             for (var slot = 0; slot < slots; slot++)
             {
                 WriteInt32(Seed, 36, slot);
                 var baker = Sampler.GetBaker(Seed);
                 result.TryGetValue(baker, out var count);
-                result[baker] = count + 1;
+                var (bakerSlots, bakerDalShards) = count;
+                bakerSlots += 1;
+                if (slot < shards)
+                    bakerDalShards += 1;
+                result[baker] = (bakerSlots, bakerDalShards);
             }
             return result;
         }
@@ -107,11 +111,16 @@ namespace Tzkt.Sync.Protocols
                     var generator = new RightsGenerator(sampler, cycle.Seed);
                     for (int position = from; position < to; position++)
                     {
-                        var rights = generator.GetEndorsingRights(position, protocol.EndorsersPerBlock);
+                        var rights = generator.GetEndorsingRights(position, protocol.EndorsersPerBlock, protocol.DalShardsPerSlot);
                         lock (res)
                         {
-                            foreach (var (baker, slots) in rights)
-                                res.Add(new() { Level = cycle.FirstLevel + position, Baker = baker, Slots = slots });
+                            foreach (var (baker, (slots, dalShards)) in rights)
+                                res.Add(new() {
+                                        Level = cycle.FirstLevel + position,
+                                        Baker = baker,
+                                        Slots = slots,
+                                        DalShards = (protocol.DalShardsPerSlot == 0) ? null : dalShards
+                                    });
                         }
                     }
                 }));
@@ -148,12 +157,13 @@ namespace Tzkt.Sync.Protocols
         public static IEnumerable<ER> GetEndorsingRights(Sampler sampler, Protocol protocol, Cycle cycle, int level)
         {
             var generator = new RightsGenerator(sampler, cycle.Seed);
-            var rights = generator.GetEndorsingRights(level - cycle.FirstLevel, protocol.EndorsersPerBlock);
+            var rights = generator.GetEndorsingRights(level - cycle.FirstLevel, protocol.EndorsersPerBlock, protocol.DalShardsPerSlot);
             return rights.Select(kv => new ER
             {
                 Level = level,
                 Baker = kv.Key,
-                Slots = kv.Value
+                Slots = kv.Value.Slots,
+                DalShards = (protocol.DalShardsPerSlot == 0) ? null : kv.Value.DalShards
             });
         }
 
@@ -162,6 +172,7 @@ namespace Tzkt.Sync.Protocols
             public int Level { get; init; }
             public int Baker { get; init; }
             public int Slots { get; init; }
+            public int? DalShards { get; init; }
         }
 
         public class BR

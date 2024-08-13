@@ -173,7 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
                     #region save shifted
                     using var writer = conn.BeginBinaryImport("""
-                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots")
+                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots", "DalShards")
                         FROM STDIN (FORMAT BINARY)
                         """);
 
@@ -187,6 +187,14 @@ namespace Tzkt.Sync.Protocols.Proto19
                         writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                         writer.WriteNull();
                         writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                        if (er.DalShards == null)
+                        {
+                            writer.WriteNull();
+                        }
+                        else
+                        {
+                            writer.Write(er.DalShards.Value, NpgsqlTypes.NpgsqlDbType.Integer);
+                        }
                     }
 
                     writer.Complete();
@@ -200,7 +208,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
                     #region save rights
                     using (var writer = conn.BeginBinaryImport("""
-                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots")
+                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots", "DalShards")
                         FROM STDIN (FORMAT BINARY)
                         """))
                     {
@@ -214,6 +222,15 @@ namespace Tzkt.Sync.Protocols.Proto19
                             writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(er.DalShards, NpgsqlTypes.NpgsqlDbType.Integer);
+                            if (er.DalShards == null)
+                            {
+                                writer.WriteNull();
+                            }
+                            else
+                            {
+                                writer.Write(er.DalShards.Value, NpgsqlTypes.NpgsqlDbType.Integer);
+                            }
                         }
 
                         foreach (var br in brs)
@@ -225,6 +242,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                             writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.WriteNull();
                             writer.WriteNull();
                         }
 

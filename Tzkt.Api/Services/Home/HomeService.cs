@@ -207,7 +207,7 @@ namespace Tzkt.Api.Services
                 new BakingRightTypeParameter { Eq = 0 },
                 null, null,
                 new Int32Parameter { In = Enumerable.Range(level + 1, 3).ToList() },
-                null,
+                null, null,
                 new Int32NullParameter { Eq = 0 },
                 null,
                 new SortParameter { Desc = "level" },

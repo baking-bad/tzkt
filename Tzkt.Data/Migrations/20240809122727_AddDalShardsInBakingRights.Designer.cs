@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -13,9 +14,11 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20240809122727_AddDalShardsInBakingRights")]
+    partial class AddDalShardsInBakingRights
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1390,32 +1393,6 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Cycles");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationStatus", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<long>("AttestationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<bool>("Attested")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("DalCommitmentStatusId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AttestationId");
-
-                    b.HasIndex("DalCommitmentStatusId");
-
-                    b.ToTable("DalAttestationStatus");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalCommitmentStatus", b =>
@@ -5985,25 +5962,6 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Revelation");
 
                     b.Navigation("Software");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationStatus", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.EndorsementOperation", "Attestation")
-                        .WithMany()
-                        .HasForeignKey("AttestationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.DalCommitmentStatus", "DalCommitmentStatus")
-                        .WithMany()
-                        .HasForeignKey("DalCommitmentStatusId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Attestation");
-
-                    b.Navigation("DalCommitmentStatus");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalCommitmentStatus", b =>

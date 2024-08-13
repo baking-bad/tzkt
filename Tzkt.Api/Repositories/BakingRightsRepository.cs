@@ -28,6 +28,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
+            Int32NullParameter dalShards,
             Int32NullParameter round,
             BakingRightStatusParameter status)
         {
@@ -38,7 +39,8 @@ namespace Tzkt.Api.Repositories
                 .Filter("Type", type)
                 .Filter("Status", status)
                 .Filter("Round", round)
-                .Filter("Slots", slots);
+                .Filter("Slots", slots)
+                .Filter("DalShards", dalShards);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -50,6 +52,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
+            Int32NullParameter dalShards,
             Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
@@ -64,6 +67,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Round", round)
                 .Filter("Slots", slots)
+                .Filter("DalShards", dalShards)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -78,6 +82,7 @@ namespace Tzkt.Api.Repositories
                 Baker = Accounts.GetAlias(row.BakerId),
                 Round = row.Round,
                 Slots = row.Slots,
+                DalShards = row.DalShards,
                 Status = BakingRightStatuses.ToString(row.Status)
             });
         }
@@ -88,6 +93,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
+            Int32NullParameter dalShards,
             Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
@@ -107,6 +113,7 @@ namespace Tzkt.Api.Repositories
                     case "baker": columns.Add(@"""BakerId"""); break;
                     case "round": columns.Add(@"""Round"""); break;
                     case "slots": columns.Add(@"""Slots"""); break;
+                    case "dalShards": columns.Add(@"""DalShards"""); break;
                     case "status": columns.Add(@"""Status"""); break;
                 }
             }
@@ -122,6 +129,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Round", round)
                 .Filter("Slots", slots)
+                .Filter("DalShards", dalShards)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -163,6 +171,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Slots;
                         break;
+                    case "dalShards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalShards;
+                        break;
                     case "status":
                         foreach (var row in rows)
                             result[j++][i] = BakingRightStatuses.ToString(row.Status);
@@ -179,6 +191,7 @@ namespace Tzkt.Api.Repositories
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
+            Int32NullParameter dalShards,
             Int32NullParameter round,
             BakingRightStatusParameter status,
             SortParameter sort,
@@ -196,6 +209,7 @@ namespace Tzkt.Api.Repositories
                 case "baker": columns.Add(@"""BakerId"""); break;
                 case "round": columns.Add(@"""Round"""); break;
                 case "slots": columns.Add(@"""Slots"""); break;
+                case "dalShards": columns.Add(@"""DalShards"""); break;
                 case "status": columns.Add(@"""Status"""); break;
             }
 
@@ -210,6 +224,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Status", status)
                 .Filter("Round", round)
                 .Filter("Slots", slots)
+                .Filter("DalShards", dalShards)
                 .Take(sort ?? new SortParameter { Asc = "level" }, offset, limit, x => ("Level", "Level"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -248,6 +263,10 @@ namespace Tzkt.Api.Repositories
                 case "slots":
                     foreach (var row in rows)
                         result[j++] = row.Slots;
+                    break;
+                case "dalShards":
+                    foreach (var row in rows)
+                        result[j++] = row.DalShards;
                     break;
                 case "status":
                     foreach (var row in rows)
