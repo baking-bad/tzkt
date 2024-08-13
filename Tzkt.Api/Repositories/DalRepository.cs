@@ -217,5 +217,272 @@ namespace Tzkt.Api.Repositories
             return result;
         }
         #endregion
+
+        #region attestations
+        public async Task<int> GetAttestationsCount(
+            DalCommitmentHashParameter commitment,
+            Int32Parameter publishLevel,
+            Int32Parameter slotIndex,
+            AccountParameter attester,
+            BoolParameter attested)
+        {
+            var sql = new SqlBuilder($"""
+                SELECT COUNT(*) FROM "DalAttestationStatus" AS da
+                LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                """)
+                .FilterA(@"dpco.""Commitment""", commitment)
+                .FilterA(@"dpco.""Level""", publishLevel)
+                .FilterA(@"dpco.""Slot""", slotIndex)
+                .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""Attested""", attested);
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<DalAttestationStatus>> GetAttestations(
+            DalCommitmentHashParameter commitment,
+            Int32Parameter publishLevel,
+            Int32Parameter slotIndex,
+            AccountParameter attester,
+            BoolParameter attested,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
+        {
+            var sql = new SqlBuilder($"""
+                SELECT    dpco."Level", dpco."Slot", dpco."Commitment", eo."DelegateId", da."Attested"
+                FROM      "DalAttestationStatus" AS da
+                LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                """)
+                .FilterA(@"dpco.""Commitment""", commitment)
+                .FilterA(@"dpco.""Level""", publishLevel)
+                .FilterA(@"dpco.""Slot""", slotIndex)
+                .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""Attested""", attested)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
+                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                }, @"dpco.""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row => new DalAttestationStatus
+            {
+                PublishLevel = row.Level,
+                SlotIndex = row.Slot,
+                Commitment = row.Commitment,
+                Attester = Accounts.GetAlias(row.DelegateId),
+                Attested = row.Attested
+            });
+        }
+
+        public async Task<object[][]> GetAttestations(
+            DalCommitmentHashParameter commitment,
+            Int32Parameter publishLevel,
+            Int32Parameter slotIndex,
+            AccountParameter attester,
+            BoolParameter attested,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
+        {
+            var columns = new HashSet<string>(fields.Length);
+            var needPublishOp = false;
+            var needAttestationOp = false;
+
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "publishLevel": columns.Add(@"dpco.""Level"""); needPublishOp = true; break;
+                    case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
+                    case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
+                    case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
+                    case "attested": columns.Add(@"da.""Attested"""); break;
+                }
+            }
+
+            if (sort == null || sort.Validate("publishLevel", "slotIndex"))
+                needPublishOp = true;
+            if (commitment != null || publishLevel != null || slotIndex != null)
+                needPublishOp = true;
+            if (attester != null)
+                needAttestationOp = true;
+
+            if (columns.Count == 0)
+                return Array.Empty<object[]>();
+
+            var sql = new SqlBuilder($"""
+                SELECT {string.Join(',', columns)}
+                FROM   "DalAttestationStatus" AS da
+                {
+                    (needPublishOp ?
+                     $"""
+                     LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                     LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                     """
+                     : string.Empty)
+                }
+                {
+                    (needAttestationOp ?
+                     $"""
+                     LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                     """
+                     : string.Empty)
+                }
+                """)
+                .FilterA(@"dpco.""Commitment""", commitment)
+                .FilterA(@"dpco.""Level""", publishLevel)
+                .FilterA(@"dpco.""Slot""", slotIndex)
+                .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""Attested""", attested)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
+                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                }, @"dpco.""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            {
+                switch (fields[i])
+                {
+                    case "publishLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Level;
+                        break;
+                    case "slotIndex":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Slot;
+                        break;
+                    case "commitment":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Commitment;
+                        break;
+                    case "attester":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.DelegateId);
+                        break;
+                    case "attested":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Attested;
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<object[]> GetAttestations(
+            DalCommitmentHashParameter commitment,
+            Int32Parameter publishLevel,
+            Int32Parameter slotIndex,
+            AccountParameter attester,
+            BoolParameter attested,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
+        {
+            var columns = new HashSet<string>(1);
+            var needPublishOp = false;
+            var needAttestationOp = false;
+
+            switch (field)
+            {
+                case "publishLevel": columns.Add(@"dpco.""Level"""); needPublishOp = true; break;
+                case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
+                case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
+                case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
+                case "attested": columns.Add(@"da.""Attested"""); break;
+            }
+
+            if (sort == null || sort.Validate("publishLevel", "slotIndex"))
+                needPublishOp = true;
+            if (commitment != null || publishLevel != null || slotIndex != null)
+                needPublishOp = true;
+            if (attester != null)
+                needAttestationOp = true;
+
+            if (columns.Count == 0)
+                return Array.Empty<object>();
+
+            var sql = new SqlBuilder($"""
+                SELECT {string.Join(',', columns)}
+                FROM   "DalAttestationStatus" AS da
+                {
+                    (needPublishOp ?
+                     $"""
+                     LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                     LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                     """
+                     : string.Empty)
+                }
+                {
+                    (needAttestationOp ?
+                     $"""
+                     LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                     """
+                     : string.Empty)
+                }
+                """)
+                .FilterA(@"dpco.""Commitment""", commitment)
+                .FilterA(@"dpco.""Level""", publishLevel)
+                .FilterA(@"dpco.""Slot""", slotIndex)
+                .FilterA(@"eo.""DelegateId""", attester)
+                .FilterA(@"da.""Attested""", attested)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
+                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                }, @"dpco.""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "publishLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.Level;
+                    break;
+                case "slotIndex":
+                    foreach (var row in rows)
+                        result[j++] = row.Slot;
+                    break;
+                case "commitment":
+                    foreach (var row in rows)
+                        result[j++] = row.Commitment;
+                    break;
+                case "attester":
+                    foreach (var row in rows)
+                        result[j++] = Accounts.GetAlias(row.DelegateId);
+                    break;
+                case "attested":
+                    foreach (var row in rows)
+                        result[j++] = row.Attested;
+                    break;
+            }
+
+            return result;
+        }
+        #endregion
     }
 }
