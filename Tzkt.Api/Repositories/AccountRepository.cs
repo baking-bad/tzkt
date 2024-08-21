@@ -166,7 +166,7 @@ namespace Tzkt.Api.Repositories
                         Extras = legacy ? null : delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
-                    #endregion
+                #endregion
                 case RawUser user:
                     #region build user
                     var userDelegate = user.DelegateId == null ? null
@@ -259,7 +259,7 @@ namespace Tzkt.Api.Repositories
                         Metadata = legacy ? user.Profile : null,
                         Extras = legacy ? null : user.Extras
                     };
-                    #endregion
+                #endregion
                 case RawContract contract:
                     #region build contract
                     var creator = contract.CreatorId == null ? null
@@ -905,7 +905,7 @@ namespace Tzkt.Api.Repositories
                     case "numProposals": columns.Add(@"acc.""ProposalsCount"""); break;
                     case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
                     case "numRegisterConstants": columns.Add(@"acc.""RegisterConstantsCount"""); break;
-                    case "numSetDepositsLimits": columns.Add(@"acc.""SetDepositsLimitsCount"""); break;                        
+                    case "numSetDepositsLimits": columns.Add(@"acc.""SetDepositsLimitsCount"""); break;
                     case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
                     case "software": columns.Add(@"acc.""SoftwareId"""); break;
@@ -1050,7 +1050,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "balance":
                         foreach (var row in rows)
-                            result[j++][i] = row.Balance + (row.StakedBalance ?? 0L); 
+                            result[j++][i] = row.Balance + (row.StakedBalance ?? 0L);
                         break;
                     case "frozenDeposit":
                         foreach (var row in rows)
@@ -1710,7 +1710,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "balance":
                     foreach (var row in rows)
-                        result[j++] = row.Balance + (row.StakedBalance ?? 0L); 
+                        result[j++] = row.Balance + (row.StakedBalance ?? 0L);
                     break;
                 case "frozenDeposit":
                     foreach (var row in rows)
@@ -2266,9 +2266,10 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+
         public async Task<IEnumerable<Operation>> GetOperations(
-            string address,
-            HashSet<string> types,
+            List<int> accountIds,
+            HashSet<string> operationTypes,
             AccountParameter initiator,
             AccountParameter sender,
             AccountParameter target,
@@ -2292,9 +2293,10 @@ namespace Tzkt.Api.Repositories
             MichelineFormat format,
             Symbols quote)
         {
-            var account = await Accounts.GetAsync(address);
-            if (account == null) return Enumerable.Empty<Operation>();
-            var result = new List<Operation>(limit * 2);
+            var accounts = await Task.WhenAll(accountIds.Select(Accounts.GetAsync));
+
+            if (accounts.Length == 0)
+                return Enumerable.Empty<Operation>();
 
             var pagination = new Pagination
             {
@@ -2336,633 +2338,514 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
-            switch (account)
+            var delegates = new List<RawDelegate>();
+            var users = new List<RawUser>();
+            var contracts = new List<RawContract>();
+            var rollups = new List<RawRollup>();
+            var smartRollups = new List<RawSmartRollup>();
+
+            foreach (var account in accounts)
             {
-                case RawDelegate delegat:
-                    var _delegat = new AccountParameter { Eq = delegat.Id };
-
-                    var endorsements = delegat.EndorsementsCount > 0 && types.Contains(OpTypes.Endorsement)
-                        ? Operations.GetEndorsements(_delegat, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
-
-                    var preendorsements = delegat.PreendorsementsCount > 0 && types.Contains(OpTypes.Preendorsement)
-                        ? Operations.GetPreendorsements(_delegat, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
-
-                    var ballots = delegat.BallotsCount > 0 && types.Contains(OpTypes.Ballot)
-                        ? Operations.GetBallots(_delegat, level, timestamp, null, null, null, null, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<BallotOperation>());
-
-                    var proposals = delegat.ProposalsCount > 0 && types.Contains(OpTypes.Proposal)
-                        ? Operations.GetProposals(_delegat, level, timestamp, null, null, null, null, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<ProposalOperation>());
-
-                    var activations = delegat.ActivationsCount > 0 && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(_delegat, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
-
-                    var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
-
-                    var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
-
-                    var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
-                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
-
-                    var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
-
-                    var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(OpTypes.VdfRevelation)
-                        ? Operations.GetVdfRevelations(_delegat, level, null, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
-
-                    var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = delegat.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(_delegat, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var registerConstants = delegat.RegisterConstantsCount > 0 && types.Contains(OpTypes.RegisterConstant)
-                        ? Operations.GetRegisterConstants(_delegat, null, level, timestamp, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
-
-                    var setDepositsLimits = delegat.SetDepositsLimitsCount > 0 && types.Contains(OpTypes.SetDepositsLimit)
-                        ? Operations.GetSetDepositsLimits(_delegat, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
-
-                    var transferTicketOps = delegat.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(null, _delegat, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
-
-                    var txRollupCommitOps = delegat.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
-                        ? Operations.GetTxRollupCommitOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
-
-                    var txRollupDispatchTicketsOps = delegat.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
-                        ? Operations.GetTxRollupDispatchTicketsOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
-
-                    var txRollupFinalizeCommitmentOps = delegat.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
-                        ? Operations.GetTxRollupFinalizeCommitmentOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
-
-                    var txRollupOriginationOps = delegat.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
-                        ? Operations.GetTxRollupOriginationOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
-
-                    var txRollupRejectionOps = delegat.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
-
-                    var txRollupRemoveCommitmentOps = delegat.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
-                        ? Operations.GetTxRollupRemoveCommitmentOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
-
-                    var txRollupReturnBondOps = delegat.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
-                        ? Operations.GetTxRollupReturnBondOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
-
-                    var txRollupSubmitBatchOps = delegat.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
-                        ? Operations.GetTxRollupSubmitBatchOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
-
-                    var increasePaidStorageOps = delegat.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
-                        ? Operations.GetIncreasePaidStorageOps(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
-
-                    var updateConsensusKeyOps = delegat.UpdateConsensusKeyCount > 0 && types.Contains(OpTypes.UpdateConsensusKey)
-                        ? Operations.GetUpdateConsensusKeys(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
-
-                    var drainDelegateOps = delegat.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
-                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
-
-                    var srAddMessagesOps = delegat.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
-                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
-
-                    var srCementOps = delegat.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
-
-                    var srExecuteOps = delegat.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
-
-                    var srOriginateOps = delegat.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _delegat }, pagination, quote, format)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
-
-                    var srPublishOps = delegat.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
-
-                    var srRecoverBondOps = delegat.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = delegat.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
-
-                    var srRefuteOps = delegat.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
-
-                    var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
-
-                    var setDelegateParametersOps = delegat.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
-                        ? Operations.GetSetDelegateParametersOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
-
-                    var dalPublishCommitmentOps = delegat.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
-                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
-
-                    var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
-
-                    var revelationPenalties = delegat.RevelationPenaltiesCount > 0 && types.Contains(OpTypes.RevelationPenalty)
-                        ? Operations.GetRevelationPenalties(null, _delegat, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
-
-                    var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<BakingOperation>());
-
-                    var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
-                        ? Operations.GetEndorsingRewards(null, _delegat, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
-
-                    var autostakingOps = delegat.AutostakingOpsCount > 0 && types.Contains(OpTypes.Autostaking)
-                        ? Operations.GetAutostakingOps(new() { baker = _delegat }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
-
-                    await Task.WhenAll(
-                        endorsements,
-                        preendorsements,
-                        proposals,
-                        ballots,
-                        activations,
-                        doubleBaking,
-                        doubleEndorsing,
-                        doublePreendorsing,
-                        nonceRevelations,
-                        vdfRevelations,
-                        delegations,
-                        originations,
-                        transactions,
-                        reveals,
-                        registerConstants,
-                        setDepositsLimits,
-                        transferTicketOps,
-                        txRollupCommitOps,
-                        txRollupDispatchTicketsOps,
-                        txRollupFinalizeCommitmentOps,
-                        txRollupOriginationOps,
-                        txRollupRejectionOps,
-                        txRollupRemoveCommitmentOps,
-                        txRollupReturnBondOps,
-                        txRollupSubmitBatchOps,
-                        increasePaidStorageOps,
-                        updateConsensusKeyOps,
-                        drainDelegateOps,
-                        srAddMessagesOps,
-                        srCementOps,
-                        srExecuteOps,
-                        srOriginateOps,
-                        srPublishOps,
-                        srRecoverBondOps,
-                        srRefuteOps,
-                        stakingOps,
-                        setDelegateParametersOps,
-                        dalPublishCommitmentOps,
-                        migrations,
-                        revelationPenalties,
-                        bakingOps,
-                        endorsingRewards,
-                        autostakingOps);
-
-                    result.AddRange(endorsements.Result);
-                    result.AddRange(preendorsements.Result);
-                    result.AddRange(proposals.Result);
-                    result.AddRange(ballots.Result);
-                    result.AddRange(activations.Result);
-                    result.AddRange(doubleBaking.Result);
-                    result.AddRange(doubleEndorsing.Result);
-                    result.AddRange(doublePreendorsing.Result);
-                    result.AddRange(nonceRevelations.Result);
-                    result.AddRange(vdfRevelations.Result);
-                    result.AddRange(delegations.Result);
-                    result.AddRange(originations.Result);
-                    result.AddRange(transactions.Result);
-                    result.AddRange(reveals.Result);
-                    result.AddRange(registerConstants.Result);
-                    result.AddRange(setDepositsLimits.Result);
-                    result.AddRange(transferTicketOps.Result);
-                    result.AddRange(txRollupCommitOps.Result);
-                    result.AddRange(txRollupDispatchTicketsOps.Result);
-                    result.AddRange(txRollupFinalizeCommitmentOps.Result);
-                    result.AddRange(txRollupOriginationOps.Result);
-                    result.AddRange(txRollupRejectionOps.Result);
-                    result.AddRange(txRollupRemoveCommitmentOps.Result);
-                    result.AddRange(txRollupReturnBondOps.Result);
-                    result.AddRange(txRollupSubmitBatchOps.Result);
-                    result.AddRange(increasePaidStorageOps.Result);
-                    result.AddRange(updateConsensusKeyOps.Result);
-                    result.AddRange(drainDelegateOps.Result);
-                    result.AddRange(srAddMessagesOps.Result);
-                    result.AddRange(srCementOps.Result);
-                    result.AddRange(srExecuteOps.Result);
-                    result.AddRange(srOriginateOps.Result);
-                    result.AddRange(srPublishOps.Result);
-                    result.AddRange(srRecoverBondOps.Result);
-                    result.AddRange(srRefuteOps.Result);
-                    result.AddRange(stakingOps.Result);
-                    result.AddRange(setDelegateParametersOps.Result);
-                    result.AddRange(dalPublishCommitmentOps.Result);
-                    result.AddRange(migrations.Result);
-                    result.AddRange(revelationPenalties.Result);
-                    result.AddRange(bakingOps.Result);
-                    result.AddRange(endorsingRewards.Result);
-                    result.AddRange(autostakingOps.Result);
-
-                    break;
-                case RawUser user:
-                    var _user = new AccountParameter { Eq = user.Id };
-
-                    var userActivations = user.ActivationsCount > 0 && types.Contains(OpTypes.Activation)
-                        ? Operations.GetActivations(_user, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<ActivationOperation>());
-
-                    var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = user.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(_user, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var userRegisterConstants = user.RegisterConstantsCount > 0 && types.Contains(OpTypes.RegisterConstant)
-                        ? Operations.GetRegisterConstants(_user, null, level, timestamp, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
-
-                    var userSetDepositsLimit = user.SetDepositsLimitsCount > 0 && types.Contains(OpTypes.SetDepositsLimit)
-                        ? Operations.GetSetDepositsLimits(_user, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
-
-                    var userTransferTicketOps = user.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(null, _user, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
-                    
-                    var userTxRollupCommitOps = user.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
-                        ? Operations.GetTxRollupCommitOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
-                    
-                    var userTxRollupDispatchTicketsOps = user.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
-                        ? Operations.GetTxRollupDispatchTicketsOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
-
-                    var userTxRollupFinalizeCommitmentOps = user.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
-                        ? Operations.GetTxRollupFinalizeCommitmentOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
-
-                    var userTxRollupOriginationOps = user.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
-                        ? Operations.GetTxRollupOriginationOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
-
-                    var userTxRollupRejectionOps = user.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
-
-                    var userTxRollupRemoveCommitmentOps = user.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
-                        ? Operations.GetTxRollupRemoveCommitmentOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
-
-                    var userTxRollupReturnBondOps = user.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
-                        ? Operations.GetTxRollupReturnBondOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
-
-                    var userTxRollupSubmitBatchOps = user.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
-                        ? Operations.GetTxRollupSubmitBatchOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
-
-                    var userIncreasePaidStorageOps = user.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
-                        ? Operations.GetIncreasePaidStorageOps(_user, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
-
-                    var userDrainDelegateOps = user.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
-                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = user.Id }, null, null, level, timestamp, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
-
-                    var userSrAddMessagesOps = user.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
-                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
-
-                    var userSrCementOps = user.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
-
-                    var userSrExecuteOps = user.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
-
-                    var userSrOriginateOps = user.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _user }, pagination, quote, format)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
-
-                    var userSrPublishOps = user.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
-
-                    var userSrRecoverBondOps = user.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = user.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
-
-                    var userSrRefuteOps = user.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
-
-                    var userStakingOps = user.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id } }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<StakingOperation>());
-
-                    var userSetDelegateParametersOps = user.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
-                        ? Operations.GetSetDelegateParametersOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
-
-                    var userDalPublishCommitmentOps = user.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
-                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _user }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
-
-                    var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
-
-                    await Task.WhenAll(
-                        userActivations,
-                        userDelegations,
-                        userOriginations,
-                        userTransactions,
-                        userReveals,
-                        userRegisterConstants,
-                        userSetDepositsLimit,
-                        userTransferTicketOps,
-                        userTxRollupCommitOps,
-                        userTxRollupDispatchTicketsOps,
-                        userTxRollupFinalizeCommitmentOps,
-                        userTxRollupOriginationOps,
-                        userTxRollupRejectionOps,
-                        userTxRollupRemoveCommitmentOps,
-                        userTxRollupReturnBondOps,
-                        userTxRollupSubmitBatchOps,
-                        userIncreasePaidStorageOps,
-                        userDrainDelegateOps,
-                        userSrAddMessagesOps,
-                        userSrCementOps,
-                        userSrExecuteOps,
-                        userSrOriginateOps,
-                        userSrPublishOps,
-                        userSrRecoverBondOps,
-                        userSrRefuteOps,
-                        userStakingOps,
-                        userSetDelegateParametersOps,
-                        userDalPublishCommitmentOps,
-                        userMigrations);
-
-                    result.AddRange(userActivations.Result);
-                    result.AddRange(userDelegations.Result);
-                    result.AddRange(userOriginations.Result);
-                    result.AddRange(userTransactions.Result);
-                    result.AddRange(userReveals.Result);
-                    result.AddRange(userRegisterConstants.Result);
-                    result.AddRange(userSetDepositsLimit.Result);
-                    result.AddRange(userTransferTicketOps.Result);
-                    result.AddRange(userTxRollupCommitOps.Result);
-                    result.AddRange(userTxRollupDispatchTicketsOps.Result);
-                    result.AddRange(userTxRollupFinalizeCommitmentOps.Result);
-                    result.AddRange(userTxRollupOriginationOps.Result);
-                    result.AddRange(userTxRollupRejectionOps.Result);
-                    result.AddRange(userTxRollupRemoveCommitmentOps.Result);
-                    result.AddRange(userTxRollupReturnBondOps.Result);
-                    result.AddRange(userTxRollupSubmitBatchOps.Result);
-                    result.AddRange(userIncreasePaidStorageOps.Result);
-                    result.AddRange(userDrainDelegateOps.Result);
-                    result.AddRange(userSrAddMessagesOps.Result);
-                    result.AddRange(userSrCementOps.Result);
-                    result.AddRange(userSrExecuteOps.Result);
-                    result.AddRange(userSrOriginateOps.Result);
-                    result.AddRange(userSrPublishOps.Result);
-                    result.AddRange(userSrRecoverBondOps.Result);
-                    result.AddRange(userSrRefuteOps.Result);
-                    result.AddRange(userStakingOps.Result);
-                    result.AddRange(userSetDelegateParametersOps.Result);
-                    result.AddRange(userDalPublishCommitmentOps.Result);
-                    result.AddRange(userMigrations.Result);
-
-                    break;
-                case RawContract contract:
-                    var _contract = new AccountParameter { Eq = contract.Id };
-
-                    var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<DelegationOperation>());
-
-                    var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<OriginationOperation>());
-
-                    var contractTransactions1 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction) && contract.Kind == 0
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var contractTransactions2 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "sender" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var contractTransactions3 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "target" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
-                        ? Operations.GetReveals(_contract, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<RevealOperation>());
-
-                    var contractTransferTicketOps = contract.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
-
-                    var contractIncreasePaidStorageOps = contract.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
-                        ? Operations.GetIncreasePaidStorageOps(null, _contract, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
-
-                    var contractMigrations = contract.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
-                        ? Operations.GetMigrations(_contract, null, null, null, level, timestamp, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<MigrationOperation>());
-
-                    await Task.WhenAll(
-                        contractDelegations,
-                        contractOriginations,
-                        contractTransactions1,
-                        contractTransactions2,
-                        contractTransactions3,
-                        contractReveals,
-                        contractTransferTicketOps,
-                        contractIncreasePaidStorageOps,
-                        contractMigrations);
-
-                    result.AddRange(contractDelegations.Result);
-                    result.AddRange(contractOriginations.Result);
-                    result.AddRange(contractTransactions1.Result.Concat(contractTransactions2.Result).Concat(contractTransactions3.Result).DistinctBy(x => x.Id));
-                    result.AddRange(contractReveals.Result);
-                    result.AddRange(contractTransferTicketOps.Result);
-                    result.AddRange(contractIncreasePaidStorageOps.Result);
-                    result.AddRange(contractMigrations.Result);
-
-                    break;
-
-                case RawRollup rollup:
-                    var _rollup = new AccountParameter { Eq = rollup.Id };
-
-                    var rollupTransactionOps = rollup.TransactionsCount> 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(null, null, null, _rollup, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var rollupTxRollupCommitOps = rollup.TxRollupCommitCount > 0 && types.Contains(OpTypes.TxRollupCommit)
-                        ? Operations.GetTxRollupCommitOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
-
-                    var rollupTxRollupDispatchTicketsOps = rollup.TxRollupDispatchTicketsCount > 0 && types.Contains(OpTypes.TxRollupDispatchTickets)
-                        ? Operations.GetTxRollupDispatchTicketsOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
-
-                    var rollupTxRollupFinalizeCommitmentOps = rollup.TxRollupFinalizeCommitmentCount > 0 && types.Contains(OpTypes.TxRollupFinalizeCommitment)
-                        ? Operations.GetTxRollupFinalizeCommitmentOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
-
-                    var rollupTxRollupOriginationOps = rollup.TxRollupOriginationCount > 0 && types.Contains(OpTypes.TxRollupOrigination)
-                        ? Operations.GetTxRollupOriginationOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
-
-                    var rollupTxRollupRejectionOps = rollup.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(null, null, null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
-
-                    var rollupTxRollupRemoveCommitmentOps = rollup.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
-                        ? Operations.GetTxRollupRemoveCommitmentOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
-
-                    var rollupTxRollupReturnBondOps = rollup.TxRollupReturnBondCount > 0 && types.Contains(OpTypes.TxRollupReturnBond)
-                        ? Operations.GetTxRollupReturnBondOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
-
-                    var rollupTxRollupSubmitBatchOps = rollup.TxRollupSubmitBatchCount > 0 && types.Contains(OpTypes.TxRollupSubmitBatch)
-                        ? Operations.GetTxRollupSubmitBatchOps(null, _rollup, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
-
-                    await Task.WhenAll(
-                        rollupTransactionOps,
-                        rollupTxRollupCommitOps,
-                        rollupTxRollupDispatchTicketsOps,
-                        rollupTxRollupFinalizeCommitmentOps,
-                        rollupTxRollupOriginationOps,
-                        rollupTxRollupRejectionOps,
-                        rollupTxRollupRemoveCommitmentOps,
-                        rollupTxRollupReturnBondOps,
-                        rollupTxRollupSubmitBatchOps);
-
-                    result.AddRange(rollupTransactionOps.Result);
-                    result.AddRange(rollupTxRollupCommitOps.Result);
-                    result.AddRange(rollupTxRollupDispatchTicketsOps.Result);
-                    result.AddRange(rollupTxRollupFinalizeCommitmentOps.Result);
-                    result.AddRange(rollupTxRollupOriginationOps.Result);
-                    result.AddRange(rollupTxRollupRejectionOps.Result);
-                    result.AddRange(rollupTxRollupRemoveCommitmentOps.Result);
-                    result.AddRange(rollupTxRollupReturnBondOps.Result);
-                    result.AddRange(rollupTxRollupSubmitBatchOps.Result);
-
-                    break;
-
-                case RawSmartRollup smartRollup:
-                    var _smartRollup = new SmartRollupParameter { Eq = smartRollup.Id };
-
-                    var smartRollupTransactionOps = smartRollup.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new() { Fields = new[] { "sender", "target" }, Eq = smartRollup.Id }, null, null, null, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
-                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
-
-                    var smartRollupSrCementOps = smartRollup.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { rollup = _smartRollup }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
-
-                    var smartRollupSrExecuteOps = smartRollup.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { rollup = _smartRollup }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
-
-                    var smartRollupSrOriginateOps = smartRollup.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { rollup = _smartRollup }, pagination, quote, format)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
-
-                    var smartRollupSrPublishOps = smartRollup.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { rollup = _smartRollup }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
-
-                    var smartRollupSrRecoverBondOps = smartRollup.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { rollup = _smartRollup }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
-
-                    var smartRollupSrRefuteOps = smartRollup.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { rollup = _smartRollup }, pagination, quote)
-                        : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
-
-                    await Task.WhenAll(
-                        smartRollupTransactionOps,
-                        smartRollupSrCementOps,
-                        smartRollupSrExecuteOps,
-                        smartRollupSrOriginateOps,
-                        smartRollupSrPublishOps,
-                        smartRollupSrRecoverBondOps,
-                        smartRollupSrRefuteOps);
-
-                    result.AddRange(smartRollupTransactionOps.Result);
-                    result.AddRange(smartRollupSrCementOps.Result);
-                    result.AddRange(smartRollupSrExecuteOps.Result);
-                    result.AddRange(smartRollupSrOriginateOps.Result);
-                    result.AddRange(smartRollupSrPublishOps.Result);
-                    result.AddRange(smartRollupSrRecoverBondOps.Result);
-                    result.AddRange(smartRollupSrRefuteOps.Result);
-
-                    break;
-
-                case RawAccount ghost:
-                    break;
+                switch (account)
+                {
+                    case RawDelegate delegat:
+                        delegates.Add(delegat);
+                        break;
+                    case RawUser user:
+                        users.Add(user);
+                        break;
+                    case RawContract contract:
+                        contracts.Add(contract);
+                        break;
+                    case RawRollup rollup:
+                        rollups.Add(rollup);
+                        break;
+                    case RawSmartRollup smartRollup:
+                        smartRollups.Add(smartRollup);
+                        break;
+                }
             }
 
-            return sort?.Desc == null
-                ? result.OrderBy(x => x.Id).Take(limit)
-                : result.OrderByDescending(x => x.Id).Take(limit);
+            var result = new List<Operation>(limit * 10);
+
+            var endorsements = delegates.Any(d => d.EndorsementsCount > 0) && operationTypes.Contains(OpTypes.Endorsement)
+                ? Operations.GetEndorsements(new() { In = delegates.FindAll(d => d.EndorsementsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
+
+            var preendorsements = delegates.Any(d => d.PreendorsementsCount > 0) && operationTypes.Contains(OpTypes.Preendorsement)
+                ? Operations.GetPreendorsements(new() { In = delegates.FindAll(d => d.PreendorsementsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
+
+            var ballots = delegates.Any(d => d.BallotsCount > 0) && operationTypes.Contains(OpTypes.Ballot)
+                ? Operations.GetBallots(new() { In = delegates.FindAll(d => d.BallotsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, null, null, null, null, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<BallotOperation>());
+
+            var proposals = delegates.Any(d => d.ProposalsCount > 0) && operationTypes.Contains(OpTypes.Proposal)
+                ? Operations.GetProposals(new() { In = delegates.FindAll(d => d.ProposalsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, null, null, null, null, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<ProposalOperation>());
+
+            var activations = delegates.Any(d => d.Activated == true) && operationTypes.Contains(OpTypes.Activation)
+                ? Operations.GetActivations(new() { In = delegates.FindAll(d => d.Activated == true).Select(d => d.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+            var doubleBaking = delegates.Any(d => d.DoubleBakingCount > 0) && operationTypes.Contains(OpTypes.DoubleBaking)
+                ? Operations.GetDoubleBakings(new() { Fields = new[] { "accuser", "offender" }, In = delegates.FindAll(d => d.DoubleBakingCount > 0).Select(d => d.Id).ToList() }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
+
+            var doubleEndorsing = delegates.Any(d => d.DoubleEndorsingCount > 0) && operationTypes.Contains(OpTypes.DoubleEndorsing)
+                ? Operations.GetDoubleEndorsings(new() { Fields = new[] { "accuser", "offender" }, In = delegates.FindAll(d => d.DoubleEndorsingCount > 0).Select(d => d.Id).ToList() }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+
+            var doublePreendorsing = delegates.Any(d => d.DoublePreendorsingCount > 0) && operationTypes.Contains(OpTypes.DoublePreendorsing)
+                ? Operations.GetDoublePreendorsings(new() { Fields = new[] { "accuser", "offender" }, In = delegates.FindAll(d => d.DoublePreendorsingCount > 0).Select(d => d.Id).ToList() }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
+
+            var nonceRevelations = delegates.Any(d => d.NonceRevelationsCount > 0) && operationTypes.Contains(OpTypes.NonceRevelation)
+                ? Operations.GetNonceRevelations(new() { Fields = new[] { "baker", "sender" }, In = delegates.FindAll(d => d.NonceRevelationsCount > 0).Select(d => d.Id).ToList() }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
+
+            var vdfRevelations = delegates.Any(d => d.VdfRevelationsCount > 0) && operationTypes.Contains(OpTypes.VdfRevelation)
+                ? Operations.GetVdfRevelations(new() { In = delegates.FindAll(d => d.VdfRevelationsCount > 0).Select(d => d.Id).ToList() }, level, null, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
+
+            var delegations = delegates.Any(d => d.DelegationsCount > 0) && operationTypes.Contains(OpTypes.Delegation)
+                ? Operations.GetDelegations(new() { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, In = delegates.FindAll(d => d.DelegationsCount > 0).Select(d => d.Id).ToList() }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+            var originations = delegates.Any(d => d.OriginationsCount > 0) && operationTypes.Contains(OpTypes.Origination)
+                ? Operations.GetOriginations(new() { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, In = delegates.FindAll(d => d.OriginationsCount > 0).Select(d => d.Id).ToList() }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+            var transactions = delegates.Any(d => d.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "initiator", "sender", "target" }, In = delegates.FindAll(d => d.TransactionsCount > 0).Select(d => d.Id).ToList() }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var reveals = delegates.Any(d => d.RevealsCount > 0) && operationTypes.Contains(OpTypes.Reveal)
+                ? Operations.GetReveals(new() { In = delegates.FindAll(d => d.RevealsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+            var registerConstants = delegates.Any(d => d.RegisterConstantsCount > 0) && operationTypes.Contains(OpTypes.RegisterConstant)
+                ? Operations.GetRegisterConstants(new() { In = delegates.FindAll(d => d.RegisterConstantsCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
+
+            var setDepositsLimits = delegates.Any(d => d.SetDepositsLimitsCount > 0) && operationTypes.Contains(OpTypes.SetDepositsLimit)
+                ? Operations.GetSetDepositsLimits(new() { In = delegates.FindAll(d => d.SetDepositsLimitsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
+
+            var transferTicketOps = delegates.Any(d => d.TransferTicketCount > 0) && operationTypes.Contains(OpTypes.TransferTicket)
+                ? Operations.GetTransferTicketOps(null, new() { In = delegates.FindAll(d => d.TransferTicketCount > 0).Select(d => d.Id).ToList() }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+            var txRollupCommitOps = delegates.Any(d => d.TxRollupCommitCount > 0) && operationTypes.Contains(OpTypes.TxRollupCommit)
+                ? Operations.GetTxRollupCommitOps(new() { In = delegates.FindAll(d => d.TxRollupCommitCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+
+            var txRollupDispatchTicketsOps = delegates.Any(d => d.TxRollupDispatchTicketsCount > 0) && operationTypes.Contains(OpTypes.TxRollupDispatchTickets)
+                ? Operations.GetTxRollupDispatchTicketsOps(new() { In = delegates.FindAll(d => d.TxRollupDispatchTicketsCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+            var txRollupFinalizeCommitmentOps = delegates.Any(d => d.TxRollupFinalizeCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupFinalizeCommitment)
+                ? Operations.GetTxRollupFinalizeCommitmentOps(new() { In = delegates.FindAll(d => d.TxRollupFinalizeCommitmentCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+            var txRollupOriginationOps = delegates.Any(d => d.TxRollupOriginationCount > 0) && operationTypes.Contains(OpTypes.TxRollupOrigination)
+                ? Operations.GetTxRollupOriginationOps(new() { In = delegates.FindAll(d => d.TxRollupOriginationCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+            var txRollupRejectionOps = delegates.Any(d => d.TxRollupRejectionCount > 0) && operationTypes.Contains(OpTypes.TxRollupRejection)
+                ? Operations.GetTxRollupRejectionOps(new() { Fields = new[] { "sender", "committer" }, In = delegates.FindAll(d => d.TxRollupRejectionCount > 0).Select(d => d.Id).ToList() }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+            var txRollupRemoveCommitmentOps = delegates.Any(d => d.TxRollupRemoveCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupRemoveCommitment)
+                ? Operations.GetTxRollupRemoveCommitmentOps(new() { In = delegates.FindAll(d => d.TxRollupRemoveCommitmentCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+            var txRollupReturnBondOps = delegates.Any(d => d.TxRollupReturnBondCount > 0) && operationTypes.Contains(OpTypes.TxRollupReturnBond)
+                ? Operations.GetTxRollupReturnBondOps(new() { In = delegates.FindAll(d => d.TxRollupReturnBondCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+            var txRollupSubmitBatchOps = delegates.Any(d => d.TxRollupSubmitBatchCount > 0) && operationTypes.Contains(OpTypes.TxRollupSubmitBatch)
+                ? Operations.GetTxRollupSubmitBatchOps(new() { In = delegates.FindAll(d => d.TxRollupSubmitBatchCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
+            var increasePaidStorageOps = delegates.Any(d => d.IncreasePaidStorageCount > 0) && operationTypes.Contains(OpTypes.IncreasePaidStorage)
+                ? Operations.GetIncreasePaidStorageOps(new() { In = delegates.FindAll(d => d.IncreasePaidStorageCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+            var updateConsensusKeyOps = delegates.Any(d => d.UpdateConsensusKeyCount > 0) && operationTypes.Contains(OpTypes.UpdateConsensusKey)
+                ? Operations.GetUpdateConsensusKeys(new() { In = delegates.FindAll(d => d.UpdateConsensusKeyCount > 0).Select(d => d.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+
+            var drainDelegateOps = delegates.Any(d => d.DrainDelegateCount > 0) && operationTypes.Contains(OpTypes.DrainDelegate)
+                ? Operations.GetDrainDelegates(new() { Fields = new[] { "delegate", "target" }, In = delegates.FindAll(d => d.DrainDelegateCount > 0).Select(d => d.Id).ToList() }, null, null, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
+
+            var srAddMessagesOps = delegates.Any(d => d.SmartRollupAddMessagesCount > 0) && operationTypes.Contains(OpTypes.SmartRollupAddMessages)
+                ? Operations.GetSmartRollupAddMessagesOps(new() { sender = new() { In = delegates.FindAll(d => d.SmartRollupAddMessagesCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
+
+            var srCementOps = delegates.Any(d => d.SmartRollupCementCount > 0) && operationTypes.Contains(OpTypes.SmartRollupCement)
+                ? Operations.GetSmartRollupCementOps(new() { sender = new() { In = delegates.FindAll(d => d.SmartRollupCementCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
+
+            var srExecuteOps = delegates.Any(d => d.SmartRollupExecuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupExecute)
+                ? Operations.GetSmartRollupExecuteOps(new() { sender = new() { In = delegates.FindAll(d => d.SmartRollupExecuteCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
+
+            var srOriginateOps = delegates.Any(d => d.SmartRollupOriginateCount > 0) && operationTypes.Contains(OpTypes.SmartRollupOriginate)
+                ? Operations.GetSmartRollupOriginateOps(new() { sender = new() { In = delegates.FindAll(d => d.SmartRollupOriginateCount > 0).Select(d => d.Id).ToList() } }, pagination, quote, format)
+                : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
+
+            var srPublishOps = delegates.Any(d => d.SmartRollupPublishCount > 0) && operationTypes.Contains(OpTypes.SmartRollupPublish)
+                ? Operations.GetSmartRollupPublishOps(new() { sender = new() { In = delegates.FindAll(d => d.SmartRollupPublishCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
+
+            var srRecoverBondOps = delegates.Any(d => d.SmartRollupRecoverBondCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRecoverBond)
+                ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, In = delegates.FindAll(d => d.SmartRollupRecoverBondCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
+
+            var srRefuteOps = delegates.Any(d => d.SmartRollupRefuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRefute)
+                ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, In = delegates.FindAll(d => d.SmartRollupRefuteCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
+
+            var stakingOps = delegates.Any(d => d.StakingOpsCount > 0) && operationTypes.Contains(OpTypes.Staking)
+                ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, In = delegates.FindAll(d => d.StakingOpsCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
+            var migrations = delegates.Any(d => d.MigrationsCount > 0) && operationTypes.Contains(OpTypes.Migration)
+                ? Operations.GetMigrations(new() { In = delegates.FindAll(d => d.MigrationsCount > 0).Select(d => d.Id).ToList() }, null, null, null, level, timestamp, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<MigrationOperation>());
+
+            var revelationPenalties = delegates.Any(d => d.RevelationPenaltiesCount > 0) && operationTypes.Contains(OpTypes.RevelationPenalty)
+                ? Operations.GetRevelationPenalties(null, new() { In = delegates.FindAll(d => d.RevelationPenaltiesCount > 0).Select(d => d.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
+
+            var bakingOps = delegates.Any(d => d.BlocksCount > 0) && operationTypes.Contains(OpTypes.Baking)
+                ? Operations.GetBakings(new() { Fields = new[] { "proposer", "producer" }, In = delegates.FindAll(d => d.BlocksCount > 0).Select(d => d.Id).ToList() }, null, null, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<BakingOperation>());
+
+            var endorsingRewards = delegates.Any(d => d.EndorsingRewardsCount > 0) && operationTypes.Contains(OpTypes.EndorsingReward)
+                ? Operations.GetEndorsingRewards(null, new() { In = delegates.FindAll(d => d.EndorsingRewardsCount > 0).Select(d => d.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+
+            var autostakingOps = delegates.Any(d => d.AutostakingOpsCount > 0) && operationTypes.Contains(OpTypes.Autostaking)
+                ? Operations.GetAutostakingOps(new() { baker = new() { In = delegates.FindAll(d => d.AutostakingOpsCount > 0).Select(d => d.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
+
+
+            var userActivations = users.Any(u => u.Activated == true) && operationTypes.Contains(OpTypes.Activation)
+                ? Operations.GetActivations(new() { In = users.FindAll(u => u.Activated == true).Select(u => u.Id).ToList() }, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<ActivationOperation>());
+
+            var userDelegations = users.Any(u => u.DelegationsCount > 0) && operationTypes.Contains(OpTypes.Delegation)
+                ? Operations.GetDelegations(new() { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, In = users.FindAll(u => u.DelegationsCount > 0).Select(u => u.Id).ToList() }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+            var userOriginations = users.Any(u => u.OriginationsCount > 0) && operationTypes.Contains(OpTypes.Origination)
+                ? Operations.GetOriginations(new() { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, In = users.FindAll(u => u.OriginationsCount > 0).Select(u => u.Id).ToList() }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+            var userTransactions = users.Any(u => u.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "initiator", "sender", "target" }, In = users.FindAll(u => u.TransactionsCount > 0).Select(u => u.Id).ToList() }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var userReveals = users.Any(u => u.RevealsCount > 0) && operationTypes.Contains(OpTypes.Reveal)
+                ? Operations.GetReveals(new() { In = users.FindAll(u => u.RevealsCount > 0).Select(u => u.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+            var userRegisterConstants = users.Any(u => u.RegisterConstantsCount > 0) && operationTypes.Contains(OpTypes.RegisterConstant)
+                ? Operations.GetRegisterConstants(new() { In = users.FindAll(u => u.RegisterConstantsCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<RegisterConstantOperation>());
+
+            var userSetDepositsLimit = users.Any(u => u.SetDepositsLimitsCount > 0) && operationTypes.Contains(OpTypes.SetDepositsLimit)
+                ? Operations.GetSetDepositsLimits(new() { In = users.FindAll(u => u.SetDepositsLimitsCount > 0).Select(u => u.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<SetDepositsLimitOperation>());
+
+            var userTransferTicketOps = users.Any(u => u.TransferTicketCount > 0) && operationTypes.Contains(OpTypes.TransferTicket)
+                ? Operations.GetTransferTicketOps(null, new() { In = users.FindAll(u => u.TransferTicketCount > 0).Select(u => u.Id).ToList() }, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+            var userTxRollupCommitOps = users.Any(u => u.TxRollupCommitCount > 0) && operationTypes.Contains(OpTypes.TxRollupCommit)
+                ? Operations.GetTxRollupCommitOps(new() { In = users.FindAll(u => u.TxRollupCommitCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+
+            var userTxRollupDispatchTicketsOps = users.Any(u => u.TxRollupDispatchTicketsCount > 0) && operationTypes.Contains(OpTypes.TxRollupDispatchTickets)
+                ? Operations.GetTxRollupDispatchTicketsOps(new() { In = users.FindAll(u => u.TxRollupDispatchTicketsCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+            var userTxRollupFinalizeCommitmentOps = users.Any(u => u.TxRollupFinalizeCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupFinalizeCommitment)
+                ? Operations.GetTxRollupFinalizeCommitmentOps(new() { In = users.FindAll(u => u.TxRollupFinalizeCommitmentCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+            var userTxRollupOriginationOps = users.Any(u => u.TxRollupOriginationCount > 0) && operationTypes.Contains(OpTypes.TxRollupOrigination)
+                ? Operations.GetTxRollupOriginationOps(new() { In = users.FindAll(u => u.TxRollupOriginationCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+            var userTxRollupRejectionOps = users.Any(u => u.TxRollupRejectionCount > 0) && operationTypes.Contains(OpTypes.TxRollupRejection)
+                ? Operations.GetTxRollupRejectionOps(new() { Fields = new[] { "sender", "committer" }, In = users.FindAll(u => u.TxRollupRejectionCount > 0).Select(u => u.Id).ToList() }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+            var userTxRollupRemoveCommitmentOps = users.Any(u => u.TxRollupRemoveCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupRemoveCommitment)
+                ? Operations.GetTxRollupRemoveCommitmentOps(new() { In = users.FindAll(u => u.TxRollupRemoveCommitmentCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+            var userTxRollupReturnBondOps = users.Any(u => u.TxRollupReturnBondCount > 0) && operationTypes.Contains(OpTypes.TxRollupReturnBond)
+                ? Operations.GetTxRollupReturnBondOps(new() { In = users.FindAll(u => u.TxRollupReturnBondCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+            var userTxRollupSubmitBatchOps = users.Any(u => u.TxRollupSubmitBatchCount > 0) && operationTypes.Contains(OpTypes.TxRollupSubmitBatch)
+                ? Operations.GetTxRollupSubmitBatchOps(new() { In = users.FindAll(u => u.TxRollupSubmitBatchCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
+            var userIncreasePaidStorageOps = users.Any(u => u.IncreasePaidStorageCount > 0) && operationTypes.Contains(OpTypes.IncreasePaidStorage)
+                ? Operations.GetIncreasePaidStorageOps(new() { In = users.FindAll(u => u.IncreasePaidStorageCount > 0).Select(u => u.Id).ToList() }, null, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+            var userDrainDelegateOps = users.Any(u => u.DrainDelegateCount > 0) && operationTypes.Contains(OpTypes.DrainDelegate)
+                ? Operations.GetDrainDelegates(new() { Fields = new[] { "delegate", "target" }, In = users.FindAll(u => u.DrainDelegateCount > 0).Select(u => u.Id).ToList() }, null, null, level, timestamp, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
+
+            var userSrAddMessagesOps = users.Any(u => u.SmartRollupAddMessagesCount > 0) && operationTypes.Contains(OpTypes.SmartRollupAddMessages)
+                ? Operations.GetSmartRollupAddMessagesOps(new() { sender = new() { In = users.FindAll(u => u.SmartRollupAddMessagesCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
+
+            var userSrCementOps = users.Any(u => u.SmartRollupCementCount > 0) && operationTypes.Contains(OpTypes.SmartRollupCement)
+                ? Operations.GetSmartRollupCementOps(new() { sender = new() { In = users.FindAll(u => u.SmartRollupCementCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
+
+            var userSrExecuteOps = users.Any(u => u.SmartRollupExecuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupExecute)
+                ? Operations.GetSmartRollupExecuteOps(new() { sender = new() { In = users.FindAll(u => u.SmartRollupExecuteCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
+
+            var userSrOriginateOps = users.Any(u => u.SmartRollupOriginateCount > 0) && operationTypes.Contains(OpTypes.SmartRollupOriginate)
+                ? Operations.GetSmartRollupOriginateOps(new() { sender = new() { In = users.FindAll(u => u.SmartRollupOriginateCount > 0).Select(u => u.Id).ToList() } }, pagination, quote, format)
+                : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
+
+            var userSrPublishOps = users.Any(u => u.SmartRollupPublishCount > 0) && operationTypes.Contains(OpTypes.SmartRollupPublish)
+                ? Operations.GetSmartRollupPublishOps(new() { sender = new() { In = users.FindAll(u => u.SmartRollupPublishCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
+
+            var userSrRecoverBondOps = users.Any(u => u.SmartRollupRecoverBondCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRecoverBond)
+                ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, In = users.FindAll(u => u.SmartRollupRecoverBondCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
+
+            var userSrRefuteOps = users.Any(u => u.SmartRollupRefuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRefute)
+                ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, In = users.FindAll(u => u.SmartRollupRefuteCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
+
+            var userStakingOps = users.Any(u => u.StakingOpsCount > 0) && operationTypes.Contains(OpTypes.Staking)
+                ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, In = users.FindAll(u => u.StakingOpsCount > 0).Select(u => u.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<StakingOperation>());
+
+            var userMigrations = users.Any(u => u.MigrationsCount > 0) && operationTypes.Contains(OpTypes.Migration)
+                ? Operations.GetMigrations(new() { In = users.FindAll(u => u.MigrationsCount > 0).Select(u => u.Id).ToList() }, null, null, null, level, timestamp, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<MigrationOperation>());
+
+
+            var contractDelegations = contracts.Any(c => c.DelegationsCount > 0) && operationTypes.Contains(OpTypes.Delegation)
+                ? Operations.GetDelegations(new() { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, In = contracts.FindAll(c => c.DelegationsCount > 0).Select(c => c.Id).ToList() }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<DelegationOperation>());
+
+            var contractOriginations = contracts.Any(c => c.OriginationsCount > 0 && operationTypes.Contains(OpTypes.Origination))
+                ? Operations.GetOriginations(new() { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, In = contracts.FindAll(c => c.OriginationsCount > 0).Select(c => c.Id).ToList() }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<OriginationOperation>());
+
+            var contractTransactions1 = contracts.Any(c => c.TransactionsCount > 0 && c.Kind == 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "initiator" }, In = contracts.FindAll(c => c.TransactionsCount > 0 && c.Kind == 0).Select(c => c.Id).ToList() }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var contractTransactions2 = contracts.Any(c => c.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "sender" }, In = contracts.FindAll(c => c.TransactionsCount > 0).Select(c => c.Id).ToList() }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var contractTransactions3 = contracts.Any(c => c.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "target" }, In = contracts.FindAll(c => c.TransactionsCount > 0).Select(c => c.Id).ToList() }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var contractReveals = contracts.Any(c => c.RevealsCount > 0) && operationTypes.Contains(OpTypes.Reveal)
+                ? Operations.GetReveals(new() { In = contracts.FindAll(c => c.RevealsCount > 0).Select(c => c.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<RevealOperation>());
+
+            var contractTransferTicketOps = contracts.Any(c => c.TransferTicketCount > 0) && operationTypes.Contains(OpTypes.TransferTicket)
+                ? Operations.GetTransferTicketOps(new() { Fields = new[] { "target", "ticketer" }, In = contracts.FindAll(c => c.TransferTicketCount > 0).Select(c => c.Id).ToList() }, null, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+            var contractIncreasePaidStorageOps = contracts.Any(c => c.IncreasePaidStorageCount > 0) && operationTypes.Contains(OpTypes.IncreasePaidStorage)
+                ? Operations.GetIncreasePaidStorageOps(null, new() { In = contracts.FindAll(c => c.IncreasePaidStorageCount > 0).Select(c => c.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+            var contractMigrations = contracts.Any(c => c.MigrationsCount > 0) && operationTypes.Contains(OpTypes.Migration)
+                ? Operations.GetMigrations(new() { In = contracts.FindAll(c => c.MigrationsCount > 0).Select(c => c.Id).ToList() }, null, null, null, level, timestamp, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<MigrationOperation>());
+
+
+            var rollupTransactionOps = rollups.Any(r => r.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(null, null, null, new() { In = rollups.FindAll(r => r.TransactionsCount > 0).Select(r => r.Id).ToList() }, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var rollupTxRollupCommitOps = rollups.Any(r => r.TxRollupCommitCount > 0) && operationTypes.Contains(OpTypes.TxRollupCommit)
+                ? Operations.GetTxRollupCommitOps(null, new() { In = rollups.FindAll(r => r.TxRollupCommitCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupCommitOperation>());
+
+            var rollupTxRollupDispatchTicketsOps = rollups.Any(r => r.TxRollupDispatchTicketsCount > 0) && operationTypes.Contains(OpTypes.TxRollupDispatchTickets)
+                ? Operations.GetTxRollupDispatchTicketsOps(null, new() { In = rollups.FindAll(r => r.TxRollupDispatchTicketsCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupDispatchTicketsOperation>());
+
+            var rollupTxRollupFinalizeCommitmentOps = rollups.Any(r => r.TxRollupFinalizeCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupFinalizeCommitment)
+                ? Operations.GetTxRollupFinalizeCommitmentOps(null, new() { In = rollups.FindAll(r => r.TxRollupFinalizeCommitmentCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupFinalizeCommitmentOperation>());
+
+            var rollupTxRollupOriginationOps = rollups.Any(r => r.TxRollupOriginationCount > 0) && operationTypes.Contains(OpTypes.TxRollupOrigination)
+                ? Operations.GetTxRollupOriginationOps(null, new() { In = rollups.FindAll(r => r.TxRollupOriginationCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
+
+            var rollupTxRollupRejectionOps = rollups.Any(r => r.TxRollupRejectionCount > 0) && operationTypes.Contains(OpTypes.TxRollupRejection)
+                ? Operations.GetTxRollupRejectionOps(null, null, null, new() { In = rollups.FindAll(r => r.TxRollupRejectionCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
+
+            var rollupTxRollupRemoveCommitmentOps = rollups.Any(r => r.TxRollupRemoveCommitmentCount > 0) && operationTypes.Contains(OpTypes.TxRollupRemoveCommitment)
+                ? Operations.GetTxRollupRemoveCommitmentOps(null, new() { In = rollups.FindAll(r => r.TxRollupRemoveCommitmentCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupRemoveCommitmentOperation>());
+
+            var rollupTxRollupReturnBondOps = rollups.Any(r => r.TxRollupReturnBondCount > 0) && operationTypes.Contains(OpTypes.TxRollupReturnBond)
+                ? Operations.GetTxRollupReturnBondOps(null, new() { In = rollups.FindAll(r => r.TxRollupReturnBondCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupReturnBondOperation>());
+
+            var rollupTxRollupSubmitBatchOps = rollups.Any(r => r.TxRollupSubmitBatchCount > 0) && operationTypes.Contains(OpTypes.TxRollupSubmitBatch)
+                ? Operations.GetTxRollupSubmitBatchOps(null, new() { In = rollups.FindAll(r => r.TxRollupSubmitBatchCount > 0).Select(r => r.Id).ToList() }, level, timestamp, status, sort, offset, limit, quote)
+                : Task.FromResult(Enumerable.Empty<TxRollupSubmitBatchOperation>());
+
+
+            var smartRollupTransactionOps = smartRollups.Any(sr => sr.TransactionsCount > 0) && operationTypes.Contains(OpTypes.Transaction)
+                ? Operations.GetTransactions(new() { Fields = new[] { "sender", "target" }, In = smartRollups.FindAll(sr => sr.TransactionsCount > 0).Select(sr => sr.Id).ToList() }, null, null, null, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+            var smartRollupSrCementOps = smartRollups.Any(sr => sr.SmartRollupCementCount > 0) && operationTypes.Contains(OpTypes.SmartRollupCement)
+                ? Operations.GetSmartRollupCementOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupCementCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
+
+            var smartRollupSrExecuteOps = smartRollups.Any(sr => sr.SmartRollupExecuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupExecute)
+                ? Operations.GetSmartRollupExecuteOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupExecuteCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
+
+            var smartRollupSrOriginateOps = smartRollups.Any(sr => sr.SmartRollupOriginateCount > 0) && operationTypes.Contains(OpTypes.SmartRollupOriginate)
+                ? Operations.GetSmartRollupOriginateOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupOriginateCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote, format)
+                : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
+
+            var smartRollupSrPublishOps = smartRollups.Any(sr => sr.SmartRollupPublishCount > 0) && operationTypes.Contains(OpTypes.SmartRollupPublish)
+                ? Operations.GetSmartRollupPublishOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupPublishCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
+
+            var smartRollupSrRecoverBondOps = smartRollups.Any(sr => sr.SmartRollupRecoverBondCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRecoverBond)
+                ? Operations.GetSmartRollupRecoverBondOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupRecoverBondCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
+
+            var smartRollupSrRefuteOps = smartRollups.Any(sr => sr.SmartRollupRefuteCount > 0) && operationTypes.Contains(OpTypes.SmartRollupRefute)
+                ? Operations.GetSmartRollupRefuteOps(new() { rollup = new() { In = smartRollups.FindAll(sr => sr.SmartRollupRefuteCount > 0).Select(sr => sr.Id).ToList() } }, pagination, quote)
+                : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
+
+            result.AddRange(await endorsements);
+            result.AddRange(await preendorsements);
+            result.AddRange(await proposals);
+            result.AddRange(await ballots);
+            result.AddRange(await activations);
+            result.AddRange(await doubleBaking);
+            result.AddRange(await doubleEndorsing);
+            result.AddRange(await doublePreendorsing);
+            result.AddRange(await nonceRevelations);
+            result.AddRange(await vdfRevelations);
+            result.AddRange(await delegations);
+            result.AddRange(await originations);
+            result.AddRange(await transactions);
+            result.AddRange(await reveals);
+            result.AddRange(await registerConstants);
+            result.AddRange(await setDepositsLimits);
+            result.AddRange(await transferTicketOps);
+            result.AddRange(await txRollupCommitOps);
+            result.AddRange(await txRollupDispatchTicketsOps);
+            result.AddRange(await txRollupFinalizeCommitmentOps);
+            result.AddRange(await txRollupOriginationOps);
+            result.AddRange(await txRollupRejectionOps);
+            result.AddRange(await txRollupRemoveCommitmentOps);
+            result.AddRange(await txRollupReturnBondOps);
+            result.AddRange(await txRollupSubmitBatchOps);
+            result.AddRange(await increasePaidStorageOps);
+            result.AddRange(await updateConsensusKeyOps);
+            result.AddRange(await drainDelegateOps);
+            result.AddRange(await srAddMessagesOps);
+            result.AddRange(await srCementOps);
+            result.AddRange(await srExecuteOps);
+            result.AddRange(await srOriginateOps);
+            result.AddRange(await srPublishOps);
+            result.AddRange(await srRecoverBondOps);
+            result.AddRange(await srRefuteOps);
+            result.AddRange(await stakingOps);
+            result.AddRange(await migrations);
+            result.AddRange(await revelationPenalties);
+            result.AddRange(await bakingOps);
+            result.AddRange(await endorsingRewards);
+            result.AddRange(await autostakingOps);
+
+            result.AddRange(await userActivations);
+            result.AddRange(await userDelegations);
+            result.AddRange(await userOriginations);
+            result.AddRange(await userTransactions);
+            result.AddRange(await userReveals);
+            result.AddRange(await userRegisterConstants);
+            result.AddRange(await userSetDepositsLimit);
+            result.AddRange(await userTransferTicketOps);
+            result.AddRange(await userTxRollupCommitOps);
+            result.AddRange(await userTxRollupDispatchTicketsOps);
+            result.AddRange(await userTxRollupFinalizeCommitmentOps);
+            result.AddRange(await userTxRollupOriginationOps);
+            result.AddRange(await userTxRollupRejectionOps);
+            result.AddRange(await userTxRollupRemoveCommitmentOps);
+            result.AddRange(await userTxRollupReturnBondOps);
+            result.AddRange(await userTxRollupSubmitBatchOps);
+            result.AddRange(await userIncreasePaidStorageOps);
+            result.AddRange(await userDrainDelegateOps);
+            result.AddRange(await userSrAddMessagesOps);
+            result.AddRange(await userSrCementOps);
+            result.AddRange(await userSrExecuteOps);
+            result.AddRange(await userSrOriginateOps);
+            result.AddRange(await userSrPublishOps);
+            result.AddRange(await userSrRecoverBondOps);
+            result.AddRange(await userSrRefuteOps);
+            result.AddRange(await userStakingOps);
+            result.AddRange(await userMigrations);
+
+            result.AddRange(await contractDelegations);
+            result.AddRange(await contractOriginations);
+            result.AddRange(await contractTransactions1);
+            result.AddRange(await contractTransactions2);
+            result.AddRange(await contractTransactions3);
+            result.AddRange(await contractReveals);
+            result.AddRange(await contractTransferTicketOps);
+            result.AddRange(await contractIncreasePaidStorageOps);
+            result.AddRange(await contractMigrations);
+
+            result.AddRange(await rollupTransactionOps);
+            result.AddRange(await rollupTxRollupCommitOps);
+            result.AddRange(await rollupTxRollupDispatchTicketsOps);
+            result.AddRange(await rollupTxRollupFinalizeCommitmentOps);
+            result.AddRange(await rollupTxRollupOriginationOps);
+            result.AddRange(await rollupTxRollupRejectionOps);
+            result.AddRange(await rollupTxRollupRemoveCommitmentOps);
+            result.AddRange(await rollupTxRollupReturnBondOps);
+            result.AddRange(await rollupTxRollupSubmitBatchOps);
+
+            result.AddRange(await smartRollupTransactionOps);
+            result.AddRange(await smartRollupSrCementOps);
+            result.AddRange(await smartRollupSrExecuteOps);
+            result.AddRange(await smartRollupSrOriginateOps);
+            result.AddRange(await smartRollupSrPublishOps);
+            result.AddRange(await smartRollupSrRecoverBondOps);
+            result.AddRange(await smartRollupSrRefuteOps);
+
+            return result
+                .DistinctBy(x => x.Id)
+                .OrderBy(x => sort?.Desc == null ? x.Id : -x.Id)
+                .Take(limit);
         }
 
         public async Task<RawJson> GetProfileInfo(string address)
