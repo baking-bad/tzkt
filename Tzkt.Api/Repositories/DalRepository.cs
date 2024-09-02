@@ -50,10 +50,10 @@ namespace Tzkt.Api.Repositories
             int limit)
         {
             var sql = new SqlBuilder($"""
-                SELECT     op.*
-                FROM       "DalCommitmentStatus" AS dc
-                INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
-                """)
+                                      SELECT     op.*, dc."ShardsAttested", dc."Attested"
+                                      FROM       "DalCommitmentStatus" AS dc
+                                      INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
+                                      """)
                 .FilterA(@"op.""Commitment""", hash)
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
@@ -72,7 +72,9 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 SlotIndex = row.Slot,
                 Hash = row.Commitment,
-                Publisher = Accounts.GetAlias(row.SenderId)
+                Publisher = Accounts.GetAlias(row.SenderId),
+                ShardsAttested = row.ShardsAttested,
+                Attested = row.Attested
             });
         }
 
@@ -92,10 +94,24 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "level": columns.Add(@"op.""Level"""); break;
-                    case "slotIndex": columns.Add(@"op.""Slot"""); break;
-                    case "hash": columns.Add(@"op.""Commitment"""); break;
-                    case "publisher": columns.Add(@"op.""SenderId"""); break;
+                    case "level":
+                        columns.Add(@"op.""Level""");
+                        break;
+                    case "slotIndex":
+                        columns.Add(@"op.""Slot""");
+                        break;
+                    case "hash":
+                        columns.Add(@"op.""Commitment""");
+                        break;
+                    case "publisher":
+                        columns.Add(@"op.""SenderId""");
+                        break;
+                    case "shardsAttested":
+                        columns.Add(@"dc.""ShardsAttested""");
+                        break;
+                    case "attested":
+                        columns.Add(@"dc.""Attested""");
+                        break;
                 }
             }
 
@@ -103,10 +119,10 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($"""
-                SELECT {string.Join(',', columns)}
-                FROM       "DalCommitmentStatus" AS dc
-                INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
-                """)
+                                      SELECT {string.Join(',', columns)}
+                                      FROM       "DalCommitmentStatus" AS dc
+                                      INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
+                                      """)
                 .FilterA(@"op.""Commitment""", hash)
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
@@ -114,7 +130,7 @@ namespace Tzkt.Api.Repositories
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
                     "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
-                    "level" or _  => (@"op.""Level""", @"op.""Level""")
+                    "level" or _ => (@"op.""Level""", @"op.""Level""")
                 }, @"op.""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -144,6 +160,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.SenderId);
                         break;
+                    case "shardsAttested":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ShardsAttested;
+                        break;
+                    case "attested":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Attested;
+                        break;
                 }
             }
 
@@ -164,20 +188,34 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "level": columns.Add(@"op.""Level"""); break;
-                case "slotIndex": columns.Add(@"op.""Slot"""); break;
-                case "hash": columns.Add(@"op.""Commitment"""); break;
-                case "publisher": columns.Add(@"op.""SenderId"""); break;
+                case "level":
+                    columns.Add(@"op.""Level""");
+                    break;
+                case "slotIndex":
+                    columns.Add(@"op.""Slot""");
+                    break;
+                case "hash":
+                    columns.Add(@"op.""Commitment""");
+                    break;
+                case "publisher":
+                    columns.Add(@"op.""SenderId""");
+                    break;
+                case "shardsAttested":
+                    columns.Add(@"dc.""ShardsAttested""");
+                    break;
+                case "attested":
+                    columns.Add(@"dc.""Attested""");
+                    break;
             }
 
             if (columns.Count == 0)
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($"""
-                SELECT {string.Join(',', columns)}
-                FROM       "DalCommitmentStatus" AS dc
-                INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
-                """)
+                                      SELECT {string.Join(',', columns)}
+                                      FROM       "DalCommitmentStatus" AS dc
+                                      INNER JOIN "DalPublishCommitmentOps" AS op ON dc."PublishmentId" = op."Id"
+                                      """)
                 .FilterA(@"op.""Commitment""", hash)
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
@@ -185,7 +223,7 @@ namespace Tzkt.Api.Repositories
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
                     "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
-                    "level" or _  => (@"op.""Level""", @"op.""Level""")
+                    "level" or _ => (@"op.""Level""", @"op.""Level""")
                 }, @"op.""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -211,6 +249,14 @@ namespace Tzkt.Api.Repositories
                 case "publisher":
                     foreach (var row in rows)
                         result[j++] = Accounts.GetAlias(row.SenderId);
+                    break;
+                case "shardsAttested":
+                    foreach (var row in rows)
+                        result[j++] = row.ShardsAttested;
+                    break;
+                case "attested":
+                    foreach (var row in rows)
+                        result[j++] = row.Attested;
                     break;
             }
 
@@ -272,7 +318,7 @@ namespace Tzkt.Api.Repositories
                 {
                     "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
-                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                    "publishLevel" or _ => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -309,12 +355,28 @@ namespace Tzkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "publishLevel": columns.Add(@"dpco.""Level"""); needPublishOp = true; break;
-                    case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
-                    case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
-                    case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
-                    case "shardsCount": columns.Add(@"da.""ShardsCount"""); break;
-                    case "attested": columns.Add(@"da.""Attested"""); break;
+                    case "publishLevel":
+                        columns.Add(@"dpco.""Level""");
+                        needPublishOp = true;
+                        break;
+                    case "slotIndex":
+                        columns.Add(@"dpco.""Slot""");
+                        needPublishOp = true;
+                        break;
+                    case "commitment":
+                        columns.Add(@"dpco.""Commitment""");
+                        needPublishOp = true;
+                        break;
+                    case "attester":
+                        columns.Add(@"eo.""DelegateId""");
+                        needAttestationOp = true;
+                        break;
+                    case "shardsCount":
+                        columns.Add(@"da.""ShardsCount""");
+                        break;
+                    case "attested":
+                        columns.Add(@"da.""Attested""");
+                        break;
                 }
             }
 
@@ -329,24 +391,24 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object[]>();
 
             var sql = new SqlBuilder($"""
-                SELECT {string.Join(',', columns)}
-                FROM   "DalAttestationStatus" AS da
-                {
-                    (needPublishOp ?
-                     $"""
-                     LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
-                     LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
-                     """
-                     : string.Empty)
-                }
-                {
-                    (needAttestationOp ?
-                     $"""
-                     LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
-                     """
-                     : string.Empty)
-                }
-                """)
+                                      SELECT {string.Join(',', columns)}
+                                      FROM   "DalAttestationStatus" AS da
+                                      {
+                                          (needPublishOp ?
+                                              $"""
+                                               LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                                               LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                                               """
+                                              : string.Empty)
+                                      }
+                                      {
+                                          (needAttestationOp ?
+                                              $"""
+                                               LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                                               """
+                                              : string.Empty)
+                                      }
+                                      """)
                 .FilterA(@"dpco.""Commitment""", commitment)
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
@@ -357,7 +419,7 @@ namespace Tzkt.Api.Repositories
                 {
                     "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
-                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                    "publishLevel" or _ => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -419,12 +481,28 @@ namespace Tzkt.Api.Repositories
 
             switch (field)
             {
-                case "publishLevel": columns.Add(@"dpco.""Level"""); needPublishOp = true; break;
-                case "slotIndex": columns.Add(@"dpco.""Slot"""); needPublishOp = true; break;
-                case "commitment": columns.Add(@"dpco.""Commitment"""); needPublishOp = true; break;
-                case "attester": columns.Add(@"eo.""DelegateId"""); needAttestationOp = true; break;
-                case "shardsCount": columns.Add(@"da.""ShardsCount"""); break;
-                case "attested": columns.Add(@"da.""Attested"""); break;
+                case "publishLevel":
+                    columns.Add(@"dpco.""Level""");
+                    needPublishOp = true;
+                    break;
+                case "slotIndex":
+                    columns.Add(@"dpco.""Slot""");
+                    needPublishOp = true;
+                    break;
+                case "commitment":
+                    columns.Add(@"dpco.""Commitment""");
+                    needPublishOp = true;
+                    break;
+                case "attester":
+                    columns.Add(@"eo.""DelegateId""");
+                    needAttestationOp = true;
+                    break;
+                case "shardsCount":
+                    columns.Add(@"da.""ShardsCount""");
+                    break;
+                case "attested":
+                    columns.Add(@"da.""Attested""");
+                    break;
             }
 
             if (sort == null || sort.Validate("publishLevel", "slotIndex"))
@@ -438,24 +516,24 @@ namespace Tzkt.Api.Repositories
                 return Array.Empty<object>();
 
             var sql = new SqlBuilder($"""
-                SELECT {string.Join(',', columns)}
-                FROM   "DalAttestationStatus" AS da
-                {
-                    (needPublishOp ?
-                     $"""
-                     LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
-                     LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
-                     """
-                     : string.Empty)
-                }
-                {
-                    (needAttestationOp ?
-                     $"""
-                     LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
-                     """
-                     : string.Empty)
-                }
-                """)
+                                      SELECT {string.Join(',', columns)}
+                                      FROM   "DalAttestationStatus" AS da
+                                      {
+                                          (needPublishOp ?
+                                              $"""
+                                               LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
+                                               LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
+                                               """
+                                              : string.Empty)
+                                      }
+                                      {
+                                          (needAttestationOp ?
+                                              $"""
+                                               LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
+                                               """
+                                              : string.Empty)
+                                      }
+                                      """)
                 .FilterA(@"dpco.""Commitment""", commitment)
                 .FilterA(@"dpco.""Level""", publishLevel)
                 .FilterA(@"dpco.""Slot""", slotIndex)
@@ -466,7 +544,7 @@ namespace Tzkt.Api.Repositories
                 {
                     "shardsCount" => (@"da.""ShardsCount""", @"da.""ShardsCount"""),
                     "slotIndex" => (@"dpco.""Slot""", @"dpco.""Slot"""),
-                    "publishLevel" or _  => (@"dpco.""Level""", @"dpco.""Level""")
+                    "publishLevel" or _ => (@"dpco.""Level""", @"dpco.""Level""")
                 }, @"dpco.""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -505,6 +583,7 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+
         #endregion
     }
 }

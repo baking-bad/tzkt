@@ -7,7 +7,9 @@ namespace Tzkt.Data.Models
     {
         public int Id { get; set; }
         public long PublishmentId { get; set; }
-
+        public int ShardsAttested { get; set; }
+        public bool Attested { get; set; }
+        
         #region relations
         [ForeignKey(nameof(PublishmentId))]
         public DalPublishCommitmentOperation Publishment { get; set; }

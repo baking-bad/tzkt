@@ -28,6 +28,7 @@ namespace Tzkt.Sync.Services
         public RefutationGameCache RefutationGames { get; private set; }
         public UnstakeRequestsCache UnstakeRequests { get; private set; }
         public DalCommitmentStatusCache DalCommitmentStatus { get; private set; }
+        public DalAttestationsCache DalAttestations { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -54,6 +55,7 @@ namespace Tzkt.Sync.Services
             RefutationGames = new(db);
             UnstakeRequests = new(db);
             DalCommitmentStatus = new(db);
+            DalAttestations = new (db);
         }
 
         public async Task ResetAsync()
@@ -77,6 +79,7 @@ namespace Tzkt.Sync.Services
             RefutationGames.Reset();
             UnstakeRequests.Reset();
             DalCommitmentStatus.Reset();
+            DalAttestationsCache.Reset();
 
             await Protocols.ResetAsync();
             await AppState.ResetAsync();

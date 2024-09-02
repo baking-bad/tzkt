@@ -21,5 +21,15 @@ namespace Tzkt.Api.Models
         /// Information about the account who has published the commitment.
         /// </summary>
         public Alias Publisher { get; set; }
+        
+        /// <summary>
+        /// Total number of Shards attested by the delegates for this commitment
+        /// </summary>
+        public int ShardsAttested { get; set; }
+        
+        /// <summary>
+        /// Attestation successful for the commitment
+        /// </summary>
+        public bool Attested { get; set; }
     }
 }

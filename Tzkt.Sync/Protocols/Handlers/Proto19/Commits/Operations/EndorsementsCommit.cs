@@ -2,6 +2,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
+using Tzkt.Sync.Services.Cache;
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
@@ -43,11 +44,17 @@ namespace Tzkt.Sync.Protocols.Proto19
                         dalAttestationsStatus.Add(attestationsStatus);
                     }
                 }
+
+                if(dalAttestationsStatus.Count > 0)
+                {
+                    DalAttestationsCache.Add(block.Level, dalAttestationsStatus);
+                }
                 Db.DalAttestationStatus.AddRange(dalAttestationsStatus);
             }
         }
 
         protected override async Task RevertDalAttestations(EndorsementOperation endorsement) {
+            DalAttestationsCache.Reset();
             await Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "DalAttestationStatus"
                 WHERE "AttestationId" = {endorsement.Id}
