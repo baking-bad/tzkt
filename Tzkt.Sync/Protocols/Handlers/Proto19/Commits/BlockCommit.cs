@@ -110,14 +110,14 @@ namespace Tzkt.Sync.Protocols.Proto19
         public virtual async Task UpdateDalCommitmentStatus(JsonElement rawBlock)
         {
             var level  = rawBlock.Required("header").RequiredInt32("level");
-            var dalAttStatusList = Cache.DalAttestations.GetCached(level);
-            if (dalAttStatusList.Count == 0) return;
-            var dalStatusEntries = dalAttStatusList.Where(das => das.Attested ).GroupBy(das =>
-                new { publishCommitmentId = das.DalCommitmentStatusId})
+            var dalAttestations = Cache.DalAttestations.GetCached(level);
+            if (dalAttestations.Count == 0) return;
+            var dalStatusEntries = dalAttestations.Where(da => da.Attested ).GroupBy(da =>
+                new { publishCommitmentId = da.DalCommitmentStatusId})
             .Select(group => new
             {
                 CommitmentStatusId = group.Key.publishCommitmentId,
-                ShardsCount = group.Sum(das => das.ShardsCount)
+                ShardsCount = group.Sum(da => da.ShardsCount)
             }).ToList();
             // These DalAttestations were done for DAL commitments published at level exactly DalAttestationLag before current level.
             var statusEntries =

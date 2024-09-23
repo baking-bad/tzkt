@@ -129,7 +129,7 @@ namespace Tzkt.Data
 
         #region dal
         public DbSet<DalCommitmentStatus> DalCommitmentStatus { get; set; }
-        public DbSet<DalAttestationStatus> DalAttestationStatus { get; set; }
+        public DbSet<DalAttestation> DalAttestations { get; set; }
         #endregion
 
         #region plugins

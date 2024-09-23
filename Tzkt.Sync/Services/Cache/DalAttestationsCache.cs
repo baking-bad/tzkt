@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Services.Cache
     public class DalAttestationsCache
     {
         static int CachedLevel = -1;
-        static List<DalAttestationStatus> CachedStatus = new();
+        static List<DalAttestation> CachedStatus = new();
 
         readonly TzktContext Db;
 
@@ -27,7 +27,7 @@ namespace Tzkt.Sync.Services.Cache
             CachedStatus.Clear();
         }
 
-        public static void Add(int level, IEnumerable<DalAttestationStatus> entry)
+        public static void Add(int level, IEnumerable<DalAttestation> entry)
         {
             if (CachedLevel != level)
             {
@@ -37,11 +37,11 @@ namespace Tzkt.Sync.Services.Cache
             CachedStatus.AddRange(entry);
         }
         
-        public List<DalAttestationStatus> GetCached(int level)
+        public List<DalAttestation> GetCached(int level)
         {
             if (CachedLevel == level && CachedStatus is not null)
                 return CachedStatus;
-            return new List<DalAttestationStatus>();
+            return new List<DalAttestation>();
         }
    }
 }

@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
-    public class DalAttestationStatus
+    public class DalAttestation
     {
         public int Id { get; set; }
         public int DalCommitmentStatusId { get; set; }
@@ -25,15 +25,15 @@ namespace Tzkt.Data.Models
         public static void BuildDalAttestationModel(this ModelBuilder modelBuilder)
         {
             #region keys
-            modelBuilder.Entity<DalAttestationStatus>()
+            modelBuilder.Entity<DalAttestation>()
                 .HasKey(x => x.Id);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<DalAttestationStatus>()
+            modelBuilder.Entity<DalAttestation>()
                 .HasIndex(x => x.DalCommitmentStatusId);
 
-            modelBuilder.Entity<DalAttestationStatus>()
+            modelBuilder.Entity<DalAttestation>()
                 .HasIndex(x => x.AttestationId);
             #endregion
         }

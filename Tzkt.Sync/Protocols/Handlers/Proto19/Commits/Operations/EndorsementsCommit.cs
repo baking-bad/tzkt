@@ -27,36 +27,36 @@ namespace Tzkt.Sync.Protocols.Proto19
                 var attesterRight = currentRights
                     .FirstOrDefault(x => x.Type == BakingRightType.Endorsing && x.BakerId == endorsement.DelegateId)
                     ?? throw new Exception($"No right found the for the attester {endorsement.Delegate.Address}");
-                var dalAttestationsStatus = new List<DalAttestationStatus>(block.Protocol.DalSlotsPerLevel);
+                var dalAttestations = new List<DalAttestation>(block.Protocol.DalSlotsPerLevel);
 
                 for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
                 {
                     var commitmentStatus = await Cache.DalCommitmentStatus.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
                     if (commitmentStatus != null)
                     {
-                        var attestationsStatus = new DalAttestationStatus
+                        var dalAttestation = new DalAttestation
                         {
                             DalCommitmentStatusId = commitmentStatus.Id,
                             AttestationId = endorsement.Id,
                             Attested = endorsementDalAttestation.Mem(slot),
                             ShardsCount = attesterRight.DalShards ?? 0,
                         };
-                        dalAttestationsStatus.Add(attestationsStatus);
+                        dalAttestations.Add(dalAttestation);
                     }
                 }
 
-                if(dalAttestationsStatus.Count > 0)
+                if(dalAttestations.Count > 0)
                 {
-                    DalAttestationsCache.Add(block.Level, dalAttestationsStatus);
+                    DalAttestationsCache.Add(block.Level, dalAttestations);
                 }
-                Db.DalAttestationStatus.AddRange(dalAttestationsStatus);
+                Db.DalAttestations.AddRange(dalAttestations);
             }
         }
 
         protected override async Task RevertDalAttestations(EndorsementOperation endorsement) {
             DalAttestationsCache.Reset();
             await Db.Database.ExecuteSqlRawAsync($"""
-                DELETE FROM "DalAttestationStatus"
+                DELETE FROM "DalAttestations"
                 WHERE "AttestationId" = {endorsement.Id}
                 """);
         }

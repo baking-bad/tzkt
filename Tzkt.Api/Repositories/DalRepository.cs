@@ -274,7 +274,7 @@ namespace Tzkt.Api.Repositories
             BoolParameter attested)
         {
             var sql = new SqlBuilder($"""
-                SELECT COUNT(*) FROM "DalAttestationStatus" AS da
+                SELECT COUNT(*) FROM "DalAttestations" AS da
                 LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
                 LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
                 LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
@@ -290,7 +290,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<DalAttestationStatus>> GetAttestations(
+        public async Task<IEnumerable<DalAttestation>> GetAttestations(
             DalCommitmentHashParameter commitment,
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,
@@ -303,7 +303,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder($"""
                 SELECT    dpco."Level", dpco."Slot", dpco."Commitment", eo."DelegateId", da."ShardsCount", da."Attested"
-                FROM      "DalAttestationStatus" AS da
+                FROM      "DalAttestations" AS da
                 LEFT JOIN "DalCommitmentStatus" AS dc ON da."DalCommitmentStatusId" = dc."Id"
                 LEFT JOIN "DalPublishCommitmentOps" AS dpco ON dc."PublishmentId" = dpco."Id"
                 LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
@@ -324,7 +324,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => new DalAttestationStatus
+            return rows.Select(row => new DalAttestation
             {
                 PublishLevel = row.Level,
                 SlotIndex = row.Slot,
@@ -392,7 +392,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($"""
                                       SELECT {string.Join(',', columns)}
-                                      FROM   "DalAttestationStatus" AS da
+                                      FROM   "DalAttestations" AS da
                                       {
                                           (needPublishOp ?
                                               $"""
@@ -517,7 +517,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($"""
                                       SELECT {string.Join(',', columns)}
-                                      FROM   "DalAttestationStatus" AS da
+                                      FROM   "DalAttestations" AS da
                                       {
                                           (needPublishOp ?
                                               $"""

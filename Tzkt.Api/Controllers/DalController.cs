@@ -167,7 +167,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("attestations")]
-        public async Task<ActionResult<IEnumerable<DalAttestationStatus>>> GetDalAttestations(
+        public async Task<ActionResult<IEnumerable<DalAttestation>>> GetDalAttestations(
             DalCommitmentHashParameter commitment,
             Int32Parameter publishLevel,
             Int32Parameter slotIndex,

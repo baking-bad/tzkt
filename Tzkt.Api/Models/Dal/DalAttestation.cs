@@ -1,6 +1,6 @@
 namespace Tzkt.Api.Models
 {
-    public class DalAttestationStatus
+    public class DalAttestation
     {
         /// <summary>
         /// Level at which the related commitment has been published.
