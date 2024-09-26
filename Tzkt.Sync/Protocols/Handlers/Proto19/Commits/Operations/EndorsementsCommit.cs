@@ -15,13 +15,13 @@ namespace Tzkt.Sync.Protocols.Proto19
             return metadata.RequiredInt32("consensus_power");
         }
 
-        protected override BigInteger? GetDalAttestation(JsonElement content) {
+        protected virtual BigInteger? GetDalAttestation(JsonElement content) {
             return content.OptionalBigInteger("dal_attestation");
         }
 
-        protected override async Task ApplyDalAttestations(EndorsementOperation endorsement, Block block) {
+        protected override async Task ApplyDalAttestations(EndorsementOperation endorsement, Block block, JsonElement content) {
 
-            if (endorsement.DalAttestation is BigInteger endorsementDalAttestation)
+            if (GetDalAttestation(content) is BigInteger endorsementDalAttestation)
             {
                 var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
                 var attesterRight = currentRights

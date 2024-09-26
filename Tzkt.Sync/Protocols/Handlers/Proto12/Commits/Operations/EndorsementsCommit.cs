@@ -22,7 +22,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = GetEndorsedSlots(metadata),
-                DalAttestation = GetDalAttestation(content),
                 Delegate = baker,
                 DelegateId = baker.Id
             };
@@ -42,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
-            await ApplyDalAttestations(endorsement, block);
+            await ApplyDalAttestations(endorsement, block, content);
 
             block.Operations |= Operations.Endorsements;
             block.Validations += endorsement.Slots;
@@ -77,8 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         }
 
         protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
-        protected virtual BigInteger? GetDalAttestation(JsonElement content) => null;
-        protected virtual Task ApplyDalAttestations(EndorsementOperation endorsement, Block block) => Task.CompletedTask;
+        protected virtual Task ApplyDalAttestations(EndorsementOperation endorsement, Block block, JsonElement content) => Task.CompletedTask;
         protected virtual Task RevertDalAttestations(EndorsementOperation endorsement, Block block) => Task.CompletedTask;
     }
 }

@@ -56,11 +56,6 @@ namespace Tzkt.Api.Models
         /// </summary>
         public long Rewards { get; set; }
 
-        /// <summary>
-        /// BitSet of attested DAL slot indexes
-        /// </summary>
-        public BigInteger? DalAttestation { get; set; }
-
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation

@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -13,9 +14,11 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20240919072923_RemoveDalAttestationFromEndorsementOperation")]
+    partial class RemoveDalAttestationFromEndorsementOperation
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1392,7 +1395,7 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Cycles");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DalAttestation", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationStatus", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1418,7 +1421,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("DalCommitmentStatusId");
 
-                    b.ToTable("DalAttestations");
+                    b.ToTable("DalAttestationStatus");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalCommitmentStatus", b =>
@@ -5993,7 +5996,7 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Software");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DalAttestation", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationStatus", b =>
                 {
                     b.HasOne("Tzkt.Data.Models.EndorsementOperation", "Attestation")
                         .WithMany()

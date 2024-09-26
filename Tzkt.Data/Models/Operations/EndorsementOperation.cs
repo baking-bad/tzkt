@@ -11,7 +11,6 @@ namespace Tzkt.Data.Models
         public int Slots { get; set; }
         public long Reward { get; set; }
         public long Deposit { get; set; }
-        public BigInteger? DalAttestation { get; set; }
 
         public int? ResetDeactivation { get; set; }
 
