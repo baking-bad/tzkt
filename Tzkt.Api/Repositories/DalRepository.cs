@@ -25,7 +25,9 @@ namespace Tzkt.Api.Repositories
             DalCommitmentHashParameter hash,
             Int32Parameter level,
             Int32Parameter slotIndex,
-            AccountParameter publisher)
+            AccountParameter publisher,
+            Int32Parameter shardsAttested,
+            BoolParameter attested)
         {
             var sql = new SqlBuilder($"""
                 SELECT COUNT(*) FROM "DalCommitmentStatus" AS dc
@@ -34,7 +36,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"op.""Commitment""", hash)
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
-                .FilterA(@"op.""SenderId""", publisher);
+                .FilterA(@"op.""SenderId""", publisher)
+                .FilterA(@"dc.""ShardsAttested""", shardsAttested)
+                .FilterA(@"dc.""Attested""", attested);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -45,6 +49,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             Int32Parameter slotIndex,
             AccountParameter publisher,
+            Int32Parameter shardsAttested,
+            BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
             int limit)
@@ -58,6 +64,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
                 .FilterA(@"op.""SenderId""", publisher)
+                .FilterA(@"dc.""ShardsAttested""", shardsAttested)
+                .FilterA(@"dc.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
                     "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
@@ -83,6 +91,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             Int32Parameter slotIndex,
             AccountParameter publisher,
+            Int32Parameter shardsAttested,
+            BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -127,6 +137,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
                 .FilterA(@"op.""SenderId""", publisher)
+                .FilterA(@"dc.""ShardsAttested""", shardsAttested)
+                .FilterA(@"dc.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
                     "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
@@ -179,6 +191,8 @@ namespace Tzkt.Api.Repositories
             Int32Parameter level,
             Int32Parameter slotIndex,
             AccountParameter publisher,
+            Int32Parameter shardsAttested,
+            BoolParameter attested,
             SortParameter sort,
             OffsetParameter offset,
             int limit,
@@ -220,6 +234,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"op.""Level""", level)
                 .FilterA(@"op.""Slot""", slotIndex)
                 .FilterA(@"op.""SenderId""", publisher)
+                .FilterA(@"dc.""ShardsAttested""", shardsAttested)
+                .FilterA(@"dc.""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
                     "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
