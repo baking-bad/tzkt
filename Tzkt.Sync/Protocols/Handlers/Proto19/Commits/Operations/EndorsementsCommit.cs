@@ -27,7 +27,12 @@ namespace Tzkt.Sync.Protocols.Proto19
                 var attesterRight = currentRights
                     .FirstOrDefault(x => x.Type == BakingRightType.Endorsing && x.BakerId == endorsement.DelegateId)
                     ?? throw new Exception($"No right found the for the attester {endorsement.Delegate.Address}");
+
+                var shardsThreshold = Math.Round((block.Protocol.DalAttestationThreshold / 100.0f) *
+                                                 (block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
+
                 var dalAttestations = new List<DalAttestation>(block.Protocol.DalSlotsPerLevel);
+                var dalCommitmentStatus = new List<DalCommitmentStatus>(block.Protocol.DalSlotsPerLevel);
 
                 for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
                 {
@@ -42,23 +47,43 @@ namespace Tzkt.Sync.Protocols.Proto19
                             ShardsCount = attesterRight.DalShards ?? 0,
                         };
                         dalAttestations.Add(dalAttestation);
+                        Cache.DalAttestations.Add(block.Level, slot, endorsement.Delegate, dalAttestation);
+
+                        if (dalAttestation.Attested)
+                        {
+                            commitmentStatus.ShardsAttested += dalAttestation.ShardsCount;
+                            commitmentStatus.Attested = (commitmentStatus.ShardsAttested >= shardsThreshold);
+                            dalCommitmentStatus.Add(commitmentStatus);
+                        }
                     }
                 }
 
-                if(dalAttestations.Count > 0)
-                {
-                    DalAttestationsCache.Add(block.Level, dalAttestations);
-                }
                 Db.DalAttestations.AddRange(dalAttestations);
+                Db.DalCommitmentStatus.UpdateRange(dalCommitmentStatus);
             }
         }
 
-        protected override async Task RevertDalAttestations(EndorsementOperation endorsement) {
-            DalAttestationsCache.Reset();
-            await Db.Database.ExecuteSqlRawAsync($"""
-                DELETE FROM "DalAttestations"
-                WHERE "AttestationId" = {endorsement.Id}
-                """);
+        protected override async Task RevertDalAttestations(EndorsementOperation endorsement, Block block) {
+            var shardsThreshold = Math.Round((block.Protocol.DalAttestationThreshold / 100.0f) *
+                                             (block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
+
+            var dalAttestations = new List<DalAttestation>(block.Protocol.DalSlotsPerLevel);
+
+            for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
+            {
+                var dalAttestation = Cache.DalAttestations.GetOrDefault(endorsement.Level, slot, endorsement.Delegate);
+                var commitmentStatus = await Cache.DalCommitmentStatus.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
+                if (dalAttestation != null)
+                {
+                    if (commitmentStatus != null && dalAttestation.Attested)
+                    {
+                        commitmentStatus.ShardsAttested -= dalAttestation.ShardsCount;
+                        commitmentStatus.Attested = (commitmentStatus.ShardsAttested >= shardsThreshold);
+                    }
+                    dalAttestations.Add(dalAttestation);
+                }
+            }
+            Db.DalAttestations.RemoveRange(dalAttestations);
         }
     }
 }

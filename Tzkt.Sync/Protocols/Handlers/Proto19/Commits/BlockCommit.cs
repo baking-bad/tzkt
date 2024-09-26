@@ -106,49 +106,5 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             return (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared, bonusDelegated, bonusStakedOwn, bonusStakedEdge, bonusStakedShared);
         }
-
-        public virtual async Task UpdateDalCommitmentStatus(JsonElement rawBlock)
-        {
-            var level  = rawBlock.Required("header").RequiredInt32("level");
-            var dalAttestations = Cache.DalAttestations.GetCached(level);
-            if (dalAttestations.Count == 0) return;
-            var dalStatusEntries = dalAttestations.Where(da => da.Attested ).GroupBy(da =>
-                new { publishCommitmentId = da.DalCommitmentStatusId})
-            .Select(group => new
-            {
-                CommitmentStatusId = group.Key.publishCommitmentId,
-                ShardsCount = group.Sum(da => da.ShardsCount)
-            }).ToList();
-            // These DalAttestations were done for DAL commitments published at level exactly DalAttestationLag before current level.
-            var statusEntries =
-                await Cache.DalCommitmentStatus.GetOrDefaultAsync(level - Block.Protocol.DalAttestationLag);
-            var shardsThreshold = Math.Round((Block.Protocol.DalAttestationThreshold / 100.0f) *
-                                                                                       (Block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
-            foreach (var item in dalStatusEntries)
-            {
-                var statusEntry = statusEntries.Find(d => d.Id == item.CommitmentStatusId);
-                statusEntry.ShardsAttested = item.ShardsCount;
-                statusEntry.Attested = (item.ShardsCount >= shardsThreshold);
-            }
-            
-            Db.DalCommitmentStatus.UpdateRange(statusEntries);
-        }
-
-        public virtual async Task RevertDalCommitmentStatusUpdate(Block block)
-        {
-            // Revert the status updates done to DalCommitmentStatus table for rows which were updated due to attestations
-            var commitmentStatus =
-                await Cache.DalCommitmentStatus.GetOrDefaultAsync(block.Level - block.Protocol.DalAttestationLag);
-            if (commitmentStatus != null)
-            {
-                commitmentStatus.ForEach(commit =>
-                {
-                    commit.ShardsAttested = 0;
-                    commit.Attested = false;
-                });
-                Db.DalCommitmentStatus.UpdateRange(commitmentStatus);
-                await Db.SaveChangesAsync();
-            }
-        } 
     }
 }

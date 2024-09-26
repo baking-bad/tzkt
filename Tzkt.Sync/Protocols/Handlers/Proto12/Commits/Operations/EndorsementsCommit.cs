@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Db.TryAttach(baker);
             baker.EndorsementsCount--;
 
-            await RevertDalAttestations(endorsement);
+            await RevertDalAttestations(endorsement, block);
 
             #region reset baker activity
             if (endorsement.ResetDeactivation != null)
@@ -79,6 +79,6 @@ namespace Tzkt.Sync.Protocols.Proto12
         protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
         protected virtual BigInteger? GetDalAttestation(JsonElement content) => null;
         protected virtual Task ApplyDalAttestations(EndorsementOperation endorsement, Block block) => Task.CompletedTask;
-        protected virtual Task RevertDalAttestations(EndorsementOperation endorsement) => Task.CompletedTask;
+        protected virtual Task RevertDalAttestations(EndorsementOperation endorsement, Block block) => Task.CompletedTask;
     }
 }

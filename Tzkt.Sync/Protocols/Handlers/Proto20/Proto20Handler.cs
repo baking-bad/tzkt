@@ -325,7 +325,6 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             await blockCommit.ApplyRewards(block);
-            await blockCommit.UpdateDalCommitmentStatus(block);
 
             new InboxCommit(this).Apply(blockCommit.Block);
 
@@ -498,7 +497,6 @@ namespace Tzkt.Sync.Protocols
             await new ContractEventCommit(this).Revert(currBlock);
             await new InboxCommit(this).Revert(currBlock);
             await new BlockCommit(this).RevertRewards(currBlock);
-            await new BlockCommit(this).RevertDalCommitmentStatusUpdate(currBlock);
 
             foreach (var operation in operations.OrderByDescending(x => x.Id))
             {

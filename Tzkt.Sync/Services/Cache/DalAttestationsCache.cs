@@ -11,37 +11,37 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class DalAttestationsCache
     {
-        static int CachedLevel = -1;
-        static List<DalAttestation> CachedStatus = new();
+        private int CachedLevel = -1;
+        private Dictionary<(int, Data.Models.Delegate), DalAttestation> CachedStatus = new();
 
-        readonly TzktContext Db;
+        private readonly TzktContext Db;
 
         public DalAttestationsCache(TzktContext db)
         {
             Db = db;
         }
 
-        public static void Reset()
+        public void Reset()
         {
             CachedLevel = -1;
             CachedStatus.Clear();
         }
 
-        public static void Add(int level, IEnumerable<DalAttestation> entry)
+        public void Add(int level, int slot, Data.Models.Delegate @delegate, DalAttestation attestation)
         {
             if (CachedLevel != level)
             {
                 Reset();
                 CachedLevel = level;
             }
-            CachedStatus.AddRange(entry);
+            CachedStatus.Add((slot, @delegate), attestation);
         }
-        
-        public List<DalAttestation> GetCached(int level)
+
+        public DalAttestation GetOrDefault(int level, int slot, Data.Models.Delegate @delegate)
         {
-            if (CachedLevel == level && CachedStatus is not null)
-                return CachedStatus;
-            return new List<DalAttestation>();
+            if (CachedLevel != level)
+                return null;
+            return CachedStatus.TryGetValue((slot, @delegate), out var res) ? res : null;
         }
-   }
+    }
 }

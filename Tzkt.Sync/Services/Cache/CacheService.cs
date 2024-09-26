@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Services
             RefutationGames.Reset();
             UnstakeRequests.Reset();
             DalCommitmentStatus.Reset();
-            DalAttestationsCache.Reset();
+            DalAttestations.Reset();
 
             await Protocols.ResetAsync();
             await AppState.ResetAsync();
