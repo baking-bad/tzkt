@@ -31,14 +31,15 @@ namespace Tzkt.Api.Repositories
             BoolParameter attested)
         {
             var sql = new SqlBuilder($"""
-                SELECT COUNT(*) FROM "DalPublishCommitmentOps" AS op WHERE op."Status"={OperationStatus.Applied}
+                SELECT COUNT(*) FROM "DalPublishCommitmentOps"
                 """)
-                .FilterA(@"op.""Commitment""", hash)
-                .FilterA(@"op.""Level""", level)
-                .FilterA(@"op.""Slot""", slotIndex)
-                .FilterA(@"op.""SenderId""", publisher)
-                .FilterA(@"dc.""ShardsAttested""", shardsAttested)
-                .FilterA(@"dc.""Attested""", attested);
+                .FilterA(@"""Status""", (byte)OperationStatus.Applied)
+                .FilterA(@"""Commitment""", hash)
+                .FilterA(@"""Level""", level)
+                .FilterA(@"""Slot""", slotIndex)
+                .FilterA(@"""SenderId""", publisher)
+                .FilterA(@"""ShardsAttested""", shardsAttested)
+                .FilterA(@"""Attested""", attested);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -57,19 +58,20 @@ namespace Tzkt.Api.Repositories
         {
             
             var sql = new SqlBuilder($"""
-                                      SELECT op.* FROM  "DalPublishCommitmentOps" AS op WHERE op."Status"={OperationStatus.Applied}
+                                      SELECT * FROM  "DalPublishCommitmentOps"
                                       """)
-                .FilterA(@"op.""Commitment""", hash)
-                .FilterA(@"op.""Level""", level)
-                .FilterA(@"op.""Slot""", slotIndex)
-                .FilterA(@"op.""SenderId""", publisher)
-                .FilterA(@"op.""ShardsAttested""", shardsAttested)
-                .FilterA(@"op.""Attested""", attested)
+                .FilterA(@"""Status""", (byte)OperationStatus.Applied)
+                .FilterA(@"""Commitment""", hash)
+                .FilterA(@"""Level""", level)
+                .FilterA(@"""Slot""", slotIndex)
+                .FilterA(@"""SenderId""", publisher)
+                .FilterA(@"""ShardsAttested""", shardsAttested)
+                .FilterA(@"""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
-                    "level" or _  => (@"op.""Level""", @"op.""Level""")
-                }, @"op.""Level""");
+                    "slotIndex" => (@"""Slot""", @"""Slot"""),
+                    "level" or _  => (@"""Level""", @"""Level""")
+                }, @"""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -104,22 +106,22 @@ namespace Tzkt.Api.Repositories
                 switch (field)
                 {
                     case "level":
-                        columns.Add(@"op.""Level""");
+                        columns.Add(@"""Level""");
                         break;
                     case "slotIndex":
-                        columns.Add(@"op.""Slot""");
+                        columns.Add(@"""Slot""");
                         break;
                     case "hash":
-                        columns.Add(@"op.""Commitment""");
+                        columns.Add(@"""Commitment""");
                         break;
                     case "publisher":
-                        columns.Add(@"op.""SenderId""");
+                        columns.Add(@"""SenderId""");
                         break;
                     case "shardsAttested":
-                        columns.Add(@"op.""ShardsAttested""");
+                        columns.Add(@"""ShardsAttested""");
                         break;
                     case "attested":
-                        columns.Add(@"op.""Attested""");
+                        columns.Add(@"""Attested""");
                         break;
                 }
             }
@@ -129,19 +131,20 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($"""
                                       SELECT {string.Join(',', columns)}
-                                      FROM      "DalPublishCommitmentOps" AS op WHERE op."Status"={OperationStatus.Applied}
+                                      FROM   "DalPublishCommitmentOps"
                                       """) 
-                .FilterA(@"op.""Commitment""", hash)
-                .FilterA(@"op.""Level""", level)
-                .FilterA(@"op.""Slot""", slotIndex)
-                .FilterA(@"op.""SenderId""", publisher)
-                .FilterA(@"op.""ShardsAttested""", shardsAttested)
-                .FilterA(@"op.""Attested""", attested)
+                .FilterA(@"""Status""", (byte)OperationStatus.Applied)
+                .FilterA(@"""Commitment""", hash)
+                .FilterA(@"""Level""", level)
+                .FilterA(@"""Slot""", slotIndex)
+                .FilterA(@"""SenderId""", publisher)
+                .FilterA(@"""ShardsAttested""", shardsAttested)
+                .FilterA(@"""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
-                    "level" or _ => (@"op.""Level""", @"op.""Level""")
-                }, @"op.""Level""");
+                    "slotIndex" => (@"""Slot""", @"""Slot"""),
+                    "level" or _ => (@"""Level""", @"""Level""")
+                }, @"""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -201,22 +204,22 @@ namespace Tzkt.Api.Repositories
             switch (field)
             {
                 case "level":
-                    columns.Add(@"op.""Level""");
+                    columns.Add(@"""Level""");
                     break;
                 case "slotIndex":
-                    columns.Add(@"op.""Slot""");
+                    columns.Add(@"""Slot""");
                     break;
                 case "hash":
-                    columns.Add(@"op.""Commitment""");
+                    columns.Add(@"""Commitment""");
                     break;
                 case "publisher":
-                    columns.Add(@"op.""SenderId""");
+                    columns.Add(@"""SenderId""");
                     break;
                 case "shardsAttested":
-                    columns.Add(@"op.""ShardsAttested""");
+                    columns.Add(@"""ShardsAttested""");
                     break;
                 case "attested":
-                    columns.Add(@"op.""Attested""");
+                    columns.Add(@"""Attested""");
                     break;
             }
 
@@ -225,19 +228,20 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($"""
                                       SELECT {string.Join(',', columns)}
-                                      FROM       "DalPublishCommitmentOps" AS op WHERE op."Status"={OperationStatus.Applied}
+                                      FROM   "DalPublishCommitmentOps"
                                       """)
-                .FilterA(@"op.""Commitment""", hash)
-                .FilterA(@"op.""Level""", level)
-                .FilterA(@"op.""Slot""", slotIndex)
-                .FilterA(@"op.""SenderId""", publisher)
-                .FilterA(@"op.""ShardsAttested""", shardsAttested)
-                .FilterA(@"op.""Attested""", attested)
+                .FilterA(@"""Status""", (byte)OperationStatus.Applied)
+                .FilterA(@"""Commitment""", hash)
+                .FilterA(@"""Level""", level)
+                .FilterA(@"""Slot""", slotIndex)
+                .FilterA(@"""SenderId""", publisher)
+                .FilterA(@"""ShardsAttested""", shardsAttested)
+                .FilterA(@"""Attested""", attested)
                 .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "slotIndex" => (@"op.""Slot""", @"op.""Slot"""),
-                    "level" or _ => (@"op.""Level""", @"op.""Level""")
-                }, @"op.""Level""");
+                    "slotIndex" => (@"""Slot""", @"""Slot"""),
+                    "level" or _ => (@"""Level""", @"""Level""")
+                }, @"""Level""");
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
@@ -289,8 +293,9 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($"""
                 SELECT COUNT(*) FROM "DalAttestations" AS da
                 LEFT JOIN "DalPublishCommitmentOps" AS dc ON da."DalPublishCommitmentOpsId" = dc."Id"
-                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id" WHERE dc."Status"={OperationStatus.Applied}
+                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
                 """)
+                .FilterA(@"dc.""Status""", (byte)OperationStatus.Applied)
                 .FilterA(@"dc.""Commitment""", commitment)
                 .FilterA(@"dc.""Level""", publishLevel)
                 .FilterA(@"dc.""Slot""", slotIndex)
@@ -317,8 +322,9 @@ namespace Tzkt.Api.Repositories
                 SELECT    dc."Level", dc."Slot", dc."Commitment", eo."DelegateId", da."ShardsCount", da."Attested"
                 FROM      "DalAttestations" AS da
                 LEFT JOIN "DalPublishCommitmentOps" AS dc ON da."DalPublishCommitmentOpsId" = dc."Id"
-                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id" WHERE dc."Status"={OperationStatus.Applied}
+                LEFT JOIN "EndorsementOps" AS eo ON da."AttestationId" = eo."Id"
                 """)
+                .FilterA(@"dc.""Status""", (byte)OperationStatus.Applied)
                 .FilterA(@"dc.""Commitment""", commitment)
                 .FilterA(@"dc.""Level""", publishLevel)
                 .FilterA(@"dc.""Slot""", slotIndex)
@@ -391,10 +397,12 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
-            if (sort == null || sort.Validate("publishLevel", "slotIndex"))
+            byte? status = null;
+
+            if (sort == null || sort.Validate("publishLevel", "slotIndex") ||
+                commitment != null || publishLevel != null || slotIndex != null)
                 needPublishOp = true;
-            if (commitment != null || publishLevel != null || slotIndex != null)
-                needPublishOp = true;
+                status = (byte)OperationStatus.Applied;
             if (attester != null)
                 needAttestationOp = true;
 
@@ -415,11 +423,11 @@ namespace Tzkt.Api.Repositories
                                           (needPublishOp ?
                                               $"""
                                                LEFT JOIN "DalPublishCommitmentOps" AS dc ON da."DalPublishCommitmentOpsId" = dc."Id"
-                                               WHERE dc."Status"={OperationStatus.Applied}
                                                """
                                               : string.Empty)
                                       }
                                       """)
+                .FilterA(@"dc.""Status""", status)
                 .FilterA(@"dc.""Commitment""", commitment)
                 .FilterA(@"dc.""Level""", publishLevel)
                 .FilterA(@"dc.""Slot""", slotIndex)
@@ -516,10 +524,12 @@ namespace Tzkt.Api.Repositories
                     break;
             }
 
-            if (sort == null || sort.Validate("publishLevel", "slotIndex"))
+            byte? status = null;
+
+            if (sort == null || sort.Validate("publishLevel", "slotIndex") ||
+                commitment != null || publishLevel != null || slotIndex != null)
                 needPublishOp = true;
-            if (commitment != null || publishLevel != null || slotIndex != null)
-                needPublishOp = true;
+                status = (byte)OperationStatus.Applied;
             if (attester != null)
                 needAttestationOp = true;
 
@@ -544,6 +554,7 @@ namespace Tzkt.Api.Repositories
                                               : string.Empty)
                                       }
                                       """)
+                .FilterA(@"dc.""Status""", status)
                 .FilterA(@"dc.""Commitment""", commitment)
                 .FilterA(@"dc.""Level""", publishLevel)
                 .FilterA(@"dc.""Slot""", slotIndex)

@@ -14,8 +14,8 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20240808123248_AddDalCommitmentStatusTable")]
-    partial class AddDalCommitmentStatusTable
+    [Migration("20241004112503_AddDalSupport")]
+    partial class AddDalSupport
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -1392,7 +1392,7 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Cycles");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DalCommitmentStatus", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestation", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -1400,15 +1400,25 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long>("PublishmentId")
+                    b.Property<long>("AttestationId")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Attested")
+                        .HasColumnType("boolean");
+
+                    b.Property<long>("DalPublishCommitmentOpsId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("ShardsCount")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("PublishmentId")
-                        .IsUnique();
+                    b.HasIndex("AttestationId");
 
-                    b.ToTable("DalCommitmentStatus");
+                    b.HasIndex("DalPublishCommitmentOpsId");
+
+                    b.ToTable("DalAttestations");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
@@ -1421,6 +1431,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");
+
+                    b.Property<bool>("Attested")
+                        .HasColumnType("boolean");
 
                     b.Property<long>("BakerFee")
                         .HasColumnType("bigint");
@@ -1452,6 +1465,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("SenderId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ShardsAttested")
+                        .HasColumnType("integer");
+
                     b.Property<int>("Slot")
                         .HasColumnType("integer");
 
@@ -1479,6 +1495,31 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("DalPublishCommitmentOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalRight", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DelegateId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Shards")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DalRights");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
@@ -1908,9 +1949,6 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<BigInteger?>("DalAttestation")
-                        .HasColumnType("numeric");
 
                     b.Property<int>("DelegateId")
                         .HasColumnType("integer");
@@ -5961,15 +5999,23 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Software");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DalCommitmentStatus", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestation", b =>
                 {
-                    b.HasOne("Tzkt.Data.Models.DalPublishCommitmentOperation", "Publishment")
-                        .WithOne("DalCommitmentStatus")
-                        .HasForeignKey("Tzkt.Data.Models.DalCommitmentStatus", "PublishmentId")
+                    b.HasOne("Tzkt.Data.Models.EndorsementOperation", "Attestation")
+                        .WithMany()
+                        .HasForeignKey("AttestationId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("Publishment");
+                    b.HasOne("Tzkt.Data.Models.DalPublishCommitmentOperation", "DalPublishCommitmentOp")
+                        .WithMany()
+                        .HasForeignKey("DalPublishCommitmentOpsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Attestation");
+
+                    b.Navigation("DalPublishCommitmentOp");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
@@ -6961,11 +7007,6 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("UpdateConsensusKeyOps");
 
                     b.Navigation("VdfRevelationOps");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
-                {
-                    b.Navigation("DalCommitmentStatus");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
