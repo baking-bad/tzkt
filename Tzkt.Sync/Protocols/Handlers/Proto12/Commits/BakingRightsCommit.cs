@@ -141,7 +141,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport(@"
-                COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"", ""DalShards"")
+                COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");
 
             foreach (var er in FutureEndorsingRights)
@@ -154,14 +154,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.WriteNull();
                 writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
-                if (er.DalShards == null)
-                {
-                    writer.WriteNull();
-                }
-                else
-                {
-                    writer.Write(er.DalShards.Value, NpgsqlTypes.NpgsqlDbType.Integer);
-                }
             }
 
             foreach (var br in FutureBakingRights)
@@ -173,7 +165,6 @@ namespace Tzkt.Sync.Protocols.Proto12
                 writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.WriteNull();
                 writer.WriteNull();
             }
 

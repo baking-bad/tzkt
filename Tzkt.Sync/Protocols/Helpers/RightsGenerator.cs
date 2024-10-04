@@ -40,20 +40,30 @@ namespace Tzkt.Sync.Protocols
             return result;
         }
 
-        Dictionary<int, (int Slots, int DalShards)> GetEndorsingRights(int position, int slots, int shards)
+        Dictionary<int, int> GetEndorsingRights(int position, int slots)
         {
             WriteInt32(Seed, 32, position);
-            var result = new Dictionary<int, (int Slots, int DalShards)>();
+            var result = new Dictionary<int, int>();
             for (var slot = 0; slot < slots; slot++)
             {
                 WriteInt32(Seed, 36, slot);
                 var baker = Sampler.GetBaker(Seed);
                 result.TryGetValue(baker, out var count);
-                var (bakerSlots, bakerDalShards) = count;
-                bakerSlots += 1;
-                if (slot < shards)
-                    bakerDalShards += 1;
-                result[baker] = (bakerSlots, bakerDalShards);
+                result[baker] = count + 1;
+            }
+            return result;
+        }
+
+        Dictionary<int, int> GetDalRights(int position, int shards)
+        {
+            WriteInt32(Seed, 32, position);
+            var result = new Dictionary<int, int>();
+            for (var shard = 0; shard < shards; shard++)
+            {
+                WriteInt32(Seed, 36, shard);
+                var @delegate = Sampler.GetBaker(Seed);
+                result.TryGetValue(@delegate, out var count);
+                result[@delegate] = count + 1;
             }
             return result;
         }
@@ -111,22 +121,44 @@ namespace Tzkt.Sync.Protocols
                     var generator = new RightsGenerator(sampler, cycle.Seed);
                     for (int position = from; position < to; position++)
                     {
-                        var rights = generator.GetEndorsingRights(position, protocol.EndorsersPerBlock, protocol.DalShardsPerSlot);
+                        var rights = generator.GetEndorsingRights(position, protocol.EndorsersPerBlock);
                         lock (res)
                         {
-                            foreach (var (baker, (slots, dalShards)) in rights)
-                                res.Add(new() {
-                                        Level = cycle.FirstLevel + position,
-                                        Baker = baker,
-                                        Slots = slots,
-                                        DalShards = (protocol.DalShardsPerSlot == 0) ? null : dalShards
-                                    });
+                            foreach (var (baker, slots) in rights)
+                                res.Add(new() { Level = cycle.FirstLevel + position, Baker = baker, Slots = slots });
                         }
                     }
                 }));
             }
             await Task.WhenAll(tasks);
             return res.OrderBy(x => x.Level).ThenByDescending(x => x.Slots);
+        }
+
+        public static async Task<IEnumerable<DR>> GetDalRightsAsync(Sampler sampler, Protocol protocol, Cycle cycle)
+        {
+            var res = new List<DR>(protocol.BlocksPerCycle * sampler.Length);
+            var step = (int)Math.Ceiling((double)protocol.BlocksPerCycle / Environment.ProcessorCount);
+            var tasks = new List<Task>();
+            for (int i = 0; i < protocol.BlocksPerCycle; i += step)
+            {
+                var from = i;
+                var to = Math.Min(protocol.BlocksPerCycle, i + step);
+                tasks.Add(Task.Run(() =>
+                {
+                    var generator = new RightsGenerator(sampler, cycle.Seed);
+                    for (int position = from; position < to; position++)
+                    {
+                        var rights = generator.GetDalRights(position, protocol.DalShardsPerSlot);
+                        lock (res)
+                        {
+                            foreach (var (@delegate, shards) in rights)
+                                res.Add(new() { Level = cycle.FirstLevel + position, Delegate = @delegate, Shards = shards });
+                        }
+                    }
+                }));
+            }
+            await Task.WhenAll(tasks);
+            return res.OrderBy(x => x.Level).ThenByDescending(x => x.Shards);
         }
 
         public static IEnumerable<BR> EnumerateBakingRights(Sampler sampler, Cycle cycle, int level, int rounds)
@@ -157,13 +189,24 @@ namespace Tzkt.Sync.Protocols
         public static IEnumerable<ER> GetEndorsingRights(Sampler sampler, Protocol protocol, Cycle cycle, int level)
         {
             var generator = new RightsGenerator(sampler, cycle.Seed);
-            var rights = generator.GetEndorsingRights(level - cycle.FirstLevel, protocol.EndorsersPerBlock, protocol.DalShardsPerSlot);
+            var rights = generator.GetEndorsingRights(level - cycle.FirstLevel, protocol.EndorsersPerBlock);
             return rights.Select(kv => new ER
             {
                 Level = level,
                 Baker = kv.Key,
-                Slots = kv.Value.Slots,
-                DalShards = (protocol.DalShardsPerSlot == 0) ? null : kv.Value.DalShards
+                Slots = kv.Value
+            });
+        }
+
+        public static IEnumerable<DR> GetDalRights(Sampler sampler, Protocol protocol, Cycle cycle, int level)
+        {
+            var generator = new RightsGenerator(sampler, cycle.Seed);
+            var rights = generator.GetDalRights(level - cycle.FirstLevel, protocol.DalShardsPerSlot);
+            return rights.Select(kv => new DR
+            {
+                Level = level,
+                Delegate = kv.Key,
+                Shards = kv.Value
             });
         }
 
@@ -172,7 +215,6 @@ namespace Tzkt.Sync.Protocols
             public int Level { get; init; }
             public int Baker { get; init; }
             public int Slots { get; init; }
-            public int? DalShards { get; init; }
         }
 
         public class BR
@@ -180,6 +222,13 @@ namespace Tzkt.Sync.Protocols
             public int Level { get; init; }
             public int Round { get; init; }
             public int Baker { get; init; }
+        }
+
+        public class DR
+        {
+            public int Level    { get; init; }
+            public int Delegate { get; init; }
+            public int Shards   { get; init; }
         }
     }
 }

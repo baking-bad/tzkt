@@ -27,7 +27,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="cycle">Filters rights by cycle</param>
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
-        /// <param name="dalShards">Filters rights by DAL shards</param>
         /// <param name="round">Filters rights by round</param>
         /// <param name="priority">[DEPRECATED]</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
@@ -39,12 +38,11 @@ namespace Tzkt.Api.Controllers
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter dalShards,
             Int32NullParameter round,
             Int32NullParameter priority,
             BakingRightStatusParameter status)
         {
-            return BakingRights.GetCount(type, baker, cycle, level, slots, dalShards, round ?? priority, status);
+            return BakingRights.GetCount(type, baker, cycle, level, slots, round ?? priority, status);
         }
 
         /// <summary>
@@ -58,7 +56,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="cycle">Filters rights by cycle</param>
         /// <param name="level">Filters rights by level</param>
         /// <param name="slots">Filters rights by slots</param>
-        /// <param name="dalShards">Filters rights by DAL shards</param>
         /// <param name="round">Filters rights by round</param>
         /// <param name="priority">[DEPRECATED]</param>
         /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
@@ -74,7 +71,6 @@ namespace Tzkt.Api.Controllers
             Int32Parameter cycle,
             Int32Parameter level,
             Int32NullParameter slots,
-            Int32NullParameter dalShards,
             Int32NullParameter round,
             Int32NullParameter priority,
             BakingRightStatusParameter status,
@@ -89,25 +85,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await BakingRights.Get(type, baker, cycle, level, slots, dalShards, round ?? priority, status, sort, offset, limit));
+                return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, dalShards, round ?? priority, status, sort, offset, limit, select.Values[0]));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, dalShards, round ?? priority, status, sort, offset, limit, select.Values));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, dalShards, round ?? priority, status, sort, offset, limit, select.Fields[0]));
+                    return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, dalShards, round ?? priority, status, sort, offset, limit, select.Fields)
+                        Rows = await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Fields)
                     });
                 }
             }

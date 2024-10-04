@@ -23,10 +23,11 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             if (GetDalAttestation(content) is BigInteger endorsementDalAttestation)
             {
-                var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
-                var attesterRight = currentRights
-                    .FirstOrDefault(x => x.Type == BakingRightType.Endorsing && x.BakerId == endorsement.DelegateId)
-                    ?? throw new Exception($"No right found the for the attester {endorsement.Delegate.Address}");
+                var currentRights = await Cache.DalRights.GetAsync(block.Cycle, block.Level);
+                if (!currentRights.TryGetValue(endorsement.DelegateId, out DalRight attesterRight))
+                {
+                    throw new Exception($"No right found the for the attester {endorsement.Delegate.Address}");
+                }
 
                 var shardsThreshold = Math.Round((block.Protocol.DalAttestationThreshold / 100.0f) *
                                                  (block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
@@ -44,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                             DalPublishCommitmentOpsId = commitmentStatus.Id,
                             AttestationId = endorsement.Id,
                             Attested = endorsementDalAttestation.Mem(slot),
-                            ShardsCount = attesterRight.DalShards ?? 0,
+                            ShardsCount = attesterRight.Shards,
                         };
                         dalAttestations.Add(dalAttestation);
                         Cache.DalAttestations.Add(block.Level, slot, endorsement.Delegate, dalAttestation);

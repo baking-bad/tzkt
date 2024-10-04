@@ -29,6 +29,7 @@ namespace Tzkt.Sync.Services
         public UnstakeRequestsCache UnstakeRequests { get; private set; }
         public DalPublishCommitmentOpsCache DalPublishCommitmentOps { get; private set; }
         public DalAttestationsCache DalAttestations { get; private set; }
+        public DalRightsCache DalRights { get; private set; }
 
         public CacheService(TzktContext db)
         {
@@ -56,6 +57,7 @@ namespace Tzkt.Sync.Services
             UnstakeRequests = new(db);
             DalPublishCommitmentOps = new(db);
             DalAttestations = new (db);
+            DalRights = new (db);
         }
 
         public async Task ResetAsync()
@@ -80,6 +82,7 @@ namespace Tzkt.Sync.Services
             UnstakeRequests.Reset();
             DalPublishCommitmentOps.Reset();
             DalAttestations.Reset();
+            DalRights.Reset();
 
             await Protocols.ResetAsync();
             await AppState.ResetAsync();

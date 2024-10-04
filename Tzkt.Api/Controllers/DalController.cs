@@ -221,5 +221,84 @@ namespace Tzkt.Api.Controllers
             }
         }
         #endregion
+
+        #region rights
+        /// <summary>
+        /// Get DAL rights count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of stored DAL rights.
+        /// </remarks>
+        /// <param name="delegate">Filters rights by delegate</param>
+        /// <param name="cycle">Filters rights by cycle</param>
+        /// <param name="level">Filters rights by level</param>
+        /// <param name="shards">Filters rights by shards</param>
+        /// <returns></returns>
+        [HttpGet("rights/count")]
+        public Task<int> GetRightsCount(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards)
+        {
+            return Dal.GetRightsCount(@delegate, cycle, level, shards);
+        }
+
+        /// <summary>
+        /// Get DAL rights
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of DAL rights.
+        /// </remarks>
+        /// <param name="delegate">Filters rights by delegate</param>
+        /// <param name="cycle">Filters rights by cycle</param>
+        /// <param name="level">Filters rights by level</param>
+        /// <param name="shards">Filters rights by shards</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts rights by specified field. Supported fields: `level` (default), `shards`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <returns></returns>
+        [HttpGet("rights")]
+        public async Task<ActionResult<IEnumerable<DalRight>>> GetRights(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100)
+        {
+            #region validate
+            if (sort != null && !sort.Validate("level", "shards"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            if (select == null)
+                return Ok(await Dal.GetRights(@delegate, cycle, level, shards, sort, offset, limit));
+
+            if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    return Ok(await Dal.GetRights(@delegate, cycle, level, shards, sort, offset, limit, select.Values[0]));
+                else
+                    return Ok(await Dal.GetRights(@delegate, cycle, level, shards, sort, offset, limit, select.Values));
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    return Ok(await Dal.GetRights(@delegate, cycle, level, shards, sort, offset, limit, select.Fields[0]));
+                else
+                {
+                    return Ok(new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Dal.GetRights(@delegate, cycle, level, shards, sort, offset, limit, select.Fields)
+                    });
+                }
+            }
+        }
+        #endregion
     }
 }

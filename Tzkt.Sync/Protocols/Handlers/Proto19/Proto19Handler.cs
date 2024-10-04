@@ -335,6 +335,7 @@ namespace Tzkt.Sync.Protocols
             var brCommit = new BakingRightsCommit(this);
             await brCommit.Apply(blockCommit.Block, cycleCommit.FutureCycle, cycleCommit.SelectedStakes);
 
+            await new DalRightsCommit(this).Apply(blockCommit.Block, cycleCommit.FutureCycle, cycleCommit.SelectedStakes);
             await new DelegatorCycleCommit(this).Apply(blockCommit.Block, cycleCommit.FutureCycle);
 
             await new BakerCycleCommit(this).Apply(

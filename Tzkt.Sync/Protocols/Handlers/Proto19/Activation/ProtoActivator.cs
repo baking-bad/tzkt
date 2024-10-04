@@ -86,6 +86,11 @@ namespace Tzkt.Sync.Protocols.Proto19
                 AND "Level" > {lastCycleStart};
                 """);
 
+            await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "DalRights"
+                WHERE "Level" > {lastCycleStart};
+                """);
+
             var removedCycles = await Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "Cycles"
                 WHERE "Index" > {lastCycle};
@@ -98,6 +103,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             Cache.BakerCycles.Reset();
             Cache.BakingRights.Reset();
+            Cache.DalRights.Reset();
 
             Db.TryAttach(state);
             state.CyclesCount -= removedCycles;
@@ -171,33 +177,47 @@ namespace Tzkt.Sync.Protocols.Proto19
                 {
                     shifted = RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, cycle.LastLevel);
 
-                    #region save shifted
-                    using var writer = conn.BeginBinaryImport("""
-                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots", "DalShards")
+                    #region save rights
+                    using (var writer = conn.BeginBinaryImport("""
+                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots")
                         FROM STDIN (FORMAT BINARY)
-                        """);
-
-                    foreach (var er in shifted)
+                        """))
                     {
-                        writer.StartRow();
-                        writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.WriteNull();
-                        writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
-                        if (er.DalShards == null)
+
+                        foreach (var er in shifted)
                         {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.WriteNull();
+                            writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
-                        else
-                        {
-                            writer.Write(er.DalShards.Value, NpgsqlTypes.NpgsqlDbType.Integer);
-                        }
+
+                        writer.Complete();
                     }
 
-                    writer.Complete();
+                    var drs = RightsGenerator.GetDalRights(sampler, nextProto, cycle, cycle.LastLevel);
+
+                    using (var writer = conn.BeginBinaryImport("""
+                        COPY "DalRights" ("Cycle", "Level", "DelegateId", "Shards")
+                        FROM STDIN (FORMAT BINARY)
+                        """))
+                    {
+
+                        foreach (var dr in drs)
+                        {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Delegate, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Shards, NpgsqlTypes.NpgsqlDbType.Integer);
+                        }
+
+                        writer.Complete();
+                    }
                     #endregion
                 }
                 else
@@ -208,7 +228,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
                     #region save rights
                     using (var writer = conn.BeginBinaryImport("""
-                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots", "DalShards")
+                        COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots")
                         FROM STDIN (FORMAT BINARY)
                         """))
                     {
@@ -222,15 +242,6 @@ namespace Tzkt.Sync.Protocols.Proto19
                             writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write(er.DalShards, NpgsqlTypes.NpgsqlDbType.Integer);
-                            if (er.DalShards == null)
-                            {
-                                writer.WriteNull();
-                            }
-                            else
-                            {
-                                writer.Write(er.DalShards.Value, NpgsqlTypes.NpgsqlDbType.Integer);
-                            }
                         }
 
                         foreach (var br in brs)
@@ -243,7 +254,26 @@ namespace Tzkt.Sync.Protocols.Proto19
                             writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
-                            writer.WriteNull();
+                        }
+
+                        writer.Complete();
+                    }
+
+                    var drs = RightsGenerator.GetDalRights(sampler, nextProto, cycle, cycle.LastLevel);
+
+                    using (var writer = conn.BeginBinaryImport("""
+                        COPY "DalRights" ("Cycle", "Level", "DelegateId", "Shards")
+                        FROM STDIN (FORMAT BINARY)
+                        """))
+                    {
+
+                        foreach (var dr in drs)
+                        {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Delegate, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Shards, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
 
                         writer.Complete();

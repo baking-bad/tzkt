@@ -37,11 +37,6 @@
         public int? Slots { get; set; }
 
         /// <summary>
-        /// Number of DAL shards to be attested. For `baking` rights this field is always `null`.
-        /// </summary>
-        public int? DalShards { get; set; }
-
-        /// <summary>
         /// Baker to which baking or endorsing right has been given.
         /// </summary>
         public Alias Baker { get; set; }

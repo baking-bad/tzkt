@@ -593,7 +593,188 @@ namespace Tzkt.Api.Repositories
 
             return result;
         }
+        #endregion
 
+        #region rights
+        public async Task<int> GetRightsCount(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards)
+        {
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DalRights""")
+                .Filter("Cycle", cycle)
+                .Filter("Level", level)
+                .Filter("DelegateId", @delegate)
+                .Filter("shards", shards);
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+        }
+
+        public async Task<IEnumerable<DalRight>> GetRights(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
+        {
+            var sql = new SqlBuilder(@"SELECT * FROM ""DalRights""")
+                .Filter("Cycle", cycle)
+                .Filter("Level", level)
+                .Filter("DelegateId", @delegate)
+                .Filter("Shards", shards)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "shards" => (@"""Shards""", @"""Shards"""),
+                    "level" or _  => (@"""Level""", @"""Level""")
+                }, @"""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            return rows.Select(row => new DalRight
+            {
+                Cycle = row.Cycle,
+                Level = row.Level,
+                Delegate = Accounts.GetAlias(row.DelegateId),
+                Shards = row.Shards
+            });
+        }
+
+        public async Task<object[][]> GetRights(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
+        {
+            var columns = new HashSet<string>(fields.Length);
+            foreach (var field in fields)
+            {
+                switch (field)
+                {
+                    case "cycle": columns.Add(@"""Cycle"""); break;
+                    case "level": columns.Add(@"""Level"""); break;
+                    case "delegate": columns.Add(@"""DelegateId"""); break;
+                    case "shards": columns.Add(@"""Shards"""); break;
+                }
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object[]>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DalRights""")
+                .Filter("Cycle", cycle)
+                .Filter("Level", level)
+                .Filter("DelegateId", @delegate)
+                .Filter("Shards", shards)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "shards" => (@"""Shards""", @"""Shards"""),
+                    "level" or _  => (@"""Level""", @"""Level""")
+                }, @"""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            var result = new object[rows.Count()][];
+            for (int i = 0; i < result.Length; i++)
+                result[i] = new object[fields.Length];
+
+            for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
+            {
+                switch (fields[i])
+                {
+                    case "cycle":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Cycle;
+                        break;
+                    case "level":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Level;
+                        break;
+                    case "delegate":
+                        foreach (var row in rows)
+                            result[j++][i] = await Accounts.GetAliasAsync(row.DelegateId);
+                        break;
+                    case "shards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Shards;
+                        break;
+                }
+            }
+
+            return result;
+        }
+
+        public async Task<object[]> GetRights(
+            AccountParameter @delegate,
+            Int32Parameter cycle,
+            Int32Parameter level,
+            Int32Parameter shards,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
+        {
+            var columns = new HashSet<string>(1);
+            switch (field)
+            {
+                case "cycle": columns.Add(@"""Cycle"""); break;
+                case "level": columns.Add(@"""Level"""); break;
+                case "delegate": columns.Add(@"""DelegateId"""); break;
+                case "shards": columns.Add(@"""Shards"""); break;
+            }
+
+            if (columns.Count == 0)
+                return Array.Empty<object>();
+
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DalRights""")
+                .Filter("Cycle", cycle)
+                .Filter("Level", level)
+                .Filter("DelegateId", @delegate)
+                .Filter("Shards", shards)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "shards" => (@"""Shards""", @"""Shards"""),
+                    "level" or _  => (@"""Level""", @"""Level""")
+                }, @"""Level""");
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
+
+            //TODO: optimize memory allocation
+            var result = new object[rows.Count()];
+            var j = 0;
+
+            switch (field)
+            {
+                case "cycle":
+                    foreach (var row in rows)
+                        result[j++] = row.Cycle;
+                    break;
+                case "level":
+                    foreach (var row in rows)
+                        result[j++] = row.Level;
+                    break;
+                case "delegate":
+                    foreach (var row in rows)
+                        result[j++] = await Accounts.GetAliasAsync(row.DelegateId);
+                    break;
+                case "shards":
+                    foreach (var row in rows)
+                        result[j++] = row.Shards;
+                    break;
+            }
+
+            return result;
+        }
         #endregion
     }
 }

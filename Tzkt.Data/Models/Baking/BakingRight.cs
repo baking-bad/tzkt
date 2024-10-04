@@ -16,7 +16,6 @@ namespace Tzkt.Data.Models
         public BakingRightStatus Status { get; set; }
         public int? Round { get; set; }
         public int? Slots { get; set; }
-        public int? DalShards { get; set; }
     }
 
     public enum BakingRightType : byte
