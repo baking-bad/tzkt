@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -13,9 +14,11 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20241002135240_MergeDalCommitmentStatusInDalPublishCommitmentOps")]
+    partial class MergeDalCommitmentStatusInDalPublishCommitmentOps
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1416,7 +1419,8 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("AttestationId");
 
-                    b.HasIndex("DalPublishCommitmentOpsId");
+                    b.HasIndex("DalPublishCommitmentOpsId")
+                        .IsUnique();
 
                     b.ToTable("DalAttestations");
                 });
@@ -5982,15 +5986,15 @@ namespace Tzkt.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Tzkt.Data.Models.DalPublishCommitmentOperation", "DalPublishCommitmentOp")
-                        .WithMany()
-                        .HasForeignKey("DalPublishCommitmentOpsId")
+                    b.HasOne("Tzkt.Data.Models.DalPublishCommitmentOperation", "DalCommitmentStatus")
+                        .WithOne("DalAttestations")
+                        .HasForeignKey("Tzkt.Data.Models.DalAttestation", "DalPublishCommitmentOpsId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Attestation");
 
-                    b.Navigation("DalPublishCommitmentOp");
+                    b.Navigation("DalCommitmentStatus");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
@@ -6982,6 +6986,11 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("UpdateConsensusKeyOps");
 
                     b.Navigation("VdfRevelationOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
+                {
+                    b.Navigation("DalAttestations");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>

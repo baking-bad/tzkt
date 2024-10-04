@@ -6,14 +6,14 @@ namespace Tzkt.Data.Models
     public class DalAttestation
     {
         public int Id { get; set; }
-        public int DalCommitmentStatusId { get; set; }
+        public long DalPublishCommitmentOpsId { get; set; }
         public long AttestationId { get; set; }
         public bool Attested { get; set; }
         public int ShardsCount { get; set; }
 
         #region relations
-        [ForeignKey(nameof(DalCommitmentStatusId))]
-        public DalCommitmentStatus DalCommitmentStatus { get; set; }
+        [ForeignKey(nameof(DalPublishCommitmentOpsId))]
+        public DalPublishCommitmentOperation DalPublishCommitmentOp { get; set; }
 
         [ForeignKey(nameof(AttestationId))]
         public EndorsementOperation Attestation { get; set; }
@@ -31,7 +31,7 @@ namespace Tzkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<DalAttestation>()
-                .HasIndex(x => x.DalCommitmentStatusId);
+                .HasIndex(x => x.DalPublishCommitmentOpsId);
 
             modelBuilder.Entity<DalAttestation>()
                 .HasIndex(x => x.AttestationId);

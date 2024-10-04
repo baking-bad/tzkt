@@ -32,16 +32,16 @@ namespace Tzkt.Sync.Protocols.Proto19
                                                  (block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
 
                 var dalAttestations = new List<DalAttestation>(block.Protocol.DalSlotsPerLevel);
-                var dalCommitmentStatus = new List<DalCommitmentStatus>(block.Protocol.DalSlotsPerLevel);
+                var dalCommits = new List<DalPublishCommitmentOperation>(block.Protocol.DalSlotsPerLevel);
 
                 for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
                 {
-                    var commitmentStatus = await Cache.DalCommitmentStatus.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
+                    var commitmentStatus = await Cache.DalPublishCommitmentOps.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
                     if (commitmentStatus != null)
                     {
                         var dalAttestation = new DalAttestation
                         {
-                            DalCommitmentStatusId = commitmentStatus.Id,
+                            DalPublishCommitmentOpsId = commitmentStatus.Id,
                             AttestationId = endorsement.Id,
                             Attested = endorsementDalAttestation.Mem(slot),
                             ShardsCount = attesterRight.DalShards ?? 0,
@@ -53,13 +53,13 @@ namespace Tzkt.Sync.Protocols.Proto19
                         {
                             commitmentStatus.ShardsAttested += dalAttestation.ShardsCount;
                             commitmentStatus.Attested = (commitmentStatus.ShardsAttested >= shardsThreshold);
-                            dalCommitmentStatus.Add(commitmentStatus);
+                            dalCommits.Add(commitmentStatus);
                         }
                     }
                 }
 
                 Db.DalAttestations.AddRange(dalAttestations);
-                Db.DalCommitmentStatus.UpdateRange(dalCommitmentStatus);
+                Db.DalPublishCommitmentOps.UpdateRange(dalCommits);
             }
         }
 
@@ -68,22 +68,25 @@ namespace Tzkt.Sync.Protocols.Proto19
                                              (block.Protocol.DalShardsPerSlot), MidpointRounding.AwayFromZero);
 
             var dalAttestations = new List<DalAttestation>(block.Protocol.DalSlotsPerLevel);
+            var dalCommits = new List<DalPublishCommitmentOperation>(block.Protocol.DalSlotsPerLevel);
 
             for (int slot = 0; slot < block.Protocol.DalSlotsPerLevel; slot++)
             {
                 var dalAttestation = Cache.DalAttestations.GetOrDefault(endorsement.Level, slot, endorsement.Delegate);
-                var commitmentStatus = await Cache.DalCommitmentStatus.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
+                var commitmentStatus = await Cache.DalPublishCommitmentOps.GetOrDefaultAsync(endorsement.Level - block.Protocol.DalAttestationLag, slot);
                 if (dalAttestation != null)
                 {
                     if (commitmentStatus != null && dalAttestation.Attested)
                     {
                         commitmentStatus.ShardsAttested -= dalAttestation.ShardsCount;
                         commitmentStatus.Attested = (commitmentStatus.ShardsAttested >= shardsThreshold);
+                        dalCommits.Add(commitmentStatus);
                     }
                     dalAttestations.Add(dalAttestation);
                 }
             }
             Db.DalAttestations.RemoveRange(dalAttestations);
+            Db.DalPublishCommitmentOps.UpdateRange(dalCommits);
         }
     }
 }

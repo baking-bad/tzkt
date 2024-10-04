@@ -71,17 +71,6 @@ namespace Tzkt.Sync.Protocols.Proto19
             Cache.AppState.Get().DalPublishCommitmentOpsCount++;
             #endregion
 
-            #region apply result
-            if (operation.Status == OperationStatus.Applied)
-            {
-                var commitmentStatus = new DalCommitmentStatus
-                {
-                    PublishmentId = operation.Id,
-                };
-                Db.DalCommitmentStatus.Add(commitmentStatus);
-            }
-            #endregion
-
             Proto.Manager.Set(operation.Sender);
             Db.DalPublishCommitmentOps.Add(operation);
         }
@@ -93,13 +82,6 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
-
-            #region revert result
-            if (operation.Status == OperationStatus.Applied)
-            {
-                Db.DalCommitmentStatus.Remove(operation.DalCommitmentStatus);
-            }
-            #endregion
 
             #region revert operation
             sender.Balance += operation.BakerFee;
