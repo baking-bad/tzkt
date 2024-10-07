@@ -210,6 +210,25 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, EpochStatusParameter status)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+                AppendFilter($"{column} = {Param(status.Eq)}");
+
+            if (status.Ne != null)
+                AppendFilter($"{column} != {Param(status.Ne)}");
+
+            if (status.In != null)
+                AppendFilter($"{column} = ANY ({Param(status.In)})");
+
+            if (status.Ni != null && status.Ni.Count > 0)
+                AppendFilter($"NOT ({column} = ANY ({Param(status.Ni)}))");
+
+            return this;
+        }
+
         public SqlBuilder FilterA(string column, StakingActionParameter action)
         {
             if (action == null) return this;

@@ -29,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         AccountId = x.Id,
                         BakerId = x.DelegateId ?? x.Id,
 
-                        OwnDelegatedBalance = x.Balance - (x as Data.Models.Delegate)?.OwnStakedBalance ?? 0,
+                        OwnDelegatedBalance = x.Balance - ((x as Data.Models.Delegate)?.OwnStakedBalance ?? 0),
                         ExternalDelegatedBalance = (x as Data.Models.Delegate)?.DelegatedBalance ?? 0,
                         DelegatorsCount = (x as Data.Models.Delegate)?.DelegatorsCount ?? 0,
 

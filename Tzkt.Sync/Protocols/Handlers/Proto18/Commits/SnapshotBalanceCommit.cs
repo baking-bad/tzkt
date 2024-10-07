@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 INNER JOIN "Accounts" as unstakedBaker
                 ON unstakedBaker."Id" = account."UnstakedBakerId"
                 WHERE unstakedBaker."Staked" = true
-                AND account."UnstakedBakerId" != account."DelegateId"
+                AND account."UnstakedBakerId" IS DISTINCT FROM account."DelegateId"
                 AND account."UnstakedBakerId" != account."Id"
                 """);
         }

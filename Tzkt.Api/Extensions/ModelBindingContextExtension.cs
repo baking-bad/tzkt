@@ -878,6 +878,66 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetEpochStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!EpochStatuses.IsValid(valueObject.FirstValue))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid epoch status.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = valueObject.FirstValue;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetEpochStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<string>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!EpochStatuses.IsValid(rawValue))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid epoch status.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result.Add(rawValue);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetDalCommitmentHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
         {
             result = null;

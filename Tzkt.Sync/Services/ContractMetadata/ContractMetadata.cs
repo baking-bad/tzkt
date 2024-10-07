@@ -218,7 +218,7 @@ namespace Tzkt.Sync.Services
         class DipDupItem
         {
             [JsonPropertyName("update_id")]
-            public int UpdateId { get; set; }
+            public long UpdateId { get; set; }
 
             [JsonPropertyName("contract")]
             public string Contract { get; set; }

@@ -303,7 +303,7 @@ namespace Tzkt.Sync.Services
             return items[0].CreatedAt;
         }
 
-        async Task<List<DipDupItem>> GetDipDupMetadata(int lastUpdateId, DipDupConfig dipDupConfig)
+        async Task<List<DipDupItem>> GetDipDupMetadata(long lastUpdateId, DipDupConfig dipDupConfig)
         {
             using var client = new HttpClient();
             using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
@@ -336,7 +336,7 @@ namespace Tzkt.Sync.Services
                 NumberHandling = JsonNumberHandling.AllowReadingFromString,
                 MaxDepth = 10240
             };
-            var lastUpdateId = -1;
+            var lastUpdateId = -1L;
             while (true)
             {
                 using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
@@ -408,7 +408,7 @@ namespace Tzkt.Sync.Services
         class DipDupItem
         {
             [JsonPropertyName("update_id")]
-            public int UpdateId { get; set; }
+            public long UpdateId { get; set; }
 
             [JsonPropertyName("contract")]
             public string Contract { get; set; }
