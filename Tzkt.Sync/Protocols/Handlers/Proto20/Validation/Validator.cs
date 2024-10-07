@@ -156,7 +156,6 @@ namespace Tzkt.Sync.Protocols.Proto20
                             case "attestation": ValidateAttestation(content); break;
                             case "attestation_with_dal": ValidateAttestation(content); break;
                             case "preattestation": ValidatePreattestation(content); break;
-                            case "preattestation_with_dal": ValidatePreattestation(content); break;
                             case "ballot": await ValidateBallot(content); break;
                             case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break;

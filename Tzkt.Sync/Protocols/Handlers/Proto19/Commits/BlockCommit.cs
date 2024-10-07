@@ -1,4 +1,6 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto19
 {

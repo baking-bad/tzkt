@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Numerics;
+using System.Text.Json;
 using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
@@ -40,6 +41,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
+            await ApplyDalAttestations(endorsement, block, content);
+
             block.Operations |= Operations.Endorsements;
             block.Validations += endorsement.Slots;
 
@@ -56,6 +59,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             Db.TryAttach(baker);
             baker.EndorsementsCount--;
 
+            await RevertDalAttestations(endorsement, block);
+
             #region reset baker activity
             if (endorsement.ResetDeactivation != null)
             {
@@ -71,5 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         }
 
         protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
+        protected virtual Task ApplyDalAttestations(EndorsementOperation endorsement, Block block, JsonElement content) => Task.CompletedTask;
+        protected virtual Task RevertDalAttestations(EndorsementOperation endorsement, Block block) => Task.CompletedTask;
     }
 }

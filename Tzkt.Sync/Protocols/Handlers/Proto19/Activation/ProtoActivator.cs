@@ -19,6 +19,11 @@ namespace Tzkt.Sync.Protocols.Proto19
             protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 500;
             protocol.DoubleEndorsingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 5000;
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+            protocol.DalSlotsPerLevel = parameters["dal_parametric"]["number_of_slots"]?.Value<int>() ?? 32;
+            protocol.DalAttestationLag = parameters["dal_parametric"]["attestation_lag"]?.Value<int>() ?? 8;
+            protocol.DalAttestationThreshold = parameters["dal_parametric"]["attestation_threshold"]?.Value<int>() ?? 66;
+            protocol.DalShardsPerSlot = parameters["dal_parametric"]["number_of_shards"]?.Value<int>() ?? 512;
+             
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -39,6 +44,10 @@ namespace Tzkt.Sync.Protocols.Proto19
             }
 
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+            protocol.DalSlotsPerLevel = 32;
+            protocol.DalAttestationLag = 8;
+            protocol.DalAttestationThreshold = 66;
+            protocol.DalShardsPerSlot = 512;
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -77,6 +86,11 @@ namespace Tzkt.Sync.Protocols.Proto19
                 AND "Level" > {lastCycleStart};
                 """);
 
+            await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "DalRights"
+                WHERE "Level" > {lastCycleStart};
+                """);
+
             var removedCycles = await Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "Cycles"
                 WHERE "Index" > {lastCycle};
@@ -89,6 +103,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             Cache.BakerCycles.Reset();
             Cache.BakingRights.Reset();
+            Cache.DalRights.Reset();
 
             Db.TryAttach(state);
             state.CyclesCount -= removedCycles;
@@ -162,25 +177,47 @@ namespace Tzkt.Sync.Protocols.Proto19
                 {
                     shifted = RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, cycle.LastLevel);
 
-                    #region save shifted
-                    using var writer = conn.BeginBinaryImport("""
+                    #region save rights
+                    using (var writer = conn.BeginBinaryImport("""
                         COPY "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Round", "Slots")
                         FROM STDIN (FORMAT BINARY)
-                        """);
-
-                    foreach (var er in shifted)
+                        """))
                     {
-                        writer.StartRow();
-                        writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.WriteNull();
-                        writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+
+                        foreach (var er in shifted)
+                        {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.WriteNull();
+                            writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                        }
+
+                        writer.Complete();
                     }
 
-                    writer.Complete();
+                    var drs = RightsGenerator.GetDalRights(sampler, nextProto, cycle, cycle.LastLevel);
+
+                    using (var writer = conn.BeginBinaryImport("""
+                        COPY "DalRights" ("Cycle", "Level", "DelegateId", "Shards")
+                        FROM STDIN (FORMAT BINARY)
+                        """))
+                    {
+
+                        foreach (var dr in drs)
+                        {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Delegate, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Shards, NpgsqlTypes.NpgsqlDbType.Integer);
+                        }
+
+                        writer.Complete();
+                    }
                     #endregion
                 }
                 else
@@ -217,6 +254,26 @@ namespace Tzkt.Sync.Protocols.Proto19
                             writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
+                        }
+
+                        writer.Complete();
+                    }
+
+                    var drs = RightsGenerator.GetDalRights(sampler, nextProto, cycle, cycle.LastLevel);
+
+                    using (var writer = conn.BeginBinaryImport("""
+                        COPY "DalRights" ("Cycle", "Level", "DelegateId", "Shards")
+                        FROM STDIN (FORMAT BINARY)
+                        """))
+                    {
+
+                        foreach (var dr in drs)
+                        {
+                            writer.StartRow();
+                            writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Delegate, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(dr.Shards, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
 
                         writer.Complete();

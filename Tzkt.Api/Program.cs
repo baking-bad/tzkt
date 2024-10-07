@@ -80,6 +80,7 @@ builder.Services.AddTransient<ContractEventsRepository>();
 builder.Services.AddTransient<DomainsRepository>();
 builder.Services.AddTransient<SmartRollupsRepository>();
 builder.Services.AddTransient<StakingRepository>();
+builder.Services.AddTransient<DalRepository>();
 
 builder.Services.AddAuthService(builder.Configuration);
 builder.Services.AddSingleton<RpcHelpers>();

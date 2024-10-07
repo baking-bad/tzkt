@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+
+namespace Tzkt.Api.Models
 {
     public class EndorsementOperation : Operation
     {
