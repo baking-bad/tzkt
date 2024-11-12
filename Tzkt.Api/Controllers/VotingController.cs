@@ -109,6 +109,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="firstLevel">Filter by level of the first block of the period.</param>
         /// <param name="lastLevel">Filter by level of the last block of the period.</param>
+        /// <param name="epoch">Filters by voting epoch</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts voting periods by specified field. Supported fields: `id` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -118,6 +119,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<VotingPeriod>>> GetPeriods(
             Int32Parameter firstLevel,
             Int32Parameter lastLevel,
+            Int32Parameter epoch,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -129,25 +131,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit));
+                return Ok(await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Values[0]));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit, select.Values[0]));
                 else
-                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Values));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit, select.Values));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Fields[0]));
+                    return Ok(await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit, select.Fields[0]));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Voting.GetPeriods(firstLevel, lastLevel, sort, offset, limit, select.Fields)
+                        Rows = await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit, select.Fields)
                     });
                 }
             }
@@ -271,22 +273,24 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of voting epochs.
         /// </remarks>
-        /// <param name="sort">Sorts voting epochs by specified field. Supported fields: `id` (default).</param>
+        /// <param name="status">Filter by voting epoch status (`no_proposals`, `voting`, `completed`, `failed`).</param>
+        /// <param name="sort">Sorts voting epochs by specified field. Supported fields: `index` (default).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <returns></returns>
         [HttpGet("epochs")]
         public async Task<ActionResult<IEnumerable<VotingEpoch>>> GetEpochs(
+            EpochStatusParameter status,
             SortParameter sort,
             OffsetParameter offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id"))
+            if (sort != null && !sort.Validate("id", "index"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
-            return Ok(await Voting.GetEpochs(sort, offset, limit));
+            return Ok(await Voting.GetEpochs(status, sort, offset, limit));
         }
 
         /// <summary>

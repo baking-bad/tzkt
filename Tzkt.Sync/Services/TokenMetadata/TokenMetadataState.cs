@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class TokenMetadataState
     {
@@ -9,7 +7,7 @@ namespace Tzkt.Sync.Services
 
     public class DipDupState
     {
-        public int LastUpdateId { get; set; } = 0;
+        public long LastUpdateId { get; set; } = 0;
         public long LastTokenId { get; set; } = 0;  // TzKT internal ID
         public int LastIndexedAt { get; set; } = 0; // TzKT internals
         public long LastIndexedAtId { get; set; } = 0; // TzKT internals

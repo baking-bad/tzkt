@@ -308,11 +308,18 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<VotingPeriod>> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<VotingPeriod>> GetPeriods(
+            Int32Parameter firstLevel,
+            Int32Parameter lastLevel,
+            Int32Parameter epoch,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""VotingPeriods""")
                 .Filter("FirstLevel", firstLevel)
                 .Filter("LastLevel", lastLevel)
+                .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -346,7 +353,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object[][]> GetPeriods(
+            Int32Parameter firstLevel,
+            Int32Parameter lastLevel,
+            Int32Parameter epoch,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
 
@@ -386,6 +400,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
                 .Filter("FirstLevel", firstLevel)
                 .Filter("LastLevel", lastLevel)
+                .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -497,7 +512,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetPeriods(Int32Parameter firstLevel, Int32Parameter lastLevel, SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object[]> GetPeriods(
+            Int32Parameter firstLevel,
+            Int32Parameter lastLevel,
+            Int32Parameter epoch,
+            SortParameter sort,
+            OffsetParameter offset,
+            int limit,
+            string field)
         {
             var columns = new HashSet<string>(1);
 
@@ -534,6 +556,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
                 .Filter("FirstLevel", firstLevel)
                 .Filter("LastLevel", lastLevel)
+                .Filter("Epoch", epoch)
                 .Take(sort, offset, limit, x => ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -747,79 +770,76 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<VotingEpoch>> GetEpochs(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<VotingEpoch>> GetEpochs(EpochStatusParameter status, SortParameter sort, OffsetParameter offset, int limit)
         {
-            sort ??= new SortParameter { Asc = "id" };
-            var sql = new SqlBuilder(@"SELECT DISTINCT ON (""Epoch"") ""Epoch"" AS epoch FROM ""VotingPeriods""")
-                .Take(sort, offset, limit, x => ("Epoch", "Epoch"));
-
-            var query = $@"
-                SELECT periods.* FROM (
-                    {sql.Query}
-                ) as epochs
-                LEFT JOIN LATERAL (
-                    SELECT *
-                    FROM ""VotingPeriods""
-                    WHERE ""Epoch"" = epoch
-                ) as periods
-                ON true
-                ORDER BY ""Id""{(sort.Desc != null ? " DESC" : "")}";
+            var sql = new SqlBuilder($"""
+                WITH
+                groups AS (
+                	SELECT "Epoch", MIN("Index") AS "FirstPeriod", MAX("Index") AS "LastPeriod"
+                	FROM "VotingPeriods"
+                	GROUP BY "Epoch"
+                ),
+                epochs AS (
+                	SELECT
+                		g."Epoch" as "Id",
+                		g."Epoch" as "Index",
+                		fp."FirstLevel",
+                		lp."LastLevel",
+                		CASE
+                			WHEN fp."Status" = {(int)Data.Models.PeriodStatus.NoProposals} THEN '{EpochStatuses.NoProposals}'
+                			WHEN lp."Status" = {(int)Data.Models.PeriodStatus.Active} THEN '{EpochStatuses.Voting}'
+                			WHEN lp."Status" = {(int)Data.Models.PeriodStatus.Success} THEN '{EpochStatuses.Completed}'
+                			ELSE '{EpochStatuses.Failed}'
+                		END as "Status"
+                	FROM groups as g
+                	INNER JOIN "VotingPeriods" as fp ON fp."Index" = g."FirstPeriod"
+                	INNER JOIN "VotingPeriods" as lp ON lp."Index" = g."LastPeriod"
+                )
+                SELECT *
+                FROM epochs
+                """)
+                .FilterA(@"""Status""", status)
+                .Take(sort, offset, limit, x => ("Index", "Index"));
 
             await using var db = await DataSource.OpenConnectionAsync();
-            var rows = await db.QueryAsync(query, sql.Params);
+            var rows = await db.QueryAsync(sql.Query, sql.Params);
             if (!rows.Any()) return Enumerable.Empty<VotingEpoch>();
 
-            var epochs = rows.Select(x => (int)x.Epoch).ToHashSet();
-            var proposals = (await GetProposals(
-                hash: null,
-                new Int32Parameter { In = epochs.ToList() },
-                new SortParameter { Desc = "votingPower" },
-                null, limit * 10))
+            var epochs = rows.Select(x => (int)x.Index).ToList();
+
+            var periods = (await GetPeriods(
+                firstLevel: null,
+                lastLevel: null,
+                epoch: new Int32Parameter { In = epochs },
+                sort: new SortParameter { Asc = "id" },
+                offset: null,
+                limit: limit * 10))
                 .GroupBy(x => x.Epoch)
                 .ToDictionary(k => k.Key, v => v.ToList());
 
-            return rows
+            var proposals = (await GetProposals(
+                hash: null,
+                epoch: new Int32Parameter { In = epochs },
+                sort: new SortParameter { Desc = "votingPower" },
+                offset: null,
+                limit: limit * 10))
                 .GroupBy(x => x.Epoch)
-                .Select(group =>
+                .ToDictionary(k => k.Key, v => v.ToList());
+
+            return rows.Select(row =>
+            {
+                return new VotingEpoch
                 {
-                    var periods = group.OrderBy(x => x.Index);
-                    return new VotingEpoch
-                    {
-                        Index = group.Key,
-                        FirstLevel = periods.First().FirstLevel,
-                        StartTime = Time[periods.First().FirstLevel],
-                        LastLevel = periods.Last().LastLevel,
-                        EndTime = Time[periods.Last().LastLevel],
-                        Status = GetEpochStatus(periods),
-                        Periods = periods.Select(row => new VotingPeriod
-                        {
-                            Index = row.Index,
-                            Epoch = row.Epoch,
-                            FirstLevel = row.FirstLevel,
-                            StartTime = Time[row.FirstLevel],
-                            LastLevel = row.LastLevel,
-                            EndTime = Time[row.LastLevel],
-                            Kind = PeriodKinds.ToString(row.Kind),
-                            Status = PeriodStatuses.ToString(row.Status),
-                            Dictator = PeriodDictatorStatuses.ToString(row.Dictator),
-                            TotalBakers = row.TotalBakers,
-                            TotalVotingPower = row.TotalVotingPower,
-                            UpvotesQuorum = row.UpvotesQuorum == null ? null : row.UpvotesQuorum / 100.0,
-                            ProposalsCount = row.ProposalsCount,
-                            TopUpvotes = row.TopUpvotes,
-                            TopVotingPower = row.TopVotingPower,
-                            BallotsQuorum = row.BallotsQuorum == null ? null : row.BallotsQuorum / 100.0,
-                            Supermajority = row.Supermajority == null ? null : row.Supermajority / 100.0,
-                            YayBallots = row.YayBallots,
-                            YayVotingPower = row.YayVotingPower,
-                            NayBallots = row.NayBallots,
-                            NayVotingPower = row.NayVotingPower,
-                            PassBallots = row.PassBallots,
-                            PassVotingPower = row.PassVotingPower,
-                        }),
-                        Proposals = proposals.GetValueOrDefault((int)group.Key) ?? Enumerable.Empty<Proposal>()
-                    };
-                });
+                    Index = row.Index,
+                    FirstLevel = row.FirstLevel,
+                    StartTime = Time[row.FirstLevel],
+                    LastLevel = row.LastLevel,
+                    EndTime = Time[row.LastLevel],
+                    Status = row.Status,
+                    Periods = periods.GetValueOrDefault((int)row.Index) ?? Enumerable.Empty<VotingPeriod>(),
+                    Proposals = proposals.GetValueOrDefault((int)row.Index) ?? Enumerable.Empty<Proposal>()
+                };
+            });
         }
 
         public async Task<VotingEpoch> GetLatestVoting()
