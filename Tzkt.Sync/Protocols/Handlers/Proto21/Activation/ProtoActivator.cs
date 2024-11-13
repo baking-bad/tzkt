@@ -22,6 +22,8 @@ namespace Tzkt.Sync.Protocols.Proto21
                 protocol.SmartRollupChallengeWindow = prev.SmartRollupChallengeWindow * 5 / 4;
                 protocol.SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod * 5 / 4;
                 protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+                protocol.MaxExternalOverOwnStakeRatio = 9;
+                protocol.StakePowerMultiplier = 3;
             }
         }
 

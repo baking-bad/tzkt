@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string VersionName => "beta";
+        public override string VersionName => "quebec_021";
         public override int VersionNumber => 21;
 
         public Proto21Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto21Handler> logger, IMetrics metrics)
