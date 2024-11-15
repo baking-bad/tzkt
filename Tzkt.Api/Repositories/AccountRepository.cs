@@ -2914,27 +2914,27 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var smartRollupSrCementOps = smartRollup.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { rollup = _smartRollup }, pagination, quote)
+                        ? Operations.GetSmartRollupCementOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
 
                     var smartRollupSrExecuteOps = smartRollup.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { rollup = _smartRollup }, pagination, quote)
+                        ? Operations.GetSmartRollupExecuteOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
 
                     var smartRollupSrOriginateOps = smartRollup.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { rollup = _smartRollup }, pagination, quote, format)
+                        ? Operations.GetSmartRollupOriginateOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote, format)
                         : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
 
                     var smartRollupSrPublishOps = smartRollup.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { rollup = _smartRollup }, pagination, quote)
+                        ? Operations.GetSmartRollupPublishOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
 
                     var smartRollupSrRecoverBondOps = smartRollup.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { rollup = _smartRollup }, pagination, quote)
+                        ? Operations.GetSmartRollupRecoverBondOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
 
                     var smartRollupSrRefuteOps = smartRollup.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { rollup = _smartRollup }, pagination, quote)
+                        ? Operations.GetSmartRollupRefuteOps(new() { rollup = _smartRollup, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     await Task.WhenAll(
