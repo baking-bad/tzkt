@@ -2454,43 +2454,43 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
                     var srAddMessagesOps = delegat.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
-                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
 
                     var srCementOps = delegat.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetSmartRollupCementOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
 
                     var srExecuteOps = delegat.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
 
                     var srOriginateOps = delegat.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _delegat }, pagination, quote, format)
+                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote, format)
                         : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
 
                     var srPublishOps = delegat.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetSmartRollupPublishOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
 
                     var srRecoverBondOps = delegat.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = delegat.Id } }, pagination, quote)
+                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
 
                     var srRefuteOps = delegat.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id } }, pagination, quote)
+                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id } }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var setDelegateParametersOps = delegat.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
-                        ? Operations.GetSetDelegateParametersOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetSetDelegateParametersOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
 
                     var dalPublishCommitmentOps = delegat.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
-                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _delegat }, pagination, quote)
+                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _delegat, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
 
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
@@ -2510,7 +2510,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
                     var autostakingOps = delegat.AutostakingOpsCount > 0 && types.Contains(OpTypes.Autostaking)
-                        ? Operations.GetAutostakingOps(new() { baker = _delegat }, pagination, quote)
+                        ? Operations.GetAutostakingOps(new() { baker = _delegat, level = level, timestamp = _timestamp }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
 
                     await Task.WhenAll(
@@ -2679,43 +2679,43 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
                     var userSrAddMessagesOps = user.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
-                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetSmartRollupAddMessagesOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupAddMessagesOperation>());
 
                     var userSrCementOps = user.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
-                        ? Operations.GetSmartRollupCementOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetSmartRollupCementOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupCementOperation>());
 
                     var userSrExecuteOps = user.SmartRollupExecuteCount > 0 && types.Contains(OpTypes.SmartRollupExecute)
-                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetSmartRollupExecuteOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupExecuteOperation>());
 
                     var userSrOriginateOps = user.SmartRollupOriginateCount > 0 && types.Contains(OpTypes.SmartRollupOriginate)
-                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _user }, pagination, quote, format)
+                        ? Operations.GetSmartRollupOriginateOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote, format)
                         : Task.FromResult(Enumerable.Empty<SmartRollupOriginateOperation>());
 
                     var userSrPublishOps = user.SmartRollupPublishCount > 0 && types.Contains(OpTypes.SmartRollupPublish)
-                        ? Operations.GetSmartRollupPublishOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetSmartRollupPublishOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
 
                     var userSrRecoverBondOps = user.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = user.Id } }, pagination, quote)
+                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
 
                     var userSrRefuteOps = user.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id } }, pagination, quote)
+                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var userStakingOps = user.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id } }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var userSetDelegateParametersOps = user.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
-                        ? Operations.GetSetDelegateParametersOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetSetDelegateParametersOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
 
                     var userDalPublishCommitmentOps = user.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
-                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _user }, pagination, quote)
+                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _user, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
 
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
