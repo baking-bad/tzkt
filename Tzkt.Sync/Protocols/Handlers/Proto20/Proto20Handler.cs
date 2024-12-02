@@ -66,7 +66,6 @@ namespace Tzkt.Sync.Protocols
                             await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "preattestation":
-                        case "preattestation_with_dal":
                             new PreendorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         default:

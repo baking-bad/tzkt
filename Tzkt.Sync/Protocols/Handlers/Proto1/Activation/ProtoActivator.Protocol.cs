@@ -125,7 +125,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginationSize = prev.SmartRollupOriginationSize,
                 SmartRollupStakeAmount = prev.SmartRollupStakeAmount,
                 SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod,
-                DelegateParametersActivationDelay = prev.DelegateParametersActivationDelay
+                DelegateParametersActivationDelay = prev.DelegateParametersActivationDelay,
+                DalSlotsPerLevel = prev.DalSlotsPerLevel,
+                DalAttestationLag = prev.DalAttestationLag,
+                DalAttestationThreshold = prev.DalAttestationThreshold,
+                DalShardsPerSlot = prev.DalShardsPerSlot
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);

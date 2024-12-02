@@ -71,13 +71,6 @@ namespace Tzkt.Sync.Protocols.Proto19
             Cache.AppState.Get().DalPublishCommitmentOpsCount++;
             #endregion
 
-            #region apply result
-            if (operation.Status == OperationStatus.Applied)
-            {
-                // nothing to do
-            }
-            #endregion
-
             Proto.Manager.Set(operation.Sender);
             Db.DalPublishCommitmentOps.Add(operation);
         }
@@ -89,13 +82,6 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
-
-            #region revert result
-            if (operation.Status == OperationStatus.Applied)
-            {
-                // nothing to do
-            }
-            #endregion
 
             #region revert operation
             sender.Balance += operation.BakerFee;

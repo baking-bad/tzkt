@@ -73,6 +73,19 @@ namespace Tzkt.Data.Models
         public int SmartRollupCommitmentPeriod { get; set; }
         public int SmartRollupTimeoutPeriod { get; set; }
 
+
+        #region DAL-Constants
+
+        public int DalSlotsPerLevel { get; set; }
+        
+        public int DalAttestationLag { get; set; }
+        
+        public int DalAttestationThreshold { get; set; }
+        
+        public int DalShardsPerSlot { get; set; }
+
+        #endregion
+
         public string Dictator { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }

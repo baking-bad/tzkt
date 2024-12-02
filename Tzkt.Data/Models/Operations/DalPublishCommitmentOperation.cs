@@ -7,6 +7,10 @@ namespace Tzkt.Data.Models
     {
         public int Slot { get; set; }
         public string Commitment {  get; set; }
+        
+        public int ShardsAttested { get; set; }
+        
+        public bool Attested { get; set; }
     }
 
     public static class DalPublishCommitmentOperationModel
