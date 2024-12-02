@@ -184,6 +184,35 @@ namespace Tzkt.Api.Repositories
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"""Cycle"""); break;
 
+                    #region additionnal fields
+                    case "totalStakedRewards":
+                        columns.Add(@"""BlockRewardsStakedOwn""");
+                        columns.Add(@"""BlockRewardsStakedEdge""");
+                        columns.Add(@"""EndorsementRewardsStakedOwn""");
+                        columns.Add(@"""EndorsementRewardsStakedEdge""");
+                        columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                        columns.Add(@"""NonceRevelationRewardsStakedEdge""");
+                        columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                        columns.Add(@"""VdfRevelationRewardsStakedEdge""");
+                        break;
+                    case "totalDelegatedRewards":
+                        columns.Add(@"""BlockRewardsDelegated""");
+                        columns.Add(@"""EndorsementRewardsDelegated""");
+                        columns.Add(@"""NonceRevelationRewardsDelegated""");
+                        columns.Add(@"""VdfRevelationRewardsDelegated""");
+                        break;
+                    case "totalStakedLosses":
+                        columns.Add(@"""DoubleBakingLostStaked""");
+                        columns.Add(@"""DoubleEndorsingLostStaked""");
+                        columns.Add(@"""DoublePreendorsingLostStaked""");
+                        break;
+                    case "totalUnstakedLosses":
+                        columns.Add(@"""DoubleBakingLostUnstaked""");
+                        columns.Add(@"""DoubleEndorsingLostUnstaked""");
+                        columns.Add(@"""DoublePreendorsingLostUnstaked""");
+                        break;
+                    #endregion
+
                     #region deprecated
                     case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
                     case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
@@ -498,6 +527,25 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
 
+                    #region additionnal fields
+                    case "totalStakedRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge;
+                        break;
+                    case "totalDelegatedRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.BlockRewardsDelegated + row.EndorsementRewardsDelegated + row.NonceRevelationRewardsDelegated + row.VdfRevelationRewardsDelegated;
+                        break;
+                    case "totalStakedLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleBakingLostStaked + row.DoubleEndorsingLostStaked + row.DoublePreendorsingLostStaked;
+                        break;
+                    case "totalUnstakedLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DoubleBakingLostUnstaked + row.DoubleEndorsingLostUnstaked + row.DoublePreendorsingLostUnstaked;
+                        break;
+                    #endregion
+
                     #region deprecated
                     case "blockRewardsLiquid":
                         foreach (var row in rows)
@@ -641,6 +689,35 @@ namespace Tzkt.Api.Repositories
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"""Cycle"""); break;
+
+                #region additionnal fields
+                case "totalStakedRewards":
+                    columns.Add(@"""BlockRewardsStakedOwn""");
+                    columns.Add(@"""BlockRewardsStakedEdge""");
+                    columns.Add(@"""EndorsementRewardsStakedOwn""");
+                    columns.Add(@"""EndorsementRewardsStakedEdge""");
+                    columns.Add(@"""NonceRevelationRewardsStakedOwn""");
+                    columns.Add(@"""NonceRevelationRewardsStakedEdge""");
+                    columns.Add(@"""VdfRevelationRewardsStakedOwn""");
+                    columns.Add(@"""VdfRevelationRewardsStakedEdge""");
+                    break;
+                case "totalDelegatedRewards":
+                    columns.Add(@"""BlockRewardsDelegated""");
+                    columns.Add(@"""EndorsementRewardsDelegated""");
+                    columns.Add(@"""NonceRevelationRewardsDelegated""");
+                    columns.Add(@"""VdfRevelationRewardsDelegated""");
+                    break;
+                case "totalStakedLosses":
+                    columns.Add(@"""DoubleBakingLostStaked""");
+                    columns.Add(@"""DoubleEndorsingLostStaked""");
+                    columns.Add(@"""DoublePreendorsingLostStaked""");
+                    break;
+                case "totalUnstakedLosses":
+                    columns.Add(@"""DoubleBakingLostUnstaked""");
+                    columns.Add(@"""DoubleEndorsingLostUnstaked""");
+                    columns.Add(@"""DoublePreendorsingLostUnstaked""");
+                    break;
+                #endregion
 
                 #region deprecated
                 case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
@@ -953,6 +1030,25 @@ namespace Tzkt.Api.Repositories
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
 
+                #region additionnal fields
+                case "totalStakedRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge;
+                    break;
+                case "totalDelegatedRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.BlockRewardsDelegated + row.EndorsementRewardsDelegated + row.NonceRevelationRewardsDelegated + row.VdfRevelationRewardsDelegated;
+                    break;
+                case "totalStakedLosses":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleBakingLostStaked + row.DoubleEndorsingLostStaked + row.DoublePreendorsingLostStaked;
+                    break;
+                case "totalUnstakedLosses":
+                    foreach (var row in rows)
+                        result[j++] = row.DoubleBakingLostUnstaked + row.DoubleEndorsingLostUnstaked + row.DoublePreendorsingLostUnstaked;
+                    break;
+                #endregion
+
                 #region deprecated
                 case "blockRewardsLiquid":
                     foreach (var row in rows)
@@ -1035,6 +1131,35 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""DelegatorCycles"" WHERE ""DelegatorId"" = {acc.Id}");
         }
 
+        const string FutureCyclesJoinQuery = """
+            LEFT JOIN   "Protocols" as p
+                    ON  p."FirstLevel" = (
+                        SELECT MAX(p2."FirstLevel")
+                        FROM "Protocols" p2
+                        WHERE p2."FirstCycle" <= dc."Cycle"
+                    )
+            LEFT JOIN   "DelegatorCycles" as future_dc
+                    ON  future_dc."DelegatorId" = dc."DelegatorId"
+                   AND  future_dc."Cycle" = dc."Cycle" + p."ConsensusRightsDelay"
+            LEFT JOIN   "DelegatorCycles" as future_dc_plus_one
+                    ON  future_dc_plus_one."DelegatorId" = dc."DelegatorId"
+                   AND  future_dc_plus_one."Cycle" = dc."Cycle" + p."ConsensusRightsDelay" + 1
+            """;
+
+        const string StakingUpdatesSumsJoinQuery = """
+            LEFT JOIN LATERAL (
+                        SELECT  SUM(CASE WHEN su."Type" = 0 THEN su."Amount" END)::bigint as "SumStakeAmount",
+                                SUM(CASE WHEN su."Type" = 1 THEN su."Amount" END)::bigint as "SumUnstakeAmount",
+                                SUM(CASE WHEN su."Type" = 4 THEN su."Amount" END)::bigint as "SumSlashStakedAmount",
+                                SUM(CASE WHEN su."Type" = 5 THEN su."Amount" END)::bigint as "SumSlashUnstakedAmount"
+                        FROM    "StakingUpdates" su
+                        INNER JOIN "Cycles" c ON c."Index" = dc."Cycle"
+                        WHERE   su."StakerId" = dc."DelegatorId"
+                        AND     su."Level" BETWEEN c."FirstLevel" AND c."LastLevel"
+                    ) as SUMS
+                    ON  true
+            """;
+
         public async Task<IEnumerable<DelegatorRewards>> GetDelegatorRewards(
             string address,
             Int32Parameter cycle,
@@ -1046,12 +1171,22 @@ namespace Tzkt.Api.Repositories
             var acc = await Accounts.GetAsync(address);
             if (acc == null) return Enumerable.Empty<DelegatorRewards>();
 
-            var sql = new SqlBuilder("""
-                SELECT      bc.*, dc."DelegatedBalance", dc."StakedBalance"
+            var sql = new SqlBuilder($"""
+                SELECT      bc.*,
+                            dc."DelegatedBalance",
+                            dc."StakedBalance",
+                            future_dc."StakedBalance" as "CurrentCycleStakedBalance",
+                            future_dc_plus_one."StakedBalance" as "NextCurrentCycleStakedBalance",
+                            SUMS."SumStakeAmount",
+                            SUMS."SumUnstakeAmount",
+                            SUMS."SumSlashStakedAmount",
+                            SUMS."SumSlashUnstakedAmount"
                 FROM        "DelegatorCycles" as dc
                 INNER JOIN  "BakerCycles" as bc
                         ON  bc."BakerId" = dc."BakerId"
                        AND  bc."Cycle" = dc."Cycle"
+                { FutureCyclesJoinQuery }
+                { StakingUpdatesSumsJoinQuery }
                 """)
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
@@ -1118,7 +1253,10 @@ namespace Tzkt.Api.Repositories
                 NonceRevelationRewardsStakedEdge = row.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = row.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = row.NonceRevelationLosses,
-                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
+                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle)),
+                TotalStakedRewards = row.NextCurrentCycleStakedBalance == null || row.CurrentCycleStakedBalance == null ? null : (row.NextCurrentCycleStakedBalance - row.CurrentCycleStakedBalance) - (row.SumStakeAmount ?? 0) + (row.SumUnstakeAmount ?? 0) + (row.SumSlashStakedAmount ?? 0),
+                TotalStakedLosses = (row.SumSlashStakedAmount ?? 0),
+                TotalUnstakedLosses = (row.SumSlashUnstakedAmount ?? 0),
             });
         }
 
@@ -1135,6 +1273,9 @@ namespace Tzkt.Api.Repositories
             if (acc == null) return Array.Empty<object[]>();
 
             var columns = new HashSet<string>(fields.Length);
+            var show_cumulative_stakedRewards = false;
+            var show_cumulative_lossesRewards = false;
+
             foreach (var field in fields)
             {
                 switch (field)
@@ -1196,6 +1337,25 @@ namespace Tzkt.Api.Repositories
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"dc.""Cycle"""); break;
+
+                    #region additionnal fields
+                    case "totalStakedRewards":
+                        show_cumulative_stakedRewards = true;
+                        columns.Add(@"future_dc.""StakedBalance"" as ""CurrentCycleStakedBalance""");
+                        columns.Add(@"future_dc_plus_one.""StakedBalance"" as ""NextCurrentCycleStakedBalance""");
+                        columns.Add(@"SUMS.""SumStakeAmount""");
+                        columns.Add(@"SUMS.""SumUnstakeAmount""");
+                        columns.Add(@"SUMS.""SumSlashStakedAmount""");
+                        break;
+                    case "totalStakedLosses":
+                        show_cumulative_lossesRewards = true;
+                        columns.Add(@"SUMS.""SumSlashStakedAmount""");
+                        break;
+                    case "totalUnstakedLosses":
+                        show_cumulative_lossesRewards = true;
+                        columns.Add(@"SUMS.""SumSlashUnstakedAmount""");
+                        break;
+                    #endregion
 
                     #region deprecated
                     case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
@@ -1265,6 +1425,18 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
+            var joinStr = string.Empty;
+
+            if (show_cumulative_stakedRewards)
+            {
+                joinStr = $"""
+                    { FutureCyclesJoinQuery }
+                    { StakingUpdatesSumsJoinQuery }
+                """;
+            }
+            else if (show_cumulative_lossesRewards)
+                joinStr = StakingUpdatesSumsJoinQuery;
+
             if (columns.Count == 0)
                 return Array.Empty<object[]>();
 
@@ -1274,6 +1446,7 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  "BakerCycles" as bc
                         ON  bc."BakerId" = dc."BakerId"
                        AND  bc."Cycle" = dc."Cycle"
+                { joinStr }
                 """)
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
@@ -1519,6 +1692,21 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
 
+                    #region additionnal fields
+                    case "totalStakedRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.NextCurrentCycleStakedBalance == null || row.CurrentCycleStakedBalance == null ? null : (row.NextCurrentCycleStakedBalance - row.CurrentCycleStakedBalance) - (row.SumStakeAmount ?? 0) + (row.SumUnstakeAmount ?? 0) + (row.SumSlashStakedAmount ?? 0);
+                        break;
+                    case "totalStakedLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = (row.SumSlashStakedAmount ?? 0);
+                        break;
+                    case "totalUnstakedLosses":
+                        foreach (var row in rows)
+                            result[j++][i] = (row.SumSlashUnstakedAmount ?? 0);
+                        break;
+                    #endregion
+
                     #region deprecated
                     case "blockRewardsLiquid":
                         foreach (var row in rows)
@@ -1600,7 +1788,8 @@ namespace Tzkt.Api.Repositories
             if (acc == null) return Array.Empty<object>();
 
             var columns = new HashSet<string>(1);
-            var join = false;
+            var show_cumulative_stakedRewards = false;
+            var show_cumulative_lossesRewards = false;
 
             switch (field)
             {
@@ -1661,6 +1850,25 @@ namespace Tzkt.Api.Repositories
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"dc.""Cycle"""); break;
+
+                #region additionnal fields
+                case "totalStakedRewards":
+                    show_cumulative_stakedRewards = true;
+                    columns.Add(@"future_dc.""StakedBalance"" as ""CurrentCycleStakedBalance""");
+                    columns.Add(@"future_dc_plus_one.""StakedBalance"" as ""NextCurrentCycleStakedBalance""");
+                    columns.Add(@"SUMS.""SumStakeAmount""");
+                    columns.Add(@"SUMS.""SumUnstakeAmount""");
+                    columns.Add(@"SUMS.""SumSlashStakedAmount""");
+                    break;
+                case "totalStakedLosses":
+                    show_cumulative_lossesRewards = true;
+                    columns.Add(@"SUMS.""SumSlashStakedAmount""");
+                    break;
+                case "totalUnstakedLosses":
+                    show_cumulative_lossesRewards = true;
+                    columns.Add(@"SUMS.""SumSlashUnstakedAmount""");
+                    break;
+                #endregion
 
                 #region deprecated
                 case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
@@ -1729,14 +1937,29 @@ namespace Tzkt.Api.Repositories
                 #endregion
             }
 
+            var joinStr = string.Empty;
+
+            if (show_cumulative_stakedRewards)
+            {
+                joinStr = $"""
+                    { FutureCyclesJoinQuery }
+                    { StakingUpdatesSumsJoinQuery }
+                """;
+            }
+            else if (show_cumulative_lossesRewards)
+                joinStr = StakingUpdatesSumsJoinQuery;
+
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return Array.Empty<object[]>();
 
-            var joinStr = join
-                ? @"INNER JOIN ""BakerCycles"" as bc ON  bc.""BakerId"" = dc.""BakerId"" AND  bc.""Cycle"" = dc.""Cycle"""
-                : string.Empty;
-
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DelegatorCycles"" as dc {joinStr}")
+            var sql = new SqlBuilder($"""
+                SELECT      {string.Join(',', columns)}
+                FROM        "DelegatorCycles" as dc
+                INNER JOIN  "BakerCycles" as bc
+                        ON  bc."BakerId" = dc."BakerId"
+                       AND  bc."Cycle" = dc."Cycle"
+                { joinStr }
+                """)
                 .FilterA(@"dc.""DelegatorId""", acc.Id)
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
@@ -1979,6 +2202,21 @@ namespace Tzkt.Api.Repositories
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
 
+                #region additionnal fields
+                case "totalStakedRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.NextCurrentCycleStakedBalance == null || row.CurrentCycleStakedBalance == null ? null : (row.NextCurrentCycleStakedBalance - row.CurrentCycleStakedBalance) - (row.SumStakeAmount ?? 0) + (row.SumUnstakeAmount ?? 0) + (row.SumSlashStakedAmount ?? 0);
+                    break;
+                case "totalStakedLosses":
+                    foreach (var row in rows)
+                        result[j++] = (row.SumSlashStakedAmount ?? 0);
+                    break;
+                case "totalUnstakedLosses":
+                    foreach (var row in rows)
+                        result[j++] = (row.SumSlashUnstakedAmount ?? 0);
+                    break;
+                #endregion
+
                 #region deprecated
                 case "blockRewardsLiquid":
                     foreach (var row in rows)
@@ -2062,11 +2300,21 @@ namespace Tzkt.Api.Repositories
                 """;
 
             var sqlDelegators = $"""
-                SELECT      "DelegatorId", "DelegatedBalance", "StakedBalance"
-                FROM        "DelegatorCycles"
-                WHERE       "BakerId" = {baker.Id}
-                AND         "Cycle" = {cycle}
-                ORDER BY    "StakedBalance" DESC, "DelegatedBalance" DESC
+                SELECT      dc."DelegatorId",
+                            dc."DelegatedBalance",
+                            dc."StakedBalance",
+                            future_dc."StakedBalance" as "CurrentCycleStakedBalance",
+                            future_dc_plus_one."StakedBalance" as "NextCurrentCycleStakedBalance",
+                            SUMS."SumStakeAmount",
+                            SUMS."SumUnstakeAmount",
+                            SUMS."SumSlashStakedAmount",
+                            SUMS."SumSlashUnstakedAmount"
+                FROM        "DelegatorCycles" as dc
+                { FutureCyclesJoinQuery }
+                { StakingUpdatesSumsJoinQuery }
+                WHERE       dc."BakerId" = {baker.Id}
+                AND         dc."Cycle" = {cycle}
+                ORDER BY    dc."StakedBalance" DESC, dc."DelegatedBalance" DESC
                 OFFSET      {offset}
                 LIMIT       {limit}
                 """;
@@ -2147,7 +2395,10 @@ namespace Tzkt.Api.Repositories
                         Address = delegator.Address,
                         DelegatedBalance = x.DelegatedBalance,
                         StakedBalance = x.StakedBalance,
-                        Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null
+                        Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null,
+                        TotalStakedRewards = x.NextCurrentCycleStakedBalance == null || x.CurrentCycleStakedBalance == null ? null : (x.NextCurrentCycleStakedBalance - x.CurrentCycleStakedBalance) - (x.SumStakeAmount ?? 0) + (x.SumUnstakeAmount ?? 0) + (x.SumSlashStakedAmount ?? 0),
+                        TotalStakedLosses = (x.SumSlashStakedAmount ?? 0),
+                        TotalUnstakedLosses = (x.SumSlashUnstakedAmount ?? 0),
                     };
                 })
             };
@@ -2162,12 +2413,21 @@ namespace Tzkt.Api.Repositories
                 return null;
 
             var sql = $"""
-                SELECT  "DelegatedBalance", "StakedBalance"
-                FROM    "DelegatorCycles"
-                WHERE   "BakerId" = {baker.Id}
-                AND     "Cycle" = {cycle}
-                AND     "DelegatorId" = {delegator.Id}
-                LIMIT   1
+                SELECT      dc."DelegatedBalance",
+                            dc."StakedBalance",
+                            future_dc."StakedBalance" as "CurrentCycleStakedBalance",
+                            future_dc_plus_one."StakedBalance" as "NextCurrentCycleStakedBalance",
+                            SUMS."SumStakeAmount",
+                            SUMS."SumUnstakeAmount",
+                            SUMS."SumSlashStakedAmount",
+                            SUMS."SumSlashUnstakedAmount"
+                FROM        "DelegatorCycles" as dc
+                { FutureCyclesJoinQuery }
+                { StakingUpdatesSumsJoinQuery }
+                WHERE       dc."BakerId" = {baker.Id}
+                AND         dc."Cycle" = {cycle}
+                AND         dc."DelegatorId" = {delegator.Id}
+                LIMIT       1
                 """;
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -2179,7 +2439,10 @@ namespace Tzkt.Api.Repositories
                 Address = delegator.Address,
                 DelegatedBalance = row.DelegatedBalance,
                 StakedBalance = row.StakedBalance,
-                Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null
+                Emptied = delegator is RawUser user && user.Balance == 0 && user.StakedPseudotokens == null,
+                TotalStakedRewards = row.NextCurrentCycleStakedBalance == null || row.CurrentCycleStakedBalance == null ? null : (row.NextCurrentCycleStakedBalance - row.CurrentCycleStakedBalance) - (row.SumStakeAmount ?? 0) + (row.SumUnstakeAmount ?? 0) + (row.SumSlashStakedAmount ?? 0),
+                TotalStakedLosses = (row.SumSlashStakedAmount ?? 0),
+                TotalUnstakedLosses = (row.SumSlashUnstakedAmount ?? 0),
             };
         }
         #endregion
