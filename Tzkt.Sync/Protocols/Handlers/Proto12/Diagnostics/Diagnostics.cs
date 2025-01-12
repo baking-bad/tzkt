@@ -12,10 +12,10 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var remote = await Rpc.GetDelegateAsync(level, delegat.Address);
 
-            if (remote.RequiredInt64("full_balance") != delegat.Balance)
+            if (!CheckFullBalance(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong balance {delegat.Address}");
-
-            if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
+            
+            if (!CheckStakingBalance(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
             if (!CheckDelegatedBalance(remote, delegat))
@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong grace period {delegat.Address}");
 
-            if (remote.OptionalInt64("frozen_deposits_limit") != delegat.FrozenDepositLimit)
+            if (!CheckFrozenDepositLimit(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong frozen deposits limit {delegat.Address}");
             
             TestDelegatorsCount(remote, delegat);
@@ -93,7 +93,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                 throw new Exception($"Invalid cycle {cycle.Index} selected bakers {cycle.TotalBakers}");
         }
 
+        protected virtual bool CheckFullBalance(JsonElement remote, Data.Models.Delegate delegat) =>
+            remote.RequiredInt64("full_balance") == delegat.Balance;
+
+        protected virtual bool CheckStakingBalance(JsonElement remote, Data.Models.Delegate delegat) =>
+            remote.RequiredInt64("staking_balance") == delegat.StakingBalance;
+
         protected virtual bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>
             remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.RollupBonds;
+
+        protected virtual bool CheckFrozenDepositLimit(JsonElement remote, Data.Models.Delegate delegat) =>
+            remote.RequiredInt64("frozen_deposits_limit") == delegat.FrozenDepositLimit;
     }
 }

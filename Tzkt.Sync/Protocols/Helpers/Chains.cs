@@ -18,6 +18,7 @@
             "NetXyuzvDo2Ugzb" => "nairobinet",
             "NetXxWsskGahzQB" => "oxfordnet",
             "NetXXWAHLEvre9b" => "parisnet",
+            "NetXuTeGinLEqxp" => "quebecnet",
             _ => "private"
         };
     }
