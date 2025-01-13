@@ -11,6 +11,9 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
+            if (protocol.ConsensusRightsDelay == 3)
+                protocol.ConsensusRightsDelay = 2;
+
             if (protocol.TimeBetweenBlocks >= 5)
             {
                 protocol.BlocksPerCycle = protocol.BlocksPerCycle * 5 / 4;
@@ -33,11 +36,52 @@ namespace Tzkt.Sync.Protocols.Proto21
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             await RemoveDeadRefutationGames(state);
+            await RemoveFutureCycles(state, prevProto, nextProto);
             await MigrateSlashing(state, nextProto);
             MigrateBakers(state, prevProto, nextProto);
             await MigrateVotingPeriods(state, nextProto);
-            var cycles = await MigrateCycles(state, nextProto);
+            var cycles = await MigrateCycles(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto, cycles);
+        }
+
+        async Task RemoveFutureCycles(AppState state, Protocol prevProto, Protocol nextProto)
+        {
+            if (prevProto.ConsensusRightsDelay == nextProto.ConsensusRightsDelay)
+                return;
+
+            var lastCycle = state.Cycle + nextProto.ConsensusRightsDelay + 1;
+            var lastCycleStart = nextProto.GetCycleStart(lastCycle);
+
+            await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "BakerCycles"
+                WHERE "Cycle" > {lastCycle};
+                """);
+
+            await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "BakingRights"
+                WHERE "Type" = {(int)BakingRightType.Baking}
+                AND "Cycle" > {lastCycle};
+                
+                DELETE FROM "BakingRights"
+                WHERE "Type" = {(int)BakingRightType.Endorsing}
+                AND "Level" > {lastCycleStart};
+                """);
+
+            var removedCycles = await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "Cycles"
+                WHERE "Index" > {lastCycle};
+                """);
+
+            await Db.Database.ExecuteSqlRawAsync($"""
+                DELETE FROM "DelegatorCycles"
+                WHERE "Cycle" > {lastCycle};
+                """);
+
+            Cache.BakerCycles.Reset();
+            Cache.BakingRights.Reset();
+
+            Db.TryAttach(state);
+            state.CyclesCount -= removedCycles;
         }
 
         async Task MigrateSlashing(AppState state, Protocol nextProto)
@@ -77,14 +121,16 @@ namespace Tzkt.Sync.Protocols.Proto21
             newPeriod.LastLevel = newPeriod.FirstLevel + nextProto.BlocksPerVoting - 1;
         }
 
-        async Task<List<Cycle>> MigrateCycles(AppState state, Protocol nextProto)
+        async Task<List<Cycle>> MigrateCycles(AppState state, Protocol prevProto, Protocol nextProto)
         {
             var cycles = await Db.Cycles
                 .Where(x => x.Index >= state.Cycle)
                 .OrderBy(x => x.Index)
                 .ToListAsync();
 
-            var res = await Proto.Rpc.GetExpectedIssuance(state.Level);
+            var res = prevProto.ConsensusRightsDelay != nextProto.ConsensusRightsDelay
+                ? await Proto.Rpc.GetExpectedIssuance(state.Level + 1) // Crutch for buggy ghostnet
+                : await Proto.Rpc.GetExpectedIssuance(state.Level);
 
             foreach (var cycle in cycles.Where(x => x.Index > state.Cycle))
             {

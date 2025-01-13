@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Sync.Protocols.Proto21
 {
-    class BakerCycleCommit : Proto18.BakerCycleCommit
+    class BakerCycleCommit : Proto19.BakerCycleCommit
     {
         public BakerCycleCommit(ProtocolHandler protocol) : base(protocol) { }
     }
