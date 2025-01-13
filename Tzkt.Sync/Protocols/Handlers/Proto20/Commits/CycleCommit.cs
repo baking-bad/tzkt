@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto20
 
         public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        public async Task Apply(Block block)
+        public virtual async Task Apply(Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto20
             Db.Cycles.Add(FutureCycle);
         }
 
-        public async Task Revert(Block block)
+        public virtual async Task Revert(Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
