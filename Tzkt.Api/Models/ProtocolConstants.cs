@@ -189,6 +189,11 @@
         public int SmartRollupTimeoutPeriod { get; set; }
 
         /// <summary>
+        /// Number of DAL Shards
+        /// </summary>
+        public int DalNumberOfShards { get; set; }
+
+        /// <summary>
         /// Governance dictator
         /// </summary>
         public string Dictator { get; set; }

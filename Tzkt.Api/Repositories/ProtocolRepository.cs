@@ -85,6 +85,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize= row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount= row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod= row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -155,6 +156,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -225,6 +227,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -296,6 +299,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
