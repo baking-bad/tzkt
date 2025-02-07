@@ -60,6 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = (parameters["origination_burn"]?.Value<int>() ?? 257_000) / protocol.ByteCost;
             protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
+            protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
             protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 10_000_000_000;
             protocol.BallotQuorumMin = 0;
@@ -101,6 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 HardOperationStorageLimit = prev.HardOperationStorageLimit,
                 OriginationSize = prev.OriginationSize,
                 ConsensusRightsDelay = prev.ConsensusRightsDelay,
+                ToleratedInactivityPeriod = prev.ToleratedInactivityPeriod,
                 TimeBetweenBlocks = prev.TimeBetweenBlocks,
                 MinimalStake = prev.MinimalStake,
                 BallotQuorumMin = prev.BallotQuorumMin,
@@ -116,7 +118,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StakePowerMultiplier = prev.StakePowerMultiplier,
                 MaxBakingReward = prev.MaxBakingReward,
                 MaxEndorsingReward = prev.MaxEndorsingReward,
-                MaxSlashingPeriod = prev.MaxSlashingPeriod,
+                DenunciationPeriod = prev.DenunciationPeriod,
+                SlashingDelay = prev.SlashingDelay,
                 MinParticipationDenominator = prev.MinParticipationDenominator,
                 MinParticipationNumerator = prev.MinParticipationNumerator,
                 Dictator = prev.Dictator,
@@ -125,7 +128,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SmartRollupOriginationSize = prev.SmartRollupOriginationSize,
                 SmartRollupStakeAmount = prev.SmartRollupStakeAmount,
                 SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod,
-                DelegateParametersActivationDelay = prev.DelegateParametersActivationDelay
+                DelegateParametersActivationDelay = prev.DelegateParametersActivationDelay,
+                NumberOfShards = prev.NumberOfShards
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);

@@ -60,6 +60,11 @@
         public double ExpectedEndorsements { get; set; }
 
         /// <summary>
+        /// Expected value of how many dal shards baker should attest based on baker's active stake, selected stake and total shards per cycle.
+        /// </summary>
+        public long ExpectedDalShards { get; set; }
+
+        /// <summary>
         /// Number of blocks which baker is allowed to produce in this cycle based on future baking rights.
         /// </summary>
         public int FutureBlocks { get; set; }
@@ -156,6 +161,40 @@
         /// Rewards which were not received due to missing endorsements.
         /// </summary>
         public long MissedEndorsementRewards { get; set; }
+
+        /// <summary>
+        /// Estimated value of future dal attestation rewards.
+        /// </summary>
+        public long FutureDalAttestationRewards { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to delegated stake, received for attested dal shards on baker's liquid balance
+        /// (it is not frozen and can be spent immediately).
+        /// </summary>
+        public long DalAttestationRewardsDelegated { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's own stake, received for attested dal shards on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long DalAttestationRewardsStakedOwn { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's edge from external stake, received for attested dal shards on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long DalAttestationRewardsStakedEdge { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's external stake, received for attested dal shards on baker's external staked balance
+        /// (it is frozen and belongs to baker's stakers).
+        /// </summary>
+        public long DalAttestationRewardsStakedShared { get; set; }
+
+        /// <summary>
+        /// Rewards which were not received due to denunciation or not enough participation.
+        /// </summary>
+        public long MissedDalAttestationRewards { get; set; }
 
         /// <summary>
         /// Operation fees which were harvested from successfully baked blocks.

@@ -62,7 +62,8 @@ namespace Tzkt.Data.Models
         public int ConsensusThreshold { get; set; }
         public int MinParticipationNumerator { get; set; }
         public int MinParticipationDenominator { get; set; }
-        public int MaxSlashingPeriod { get; set; }
+        public int DenunciationPeriod { get; set; }
+        public int SlashingDelay { get; set; }
         public int MaxDelegatedOverFrozenRatio { get; set; }
         public int MaxExternalOverOwnStakeRatio { get; set; }
         public int StakePowerMultiplier { get; set; }
@@ -77,6 +78,9 @@ namespace Tzkt.Data.Models
 
         public int DoubleBakingSlashedPercentage { get; set; }
         public int DoubleEndorsingSlashedPercentage { get; set; }
+
+        public int NumberOfShards { get; set; }
+        public int ToleratedInactivityPeriod { get; set; }
 
         #region helpers
         public int GetCycleStart(int cycle)

@@ -31,6 +31,7 @@ namespace Tzkt.Data.Models
         public int PreendorsementsCount { get; set; }
         public int BallotsCount { get; set; }
         public int ProposalsCount { get; set; }
+        public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DoubleBakingCount { get; set; }
         public int DoubleEndorsingCount { get; set; }
         public int DoublePreendorsingCount { get; set; }
@@ -38,6 +39,7 @@ namespace Tzkt.Data.Models
         public int VdfRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
         public int EndorsingRewardsCount { get; set; }
+        public int DalAttestationRewardsCount { get; set; }
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }

@@ -167,10 +167,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                 if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                 {
                     var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedDalShards = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
                     bakerCycle.BakingPower = bakingPower;
                     bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                     bakerCycle.ExpectedEndorsements = expectedEndorsements;
                     bakerCycle.FutureEndorsementRewards = expectedEndorsements * futureCycle.EndorsementRewardPerSlot;
+                    bakerCycle.ExpectedDalShards = expectedDalShards;
+                    bakerCycle.FutureDalAttestationRewards = expectedDalShards * futureCycle.DalAttestationRewardPerShard;
                 }
                 return bakerCycle;
             });

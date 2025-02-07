@@ -19,6 +19,7 @@
             "NetXxWsskGahzQB" => "oxfordnet",
             "NetXXWAHLEvre9b" => "parisnet",
             "NetXuTeGinLEqxp" => "quebecnet",
+            "NetXLWih5i7AaYK" => "nextnet",
             _ => "private"
         };
     }

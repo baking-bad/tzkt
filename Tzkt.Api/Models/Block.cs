@@ -170,6 +170,11 @@
         /// tezos tokens for donations to the Tezos Foundation’s fundraiser) operations, included in the block
         /// </summary>
         public IEnumerable<ActivationOperation> Activations { get; set; }
+
+        /// <summary>
+        /// List of dal entrapment evidence operations, included in the block
+        /// </summary>
+        public IEnumerable<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
         
         /// <summary>
         /// List of double baking evidence (is used by bakers to provide evidence of double baking (baking two different
@@ -354,6 +359,11 @@
         /// List of endorsing rewards, implicitly applied at the end of the block
         /// </summary>
         public IEnumerable<EndorsingRewardOperation> EndorsingRewards { get; set; }
+
+        /// <summary>
+        /// List of dal attestation rewards, implicitly applied at the end of the block
+        /// </summary>
+        public IEnumerable<DalAttestationRewardOperation> DalAttestationRewards { get; set; }
 
         /// <summary>
         /// List of autostaking operations, implicitly applied at the end of the block
