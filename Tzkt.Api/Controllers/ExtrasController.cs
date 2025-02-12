@@ -502,5 +502,74 @@ namespace Tzkt.Api.Controllers
             }
         }
         #endregion
+
+        #region tokens
+        [HttpGet("tokens/{id:long}")]
+        public async Task<ActionResult<RawJson>> GetTokenExtras(
+            [FromHeader] AuthHeaders headers,
+            [Min(0)] int level,
+            string section = null)
+        {
+            var rights = new AccessRights()
+            {
+                Table = "Tokens",
+                Section = section,
+                Access = Access.Read
+            };
+            
+            if (!Auth.TryAuthenticate(headers, rights, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Extras.GetTokenExtras(level, section));
+        }
+
+        [HttpGet("tokens")]
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<long>>>> GetTokenExtras(
+            [FromHeader] AuthHeaders headers,
+            JsonParameter extras,
+            [Min(0)] int offset = 0,
+            [Range(0, 10000)] int limit = 100,
+            string section = null)
+        {
+            var rights = new AccessRights()
+            {
+                Table = "Tokens",
+                Section = section,
+                Access = Access.Read
+            };
+            
+            if (!Auth.TryAuthenticate(headers, rights, out var error))
+                return Unauthorized(error);
+
+            return Ok(await Extras.GetTokenExtras(extras, offset, limit, section));
+        }
+
+        [HttpPost("tokens")]
+        public async Task<ActionResult<IEnumerable<ExtrasUpdate<long>>>> UpdateTokenExtras(
+            [FromHeader] AuthHeaders headers,
+            string section = null)
+        {
+            try
+            {
+                var rights = new AccessRights()
+                {
+                    Table = "Tokens",
+                    Section = section,
+                    Access = Access.Write
+                };
+                
+                var body = await Request.Body.ReadAsStringAsync();
+                if (!Auth.TryAuthenticate(headers, rights, body, out var error))
+                    return Unauthorized(error);
+
+                var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<long>>>(body);
+                return Ok(await Extras.UpdateTokenExtras(extras, section));
+            }
+            catch (JsonException)
+            {
+                return new BadRequest("body", "Invalid json");
+            }
+        }
+        #endregion
     }
 }

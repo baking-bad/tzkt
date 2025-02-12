@@ -38,5 +38,11 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson Metadata { get; set; }
+        
+        /// <summary>
+        /// Off-chain extras
+        /// </summary>
+        [JsonSchemaType(typeof(object), IsNullable = true)]
+        public RawJson Extras { get; set; }
     }
 }

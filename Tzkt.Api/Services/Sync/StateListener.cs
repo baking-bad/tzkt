@@ -19,6 +19,7 @@ namespace Tzkt.Api.Services.Sync
         const string SoftwareExtrasChanged = "software_extras_changed";
         const string ConstantExtrasChanged = "constant_extras_changed";
         const string BlockExtrasChanged = "block_extras_changed";
+        const string TokenExtrasChanged = "token_extras_changed";
         #endregion
 
         readonly string ConnectionString;
@@ -97,6 +98,7 @@ namespace Tzkt.Api.Services.Sync
                                 //LISTEN {ProposalExtrasChanged};
                                 //LISTEN {ProtocolExtrasChanged};
                                 //LISTEN {BlockExtrasChanged};
+                                //LISTEN {TokenExtrasChanged};
                             Logger.LogInformation("Db listener connected");
                         }
                         await db.WaitAsync(cancellationToken);
@@ -285,6 +287,8 @@ namespace Tzkt.Api.Services.Sync
                     //case ConstantExtrasChanged:
                     //    break;
                     //case BlockExtrasChanged:
+                    //    break;
+                    //case TokenExtrasChanged:
                     //    break;
                     default:
                         break;

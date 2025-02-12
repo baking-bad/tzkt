@@ -38,7 +38,8 @@ namespace Tzkt.Api.Repositories
                 ""TotalMinted"",
                 ""TotalSupply"",
                 ""TransfersCount"",
-                ""Metadata""";
+                ""Metadata"",
+                ""Extras""";
 
             if (fields != null)
             {
@@ -72,6 +73,17 @@ namespace Tzkt.Api.Repositories
                             {
                                 field.Column = $"c{counter++}";
                                 columns.Add($@"""Metadata"" #> '{{{field.PathString}}}' as {field.Column}");
+                            }
+                            break;
+                        case "extras":
+                            if (field.Path == null)
+                            {
+                                columns.Add(@"""Extras""");
+                            }
+                            else
+                            {
+                                field.Column = $"c{counter++}";
+                                columns.Add($@"""Extras"" #> '{{{field.PathString}}}' as {field.Column}");
                             }
                             break;
                     }

@@ -33,6 +33,9 @@ namespace Tzkt.Api.Repositories
         public Task<RawJson> GetBlockExtras(int level, string section = null)
             => Get("Blocks", "Level", "integer", level, section);
 
+        public Task<RawJson> GetTokenExtras(long id, string section = null)
+            => Get("Blocks", "Id", "bigint", id, section);
+
         async Task<RawJson> Get<T>(string table, string keyColumn, string keyType, T key, string section)
         {
             var path = section != null
@@ -69,6 +72,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<IEnumerable<ExtrasUpdate<int>>> GetBlockExtras(JsonParameter extras, int offset, int limit, string section = null)
             => Get<int>("Blocks", "Level", extras, offset, limit, section);
+
+        public Task<IEnumerable<ExtrasUpdate<long>>> GetTokenExtras(JsonParameter extras, int offset, int limit, string section = null)
+            => Get<long>("Tokens", "Id", extras, offset, limit, section);
 
         async Task<IEnumerable<ExtrasUpdate<T>>> Get<T>(string table, string keyColumn, JsonParameter extras, int offset, int limit, string section)
         {
@@ -163,6 +169,9 @@ namespace Tzkt.Api.Repositories
 
         public Task<List<ExtrasUpdate<int>>> UpdateBlockExtras(List<ExtrasUpdate<int>> extras, string section)
             => Update("Blocks", "Level", "integer", extras, section);
+
+        public Task<List<ExtrasUpdate<long>>> UpdateTokenExtras(List<ExtrasUpdate<long>> extras, string section)
+            => Update("Tokens", "Id", "bigint", extras, section);
 
         async Task<List<ExtrasUpdate<T>>> Update<T>(string table, string keyColumn, string keyType, List<ExtrasUpdate<T>> extras, string section)
         {
