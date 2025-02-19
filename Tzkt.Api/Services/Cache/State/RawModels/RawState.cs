@@ -34,6 +34,7 @@
 
         public int ActivationOpsCount { get; set; }
         public int BallotOpsCount { get; set; }
+        public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DelegationOpsCount { get; set; }
         public int DoubleBakingOpsCount { get; set; }
         public int DoubleEndorsingOpsCount { get; set; }
@@ -54,6 +55,7 @@
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
         public int EndorsingRewardOpsCount { get; set; }
+        public int DalAttestationRewardOpsCount { get; set; }
         public int AutostakingOpsCount { get; set; }
 
         public int TxRollupOriginationOpsCount { get; set; }

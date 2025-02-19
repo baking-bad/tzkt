@@ -354,6 +354,7 @@ namespace Tzkt.Sync
                         b.Ballots = null;
                         b.CreatedAccounts = null;
                         b.Delegations = null;
+                        b.DalEntrapmentEvidenceOps = null;
                         b.DoubleBakings = null;
                         b.DoubleEndorsings = null;
                         b.DoublePreendorsings = null;

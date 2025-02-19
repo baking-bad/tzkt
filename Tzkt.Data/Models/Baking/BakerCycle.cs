@@ -27,6 +27,8 @@ namespace Tzkt.Data.Models
         public int FutureEndorsements { get; set; }
         public int Endorsements { get; set; }
         public int MissedEndorsements { get; set; }
+
+        // TODO: add dal rights
         #endregion
 
         #region rewards
@@ -43,6 +45,13 @@ namespace Tzkt.Data.Models
         public long EndorsementRewardsStakedOwn { get; set; }
         public long EndorsementRewardsStakedEdge { get; set; }
         public long EndorsementRewardsStakedShared { get; set; }
+
+        public long FutureDalAttestationRewards { get; set; }
+        public long MissedDalAttestationRewards { get; set; }
+        public long DalAttestationRewardsDelegated { get; set; }
+        public long DalAttestationRewardsStakedOwn { get; set; }
+        public long DalAttestationRewardsStakedEdge { get; set; }
+        public long DalAttestationRewardsStakedShared { get; set; }
 
         public long BlockFees { get; set; }
         public long MissedBlockFees { get; set; }
@@ -80,6 +89,7 @@ namespace Tzkt.Data.Models
         #region expected
         public double ExpectedBlocks { get; set; }
         public double ExpectedEndorsements { get; set; }
+        public long ExpectedDalShards { get; set; }
         #endregion
     }
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 
@@ -51,7 +52,8 @@ namespace Tzkt.Sync.Protocols.Proto20
                 BlockBonusPerSlot = cycleIssuance.RequiredInt64("baking_reward_bonus_per_slot"),
                 EndorsementRewardPerSlot = cycleIssuance.RequiredInt64("attesting_reward_per_slot"),
                 NonceRevelationReward = cycleIssuance.RequiredInt64("seed_nonce_revelation_tip"),
-                VdfRevelationReward = cycleIssuance.RequiredInt64("vdf_revelation_tip")
+                VdfRevelationReward = cycleIssuance.RequiredInt64("vdf_revelation_tip"),
+                DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(cycleIssuance)
             };
 
             FutureCycle.MaxBlockReward = FutureCycle.BlockReward
@@ -72,5 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto20
                 WHERE "Index" = {block.Cycle + block.Protocol.ConsensusRightsDelay}
                 """);
         }
+
+        protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;
     }
 }

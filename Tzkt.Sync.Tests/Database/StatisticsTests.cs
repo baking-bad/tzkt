@@ -24,6 +24,7 @@ namespace Tzkt.Sync.Tests.Database
             var totalCreated = await db.Blocks.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared + x.BonusDelegated + x.BonusStakedOwn + x.BonusStakedEdge + x.BonusStakedShared);
             totalCreated += await db.EndorsementOps.SumAsync(x => x.Reward);
             totalCreated += await db.EndorsingRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
+            totalCreated += await db.DalAttestationRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.NonceRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.VdfRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.MigrationOps.Where(x => x.Kind != MigrationKind.Bootstrap).SumAsync(x => x.BalanceChange);

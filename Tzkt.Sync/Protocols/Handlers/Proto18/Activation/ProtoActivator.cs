@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
@@ -57,10 +58,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                 cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
+                cycle.DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(issuance);
             }
 
             return cycles;
         }
+
+        protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;
 
         public override void BootstrapBakerCycles(
             Protocol protocol,

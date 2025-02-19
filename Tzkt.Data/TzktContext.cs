@@ -30,6 +30,7 @@ namespace Tzkt.Data
         public DbSet<ActivationOperation> ActivationOps { get; set; }
         public DbSet<BallotOperation> BallotOps { get; set; }
         public DbSet<DelegationOperation> DelegationOps { get; set; }
+        public DbSet<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
         public DbSet<DoubleBakingOperation> DoubleBakingOps { get; set; }
         public DbSet<DoubleEndorsingOperation> DoubleEndorsingOps { get; set; }
         public DbSet<DoublePreendorsingOperation> DoublePreendorsingOps { get; set; }
@@ -60,6 +61,7 @@ namespace Tzkt.Data
         public DbSet<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
         public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
+        public DbSet<DalAttestationRewardOperation> DalAttestationRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
         public DbSet<AutostakingOperation> AutostakingOps { get; set; }
@@ -160,6 +162,7 @@ namespace Tzkt.Data
             modelBuilder.BuildActivationOperationModel();
             modelBuilder.BuildBallotOperationModel();
             modelBuilder.BuildDelegationOperationModel();
+            modelBuilder.BuildDalEntrapmentEvidenceOperationModel();
             modelBuilder.BuildDoubleBakingOperationModel();
             modelBuilder.BuildDoubleEndorsingOperationModel();
             modelBuilder.BuildDoublePreendorsingOperationModel();
@@ -190,6 +193,7 @@ namespace Tzkt.Data
             modelBuilder.BuildDrainDelegateOperationModel();
 
             modelBuilder.BuildEndorsingRewardOperationModel();
+            modelBuilder.BuildDalAttestationRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();
             modelBuilder.BuildAutostakingOperationModel();

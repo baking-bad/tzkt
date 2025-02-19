@@ -62,6 +62,7 @@ namespace Tzkt.Api.Repositories
                 StakersCount = row.StakersCount,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
+                ExpectedDalShards = row.ExpectedDalShards,
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
                 Blocks = row.Blocks,
@@ -80,6 +81,12 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
                 MissedEndorsements = row.MissedEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
+                FutureDalAttestationRewards = row.FutureDalAttestationRewards,
+                DalAttestationRewardsDelegated = row.DalAttestationRewardsDelegated,
+                DalAttestationRewardsStakedOwn = row.DalAttestationRewardsStakedOwn,
+                DalAttestationRewardsStakedEdge = row.DalAttestationRewardsStakedEdge,
+                DalAttestationRewardsStakedShared = row.DalAttestationRewardsStakedShared,
+                MissedDalAttestationRewards = row.MissedDalAttestationRewards,
                 BlockFees = row.BlockFees,
                 MissedBlockFees = row.MissedBlockFees,
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -138,6 +145,7 @@ namespace Tzkt.Api.Repositories
                     case "stakersCount": columns.Add(@"""StakersCount"""); break;
                     case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                     case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                    case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                     case "blocks": columns.Add(@"""Blocks"""); break;
@@ -156,6 +164,12 @@ namespace Tzkt.Api.Repositories
                     case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                     case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                     case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                    case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
+                    case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
+                    case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
+                    case "dalAttestationRewardsStakedEdge": columns.Add(@"""DalAttestationRewardsStakedEdge"""); break;
+                    case "dalAttestationRewardsStakedShared": columns.Add(@"""DalAttestationRewardsStakedShared"""); break;
+                    case "missedDalAttestationRewards": columns.Add(@"""MissedDalAttestationRewards"""); break;
                     case "blockFees": columns.Add(@"""BlockFees"""); break;
                     case "missedBlockFees": columns.Add(@"""MissedBlockFees"""); break;
                     case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
@@ -317,6 +331,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Math.Round(row.ExpectedEndorsements, 2);
                         break;
+                    case "expectedDalShards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExpectedDalShards;
+                        break;
                     case "futureBlocks":
                         foreach (var row in rows)
                             result[j++][i] = row.FutureBlocks;
@@ -388,6 +406,30 @@ namespace Tzkt.Api.Repositories
                     case "missedEndorsementRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.MissedEndorsementRewards;
+                        break;
+                    case "futureDalAttestationRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FutureDalAttestationRewards;
+                        break;
+                    case "dalAttestationRewardsDelegated":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsDelegated;
+                        break;
+                    case "dalAttestationRewardsStakedOwn":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedOwn;
+                        break;
+                    case "dalAttestationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedEdge;
+                        break;
+                    case "dalAttestationRewardsStakedShared":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedShared;
+                        break;
+                    case "missedDalAttestationRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.MissedDalAttestationRewards;
                         break;
                     case "blockFees":
                         foreach (var row in rows)
@@ -596,6 +638,7 @@ namespace Tzkt.Api.Repositories
                 case "stakersCount": columns.Add(@"""StakersCount"""); break;
                 case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                 case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                 case "blocks": columns.Add(@"""Blocks"""); break;
@@ -614,6 +657,12 @@ namespace Tzkt.Api.Repositories
                 case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                 case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                 case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
+                case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
+                case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
+                case "dalAttestationRewardsStakedEdge": columns.Add(@"""DalAttestationRewardsStakedEdge"""); break;
+                case "dalAttestationRewardsStakedShared": columns.Add(@"""DalAttestationRewardsStakedShared"""); break;
+                case "missedDalAttestationRewards": columns.Add(@"""MissedDalAttestationRewards"""); break;
                 case "blockFees": columns.Add(@"""BlockFees"""); break;
                 case "missedBlockFees": columns.Add(@"""MissedBlockFees"""); break;
                 case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
@@ -772,6 +821,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Math.Round(row.ExpectedEndorsements, 2);
                     break;
+                case "expectedDalShards":
+                    foreach (var row in rows)
+                        result[j++] = row.ExpectedDalShards;
+                    break;
                 case "futureBlocks":
                     foreach (var row in rows)
                         result[j++] = row.FutureBlocks;
@@ -843,6 +896,30 @@ namespace Tzkt.Api.Repositories
                 case "missedEndorsementRewards":
                     foreach (var row in rows)
                         result[j++] = row.MissedEndorsementRewards;
+                    break;
+                case "futureDalAttestationRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.FutureDalAttestationRewards;
+                    break;
+                case "dalAttestationRewardsDelegated":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsDelegated;
+                    break;
+                case "dalAttestationRewardsStakedOwn":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedOwn;
+                    break;
+                case "dalAttestationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedEdge;
+                    break;
+                case "dalAttestationRewardsStakedShared":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedShared;
+                    break;
+                case "missedDalAttestationRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.MissedDalAttestationRewards;
                     break;
                 case "blockFees":
                     foreach (var row in rows)
@@ -1074,6 +1151,7 @@ namespace Tzkt.Api.Repositories
                 ExternalStakedBalance = row.ExternalStakedBalance,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
+                ExpectedDalShards = row.ExpectedDalShards,
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
                 Blocks = row.Blocks,
@@ -1092,6 +1170,12 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
                 MissedEndorsements = row.MissedEndorsements,
                 MissedEndorsementRewards = row.MissedEndorsementRewards,
+                FutureDalAttestationRewards = row.FutureDalAttestationRewards,
+                DalAttestationRewardsDelegated = row.DalAttestationRewardsDelegated,
+                DalAttestationRewardsStakedOwn = row.DalAttestationRewardsStakedOwn,
+                DalAttestationRewardsStakedEdge = row.DalAttestationRewardsStakedEdge,
+                DalAttestationRewardsStakedShared = row.DalAttestationRewardsStakedShared,
+                MissedDalAttestationRewards = row.MissedDalAttestationRewards,
                 BlockFees = row.BlockFees,
                 MissedBlockFees = row.MissedBlockFees,
                 DoubleBakingRewards = row.DoubleBakingRewards,
@@ -1151,6 +1235,7 @@ namespace Tzkt.Api.Repositories
                     case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                     case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                     case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                    case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                     case "blocks": columns.Add(@"""Blocks"""); break;
@@ -1169,6 +1254,12 @@ namespace Tzkt.Api.Repositories
                     case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                     case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                     case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                    case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
+                    case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
+                    case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
+                    case "dalAttestationRewardsStakedEdge": columns.Add(@"""DalAttestationRewardsStakedEdge"""); break;
+                    case "dalAttestationRewardsStakedShared": columns.Add(@"""DalAttestationRewardsStakedShared"""); break;
+                    case "missedDalAttestationRewards": columns.Add(@"""MissedDalAttestationRewards"""); break;
                     case "blockFees": columns.Add(@"""BlockFees"""); break;
                     case "missedBlockFees": columns.Add(@"""MissedBlockFees"""); break;
                     case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
@@ -1338,6 +1429,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Math.Round(row.ExpectedEndorsements, 2);
                         break;
+                    case "expectedDalShards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExpectedDalShards;
+                        break;
                     case "futureBlocks":
                         foreach (var row in rows)
                             result[j++][i] = row.FutureBlocks;
@@ -1409,6 +1504,30 @@ namespace Tzkt.Api.Repositories
                     case "missedEndorsementRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.MissedEndorsementRewards;
+                        break;
+                    case "futureDalAttestationRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FutureDalAttestationRewards;
+                        break;
+                    case "dalAttestationRewardsDelegated":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsDelegated;
+                        break;
+                    case "dalAttestationRewardsStakedOwn":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedOwn;
+                        break;
+                    case "dalAttestationRewardsStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedEdge;
+                        break;
+                    case "dalAttestationRewardsStakedShared":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsStakedShared;
+                        break;
+                    case "missedDalAttestationRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = row.MissedDalAttestationRewards;
                         break;
                     case "blockFees":
                         foreach (var row in rows)
@@ -1616,6 +1735,7 @@ namespace Tzkt.Api.Repositories
                 case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                 case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
                 case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
                 case "blocks": columns.Add(@"""Blocks"""); break;
@@ -1634,6 +1754,12 @@ namespace Tzkt.Api.Repositories
                 case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
                 case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
                 case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
+                case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
+                case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
+                case "dalAttestationRewardsStakedEdge": columns.Add(@"""DalAttestationRewardsStakedEdge"""); break;
+                case "dalAttestationRewardsStakedShared": columns.Add(@"""DalAttestationRewardsStakedShared"""); break;
+                case "missedDalAttestationRewards": columns.Add(@"""MissedDalAttestationRewards"""); break;
                 case "blockFees": columns.Add(@"""BlockFees"""); break;
                 case "missedBlockFees": columns.Add(@"""MissedBlockFees"""); break;
                 case "doubleBakingRewards": columns.Add(@"""DoubleBakingRewards"""); break;
@@ -1798,6 +1924,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Math.Round(row.ExpectedEndorsements, 2);
                     break;
+                case "expectedDalShards":
+                    foreach (var row in rows)
+                        result[j++] = row.ExpectedDalShards;
+                    break;
                 case "futureBlocks":
                     foreach (var row in rows)
                         result[j++] = row.FutureBlocks;
@@ -1869,6 +1999,30 @@ namespace Tzkt.Api.Repositories
                 case "missedEndorsementRewards":
                     foreach (var row in rows)
                         result[j++] = row.MissedEndorsementRewards;
+                    break;
+                case "futureDalAttestationRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.FutureDalAttestationRewards;
+                    break;
+                case "dalAttestationRewardsDelegated":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsDelegated;
+                    break;
+                case "dalAttestationRewardsStakedOwn":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedOwn;
+                    break;
+                case "dalAttestationRewardsStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedEdge;
+                    break;
+                case "dalAttestationRewardsStakedShared":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsStakedShared;
+                    break;
+                case "missedDalAttestationRewards":
+                    foreach (var row in rows)
+                        result[j++] = row.MissedDalAttestationRewards;
                     break;
                 case "blockFees":
                     foreach (var row in rows)
@@ -2095,6 +2249,7 @@ namespace Tzkt.Api.Repositories
                 StakersCount = rewards.StakersCount,
                 ExpectedBlocks = Math.Round(rewards.ExpectedBlocks, 2),
                 ExpectedEndorsements = Math.Round(rewards.ExpectedEndorsements, 2),
+                ExpectedDalShards = rewards.ExpectedDalShards,
                 FutureBlocks = rewards.FutureBlocks,
                 FutureBlockRewards = rewards.FutureBlockRewards,
                 Blocks = rewards.Blocks,
@@ -2113,6 +2268,12 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardsStakedShared = rewards.EndorsementRewardsStakedShared,
                 MissedEndorsements = rewards.MissedEndorsements,
                 MissedEndorsementRewards = rewards.MissedEndorsementRewards,
+                FutureDalAttestationRewards = rewards.FutureDalAttestationRewards,
+                DalAttestationRewardsDelegated = rewards.DalAttestationRewardsDelegated,
+                DalAttestationRewardsStakedOwn = rewards.DalAttestationRewardsStakedOwn,
+                DalAttestationRewardsStakedEdge = rewards.DalAttestationRewardsStakedEdge,
+                DalAttestationRewardsStakedShared = rewards.DalAttestationRewardsStakedShared,
+                MissedDalAttestationRewards = rewards.MissedDalAttestationRewards,
                 BlockFees = rewards.BlockFees,
                 MissedBlockFees = rewards.MissedBlockFees,
                 DoubleBakingRewards = rewards.DoubleBakingRewards,

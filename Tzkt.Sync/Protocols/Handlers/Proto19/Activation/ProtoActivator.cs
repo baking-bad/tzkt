@@ -15,16 +15,21 @@ namespace Tzkt.Sync.Protocols.Proto19
         {
             base.SetParameters(protocol, parameters);
             protocol.ConsensusRightsDelay = parameters["consensus_rights_delay"]?.Value<int>() ?? 2;
+            protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
             protocol.DelegateParametersActivationDelay = parameters["delegate_parameters_activation_delay"]?.Value<int>() ?? 5;
             protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 500;
             protocol.DoubleEndorsingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 5000;
+            protocol.NumberOfShards = parameters["dal_parametric"]?["number_of_shards"]?.Value<int>() ?? 512;
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             if (protocol.ConsensusRightsDelay == 5)
+            {
                 protocol.ConsensusRightsDelay = 2;
+                protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
+            }
 
             if (protocol.TimeBetweenBlocks >= 8)
             {
@@ -39,6 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             }
 
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
+            protocol.NumberOfShards = 512;
         }
 
         protected override async Task MigrateContext(AppState state)

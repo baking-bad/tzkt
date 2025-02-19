@@ -76,7 +76,8 @@ namespace Tzkt.Api.Repositories
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
                     MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
-                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    DenunciationPeriod = row.DenunciationPeriod,
+                    SlashingDelay = row.SlashingDelay,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     SmartRollupChallengeWindow= row.SmartRollupChallengeWindow,
@@ -84,6 +85,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize= row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount= row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod= row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -145,7 +147,8 @@ namespace Tzkt.Api.Repositories
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
                     MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
-                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    DenunciationPeriod = row.DenunciationPeriod,
+                    SlashingDelay = row.SlashingDelay,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
@@ -153,6 +156,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -214,7 +218,8 @@ namespace Tzkt.Api.Repositories
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
                     MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
-                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    DenunciationPeriod = row.DenunciationPeriod,
+                    SlashingDelay = row.SlashingDelay,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
@@ -222,6 +227,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras
@@ -284,7 +290,8 @@ namespace Tzkt.Api.Repositories
                     ConsensusThreshold = row.ConsensusThreshold,
                     MaxDelegatedOverFrozenRatio = row.MaxDelegatedOverFrozenRatio,
                     MaxExternalOverOwnStakeRatio = row.MaxExternalOverOwnStakeRatio,
-                    MaxSlashingPeriod = row.MaxSlashingPeriod,
+                    DenunciationPeriod = row.DenunciationPeriod,
+                    SlashingDelay = row.SlashingDelay,
                     MinParticipationDenominator = row.MinParticipationDenominator,
                     MinParticipationNumerator = row.MinParticipationNumerator,
                     SmartRollupChallengeWindow = row.SmartRollupChallengeWindow,
@@ -292,6 +299,7 @@ namespace Tzkt.Api.Repositories
                     SmartRollupOriginationSize = row.SmartRollupOriginationSize,
                     SmartRollupStakeAmount = row.SmartRollupStakeAmount,
                     SmartRollupTimeoutPeriod = row.SmartRollupTimeoutPeriod,
+                    DalNumberOfShards = row.NumberOfShards,
                     Dictator = row.Dictator
                 },
                 Extras = row.Extras

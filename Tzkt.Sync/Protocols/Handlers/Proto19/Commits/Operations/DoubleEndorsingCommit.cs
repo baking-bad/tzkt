@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
         protected override int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
         {
-            return Cache.Protocols.GetCycleEnd(protocol.GetCycle(accusedLevel) + protocol.MaxSlashingPeriod - 1);
+            return Cache.Protocols.GetCycleEnd(protocol.GetCycle(accusedLevel) + protocol.SlashingDelay);
         }
     }
 }

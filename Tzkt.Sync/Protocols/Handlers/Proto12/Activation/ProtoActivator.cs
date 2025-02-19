@@ -31,7 +31,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.ConsensusThreshold = parameters["consensus_threshold"]?.Value<int>() ?? 4667;
             protocol.MinParticipationNumerator = parameters["minimal_participation_ratio"]?["numerator"]?.Value<int>() ?? 2;
             protocol.MinParticipationDenominator = parameters["minimal_participation_ratio"]?["denominator"]?.Value<int>() ?? 3;
-            protocol.MaxSlashingPeriod = parameters["max_slashing_period"]?.Value<int>() ?? 2;
+            protocol.DenunciationPeriod = 1;
+            protocol.SlashingDelay = 1;
             protocol.MaxDelegatedOverFrozenRatio = 100 / (parameters["frozen_deposits_percentage"]?.Value<int>() ?? 10) - 1;
 
             protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
@@ -56,7 +57,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.ConsensusThreshold = 4667;
             protocol.MinParticipationNumerator = 2;
             protocol.MinParticipationDenominator = 3;
-            protocol.MaxSlashingPeriod = 2;
+            protocol.DenunciationPeriod = 1;
+            protocol.SlashingDelay = 1;
             protocol.MaxDelegatedOverFrozenRatio = 9;
 
             protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;

@@ -192,6 +192,7 @@ namespace Tzkt.Api.Repositories
             #region very unlikely
             var endorsements = GetEndorsements(hash, quote);
             var preendorsements = GetPreendorsements(hash, quote);
+            var dalEntrapmentEvidence = GetDalEntrapmentEvidences(hash, quote);
             var doubleBaking = GetDoubleBakings(hash, quote);
             var doubleEndorsing = GetDoubleEndorsings(hash, quote);
             var doublePreendorsing = GetDoublePreendorsings(hash, quote);
@@ -205,6 +206,9 @@ namespace Tzkt.Api.Repositories
 
             if (preendorsements.Result.Any())
                 return preendorsements.Result;
+
+            if (dalEntrapmentEvidence.Result.Any())
+                return dalEntrapmentEvidence.Result;
 
             if (doubleBaking.Result.Any())
                 return doubleBaking.Result;

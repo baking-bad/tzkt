@@ -73,6 +73,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawDelegate delegat)
             {
                 if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
+                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
@@ -211,6 +212,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawDelegate delegat)
             {
                 if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
+                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
@@ -383,6 +385,7 @@ namespace Tzkt.Api.Repositories
             if (account is RawDelegate delegat)
             {
                 if (delegat.EndorsingRewardsCount > 0) UnionEndorsingRewards(sql);
+                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.EndorsementsCount > 0) UnionEndorsements(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
@@ -524,6 +527,33 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""To"" ");
 
             sql.Append(@"FROM ""EndorsingRewardOps"" ");
+            sql.Append(@"WHERE ""BakerId"" = @account ");
+            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
+            sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" > 0 OR ""RewardStakedEdge"" > 0) ");
+
+            sql.AppendLine();
+        }
+
+        void UnionDalAttestationRewards(StringBuilder sql)
+        {
+            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
+
+            sql.Append(@"19 as ""Type"", ");
+            sql.Append(@"""Id"" as ""Id"", ");
+            sql.Append(@"""Level"" as ""Level"", ");
+            sql.Append(@"null::character(51) as ""OpHash"", ");
+            sql.Append(@"null::integer as ""Counter"", ");
+            sql.Append(@"null::integer as ""Nonce"", ");
+            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
+            sql.Append(@"(""RewardDelegated"" + ""RewardStakedOwn"" + ""RewardStakedEdge"") as ""Reward"", ");
+            sql.Append(@"null::integer as ""Loss"", ");
+            sql.Append(@"null::integer as ""Received"", ");
+            sql.Append(@"null::integer as ""From"", ");
+            sql.Append(@"null::integer as ""Sent"", ");
+            sql.Append(@"null::integer as ""Fee"", ");
+            sql.Append(@"null::integer as ""To"" ");
+
+            sql.Append(@"FROM ""DalAttestationRewardOps"" ");
             sql.Append(@"WHERE ""BakerId"" = @account ");
             sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND (""RewardDelegated"" > 0 OR ""RewardStakedOwn"" > 0 OR ""RewardStakedEdge"" > 0) ");

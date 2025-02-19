@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
             protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
+            protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
             protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;

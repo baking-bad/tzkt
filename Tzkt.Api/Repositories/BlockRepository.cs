@@ -724,6 +724,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetActivations(block, quote)
                 : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
+            var dalEntrapmentEvidences = operations.HasFlag(Data.Models.Operations.DalEntrapmentEvidence)
+                ? Operations.GetDalEntrapmentEvidences(block, quote)
+                : Task.FromResult(Enumerable.Empty<DalEntrapmentEvidenceOperation>());
+
             var doubleBaking = operations.HasFlag(Data.Models.Operations.DoubleBakings)
                 ? Operations.GetDoubleBakings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
@@ -868,6 +872,10 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetEndorsingRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
+            var dalAttestationRewards = operations.HasFlag(Data.Models.Operations.DalAttestationReward)
+                ? Operations.GetDalAttestationRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                : Task.FromResult(Enumerable.Empty<DalAttestationRewardOperation>());
+
             var autostakingOps = operations.HasFlag(Data.Models.Operations.Autostaking)
                 ? Operations.GetAutostakingOps(new() { level = block.Level }, new() { limit = -1 }, quote)
                 : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
@@ -878,6 +886,7 @@ namespace Tzkt.Api.Repositories
                 proposals,
                 ballots,
                 activations,
+                dalEntrapmentEvidences,
                 doubleBaking,
                 doubleEndorsing,
                 doublePreendorsing,
@@ -914,6 +923,7 @@ namespace Tzkt.Api.Repositories
                 migrations,
                 penalties,
                 endorsingRewards,
+                dalAttestationRewards,
                 autostakingOps);
 
             block.Endorsements = endorsements.Result;
@@ -921,6 +931,7 @@ namespace Tzkt.Api.Repositories
             block.Proposals = proposals.Result;
             block.Ballots = ballots.Result;
             block.Activations = activations.Result;
+            block.DalEntrapmentEvidenceOps = dalEntrapmentEvidences.Result;
             block.DoubleBaking = doubleBaking.Result;
             block.DoubleEndorsing = doubleEndorsing.Result;
             block.DoublePreendorsing = doublePreendorsing.Result;
@@ -957,6 +968,7 @@ namespace Tzkt.Api.Repositories
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
             block.EndorsingRewards = endorsingRewards.Result;
+            block.DalAttestationRewards = dalAttestationRewards.Result;
             block.AutostakingOps = autostakingOps.Result;
         }
     }
