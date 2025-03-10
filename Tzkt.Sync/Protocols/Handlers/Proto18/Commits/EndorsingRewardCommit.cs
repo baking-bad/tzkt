@@ -125,6 +125,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             Cache.AppState.Get().EndorsingRewardOpsCount += ops.Count;
 
             Db.EndorsingRewardOps.AddRange(ops.Values);
+            Context.EndorsingRewardOps.AddRange(ops.Values);
         }
 
         public virtual async Task Revert(Block block)

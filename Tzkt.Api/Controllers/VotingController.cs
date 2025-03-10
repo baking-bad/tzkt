@@ -30,7 +30,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals/count")]
         public Task<int> GetProposalsCount()
         {
-            return Task.FromResult(State.Current.ProposalsCount);
+            return Task.FromResult(State.Current.ProposalCounter);
         }
 
         /// <summary>

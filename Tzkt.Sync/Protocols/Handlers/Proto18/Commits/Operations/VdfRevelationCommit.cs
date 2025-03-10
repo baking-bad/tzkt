@@ -17,16 +17,15 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .EnumerateArray()
                 .ToList();
 
-            var (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared) = ParseRewards(block.Proposer, balanceUpdates);
+            var (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared) = ParseRewards(Context.Proposer, balanceUpdates);
 
             var revelation = new VdfRevelationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Baker = block.Proposer,
+                BakerId = Context.Proposer.Id,
                 Cycle = block.Cycle,
                 Solution = Hex.Parse(content.RequiredArray("solution", 2)[0].RequiredString()),
                 Proof = Hex.Parse(content.RequiredArray("solution", 2)[1].RequiredString()),
@@ -38,11 +37,11 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region apply operation
-            block.Proposer.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            block.Proposer.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.ExternalStakedBalance += revelation.RewardStakedShared;
-            block.Proposer.VdfRevelationsCount++;
+            Context.Proposer.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            Context.Proposer.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            Context.Proposer.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            Context.Proposer.ExternalStakedBalance += revelation.RewardStakedShared;
+            Context.Proposer.VdfRevelationsCount++;
 
             Cache.AppState.Get().VdfRevelationOpsCount++;
 
@@ -53,26 +52,23 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);
+            Context.VdfRevelationOps.Add(revelation);
             return Task.CompletedTask;
         }
 
         public virtual Task Revert(Block block, VdfRevelationOperation revelation)
         {
-            #region init
-            revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
-            #endregion
-
             #region entities
-            var blockBaker = revelation.Baker;
+            var blockBaker = Context.Proposer;
             Db.TryAttach(blockBaker);
             #endregion
 
             #region apply operation
-            block.Proposer.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            block.Proposer.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.ExternalStakedBalance -= revelation.RewardStakedShared;
-            block.Proposer.VdfRevelationsCount--;
+            blockBaker.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            blockBaker.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            blockBaker.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            blockBaker.ExternalStakedBalance -= revelation.RewardStakedShared;
+            blockBaker.VdfRevelationsCount--;
 
             Cache.AppState.Get().VdfRevelationOpsCount--;
             #endregion

@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             return diffs.RequiredArray().EnumerateArray().Select(x => new UpdateDiff
             {
-                Ptr = transaction.Target.Id,
+                Ptr = transaction.TargetId.Value,
                 KeyHash = x.RequiredString("key_hash"),
                 Key = Micheline.FromJson(x.Required("key")),
                 Value = x.TryGetProperty("value", out var value)

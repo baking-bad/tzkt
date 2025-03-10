@@ -22,15 +22,15 @@ namespace Tzkt.Sync.Protocols.Proto8
         }
 
         // new voting period
-        protected override VotingPeriod StartNextPeriod(Block block, VotingPeriod current)
+        protected override VotingPeriod StartNextPeriod(Block block, Protocol protocol, VotingPeriod current)
         {
             return current.Kind switch
             {
-                PeriodKind.Proposal => StartBallotPeriod(block, current, PeriodKind.Exploration),
-                PeriodKind.Exploration => StartWaitingPeriod(block, current, PeriodKind.Testing),
-                PeriodKind.Testing => StartBallotPeriod(block, current, PeriodKind.Promotion),
-                PeriodKind.Promotion => StartWaitingPeriod(block, current, PeriodKind.Adoption),
-                PeriodKind.Adoption => StartProposalPeriod(block, current),
+                PeriodKind.Proposal => StartBallotPeriod(block, protocol, current, PeriodKind.Exploration),
+                PeriodKind.Exploration => StartWaitingPeriod(block, protocol, current, PeriodKind.Testing),
+                PeriodKind.Testing => StartBallotPeriod(block, protocol, current, PeriodKind.Promotion),
+                PeriodKind.Promotion => StartWaitingPeriod(block, protocol, current, PeriodKind.Adoption),
+                PeriodKind.Adoption => StartProposalPeriod(block, protocol, current),
                 _ => throw new Exception("Invalid voting period kind")
             };
         }

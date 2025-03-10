@@ -13,14 +13,15 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
+            var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("pkh"));
+
             var activation = new ActivationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Account = (User)await Cache.Accounts.GetAsync(content.RequiredString("pkh")),
+                AccountId = sender.Id,
                 Balance = ParseBalance(content.Required("metadata").Required("balance_updates"))
             };
 
@@ -29,7 +30,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var sender = activation.Account;
             Db.TryAttach(sender);
             #endregion
 
@@ -42,25 +42,22 @@ namespace Tzkt.Sync.Protocols.Proto1
             commitment.AccountId = sender.Id;
             commitment.Level = block.Level;
 
+            Cache.AppState.Get().ActivationOpsCount++;
             Cache.Statistics.Current.TotalActivated += activation.Balance;
             #endregion
 
             Db.ActivationOps.Add(activation);
+            Context.ActivationOps.Add(activation);
             Activation = activation;
         }
 
         public virtual async Task Revert(Block block, ActivationOperation activation)
         {
-            #region init
-            activation.Block ??= block;
-            activation.Account ??= (User)await Cache.Accounts.GetAsync(activation.AccountId);
+            #region entities
+            var sender = (User)await Cache.Accounts.GetAsync(activation.AccountId);
+            Db.TryAttach(sender);
 
             var commitment = await Db.Commitments.FirstAsync(x => x.AccountId == activation.AccountId);
-            #endregion
-
-            #region entities
-            var sender = activation.Account;
-            Db.TryAttach(sender);
             #endregion
 
             #region revert operation
@@ -69,6 +66,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             commitment.AccountId = null;
             commitment.Level = null;
+
+            Cache.AppState.Get().ActivationOpsCount--;
             #endregion
 
             Db.ActivationOps.Remove(activation);

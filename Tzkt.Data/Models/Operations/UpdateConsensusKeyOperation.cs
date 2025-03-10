@@ -37,14 +37,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<UpdateConsensusKeyOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.UpdateConsensusKeyOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

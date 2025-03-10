@@ -26,6 +26,7 @@ namespace Tzkt.Sync
         public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
         public readonly InboxContext Inbox;
+        public readonly BlockContext Context;
 
         bool _ForceDiagnostics = false;
 
@@ -41,6 +42,7 @@ namespace Tzkt.Sync
             Metrics = metrics;
             Manager = new(this);
             Inbox = new();
+            Context = new();
         }
 
         public virtual async Task<AppState> CommitBlock(int head)
@@ -138,7 +140,6 @@ namespace Tzkt.Sync
             }
 
             Cache.Trim();
-            ClearCachedRelations();
             return Cache.AppState.Get();
         }
         
@@ -150,6 +151,9 @@ namespace Tzkt.Sync
             {
                 var state = Cache.AppState.Get();
                 Db.TryAttach(state);
+
+                Logger.LogDebug("Init block context");
+                await InitContext(state);
 
                 var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)
@@ -214,7 +218,6 @@ namespace Tzkt.Sync
             }
 
             Cache.Trim();
-            ClearCachedRelations();
             return Cache.AppState.Get();
         }
 
@@ -271,13 +274,163 @@ namespace Tzkt.Sync
 
         public void ForceDiagnostics() => _ForceDiagnostics = true;
 
+        async Task InitContext(AppState state)
+        {
+            var currBlock = Cache.Blocks.Get(state.Level);
+            Context.Block = currBlock;
+            Context.Proposer = Cache.Accounts.GetDelegate(currBlock.ProposerId);
+            Context.Protocol = await Cache.Protocols.GetAsync(currBlock.ProtoCode);
+
+            if (currBlock.Operations.HasFlag(Operations.Endorsements))
+                Context.EndorsementOps = await Db.EndorsementOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Preendorsements))
+                Context.PreendorsementOps = await Db.PreendorsementOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Proposals))
+                Context.ProposalOps = await Db.ProposalOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Ballots))
+                Context.BallotOps = await Db.BallotOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Activations))
+                Context.ActivationOps = await Db.ActivationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DalEntrapmentEvidence))
+                Context.DalEntrapmentEvidenceOps = await Db.DalEntrapmentEvidenceOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
+                Context.DoubleBakingOps = await Db.DoubleBakingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
+                Context.DoubleEndorsingOps = await Db.DoubleEndorsingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
+                Context.DoublePreendorsingOps = await Db.DoublePreendorsingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Revelations))
+                Context.NonceRevelationOps = await Db.NonceRevelationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.VdfRevelation))
+                Context.VdfRevelationOps = await Db.VdfRevelationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DrainDelegate))
+                Context.DrainDelegateOps = await Db.DrainDelegateOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Delegations))
+                Context.DelegationOps = await Db.DelegationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Originations))
+                Context.OriginationOps = await Db.OriginationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Transactions))
+                Context.TransactionOps = await Db.TransactionOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Reveals))
+                Context.RevealOps = await Db.RevealOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
+                Context.RegisterConstantOps = await Db.RegisterConstantOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
+                Context.SetDepositsLimitOps = await Db.SetDepositsLimitOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.IncreasePaidStorage))
+                Context.IncreasePaidStorageOps = await Db.IncreasePaidStorageOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.UpdateConsensusKey))
+                Context.UpdateConsensusKeyOps = await Db.UpdateConsensusKeyOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TransferTicket))
+                Context.TransferTicketOps = await Db.TransferTicketOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SetDelegateParameters))
+                Context.SetDelegateParametersOps = await Db.SetDelegateParametersOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DalPublishCommitment))
+                Context.DalPublishCommitmentOps = await Db.DalPublishCommitmentOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Staking))
+                Context.StakingOps = await Db.StakingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupOrigination))
+                Context.TxRollupOriginationOps = await Db.TxRollupOriginationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupSubmitBatch))
+                Context.TxRollupSubmitBatchOps = await Db.TxRollupSubmitBatchOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupCommit))
+                Context.TxRollupCommitOps = await Db.TxRollupCommitOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupFinalizeCommitment))
+                Context.TxRollupFinalizeCommitmentOps = await Db.TxRollupFinalizeCommitmentOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupRemoveCommitment))
+                Context.TxRollupRemoveCommitmentOps = await Db.TxRollupRemoveCommitmentOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupReturnBond))
+                Context.TxRollupReturnBondOps = await Db.TxRollupReturnBondOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupRejection))
+                Context.TxRollupRejectionOps = await Db.TxRollupRejectionOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.TxRollupDispatchTickets))
+                Context.TxRollupDispatchTicketsOps = await Db.TxRollupDispatchTicketsOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupAddMessages))
+                Context.SmartRollupAddMessagesOps = await Db.SmartRollupAddMessagesOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupCement))
+                Context.SmartRollupCementOps = await Db.SmartRollupCementOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupExecute))
+                Context.SmartRollupExecuteOps = await Db.SmartRollupExecuteOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupOriginate))
+                Context.SmartRollupOriginateOps = await Db.SmartRollupOriginateOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupPublish))
+                Context.SmartRollupPublishOps = await Db.SmartRollupPublishOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupRecoverBond))
+                Context.SmartRollupRecoverBondOps = await Db.SmartRollupRecoverBondOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.SmartRollupRefute))
+                Context.SmartRollupRefuteOps = await Db.SmartRollupRefuteOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Migrations))
+                Context.MigrationOps = await Db.MigrationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
+                Context.RevelationPenaltyOps = await Db.RevelationPenaltyOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.EndorsingRewards))
+                Context.EndorsingRewardOps = await Db.EndorsingRewardOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.DalAttestationReward))
+                Context.DalAttestationRewardOps = await Db.DalAttestationRewardOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Operations.HasFlag(Operations.Autostaking))
+                Context.AutostakingOps = await Db.AutostakingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+
+            if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
+            {
+                var createdAccounts = await Db.Accounts
+                    .Where(x => x.FirstLevel == currBlock.Level)
+                    .ToListAsync();
+
+                foreach (var account in createdAccounts)
+                    Cache.Accounts.Add(account);
+            }
+        }
+
         void TouchAccounts()
         {
             var state = Cache.AppState.Get();
             var block = Db.ChangeTracker.Entries()
                 .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block;
 
-            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account).ToList())
             {
                 var account = entry.Entity as Account;
 
@@ -297,7 +450,7 @@ namespace Tzkt.Sync
         {
             var state = Cache.AppState.Get();
 
-            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account))
+            foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account).ToList())
             {
                 var account = entry.Entity as Account;
 
@@ -309,93 +462,6 @@ namespace Tzkt.Sync
                     Db.Accounts.Remove(account);
                     Cache.Accounts.Remove(account);
                     Cache.AppState.ReleaseAccountId();
-                }
-            }
-        }
-
-        void ClearCachedRelations()
-        {
-            foreach (var entry in Db.ChangeTracker.Entries())
-            {
-                switch(entry.Entity)
-                {
-                    case Data.Models.Delegate delegat:
-                        delegat.Delegate = null;
-                        delegat.DelegatedAccounts = null;
-                        delegat.FirstBlock = null;
-                        delegat.Software = null;
-                        break;
-                    case User user:
-                        user.Delegate = null;
-                        user.FirstBlock = null;
-                        break;
-                    case Contract contract:
-                        contract.Delegate = null;
-                        contract.WeirdDelegate = null;
-                        contract.Manager = null;
-                        contract.Creator = null;
-                        contract.FirstBlock = null;
-                        break;
-                    case Rollup rollup:
-                        rollup.Delegate = null;
-                        rollup.FirstBlock = null;
-                        break;
-                    case SmartRollup smartRollup:
-                        smartRollup.Delegate = null;
-                        smartRollup.FirstBlock = null;
-                        break;
-                    case Account account:
-                        account.Delegate = null;
-                        account.FirstBlock = null;
-                        break;
-                    case Block b:
-                        b.Activations = null;
-                        b.Proposer = null;
-                        b.Ballots = null;
-                        b.CreatedAccounts = null;
-                        b.Delegations = null;
-                        b.DalEntrapmentEvidenceOps = null;
-                        b.DoubleBakings = null;
-                        b.DoubleEndorsings = null;
-                        b.DoublePreendorsings = null;
-                        b.Endorsements = null;
-                        b.Preendorsements = null;
-                        b.Originations = null;
-                        b.Proposals = null;
-                        b.Protocol = null;
-                        b.Reveals = null;
-                        b.RegisterConstants = null;
-                        b.SetDepositsLimits = null;
-                        b.Revelation = null;
-                        b.Revelations = null;
-                        b.StakingOps = null;
-                        b.Transactions = null;
-                        b.Migrations = null;
-                        b.RevelationPenalties = null;
-                        b.Software = null;
-                        b.TxRollupOriginationOps = null;
-                        b.TxRollupSubmitBatchOps = null;
-                        b.TxRollupCommitOps = null;
-                        b.TxRollupFinalizeCommitmentOps = null;
-                        b.TxRollupRemoveCommitmentOps = null;
-                        b.TxRollupReturnBondOps = null;
-                        b.TxRollupRejectionOps = null;
-                        b.TxRollupDispatchTicketsOps = null;
-                        b.TransferTicketOps = null;
-                        b.IncreasePaidStorageOps = null;
-                        b.VdfRevelationOps = null;
-                        b.UpdateConsensusKeyOps = null;
-                        b.DrainDelegateOps = null;
-                        b.SmartRollupAddMessagesOps = null;
-                        b.SmartRollupCementOps = null;
-                        b.SmartRollupExecuteOps = null;
-                        b.SmartRollupOriginateOps = null;
-                        b.SmartRollupPublishOps = null;
-                        b.SmartRollupRecoverBondOps = null;
-                        b.SmartRollupRefuteOps = null;
-                        b.SetDelegateParametersOps = null;
-                        b.DalPublishCommitmentOps = null;
-                        break;
                 }
             }
         }

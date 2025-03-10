@@ -16,6 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public OriginationOperation Origination { get; private set; }
         public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
+        public Contract Contract { get; private set; }
 
         public OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
@@ -23,16 +24,13 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
             var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
-            Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
             Db.TryAttach(manager);
             Db.TryAttach(delegat);
 
@@ -53,11 +51,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Address = address,
                         Balance = content.RequiredInt64("balance"),
                         Counter = 0,
-                        Delegate = delegat,
+                        DelegateId = delegat?.Id,
                         DelegationLevel = delegat != null ? block.Level : null,
-                        WeirdDelegate = await GetWeirdDelegate(content),
-                        Creator = sender,
-                        Manager = manager,
+                        WeirdDelegateId = (await GetWeirdDelegate(content))?.Id,
+                        CreatorId = sender.Id,
+                        ManagerId = manager?.Id,
                         Staked = delegat?.Staked ?? false,
                         Type = AccountType.Contract,
                         Kind = GetContractKind(content),
@@ -82,11 +80,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Address = address,
                         Balance = content.RequiredInt64("balance"),
                         Counter = 0,
-                        Delegate = delegat,
+                        DelegateId = delegat?.Id,
                         DelegationLevel = delegat != null ? block.Level : null,
-                        WeirdDelegate = await GetWeirdDelegate(content),
-                        Creator = sender,
-                        Manager = manager,
+                        WeirdDelegateId = (await GetWeirdDelegate(content))?.Id,
+                        CreatorId = sender.Id,
+                        ManagerId = manager?.Id,
                         Staked = delegat?.Staked ?? false,
                         Type = AccountType.Contract,
                         Kind = GetContractKind(content),
@@ -100,7 +98,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var origination = new OriginationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -109,10 +106,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
-                Manager = manager,
-                Delegate = delegat,
-                Contract = contract,
+                SenderId = sender.Id,
+                ManagerId = manager?.Id,
+                DelegateId = delegat?.Id,
+                ContractId = contract?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -127,25 +124,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
-                AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
+                AllocationFee = Context.Protocol.OriginationSize * Context.Protocol.ByteCost
             };
             #endregion
 
             #region entities
-            //var block = origination.Block;
-            var blockBaker = block.Proposer;
-            //var sender = origination.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             //var contract = origination.Contract;
-            var contractDelegate = origination.Delegate;
-            var contractManager = origination.Manager;
+            var contractDelegate = delegat;
+            var contractManager = manager;
 
-            //Db.TryAttach(block);
-            //Db.TryAttach(blockBaker);
-            //Db.TryAttach(sender);
-            //Db.TryAttach(senderDelegate);
+            Db.TryAttach(blockBaker);
+            Db.TryAttach(senderDelegate);
             //Db.TryAttach(contract);
             //Db.TryAttach(contractDelegate);
             //Db.TryAttach(contractManager);
@@ -171,6 +164,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Fees += origination.BakerFee;
 
             sender.Counter = origination.Counter;
+
+            Cache.AppState.Get().OriginationOpsCount++;
             #endregion
 
             #region apply result
@@ -202,11 +197,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = await ProcessCode(origination, Micheline.FromJson(content.Required("script").Required("code")));
+                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code")));
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, code, storage);
+                    await ProcessScript(origination, contract, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
@@ -215,19 +210,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            Proto.Manager.Set(origination.Sender);
+            Proto.Manager.Set(sender);
             Db.OriginationOps.Add(origination);
+            Context.OriginationOps.Add(origination);
             Origination = origination;
+            Contract = contract;
         }
 
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract
-                    ?? throw new ValidationException("Origination source address doesn't exist");
-
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+                ?? throw new ValidationException("Origination source address doesn't exist");
 
             // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
@@ -235,7 +229,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
 
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
             Db.TryAttach(manager);
             Db.TryAttach(delegat);
 
@@ -256,11 +249,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Address = address,
                         Balance = content.RequiredInt64("balance"),
                         Counter = 0,
-                        Delegate = delegat,
+                        DelegateId = delegat?.Id,
                         DelegationLevel = delegat != null ? block.Level : null,
-                        WeirdDelegate = await GetWeirdDelegate(content),
-                        Creator = sender,
-                        Manager = manager,
+                        WeirdDelegateId = (await GetWeirdDelegate(content))?.Id,
+                        CreatorId = sender.Id,
+                        ManagerId = manager?.Id,
                         Staked = delegat?.Staked ?? false,
                         Type = AccountType.Contract,
                         Kind = GetContractKind(content),
@@ -285,11 +278,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Address = address,
                         Balance = content.RequiredInt64("balance"),
                         Counter = 0,
-                        Delegate = delegat,
+                        DelegateId = delegat?.Id,
                         DelegationLevel = delegat != null ? (int?)block.Level : null,
-                        WeirdDelegate = await GetWeirdDelegate(content),
-                        Creator = sender,
-                        Manager = manager,
+                        WeirdDelegateId = (await GetWeirdDelegate(content))?.Id,
+                        CreatorId = sender.Id,
+                        ManagerId = manager?.Id,
                         Staked = delegat?.Staked ?? false,
                         Type = AccountType.Contract,
                         Kind = GetContractKind(content),
@@ -303,19 +296,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             var origination = new OriginationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Initiator = parent.Sender,
-                Block = parent.Block,
-                Level = parent.Block.Level,
+                InitiatorId = parent.SenderId,
+                Level = parent.Level,
                 Timestamp = parent.Timestamp,
                 OpHash = parent.OpHash,
                 Counter = parent.Counter,
                 Nonce = content.RequiredInt32("nonce"),
                 Balance = content.RequiredInt64("balance"),
-                Sender = sender,
+                SenderId = sender.Id,
                 SenderCodeHash = (sender as Contract)?.CodeHash,
-                Manager = manager,
-                Delegate = delegat,
-                Contract = contract,
+                ManagerId = manager?.Id,
+                DelegateId = delegat?.Id,
+                ContractId = contract?.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -330,26 +322,26 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
-                AllocationFee = block.Protocol.OriginationSize * block.Protocol.ByteCost
+                AllocationFee = Context.Protocol.OriginationSize * Context.Protocol.ByteCost
             };
             #endregion
 
             #region entities
-            var parentSender = parent.Sender;
-            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+            var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
+            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
 
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            var contractDelegate = origination.Delegate;
-            var contractManager = origination.Manager;
+            var contractDelegate = delegat;
+            var contractManager = manager;
 
             //Db.TryAttach(parentSender);
-            //Db.TryAttach(parentDelegate);
+            Db.TryAttach(parentDelegate);
 
             //Db.TryAttach(sender);
-            //Db.TryAttach(senderDelegate);
+            Db.TryAttach(senderDelegate);
 
             //Db.TryAttach(contract);
             //Db.TryAttach(contractDelegate);
@@ -370,6 +362,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (contract != null) contract.OriginationsCount++;
 
             block.Operations |= Operations.Originations;
+
+            Cache.AppState.Get().OriginationOpsCount++;
             #endregion
 
             #region apply result
@@ -408,11 +402,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (contract.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = await ProcessCode(origination, Micheline.FromJson(content.Required("script").Required("code")));
+                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code")));
                     var storage = Micheline.FromJson(content.Required("script").Required("storage"));
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, code, storage);
+                    await ProcessScript(origination, contract, code, storage);
 
                     origination.ContractCodeHash = contract.CodeHash;
                 }
@@ -422,33 +416,21 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Db.OriginationOps.Add(origination);
+            Context.OriginationOps.Add(origination);
             Origination = origination;
+            Contract = contract;
         }
 
         public virtual async Task Revert(Block block, OriginationOperation origination)
         {
-            #region init
-            origination.Block ??= block;
-            origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            origination.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-            
-            origination.Sender ??= await Cache.Accounts.GetAsync(origination.SenderId);
-            origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
-            origination.Contract ??= (Contract)await Cache.Accounts.GetAsync(origination.ContractId);
-            origination.Delegate ??= Cache.Accounts.GetDelegate(origination.DelegateId);
-            origination.Manager ??= (User)await Cache.Accounts.GetAsync(origination.ManagerId);
-            #endregion
-
             #region entities
-            //var block = origination.Block;
-            var blockBaker = block.Proposer;
-            var sender = origination.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var contract = origination.Contract;
-            var contractDelegate = origination.Delegate;
-            var contractManager = origination.Manager;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(origination.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
+            var contract = await Cache.Accounts.GetAsync(origination.ContractId) as Contract;
+            var contractDelegate = Cache.Accounts.GetDelegate(origination.DelegateId);
+            var contractManager = await Cache.Accounts.GetAsync(origination.ManagerId) as User;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
@@ -481,7 +463,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                    await RevertScript(origination);
+                    await RevertScript(origination, contract);
 
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
@@ -494,7 +476,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         Id = contract.Id,
                         Address = contract.Address,
-                        FirstBlock = contract.FirstBlock,
                         FirstLevel = contract.FirstLevel,
                         LastLevel = contract.LastLevel,
                         ActiveTokensCount = contract.ActiveTokensCount,
@@ -529,7 +510,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (contractDelegate != null && contractDelegate != sender && contractDelegate != contractManager) contractDelegate.OriginationsCount--;
 
             sender.Counter = origination.Counter - 1;
-            (sender as User).Revealed = true;
+            if (sender is User user) user.Revealed = true;
+
+            Cache.AppState.Get().OriginationOpsCount--;
             #endregion
 
             Db.OriginationOps.Remove(origination);
@@ -539,31 +522,16 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task RevertInternal(Block block, OriginationOperation origination)
         {
-            #region init
-            origination.Block ??= block;
-            origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            origination.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            origination.Sender ??= await Cache.Accounts.GetAsync(origination.SenderId);
-            origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
-            origination.Contract ??= (Contract)await Cache.Accounts.GetAsync(origination.ContractId);
-            origination.Delegate ??= Cache.Accounts.GetDelegate(origination.DelegateId);
-            origination.Manager ??= (User)await Cache.Accounts.GetAsync(origination.ManagerId);
-
-            origination.Initiator = await Cache.Accounts.GetAsync(origination.InitiatorId);
-            origination.Initiator.Delegate ??= Cache.Accounts.GetDelegate(origination.Initiator.DelegateId);
-            #endregion
-
             #region entities
-            var parentSender = origination.Initiator;
-            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
+            var parentSender = await Cache.Accounts.GetAsync(origination.InitiatorId);
+            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
 
-            var sender = origination.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var sender = await Cache.Accounts.GetAsync(origination.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            var contract = origination.Contract;
-            var contractDelegate = origination.Delegate;
-            var contractManager = origination.Manager;
+            var contract = await Cache.Accounts.GetAsync(origination.ContractId) as Contract;
+            var contractDelegate = Cache.Accounts.GetDelegate(origination.DelegateId);
+            var contractManager = await Cache.Accounts.GetAsync(origination.ManagerId) as User;
 
             //Db.TryAttach(parentTx);
             Db.TryAttach(parentSender);
@@ -609,7 +577,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
                 if (contract.Kind > ContractKind.DelegatorContract)
-                    await RevertScript(origination);
+                    await RevertScript(origination, contract);
 
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
@@ -622,7 +590,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         Id = contract.Id,
                         Address = contract.Address,
-                        FirstBlock = contract.FirstBlock,
                         FirstLevel = contract.FirstLevel,
                         LastLevel = contract.LastLevel,
                         ActiveTokensCount = contract.ActiveTokensCount,
@@ -646,6 +613,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (contractManager != null && contractManager != sender) contractManager.OriginationsCount--;
             if (contractDelegate != null && contractDelegate != sender && contractDelegate != contractManager) contractDelegate.OriginationsCount--;
             if (parentSender != sender && parentSender != contractDelegate && parentSender != contractManager) parentSender.OriginationsCount--;
+
+            Cache.AppState.Get().OriginationOpsCount--;
             #endregion
 
             Db.OriginationOps.Remove(origination);
@@ -688,11 +657,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        protected async Task<MichelineArray> ProcessCode(OriginationOperation origination, IMicheline code)
+        protected async Task<MichelineArray> ProcessCode(Contract contract, IMicheline code)
         {
             if (code is not MichelineArray array)
             {
-                var contract = origination.Contract;
                 var constants = await Constants.Find(Db, new[] { code });
                 if (constants.Count > 0)
                 {
@@ -714,7 +682,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return array;
         }
 
-        protected async Task ProcessScript(OriginationOperation origination, MichelineArray code, IMicheline storageValue)
+        protected async Task ProcessScript(OriginationOperation origination, Contract contract, MichelineArray code, IMicheline storageValue)
         {
             #region expand top-level constants
             var constants = await Constants.Find(Db, code);
@@ -734,7 +702,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            var contract = origination.Contract;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
@@ -826,14 +793,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.Storages.Add(storage);
             Cache.Storages.Add(contract, storage);
 
-            origination.Script = script;
-            origination.Storage = storage;
+            origination.ScriptId = script.Id;
+            origination.StorageId = storage.Id;
         }
 
-        protected async Task RevertScript(OriginationOperation origination)
+        protected async Task RevertScript(OriginationOperation origination, Contract contract)
         {
-            var contract = origination.Contract;
-
             #region process constants
             if (contract.Tags.HasFlag(ContractTags.Constants))
             {
@@ -887,7 +852,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 res = new List<BigMapDiff>
                 {
-                    new AllocDiff { Ptr = origination.Contract.Id }
+                    new AllocDiff { Ptr = origination.ContractId.Value }
                 };
                 if (bigmap.Value is MichelineArray items && items.Count > 0)
                 {

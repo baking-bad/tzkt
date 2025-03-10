@@ -38,14 +38,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TxRollupRemoveCommitmentOperation>()
                 .HasIndex(x => x.RollupId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<TxRollupRemoveCommitmentOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.TxRollupRemoveCommitmentOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

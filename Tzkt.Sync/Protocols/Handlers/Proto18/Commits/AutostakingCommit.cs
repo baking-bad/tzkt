@@ -57,6 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     state.AutostakingOpsCount++;
 
                     Db.AutostakingOps.Add(operation);
+                    Context.AutostakingOps.Add(operation);
                 }
 
                 await new StakingUpdateCommit(Proto).Apply(updates);

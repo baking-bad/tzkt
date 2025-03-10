@@ -144,6 +144,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             Cache.AppState.Get().DalAttestationRewardOpsCount += ops.Count;
 
             Db.DalAttestationRewardOps.AddRange(ops.Values);
+            Context.DalAttestationRewardOps.AddRange(ops.Values);
         }
 
         public virtual async Task Revert(Block block)

@@ -15,21 +15,19 @@ namespace Tzkt.Sync.Protocols.Proto11
         {
             #region init
             var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
             var registerConstant = new RegisterConstantOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -44,14 +42,14 @@ namespace Tzkt.Sync.Protocols.Proto11
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("storage_size") ?? 0,
                 StorageFee = result.OptionalInt32("storage_size") > 0
-                    ? result.OptionalInt32("storage_size") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("storage_size") * Context.Protocol.ByteCost
                     : null,
             };
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -75,6 +73,8 @@ namespace Tzkt.Sync.Protocols.Proto11
             block.Fees += registerConstant.BakerFee;
 
             sender.Counter = registerConstant.Counter;
+
+            Cache.AppState.Get().RegisterConstantOpsCount++;
             #endregion
 
             #region apply result
@@ -101,24 +101,17 @@ namespace Tzkt.Sync.Protocols.Proto11
             }
             #endregion
 
-            Proto.Manager.Set(registerConstant.Sender);
+            Proto.Manager.Set(sender);
             Db.RegisterConstantOps.Add(registerConstant);
+            Context.RegisterConstantOps.Add(registerConstant);
         }
 
         public virtual async Task Revert(Block block, RegisterConstantOperation registerConstant)
         {
-            #region init
-            registerConstant.Block ??= block;
-            registerConstant.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            registerConstant.Sender ??= await Cache.Accounts.GetAsync(registerConstant.SenderId);
-            registerConstant.Sender.Delegate ??= Cache.Accounts.GetDelegate(registerConstant.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = (User)registerConstant.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(registerConstant.SenderId) as User;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -157,6 +150,8 @@ namespace Tzkt.Sync.Protocols.Proto11
 
             sender.Counter = registerConstant.Counter - 1;
             sender.Revealed = true;
+
+            Cache.AppState.Get().RegisterConstantOpsCount--;
             #endregion
 
             Db.RegisterConstantOps.Remove(registerConstant);

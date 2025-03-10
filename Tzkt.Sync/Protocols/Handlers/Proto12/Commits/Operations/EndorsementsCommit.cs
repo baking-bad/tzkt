@@ -16,12 +16,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             var endorsement = new EndorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = GetEndorsedSlots(metadata),
-                Delegate = baker,
                 DelegateId = baker.Id
             };
 
@@ -29,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             baker.EndorsementsCount++;
 
             #region set baker active
-            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(block) : GracePeriod.Init(block);
+            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(block.Level, Context.Protocol) : GracePeriod.Init(block.Level, Context.Protocol);
             if (baker.DeactivationLevel < newDeactivationLevel)
             {
                 if (baker.DeactivationLevel <= block.Level)
@@ -43,16 +41,15 @@ namespace Tzkt.Sync.Protocols.Proto12
             block.Operations |= Operations.Endorsements;
             block.Validations += endorsement.Slots;
 
+            Cache.AppState.Get().EndorsementOpsCount++;
+
             Db.EndorsementOps.Add(endorsement);
+            Context.EndorsementOps.Add(endorsement);
         }
 
         public virtual async Task Revert(Block block, EndorsementOperation endorsement)
         {
-            endorsement.Block ??= block;
-            endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
-
-            var baker = endorsement.Delegate;
+            var baker = Cache.Accounts.GetDelegate(endorsement.DelegateId);
             Db.TryAttach(baker);
             baker.EndorsementsCount--;
 
@@ -65,6 +62,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 baker.DeactivationLevel = (int)endorsement.ResetDeactivation;
             }
             #endregion
+
+            Cache.AppState.Get().EndorsementOpsCount--;
 
             Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();

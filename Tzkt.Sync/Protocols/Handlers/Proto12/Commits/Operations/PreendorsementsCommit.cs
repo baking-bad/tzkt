@@ -16,12 +16,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             var preendorsement = new PreendorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = GetPreendorsedSlots(metadata),
-                Delegate = baker,
                 DelegateId = baker.Id
             };
 
@@ -30,21 +28,24 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             block.Operations |= Operations.Preendorsements;
 
+            Cache.AppState.Get().PreendorsementOpsCount++;
+
             Db.PreendorsementOps.Add(preendorsement);
+            Context.PreendorsementOps.Add(preendorsement);
         }
 
-        public virtual async Task Revert(Block block, PreendorsementOperation preendorsement)
+        public virtual Task Revert(Block block, PreendorsementOperation preendorsement)
         {
-            preendorsement.Block ??= block;
-            preendorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            preendorsement.Delegate ??= Cache.Accounts.GetDelegate(preendorsement.DelegateId);
-
-            var baker = preendorsement.Delegate;
+            var baker = Cache.Accounts.GetDelegate(preendorsement.DelegateId);
             Db.TryAttach(baker);
             baker.PreendorsementsCount--;
 
+            Cache.AppState.Get().PreendorsementOpsCount--;
+
             Db.PreendorsementOps.Remove(preendorsement);
             Cache.AppState.ReleaseOperationId();
+
+            return Task.CompletedTask;
         }
 
         protected virtual int GetPreendorsedSlots(JsonElement metadata) => metadata.RequiredInt32("preendorsement_power");

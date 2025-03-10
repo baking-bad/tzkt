@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
-            if (block.BlockRound == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
+            if (block.BlockRound == 0 && block.Validations == Context.Protocol.EndorsersPerBlock)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
                 CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
@@ -79,9 +79,9 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                 CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
 
-                if (block.Endorsements != null)
+                if (Context.EndorsementOps.Count != 0)
                 {
-                    var endorsers = new HashSet<int>(block.Endorsements.Select(x => x.Delegate.Id));
+                    var endorsers = new HashSet<int>(Context.EndorsementOps.Select(x => x.DelegateId));
                     foreach (var er in CurrentRights.Where(x => x.Type == BakingRightType.Endorsing && endorsers.Contains(x.BakerId)))
                         er.Status = BakingRightStatus.Realized;
                 }
@@ -111,10 +111,10 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
-                FutureBakingRights = await GetBakingRights(block, futureCycle);
-                FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);
+                FutureBakingRights = await GetBakingRights(block, Context.Protocol, futureCycle);
+                FutureEndorsingRights = await GetEndorsingRights(block, Context.Protocol, futureCycle);
 
                 var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
@@ -122,7 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 foreach (var er in FutureEndorsingRights)
                 {
                     writer.StartRow();
-                    writer.Write(block.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(Context.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
                     writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                          // level + 1 (shifted)
                     writer.Write(Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);

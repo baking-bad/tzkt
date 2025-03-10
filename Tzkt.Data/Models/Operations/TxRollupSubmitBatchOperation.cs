@@ -38,14 +38,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TxRollupSubmitBatchOperation>()
                 .HasIndex(x => x.RollupId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<TxRollupSubmitBatchOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.TxRollupSubmitBatchOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

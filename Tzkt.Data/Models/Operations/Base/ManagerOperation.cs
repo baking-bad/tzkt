@@ -19,11 +19,6 @@ namespace Tzkt.Data.Models.Base
 
         public OperationStatus Status { get; set; }
         public string Errors { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(SenderId))]
-        public Account Sender { get; set; }
-        #endregion
     }
 
     public enum OperationStatus : byte

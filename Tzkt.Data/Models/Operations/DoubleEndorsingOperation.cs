@@ -19,14 +19,6 @@ namespace Tzkt.Data.Models
         public long LostExternalUnstaked { get; set; }
 
         public int? StakingUpdatesCount { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(AccuserId))]
-        public Delegate Accuser { get; set; }
-
-        [ForeignKey(nameof(OffenderId))]
-        public Delegate Offender { get; set; }
-        #endregion
     }
 
     public static class DoubleEndorsingOperationModel
@@ -58,14 +50,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DoubleEndorsingOperation>()
                 .HasIndex(x => x.OffenderId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<DoubleEndorsingOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DoubleEndorsings)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

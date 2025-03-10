@@ -1,10 +1,11 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class MigrationOperation
+    public class MigrationOperation : IOperation
     {
         public long Id { get; set; }
         public int Level { get; set; }
@@ -20,20 +21,6 @@ namespace Tzkt.Data.Models
         public int? TokenTransfers { get; set; }
 
         public int? SubIds { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(Level))]
-        public Block Block { get; set; }
-
-        [ForeignKey(nameof(AccountId))]
-        public Account Account { get; set; }
-
-        [ForeignKey(nameof(ScriptId))]
-        public Script Script { get; set; }
-
-        [ForeignKey(nameof(StorageId))]
-        public Storage Storage { get; set; }
-        #endregion
     }
 
     public enum MigrationKind
@@ -63,14 +50,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<MigrationOperation>()
                 .HasIndex(x => x.AccountId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<MigrationOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Migrations)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

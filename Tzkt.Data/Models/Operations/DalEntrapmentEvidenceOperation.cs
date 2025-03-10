@@ -42,14 +42,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<DalEntrapmentEvidenceOperation>()
                 .HasIndex(x => x.OffenderId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<DalEntrapmentEvidenceOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DalEntrapmentEvidenceOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

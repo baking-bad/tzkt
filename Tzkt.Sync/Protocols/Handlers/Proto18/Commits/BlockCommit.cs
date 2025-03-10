@@ -49,11 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Cycle = protocol.GetCycle(level),
                 Level = level,
                 ProtoCode = protocol.Code,
-                Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = payloadRound,
                 BlockRound = blockRound,
-                Proposer = proposer,
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
                 Events = events,
@@ -70,8 +68,14 @@ namespace Tzkt.Sync.Protocols.Proto18
             Db.TryAttach(proposer); // if we don't attach it, ef will recognize it as 'added'
             Db.TryAttach(producer); // if we don't attach it, ef will recognize it as 'added'
 
+            Cache.AppState.Get().BlocksCount++;
+
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
+
+            Context.Block = Block;
+            Context.Proposer = proposer;
+            Context.Protocol = protocol;
         }
         
         public async Task ApplyRewards(JsonElement rawBlock)
@@ -114,7 +118,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             proposer.BlocksCount++;
 
             #region set baker active
-            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block.Level, Context.Protocol) : GracePeriod.Init(Block.Level, Context.Protocol);
             if (proposer.DeactivationLevel < newDeactivationLevel)
             {
                 if (proposer.DeactivationLevel <= Block.Level)
@@ -135,7 +139,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 producer.BlocksCount++;
 
                 #region set proposer active
-                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block.Level, Context.Protocol) : GracePeriod.Init(Block.Level, Context.Protocol);
                 if (producer.DeactivationLevel < newDeactivationLevel)
                 {
                     if (producer.DeactivationLevel <= Block.Level)
@@ -158,6 +162,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         public virtual void Revert(Block block)
         {
+            Cache.AppState.Get().BlocksCount--;
+
             Db.Blocks.Remove(block);
             Cache.AppState.ReleaseOperationId();
         }

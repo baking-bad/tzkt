@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols
                 Hash = rawBlock.RequiredString("hash"),
                 Cycle = 0,
                 Level = rawBlock.Required("header").RequiredInt32("level"),
-                Protocol = protocol,
+                ProtoCode = protocol.Code,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
                 Events = BlockEvents.CycleBegin
                     | BlockEvents.ProtocolBegin
@@ -75,7 +75,7 @@ namespace Tzkt.Sync.Protocols
             state.Cycle = 0;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
-            state.Protocol = block.Protocol.Hash;
+            state.Protocol = protocol.Hash;
             state.NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
             state.Hash = block.Hash;
             state.BlocksCount++;
@@ -90,10 +90,10 @@ namespace Tzkt.Sync.Protocols
         public override async Task Revert()
         {
             var curr = Cache.Blocks.Current();
-            curr.Protocol ??= await Cache.Protocols.GetAsync(curr.ProtoCode);
+            var currProtocol = await Cache.Protocols.GetAsync(curr.ProtoCode);
 
             var prev = await Cache.Blocks.PreviousAsync();
-            prev.Protocol ??= await Cache.Protocols.GetAsync(prev.ProtoCode);
+            var prevProtocol = await Cache.Protocols.GetAsync(prev.ProtoCode);
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 DELETE FROM ""Statistics"" WHERE ""Level"" = {curr.Level};
@@ -109,8 +109,8 @@ namespace Tzkt.Sync.Protocols
             state.Cycle = -1;
             state.Level = prev.Level;
             state.Timestamp = prev.Timestamp;
-            state.Protocol = prev.Protocol.Hash;
-            state.NextProtocol = curr.Protocol.Hash;
+            state.Protocol = prevProtocol.Hash;
+            state.NextProtocol = currProtocol.Hash;
             state.Hash = prev.Hash;
             state.BlocksCount--;
             state.ProtocolsCount--;

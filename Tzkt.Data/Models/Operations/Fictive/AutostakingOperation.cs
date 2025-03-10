@@ -1,8 +1,9 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class AutostakingOperation
+    public class AutostakingOperation : IOperation
     {
         public long Id { get; set; }
         public int Level { get; set; }

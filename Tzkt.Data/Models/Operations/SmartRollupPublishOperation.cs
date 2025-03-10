@@ -66,14 +66,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => new { x.SmartRollupId, x.BondStatus, x.SenderId })
                 .HasFilter($@"""{nameof(SmartRollupPublishOperation.BondStatus)}"" IS NOT NULL");
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupPublishOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

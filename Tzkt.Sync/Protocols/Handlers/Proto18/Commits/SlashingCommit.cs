@@ -29,9 +29,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             foreach (var slashing in slashings.GroupBy(x => x.RequiredString("delayed_operation_hash")).Reverse())
             {
                 var opHash = slashing.Key;
-                var accusation = block.DoubleBakings?.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? block.DoubleEndorsings?.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? block.DoublePreendorsings?.FirstOrDefault(x => x.OpHash == opHash)
+                var accusation = Context.DoubleBakingOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? Context.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? Context.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? Db.DoubleBakingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? Db.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? (BaseOperation)Db.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)

@@ -20,14 +20,14 @@ namespace Tzkt.Sync.Protocols.Proto10
             var op = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Account = contract,
+                AccountId = contract.Id,
                 BalanceChange = balanceUpdate.RequiredInt64("change"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 Kind = MigrationKind.Subsidy,
             };
             Db.MigrationOps.Add(op);
+            Context.MigrationOps.Add(op);
             Cache.AppState.Get().MigrationOpsCount++;
 
             Cache.Statistics.Current.TotalCreated += op.BalanceChange;
@@ -60,15 +60,12 @@ namespace Tzkt.Sync.Protocols.Proto10
             Db.Storages.Add(newStorage);
             Cache.Storages.Add(contract, newStorage);
 
-            op.Storage = newStorage;
+            op.StorageId = newStorage.Id;
         }
 
         public virtual async Task Revert(Block block)
         {
-            if (block.Migrations == null)
-                return;
-
-            foreach (var op in block.Migrations.Where(x => x.Kind == MigrationKind.Subsidy))
+            foreach (var op in Context.MigrationOps.Where(x => x.Kind == MigrationKind.Subsidy))
             {
                 var contract = await Cache.Accounts.GetAsync(op.AccountId) as Contract;
                 Db.TryAttach(contract);

@@ -163,13 +163,13 @@ namespace Tzkt.Sync.Protocols
                             var orig = new OriginationsCommit(this);
                             await orig.Apply(blockCommit.Block, operation, content);
                             if (orig.BigMapDiffs != null)
-                                bigMapCommit.Append(orig.Origination, orig.Origination.Contract, orig.BigMapDiffs);
+                                bigMapCommit.Append(orig.Origination, orig.Contract, orig.BigMapDiffs);
                             break;
                         case "transaction":
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
-                                bigMapCommit.Append(parent.Transaction, parent.Transaction.Target as Contract, parent.BigMapDiffs);
+                                bigMapCommit.Append(parent.Transaction, parent.Target as Contract, parent.BigMapDiffs);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -184,13 +184,13 @@ namespace Tzkt.Sync.Protocols
                                             var internalOrig = new OriginationsCommit(this);
                                             await internalOrig.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalOrig.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Origination.Contract, internalOrig.BigMapDiffs);
+                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Contract, internalOrig.BigMapDiffs);
                                             break;
                                         case "transaction":
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
@@ -238,7 +238,7 @@ namespace Tzkt.Sync.Protocols
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent1.Operation, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         case "event":
                                             await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
@@ -297,107 +297,6 @@ namespace Tzkt.Sync.Protocols
             var currBlock = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(currBlock);
 
-            #region load operations
-            var operations = new List<BaseOperation>(40);
-
-            if (currBlock.Operations.HasFlag(Operations.Activations))
-                operations.AddRange(await Db.ActivationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Delegations))
-                operations.AddRange(await Db.DelegationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Endorsements))
-                operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Preendorsements))
-                operations.AddRange(await Db.PreendorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Originations))
-                operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Reveals))
-                operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
-                operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
-                operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.IncreasePaidStorage))
-                operations.AddRange(await Db.IncreasePaidStorageOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.UpdateConsensusKey))
-                operations.AddRange(await Db.UpdateConsensusKeyOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Revelations))
-                operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.VdfRevelation))
-                operations.AddRange(await Db.VdfRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Transactions))
-                operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupOrigination))
-                operations.AddRange(await Db.TxRollupOriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupSubmitBatch))
-                operations.AddRange(await Db.TxRollupSubmitBatchOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupCommit))
-                operations.AddRange(await Db.TxRollupCommitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupFinalizeCommitment))
-                operations.AddRange(await Db.TxRollupFinalizeCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupRemoveCommitment))
-                operations.AddRange(await Db.TxRollupRemoveCommitmentOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupReturnBond))
-                operations.AddRange(await Db.TxRollupReturnBondOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupRejection))
-                operations.AddRange(await Db.TxRollupRejectionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TxRollupDispatchTickets))
-                operations.AddRange(await Db.TxRollupDispatchTicketsOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.TransferTicket))
-                operations.AddRange(await Db.TransferTicketOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
-                operations.AddRange(await Db.DoubleBakingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
-                operations.AddRange(await Db.DoubleEndorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
-                operations.AddRange(await Db.DoublePreendorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DrainDelegate))
-                operations.AddRange(await Db.DrainDelegateOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Ballots))
-                operations.AddRange(await Db.BallotOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Proposals))
-                operations.AddRange(await Db.ProposalOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
-                await Db.Entry(currBlock).Collection(x => x.RevelationPenalties).LoadAsync();
-
-            if (currBlock.Operations.HasFlag(Operations.Migrations))
-                await Db.Entry(currBlock).Collection(x => x.Migrations).LoadAsync();
-
-            if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
-            {
-                await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
-                foreach (var account in currBlock.CreatedAccounts)
-                    Cache.Accounts.Add(account);
-            }
-            #endregion
-
             await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
@@ -411,36 +310,36 @@ namespace Tzkt.Sync.Protocols
             await new BigMapCommit(this).Revert(currBlock);
             await new ContractEventCommit(this).Revert(currBlock);
 
-            foreach (var operation in operations.OrderByDescending(x => x.Id))
+            foreach (var operation in Context.EnumerateOps().OrderByDescending(x => x.Id).ToList())
             {
                 switch (operation)
                 {
-                    case EndorsementOperation endorsement:
-                        await new EndorsementsCommit(this).Revert(currBlock, endorsement);
+                    case EndorsementOperation op:
+                        await new EndorsementsCommit(this).Revert(currBlock, op);
                         break;
-                    case PreendorsementOperation preendorsement:
-                        await new PreendorsementsCommit(this).Revert(currBlock, preendorsement);
+                    case PreendorsementOperation op:
+                        await new PreendorsementsCommit(this).Revert(currBlock, op);
                         break;
-                    case ProposalOperation proposal:
-                        await new ProposalsCommit(this).Revert(currBlock, proposal);
+                    case ProposalOperation op:
+                        await new ProposalsCommit(this).Revert(currBlock, op);
                         break;
-                    case BallotOperation ballot:
-                        await new BallotsCommit(this).Revert(currBlock, ballot);
+                    case BallotOperation op:
+                        await new BallotsCommit(this).Revert(currBlock, op);
                         break;
-                    case ActivationOperation activation:
-                        await new ActivationsCommit(this).Revert(currBlock, activation);
+                    case ActivationOperation op:
+                        await new ActivationsCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleBakingOperation doubleBaking:
-                        new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
+                    case DoubleBakingOperation op:
+                        new DoubleBakingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleEndorsingOperation doubleEndorsing:
-                        new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                    case DoubleEndorsingOperation op:
+                        new DoubleEndorsingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoublePreendorsingOperation doublePreendorsing:
-                        new DoublePreendorsingCommit(this).Revert(currBlock, doublePreendorsing);
+                    case DoublePreendorsingOperation op:
+                        new DoublePreendorsingCommit(this).Revert(currBlock, op);
                         break;
-                    case NonceRevelationOperation revelation:
-                        await new NonceRevelationsCommit(this).Revert(currBlock, revelation);
+                    case NonceRevelationOperation op:
+                        await new NonceRevelationsCommit(this).Revert(currBlock, op);
                         break;
                     case VdfRevelationOperation op:
                         await new VdfRevelationCommit(this).Revert(currBlock, op);
@@ -448,8 +347,8 @@ namespace Tzkt.Sync.Protocols
                     case DrainDelegateOperation op:
                         await new DrainDelegateCommit(this).Revert(currBlock, op);
                         break;
-                    case RevealOperation reveal:
-                        await new RevealsCommit(this).Revert(currBlock, reveal);
+                    case RevealOperation op:
+                        await new RevealsCommit(this).Revert(currBlock, op);
                         break;
                     case IncreasePaidStorageOperation op:
                         await new IncreasePaidStorageCommit(this).Revert(currBlock, op);
@@ -457,56 +356,56 @@ namespace Tzkt.Sync.Protocols
                     case UpdateConsensusKeyOperation op:
                         await new UpdateConsensusKeyCommit(this).Revert(currBlock, op);
                         break;
-                    case RegisterConstantOperation registerConstant:
-                        await new RegisterConstantsCommit(this).Revert(currBlock, registerConstant);
+                    case RegisterConstantOperation op:
+                        await new RegisterConstantsCommit(this).Revert(currBlock, op);
                         break;
-                    case SetDepositsLimitOperation setDepositsLimit:
-                        await new SetDepositsLimitCommit(this).Revert(currBlock, setDepositsLimit);
+                    case SetDepositsLimitOperation op:
+                        await new SetDepositsLimitCommit(this).Revert(currBlock, op);
                         break;
-                    case DelegationOperation delegation:
-                        if (delegation.InitiatorId == null)
-                            await new DelegationsCommit(this).Revert(currBlock, delegation);
+                    case DelegationOperation op:
+                        if (op.InitiatorId == null)
+                            await new DelegationsCommit(this).Revert(currBlock, op);
                         else
-                            await new DelegationsCommit(this).RevertInternal(currBlock, delegation);
+                            await new DelegationsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case OriginationOperation origination:
-                        if (origination.InitiatorId == null)
-                            await new OriginationsCommit(this).Revert(currBlock, origination);
+                    case OriginationOperation op:
+                        if (op.InitiatorId == null)
+                            await new OriginationsCommit(this).Revert(currBlock, op);
                         else
-                            await new OriginationsCommit(this).RevertInternal(currBlock, origination);
+                            await new OriginationsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case TransactionOperation transaction:
-                        if (transaction.InitiatorId == null)
-                            await new TransactionsCommit(this).Revert(currBlock, transaction);
+                    case TransactionOperation op:
+                        if (op.InitiatorId == null)
+                            await new TransactionsCommit(this).Revert(currBlock, op);
                         else
-                            await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
+                            await new TransactionsCommit(this).RevertInternal(currBlock, op);
                         break;
-                    case TxRollupOriginationOperation rollupOrigination:
-                        await new TxRollupOriginationCommit(this).Revert(currBlock, rollupOrigination);
+                    case TxRollupOriginationOperation op:
+                        await new TxRollupOriginationCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupSubmitBatchOperation submitBatch:
-                        await new TxRollupSubmitBatchCommit(this).Revert(currBlock, submitBatch);
+                    case TxRollupSubmitBatchOperation op:
+                        await new TxRollupSubmitBatchCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupCommitOperation rollupCommit:
-                        await new TxRollupCommitCommit(this).Revert(currBlock, rollupCommit);
+                    case TxRollupCommitOperation op:
+                        await new TxRollupCommitCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupFinalizeCommitmentOperation finalizeCommitment:
-                        await new TxRollupFinalizeCommitmentCommit(this).Revert(currBlock, finalizeCommitment);
+                    case TxRollupFinalizeCommitmentOperation op:
+                        await new TxRollupFinalizeCommitmentCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupRemoveCommitmentOperation removeCommitment:
-                        await new TxRollupRemoveCommitmentCommit(this).Revert(currBlock, removeCommitment);
+                    case TxRollupRemoveCommitmentOperation op:
+                        await new TxRollupRemoveCommitmentCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupReturnBondOperation returnBond:
-                        await new TxRollupReturnBondCommit(this).Revert(currBlock, returnBond);
+                    case TxRollupReturnBondOperation op:
+                        await new TxRollupReturnBondCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupRejectionOperation rejection:
-                        await new TxRollupRejectionCommit(this).Revert(currBlock, rejection);
+                    case TxRollupRejectionOperation op:
+                        await new TxRollupRejectionCommit(this).Revert(currBlock, op);
                         break;
-                    case TxRollupDispatchTicketsOperation dispatchTickets:
-                        await new TxRollupDispatchTicketsCommit(this).Revert(currBlock, dispatchTickets);
+                    case TxRollupDispatchTicketsOperation op:
+                        await new TxRollupDispatchTicketsCommit(this).Revert(currBlock, op);
                         break;
-                    case TransferTicketOperation transferTicket:
-                        await new TransferTicketCommit(this).Revert(currBlock, transferTicket);
+                    case TransferTicketOperation op:
+                        await new TransferTicketCommit(this).Revert(currBlock, op);
                         break;
                     default:
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");

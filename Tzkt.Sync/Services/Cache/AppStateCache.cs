@@ -150,6 +150,26 @@ namespace Tzkt.Sync.Services.Cache
             AppState.InboxMessageCounter -= count;
         }
 
+        public int NextProposalId()
+        {
+            return ++AppState.ProposalCounter;
+        }
+
+        public void ReleaseProposalId()
+        {
+            AppState.ProposalCounter--;
+        }
+
+        public int NextSoftwareId()
+        {
+            return ++AppState.SoftwareCounter;
+        }
+
+        public void ReleaseSoftwareId()
+        {
+            AppState.SoftwareCounter--;
+        }
+
         public int NextStorageId()
         {
             return ++AppState.StorageCounter;

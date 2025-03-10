@@ -26,6 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     List<(string Address, BigInteger Balance)> Balances
                 )> Tokens
             )>();
+            var opBlocks = new Dictionary<int, Block> { { block.Level, block } };
 
             #region discover ledgers
             Dictionary<int, BigMap> pendingBigMaps = null;
@@ -35,9 +36,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     if ((bigmap.Tags & BigMapTag.LedgerTypes) != 0)
                     {
-                        var contract = op is TransactionOperation tx
-                            ? tx.Target as Contract
-                            : (op as OriginationOperation).Contract;
+                        var contract = await Cache.Accounts.GetAsync(
+                            op is TransactionOperation tx
+                                ? tx.TargetId
+                                : (op as OriginationOperation).ContractId
+                        ) as Contract;
 
                         if (contract.Tags.HasFlag(ContractTags.Ledger))
                         {
@@ -58,9 +61,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     if ((bigmap.Tags & BigMapTag.LedgerTypes) != 0)
                     {
-                        var contract = op is TransactionOperation tx
-                            ? tx.Target as Contract
-                            : (op as OriginationOperation).Contract;
+                        var contract = await Cache.Accounts.GetAsync(
+                            op is TransactionOperation tx
+                                ? tx.TargetId
+                                : (op as OriginationOperation).ContractId
+                        ) as Contract;
 
                         Db.TryAttach(contract);
                         contract.Tags &= ~ContractTags.Ledger;
@@ -69,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     }
                 }
                 else if ((bigmap.Tags & (BigMapTag.Persistent | BigMapTag.Ledger)) == BigMapTag.Persistent &&
-                    op is TransactionOperation tx && tx.Entrypoint == "transfer" && tx.Target is Contract contract &&
+                    op is TransactionOperation tx && tx.Entrypoint == "transfer" && await Cache.Accounts.GetAsync(tx.TargetId) is Contract contract &&
                     (contract.Tags & (ContractTags.FA | ContractTags.Ledger)) == ContractTags.FA)
                 {
                     Db.TryAttach(bigmap);
@@ -159,8 +164,12 @@ namespace Tzkt.Sync.Protocols.Proto5
                 #region group
                 foreach (var tx in pendingTransfers)
                 {
-                    tx.Block ??= Cache.Blocks.GetCached(tx.Level);
-                    Db.TryAttach(tx.Block);
+                    if (!opBlocks.ContainsKey(tx.Level))
+                    {
+                        var opBlock = Cache.Blocks.GetCached(tx.Level);
+                        opBlocks.Add(tx.Level, opBlock);
+                        Db.TryAttach(opBlock);
+                    }
 
                     var tokens = new Dictionary<BigInteger, (
                         List<(string From, string To, BigInteger Amount)> Transfers,
@@ -188,8 +197,12 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ? origs[(long)update.OriginationId] as ContractOperation
                         : txs[(long)update.TransactionId];
 
-                    op.Block ??= Cache.Blocks.GetCached(op.Level);
-                    Db.TryAttach(op.Block);
+                    if (!opBlocks.ContainsKey(op.Level))
+                    {
+                        var opBlock = Cache.Blocks.GetCached(op.Level);
+                        opBlocks.Add(op.Level, opBlock);
+                        Db.TryAttach(opBlock);
+                    }
 
                     if (!ops.TryGetValue(op, out var opCtx))
                     {
@@ -223,13 +236,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region group updates
-            if (block.Transactions != null)
+            foreach (var tx in Context.TransactionOps)
             {
-                foreach (var tx in block.Transactions)
+                if (tx.Status == OperationStatus.Applied && tx.Entrypoint == "transfer")
                 {
-                    if (tx.Status == OperationStatus.Applied &&
-                        tx.Entrypoint == "transfer" &&
-                        (tx.Target as Contract).Tags.HasFlag(ContractTags.Ledger))
+                    var contract = await Cache.Accounts.GetAsync(tx.TargetId) as Contract;
+                    if (contract.Tags.HasFlag(ContractTags.Ledger))
                     {
                         var tokens = new Dictionary<BigInteger, (
                             List<(string From, string To, BigInteger Amount)> Transfers,
@@ -246,7 +258,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                             ctx.Transfers.Add((from, to, amount));
                         }
 
-                        ops.Add(tx, (false, tx.Target as Contract, tokens));
+                        ops.Add(tx, (false, contract, tokens));
                     }
                 }
             }
@@ -257,9 +269,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (!ops.TryGetValue(op, out var opCtx))
                 {
-                    var contract = op is OriginationOperation orig
-                        ? orig.Contract
-                        : (op as TransactionOperation).Target as Contract;
+                    var contract = await Cache.Accounts.GetAsync(
+                        op is TransactionOperation tx
+                            ? tx.TargetId
+                            : (op as OriginationOperation).ContractId
+                    ) as Contract;
 
                     opCtx = (false, contract, new());
                     ops.Add(op, opCtx);
@@ -350,7 +364,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 if (opCtx.Reset)
                 {
-                    op.Block.Events |= BlockEvents.Tokens;
+                    opBlocks[op.Level].Events |= BlockEvents.Tokens;
                     await ResetLedgers(op, opCtx.Contract);
                 }
 
@@ -367,14 +381,14 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                         if (tokenCtx.Transfers.Count > 0 && ValidateTransfers(token, tokenCtx))
                         {
-                            ProcessTransfers(op, opCtx.Contract, token, tokenCtx.Transfers);
+                            ProcessTransfers(op, opBlocks[op.Level], opCtx.Contract, token, tokenCtx.Transfers);
                         }
                         else
                         {
-                            var diffs = GetDiffs(op, token, tokenCtx.Balances);
+                            var diffs = GetDiffs(op, opBlocks[op.Level], token, tokenCtx.Balances);
                             if (diffs.Count > 0)
                             {
-                                ProcessDiffs(op, opCtx.Contract, token, diffs);
+                                ProcessDiffs(op, opBlocks[op.Level], opCtx.Contract, token, diffs);
                             }
                         }
                     }
@@ -382,16 +396,16 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         if (tokenCtx.Transfers.Count > 0 && ValidateTransfers(tokenCtx))
                         {
-                            token = GetOrCreateToken(op, opCtx.Contract, tokenId);
-                            ProcessTransfers(op, opCtx.Contract, token, tokenCtx.Transfers);
+                            token = GetOrCreateToken(op, opBlocks[op.Level], opCtx.Contract, tokenId);
+                            ProcessTransfers(op, opBlocks[op.Level], opCtx.Contract, token, tokenCtx.Transfers);
                         }
                         else
                         {
-                            var diffs = GetDiffs(op, opCtx.Contract, tokenId, tokenCtx.Balances);
+                            var diffs = GetDiffs(op, opBlocks[op.Level], opCtx.Contract, tokenId, tokenCtx.Balances);
                             if (diffs.Count > 0)
                             {
-                                token = GetOrCreateToken(op, opCtx.Contract, tokenId);
-                                ProcessDiffs(op, opCtx.Contract, token, diffs);
+                                token = GetOrCreateToken(op, opBlocks[op.Level], opCtx.Contract, tokenId);
+                                ProcessDiffs(op, opBlocks[op.Level], opCtx.Contract, token, diffs);
                             }
                         }
                     }
@@ -489,23 +503,23 @@ namespace Tzkt.Sync.Protocols.Proto5
             return dic.Values.All(x => x == BigInteger.Zero);
         }
 
-        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Contract contract, BigInteger tokenId, List<(string, BigInteger)> balances)
+        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Contract contract, BigInteger tokenId, List<(string, BigInteger)> balances)
         {
             var diffs = new List<(Account, TokenBalance, BigInteger Diff)>(balances.Count);
             foreach (var (address, balance) in balances)
             {
                 if (balance != BigInteger.Zero)
                 {
-                    var token = GetOrCreateToken(op, contract, tokenId);
-                    var account = GetOrCreateAccount(op, address);
-                    var tokenBalance = GetOrCreateTokenBalance(op, token, account);
+                    var token = GetOrCreateToken(op, block, contract, tokenId);
+                    var account = GetOrCreateAccount(op, block, address);
+                    var tokenBalance = GetOrCreateTokenBalance(op, block, token, account);
                     diffs.Add((account, tokenBalance, balance));
                 }
             }
             return diffs;
         }
 
-        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Token token, List<(string, BigInteger)> balances)
+        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Token token, List<(string, BigInteger)> balances)
         {
             var diffs = new List<(Account, TokenBalance, BigInteger Diff)>(balances.Count);
             foreach (var (address, balance) in balances)
@@ -518,37 +532,37 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var diff = balance - prevBalance;
                 if (diff != BigInteger.Zero)
                 {
-                    account = GetOrCreateAccount(op, address);
-                    tokenBalance = GetOrCreateTokenBalance(op, token, account);
+                    account = GetOrCreateAccount(op, block, address);
+                    tokenBalance = GetOrCreateTokenBalance(op, block, token, account);
                     diffs.Add((account, tokenBalance, diff));
                 }
             }
             return diffs;
         }
 
-        void ProcessTransfers(ContractOperation op, Contract contract, Token token, List<(string, string, BigInteger)> transfers)
+        void ProcessTransfers(ContractOperation op, Block block, Contract contract, Token token, List<(string, string, BigInteger)> transfers)
         {
             Db.TryAttach(token);
             token.LastLevel = op.Level;
 
-            op.Block.Events |= BlockEvents.Tokens;
+            block.Events |= BlockEvents.Tokens;
 
             foreach (var (from, to, amount) in transfers)
             {
-                var fromAcc = GetOrCreateAccount(op, from);
-                var fromBalance = GetOrCreateTokenBalance(op, token, fromAcc);
-                var toAcc = GetOrCreateAccount(op, to);
-                var toBalance = GetOrCreateTokenBalance(op, token, toAcc);
+                var fromAcc = GetOrCreateAccount(op, block, from);
+                var fromBalance = GetOrCreateTokenBalance(op, block, token, fromAcc);
+                var toAcc = GetOrCreateAccount(op, block, to);
+                var toBalance = GetOrCreateTokenBalance(op, block, token, toAcc);
                 TransferTokens(op, contract, token, fromAcc, fromBalance, toAcc, toBalance, amount);
             }
         }
 
-        void ProcessDiffs(ContractOperation op, Contract contract, Token token, List<(Account, TokenBalance, BigInteger Diff)> diffs)
+        void ProcessDiffs(ContractOperation op, Block block, Contract contract, Token token, List<(Account, TokenBalance, BigInteger Diff)> diffs)
         {
             Db.TryAttach(token);
             token.LastLevel = op.Level;
 
-            op.Block.Events |= BlockEvents.Tokens;
+            block.Events |= BlockEvents.Tokens;
 
             if (diffs.Count == 1 || diffs.BigSum(x => x.Diff) != BigInteger.Zero)
             {
@@ -580,7 +594,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
         }
 
-        Account GetOrCreateAccount(ContractOperation op, string address)
+        Account GetOrCreateAccount(ContractOperation op, Block block, string address)
         {
             if (!Cache.Accounts.TryGetCached(address, out var account))
             {
@@ -604,13 +618,13 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Db.Accounts.Add(account);
                 Cache.Accounts.Add(account);
 
-                Db.TryAttach(op.Block);
-                op.Block.Events |= BlockEvents.NewAccounts;
+                Db.TryAttach(block);
+                block.Events |= BlockEvents.NewAccounts;
             }
             return account;
         }
 
-        Token GetOrCreateToken(ContractOperation op, Contract contract, BigInteger tokenId)
+        Token GetOrCreateToken(ContractOperation op, Block block, Contract contract, BigInteger tokenId)
         {
             if (!Cache.Tokens.TryGet(contract.Id, tokenId, out var token))
             {
@@ -641,13 +655,13 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Db.TryAttach(contract);
                 contract.TokensCount++;
 
-                Db.TryAttach(op.Block);
-                op.Block.Events |= BlockEvents.Tokens;
+                Db.TryAttach(block);
+                block.Events |= BlockEvents.Tokens;
             }
             return token;
         }
 
-        TokenBalance GetOrCreateTokenBalance(ContractOperation op, Token token, Account account)
+        TokenBalance GetOrCreateTokenBalance(ContractOperation op, Block block, Token token, Account account)
         {
             if (!Cache.TokenBalances.TryGet(account.Id, token.Id, out var tokenBalance))
             {
@@ -676,7 +690,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (account.FirstLevel > op.Level)
                 {
                     account.FirstLevel = op.Level;
-                    op.Block.Events |= BlockEvents.NewAccounts;
+                    block.Events |= BlockEvents.NewAccounts;
                 }
             }
             return tokenBalance;

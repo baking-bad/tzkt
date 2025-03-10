@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 return;
 
             await TakeSnapshot(block);
-            await TakeWeirdsSnapshot(block);
+            await TakeWeirdsSnapshot(block, Context.Protocol);
         }
 
         public virtual async Task Revert(Block block)
@@ -70,16 +70,16 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var deactivated = await Db.Delegates
                 .AsNoTracking()
-                .Include(x => x.DelegatedAccounts)
-                .Where(x => x.DeactivationLevel == block.Level)
+                .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
+                .Where(x => x.baker.DeactivationLevel == block.Level)
                 .ToListAsync();
 
             if (deactivated.Any())
             {
                 var values = string.Join(",\n", deactivated
-                    .SelectMany(baker =>
-                        new[] { $"({block.Level}, {baker.Id}, {baker.Id}, {baker.StakingBalance - baker.DelegatedBalance}, {baker.DelegatedBalance}, {baker.DelegatorsCount}, 0, 0, 0)" }
-                        .Concat(baker.DelegatedAccounts.Select(delegator => $"({block.Level}, {delegator.Id}, {delegator.DelegateId}, {delegator.Balance}, 0, 0, 0, 0, 0)"))));
+                    .SelectMany(row =>
+                        new[] { $"({block.Level}, {row.baker.Id}, {row.baker.Id}, {row.baker.StakingBalance - row.baker.DelegatedBalance}, {row.baker.DelegatedBalance}, {row.baker.DelegatorsCount}, 0, 0, 0)" }
+                        .Concat(row.delegators.Select(delegator => $"({block.Level}, {delegator.Id}, {delegator.DelegateId}, {delegator.Balance}, 0, 0, 0, 0, 0)"))));
 
                 if (values.Length > 0)
                 {
@@ -145,22 +145,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray();
         }
 
-        async Task TakeWeirdsSnapshot(Block block)
+        async Task TakeWeirdsSnapshot(Block block, Protocol protocol)
         {
             var weirdDelegators = (await Db.Contracts
                 .AsNoTracking()
-                .Include(x => x.WeirdDelegate)
+                .Join(Db.Users, x => x.WeirdDelegateId, x => x.Id, (contract, weirdDelegate) => new { contract, weirdDelegate })
                 .Where(x =>
-                    x.DelegateId == null &&
-                    x.WeirdDelegateId != null &&
-                    x.WeirdDelegate.Type != AccountType.Delegate)
+                    x.contract.DelegateId == null &&
+                    x.contract.WeirdDelegateId != null &&
+                    x.weirdDelegate.Type != AccountType.Delegate)
+                .Select(x => x.contract)
                 .ToListAsync())
                 .GroupBy(x => x.WeirdDelegateId);
 
             if (weirdDelegators.Any())
             {
                 var values = string.Join(",\n", weirdDelegators
-                    .Where(weirds => weirds.Sum(x => x.Balance) >= block.Protocol.MinimalStake)
+                    .Where(weirds => weirds.Sum(x => x.Balance) >= protocol.MinimalStake)
                     .SelectMany(weirds =>
                         new[] { $"({block.Level}, {weirds.First().WeirdDelegateId}, {weirds.First().WeirdDelegateId}, 0, {weirds.Sum(x => x.Balance)}, {weirds.Count()}, 0, 0, 0)" }
                         .Concat(weirds.Select(x => $"({block.Level}, {x.Id}, {x.WeirdDelegateId}, {x.Balance}, 0, 0, 0, 0, 0)"))));

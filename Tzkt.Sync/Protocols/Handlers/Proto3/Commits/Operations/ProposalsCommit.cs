@@ -13,19 +13,20 @@ namespace Tzkt.Sync.Protocols.Proto3
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            #region init
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
+            Db.TryAttach(period);
             var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
+            Db.TryAttach(sender);
             
             var snapshot = await Db.VotingSnapshots
                 .FirstOrDefaultAsync(x => x.Period == period.Index && x.BakerId == sender.Id)
                     ?? throw new ValidationException("Proposal sender is not on the voters list");
 
-            var proposalOperations = new List<ProposalOperation>(4);
             foreach (var proposalHash in content.RequiredArray("proposals").EnumerateArray())
             {
                 var proposal = await Cache.Proposals.GetOrCreateAsync(period.Epoch, proposalHash.RequiredString(), () => new Proposal
                 {
+                    Id = Cache.AppState.NextProposalId(),
                     Hash = proposalHash.RequiredString(),
                     Epoch = period.Epoch,
                     FirstPeriod = period.Index,
@@ -34,38 +35,27 @@ namespace Tzkt.Sync.Protocols.Proto3
                     Status = ProposalStatus.Active
                 });
 
-                var duplicated = proposalOperations.Any(x => x.Period == period.Index && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash);
-                if (!duplicated) duplicated = block.Proposals?.Any(x => x.Period == period.Index && x.Sender.Id == sender.Id && x.Proposal.Hash == proposal.Hash) ?? false;
+                if (proposal.Upvotes == 0)
+                    Db.Proposals.Add(proposal);
+                else
+                    Db.TryAttach(proposal);
+
+                var duplicated = Context.ProposalOps.Any(x => x.Period == period.Index && x.SenderId == sender.Id && x.ProposalId == proposal.Id);
                 if (!duplicated) duplicated = await Db.ProposalOps.AnyAsync(x => x.Period == period.Index && x.SenderId == sender.Id && x.ProposalId == proposal.Id);
 
-                proposalOperations.Add(new ProposalOperation
+                var proposalOp = new ProposalOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
-                    Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     OpHash = op.RequiredString("hash"),
-                    Sender = sender,
+                    SenderId = sender.Id,
                     VotingPower = snapshot.VotingPower,
                     Duplicated = duplicated,
                     Epoch = period.Epoch,
                     Period = period.Index,
-                    Proposal = proposal
-                });
-            }
-            #endregion
-
-            foreach (var proposalOp in proposalOperations)
-            {
-                #region entities
-                var proposal = proposalOp.Proposal;
-
-                //Db.TryAttach(block);
-                Db.TryAttach(period);
-                Db.TryAttach(sender);
-                Db.TryAttach(proposal);
-                //Db.TryAttach(snapshot);
-                #endregion
+                    ProposalId = proposal.Id,
+                };
 
                 #region apply operation
                 if (!proposalOp.Duplicated)
@@ -73,7 +63,6 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (proposal.Upvotes == 0)
                     {
                         period.ProposalsCount++;
-                        Cache.AppState.Get().ProposalsCount++;
                     }
 
                     proposal.Upvotes++;
@@ -101,31 +90,24 @@ namespace Tzkt.Sync.Protocols.Proto3
                 #endregion
 
                 Db.ProposalOps.Add(proposalOp);
+                Context.ProposalOps.Add(proposalOp);
             }
         }
 
         public virtual async Task Revert(Block block, ProposalOperation proposalOp)
         {
-            #region init
-            proposalOp.Block ??= block;
-            proposalOp.Sender ??= Cache.Accounts.GetDelegate(proposalOp.SenderId);
-            proposalOp.Proposal ??= await Cache.Proposals.GetAsync(proposalOp.ProposalId);
+            #region entities
+            var sender = Cache.Accounts.GetDelegate(proposalOp.SenderId);
+            var proposal = await Cache.Proposals.GetAsync(proposalOp.ProposalId);
 
             var snapshot = await Db.VotingSnapshots
-                .FirstAsync(x => x.Period == proposalOp.Period && x.BakerId == proposalOp.Sender.Id);
+                .FirstAsync(x => x.Period == proposalOp.Period && x.BakerId == proposalOp.SenderId);
 
             var period = await Cache.Periods.GetAsync(proposalOp.Period);
-            #endregion
 
-            #region entities
-            var sender = proposalOp.Sender;
-            var proposal = proposalOp.Proposal;
-
-            //Db.TryAttach(block);
             Db.TryAttach(period);
             Db.TryAttach(sender);
             Db.TryAttach(proposal);
-            //Db.TryAttach(snapshot);
             #endregion
 
             #region revert operation
@@ -158,7 +140,6 @@ namespace Tzkt.Sync.Protocols.Proto3
                 if (proposal.Upvotes == 0)
                 {
                     period.ProposalsCount--;
-                    Cache.AppState.Get().ProposalsCount--;
                 }
 
                 if (!await Db.ProposalOps.AnyAsync(x => x.Period == period.Index && x.SenderId == sender.Id && x.Id < proposalOp.Id))
@@ -174,6 +155,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             {
                 Db.Proposals.Remove(proposal);
                 Cache.Proposals.Remove(proposal);
+                Cache.AppState.ReleaseProposalId();
             }
 
             Db.ProposalOps.Remove(proposalOp);

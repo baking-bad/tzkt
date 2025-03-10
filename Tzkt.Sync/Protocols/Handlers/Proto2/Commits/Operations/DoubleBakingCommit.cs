@@ -32,18 +32,20 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .FirstOrDefault(x => x.RequiredString("category")[0] == 'f' && x.RequiredInt64("change") < 0);
             var lostFeesValue = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0;
 
+            var accuser = Context.Proposer;
+            var offender = Cache.Accounts.GetDelegate(offenderAddr);
+
             var doubleBaking = new DoubleBakingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
                 SlashedLevel = block.Level,
                 AccusedLevel = content.Required("bh1").RequiredInt32("level"),
-                Accuser = block.Proposer,
-                Offender = Cache.Accounts.GetDelegate(offenderAddr),
+                AccuserId = accuser.Id,
+                OffenderId = offender.Id,
 
                 Reward = rewards.ValueKind != JsonValueKind.Undefined ? rewards.RequiredInt64("change") : 0,
                 LostStaked = lostDepositsValue + lostRewardsValue + lostFeesValue,
@@ -54,11 +56,6 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region entities
-            //var block = doubleBaking.Block;
-            var accuser = doubleBaking.Accuser;
-            var offender = doubleBaking.Offender;
-
-            //Db.TryAttach(block);
             Db.TryAttach(accuser);
             Db.TryAttach(offender);
             #endregion
@@ -74,28 +71,22 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             block.Operations |= Operations.DoubleBakings;
 
+            Cache.AppState.Get().DoubleBakingOpsCount++;
             Cache.Statistics.Current.TotalBurned += doubleBaking.LostStaked - doubleBaking.Reward;
             Cache.Statistics.Current.TotalFrozen -= doubleBaking.LostStaked - doubleBaking.Reward;
             #endregion
 
             Db.DoubleBakingOps.Add(doubleBaking);
+            Context.DoubleBakingOps.Add(doubleBaking);
             return Task.CompletedTask;
         }
 
         public virtual Task Revert(Block block, DoubleBakingOperation doubleBaking)
         {
-            #region init
-            doubleBaking.Block ??= block;
-            doubleBaking.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            doubleBaking.Accuser ??= Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
-            doubleBaking.Offender ??= Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
-            #endregion
-
             #region entities
             //var block = doubleBaking.Block;
-            var accuser = doubleBaking.Accuser;
-            var offender = doubleBaking.Offender;
+            var accuser = Cache.Accounts.GetDelegate(doubleBaking.AccuserId);
+            var offender = Cache.Accounts.GetDelegate(doubleBaking.OffenderId);
 
             //Db.TryAttach(block);
             Db.TryAttach(accuser);
@@ -111,6 +102,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;
+
+            Cache.AppState.Get().DoubleBakingOpsCount--;
             #endregion
 
             Db.DoubleBakingOps.Remove(doubleBaking);

@@ -136,16 +136,18 @@ namespace Tzkt.Sync.Protocols.Proto15
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
+
+            var migration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                Account = account,
+                AccountId = account.Id,
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = amount
-            });
+            };
+            Db.MigrationOps.Add(migration);
+            Context.MigrationOps.Add(migration);
 
             Db.TryAttach(state);
             state.MigrationOpsCount++;
@@ -423,10 +425,9 @@ namespace Tzkt.Sync.Protocols.Proto15
                     var migration = new MigrationOperation
                     {
                         Id = Cache.AppState.NextOperationId(),
-                        Block = block,
                         Level = block.Level,
                         Timestamp = block.Timestamp,
-                        Account = contract,
+                        AccountId = contract.Id,
                         Kind = MigrationKind.CodeChange
                     };
                     var newScript = new Script
@@ -464,8 +465,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                     contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                    migration.Script = newScript;
-                    migration.Storage = newStorage;
+                    migration.ScriptId = newScript.Id;
+                    migration.StorageId = newStorage.Id;
 
                     contract.MigrationsCount++;
                     contract.LastLevel = migration.Level;
@@ -473,6 +474,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                     state.MigrationOpsCount++;
 
                     Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
 
                     Db.Scripts.Add(newScript);
                     Cache.Schemas.Add(contract, newScript.Schema);

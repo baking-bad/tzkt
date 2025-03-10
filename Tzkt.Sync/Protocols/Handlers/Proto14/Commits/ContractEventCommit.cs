@@ -19,7 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto14
         {
             #region init
             var contract = await Cache.Accounts.GetAsync(content.RequiredString("source")) as Contract;
-            var parentTx = block.Transactions.OrderByDescending(x => x.Id).FirstOrDefault(x => x.Target?.Id == contract.Id)
+            var parentTx = Context.TransactionOps.OrderByDescending(x => x.Id).FirstOrDefault(x => x.TargetId == contract.Id)
                 ?? throw new Exception("Event parent transaction not found");
 
             var result = content.Required("result");

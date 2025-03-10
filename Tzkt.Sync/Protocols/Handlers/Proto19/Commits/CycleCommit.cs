@@ -17,17 +17,17 @@ namespace Tzkt.Sync.Protocols.Proto19
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                 {
                     Cache.AppState.Get().CyclesCount--;
                     return;
                 }
             }
 
-            var index = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var index = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             var contextTask = Proto.Rpc.GetCycleAsync(block.Level, index);
             var issuanceTask = Proto.Rpc.GetExpectedIssuance(block.Level);
@@ -51,8 +51,8 @@ namespace Tzkt.Sync.Protocols.Proto19
             FutureCycle = new Cycle
             {
                 Index = index, 
-                FirstLevel = block.Protocol.GetCycleStart(index),
-                LastLevel = block.Protocol.GetCycleEnd(index),
+                FirstLevel = Context.Protocol.GetCycleStart(index),
+                LastLevel = Context.Protocol.GetCycleEnd(index),
                 SnapshotLevel = block.Level - 1,
                 TotalBakers = SelectedStakes.Count,
                 TotalBakingPower = SelectedStakes.Values.Sum(),
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             };
 
             FutureCycle.MaxBlockReward = FutureCycle.BlockReward
-                + FutureCycle.BlockBonusPerSlot * (block.Protocol.EndorsersPerBlock - block.Protocol.ConsensusThreshold);
+                + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
 
             Db.Cycles.Add(FutureCycle);
         }
@@ -75,12 +75,10 @@ namespace Tzkt.Sync.Protocols.Proto19
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                 {
                     Cache.AppState.Get().CyclesCount++;
                     return;
@@ -89,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             await Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "Cycles"
-                WHERE "Index" = {block.Cycle + block.Protocol.ConsensusRightsDelay}
+                WHERE "Index" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
                 """);
         }
     }

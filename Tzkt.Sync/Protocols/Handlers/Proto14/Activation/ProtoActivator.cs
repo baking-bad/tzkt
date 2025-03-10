@@ -36,16 +36,17 @@ namespace Tzkt.Sync.Protocols.Proto14
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
+            var migration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                Account = account,
+                AccountId = account.Id,
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = 3_000_000_000L
-            });
+            };
+            Db.MigrationOps.Add(migration);
+            Context.MigrationOps.Add(migration);
 
             Db.TryAttach(state);
             state.MigrationOpsCount++;
@@ -70,14 +71,13 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .Include(x => x.Account)
                 .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
-            Db.TryAttach(invoice.Account);
-            Cache.Accounts.Add(invoice.Account);
+            var account = await Cache.Accounts.GetAsync(invoice.AccountId);
+            Db.TryAttach(account);
 
-            invoice.Account.Balance -= invoice.BalanceChange;
-            invoice.Account.MigrationsCount--;
+            account.Balance -= invoice.BalanceChange;
+            account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
             Cache.AppState.ReleaseOperationId();

@@ -23,7 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
-            if (block.BlockRound == 0 && block.Validations == block.Protocol.EndorsersPerBlock)
+            if (block.BlockRound == 0 && block.Validations == Context.Protocol.EndorsersPerBlock)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
                 CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
@@ -106,10 +106,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     cr.Status = BakingRightStatus.Missed;
 
                 CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
-                
-                if (block.Endorsements != null)
+
+                if (Context.EndorsementOps.Count != 0)
                 {
-                    var endorsers = new HashSet<int>(block.Endorsements.Select(x => x.Delegate.Id));
+                    var endorsers = new HashSet<int>(Context.EndorsementOps.Select(x => x.DelegateId));
                     foreach (var er in CurrentRights.Where(x => x.Type == BakingRightType.Endorsing && endorsers.Contains(x.BakerId)))
                         er.Status = BakingRightStatus.Realized;
                 }
@@ -139,10 +139,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
-                FutureBakingRights = await GetBakingRights(block, futureCycle);
-                FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);
+                FutureBakingRights = await GetBakingRights(block, Context.Protocol, futureCycle);
+                FutureEndorsingRights = await GetEndorsingRights(block, Context.Protocol, futureCycle);
 
                 foreach (var er in FutureEndorsingRights)
                     if (!await Cache.Accounts.ExistsAsync(er.RequiredString("delegate")))
@@ -161,7 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var acc = await Cache.Accounts.GetAsync(er.RequiredString("delegate"));
                     
                     writer.StartRow();
-                    writer.Write(block.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(Context.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
                     writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                             // level + 1 (shifted)
                     writer.Write(acc.Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
@@ -192,7 +192,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Revert(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
             #region current rights
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
 
@@ -210,25 +209,25 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""BakingRights""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.ConsensusRightsDelay} AND ""Type"" = 0
-                    OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.ConsensusRightsDelay)}");
+                    WHERE   ""Cycle"" = {block.Cycle + Context.Protocol.ConsensusRightsDelay} AND ""Type"" = 0
+                    OR      ""Level"" > {Context.Protocol.GetCycleStart(block.Cycle + Context.Protocol.ConsensusRightsDelay)}");
             }
             #endregion
         }
 
-        protected virtual async Task<IEnumerable<JsonElement>> GetBakingRights(Block block, int cycle)
+        protected virtual async Task<IEnumerable<JsonElement>> GetBakingRights(Block block, Protocol protocol, int cycle)
         {
             var rights = (await Proto.Rpc.GetBakingRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
-            if (!rights.Any() || rights.Count(x => x.RequiredInt32("priority") == 0) != block.Protocol.BlocksPerCycle)
+            if (!rights.Any() || rights.Count(x => x.RequiredInt32("priority") == 0) != protocol.BlocksPerCycle)
                 throw new ValidationException("Rpc returned less baking rights (with priority 0) than it should be");
 
             return rights;
         }
 
-        protected virtual async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, int cycle)
+        protected virtual async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, Protocol protocol, int cycle)
         {
             var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
-            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != block.Protocol.BlocksPerCycle * block.Protocol.EndorsersPerBlock)
+            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                 throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
 
             return rights;

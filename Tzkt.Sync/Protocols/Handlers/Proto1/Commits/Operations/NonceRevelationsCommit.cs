@@ -19,16 +19,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : 0;
 
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));
+            var sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId);
+
             var revelation = new NonceRevelationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Baker = block.Proposer,
-                Sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId),
-                RevealedBlock = revealedBlock,
+                BakerId = Context.Proposer.Id,
+                SenderId = sender.Id,
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce")),
@@ -37,8 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = revelation.Sender;
+            var blockBaker = Context.Proposer;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -53,31 +52,23 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             block.Operations |= Operations.Revelations;
 
-            revealedBlock.Revelation = revelation;
+            revealedBlock.RevelationId = revelation.Id;
 
+            Cache.AppState.Get().NonceRevelationOpsCount++;
             Cache.Statistics.Current.TotalCreated += revelation.RewardDelegated;
             Cache.Statistics.Current.TotalFrozen += revelation.RewardDelegated;
             #endregion
 
             Db.NonceRevelationOps.Add(revelation);
+            Context.NonceRevelationOps.Add(revelation);
         }
 
         public virtual async Task Revert(Block block, NonceRevelationOperation revelation)
         {
-            #region init
-            revelation.Block ??= block;
-            revelation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            revelation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
-            revelation.Sender ??= Cache.Accounts.GetDelegate(revelation.SenderId);
-            revelation.RevealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = revelation.Sender;
-            var revealedBlock = revelation.RevealedBlock;
+            var blockBaker = Context.Proposer;
+            var sender = Cache.Accounts.GetDelegate(revelation.SenderId);
+            var revealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -90,8 +81,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.NonceRevelationsCount--;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount--;
 
-            revealedBlock.Revelation = null;
             revealedBlock.RevelationId = null;
+
+            Cache.AppState.Get().NonceRevelationOpsCount--;
             #endregion
 
             Db.NonceRevelationOps.Remove(revelation);
