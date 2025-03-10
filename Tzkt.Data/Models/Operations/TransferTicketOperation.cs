@@ -52,14 +52,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TransferTicketOperation>()
                 .HasIndex(x => x.TicketerId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<TransferTicketOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.TransferTicketOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

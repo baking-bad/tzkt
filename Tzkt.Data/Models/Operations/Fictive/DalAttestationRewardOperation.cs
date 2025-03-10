@@ -1,9 +1,10 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class DalAttestationRewardOperation
+    public class DalAttestationRewardOperation : IOperation
     {
         public long Id { get; set; }
         public int Level { get; set; }

@@ -23,14 +23,12 @@ namespace Tzkt.Sync.Protocols.Proto18
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
                 SenderId = sender.Id,
                 Action = content.Required("parameters").RequiredString("entrypoint") switch
                 {
@@ -75,8 +73,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            block.Proposer.Balance += operation.BakerFee;
-            block.Proposer.StakingBalance += operation.BakerFee;
+            Context.Proposer.Balance += operation.BakerFee;
+            Context.Proposer.StakingBalance += operation.BakerFee;
 
             block.Operations |= Operations.Staking;
             block.Fees += operation.BakerFee;
@@ -121,8 +119,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.StakingOps.Add(operation);
+            Context.StakingOps.Add(operation);
         }
 
         public async Task Revert(Block block, StakingOperation operation)
@@ -162,8 +161,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            block.Proposer.Balance -= operation.BakerFee;
-            block.Proposer.StakingBalance -= operation.BakerFee;
+            Context.Proposer.Balance -= operation.BakerFee;
+            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().StakingOpsCount--;
             #endregion

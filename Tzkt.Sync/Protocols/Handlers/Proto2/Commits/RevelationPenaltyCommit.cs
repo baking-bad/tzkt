@@ -15,16 +15,16 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
-                if (HasPenaltiesUpdates(block, rawBlock))
+                if (HasPenaltiesUpdates(block, Context.Protocol, rawBlock))
                 {
                     revelationPenalties = new List<RevelationPenaltyOperation>();
 
                     var missedBlocks = await Db.Blocks
-                        .Include(x => x.Proposer)
-                        .Include(x => x.Protocol)
-                        .Where(x => x.Level % x.Protocol.BlocksPerCommitment == 0 &&
-                            x.Cycle == block.Cycle - 1 &&
-                            x.RevelationId == null)
+                        .Join(Db.Protocols, x => x.ProtoCode, x => x.Code, (block, protocol) => new { block, protocol })
+                        .Where(x => x.block.Level % x.protocol.BlocksPerCommitment == 0 &&
+                            x.block.Cycle == block.Cycle - 1 &&
+                            x.block.RevelationId == null)
+                        .Select(x => x.block)
                         .ToListAsync();
 
                     var penalizedBakers = missedBlocks
@@ -42,13 +42,12 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                     foreach (var missedBlock in missedBlocks)
                     {
-                        Cache.Accounts.Add(missedBlock.Proposer);
+                        var missedBlockProposer = Cache.Accounts.GetDelegate(missedBlock.ProposerId);
                         var slashed = slashedBakers.Contains((int)missedBlock.ProposerId);
                         revelationPenalties.Add(new RevelationPenaltyOperation
                         {
                             Id = Cache.AppState.NextOperationId(),
-                            Baker = missedBlock.Proposer,
-                            Block = block,
+                            BakerId = missedBlockProposer.Id,
                             Level = block.Level,
                             Timestamp = block.Timestamp,
                             MissedLevel = missedBlock.Level,
@@ -64,9 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             foreach (var penalty in revelationPenalties)
             {
                 #region entities
-                //var block = penalty.Block;
-                var delegat = penalty.Baker;
-
+                var delegat = Cache.Accounts.GetDelegate(penalty.BakerId);
                 Db.TryAttach(delegat);
                 #endregion
 
@@ -78,37 +75,21 @@ namespace Tzkt.Sync.Protocols.Proto2
                 delegat.RevelationPenaltiesCount++;
                 block.Operations |= Operations.RevelationPenalty;
 
+                Cache.AppState.Get().RevelationPenaltyOpsCount++;
                 Cache.Statistics.Current.TotalBurned += penalty.Loss;
                 Cache.Statistics.Current.TotalFrozen -= penalty.Loss;
 
                 Db.RevelationPenaltyOps.Add(penalty);
+                Context.RevelationPenaltyOps.Add(penalty);
             }
         }
 
         public virtual async Task Revert(Block block)
         {
-            #region init
-            List<RevelationPenaltyOperation> revelationPenalties = null;
-
-            if (block.RevelationPenalties?.Count > 0)
-            {
-                revelationPenalties = block.RevelationPenalties;
-                foreach (var penalty in revelationPenalties)
-                {
-                    penalty.Block ??= block;
-                    penalty.Baker ??= Cache.Accounts.GetDelegate(penalty.BakerId);
-                }
-            }
-            #endregion
-
-            if (revelationPenalties == null) return;
-
-            foreach (var penalty in revelationPenalties)
+            foreach (var penalty in Context.RevelationPenaltyOps)
             {
                 #region entities
-                //var block = penalty.Block;
-                var delegat = penalty.Baker;
-
+                var delegat = Cache.Accounts.GetDelegate(penalty.BakerId);
                 Db.TryAttach(delegat);
                 #endregion
 
@@ -119,6 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                 delegat.RevelationPenaltiesCount--;
 
+                Cache.AppState.Get().RevelationPenaltyOpsCount--;
+
                 Db.RevelationPenaltyOps.Remove(penalty);
                 Cache.AppState.ReleaseOperationId();
             }
@@ -126,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
 
-        protected virtual bool HasPenaltiesUpdates(Block block, JsonElement rawBlock)
+        protected virtual bool HasPenaltiesUpdates(Block block, Protocol protocol, JsonElement rawBlock)
         {
             return rawBlock
                 .Required("metadata")
@@ -134,7 +117,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 .EnumerateArray()
                 .Any(x => x.RequiredString("kind")[0] == 'f' &&
                           x.RequiredInt64("change") < 0 &&
-                          GetFreezerCycle(x) != block.Cycle - block.Protocol.ConsensusRightsDelay);
+                          GetFreezerCycle(x) != block.Cycle - protocol.ConsensusRightsDelay);
         }
     }
 }

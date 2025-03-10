@@ -110,34 +110,28 @@ namespace Tzkt.Sync.Protocols.Proto18
                     throw new Exception("Unexpected future rights");
             }
 
-            if (block.Revelations != null)
+            foreach (var op in Context.NonceRevelationOps)
             {
-                foreach (var op in block.Revelations)
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.BakerId);
+                if (bakerCycle != null)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.Baker.Id);
-                    if (bakerCycle != null)
-                    {
-                        Db.TryAttach(bakerCycle);
-                        bakerCycle.NonceRevelationRewardsDelegated += op.RewardDelegated;
-                        bakerCycle.NonceRevelationRewardsStakedOwn += op.RewardStakedOwn;
-                        bakerCycle.NonceRevelationRewardsStakedEdge += op.RewardStakedEdge;
-                        bakerCycle.NonceRevelationRewardsStakedShared += op.RewardStakedShared;
-                    }
+                    Db.TryAttach(bakerCycle);
+                    bakerCycle.NonceRevelationRewardsDelegated += op.RewardDelegated;
+                    bakerCycle.NonceRevelationRewardsStakedOwn += op.RewardStakedOwn;
+                    bakerCycle.NonceRevelationRewardsStakedEdge += op.RewardStakedEdge;
+                    bakerCycle.NonceRevelationRewardsStakedShared += op.RewardStakedShared;
                 }
             }
 
-            if (block.VdfRevelationOps != null)
+            foreach (var op in Context.VdfRevelationOps)
             {
-                foreach (var op in block.VdfRevelationOps)
-                {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
-                    Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
+                Db.TryAttach(bakerCycle);
 
-                    bakerCycle.VdfRevelationRewardsDelegated += op.RewardDelegated;
-                    bakerCycle.VdfRevelationRewardsStakedOwn += op.RewardStakedOwn;
-                    bakerCycle.VdfRevelationRewardsStakedEdge += op.RewardStakedEdge;
-                    bakerCycle.VdfRevelationRewardsStakedShared += op.RewardStakedShared;
-                }
+                bakerCycle.VdfRevelationRewardsDelegated += op.RewardDelegated;
+                bakerCycle.VdfRevelationRewardsStakedOwn += op.RewardStakedOwn;
+                bakerCycle.VdfRevelationRewardsStakedEdge += op.RewardStakedEdge;
+                bakerCycle.VdfRevelationRewardsStakedShared += op.RewardStakedShared;
             }
         }
 
@@ -166,10 +160,10 @@ namespace Tzkt.Sync.Protocols.Proto18
                 };
                 if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                 {
-                    var expectedEndorsements = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
-                    var expectedDalShards = (int)(new BigInteger(block.Protocol.BlocksPerCycle) * block.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedEndorsements = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedDalShards = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
                     bakerCycle.BakingPower = bakingPower;
-                    bakerCycle.ExpectedBlocks = block.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
+                    bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                     bakerCycle.ExpectedEndorsements = expectedEndorsements;
                     bakerCycle.FutureEndorsementRewards = expectedEndorsements * futureCycle.EndorsementRewardPerSlot;
                     bakerCycle.ExpectedDalShards = expectedDalShards;
@@ -319,43 +313,36 @@ namespace Tzkt.Sync.Protocols.Proto18
                     throw new Exception("Unexpected future rights");
             }
 
-            if (block.Revelations != null)
+            foreach (var op in Context.NonceRevelationOps)
             {
-                foreach (var op in block.Revelations)
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.BakerId);
+                if (bakerCycle != null)
                 {
-                    var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.BakerId);
-                    if (bakerCycle != null)
-                    {
-                        Db.TryAttach(bakerCycle);
-                        bakerCycle.NonceRevelationRewardsDelegated -= op.RewardDelegated;
-                        bakerCycle.NonceRevelationRewardsStakedOwn -= op.RewardStakedOwn;
-                        bakerCycle.NonceRevelationRewardsStakedEdge -= op.RewardStakedEdge;
-                        bakerCycle.NonceRevelationRewardsStakedShared -= op.RewardStakedShared;
-                    }
+                    Db.TryAttach(bakerCycle);
+                    bakerCycle.NonceRevelationRewardsDelegated -= op.RewardDelegated;
+                    bakerCycle.NonceRevelationRewardsStakedOwn -= op.RewardStakedOwn;
+                    bakerCycle.NonceRevelationRewardsStakedEdge -= op.RewardStakedEdge;
+                    bakerCycle.NonceRevelationRewardsStakedShared -= op.RewardStakedShared;
                 }
             }
 
-            if (block.VdfRevelationOps != null)
+            foreach (var op in Context.VdfRevelationOps)
             {
-                foreach (var op in block.VdfRevelationOps)
-                {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
-                    Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
+                Db.TryAttach(bakerCycle);
 
-                    bakerCycle.VdfRevelationRewardsDelegated -= op.RewardDelegated;
-                    bakerCycle.VdfRevelationRewardsStakedOwn -= op.RewardStakedOwn;
-                    bakerCycle.VdfRevelationRewardsStakedEdge -= op.RewardStakedEdge;
-                    bakerCycle.VdfRevelationRewardsStakedShared -= op.RewardStakedShared;
-                }
+                bakerCycle.VdfRevelationRewardsDelegated -= op.RewardDelegated;
+                bakerCycle.VdfRevelationRewardsStakedOwn -= op.RewardStakedOwn;
+                bakerCycle.VdfRevelationRewardsStakedEdge -= op.RewardStakedEdge;
+                bakerCycle.VdfRevelationRewardsStakedShared -= op.RewardStakedShared;
             }
         }
 
         protected virtual async Task RevertNewCycle(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
             await Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "BakerCycles"
-                WHERE "Cycle" = {block.Cycle + block.Protocol.ConsensusRightsDelay}
+                WHERE "Cycle" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
                 """);
         }
     }

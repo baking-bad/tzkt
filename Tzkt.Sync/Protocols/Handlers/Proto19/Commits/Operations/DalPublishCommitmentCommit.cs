@@ -19,14 +19,12 @@ namespace Tzkt.Sync.Protocols.Proto19
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
                 SenderId = sender.Id,
                 Slot = content.Required("slot_header").RequiredInt32("slot_index"),
                 Commitment = content.Required("slot_header").RequiredString("commitment"),
@@ -62,8 +60,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                     senderDelegate.DelegatedBalance -= operation.BakerFee;
             }
 
-            block.Proposer.Balance += operation.BakerFee;
-            block.Proposer.StakingBalance += operation.BakerFee;
+            Context.Proposer.Balance += operation.BakerFee;
+            Context.Proposer.StakingBalance += operation.BakerFee;
 
             block.Operations |= Operations.DalPublishCommitment;
             block.Fees += operation.BakerFee;
@@ -78,8 +76,9 @@ namespace Tzkt.Sync.Protocols.Proto19
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.DalPublishCommitmentOps.Add(operation);
+            Context.DalPublishCommitmentOps.Add(operation);
         }
 
         public async Task Revert(Block block, DalPublishCommitmentOperation operation)
@@ -109,8 +108,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                     senderDelegate.DelegatedBalance += operation.BakerFee;
             }
 
-            block.Proposer.Balance -= operation.BakerFee;
-            block.Proposer.StakingBalance -= operation.BakerFee;
+            Context.Proposer.Balance -= operation.BakerFee;
+            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().DalPublishCommitmentOpsCount--;
             #endregion

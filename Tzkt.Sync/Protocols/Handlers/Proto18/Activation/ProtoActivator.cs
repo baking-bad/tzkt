@@ -332,8 +332,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                     var migration = new MigrationOperation
                     {
                         Id = Cache.AppState.NextOperationId(),
-                        Block = block,
-                        Account = contract,
                         AccountId = contract.Id,
                         BigMapUpdates = 1,
                         Kind = MigrationKind.RemoveBigMapKey,
@@ -341,6 +339,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         Timestamp = block.Timestamp
                     };
                     Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
 
                     block.Operations |= Operations.Migrations;
                     

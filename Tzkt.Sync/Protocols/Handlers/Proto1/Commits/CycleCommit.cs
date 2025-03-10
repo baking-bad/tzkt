@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
                 
                 var lastSeed = await Db.Cycles
                     .AsNoTracking()
@@ -49,8 +49,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 FutureCycle = new Cycle
                 {
                     Index = futureCycle,
-                    FirstLevel = block.Protocol.GetCycleStart(futureCycle),
-                    LastLevel = block.Protocol.GetCycleEnd(futureCycle),
+                    FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
+                    LastLevel = Context.Protocol.GetCycleEnd(futureCycle),
                     SnapshotLevel = snapshotLevel,
                     TotalBakers = BakerSnapshots.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
                     TotalBakingPower = BakerSnapshots.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
@@ -65,8 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""Cycles""

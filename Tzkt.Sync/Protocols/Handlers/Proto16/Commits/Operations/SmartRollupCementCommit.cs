@@ -13,7 +13,6 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(GetCommitment(content), rollup?.Id);
 
@@ -22,7 +21,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             var operation = new SmartRollupCementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -31,7 +29,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                Sender = sender,
                 SmartRollupId = rollup?.Id,
                 CommitmentId = commitment?.Id,
                 Status = result.RequiredString("status") switch
@@ -53,12 +50,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(block.Proposer);
+            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             Db.TryAttach(commitment);
             #endregion
@@ -100,25 +97,17 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SmartRollupCementOps.Add(operation);
+            Context.SmartRollupCementOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, SmartRollupCementOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender ??= await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
             var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(operation.CommitmentId);
 

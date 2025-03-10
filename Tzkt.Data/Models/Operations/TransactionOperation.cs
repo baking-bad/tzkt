@@ -24,14 +24,6 @@ namespace Tzkt.Data.Models
 
         public int? EventsCount { get; set; }
         public int? TicketTransfers { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(TargetId))]
-        public Account Target { get; set; }
-
-        [ForeignKey(nameof(StorageId))]
-        public Storage Storage { get; set; }
-        #endregion
     }
 
     public static class TransactionOperationModel
@@ -91,14 +83,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.JsonParameters)
                 .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<TransactionOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Transactions)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

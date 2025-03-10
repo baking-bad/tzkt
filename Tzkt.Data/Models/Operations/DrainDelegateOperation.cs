@@ -42,14 +42,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<DrainDelegateOperation>()
                 .HasIndex(x => x.TargetId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<DrainDelegateOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DrainDelegateOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

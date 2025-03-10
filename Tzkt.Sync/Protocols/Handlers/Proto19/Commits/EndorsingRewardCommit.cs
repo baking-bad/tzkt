@@ -143,6 +143,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             Cache.AppState.Get().EndorsingRewardOpsCount += ops.Count;
 
             Db.EndorsingRewardOps.AddRange(ops.Values);
+            Context.EndorsingRewardOps.AddRange(ops.Values);
         }
     }
 }

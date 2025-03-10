@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
@@ -39,12 +40,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region airdrop
             var emptiedManagers = await Db.Contracts
                 .AsNoTracking()
-                .Include(x => x.Manager)
-                .Where(x => x.Spendable == null &&
-                            x.Manager.Type == AccountType.User &&
-                            x.Manager.Balance == 0 &&
-                            x.Manager.Counter > 0)
-                .Select(x => x.Manager)
+                .Join(Db.Users, x => x.ManagerId, x => x.Id, (contract, manager) => new { contract, manager })
+                .Where(x => x.contract.Spendable == null &&
+                            x.manager.Type == AccountType.User &&
+                            x.manager.Balance == 0 &&
+                            x.manager.Counter > 0)
+                .Select(x => x.manager)
                 .ToListAsync();
 
             var dict = new Dictionary<string, User>(8000);
@@ -62,16 +63,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                 manager.LastLevel = block.Level;
 
                 block.Operations |= Operations.Migrations;
-                Db.MigrationOps.Add(new MigrationOperation
+
+                var airdropMigration = new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
-                    Block = block,
                     Level = state.Level,
                     Timestamp = state.Timestamp,
-                    Account = manager,
+                    AccountId = manager.Id,
                     Kind = MigrationKind.AirDrop,
                     BalanceChange = 1
-                });
+                };
+                Db.MigrationOps.Add(airdropMigration);
+                Context.MigrationOps.Add(airdropMigration);
             }
 
             state.MigrationOpsCount += dict.Values.Count;
@@ -86,16 +89,18 @@ namespace Tzkt.Sync.Protocols.Proto5
             account.LastLevel = block.Level;
 
             block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
+
+            var invoiceMigration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                Account = account,
+                AccountId = account.Id,
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = 500_000_000
-            });
+            };
+            Db.MigrationOps.Add(invoiceMigration);
+            Context.MigrationOps.Add(invoiceMigration);
 
             state.MigrationOpsCount++;
             statistics.TotalCreated += 500_000_000;
@@ -144,10 +149,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var migration = new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
-                    Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
-                    Account = contract,
+                    AccountId = contract.Id,
                     Kind = MigrationKind.CodeChange
                 };
                 var newScript = new Script
@@ -185,8 +189,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                 contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                migration.Script = newScript;
-                migration.Storage = newStorage;
+                migration.ScriptId = newScript.Id;
+                migration.StorageId = newStorage.Id;
 
                 contract.MigrationsCount++;
                 contract.LastLevel = block.Level;
@@ -194,6 +198,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 state.MigrationOpsCount++;
 
                 Db.MigrationOps.Add(migration);
+                Context.MigrationOps.Add(migration);
 
                 Db.Scripts.Add(newScript);
                 Cache.Schemas.Add(contract, newScript.Schema);
@@ -243,17 +248,16 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region airdrop
             var airDrops = await Db.MigrationOps
                 .AsNoTracking()
-                .Include(x => x.Account)
                 .Where(x => x.Kind == MigrationKind.AirDrop)
                 .ToListAsync();
 
             foreach (var airDrop in airDrops)
             {
-                Db.TryAttach(airDrop.Account);
-                Cache.Accounts.Add(airDrop.Account);
+                var account = await Cache.Accounts.GetAsync(airDrop.AccountId);
+                Db.TryAttach(account);
 
-                airDrop.Account.Balance = 0;
-                airDrop.Account.MigrationsCount--;
+                account.Balance = 0;
+                account.MigrationsCount--;
             }
 
             Db.MigrationOps.RemoveRange(airDrops);
@@ -265,14 +269,13 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region invoice
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .Include(x => x.Account)
                 .FirstOrDefaultAsync(x => x.Level == state.Level && x.Kind == MigrationKind.ProposalInvoice);
 
-            Db.TryAttach(invoice.Account);
-            Cache.Accounts.Add(invoice.Account);
+            var invoiceAccount = await Cache.Accounts.GetAsync(invoice.AccountId);
+            Db.TryAttach(invoiceAccount);
 
-            invoice.Account.Balance -= 500_000_000;
-            invoice.Account.MigrationsCount--;
+            invoiceAccount.Balance -= 500_000_000;
+            invoiceAccount.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
             Cache.AppState.ReleaseOperationId();
@@ -282,10 +285,9 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region scripts
             var codeChanges = await Db.MigrationOps
-                .Include(x => x.Account)
-                .Include(x => x.Script)
-                .Include(x => x.Storage)
-                .Where(x => x.Kind == MigrationKind.CodeChange)
+                .Join(Db.Scripts, x => x.ScriptId, x => x.Id, (op, script) => new { op, script })
+                .Join(Db.Storages, x => x.op.StorageId, x => x.Id, (pair, storage) => new { pair.op, pair.script, storage })
+                .Where(x => x.op.Kind == MigrationKind.CodeChange)
                 .ToListAsync();
 
             var oldScripts = (await Db.Scripts.Where(x => !x.Current)
@@ -294,16 +296,16 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             foreach (var change in codeChanges)
             {
-                var contract = change.Account as Contract;
-                Cache.Accounts.Add(contract);
+                var contract = await Cache.Accounts.GetAsync(change.op.AccountId) as Contract;
+                Db.TryAttach(contract);
 
                 var oldScript = oldScripts[contract.Id];
                 var oldStorage = await Db.Storages
-                    .Where(x => x.ContractId == contract.Id && x.Id < change.StorageId)
+                    .Where(x => x.ContractId == contract.Id && x.Id < change.op.StorageId)
                     .OrderByDescending(x => x.Id)
                     .FirstAsync();
 
-                var tree = change.Script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.Storage.RawValue));
+                var tree = change.script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.storage.RawValue));
                 var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
                 if (bigmap != null)
                 {
@@ -325,7 +327,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         UPDATE ""BigMapUpdates"" SET ""BigMapPtr"" = {contract.Id} WHERE ""BigMapPtr"" = {newPtr};
                     ");
 
-                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.Level).ToListAsync();
+                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.op.Level).ToListAsync();
                     foreach (var prevStorage in storages)
                     {
                         var prevValue = Micheline.FromBytes(prevStorage.RawValue);
@@ -344,9 +346,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 oldStorage.Current = true;
                 Cache.Storages.Add(contract, oldStorage);
 
-                Db.Scripts.Remove(change.Script);
+                Db.Scripts.Remove(change.script);
                 Cache.AppState.ReleaseScriptId();
-                Db.Storages.Remove(change.Storage);
+                Db.Storages.Remove(change.storage);
                 Cache.AppState.ReleaseStorageId();
 
                 contract.TypeHash = oldScript.TypeHash;
@@ -354,7 +356,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 contract.MigrationsCount--;
             }
 
-            Db.MigrationOps.RemoveRange(codeChanges);
+            Db.MigrationOps.RemoveRange(codeChanges.Select(x => x.op));
             Cache.AppState.ReleaseOperationId(codeChanges.Count);
             state.MigrationOpsCount -= codeChanges.Count;
             #endregion

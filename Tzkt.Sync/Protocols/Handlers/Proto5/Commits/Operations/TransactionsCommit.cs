@@ -19,7 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 : BlockEvents.None;
         }
 
-        protected override async Task ProcessParameters(TransactionOperation transaction, JsonElement param)
+        protected override async Task ProcessParameters(TransactionOperation transaction, Account target, JsonElement param)
         {
             string rawEp = null;
             IMicheline rawParam = null;
@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 return;
             }
 
-            if (transaction.Target is Contract contract)
+            if (target is Contract contract)
             {
                 var schema = contract.Kind > ContractKind.DelegatorContract
                     ? (await Cache.Schemas.GetAsync(contract))
@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
-            else if (transaction.Target is SmartRollup smartRollup)
+            else if (target is SmartRollup smartRollup)
             {
                 var schema = await Cache.Schemas.GetAsync(smartRollup);
 
@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
-            else if (transaction.Target is Rollup)
+            else if (target is Rollup)
             {
                 transaction.Entrypoint = rawEp;
                 transaction.RawParameters = rawParam.ToBytes();

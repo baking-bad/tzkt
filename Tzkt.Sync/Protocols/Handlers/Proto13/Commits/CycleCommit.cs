@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             var lastSeed = await Db.Cycles
                 .AsNoTracking()
@@ -49,13 +49,13 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
-            SelectedStakes = await GetSelectedStakes(block);
+            SelectedStakes = await GetSelectedStakes(block, Context.Protocol);
 
             FutureCycle = new Cycle
             {
                 Index = futureCycle,
-                FirstLevel = block.Protocol.GetCycleStart(futureCycle),
-                LastLevel = block.Protocol.GetCycleEnd(futureCycle),
+                FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
+                LastLevel = Context.Protocol.GetCycleEnd(futureCycle),
                 SnapshotLevel = snapshotLevel,
                 TotalBakers = SelectedStakes.Count,
                 TotalBakingPower = SelectedStakes.Values.Sum(),
@@ -70,8 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 DELETE  FROM ""Cycles""
@@ -80,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
         protected virtual Task<byte[]> GetVdfSolution(Block block) => Task.FromResult<byte[]>(null);
 
-        protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block)
+        protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol)
         {
             var endorsingRewards = await Db.BakerCycles
                 .AsNoTracking()
@@ -88,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
 
             return Snapshots
-                .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
+                .Where(x => x.StakingBalance >= protocol.MinimalStake)
                 .ToDictionary(x => x.AccountId, x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
@@ -102,7 +101,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                         lastBalance -= block.BonusDelegated;
 
                     var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                    return Math.Min((long)x.StakingBalance, depositCap * (block.Protocol.MaxDelegatedOverFrozenRatio + 1));
+                    return Math.Min((long)x.StakingBalance, depositCap * (protocol.MaxDelegatedOverFrozenRatio + 1));
                 });
         }
     }

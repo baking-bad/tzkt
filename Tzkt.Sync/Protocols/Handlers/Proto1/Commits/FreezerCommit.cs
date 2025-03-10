@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
 
-            foreach (var update in GetFreezerUpdates(block, rawBlock))
+            foreach (var update in GetFreezerUpdates(block, Context.Protocol, rawBlock))
             {
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var rawBlock = await Proto.Rpc.GetBlockAsync(block.Level);
 
-            foreach (var update in GetFreezerUpdates(block, rawBlock))
+            foreach (var update in GetFreezerUpdates(block, Context.Protocol, rawBlock))
             {
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
 
-        protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, JsonElement rawBlock)
+        protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, Protocol protocol, JsonElement rawBlock)
         {
             return rawBlock
                 .Required("metadata")
@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray()
                 .Where(x => x.RequiredString("kind")[0] == 'f' &&
                             x.RequiredInt64("change") < 0 &&
-                            GetFreezerCycle(x) == block.Cycle - block.Protocol.ConsensusRightsDelay);
+                            GetFreezerCycle(x) == block.Cycle - protocol.ConsensusRightsDelay);
         }
     }
 }

@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols
                 Hash = rawBlock.RequiredString("hash"),
                 Cycle = -1,
                 Level = rawBlock.Required("header").RequiredInt32("level"),
-                Protocol = protocol,
+                ProtoCode = protocol.Code,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
                 Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
             };
@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols
             state.Cycle = -1;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
-            state.Protocol = block.Protocol.Hash;
+            state.Protocol = protocol.Hash;
             state.NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
             state.Hash = block.Hash;
             state.BlocksCount++;

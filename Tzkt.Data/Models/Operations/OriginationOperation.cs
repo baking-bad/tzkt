@@ -14,23 +14,6 @@ namespace Tzkt.Data.Models
         public int? ScriptId { get; set; }
 
         public long Balance { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(ContractId))]
-        public Contract Contract { get; set; }
-
-        [ForeignKey(nameof(DelegateId))]
-        public Delegate Delegate { get; set; }
-
-        [ForeignKey(nameof(ManagerId))]
-        public User Manager { get; set; }
-
-        [ForeignKey(nameof(ScriptId))]
-        public Script Script { get; set; }
-
-        [ForeignKey(nameof(StorageId))]
-        public Storage Storage { get; set; }
-        #endregion
     }
 
     public static class OriginationOperationModel
@@ -79,14 +62,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.ContractCodeHash)
                 .HasFilter($@"""{nameof(OriginationOperation.ContractCodeHash)}"" IS NOT NULL");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<OriginationOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Originations)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

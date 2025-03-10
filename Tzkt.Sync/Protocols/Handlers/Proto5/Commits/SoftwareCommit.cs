@@ -13,11 +13,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             var version = rawBlock.Required("header").RequiredString("proof_of_work_nonce")[..8];
             var software = await Cache.Software.GetOrCreateAsync(version, () => new Software
             {
+                Id = Cache.AppState.NextSoftwareId(),
                 FirstLevel = block.Level,
                 ShortHash = version
             });
 
-            if (software.Id == 0)
+            if (software.BlocksCount == 0)
                 Db.Software.Add(software);
             else
                 Db.TryAttach(software);
@@ -25,11 +26,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             software.BlocksCount++;
             software.LastLevel = block.Level;
 
-            block.Software = software;
+            block.SoftwareId = software.Id;
 
             var blockProducer = Cache.Accounts.GetDelegate(block.ProducerId);
             //Db.TryAttach(blockProducer);
-            blockProducer.Software = software;
+            blockProducer.SoftwareId = software.Id;
         }
 
         public virtual async Task Revert(Block block)

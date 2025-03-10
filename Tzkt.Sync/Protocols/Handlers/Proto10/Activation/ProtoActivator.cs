@@ -447,6 +447,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             #region contract
             Contract contract;
+            var creator = await Cache.Accounts.GetAsync(NullAddress.Address);
             var ghost = await Cache.Accounts.GetAsync(address);
             if (ghost != null)
             {
@@ -457,7 +458,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     LastLevel = block.Level,
                     Address = address,
                     Balance = rawContract.RequiredInt64("balance"),
-                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    CreatorId = creator.Id,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                     MigrationsCount = 1,
@@ -477,7 +478,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     LastLevel = block.Level,
                     Address = address,
                     Balance = rawContract.RequiredInt64("balance"),
-                    Creator = await Cache.Accounts.GetAsync(NullAddress.Address),
+                    CreatorId = creator.Id,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                     MigrationsCount = 1,
@@ -486,8 +487,8 @@ namespace Tzkt.Sync.Protocols.Proto10
             }
             Cache.Accounts.Add(contract);
 
-            Db.TryAttach(contract.Creator);
-            contract.Creator.ContractsCount++;
+            Db.TryAttach(creator);
+            creator.ContractsCount++;
             #endregion
 
             #region script
@@ -556,14 +557,13 @@ namespace Tzkt.Sync.Protocols.Proto10
             var migration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 Kind = MigrationKind.Origination,
-                Account = contract,
+                AccountId = contract.Id,
                 BalanceChange = contract.Balance,
-                Script = script,
-                Storage = storage,
+                ScriptId = script.Id,
+                StorageId = storage.Id,
             };
 
             script.MigrationId = migration.Id;
@@ -582,6 +582,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             stats.TotalCreated += contract.Balance;
 
             Db.MigrationOps.Add(migration);
+            Context.MigrationOps.Add(migration);
             #endregion
 
             #region bigmaps
@@ -711,10 +712,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                     state.TokenTransfersCount++;
 
                     contract.TokensCount++;
-                    contract.Creator.ActiveTokensCount++;
-                    contract.Creator.TokenBalancesCount++;
-                    contract.Creator.TokenTransfersCount++;
-                    contract.Creator.LastLevel = tokenTransfer.Level;
+                    creator.ActiveTokensCount++;
+                    creator.TokenBalancesCount++;
+                    creator.TokenTransfersCount++;
+                    creator.LastLevel = tokenTransfer.Level;
 
                     block.Events |= BlockEvents.Tokens;
                     #endregion
@@ -797,7 +798,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                 {
                     Id = contract.Id,
                     Address = contract.Address,
-                    FirstBlock = contract.FirstBlock,
                     FirstLevel = contract.FirstLevel,
                     LastLevel = contract.LastLevel,
                     ActiveTokensCount = contract.ActiveTokensCount,

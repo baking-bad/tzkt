@@ -13,7 +13,6 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             #region init
             var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
 
             var aliceId = await Cache.Accounts.GetIdOrDefaultAsync(content.Required("stakers").RequiredString("alice"));
@@ -25,7 +24,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             var operation = new SmartRollupRefuteOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -34,7 +32,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                Sender = sender,
                 SmartRollupId = rollup?.Id,
                 GameId = game?.Id,
                 Move = RefutationMove.Timeout,
@@ -73,8 +70,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -255,13 +252,14 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SmartRollupRefuteOps.Add(operation);
+            Context.SmartRollupRefuteOps.Add(operation);
         }
 
         async Task<SmartRollupPublishOperation> GetBondOperation(SmartRollup rollup, Account staker, Block block)
         {
-            return block.SmartRollupPublishOps?
+            return Context.SmartRollupPublishOps
                 .FirstOrDefault(x =>
                     x.SmartRollupId == rollup.Id &&
                     x.BondStatus == SmartRollupBondStatus.Active &&
@@ -287,18 +285,15 @@ namespace Tzkt.Sync.Protocols.Proto16
                 .ToListAsync())
                 .ToHashSet();
 
-            if (block.SmartRollupPublishOps != null)
+            foreach (var op in Context.SmartRollupPublishOps)
             {
-                foreach (var op in block.SmartRollupPublishOps)
+                if (op.Id >= bondOp.Id &&
+                    op.SenderId == staker.Id &&
+                    op.SmartRollupId == rollup.Id &&
+                    op.Status == OperationStatus.Applied &&
+                    (await Cache.SmartRollupCommitments.GetAsync((int)op.CommitmentId)).InboxLevel > rollup.InboxLevel)
                 {
-                    if (op.Id >= bondOp.Id &&
-                        op.SenderId == staker.Id &&
-                        op.SmartRollupId == rollup.Id &&
-                        op.Status == OperationStatus.Applied &&
-                        (await Cache.SmartRollupCommitments.GetAsync((int)op.CommitmentId)).InboxLevel > rollup.InboxLevel)
-                    {
-                        ids.Add((int)op.CommitmentId);
-                    }
+                    ids.Add((int)op.CommitmentId);
                 }
             }
 

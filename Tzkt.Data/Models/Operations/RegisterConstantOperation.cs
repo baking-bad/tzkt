@@ -50,14 +50,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.Address)
                 .HasFilter($@"""{nameof(RegisterConstantOperation.Address)}"" IS NOT NULL");
             #endregion
-
-            #region relations
-            modelBuilder.Entity<RegisterConstantOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.RegisterConstants)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

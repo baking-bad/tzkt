@@ -23,7 +23,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             var operation = new TxRollupCommitOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -31,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 RollupId = rollup?.Id,
                 Bond = bond.ValueKind == JsonValueKind.Undefined ? 0 : -bond.RequiredInt64("change"),
                 Status = result.RequiredString("status") switch
@@ -50,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -91,26 +90,18 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.TxRollupCommitOps.Add(operation);
+            Context.TxRollupCommitOps.Add(operation);
             Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupCommitOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.RollupId);
 
             Db.TryAttach(blockBaker);

@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             if (!block.Events.HasFlag(BlockEvents.BalanceSnapshot))
                 return;
 
-            await RemoveOutdated(block, block.Protocol);
+            await RemoveOutdated(block, Context.Protocol);
             await TakeSnapshot(block);
         }
     }

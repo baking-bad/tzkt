@@ -11,14 +11,14 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             await base.Apply(block, op, content);
 
-            var delegat = Cache.Accounts.GetDelegate(Activation.Account.DelegateId)
-                ?? Activation.Account as Data.Models.Delegate;
+            var account = await Cache.Accounts.GetAsync(Activation.AccountId);
+            var delegat = Cache.Accounts.GetDelegate(account.DelegateId) ?? account as Data.Models.Delegate;
 
             if (delegat != null)
             {
                 Db.TryAttach(delegat);
                 delegat.StakingBalance += Activation.Balance;
-                if (delegat.Id != Activation.Account.Id)
+                if (delegat.Id != account.Id)
                     delegat.DelegatedBalance += Activation.Balance;
             }
         }
@@ -27,14 +27,14 @@ namespace Tzkt.Sync.Protocols.Proto5
         {
             await base.Revert(block, activation);
 
-            var delegat = Cache.Accounts.GetDelegate(activation.Account.DelegateId)
-                ?? activation.Account as Data.Models.Delegate;
+            var account = await Cache.Accounts.GetAsync(activation.AccountId);
+            var delegat = Cache.Accounts.GetDelegate(account.DelegateId) ?? account as Data.Models.Delegate;
 
             if (delegat != null)
             {
                 Db.TryAttach(delegat);
                 delegat.StakingBalance -= activation.Balance;
-                if (delegat.Id != activation.AccountId)
+                if (delegat.Id != account.Id)
                     delegat.DelegatedBalance -= activation.Balance;
             }
         }

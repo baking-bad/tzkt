@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
             
-            var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             var lastSeed = await Db.Cycles
                 .AsNoTracking()
@@ -39,12 +39,12 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             if (block.Cycle >= 1)
             {
-                if (block.Cycle == block.Protocol.FirstCycle)
+                if (block.Cycle == Context.Protocol.FirstCycle)
                 {
-                    snapshotLevel = block.Protocol.FirstLevel - 1;
+                    snapshotLevel = Context.Protocol.FirstLevel - 1;
                     activation = true;
                 }
-                else if (block.Cycle == block.Protocol.FirstCycle + 1 && block.Protocol.FirstLevel >= block.Protocol.FirstCycleLevel)
+                else if (block.Cycle == Context.Protocol.FirstCycle + 1 && Context.Protocol.FirstLevel >= Context.Protocol.FirstCycleLevel)
                 {
                     var snapshotProto = await Cache.Protocols.FindByCycleAsync(block.Cycle - 1);
                     snapshotIndex = Seed.GetSnapshotIndex(futureSeed, snapshotProto.SnapshotsPerCycle + 1, true) - 1;
@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
 
             SelectedStakes = Snapshots
-                .Where(x => x.StakingBalance >= block.Protocol.MinimalStake)
+                .Where(x => x.StakingBalance >= Context.Protocol.MinimalStake)
                 .ToDictionary(x => x.AccountId, x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
@@ -83,14 +83,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                         lastBalance -= block.BonusDelegated;
 
                     var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                    return Math.Min((long)x.StakingBalance, depositCap * (block.Protocol.MaxDelegatedOverFrozenRatio + 1));
+                    return Math.Min((long)x.StakingBalance, depositCap * (Context.Protocol.MaxDelegatedOverFrozenRatio + 1));
                 });
 
             FutureCycle = new Cycle
             {
                 Index = futureCycle,
-                FirstLevel = block.Protocol.GetCycleStart(futureCycle),
-                LastLevel = block.Protocol.GetCycleEnd(futureCycle),
+                FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
+                LastLevel = Context.Protocol.GetCycleEnd(futureCycle),
                 SnapshotLevel = snapshotLevel,
                 TotalBakers = SelectedStakes.Count,
                 TotalBakingPower = SelectedStakes.Values.Sum(),
@@ -105,8 +105,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             await Db.Database.ExecuteSqlRawAsync($@"
                 DELETE  FROM ""Cycles""

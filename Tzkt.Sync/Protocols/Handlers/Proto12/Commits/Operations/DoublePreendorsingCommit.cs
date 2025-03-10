@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var offenderAddr = freezerUpdates.Any()
                 ? freezerUpdates.First().RequiredString("delegate")
-                : block.Proposer.Address; // this is wrong, but no big deal
+                : Context.Proposer.Address; // this is wrong, but no big deal
 
             var offenderLoss = freezerUpdates.Any()
                 ? -freezerUpdates.Sum(x => x.RequiredInt64("change"))
@@ -26,18 +26,20 @@ namespace Tzkt.Sync.Protocols.Proto12
                 ? contractUpdates.Sum(x => x.RequiredInt64("change"))
                 : 0;
 
+            var accuser = Context.Proposer;
+            var offender = Cache.Accounts.GetDelegate(offenderAddr);
+
             var doublePreendorsing = new DoublePreendorsingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
                 SlashedLevel = block.Level,
                 AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level"),
-                Accuser = block.Proposer,
-                Offender = Cache.Accounts.GetDelegate(offenderAddr),
+                AccuserId = accuser.Id,
+                OffenderId = offender.Id,
 
                 Reward = accuserReward,
                 LostStaked = offenderLoss,
@@ -48,8 +50,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region entities
-            var accuser = doublePreendorsing.Accuser;
-            var offender = doublePreendorsing.Offender;
             Db.TryAttach(accuser);
             Db.TryAttach(offender);
             #endregion
@@ -66,26 +66,20 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             block.Operations |= Operations.DoublePreendorsings;
 
+            Cache.AppState.Get().DoublePreendorsingOpsCount++;
             Cache.Statistics.Current.TotalBurned += doublePreendorsing.LostStaked - doublePreendorsing.Reward;
             Cache.Statistics.Current.TotalFrozen -= doublePreendorsing.LostStaked;
             #endregion
 
             Db.DoublePreendorsingOps.Add(doublePreendorsing);
+            Context.DoublePreendorsingOps.Add(doublePreendorsing);
         }
 
         public virtual void Revert(Block block, DoublePreendorsingOperation doublePreendorsing)
         {
-            #region init
-            doublePreendorsing.Block ??= block;
-            doublePreendorsing.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            doublePreendorsing.Accuser ??= Cache.Accounts.GetDelegate(doublePreendorsing.AccuserId);
-            doublePreendorsing.Offender ??= Cache.Accounts.GetDelegate(doublePreendorsing.OffenderId);
-            #endregion
-
             #region entities
-            var accuser = doublePreendorsing.Accuser;
-            var offender = doublePreendorsing.Offender;
+            var accuser = Cache.Accounts.GetDelegate(doublePreendorsing.AccuserId);
+            var offender = Cache.Accounts.GetDelegate(doublePreendorsing.OffenderId);
             Db.TryAttach(accuser);
             Db.TryAttach(offender);
             #endregion
@@ -99,6 +93,8 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             accuser.DoublePreendorsingCount--;
             if (offender != accuser) offender.DoublePreendorsingCount--;
+
+            Cache.AppState.Get().DoublePreendorsingOpsCount--;
             #endregion
 
             Db.DoublePreendorsingOps.Remove(doublePreendorsing);

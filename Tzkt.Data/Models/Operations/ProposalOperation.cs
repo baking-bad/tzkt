@@ -13,14 +13,6 @@ namespace Tzkt.Data.Models
         public long VotingPower { get; set; }
 
         public bool Duplicated { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(ProposalId))]
-        public Proposal Proposal { get; set; }
-
-        [ForeignKey(nameof(SenderId))]
-        public Delegate Sender { get; set; }
-        #endregion
     }
 
     public static class ProposalOperationModel
@@ -55,14 +47,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<ProposalOperation>()
                 .HasIndex(x => x.SenderId);
-            #endregion
 
-            #region relations
             modelBuilder.Entity<ProposalOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Proposals)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
+                .HasIndex(x => x.ProposalId);
             #endregion
         }
     }

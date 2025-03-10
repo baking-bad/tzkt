@@ -40,14 +40,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SetDelegateParametersOperation>()
                 .HasIndex(x => x.ActivationCycle);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SetDelegateParametersOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SetDelegateParametersOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

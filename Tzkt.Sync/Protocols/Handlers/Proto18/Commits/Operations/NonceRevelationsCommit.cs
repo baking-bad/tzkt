@@ -11,26 +11,27 @@ namespace Tzkt.Sync.Protocols.Proto18
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
+            var baker = Context.Proposer;
+
             var balanceUpdates = content
                 .Required("metadata")
                 .RequiredArray("balance_updates")
                 .EnumerateArray()
                 .ToList();
 
-            var (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared) = ParseRewards(block.Proposer, balanceUpdates);
+            var (rewardDelegated, rewardStakedOwn, rewardStakedEdge, rewardStakedShared) = ParseRewards(Context.Proposer, balanceUpdates);
 
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));
+            var sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId);
 
             var revelation = new NonceRevelationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Baker = block.Proposer,
-                Sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId),
-                RevealedBlock = revealedBlock,
+                BakerId = baker.Id,
+                SenderId = sender.Id,
                 RevealedLevel = revealedBlock.Level,
                 RevealedCycle = revealedBlock.Cycle,
                 Nonce = Hex.Parse(content.RequiredString("nonce")),
@@ -42,60 +43,61 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region apply operation
-            block.Proposer.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            block.Proposer.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.ExternalStakedBalance += revelation.RewardStakedShared;
-            block.Proposer.NonceRevelationsCount++;
+            baker.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            baker.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            baker.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            baker.ExternalStakedBalance += revelation.RewardStakedShared;
+            baker.NonceRevelationsCount++;
 
-            if (revelation.Sender != block.Proposer)
+            if (revelation.SenderId != baker.Id)
             {
-                Db.TryAttach(revelation.Sender);
-                revelation.Sender.NonceRevelationsCount++;
+                Db.TryAttach(sender);
+                sender.NonceRevelationsCount++;
             }
 
-            Db.TryAttach(revelation.RevealedBlock);
-            revelation.RevealedBlock.Revelation = revelation;
-            revelation.RevealedBlock.RevelationId = revelation.Id;
+            Db.TryAttach(revealedBlock);
+            revealedBlock.RevelationId = revelation.Id;
 
             block.Operations |= Operations.Revelations;
 
+            Cache.AppState.Get().NonceRevelationOpsCount++;
             Cache.Statistics.Current.TotalCreated += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
             Cache.Statistics.Current.TotalFrozen += revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
             #endregion
 
             Db.NonceRevelationOps.Add(revelation);
+            Context.NonceRevelationOps.Add(revelation);
         }
 
         public virtual async Task Revert(Block block, NonceRevelationOperation revelation)
         {
-            #region init
-            revelation.Block ??= block;
-            revelation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            revelation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
+            #region entities
+            var blockBaker = Context.Proposer;
+            var sender = Cache.Accounts.GetDelegate(revelation.SenderId);
+            var revealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
 
-            revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
-            revelation.Sender ??= Cache.Accounts.GetDelegate(revelation.SenderId);
-            revelation.RevealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
+            Db.TryAttach(blockBaker);
+            Db.TryAttach(sender);
+            Db.TryAttach(revealedBlock);
             #endregion
 
             #region apply operation
-            Db.TryAttach(block.Proposer);
-            block.Proposer.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            block.Proposer.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            block.Proposer.ExternalStakedBalance -= revelation.RewardStakedShared;
-            block.Proposer.NonceRevelationsCount--;
+            blockBaker.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            blockBaker.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
+            blockBaker.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
+            blockBaker.ExternalStakedBalance -= revelation.RewardStakedShared;
+            blockBaker.NonceRevelationsCount--;
 
-            if (revelation.Sender != block.Proposer)
+            if (sender.Id != blockBaker.Id)
             {
-                Db.TryAttach(revelation.Sender);
-                revelation.Sender.NonceRevelationsCount--;
+                Db.TryAttach(sender);
+                sender.NonceRevelationsCount--;
             }
 
-            Db.TryAttach(revelation.RevealedBlock);
-            revelation.RevealedBlock.Revelation = null;
-            revelation.RevealedBlock.RevelationId = null;
+            Db.TryAttach(revealedBlock);
+            revealedBlock.RevelationId = null;
+
+            Cache.AppState.Get().NonceRevelationOpsCount--;
             #endregion
 
             Db.NonceRevelationOps.Remove(revelation);

@@ -124,13 +124,13 @@ namespace Tzkt.Sync.Protocols
                             var orig = new OriginationsCommit(this);
                             await orig.Apply(blockCommit.Block, operation, content);
                             if (orig.BigMapDiffs != null)
-                                bigMapCommit.Append(orig.Origination, orig.Origination.Contract, orig.BigMapDiffs);
+                                bigMapCommit.Append(orig.Origination, orig.Contract, orig.BigMapDiffs);
                             break;
                         case "transaction":
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
-                                bigMapCommit.Append(parent.Transaction, parent.Transaction.Target as Contract, parent.BigMapDiffs);
+                                bigMapCommit.Append(parent.Transaction, parent.Target as Contract, parent.BigMapDiffs);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -142,7 +142,7 @@ namespace Tzkt.Sync.Protocols
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Transaction.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");
@@ -197,53 +197,6 @@ namespace Tzkt.Sync.Protocols
             var currBlock = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(currBlock);
 
-            #region load operations
-            var operations = new List<BaseOperation>(40);
-
-            if (currBlock.Operations.HasFlag(Operations.Activations))
-                operations.AddRange(await Db.ActivationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Delegations))
-                operations.AddRange(await Db.DelegationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Endorsements))
-                operations.AddRange(await Db.EndorsementOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Originations))
-                operations.AddRange(await Db.OriginationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Reveals))
-                operations.AddRange(await Db.RevealOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Revelations))
-                operations.AddRange(await Db.NonceRevelationOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Transactions))
-                operations.AddRange(await Db.TransactionOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
-                operations.AddRange(await Db.DoubleBakingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
-                operations.AddRange(await Db.DoubleEndorsingOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Ballots))
-                operations.AddRange(await Db.BallotOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.Proposals))
-                operations.AddRange(await Db.ProposalOps.Where(x => x.Level == currBlock.Level).ToListAsync());
-
-            if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
-                await Db.Entry(currBlock).Collection(x => x.RevelationPenalties).LoadAsync();
-
-            if (currBlock.Events.HasFlag(BlockEvents.NewAccounts))
-            {
-                await Db.Entry(currBlock).Collection(x => x.CreatedAccounts).LoadAsync();
-                foreach (var account in currBlock.CreatedAccounts)
-                    Cache.Accounts.Add(account);
-            }
-            #endregion
-
             await new VotingCommit(this).Revert(currBlock);
             await new StatisticsCommit(this).Revert(currBlock);
 
@@ -253,45 +206,45 @@ namespace Tzkt.Sync.Protocols
             await new BakingRightsCommit(this).Revert(currBlock);
             await new BigMapCommit(this).Revert(currBlock);
 
-            foreach (var operation in operations.OrderByDescending(x => x.Id))
+            foreach (var operation in Context.EnumerateOps().OrderByDescending(x => x.Id).ToList())
             {
                 switch (operation)
                 {
-                    case EndorsementOperation endorsement:
-                        await new EndorsementsCommit(this).Revert(currBlock, endorsement);
+                    case EndorsementOperation op:
+                        await new EndorsementsCommit(this).Revert(currBlock, op);
                         break;
-                    case ProposalOperation proposal:
-                        await new ProposalsCommit(this).Revert(currBlock, proposal);
+                    case ProposalOperation op:
+                        await new ProposalsCommit(this).Revert(currBlock, op);
                         break;
-                    case BallotOperation ballot:
-                        await new BallotsCommit(this).Revert(currBlock, ballot);
+                    case BallotOperation op:
+                        await new BallotsCommit(this).Revert(currBlock, op);
                         break;
-                    case ActivationOperation activation:
-                        await new ActivationsCommit(this).Revert(currBlock, activation);
+                    case ActivationOperation op:
+                        await new ActivationsCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleBakingOperation doubleBaking:
-                        await new DoubleBakingCommit(this).Revert(currBlock, doubleBaking);
+                    case DoubleBakingOperation op:
+                        await new DoubleBakingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleEndorsingOperation doubleEndorsing:
-                        await new DoubleEndorsingCommit(this).Revert(currBlock, doubleEndorsing);
+                    case DoubleEndorsingOperation op:
+                        await new DoubleEndorsingCommit(this).Revert(currBlock, op);
                         break;
-                    case NonceRevelationOperation revelation:
-                        await new NonceRevelationsCommit(this).Revert(currBlock, revelation);
+                    case NonceRevelationOperation op:
+                        await new NonceRevelationsCommit(this).Revert(currBlock, op);
                         break;
-                    case RevealOperation reveal:
-                        await new RevealsCommit(this).Revert(currBlock, reveal);
+                    case RevealOperation op:
+                        await new RevealsCommit(this).Revert(currBlock, op);
                         break;
-                    case DelegationOperation delegation:
-                        await new DelegationsCommit(this).Revert(currBlock, delegation);
+                    case DelegationOperation op:
+                        await new DelegationsCommit(this).Revert(currBlock, op);
                         break;
-                    case OriginationOperation origination:
-                        await new OriginationsCommit(this).Revert(currBlock, origination);
+                    case OriginationOperation op:
+                        await new OriginationsCommit(this).Revert(currBlock, op);
                         break;
-                    case TransactionOperation transaction:
-                        if (transaction.InitiatorId == null)
-                            await new TransactionsCommit(this).Revert(currBlock, transaction);
+                    case TransactionOperation op:
+                        if (op.InitiatorId == null)
+                            await new TransactionsCommit(this).Revert(currBlock, op);
                         else
-                            await new TransactionsCommit(this).RevertInternal(currBlock, transaction);
+                            await new TransactionsCommit(this).RevertInternal(currBlock, op);
                         break;
                     default:
                         throw new NotImplementedException($"'{operation.GetType()}' is not implemented");

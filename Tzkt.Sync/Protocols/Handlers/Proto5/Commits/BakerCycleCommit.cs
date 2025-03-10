@@ -74,12 +74,12 @@ namespace Tzkt.Sync.Protocols.Proto5
                 #region endorsing rewards
                 if (endorsingRight != null)
                 {
-                    bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
+                    bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, block.BlockRound);
+                    var successReward = GetEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots, block.BlockRound);
 
                     var maxReward = bakingRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, (int)bakingRights[0].Round)
+                        ? GetEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots, (int)bakingRights[0].Round)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -100,16 +100,16 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (bakingRights.Count > 0)
                 {
                     if (bakingRights[0].Round == 0)
-                        bakerCycle.FutureBlockRewards -= GetFutureBlockReward(block.Protocol, block.Cycle);
+                        bakerCycle.FutureBlockRewards -= GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[^1].Round, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[^1].Round, block.Validations)
                         : 0;
 
                     var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations + (int)endorsingRight.Slots)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations + (int)endorsingRight.Slots)
                         : successReward;
 
                     if (actualReward > 0)
@@ -147,62 +147,50 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
                 #endregion
             }
-            
-            if (block.DoubleBakings != null)
+
+            foreach (var op in Context.DoubleBakingOps)
             {
-                foreach (var op in block.DoubleBakings)
-                {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
+                Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLostStaked += op.LostStaked;
+                offenderCycle.DoubleBakingLostStaked += op.LostStaked;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
+                var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
+                Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleBakingRewards += op.Reward;
-                }
+                accuserCycle.DoubleBakingRewards += op.Reward;
             }
 
-            if (block.DoubleEndorsings != null)
+            foreach (var op in Context.DoubleEndorsingOps)
             {
-                foreach (var op in block.DoubleEndorsings)
-                {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.Offender.Id);
-                    Db.TryAttach(offenderCycle);
+                var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
+                Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLostStaked += op.LostStaked;
+                offenderCycle.DoubleEndorsingLostStaked += op.LostStaked;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Accuser.Id);
-                    Db.TryAttach(accuserCycle);
+                var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
+                Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleEndorsingRewards += op.Reward;
-                }
+                accuserCycle.DoubleEndorsingRewards += op.Reward;
             }
 
-            if (block.Revelations != null)
+            foreach (var op in Context.NonceRevelationOps)
             {
-                foreach (var op in block.Revelations)
-                {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
-                    Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
+                Db.TryAttach(bakerCycle);
 
-                    bakerCycle.NonceRevelationRewardsDelegated += op.RewardDelegated;
-                }
+                bakerCycle.NonceRevelationRewardsDelegated += op.RewardDelegated;
             }
 
-            if (block.RevelationPenalties != null)
+            foreach (var op in Context.RevelationPenaltyOps)
             {
-                foreach (var op in block.RevelationPenalties)
-                {
-                    var penaltyBlock = await Cache.Blocks.GetAsync(op.MissedLevel);
-                    var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.Baker.Id);
-                    Db.TryAttach(penaltyCycle);
+                var penaltyBlock = await Cache.Blocks.GetAsync(op.MissedLevel);
+                var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.BakerId);
+                Db.TryAttach(penaltyCycle);
 
-                    penaltyCycle.NonceRevelationLosses += op.Loss;
-                }
+                penaltyCycle.NonceRevelationLosses += op.Loss;
             }
             #endregion
 
@@ -213,7 +201,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     snapshot => Cache.Accounts.GetDelegate(snapshot.AccountId).Address,
                     snapshot =>
                     {
-                        var bakingPower = snapshot.StakingBalance - snapshot.StakingBalance % block.Protocol.MinimalStake;
+                        var bakingPower = snapshot.StakingBalance - snapshot.StakingBalance % Context.Protocol.MinimalStake;
                         var share = (double)bakingPower / futureCycle.TotalBakingPower;
 
                         var bakerCycle = new BakerCycle
@@ -228,8 +216,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             StakersCount = snapshot.StakersCount,
                             BakingPower = bakingPower,
                             TotalBakingPower = futureCycle.TotalBakingPower,
-                            ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
-                            ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
+                            ExpectedBlocks = Context.Protocol.BlocksPerCycle * share,
+                            ExpectedEndorsements = Context.Protocol.EndorsersPerBlock * Context.Protocol.BlocksPerCycle * share
                         };
 
                         return bakerCycle;
@@ -245,7 +233,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         throw new Exception("Nonexistent baker cycle");
 
                     bakerCycle.FutureBlocks++;
-                    bakerCycle.FutureBlockRewards += GetFutureBlockReward(block.Protocol, futureCycle.Index);
+                    bakerCycle.FutureBlockRewards += GetFutureBlockReward(Context.Protocol, futureCycle.Index);
                 }
                 #endregion
 
@@ -260,7 +248,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     var slots = er.RequiredArray("slots").Count();
 
                     bakerCycle.FutureEndorsements += slots;
-                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, futureCycle.Index, slots);
+                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(Context.Protocol, futureCycle.Index, slots);
                 }
                 #endregion
 
@@ -290,7 +278,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                         var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
                         var delegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance");
-                        var bakingPower = stakingBalance - stakingBalance % block.Protocol.MinimalStake;
+                        var bakingPower = stakingBalance - stakingBalance % Context.Protocol.MinimalStake;
                         var share = (double)bakingPower / futureCycle.TotalBakingPower;
 
                         bakerCycle = new BakerCycle
@@ -305,8 +293,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                             StakersCount = 0,
                             BakingPower = bakingPower,
                             TotalBakingPower = futureCycle.TotalBakingPower,
-                            ExpectedBlocks = block.Protocol.BlocksPerCycle * share,
-                            ExpectedEndorsements = block.Protocol.EndorsersPerBlock * block.Protocol.BlocksPerCycle * share
+                            ExpectedBlocks = Context.Protocol.BlocksPerCycle * share,
+                            ExpectedEndorsements = Context.Protocol.EndorsersPerBlock * Context.Protocol.BlocksPerCycle * share
                         };
                         bakerCycles.Add(baker.Address, bakerCycle);
 
@@ -326,7 +314,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     }
 
                     bakerCycle.FutureEndorsements += (int)er.Slots;
-                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, futureCycle.Index, (int)er.Slots);
+                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(Context.Protocol, futureCycle.Index, (int)er.Slots);
                 }
                 #endregion
 
@@ -337,8 +325,6 @@ namespace Tzkt.Sync.Protocols.Proto5
 
         public virtual async Task Revert(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
             #region current rights
             var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
 
@@ -406,12 +392,12 @@ namespace Tzkt.Sync.Protocols.Proto5
                 #region endorsing rewards
                 if (endorsingRight != null)
                 {
-                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots);
+                    bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots);
 
-                    var successReward = GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, block.BlockRound);
+                    var successReward = GetEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots, block.BlockRound);
 
                     var maxReward = bakingRights.FirstOrDefault()?.Status > BakingRightStatus.Realized
-                        ? GetEndorsementReward(block.Protocol, block.Cycle, (int)endorsingRight.Slots, (int)bakingRights[0].Round)
+                        ? GetEndorsementReward(Context.Protocol, block.Cycle, (int)endorsingRight.Slots, (int)bakingRights[0].Round)
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
@@ -432,16 +418,16 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (bakingRights.Count > 0)
                 {
                     if (bakingRights[0].Round == 0)
-                        bakerCycle.FutureBlockRewards += GetFutureBlockReward(block.Protocol, block.Cycle);
+                        bakerCycle.FutureBlockRewards += GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[^1].Round, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[^1].Round, block.Validations)
                         : 0;
 
                     var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
-                        ? GetBlockReward(block.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations + (int)endorsingRight.Slots)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, (int)bakingRights[0].Round, block.Validations + (int)endorsingRight.Slots)
                         : successReward;
 
                     if (actualReward > 0)
@@ -480,61 +466,49 @@ namespace Tzkt.Sync.Protocols.Proto5
                 #endregion
             }
 
-            if (block.DoubleBakings != null)
+            foreach (var op in Context.DoubleBakingOps)
             {
-                foreach (var op in block.DoubleBakings)
-                {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
-                    Db.TryAttach(offenderCycle);
+                var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
+                Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleBakingLostStaked -= op.LostStaked;
+                offenderCycle.DoubleBakingLostStaked -= op.LostStaked;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
-                    Db.TryAttach(accuserCycle);
+                var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
+                Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleBakingRewards -= op.Reward;
-                }
+                accuserCycle.DoubleBakingRewards -= op.Reward;
             }
 
-            if (block.DoubleEndorsings != null)
+            foreach (var op in Context.DoubleEndorsingOps)
             {
-                foreach (var op in block.DoubleEndorsings)
-                {
-                    var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
-                    var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
-                    Db.TryAttach(offenderCycle);
+                var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
+                var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
+                Db.TryAttach(offenderCycle);
 
-                    offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
+                offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
 
-                    var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
-                    Db.TryAttach(accuserCycle);
+                var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
+                Db.TryAttach(accuserCycle);
 
-                    accuserCycle.DoubleEndorsingRewards -= op.Reward;
-                }
+                accuserCycle.DoubleEndorsingRewards -= op.Reward;
             }
 
-            if (block.Revelations != null)
+            foreach (var op in Context.NonceRevelationOps)
             {
-                foreach (var op in block.Revelations)
-                {
-                    var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
-                    Db.TryAttach(bakerCycle);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
+                Db.TryAttach(bakerCycle);
 
-                    bakerCycle.NonceRevelationRewardsDelegated -= op.RewardDelegated;
-                }
+                bakerCycle.NonceRevelationRewardsDelegated -= op.RewardDelegated;
             }
 
-            if (block.RevelationPenalties != null)
+            foreach (var op in Context.RevelationPenaltyOps)
             {
-                foreach (var op in block.RevelationPenalties)
-                {
-                    var penaltyBlock = await Cache.Blocks.GetAsync(op.MissedLevel);
-                    var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.BakerId);
-                    Db.TryAttach(penaltyCycle);
+                var penaltyBlock = await Cache.Blocks.GetAsync(op.MissedLevel);
+                var penaltyCycle = await Cache.BakerCycles.GetAsync(penaltyBlock.Cycle, op.BakerId);
+                Db.TryAttach(penaltyCycle);
 
-                    penaltyCycle.NonceRevelationLosses -= op.Loss;
-                }
+                penaltyCycle.NonceRevelationLosses -= op.Loss;
             }
             #endregion
 
@@ -543,7 +517,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""BakerCycles""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.ConsensusRightsDelay}");
+                    WHERE   ""Cycle"" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}");
             }
             #endregion
         }

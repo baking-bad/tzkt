@@ -41,6 +41,8 @@ namespace Tzkt.Data.Models
         public int SmartRollupCommitmentCounter { get; set; }
         public int RefutationGameCounter { get; set; }
         public int InboxMessageCounter { get; set; }
+        public int ProposalCounter { get; set; }
+        public int SoftwareCounter { get; set; }
         #endregion
 
         #region entities count
@@ -98,8 +100,6 @@ namespace Tzkt.Data.Models
         public int SmartRollupRefuteOpsCount { get; set; }
 
         public int DalPublishCommitmentOpsCount { get; set; }
-
-        public int ProposalsCount { get; set; }
 
         public int CyclesCount { get; set; }
         public int ConstantsCount { get; set; }

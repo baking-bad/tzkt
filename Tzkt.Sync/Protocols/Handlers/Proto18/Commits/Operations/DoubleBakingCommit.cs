@@ -25,22 +25,21 @@ namespace Tzkt.Sync.Protocols.Proto18
                 accusedBakerId = Cache.Accounts.GetDelegate(accusedBaker).Id;
             }
 
-            var accuser = block.Proposer;
+            var accuser = Context.Proposer;
             var offender = Cache.Accounts.GetDelegate(accusedBakerId);
 
             var operation = new DoubleBakingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = accusedLevel,
-                SlashedLevel = GetSlashingLevel(block, block.Protocol, accusedLevel),
+                SlashedLevel = GetSlashingLevel(block, Context.Protocol, accusedLevel),
 
-                Accuser = accuser,
-                Offender = offender,
+                AccuserId = accuser.Id,
+                OffenderId = offender.Id,
 
                 Reward = 0,
                 LostStaked = 0,
@@ -61,9 +60,12 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
 
             block.Operations |= Operations.DoubleBakings;
+
+            Cache.AppState.Get().DoubleBakingOpsCount++;
             #endregion
 
             Db.DoubleBakingOps.Add(operation);
+            Context.DoubleBakingOps.Add(operation);
         }
 
         public void Revert(DoubleBakingOperation operation)
@@ -82,6 +84,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(offender);
                 offender.DoubleBakingCount--;
             }
+
+            Cache.AppState.Get().DoubleBakingOpsCount--;
             #endregion
 
             Db.DoubleBakingOps.Remove(operation);

@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
         public override async Task Apply(Block block, JsonElement op, JsonElement content)
         {
-            if (content.RequiredString("source") != block.Protocol.Dictator)
+            if (content.RequiredString("source") != Context.Protocol.Dictator)
             {
                 await base.Apply(block, op, content);
                 return;
@@ -79,7 +79,8 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             foreach (var proposal in proposals)
             {
-                Cache.AppState.Get().ProposalsCount--;
+                Cache.AppState.ReleaseProposalId();
+                Cache.Proposals.Remove(proposal);
                 Db.Proposals.Remove(proposal);
             }
 
@@ -122,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 period.TotalBakers = snapshots.Count;
                 period.TotalVotingPower = snapshots.Sum(x => x.VotingPower);
 
-                period.UpvotesQuorum = block.Protocol.ProposalQuorum;
+                period.UpvotesQuorum = Context.Protocol.ProposalQuorum;
                 period.ProposalsCount = 0;
                 period.TopUpvotes = 0;
                 period.TopVotingPower = 0;
@@ -162,6 +163,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             {
                 var proposal = new Proposal
                 {
+                    Id = Cache.AppState.NextProposalId(),
                     Epoch = period.Epoch,
                     FirstPeriod = period.Index,
                     LastPeriod = period.Index,
@@ -171,7 +173,6 @@ namespace Tzkt.Sync.Protocols.Proto14
                     Upvotes = 0,
                     VotingPower = 0
                 };
-                Cache.AppState.Get().ProposalsCount++;
                 Db.Proposals.Add(proposal);
             }
             #endregion

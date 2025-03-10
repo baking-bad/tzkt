@@ -34,14 +34,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<RevealOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<RevealOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Reveals)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

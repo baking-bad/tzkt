@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Apply()
         {
             if (Diffs.Count == 0) return;
-            Diffs[0].op.Block.Events |= BlockEvents.Bigmaps;
+            Context.Block.Events |= BlockEvents.Bigmaps;
 
             #region prefetch
             var allocated = new HashSet<int>(7);

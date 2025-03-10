@@ -62,16 +62,14 @@ namespace Tzkt.Sync.Protocols.Proto18
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
                 SenderId = sender.Id,
-                ActivationCycle = block.Cycle + block.Protocol.DelegateParametersActivationDelay + 1,
+                ActivationCycle = block.Cycle + Context.Protocol.DelegateParametersActivationDelay + 1,
                 LimitOfStakingOverBaking = limit.TrimToInt64(),
                 EdgeOfBakingOverStaking = (long)edge,
                 Status = status,
@@ -102,8 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            block.Proposer.Balance += operation.BakerFee;
-            block.Proposer.StakingBalance += operation.BakerFee;
+            Context.Proposer.Balance += operation.BakerFee;
+            Context.Proposer.StakingBalance += operation.BakerFee;
 
             block.Operations |= Operations.SetDelegateParameters;
             block.Fees += operation.BakerFee;
@@ -118,8 +116,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SetDelegateParametersOps.Add(operation);
+            Context.SetDelegateParametersOps.Add(operation);
         }
 
         public async Task Revert(Block block, SetDelegateParametersOperation operation)
@@ -152,8 +151,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            block.Proposer.Balance -= operation.BakerFee;
-            block.Proposer.StakingBalance -= operation.BakerFee;
+            Context.Proposer.Balance -= operation.BakerFee;
+            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().SetDelegateParametersOpsCount--;
             #endregion

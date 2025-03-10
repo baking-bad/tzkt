@@ -17,7 +17,6 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             #region init
             var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
             var limit = content.OptionalString("limit");
@@ -26,14 +25,13 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -51,8 +49,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -96,24 +94,17 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SetDepositsLimitOps.Add(operation);
+            Context.SetDepositsLimitOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, SetDepositsLimitOperation op)
         {
-            #region init
-            op.Block ??= block;
-            op.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            op.Sender ??= await Cache.Accounts.GetAsync(op.SenderId);
-            op.Sender.Delegate ??= Cache.Accounts.GetDelegate(op.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = (User)op.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(op.SenderId) as User;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);

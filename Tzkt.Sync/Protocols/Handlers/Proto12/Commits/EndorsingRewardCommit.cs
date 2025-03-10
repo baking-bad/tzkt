@@ -74,16 +74,15 @@ namespace Tzkt.Sync.Protocols.Proto12
             Cache.AppState.Get().EndorsingRewardOpsCount += Ops.Count;
 
             Db.EndorsingRewardOps.AddRange(Ops);
+            Context.EndorsingRewardOps.AddRange(Ops);
         }
 
         public virtual async Task Revert(Block block)
         {
-            if (!block.Operations.HasFlag(Operations.EndorsingRewards))
+            if (Context.EndorsingRewardOps.Count == 0)
                 return;
 
-            var ops = await Db.EndorsingRewardOps.Where(x => x.Level == block.Level).ToListAsync();
-
-            foreach (var op in ops)
+            foreach (var op in Context.EndorsingRewardOps)
             {
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
@@ -102,10 +101,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                     bakerCycle.MissedEndorsementRewards -= op.Expected;
             }
 
-            Cache.AppState.Get().EndorsingRewardOpsCount -= ops.Count;
+            Cache.AppState.Get().EndorsingRewardOpsCount -= Context.EndorsingRewardOps.Count;
 
-            Db.EndorsingRewardOps.RemoveRange(ops);
-            Cache.AppState.ReleaseOperationId(ops.Count);
+            Db.EndorsingRewardOps.RemoveRange(Context.EndorsingRewardOps);
+            Cache.AppState.ReleaseOperationId(Context.EndorsingRewardOps.Count);
         }
     }
 }

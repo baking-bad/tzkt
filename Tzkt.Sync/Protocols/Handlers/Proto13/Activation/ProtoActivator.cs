@@ -105,10 +105,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                     var migration = new MigrationOperation
                     {
                         Id = Cache.AppState.NextOperationId(),
-                        Block = block,
                         Level = block.Level,
                         Timestamp = block.Timestamp,
-                        Account = contract,
+                        AccountId = contract.Id,
                         Kind = MigrationKind.CodeChange
                     };
                     var newScript = new Script
@@ -146,8 +145,8 @@ namespace Tzkt.Sync.Protocols.Proto13
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                     contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                    migration.Script = newScript;
-                    migration.Storage = newStorage;
+                    migration.ScriptId = newScript.Id;
+                    migration.StorageId = newStorage.Id;
 
                     contract.MigrationsCount++;
                     contract.LastLevel = migration.Level;
@@ -157,6 +156,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     block.Operations |= Operations.Migrations;
 
                     Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
 
                     Db.Scripts.Add(newScript);
                     Cache.Schemas.Add(contract, newScript.Schema);

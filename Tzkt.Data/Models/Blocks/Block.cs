@@ -43,76 +43,6 @@ namespace Tzkt.Data.Models
 
         public bool? AIToggle { get; set; }
         public int AIToggleEma { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(ProtoCode))]
-        public Protocol Protocol { get; set; }
-
-        [ForeignKey(nameof(ProposerId))]
-        public Delegate Proposer { get; set; }
-
-        [ForeignKey(nameof(RevelationId))]
-        public NonceRevelationOperation Revelation { get; set; }
-
-        [ForeignKey(nameof(SoftwareId))]
-        public Software Software { get; set; }
-        #endregion
-
-        #region indirect relations
-        public List<Account> CreatedAccounts { get; set; }
-
-        public List<EndorsementOperation> Endorsements { get; set; }
-        public List<PreendorsementOperation> Preendorsements { get; set; }
-
-        public List<BallotOperation> Ballots { get; set; }
-        public List<ProposalOperation> Proposals { get; set; }
-
-        public List<ActivationOperation> Activations { get; set; }
-        public List<DoubleBakingOperation> DoubleBakings { get; set; }
-        public List<DoubleEndorsingOperation> DoubleEndorsings { get; set; }
-        public List<DoublePreendorsingOperation> DoublePreendorsings { get; set; }
-        public List<NonceRevelationOperation> Revelations { get; set; }
-
-        public List<DelegationOperation> Delegations { get; set; }
-        public List<OriginationOperation> Originations { get; set; }
-        public List<StakingOperation> StakingOps { get; set; }
-        public List<TransactionOperation> Transactions { get; set; }
-        public List<RevealOperation> Reveals { get; set; }
-        public List<RegisterConstantOperation> RegisterConstants { get; set; }
-        public List<SetDepositsLimitOperation> SetDepositsLimits { get; set; }
-
-        public List<TxRollupOriginationOperation> TxRollupOriginationOps { get; set; }
-        public List<TxRollupSubmitBatchOperation> TxRollupSubmitBatchOps { get; set; }
-        public List<TxRollupCommitOperation> TxRollupCommitOps { get; set; }
-        public List<TxRollupFinalizeCommitmentOperation> TxRollupFinalizeCommitmentOps { get; set; }
-        public List<TxRollupRemoveCommitmentOperation> TxRollupRemoveCommitmentOps { get; set; }
-        public List<TxRollupReturnBondOperation> TxRollupReturnBondOps { get; set; }
-        public List<TxRollupRejectionOperation> TxRollupRejectionOps { get; set; }
-        public List<TxRollupDispatchTicketsOperation> TxRollupDispatchTicketsOps { get; set; }
-        public List<TransferTicketOperation> TransferTicketOps { get; set; }
-
-        public List<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; }
-        public List<VdfRevelationOperation> VdfRevelationOps { get; set; }
-
-        public List<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; }
-        public List<DrainDelegateOperation> DrainDelegateOps { get; set; }
-
-        public List<MigrationOperation> Migrations { get; set; }
-        public List<RevelationPenaltyOperation> RevelationPenalties { get; set; }
-
-        public List<SmartRollupAddMessagesOperation> SmartRollupAddMessagesOps { get; set; }
-        public List<SmartRollupCementOperation> SmartRollupCementOps { get; set; }
-        public List<SmartRollupExecuteOperation> SmartRollupExecuteOps { get; set; }
-        public List<SmartRollupOriginateOperation> SmartRollupOriginateOps { get; set; }
-        public List<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
-        public List<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
-        public List<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
-
-        public List<SetDelegateParametersOperation> SetDelegateParametersOps { get; set; }
-        public List<DalPublishCommitmentOperation> DalPublishCommitmentOps { get; set; }
-
-        public List<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
-        #endregion
     }
 
     public static class BlockModel
@@ -151,25 +81,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Block>()
                 .HasIndex(x => x.ProducerId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Protocol)
-                .WithMany()
-                .HasForeignKey(x => x.ProtoCode)
-                .HasPrincipalKey(x => x.Code);
-
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Revelation)
-                .WithOne(x => x.RevealedBlock)
-                .HasForeignKey<Block>(x => x.RevelationId);
-
-            modelBuilder.Entity<Block>()
-                .HasOne(x => x.Software)
-                .WithMany()
-                .HasForeignKey(x => x.SoftwareId)
-                .HasPrincipalKey(x => x.Id);
             #endregion
         }
     }

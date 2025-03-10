@@ -24,15 +24,14 @@ namespace Tzkt.Sync.Protocols.Proto3
             var ballot = new BallotOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Sender = sender,
+                SenderId = sender.Id,
                 VotingPower = snapshot.VotingPower,
                 Epoch = period.Epoch,
                 Period = period.Index,
-                Proposal = proposal,
+                ProposalId = proposal.Id,
                 Vote = content.RequiredString("ballot") switch
                 {
                     "yay" => Vote.Yay,
@@ -79,28 +78,21 @@ namespace Tzkt.Sync.Protocols.Proto3
             #endregion
 
             Db.BallotOps.Add(ballot);
+            Context.BallotOps.Add(ballot);
         }
 
         public virtual async Task Revert(Block block, BallotOperation ballot)
         {
-            #region init
-            ballot.Block ??= block;
-            ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
-            ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
+            #region entities
+            var sender = Cache.Accounts.GetDelegate(ballot.SenderId);
 
             var snapshot = await Db.VotingSnapshots
-                .FirstAsync(x => x.Period == ballot.Period && x.BakerId == ballot.Sender.Id);
+                .FirstAsync(x => x.Period == ballot.Period && x.BakerId == ballot.SenderId);
 
             var period = await Cache.Periods.GetAsync(ballot.Period);
-            #endregion
 
-            #region entities
-            var sender = ballot.Sender;
-
-            //Db.TryAttach(block);
             Db.TryAttach(sender);
             Db.TryAttach(period);
-            //Db.TryAttach(snapshot);
             #endregion
 
             #region revert operation

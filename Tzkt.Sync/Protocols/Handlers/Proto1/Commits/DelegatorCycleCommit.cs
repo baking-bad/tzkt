@@ -33,8 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
                 await Db.Database.ExecuteSqlRawAsync($"""
                     DELETE FROM "DelegatorCycles"

@@ -85,7 +85,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Revealed = true,
                     Staked = true,
                     DelegationLevel = 1,
-                    Delegate = delegat,
                     DelegateId = delegat.Id
                 };
 
@@ -132,8 +131,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = 1,
                     Spendable = false,
                     DelegationLevel = delegat == null ? null : 1,
-                    Delegate = delegat,
-                    Manager = manager,
+                    DelegateId = delegat?.Id,
+                    ManagerId = manager.Id,
                     Staked = delegat != null,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
@@ -274,10 +273,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var migration = new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
-                    Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
-                    Account = account,
+                    AccountId = account.Id,
                     Kind = MigrationKind.Bootstrap,
                     BalanceChange = account.Balance,
                 };
@@ -291,11 +289,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     script.MigrationId = migration.Id;
                     storage.MigrationId = migration.Id;
 
-                    migration.Script = script;
-                    migration.Storage = storage;
+                    migration.ScriptId = script.Id;
+                    migration.StorageId = storage.Id;
                 }
 
                 Db.MigrationOps.Add(migration);
+                Context.MigrationOps.Add(migration);
                 account.MigrationsCount++;
             }
 

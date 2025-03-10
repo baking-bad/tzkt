@@ -22,13 +22,13 @@
         public int RefutationGameCounter { get; set; }
         public int InboxMessageCounter { get; set; }
         public int BigMapUpdateCounter { get; set; }
+        public int ProposalCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }
 
         public int BlocksCount { get; set; }
         public int ProtocolsCount { get; set; }
-        public int ProposalsCount { get; set; }
         public int CyclesCount { get; set; }
         public int ConstantsCount { get; set; }
 

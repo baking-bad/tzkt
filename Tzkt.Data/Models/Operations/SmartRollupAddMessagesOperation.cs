@@ -35,14 +35,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupAddMessagesOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupAddMessagesOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupAddMessagesOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

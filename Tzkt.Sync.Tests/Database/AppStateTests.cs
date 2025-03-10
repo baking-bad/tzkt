@@ -158,6 +158,12 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.InboxMessageCounter != await db.InboxMessages.CountAsync())
                 throw new Exception("Invalid AppState.InboxMessageCounter");
+
+            if (state.ProposalCounter != await db.Proposals.CountAsync())
+                throw new Exception("Invalid AppState.ProposalCounter");
+
+            if (state.SoftwareCounter != await db.Software.CountAsync())
+                throw new Exception("Invalid AppState.SoftwareCounter");
             #endregion
 
             #region counts
@@ -301,9 +307,6 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.DalPublishCommitmentOpsCount != await db.DalPublishCommitmentOps.CountAsync())
                 throw new Exception("Invalid AppState.DalPublishCommitmentOpsCount");
-
-            if (state.ProposalsCount != await db.Proposals.CountAsync())
-                throw new Exception("Invalid AppState.ProposalsCount");
 
             if (state.CyclesCount != await db.Cycles.CountAsync())
                 throw new Exception("Invalid AppState.CyclesCount");

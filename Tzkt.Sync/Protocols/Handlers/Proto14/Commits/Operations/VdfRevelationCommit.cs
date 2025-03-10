@@ -20,11 +20,10 @@ namespace Tzkt.Sync.Protocols.Proto14
             var revelation = new VdfRevelationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Baker = block.Proposer,
+                BakerId = Context.Proposer.Id,
                 Cycle = block.Cycle,
                 RewardDelegated = reward,
                 Solution = Hex.Parse(content.RequiredArray("solution", 2)[0].RequiredString()),
@@ -33,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             Db.TryAttach(blockBaker);
             #endregion
 
@@ -50,17 +49,14 @@ namespace Tzkt.Sync.Protocols.Proto14
             #endregion
 
             Db.VdfRevelationOps.Add(revelation);
+            Context.VdfRevelationOps.Add(revelation);
             return Task.CompletedTask;
         }
 
         public virtual Task Revert(Block block, VdfRevelationOperation revelation)
         {
-            #region init
-            revelation.Baker ??= Cache.Accounts.GetDelegate(revelation.BakerId);
-            #endregion
-
             #region entities
-            var blockBaker = revelation.Baker;
+            var blockBaker = Cache.Accounts.GetDelegate(revelation.BakerId);
             Db.TryAttach(blockBaker);
             #endregion
 

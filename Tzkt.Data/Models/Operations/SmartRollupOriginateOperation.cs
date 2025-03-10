@@ -42,14 +42,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupOriginateOperation>()
                 .HasIndex(x => x.SmartRollupId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupOriginateOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupOriginateOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

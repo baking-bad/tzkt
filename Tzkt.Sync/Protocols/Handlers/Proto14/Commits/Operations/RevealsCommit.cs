@@ -13,16 +13,16 @@ namespace Tzkt.Sync.Protocols.Proto14
             return (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000);
         }
 
-        protected override void ApplyResult(RevealOperation op, string pubKey)
+        protected override void ApplyResult(RevealOperation op, Account sender, string pubKey)
         {
             if (op.Status != OperationStatus.Applied) return;
-            base.ApplyResult(op, pubKey);
+            base.ApplyResult(op, sender, pubKey);
         }
 
-        protected override void RevertResult(RevealOperation op)
+        protected override void RevertResult(RevealOperation op, Account sender)
         {
             if (op.Status != OperationStatus.Applied) return;
-            base.RevertResult(op);
+            base.RevertResult(op, sender);
         }
     }
 }

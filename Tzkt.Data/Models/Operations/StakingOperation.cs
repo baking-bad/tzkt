@@ -50,14 +50,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<StakingOperation>()
                 .HasIndex(x => x.BakerId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<StakingOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.StakingOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

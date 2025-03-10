@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             await Cache.TicketBalances.Preload(balancesSet);
             #endregion
 
-            Updates.First().Key.Block.Events |= BlockEvents.Tickets;
+            Context.Block.Events |= BlockEvents.Tickets;
 
             foreach (var (parent, opUpdates) in Updates.OrderBy(kv => kv.Key.Id))
             {

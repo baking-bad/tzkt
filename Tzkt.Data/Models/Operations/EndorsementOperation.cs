@@ -12,11 +12,6 @@ namespace Tzkt.Data.Models
         public long Deposit { get; set; }
 
         public int? ResetDeactivation { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(DelegateId))]
-        public Delegate Delegate { get; set; }
-        #endregion
     }
 
     public static class EndorsementOperationModel
@@ -45,14 +40,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<EndorsementOperation>()
                 .HasIndex(x => x.DelegateId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<EndorsementOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Endorsements)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

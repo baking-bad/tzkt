@@ -15,18 +15,6 @@ namespace Tzkt.Data.Models
         public long RewardStakedEdge { get; set; }
         public long RewardStakedShared { get; set; }
         public byte[] Nonce { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(BakerId))]
-        public Delegate Baker { get; set; }
-
-        [ForeignKey(nameof(SenderId))]
-        public Delegate Sender { get; set; }
-        #endregion
-
-        #region indirect relations
-        public Block RevealedBlock { get; set; }
-        #endregion
     }
 
     public static class NonceRevelationOperationModel
@@ -67,14 +55,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasIndex(x => x.RevealedCycle);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Revelations)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

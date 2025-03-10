@@ -36,14 +36,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<DalPublishCommitmentOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<DalPublishCommitmentOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DalPublishCommitmentOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

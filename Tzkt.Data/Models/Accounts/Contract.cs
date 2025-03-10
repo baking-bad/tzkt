@@ -20,17 +20,6 @@ namespace Tzkt.Data.Models
         public int? CreatorId { get; set; }
         public int? ManagerId { get; set; }
         public int? WeirdDelegateId { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(CreatorId))]
-        public Account Creator { get; set; }
-
-        [ForeignKey(nameof(ManagerId))]
-        public User Manager { get; set; }
-
-        [ForeignKey(nameof(WeirdDelegateId))]
-        public User WeirdDelegate { get; set; }
-        #endregion
     }
 
     public enum ContractKind : byte
