@@ -5,20 +5,18 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class BakingRightsCommit : ProtocolCommit
+    class BakingRightsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public List<BakingRight> CurrentRights { get; protected set; }
-        public IEnumerable<RightsGenerator.BR> FutureBakingRights { get; protected set; }
-        public IEnumerable<RightsGenerator.ER> FutureEndorsingRights { get; protected set; }
+        public List<BakingRight> CurrentRights { get; protected set; } = null!;
+        public IEnumerable<RightsGenerator.BR>? FutureBakingRights { get; protected set; }
+        public IEnumerable<RightsGenerator.ER>? FutureEndorsingRights { get; protected set; }
 
-        public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public virtual async Task Apply(Block block, Cycle futureCycle, Dictionary<int, long> selectedStakes)
+        public virtual async Task Apply(Block block, Cycle? futureCycle, Dictionary<int, long>? selectedStakes)
         {
             await ApplyCurrentRights(block);
 
             if (futureCycle != null)
-                await ApplyNewCycle(block, futureCycle, selectedStakes);
+                await ApplyNewCycle(block, futureCycle, selectedStakes!);
         }
 
         protected virtual async Task ApplyCurrentRights(Block block)
@@ -139,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             FutureBakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, Context.Protocol, futureCycle);
             FutureEndorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, Context.Protocol, futureCycle);
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");

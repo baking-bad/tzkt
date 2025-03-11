@@ -5,8 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class RegisterConstantOperation : ManagerOperation
     {
-        public string Address { get; set; }
-        public byte[] Value { get; set; }
+        public string? Address { get; set; }
+        public byte[]? Value { get; set; }
         public int? Refs { get; set; }
     }
 

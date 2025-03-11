@@ -8,17 +8,15 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupExecuteCommit : ProtocolCommit
+    class SmartRollupExecuteCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupExecuteOperation Operation { get; private set; }
-        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
-
-        public SmartRollupExecuteCommit(ProtocolHandler protocol) : base(protocol) { }
+        public SmartRollupExecuteOperation Operation { get; private set; } = null!;
+        public IEnumerable<TicketUpdates>? TicketUpdates { get; private set; }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(content.RequiredString("cemented_commitment"), rollup?.Id);
 
@@ -109,9 +107,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                 
                 TicketUpdates = ParseTicketUpdates(result);
 
-                if (commitment.Status != SmartRollupCommitmentStatus.Executed)
+                if (commitment!.Status != SmartRollupCommitmentStatus.Executed)
                 {
-                    rollup.ExecutedCommitments++;
+                    rollup!.ExecutedCommitments++;
                     commitment.Status = SmartRollupCommitmentStatus.Executed;
                 }
 
@@ -159,8 +157,8 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 if (isFirstExecution)
                 {
-                    rollup.ExecutedCommitments--;
-                    commitment.Status = SmartRollupCommitmentStatus.Cemented;
+                    rollup!.ExecutedCommitments--;
+                    commitment!.Status = SmartRollupCommitmentStatus.Cemented;
                 }
             }
             #endregion
@@ -180,7 +178,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (rollup != null) rollup.SmartRollupExecuteCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             // commitment.LastLevel is not reverted
 
@@ -192,7 +190,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(JsonElement result)
+        protected virtual IEnumerable<TicketUpdates>? ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
@@ -217,16 +215,16 @@ namespace Tzkt.Sync.Protocols.Proto16
                 if (list.Count > 0)
                 {
                     var ticketToken = updates.Required("ticket_token");
-                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var type = ticketToken.RequiredMicheline("content_type");
+                    var value = ticketToken.RequiredMicheline("content");
                     var rawType = type.ToBytes();
 
                     byte[] rawContent;
-                    string jsonContent;
+                    string? jsonContent;
 
                     try
                     {
-                        var schema = Schema.Create(type as MichelinePrim);
+                        var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
                         jsonContent = schema.Humanize(value);
                     }

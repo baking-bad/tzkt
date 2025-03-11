@@ -5,14 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupRecoverBondCommit : ProtocolCommit
+    class SmartRollupRecoverBondCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupRecoverBondCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var staker = await Cache.Accounts.GetAsync(content.RequiredString("staker"));
 
@@ -89,8 +87,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                staker.SmartRollupBonds -= operation.Bond;
-                rollup.SmartRollupBonds -= operation.Bond;
+                staker!.SmartRollupBonds -= operation.Bond;
+                rollup!.SmartRollupBonds -= operation.Bond;
                 rollup.ActiveStakers--;
 
                 var bondOp = Context.SmartRollupPublishOps
@@ -126,8 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                staker.SmartRollupBonds += operation.Bond;
-                rollup.SmartRollupBonds += operation.Bond;
+                staker!.SmartRollupBonds += operation.Bond;
+                rollup!.SmartRollupBonds += operation.Bond;
                 rollup.ActiveStakers++;
 
                 var bondOp = await Db.SmartRollupPublishOps
@@ -153,7 +151,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (staker != null && staker.Id != sender.Id) staker.SmartRollupRecoverBondCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().SmartRollupRecoverBondOpsCount--;
             #endregion

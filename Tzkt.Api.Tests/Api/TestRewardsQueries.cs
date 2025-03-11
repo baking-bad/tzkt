@@ -1,21 +1,13 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Dynamic.Json;
+﻿using Dynamic.Json;
 using Dynamic.Json.Extensions;
 using Xunit;
 
 namespace Tzkt.Api.Tests.Api
 {
-    public class TestRewardsQueries : IClassFixture<SettingsFixture>
+    public class TestRewardsQueries(SettingsFixture settings) : IClassFixture<SettingsFixture>
     {
-        readonly HttpClient Client;
-        readonly SettingsFixture Settings;
-        
-        public TestRewardsQueries(SettingsFixture settings)
-        {
-            Client = settings.Client;
-            Settings = settings;
-        }
+        readonly HttpClient Client = settings.Client;
+        readonly SettingsFixture Settings = settings;
 
         [Fact]
         public async Task TestBakerRewardsCount()

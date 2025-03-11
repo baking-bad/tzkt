@@ -1,18 +1,16 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class MigrationOperation : IOperation
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public DateTime Timestamp { get; set; }
+        public required long Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required MigrationKind Kind { get; set; }
+        public required int AccountId { get; set; }
 
-        public int AccountId { get; set; }
-        public MigrationKind Kind { get; set; }
         public long BalanceChange { get; set; }
 
         public int? ScriptId { get; set; }

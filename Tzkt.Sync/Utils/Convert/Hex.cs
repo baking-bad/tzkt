@@ -1,11 +1,11 @@
-﻿using System;
+﻿using System.Diagnostics.CodeAnalysis;
 
 namespace Tzkt.Sync.Utils
 {
     public static class Hex
     {
-        private static readonly int[] HexAscii = new[]
-        {
+        private static readonly int[] HexAscii =
+        [
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Utils
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
             255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255
-        };
+        ];
 
         public static string Convert(byte[] bytes)
         {
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Utils
             return bytes;
         }
 
-        public static bool TryParse(string hex, out byte[] bytes)
+        public static bool TryParse(string hex, [NotNullWhen(true)] out byte[]? bytes)
         {
             bytes = null;
 

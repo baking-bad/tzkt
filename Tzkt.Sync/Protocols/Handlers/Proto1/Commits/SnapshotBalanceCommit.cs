@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class SnapshotBalanceCommit : ProtocolCommit
+    class SnapshotBalanceCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(JsonElement rawBlock, Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.BalanceSnapshot))
@@ -114,7 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             GetFreezerCycle(x) != block.Cycle)
                 .Select(x => (x.RequiredString("delegate"), x.RequiredInt64("change")))
                 .GroupBy(x => x.Item1)
-                .Select(updates => $"({Cache.Accounts.GetDelegate(updates.Key).Id}, {updates.Sum(x => -x.Item2)}::bigint)"));
+                .Select(updates => $"({Cache.Accounts.GetExistingDelegate(updates.Key).Id}, {updates.Sum(x => -x.Item2)}::bigint)"));
 
             if (rewards.Length > 0)
             {

@@ -1,20 +1,19 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class NonceRevelationOperation : BaseOperation
     {
-        public int BakerId { get; set; }
-        public int SenderId { get; set; }
+        public required int BakerId { get; set; }
+        public required int SenderId { get; set; }
         public int RevealedLevel { get; set; }
         public int RevealedCycle { get; set; }
         public long RewardDelegated { get; set; }
         public long RewardStakedOwn { get; set; }
         public long RewardStakedEdge { get; set; }
         public long RewardStakedShared { get; set; }
-        public byte[] Nonce { get; set; }
+        public required byte[] Nonce { get; set; }
     }
 
     public static class NonceRevelationOperationModel

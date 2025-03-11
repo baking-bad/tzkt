@@ -7,10 +7,8 @@ using Tzkt.Sync.Services.Cache;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupPublishCommit : ProtocolCommit
+    class SmartRollupPublishCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupPublishCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -19,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             var bond = result.OptionalArray("balance_updates")?.EnumerateArray()
                 .FirstOrDefault(x => x.RequiredString("kind") == "contract") ?? default;
 
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(commitmentHash, rollup?.Id);
             
@@ -98,7 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 if (operation.Bond != 0)
                 {
                     sender.SmartRollupBonds += operation.Bond;
-                    rollup.SmartRollupBonds += operation.Bond;
+                    rollup!.SmartRollupBonds += operation.Bond;
 
                     var uniqueStakers = (await Db.SmartRollupPublishOps.AsNoTracking()
                         .Where(x => x.SmartRollupId == rollup.Id && x.BondStatus != null)
@@ -126,14 +124,14 @@ namespace Tzkt.Sync.Protocols.Proto16
                     commitment = new SmartRollupCommitment
                     {
                         Id = Cache.AppState.NextSmartRollupCommitmentId(),
-                        SmartRollupId = rollup.Id,
+                        SmartRollupId = rollup!.Id,
                         InitiatorId = operation.SenderId,
                         FirstLevel = operation.Level,
                         LastLevel = operation.Level,
                         InboxLevel = commitmentEl.RequiredInt32("inbox_level"),
                         State = commitmentEl.RequiredString("compressed_state"),
                         Ticks = commitmentEl.RequiredInt64("number_of_ticks"),
-                        Hash = commitmentHash,
+                        Hash = commitmentHash!,
                         Stakers = 1,
                         ActiveStakers = 1,
                         Successors = 0,
@@ -177,7 +175,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     }
                     if (commitment.Status == SmartRollupCommitmentStatus.Refuted)
                     {
-                        rollup.PendingCommitments++;
+                        rollup!.PendingCommitments++;
                         rollup.RefutedCommitments--;
 
                         commitment.Status = SmartRollupCommitmentStatus.Pending;
@@ -220,7 +218,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 if (operation.Bond != 0)
                 {
                     sender.SmartRollupBonds -= operation.Bond;
-                    rollup.SmartRollupBonds -= operation.Bond;
+                    rollup!.SmartRollupBonds -= operation.Bond;
 
                     var uniqueStakers = await Db.SmartRollupPublishOps.AsNoTracking()
                         .Where(x => x.SmartRollupId == rollup.Id && x.BondStatus != null && x.Id < operation.Id)
@@ -232,9 +230,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup.ActiveStakers--;
                 }
 
-                if (commitment.Stakers == 1 && operation.Flags.HasFlag(SmartRollupPublishFlags.AddStaker))
+                if (commitment!.Stakers == 1 && operation.Flags.HasFlag(SmartRollupPublishFlags.AddStaker))
                 {
-                    rollup.PendingCommitments--;
+                    rollup!.PendingCommitments--;
 
                     if (commitment.PredecessorId != null)
                     {
@@ -264,7 +262,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     }
                     if (change.HasFlag(SmartRollupPublishFlags.ReactivateBranch))
                     {
-                        rollup.PendingCommitments--;
+                        rollup!.PendingCommitments--;
                         rollup.RefutedCommitments++;
 
                         commitment.Status = SmartRollupCommitmentStatus.Refuted;
@@ -294,7 +292,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (rollup != null) rollup.SmartRollupPublishCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             // commitment.LastLevel is not reverted
 

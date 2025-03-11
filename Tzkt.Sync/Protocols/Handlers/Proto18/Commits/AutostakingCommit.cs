@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class AutostakingCommit : ProtocolCommit
+    class AutostakingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public AutostakingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -40,6 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     {
                         Id = Cache.AppState.NextOperationId(),
                         Level = group.First().Level,
+                        Timestamp = block.Timestamp,
                         Action = staked != 0 ? StakingAction.Stake : unstaked != 0 ? StakingAction.Unstake : StakingAction.Finalize,
                         Amount = staked != 0 ? staked : unstaked != 0 ? unstaked : finalized,
                         BakerId = group.Key,
@@ -127,8 +126,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                         Id = ++Cache.AppState.Get().StakingUpdatesCount,
                         Level = block.Level,
                         Cycle = block.Cycle,
-                        BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                        StakerId = Cache.Accounts.GetDelegate(baker).Id,
+                        BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                        StakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
                         Type = StakingUpdateType.Stake,
                         Amount = change
                     });
@@ -154,8 +153,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Id = ++Cache.AppState.Get().StakingUpdatesCount,
                             Level = block.Level,
                             Cycle = cycle,
-                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                            StakerId = Cache.Accounts.GetDelegate(staker).Id,
+                            BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                            StakerId = Cache.Accounts.GetExistingDelegate(staker).Id,
                             Type = StakingUpdateType.Unstake,
                             Amount = change
                         });
@@ -186,8 +185,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Id = ++Cache.AppState.Get().StakingUpdatesCount,
                             Level = block.Level,
                             Cycle = cycle,
-                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                            StakerId = Cache.Accounts.GetDelegate(staker).Id,
+                            BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                            StakerId = Cache.Accounts.GetExistingDelegate(staker).Id,
                             Type = StakingUpdateType.Finalize,
                             Amount = change
                         });
@@ -211,8 +210,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Id = ++Cache.AppState.Get().StakingUpdatesCount,
                             Level = block.Level,
                             Cycle = cycle,
-                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                            StakerId = Cache.Accounts.GetDelegate(staker).Id,
+                            BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                            StakerId = Cache.Accounts.GetExistingDelegate(staker).Id,
                             Type = StakingUpdateType.Restake,
                             Amount = change
                         });

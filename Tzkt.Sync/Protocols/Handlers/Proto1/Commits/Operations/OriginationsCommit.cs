@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
@@ -12,23 +8,20 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class OriginationsCommit : ProtocolCommit
+    class OriginationsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public OriginationOperation Origination { get; private set; }
-        public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
-        public Contract Contract { get; private set; }
-
-        public OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
+        public OriginationOperation Origination { get; private set; } = null!;
+        public IEnumerable<BigMapDiff>? BigMapDiffs { get; private set; }
+        public Contract? Contract { get; private set; }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
-            var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             // WTF: [level:635] - Tezos allows to set non-existent delegate.
+            var delegat = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
 
             Db.TryAttach(sender);
             Db.TryAttach(manager);
@@ -36,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var result = content.Required("metadata").Required("operation_result");
 
-            Contract contract = null;
+            Contract? contract = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredArray("originated_contracts", 1)[0].RequiredString();
@@ -186,19 +179,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount++;
-                    contractDelegate.StakingBalance += contract.Balance;
+                    contractDelegate.StakingBalance += contract!.Balance;
                     contractDelegate.DelegatedBalance += contract.Balance;
                 }
 
                 sender.ContractsCount++;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
-                block.Events |= GetBlockEvents(contract);
+                block.Events |= GetBlockEvents(contract!);
 
-                if (contract.Kind > ContractKind.DelegatorContract)
+                if (contract!.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code")));
-                    var storage = Micheline.FromJson(content.Required("script").Required("storage"));
+                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code"))!);
+                    var storage = Micheline.FromJson(content.Required("script").Required("storage"))!;
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
                     await ProcessScript(origination, contract, code, storage);
@@ -220,8 +213,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? throw new ValidationException("Origination source address doesn't exist");
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             // WTF: [level:25054] - Manager and sender are not equal.
             var manager = await GetManager(content);
@@ -234,7 +226,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var result = content.Required("result");
 
-            Contract contract = null;
+            Contract? contract = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredArray("originated_contracts", 1)[0].RequiredString();
@@ -391,19 +383,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount++;
-                    contractDelegate.StakingBalance += contract.Balance;
+                    contractDelegate.StakingBalance += contract!.Balance;
                     contractDelegate.DelegatedBalance += contract.Balance;
                 }
 
                 sender.ContractsCount++;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount++;
 
-                block.Events |= GetBlockEvents(contract);
+                block.Events |= GetBlockEvents(contract!);
 
-                if (contract.Kind > ContractKind.DelegatorContract)
+                if (contract!.Kind > ContractKind.DelegatorContract)
                 {
-                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code")));
-                    var storage = Micheline.FromJson(content.Required("script").Required("storage"));
+                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code"))!);
+                    var storage = Micheline.FromJson(content.Required("script").Required("storage"))!;
 
                     BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
                     await ProcessScript(origination, contract, code, storage);
@@ -455,14 +447,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount--;
-                    contractDelegate.StakingBalance -= contract.Balance;
+                    contractDelegate.StakingBalance -= contract!.Balance;
                     contractDelegate.DelegatedBalance -= contract.Balance;
                 }
 
                 sender.ContractsCount--;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
-                if (contract.Kind > ContractKind.DelegatorContract)
+                if (contract!.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination, contract);
 
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
@@ -523,7 +515,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task RevertInternal(Block block, OriginationOperation origination)
         {
             #region entities
-            var parentSender = await Cache.Accounts.GetAsync(origination.InitiatorId);
+            var parentSender = await Cache.Accounts.GetAsync(origination.InitiatorId!.Value);
             var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
 
             var sender = await Cache.Accounts.GetAsync(origination.SenderId);
@@ -569,14 +561,14 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (contractDelegate != null)
                 {
                     contractDelegate.DelegatorsCount--;
-                    contractDelegate.StakingBalance -= contract.Balance;
+                    contractDelegate.StakingBalance -= contract!.Balance;
                     contractDelegate.DelegatedBalance -= contract.Balance;
                 }
 
                 sender.ContractsCount--;
                 if (contractManager != null && contractManager != sender) contractManager.ContractsCount--;
 
-                if (contract.Kind > ContractKind.DelegatorContract)
+                if (contract!.Kind > ContractKind.DelegatorContract)
                     await RevertScript(origination, contract);
 
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
@@ -621,16 +613,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual async Task<User> GetWeirdDelegate(JsonElement content)
+        protected virtual async Task<User?> GetWeirdDelegate(JsonElement content)
         {
             var originDelegate = await Cache.Accounts.GetAsync(content.OptionalString("delegate"));
             return originDelegate?.Type == AccountType.User ? (User)originDelegate : null;
         }
 
-        protected virtual async Task<User> GetManager(JsonElement content)
+        protected virtual async Task<User?> GetManager(JsonElement content)
         {
             // WTF: [level: 130] - Different nodes return different manager prop name.
-            return (User)await Cache.Accounts.GetAsync(content.OptionalString("managerPubkey") ?? content.OptionalString("manager_pubkey"));
+            return await Cache.Accounts.GetAsync(content.OptionalString("managerPubkey") ?? content.OptionalString("manager_pubkey")) as User;
         }
 
         protected virtual ContractKind GetContractKind(JsonElement content)
@@ -661,7 +653,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (code is not MichelineArray array)
             {
-                var constants = await Constants.Find(Db, new[] { code });
+                var constants = await Constants.Find(Db, [code]);
                 if (constants.Count > 0)
                 {
                     contract.Tags |= ContractTags.Constants;
@@ -670,7 +662,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         Db.TryAttach(constant);
                         constant.Refs++;
                     }
-                    var dict = constants.ToDictionary(x => x.Address, x => Micheline.FromBytes(x.Value));
+                    var dict = constants.ToDictionary(x => x.Address!, x => Micheline.FromBytes(x.Value!));
                     array = Constants.Expand(code, dict) as MichelineArray
                         ?? throw new Exception("Contract code should be an array or constant");
                 }
@@ -695,7 +687,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         if (code[i] is MichelinePrim prim && prim.Prim == PrimType.constant)
                         {
-                            code[i] = Micheline.FromBytes(constants.First(x => x.Address == (prim.Args[0] as MichelineString).Value).Value);
+                            code[i] = Micheline.FromBytes(constants.First(x => x.Address == (prim.Args![0] as MichelineString)!.Value).Value!);
                         }
                     }
                 }
@@ -716,12 +708,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Db.TryAttach(constant);
                     constant.Refs++;
                 }
-                var dict = constants.ToDictionary(x => x.Address, x => Micheline.FromBytes(x.Value));
+                var dict = constants.ToDictionary(x => x.Address!, x => Micheline.FromBytes(x.Value!));
                 micheParameter = Constants.Expand(micheParameter, dict);
                 micheStorage = Constants.Expand(micheStorage, dict);
-                foreach (MichelinePrim view in micheViews)
+                foreach (var view in micheViews.Select(x => (x as MichelinePrim)!))
                 {
-                    view.Args[1] = Constants.Expand(view.Args[1], dict);
+                    view.Args![1] = Constants.Expand(view.Args[1], dict);
                     view.Args[2] = Constants.Expand(view.Args[2], dict);
                 }
             }
@@ -829,43 +821,51 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            Db.Scripts.Remove(new Script { Id = (int)origination.ScriptId });
+            Db.Scripts.Remove(new Script
+            {
+                Id = origination.ScriptId!.Value,
+                ParameterSchema = [],
+                StorageSchema = [],
+                CodeSchema = [],
+                Level = 0,
+                ContractId = 0,
+            });
             Cache.Schemas.Remove(contract);
             Cache.AppState.ReleaseScriptId();
 
-            var storage = await Cache.Storages.GetAsync(contract);
+            var storage = await Cache.Storages.GetKnownAsync(contract);
             Db.Storages.Remove(storage);
             Cache.Storages.Remove(contract);
             Cache.AppState.ReleaseStorageId();
         }
 
-        protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)
+        protected virtual IEnumerable<BigMapDiff>? ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)
         {
-            List<BigMapDiff> res = null;
+            List<BigMapDiff>? res = null;
 
-            var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage) as MichelinePrim;
+            var micheStorage = (code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage) as MichelinePrim)!;
             var schema = new StorageSchema(micheStorage);
             var tree = schema.Schema.ToTreeView(storage);
             var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
 
             if (bigmap != null)
             {
-                res = new List<BigMapDiff>
-                {
-                    new AllocDiff { Ptr = origination.ContractId.Value }
-                };
+                res =
+                [
+                    new AllocDiff { Ptr = origination.ContractId!.Value }
+                ];
                 if (bigmap.Value is MichelineArray items && items.Count > 0)
                 {
                     foreach (var item in items)
                     {
-                        var key = (item as MichelinePrim).Args[0];
-                        var value = (item as MichelinePrim).Args[1];
+                        var key = (item as MichelinePrim)!.Args![0];
+                        var value = (item as MichelinePrim)!.Args![1];
                         res.Add(new UpdateDiff
                         {
                             Ptr = res[0].Ptr,
                             Key = key,
                             Value = value,
-                            KeyHash = (bigmap.Schema as BigMapSchema).GetKeyHash(key)
+                            KeyHash = (bigmap.Schema as BigMapSchema)!.GetKeyHash(key)
                         });
                     }
                 }

@@ -4,16 +4,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class ActivationsCommit : ProtocolCommit
+    class ActivationsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        protected ActivationOperation Activation { get; set; }
-
-        public ActivationsCommit(ProtocolHandler protocol) : base(protocol) { }
+        protected ActivationOperation Activation { get; set; } = null!;
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("pkh"));
+            var sender = (User)(await Cache.Accounts.GetAsync(content.RequiredString("pkh")))!;
 
             var activation = new ActivationOperation
             {

@@ -1,26 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class PeriodsCache
+    public class PeriodsCache(TzktContext db)
     {
-        public const int MaxPeriods = 16; //TODO: set limits in app settings
-
+        const int MaxPeriods = 16; //TODO: set limits in app settings
         static readonly Dictionary<int, VotingPeriod> Cached = new(17);
 
-        readonly TzktContext Db;
-
-        public PeriodsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {

@@ -6,14 +6,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupOriginateCommit : ProtocolCommit
+    class SmartRollupOriginateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupOriginateCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId);
 
             Db.TryAttach(sender);
@@ -27,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             };
             var result = content.Required("metadata").Required("operation_result");
 
-            SmartRollup rollup = null;
+            SmartRollup? rollup = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredString("address");
@@ -46,7 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
-                        ParameterSchema = Micheline.FromJson(content.Required("parameters_ty")).ToBytes(),
+                        ParameterSchema = content.RequiredMicheline("parameters_ty").ToBytes(),
                         GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
                         LastCommitment = result.RequiredString("genesis_commitment_hash"),
                         InboxLevel = 0,
@@ -82,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
-                        ParameterSchema = Micheline.FromJson(content.Required("parameters_ty")).ToBytes(),
+                        ParameterSchema = content.RequiredMicheline("parameters_ty").ToBytes(),
                         GenesisCommitment = result.RequiredString("genesis_commitment_hash"),
                         LastCommitment = result.RequiredString("genesis_commitment_hash"),
                         InboxLevel = 0,
@@ -136,7 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
             try
             {
-                operation.ParameterType = Micheline.FromJson(content.Required("parameters_ty")).ToBytes();
+                operation.ParameterType = content.RequiredMicheline("parameters_ty").ToBytes();
             }
             catch (Exception ex)
             {
@@ -224,7 +222,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 sender.SmartRollupsCount--;
 
-                if (rollup.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
+                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
                 {
                     Db.SmartRollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);
@@ -269,7 +267,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             sender.SmartRollupOriginateCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().SmartRollupOriginateOpsCount--;
             #endregion

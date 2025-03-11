@@ -1,29 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class AccountsCache
+    public class AccountsCache(CacheService cache, TzktContext db)
     {
-        public const int MaxAccounts = 16 * 4096; //TODO: set limits in app settings
-
+        const int MaxAccounts = 16 * 4096; //TODO: set limits in app settings
         static readonly Dictionary<int, Account> CachedById = new(MaxAccounts);
         static readonly Dictionary<string, Account> CachedByAddress = new(MaxAccounts);
 
-        readonly CacheService Cache;
-        readonly TzktContext Db;
-
-        public AccountsCache(CacheService cache, TzktContext db)
-        {
-            Cache = cache;
-            Db = db;
-        }
+        readonly CacheService Cache = cache;
+        readonly TzktContext Db = db;
 
         public async Task ResetAsync()
         {
@@ -121,7 +110,7 @@ namespace Tzkt.Sync.Services.Cache
             CachedByAddress.Remove(account.Address);
         }
 
-        public async Task<bool> ExistsAsync(string address, AccountType? type = null)
+        public async Task<bool> ExistsAsync(string? address, AccountType? type = null)
         {
             if (string.IsNullOrEmpty(address))
                 return false;
@@ -154,16 +143,14 @@ namespace Tzkt.Sync.Services.Cache
             return CachedByAddress[address];
         }
 
-        public bool TryGetCached(string address, out Account account)
+        public bool TryGetCached(string address, [NotNullWhen(true)] out Account? account)
         {
             return CachedByAddress.TryGetValue(address, out account);
         }
 
-        public async Task<Account> GetAsync(int? id)
+        public async Task<Account> GetAsync(int id)
         {
-            if (id == null) return null;
-
-            if (!CachedById.TryGetValue((int)id, out var account))
+            if (!CachedById.TryGetValue(id, out var account))
             {
                 account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == id)
                     ?? throw new Exception($"Account #{id} doesn't exist");
@@ -174,7 +161,43 @@ namespace Tzkt.Sync.Services.Cache
             return account;
         }
 
-        public async Task<Account> GetAsync(string address)
+        public async Task<Account?> GetAsync(int? id)
+        {
+            if (id is not int _id) return null;
+
+            if (!CachedById.TryGetValue(_id, out var account))
+            {
+                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == id)
+                    ?? throw new Exception($"Account #{id} doesn't exist");
+
+                Add(account);
+            }
+
+            return account;
+        }
+
+        public async Task<Account> GetExistingAsync(string address)
+        {
+            if (!CachedByAddress.TryGetValue(address, out var account))
+            {
+                account = await Db.Accounts
+                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FirstOrDefaultAsync()
+                    ?? throw new Exception($"Account {address} doesn't exist");
+
+                Add(account);
+            }
+
+            if (account.Type == AccountType.User && account.Balance == 0)
+            {
+                Db.TryAttach(account);
+                account.Counter = Cache.AppState.GetManagerCounter();
+            }
+
+            return account;
+        }
+
+        public async Task<Account?> GetAsync(string? address)
         {
             if (string.IsNullOrEmpty(address))
                 return null;
@@ -198,7 +221,7 @@ namespace Tzkt.Sync.Services.Cache
             return account;
         }
 
-        public async Task<int?> GetIdOrDefaultAsync(string address)
+        public async Task<int?> GetIdOrDefaultAsync(string? address)
         {
             if (string.IsNullOrEmpty(address))
                 return null;
@@ -214,7 +237,7 @@ namespace Tzkt.Sync.Services.Cache
             return account?.Id;
         }
 
-        public async Task<SmartRollup> GetSmartRollupOrDefaultAsync(string address)
+        public async Task<SmartRollup?> GetSmartRollupOrDefaultAsync(string? address)
         {
             if (string.IsNullOrEmpty(address))
                 return null;
@@ -240,17 +263,25 @@ namespace Tzkt.Sync.Services.Cache
             return CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate;
         }
 
-        public Data.Models.Delegate GetDelegate(int? id)
+        public Data.Models.Delegate? GetDelegate(int? id)
         {
-            if (id == null) return null;
+            if (id is not int _id) return null;
 
-            if (CachedById.TryGetValue((int)id, out var account) && account is Data.Models.Delegate delegat)
+            if (CachedById.TryGetValue(_id, out var account) && account is Data.Models.Delegate delegat)
                 return delegat;
 
             throw new Exception($"Unknown delegate #{id}");
         }
 
-        public Data.Models.Delegate GetDelegate(string address)
+        public Data.Models.Delegate GetDelegate(int id)
+        {
+            if (CachedById.TryGetValue(id, out var account) && account is Data.Models.Delegate delegat)
+                return delegat;
+
+            throw new Exception($"Unknown delegate #{id}");
+        }
+
+        public Data.Models.Delegate? GetDelegate(string? address)
         {
             if (string.IsNullOrEmpty(address))
                 return null;
@@ -261,17 +292,25 @@ namespace Tzkt.Sync.Services.Cache
             throw new Exception($"Unknown delegate '{address}'");
         }
 
-        public Data.Models.Delegate GetDelegateOrDefault(int? id)
+        public Data.Models.Delegate GetExistingDelegate(string address)
         {
-            if (id == null) return null;
+            if (CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate delegat)
+                return delegat;
 
-            if (CachedById.TryGetValue((int)id, out var account) && account is Data.Models.Delegate delegat)
+            throw new Exception($"Unknown delegate '{address}'");
+        }
+
+        public Data.Models.Delegate? GetDelegateOrDefault(int? id)
+        {
+            if (id is not int _id) return null;
+
+            if (CachedById.TryGetValue(_id, out var account) && account is Data.Models.Delegate delegat)
                 return delegat;
 
             return null;
         }
 
-        public Data.Models.Delegate GetDelegateOrDefault(string address)
+        public Data.Models.Delegate? GetDelegateOrDefault(string? address)
         {
             if (string.IsNullOrEmpty(address))
                 return null;

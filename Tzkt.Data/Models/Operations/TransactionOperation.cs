@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -13,9 +12,9 @@ namespace Tzkt.Data.Models
 
         public long Amount { get; set; }
 
-        public string Entrypoint { get; set; }
-        public byte[] RawParameters { get; set; }
-        public string JsonParameters { get; set; }
+        public string? Entrypoint { get; set; }
+        public byte[]? RawParameters { get; set; }
+        public string? JsonParameters { get; set; }
 
         public short? InternalOperations { get; set; }
         public short? InternalDelegations { get; set; }

@@ -6,8 +6,8 @@ namespace Tzkt.Data.Models
     public class UpdateConsensusKeyOperation : ManagerOperation
     {
         public int ActivationCycle { get; set; }
-        public string PublicKey { get; set; }
-        public string PublicKeyHash { get; set; }
+        public required string PublicKey { get; set; }
+        public required string PublicKeyHash { get; set; }
     }
 
     public static class UpdateConsensusKeyOperationModel

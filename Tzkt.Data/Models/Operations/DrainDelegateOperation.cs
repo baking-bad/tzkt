@@ -5,8 +5,9 @@ namespace Tzkt.Data.Models
 {
     public class DrainDelegateOperation : BaseOperation
     {
-        public int DelegateId { get; set; }
-        public int TargetId { get; set; }
+        public required int DelegateId { get; set; }
+        public required int TargetId { get; set; }
+
         public long Amount { get; set; }
         public long Fee { get; set; }
         public long AllocationFee { get; set; }

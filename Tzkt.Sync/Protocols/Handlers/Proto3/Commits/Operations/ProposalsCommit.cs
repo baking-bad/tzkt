@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -15,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto3
         {
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
             Db.TryAttach(period);
-            var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
+            var sender = Cache.Accounts.GetExistingDelegate(content.RequiredString("source"));
             Db.TryAttach(sender);
             
             var snapshot = await Db.VotingSnapshots

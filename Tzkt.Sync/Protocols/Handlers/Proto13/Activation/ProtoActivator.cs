@@ -6,10 +6,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    partial class ProtoActivator : Proto12.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto12.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -48,6 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = state.Level,
                     Period = state.VotingPeriod,
                     BakerId = x.Id,
@@ -76,18 +75,18 @@ namespace Tzkt.Sync.Protocols.Proto13
                     Db.TryAttach(contract);
 
                     var oldScript = await Db.Scripts.FirstAsync(x => x.ContractId == contract.Id && x.Current);
-                    var oldStorage = await Cache.Storages.GetAsync(contract);
+                    var oldStorage = await Cache.Storages.GetKnownAsync(contract);
 
                     var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
 
-                    var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                    var code = (rawContract.Required("script").RequiredMicheline("code") as MichelineArray)!;
                     var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                     var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                     var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                     var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                     var newSchema = new ContractScript(code);
-                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                    var newStorageValue = rawContract.Required("script").RequiredMicheline("storage");
                     var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 
                     if (oldScript.ParameterSchema.IsEqual(micheParameter) &&
@@ -139,7 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                         .OrderBy(x => x, new BytesComparer())
                         .SelectMany(x => x)
                         .ToArray()
-                        ?? Array.Empty<byte>();
+                        ?? [];
                     var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                     var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);

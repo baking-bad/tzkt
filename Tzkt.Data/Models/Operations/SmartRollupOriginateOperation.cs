@@ -5,10 +5,11 @@ namespace Tzkt.Data.Models
 {
     public class SmartRollupOriginateOperation : ManagerOperation
     {
-        public PvmKind PvmKind { get; set; }
-        public byte[] Kernel { get; set; }
-        public byte[] ParameterType { get; set; }
-        public string GenesisCommitment { get; set; }
+        public required PvmKind PvmKind { get; set; }
+        public required byte[] Kernel { get; set; }
+
+        public byte[]? ParameterType { get; set; }
+        public string? GenesisCommitment { get; set; }
         public int? SmartRollupId { get; set; }
     }
 

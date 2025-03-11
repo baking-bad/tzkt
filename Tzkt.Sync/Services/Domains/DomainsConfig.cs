@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services.Domains
+﻿namespace Tzkt.Sync.Services.Domains
 {
     public class DomainsConfig
     {

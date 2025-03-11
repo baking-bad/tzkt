@@ -4,16 +4,16 @@ namespace Tzkt.Data.Models
 {
     public class Storage
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int ContractId { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int ContractId { get; set; }
         public long? OriginationId { get; set; }
         public long? TransactionId { get; set; }
         public long? MigrationId { get; set; }
         public bool Current { get; set; }
 
-        public byte[] RawValue { get; set; }
-        public string JsonValue { get; set; }
+        public required byte[] RawValue { get; set; }
+        public required string JsonValue { get; set; }
     }
 
     public static class StorageModel

@@ -1,21 +1,15 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Numerics;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class TokensCommit : ProtocolCommit
+    class TokensCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TokensCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block,
-            List<(BigMap BigMap, BigMapKey Key, BigMapUpdate Update, ContractOperation Op)> updates)
+            List<(BigMap BigMap, BigMapKey? Key, BigMapUpdate Update, ContractOperation Op)> updates)
         {
             updates = updates.OrderBy(x => x.Op.Id).ThenBy(x => x.BigMap.Ptr).ToList();
             var ops = new Dictionary<ContractOperation, (
@@ -29,18 +23,18 @@ namespace Tzkt.Sync.Protocols.Proto5
             var opBlocks = new Dictionary<int, Block> { { block.Level, block } };
 
             #region discover ledgers
-            Dictionary<int, BigMap> pendingBigMaps = null;
+            Dictionary<int, BigMap>? pendingBigMaps = null;
             foreach (var (bigmap, _, update, op) in updates)
             {
                 if (update.Action == BigMapAction.Allocate)
                 {
                     if ((bigmap.Tags & BigMapTag.LedgerTypes) != 0)
                     {
-                        var contract = await Cache.Accounts.GetAsync(
+                        var contract = (await Cache.Accounts.GetAsync(
                             op is TransactionOperation tx
-                                ? tx.TargetId
-                                : (op as OriginationOperation).ContractId
-                        ) as Contract;
+                                ? tx.TargetId!.Value
+                                : (op as OriginationOperation)!.ContractId!.Value
+                        ) as Contract)!;
 
                         if (contract.Tags.HasFlag(ContractTags.Ledger))
                         {
@@ -61,11 +55,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     if ((bigmap.Tags & BigMapTag.LedgerTypes) != 0)
                     {
-                        var contract = await Cache.Accounts.GetAsync(
+                        var contract = (await Cache.Accounts.GetAsync(
                             op is TransactionOperation tx
-                                ? tx.TargetId
-                                : (op as OriginationOperation).ContractId
-                        ) as Contract;
+                                ? tx.TargetId!.Value
+                                : (op as OriginationOperation)!.ContractId!.Value
+                        ) as Contract)!;
 
                         Db.TryAttach(contract);
                         contract.Tags &= ~ContractTags.Ledger;
@@ -87,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         if ((bigmap.Tags & BigMapTag.LedgerNft) != 0)
                             contract.Tags |= ContractTags.Nft;
 
-                        pendingBigMaps ??= new();
+                        pendingBigMaps ??= [];
                         pendingBigMaps.Add(bigmap.Ptr, bigmap);
                     }
                     else
@@ -108,39 +102,40 @@ namespace Tzkt.Sync.Protocols.Proto5
                                 x.Level < block.Level)
                     .ToListAsync();
 
-                var keys = pendingUpdates.Count == 0 ? new() : await Db.BigMapKeys
+                var keys = pendingUpdates.Count == 0 ? [] : await Db.BigMapKeys
                     .AsNoTracking()
                     .Where(x => ptrs.Contains(x.BigMapPtr))
                     .ToDictionaryAsync(x => x.Id);
 
                 var txIds = pendingUpdates
                     .Where(x => x.TransactionId != null)
-                    .Select(x => (long)x.TransactionId)
+                    .Select(x => x.TransactionId!.Value)
                     .ToHashSet();
 
-                var txs = txIds.Count == 0 ? new() : await Db.TransactionOps
+                var txs = txIds.Count == 0 ? [] : await Db.TransactionOps
                     //.AsNoTracking()
                     .Where(x => txIds.Contains(x.Id))
                     .ToDictionaryAsync(x => x.Id);
 
                 var origIds = pendingUpdates
                     .Where(x => x.OriginationId != null)
-                    .Select(x => (long)x.OriginationId)
+                    .Select(x => x.OriginationId!.Value)
                     .ToHashSet();
 
-                var origs = origIds.Count == 0 ? new() : await Db.OriginationOps
+                var origs = origIds.Count == 0 ? [] : await Db.OriginationOps
                     //.AsNoTracking()
                     .Where(x => origIds.Contains(x.Id))
                     .ToDictionaryAsync(x => x.Id);
 
                 var contracts = pendingBigMaps.Values
-                    .Select(x => (long?)x.ContractId)
+                    .Select(x => x.ContractId)
                     .ToHashSet();
 
                 // transfers with no balance updates, e.g. to itself or with 0 amount
                 var pendingTransfers = await Db.TransactionOps
                     //.AsNoTracking()
-                    .Where(x => contracts.Contains(x.TargetId) &&
+                    .Where(x => x.TargetId != null &&
+                                contracts.Contains(x.TargetId.Value) &&
                                 x.Status == OperationStatus.Applied &&
                                 x.Entrypoint == "transfer" &&
                                 x.TokenTransfers == null &&
@@ -153,7 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     .Concat(pendingUpdates.Select(x => x.Level))
                     .ToHashSet();
 
-                var targets = pendingTransfers.Select(x => (int)x.TargetId)
+                var targets = pendingTransfers.Select(x => x.TargetId!.Value)
                     .Concat(pendingBigMaps.Select(x => x.Value.ContractId))
                     .ToHashSet();
 
@@ -176,17 +171,17 @@ namespace Tzkt.Sync.Protocols.Proto5
                         List<(string Address, BigInteger Balance)> Balances
                     )>();
 
-                    foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters)))
+                    foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
                     {
                         if (!tokens.TryGetValue(tokenId, out var ctx))
                         {
-                            ctx = (new(), new());
+                            ctx = ([], []);
                             tokens.Add(tokenId, ctx);
                         }
                         ctx.Transfers.Add((from, to, amount));
                     }
 
-                    var contract = Cache.Accounts.GetCached((int)tx.TargetId) as Contract;
+                    var contract = (Cache.Accounts.GetCached(tx.TargetId!.Value) as Contract)!;
                     ops.Add(tx, (false, contract, tokens));
                 }
 
@@ -194,8 +189,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     var bigmap = pendingBigMaps[update.BigMapPtr];
                     var op = update.OriginationId != null
-                        ? origs[(long)update.OriginationId] as ContractOperation
-                        : txs[(long)update.TransactionId];
+                        ? origs[update.OriginationId.Value] as ContractOperation
+                        : txs[update.TransactionId!.Value];
 
                     if (!opBlocks.ContainsKey(op.Level))
                     {
@@ -206,8 +201,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     if (!ops.TryGetValue(op, out var opCtx))
                     {
-                        var contract = Cache.Accounts.GetCached(bigmap.ContractId) as Contract;
-                        opCtx = (false, contract, new());
+                        var contract = (Cache.Accounts.GetCached(bigmap.ContractId) as Contract)!;
+                        opCtx = (false, contract, []);
                         ops.Add(op, opCtx);
                     }
 
@@ -217,13 +212,13 @@ namespace Tzkt.Sync.Protocols.Proto5
                     }
                     else
                     {
-                        var key = keys[(int)update.BigMapKeyId];
+                        var key = keys[update.BigMapKeyId!.Value];
 
                         foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
                         {
                             if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                             {
-                                tokenCtx = (new(0), new());
+                                tokenCtx = ([], []);
                                 opCtx.Tokens.Add(tokenId, tokenCtx);
                             }
                             tokenCtx.Balances.Add((address, balance));
@@ -240,7 +235,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 if (tx.Status == OperationStatus.Applied && tx.Entrypoint == "transfer")
                 {
-                    var contract = await Cache.Accounts.GetAsync(tx.TargetId) as Contract;
+                    var contract = (await Cache.Accounts.GetAsync(tx.TargetId!.Value) as Contract)!;
                     if (contract.Tags.HasFlag(ContractTags.Ledger))
                     {
                         var tokens = new Dictionary<BigInteger, (
@@ -248,11 +243,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                             List<(string Address, BigInteger Balance)> Balances
                         )>();
 
-                        foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters)))
+                        foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
                         {
                             if (!tokens.TryGetValue(tokenId, out var ctx))
                             {
-                                ctx = (new(), new());
+                                ctx = ([], []);
                                 tokens.Add(tokenId, ctx);
                             }
                             ctx.Transfers.Add((from, to, amount));
@@ -269,13 +264,13 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                 if (!ops.TryGetValue(op, out var opCtx))
                 {
-                    var contract = await Cache.Accounts.GetAsync(
+                    var contract = (await Cache.Accounts.GetAsync(
                         op is TransactionOperation tx
-                            ? tx.TargetId
-                            : (op as OriginationOperation).ContractId
-                    ) as Contract;
+                            ? tx.TargetId!.Value
+                            : (op as OriginationOperation)!.ContractId!.Value
+                    ) as Contract)!;
 
-                    opCtx = (false, contract, new());
+                    opCtx = (false, contract, []);
                     ops.Add(op, opCtx);
                 }
 
@@ -285,11 +280,11 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
                 else
                 {
-                    foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
+                    foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key!, update))
                     {
                         if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                         {
-                            tokenCtx = (new(0), new());
+                            tokenCtx = ([], []);
                             opCtx.Tokens.Add(tokenId, tokenCtx);
                         }
                         tokenCtx.Balances.Add((address, balance));
@@ -955,7 +950,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 else
                 {
                     #region revert burn
-                    var from = Cache.Accounts.GetCached((int)transfer.FromId);
+                    var from = Cache.Accounts.GetCached(transfer.FromId!.Value);
                     var fromBalance = Cache.TokenBalances.Get(from.Id, token.Id);
 
                     Db.TryAttach(from);
@@ -1034,15 +1029,15 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 foreach (var transfer in arr)
                 {
-                    var transferPair = transfer as MichelinePrim;
-                    var from = transferPair.Args[0].ParseAddress();
-                    foreach (var tx in transferPair.Args[1] as MichelineArray)
+                    var transferPair = (transfer as MichelinePrim)!;
+                    var from = transferPair.Args![0].ParseAddress();
+                    foreach (var tx in (transferPair.Args[1] as MichelineArray)!)
                     {
-                        var txPair = tx as MichelinePrim;
-                        var to = txPair.Args[0].ParseAddress();
-                        var txPair2 = txPair.Args[1] as MichelinePrim;
-                        var tokenId = (txPair2.Args[0] as MichelineInt).Value;
-                        var amount = (txPair2.Args[1] as MichelineInt).Value;
+                        var txPair = (tx as MichelinePrim)!;
+                        var to = txPair.Args![0].ParseAddress();
+                        var txPair2 = (txPair.Args[1] as MichelinePrim)!;
+                        var tokenId = (txPair2.Args![0] as MichelineInt)!.Value;
+                        var amount = (txPair2.Args[1] as MichelineInt)!.Value;
 
                         transfers.Add((from, to, tokenId, amount));
                     }
@@ -1050,10 +1045,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
             else if (micheline is MichelinePrim pair)
             {
-                var from = pair.Args[0].ParseAddress();
-                var pair2 = pair.Args[1] as MichelinePrim;
-                var to = pair2.Args[0].ParseAddress();
-                var value = (pair2.Args[1] as MichelineInt).Value;
+                var from = pair.Args![0].ParseAddress();
+                var pair2 = (pair.Args[1] as MichelinePrim)!;
+                var to = pair2.Args![0].ParseAddress();
+                var value = (pair2.Args[1] as MichelineInt)!.Value;
 
                 transfers.Add((from, to, BigInteger.Zero, value));
             }

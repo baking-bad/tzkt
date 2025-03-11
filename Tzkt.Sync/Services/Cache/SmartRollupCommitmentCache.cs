@@ -4,19 +4,13 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class SmartRollupCommitmentCache
+    public class SmartRollupCommitmentCache(TzktContext db)
     {
-        public const int MaxItems = 4096; //TODO: set limits in app settings
-
+        const int MaxItems = 4096; //TODO: set limits in app settings
         static readonly Dictionary<int, SmartRollupCommitment> CachedById = new(4097);
         static readonly Dictionary<(string, int), SmartRollupCommitment> CachedByKey = new(4097);
 
-        readonly TzktContext Db;
-
-        public SmartRollupCommitmentCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Add(SmartRollupCommitment item)
         {
@@ -75,7 +69,7 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public async Task<SmartRollupCommitment> GetOrDefaultAsync(int? id)
+        public async Task<SmartRollupCommitment?> GetOrDefaultAsync(int? id)
         {
             if (id is not int _id)
                 return null;
@@ -89,7 +83,7 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public async Task<SmartRollupCommitment> GetOrDefaultAsync(string hash, int? rollupId)
+        public async Task<SmartRollupCommitment?> GetOrDefaultAsync(string? hash, int? rollupId)
         {
             if (hash is not string _hash || rollupId is not int _rollupId)
                 return null;

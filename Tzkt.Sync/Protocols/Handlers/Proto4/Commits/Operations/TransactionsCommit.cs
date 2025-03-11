@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {

@@ -5,14 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class DelegationsCommit : ProtocolCommit
+    class DelegationsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DelegationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var prevDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             var result = content.Required("metadata").Required("operation_result");
@@ -86,9 +84,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (sender.Type == AccountType.User)
                     {
                         if (result.TryGetProperty("balance_updates", out var updates))
-                            await Unstake(delegation, updates.EnumerateArray().ToList());
+                            await Unstake(delegation, [.. updates.EnumerateArray()]);
                         ResetDelegate(sender, prevDelegate);
-                        sender = UpgradeUser(sender as User);
+                        sender = UpgradeUser((sender as User)!);
                         delegation.DelegateId = sender.Id;
 
                         #region weird delegators
@@ -109,7 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Db.TryAttach(weird.contract);
                                 Cache.Accounts.Add(weird.contract);
 
-                                SetDelegate(weird.contract, sender as Data.Models.Delegate, weird.origination.Level);
+                                SetDelegate(weird.contract, (sender as Data.Models.Delegate)!, weird.origination.Level);
                             }
                         }
                         #endregion
@@ -123,7 +121,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 else
                 {
                     if (result.TryGetProperty("balance_updates", out var updates))
-                        await Unstake(delegation, updates.EnumerateArray().ToList());
+                        await Unstake(delegation, [.. updates.EnumerateArray()]);
                     ResetDelegate(sender, prevDelegate);
                     if (newDelegate != null)
                         SetDelegate(sender, newDelegate, block.Level);
@@ -139,9 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? throw new ValidationException("Delegation source address doesn't exist");
-
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var prevDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             var result = content.Required("result");
@@ -290,18 +286,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                         #endregion
 
                         ResetDelegate(sender, senderDelegate);
-                        sender = DowngradeDelegate(sender as Data.Models.Delegate);
+                        sender = DowngradeDelegate((sender as Data.Models.Delegate)!);
                         newDelegate = null;
 
                         if (prevDelegate != null && prevDelegate.Id != sender.Id)
                         {
-                            SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                            SetDelegate(sender, prevDelegate, prevDelegationLevel!.Value);
                             await RevertUnstake(delegation);
                         }
                     }
                     else
                     {
-                        await DeactivateDelegate(sender as Data.Models.Delegate, (int)delegation.ResetDeactivation);
+                        await DeactivateDelegate((sender as Data.Models.Delegate)!, delegation.ResetDeactivation.Value);
                     }
                 }
                 else
@@ -309,7 +305,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ResetDelegate(sender, senderDelegate);
                     if (prevDelegate != null && prevDelegate.Id != sender.Id)
                     {
-                        SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                        SetDelegate(sender, prevDelegate, prevDelegationLevel!.Value);
                         await RevertUnstake(delegation);
                     }
                 }
@@ -345,7 +341,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task RevertInternal(Block block, DelegationOperation delegation)
         {
             #region entities
-            var parentSender = await Cache.Accounts.GetAsync(delegation.InitiatorId);
+            var parentSender = await Cache.Accounts.GetAsync(delegation.InitiatorId!.Value);
             var sender = await Cache.Accounts.GetAsync(delegation.SenderId);
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
@@ -385,7 +381,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 ResetDelegate(sender, senderDelegate);
                 if (prevDelegate != null)
-                    SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                    SetDelegate(sender, prevDelegate, prevDelegationLevel!.Value);
             }
             #endregion
 
@@ -592,7 +588,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             newDelegate.DelegatedBalance += sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
         }
 
-        void ResetDelegate(Account sender, Data.Models.Delegate prevDelegate)
+        void ResetDelegate(Account sender, Data.Models.Delegate? prevDelegate)
         {
             if (prevDelegate != null)
             {
@@ -620,7 +616,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .FirstAsync(x => x.Status == OperationStatus.Applied && x.ContractId == contract.Id);
         }
 
-        Task<DelegationOperation> GetPrevDelegationAsync(Account sender, long id)
+        Task<DelegationOperation?> GetPrevDelegationAsync(Account sender, long id)
         {
             return Db.DelegationOps
                 .Where(x =>

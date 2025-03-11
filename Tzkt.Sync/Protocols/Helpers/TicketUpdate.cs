@@ -4,21 +4,21 @@ namespace Tzkt.Sync.Protocols
 {
     public class TicketUpdates
     {
-        public TicketIdentity Ticket { get; set; }
-        public IEnumerable<TicketUpdate> Updates { get; set; }
+        public required TicketIdentity Ticket { get; set; }
+        public required IEnumerable<TicketUpdate> Updates { get; set; }
     }
     
     public class TicketIdentity
     {
-        public string Ticketer { get; set; }
-        public byte[] RawType { get; set; }
-        public byte[] RawContent { get; set; }
-        public string JsonContent { get; set; }
+        public required string Ticketer { get; set; }
+        public required byte[] RawType { get; set; }
+        public required byte[] RawContent { get; set; }
+        public string? JsonContent { get; set; }
 
         public int ContentHash { get; set; }
         public int TypeHash { get; set; }
 
-        public override bool Equals(object obj)
+        public override bool Equals(object? obj)
         {
             return obj is TicketIdentity ticket &&
                 ticket.Ticketer == Ticketer &&
@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols
     
     public class TicketUpdate
     {
-        public string Account { get; set; }
+        public required string Account { get; set; }
         public BigInteger Amount { get; set; }
     }
 }

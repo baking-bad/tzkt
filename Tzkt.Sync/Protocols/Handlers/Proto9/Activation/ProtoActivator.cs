@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto9
 {
-    class ProtoActivator : Proto8.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto8.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         // Proposal invoice
 
         protected override async Task MigrateContext(AppState state)
@@ -14,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto9
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf");
+            var account = (await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf"))!;
             Db.TryAttach(account);
             account.Balance += 100_000_000;
             if (account is Data.Models.Delegate delegat)
@@ -50,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
+                .FirstAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);

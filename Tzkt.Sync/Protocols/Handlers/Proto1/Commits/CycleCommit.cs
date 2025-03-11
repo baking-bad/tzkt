@@ -3,12 +3,10 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> BakerSnapshots { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? BakerSnapshots { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -48,6 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 FutureCycle = new Cycle
                 {
+                    Id = 0,
                     Index = futureCycle,
                     FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
                     LastLevel = Context.Protocol.GetCycleEnd(futureCycle),

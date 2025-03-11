@@ -1,28 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BlocksCache
+    public class BlocksCache(CacheService cache, TzktContext db)
     {
-        public const int MaxBlocks = 3 * 8192; //TODO: set limits in app settings
-
+        const int MaxBlocks = 3 * 8192; //TODO: set limits in app settings
         static readonly Dictionary<int, Block> CachedBlocks = new(MaxBlocks);
 
-        readonly CacheService Cache;
-        readonly TzktContext Db;
-
-        public BlocksCache(CacheService cache, TzktContext db)
-        {
-            Cache = cache;
-            Db = db;
-        }
+        readonly CacheService Cache = cache;
+        readonly TzktContext Db = db;
 
         public void Reset()
         {

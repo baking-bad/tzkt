@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class NonceRevelationsCommit : ProtocolCommit
+    class NonceRevelationsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public NonceRevelationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -19,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 : 0;
 
             var revealedBlock = await Cache.Blocks.GetAsync(content.RequiredInt32("level"));
-            var sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId);
+            var sender = Cache.Accounts.GetDelegate(revealedBlock.ProposerId!.Value);
 
             var revelation = new NonceRevelationOperation
             {

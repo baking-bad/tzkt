@@ -5,14 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupAddMessagesCommit : ProtocolCommit
+    class SmartRollupAddMessagesCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupAddMessagesCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -124,7 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             sender.SmartRollupAddMessagesCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().SmartRollupAddMessagesOpsCount--;
             #endregion

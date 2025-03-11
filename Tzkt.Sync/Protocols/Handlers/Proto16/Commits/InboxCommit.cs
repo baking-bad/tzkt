@@ -4,13 +4,11 @@ using Npgsql;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    public class InboxCommit : ProtocolCommit
+    public class InboxCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public InboxCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public void Init(Block block)
         {
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport("""
                 COPY "InboxMessages" ("Id", "Level", "Index", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)
@@ -55,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
         public void Apply(Block block)
         {
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport("""
                 COPY "InboxMessages" ("Id", "Level", "Index", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)

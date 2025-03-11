@@ -12,20 +12,23 @@ namespace Tzkt.Sync.Protocols.Proto1
             var cycles = new List<Cycle>(protocol.ConsensusRightsDelay + 1);
             var delegates = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
             var selected = delegates.Where(x => x.StakingBalance >= protocol.MinimalStake);
             var selectedBakers = selected.Count();
             var selectedStaking = selected.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
 
-            var base58Seed = parameters["initial_seed"]?.Value<string>();
-            if (!Base58.TryParse(base58Seed, new byte[3], out var initialSeed) || initialSeed.Length != 32)
-                initialSeed = Array.Empty<byte>();
+            var initialSeed = parameters["initial_seed"]?.Value<string>() is string base58Seed &&
+                Base58.TryParse(base58Seed, new byte[3], out var _initialSeed) &&
+                _initialSeed.Length == 32
+                ? _initialSeed
+                : [];
 
             var seeds = Seed.GetInitialSeeds(protocol.ConsensusRightsDelay + 1, initialSeed);
             for (int index = 0; index <= protocol.ConsensusRightsDelay; index++)
             {
                 var cycle = new Cycle
                 {
+                    Id = 0,
                     Index = index,
                     FirstLevel = protocol.GetCycleStart(index),
                     LastLevel = protocol.GetCycleEnd(index),

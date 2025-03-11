@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
     public class DefaultQuotesProvider : IQuoteProvider
     {
-        public async Task<int> FillQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        public async Task<int> FillQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var filled = await Task.WhenAll(
                 FillBtcQuotes(quotes, last),
@@ -23,7 +19,7 @@ namespace Tzkt.Sync.Services
             return filled.Min();
         }
 
-        async Task<int> FillBtcQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillBtcQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetBtc(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -55,7 +51,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillEurQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillEurQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetEur(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -87,7 +83,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillUsdQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillUsdQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetUsd(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -119,7 +115,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillCnyQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillCnyQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetCny(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -151,7 +147,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillJpyQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillJpyQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetJpy(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -183,7 +179,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillKrwQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillKrwQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetKrw(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -215,7 +211,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillEthQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillEthQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetEth(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -247,7 +243,7 @@ namespace Tzkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<int> FillGbpQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        async Task<int> FillGbpQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = (await GetGbp(
                 quotes.First().Timestamp.AddMinutes(-30),

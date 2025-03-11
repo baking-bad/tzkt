@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
     public class DalPublishCommitmentOperation : ManagerOperation
     {
         public int Slot { get; set; }
-        public string Commitment {  get; set; }
+        public required string Commitment {  get; set; }
     }
 
     public static class DalPublishCommitmentOperationModel

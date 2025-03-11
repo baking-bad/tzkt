@@ -5,12 +5,12 @@ namespace Tzkt.Data.Models
 {
     public class Ticket
     {
-        public long Id { get; set; }
-        public int TicketerId { get; set; }
+        public required long Id { get; set; }
+        public required int TicketerId { get; set; }
 
-        public int FirstMinterId { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int FirstMinterId { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public int TransfersCount { get; set; }
         public int BalancesCount { get; set; }
@@ -23,9 +23,9 @@ namespace Tzkt.Data.Models
         public int TypeHash { get; set; }
         public int ContentHash { get; set; }
         
-        public byte[] RawType { get; set; }
-        public byte[] RawContent { get; set; }
-        public string JsonContent { get; set; }
+        public required byte[] RawType { get; set; }
+        public required byte[] RawContent { get; set; }
+        public string? JsonContent { get; set; }
     }
     
     public static class TicketModel

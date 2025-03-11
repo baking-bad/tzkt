@@ -3,15 +3,13 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    class DrainDelegateCommit : ProtocolCommit
+    class DrainDelegateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DrainDelegateCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var delegat = Cache.Accounts.GetDelegate(content.RequiredString("delegate"));
-            var target = await Cache.Accounts.GetAsync(content.RequiredString("destination"));
+            var delegat = Cache.Accounts.GetExistingDelegate(content.RequiredString("delegate"));
+            var target = (await Cache.Accounts.GetAsync(content.RequiredString("destination")))!;
 
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
 
@@ -110,7 +108,7 @@ namespace Tzkt.Sync.Protocols.Proto15
         public virtual async Task Revert(Block block, DrainDelegateOperation operation)
         {
             #region entities
-            var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId);
+            var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
             Db.TryAttach(blockBaker);
             
             var delegat = Cache.Accounts.GetDelegate(operation.DelegateId);

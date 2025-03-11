@@ -1,7 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 
 using Tzkt.Data.Models;
@@ -9,16 +6,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupRejectionCommit : ProtocolCommit
+    class TxRollupRejectionCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupRejectionOperation Operation { get; private set; }
-
-        public TxRollupRejectionCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -28,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             var freezer = updates.FirstOrDefault(x => x.RequiredString("kind") == "freezer");
             var committer = freezer.ValueKind == JsonValueKind.Undefined
                 ? sender // if there is no balance update, we don't know who is the committer
-                : await Cache.Accounts.GetAsync(freezer.RequiredString("contract"));
+                : await Cache.Accounts.GetExistingAsync(freezer.RequiredString("contract"));
 
             var operation = new TxRollupRejectionOperation
             {
@@ -127,7 +120,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 }
 
                 committer.RollupBonds -= operation.Loss;
-                rollup.RollupBonds -= operation.Loss;
+                rollup!.RollupBonds -= operation.Loss;
 
                 Cache.Statistics.Current.TotalBurned += operation.Loss - operation.Reward;
                 Cache.Statistics.Current.TotalRollupBonds -= operation.Loss;
@@ -137,7 +130,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupRejectionOps.Add(operation);
             Context.TxRollupRejectionOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupRejectionOperation operation)
@@ -187,7 +179,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 }
 
                 committer.RollupBonds += operation.Loss;
-                rollup.RollupBonds += operation.Loss;
+                rollup!.RollupBonds += operation.Loss;
             }
             #endregion
 
@@ -207,7 +199,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (committer.Id != sender.Id) committer.TxRollupRejectionCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupRejectionOpsCount--;
             #endregion

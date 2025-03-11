@@ -1,20 +1,15 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
-
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class RevealsCommit : ProtocolCommit
+    class RevealsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public RevealsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var pubKey = content.RequiredString("public_key");
             var result = content.Required("metadata").Required("operation_result");

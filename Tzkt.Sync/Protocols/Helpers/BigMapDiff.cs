@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Netezos.Encoding;
 
 namespace Tzkt.Sync.Protocols
@@ -19,9 +18,9 @@ namespace Tzkt.Sync.Protocols
     {
         public override BigMapDiffAction Action => BigMapDiffAction.Update;
 
-        public string KeyHash { get; set; }
-        public IMicheline Key { get; set; }
-        public IMicheline Value { get; set; }
+        public required string KeyHash { get; set; }
+        public required IMicheline Key { get; set; }
+        public IMicheline? Value { get; set; }
     }
 
     public class RemoveDiff : BigMapDiff
@@ -49,10 +48,8 @@ namespace Tzkt.Sync.Protocols
                 {
                     Ptr = diff.RequiredInt32("big_map"),
                     KeyHash = diff.RequiredString("key_hash"),
-                    Key = Micheline.FromJson(diff.Required("key")),
-                    Value = diff.TryGetProperty("value", out var v)
-                        ? Micheline.FromJson(v)
-                        : null
+                    Key = diff.RequiredMicheline("key"),
+                    Value = diff.OptionalMicheline("value")
                 },
                 "remove" => new RemoveDiff
                 {
@@ -78,10 +75,8 @@ namespace Tzkt.Sync.Protocols
                                 {
                                     Ptr = diff.RequiredInt32("id"),
                                     KeyHash = update.RequiredString("key_hash"),
-                                    Key = Micheline.FromJson(update.Required("key")),
-                                    Value = update.TryGetProperty("value", out var v)
-                                        ? Micheline.FromJson(v)
-                                        : null
+                                    Key = update.RequiredMicheline("key"),
+                                    Value = update.OptionalMicheline("value")
                                 };
                             }
                             break;
@@ -103,10 +98,8 @@ namespace Tzkt.Sync.Protocols
                                 {
                                     Ptr = diff.RequiredInt32("id"),
                                     KeyHash = update.RequiredString("key_hash"),
-                                    Key = Micheline.FromJson(update.Required("key")),
-                                    Value = update.TryGetProperty("value", out var v)
-                                        ? Micheline.FromJson(v)
-                                        : null
+                                    Key = update.RequiredMicheline("key"),
+                                    Value = update.OptionalMicheline("value")
                                 };
                             }
                             break;
@@ -121,10 +114,8 @@ namespace Tzkt.Sync.Protocols
                                 {
                                     Ptr = diff.RequiredInt32("id"),
                                     KeyHash = update.RequiredString("key_hash"),
-                                    Key = Micheline.FromJson(update.Required("key")),
-                                    Value = update.TryGetProperty("value", out var v)
-                                        ? Micheline.FromJson(v)
-                                        : null
+                                    Key = update.RequiredMicheline("key"),
+                                    Value = update.OptionalMicheline("value")
                                 };
                             }
                             break;

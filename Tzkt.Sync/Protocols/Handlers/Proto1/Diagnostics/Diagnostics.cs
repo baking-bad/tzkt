@@ -7,22 +7,15 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class Diagnostics : IDiagnostics
+    class Diagnostics(ProtocolHandler handler) : IDiagnostics
     {
-        protected readonly TzktContext Db;
-        protected readonly CacheService Cache;
-        protected readonly IRpc Rpc;
+        protected readonly TzktContext Db = handler.Db;
+        protected readonly CacheService Cache = handler.Cache;
+        protected readonly IRpc Rpc = handler.Rpc;
 
         int AddedOperations = 0;
         readonly Dictionary<int, Account> ChangedAccounts = new();
         readonly Dictionary<long, TicketBalance> ChangedTicketBalances = new();
-
-        public Diagnostics(ProtocolHandler handler)
-        {
-            Db = handler.Db;
-            Cache = handler.Cache;
-            Rpc = handler.Rpc;
-        }
 
         public void TrackChanges()
         {
@@ -31,12 +24,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var account in entries.Where(x =>
                 x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as Account))
+                .Select(x => (x.Entity as Account)!))
                 ChangedAccounts[account.Id] = account;
 
             foreach (var ticket in entries.Where(x =>
                 x.Entity is TicketBalance && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as TicketBalance))
+                .Select(x => (x.Entity as TicketBalance)!))
                 ChangedTicketBalances[ticket.Id] = ticket;
         }
 
@@ -103,7 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
-                foreach (var cycle in entries.Where(x => x.Entity is Cycle).Select(x => x.Entity as Cycle))
+                foreach (var cycle in entries.Where(x => x.Entity is Cycle).Select(x => (x.Entity as Cycle)!))
                     await TestCycle(state, cycle);
                 
                 await TestParticipation(state);
@@ -203,7 +196,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var localDelegate = Cache.Accounts.GetDelegate(local.DelegateId);
 
             if (local is not Data.Models.Delegate && remoteDelegate != localDelegate?.Address &&
-                !(local is Contract c && (c.ManagerId == null || (await Cache.Accounts.GetAsync(c.ManagerId)).Address == remoteDelegate)))
+                !(local is Contract c && (c.ManagerId == null || (await Cache.Accounts.GetAsync(c.ManagerId!.Value)).Address == remoteDelegate)))
                 throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
 

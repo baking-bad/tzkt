@@ -5,16 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupOriginationCommit : ProtocolCommit
+    class TxRollupOriginationCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupOriginationOperation Origination { get; private set; }
-
-        public TxRollupOriginationCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(sender);
@@ -22,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             var result = content.Required("metadata").Required("operation_result");
 
-            Rollup rollup = null;
+            Rollup? rollup = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredString("originated_rollup");
@@ -146,7 +142,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupOriginationOps.Add(origination);
             Context.TxRollupOriginationOps.Add(origination);
-            Origination = origination;
         }
 
         public virtual async Task Revert(Block block, TxRollupOriginationOperation origination)
@@ -178,7 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                 sender.RollupsCount--;
 
-                if (rollup.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
+                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
                 {
                     Db.Rollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);
@@ -221,7 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             sender.TxRollupOriginationCount--;
 
             sender.Counter = origination.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupOriginationOpsCount--;
             #endregion

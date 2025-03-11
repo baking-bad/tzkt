@@ -5,7 +5,7 @@ namespace Tzkt.Sync.Protocols
 {
     static class Blind
     {
-        static readonly byte[] Prefix = new byte[] { 1, 2, 49, 223 };
+        static readonly byte[] Prefix = [1, 2, 49, 223];
 
         public static string GetBlindedAddress(string address, string secret)
         {

@@ -1,16 +1,15 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class DalAttestationRewardOperation : IOperation
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public DateTime Timestamp { get; set; }
-
-        public int BakerId { get; set; }
+        public required long Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required int BakerId { get; set; }
+        
         public long Expected { get; set; }
         public long RewardDelegated { get; set; }
         public long RewardStakedOwn { get; set; }

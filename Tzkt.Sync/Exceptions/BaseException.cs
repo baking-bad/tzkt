@@ -1,11 +1,7 @@
-﻿using System;
-
-namespace Tzkt.Sync
+﻿namespace Tzkt.Sync
 {
-    public class BaseException : Exception
+    public class BaseException(string message, bool rebase = false) : Exception(message)
     {
-        public bool RebaseRequired { get; }
-
-        public BaseException(string message, bool rebase = false) : base(message) => RebaseRequired = rebase;
+        public bool RebaseRequired { get; } = rebase;
     }
 }

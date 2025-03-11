@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Tzkt.Data.Models
+﻿namespace Tzkt.Data.Models
 {
     public interface IQuote
     {

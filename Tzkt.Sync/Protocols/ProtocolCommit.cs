@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-
 using Tzkt.Data;
-using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols

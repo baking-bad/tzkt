@@ -3,12 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
 {
-    class ProtoActivator : Proto1.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto1.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
-        // Activate weird delegates
-
         protected override async Task MigrateContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
@@ -81,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             var weirdOriginations = await Db.OriginationOps
                 .AsNoTracking()
                 .Join(Db.Contracts, x => x.ContractId, x => x.Id, (op, contract) => new { op, contract })
-                .Where(x => x.op.ContractId != null && ids.Contains((int)x.contract.WeirdDelegateId))
+                .Where(x => x.op.ContractId != null && x.contract.WeirdDelegateId != null && ids.Contains(x.contract.WeirdDelegateId!.Value))
                 .Select(x => new
                 {
                     x.contract.WeirdDelegateId,
@@ -91,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto2
 
             foreach (var op in weirdOriginations)
             {
-                var delegat = activatedDelegates[(int)op.WeirdDelegateId];
+                var delegat = activatedDelegates[op.WeirdDelegateId!.Value];
 
                 Db.TryAttach(op.Origination);
                 op.Origination.DelegateId = delegat.Id;
@@ -114,7 +110,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             var weirdOriginations = await Db.OriginationOps
                 .AsNoTracking()
                 .Join(Db.Contracts, x => x.ContractId, x => x.Id, (op, contract) => new { op, contract })
-                .Where(x => x.op.ContractId != null && ids.Contains((int)x.contract.WeirdDelegateId))
+                .Where(x => x.op.ContractId != null && x.contract.WeirdDelegateId != null && ids.Contains(x.contract.WeirdDelegateId!.Value))
                 .Select(x => new
                 {
                     x.contract.WeirdDelegateId,
@@ -156,7 +152,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 user.MigrationsCount--;
 
                 foreach (var delegator in row.delegators)
-                    (delegator as Contract).WeirdDelegateId = user.Id;
+                    (delegator as Contract)!.WeirdDelegateId = user.Id;
             }
 
             var migrationOps = await Db.MigrationOps

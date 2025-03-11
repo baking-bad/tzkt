@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto8
 
             // custom handler for Tezos Domains
             if (contract.Address == "KT1GBZmSxmnKJXGMdMLbugPfLyUPmuLSMwKS" &&
-                (node.Value as MichelineInt).Value == 1264) // %records
+                (node.Value as MichelineInt)!.Value == 1264) // %records
                 tags |= BigMapTag.Ledger12;
 
             return tags;

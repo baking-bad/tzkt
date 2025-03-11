@@ -1,12 +1,11 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Statistics
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
         public int? Cycle { get; set; }
         public DateTime? Date { get; set; }
 

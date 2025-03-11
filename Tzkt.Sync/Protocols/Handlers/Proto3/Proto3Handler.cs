@@ -1,9 +1,7 @@
 ﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using App.Metrics;
 using Tzkt.Data;
 using Tzkt.Data.Models;
-using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Protocols.Proto3;
 
@@ -121,13 +119,13 @@ namespace Tzkt.Sync.Protocols
                             var orig = new OriginationsCommit(this);
                             await orig.Apply(blockCommit.Block, operation, content);
                             if (orig.BigMapDiffs != null)
-                                bigMapCommit.Append(orig.Origination, orig.Contract, orig.BigMapDiffs);
+                                bigMapCommit.Append(orig.Origination, orig.Contract!, orig.BigMapDiffs);
                             break;
                         case "transaction":
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
-                                bigMapCommit.Append(parent.Transaction, parent.Target as Contract, parent.BigMapDiffs);
+                                bigMapCommit.Append(parent.Transaction, (parent.Target as Contract)!, parent.BigMapDiffs);
 
                             if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResult))
                             {
@@ -139,7 +137,7 @@ namespace Tzkt.Sync.Protocols
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, (internalTx.Target as Contract)!, internalTx.BigMapDiffs);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");

@@ -4,12 +4,12 @@ namespace Tzkt.Data.Models
 {
     public class Proposal
     {
-        public int Id { get; set; }
-        public string Hash { get; set; }
-        public int InitiatorId { get; set; }
-        public int FirstPeriod { get; set; }
-        public int LastPeriod { get; set; }
-        public int Epoch { get; set; }
+        public required int Id { get; set; }
+        public required string Hash { get; set; }
+        public required int InitiatorId { get; set; }
+        public required int FirstPeriod { get; set; }
+        public required int LastPeriod { get; set; }
+        public required int Epoch { get; set; }
         
         public int Upvotes { get; set; }
         public long VotingPower { get; set; }

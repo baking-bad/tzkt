@@ -1,15 +1,16 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Contract : Account
     {
-        public ContractKind Kind { get; set; }
+        public required ContractKind Kind { get; set; }
+
         public int TypeHash { get; set; }
         public int CodeHash { get; set; }
         public ContractTags Tags { get; set; }
+
         public int TokensCount { get; set; }
         public int EventsCount { get; set; }
         public int TicketsCount { get; set; }

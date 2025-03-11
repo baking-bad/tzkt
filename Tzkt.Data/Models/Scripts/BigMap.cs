@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
 
@@ -8,17 +6,17 @@ namespace Tzkt.Data.Models
 {
     public class BigMap
     {
-        public int Id { get; set; }
-        public int Ptr { get; set; }
-        public int ContractId { get; set; }
-        public string StoragePath { get; set; }
+        public required int Id { get; set; }
+        public required int Ptr { get; set; }
+        public required int ContractId { get; set; }
+        public required string StoragePath { get; set; }
         public bool Active { get; set; }
 
-        public byte[] KeyType { get; set; }
-        public byte[] ValueType { get; set; }
+        public required byte[] KeyType { get; set; }
+        public required byte[] ValueType { get; set; }
 
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
         public int TotalKeys { get; set; }
         public int ActiveKeys { get; set; }
         public int Updates { get; set; }
@@ -26,7 +24,7 @@ namespace Tzkt.Data.Models
         public BigMapTag Tags { get; set; }
 
         #region schema
-        BigMapSchema _Schema = null;
+        BigMapSchema? _Schema = null;
         public BigMapSchema Schema
         {
             get
@@ -34,11 +32,11 @@ namespace Tzkt.Data.Models
                 _Schema ??= new BigMapSchema(new MichelinePrim
                 {
                     Prim = PrimType.big_map,
-                    Args = new List<IMicheline>
-                    {
+                    Args =
+                    [
                         Micheline.FromBytes(KeyType),
                         Micheline.FromBytes(ValueType)
-                    }
+                    ]
                 });
                 return _Schema;
             }

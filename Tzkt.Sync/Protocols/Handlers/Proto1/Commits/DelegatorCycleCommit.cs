@@ -3,16 +3,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class DelegatorCycleCommit : ProtocolCommit
+    class DelegatorCycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public virtual async Task Apply(Block block, Cycle futureCycle)
+        public virtual async Task Apply(Block block, Cycle? futureCycle)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            await CreateFromSnapshots(futureCycle);
+            await CreateFromSnapshots(futureCycle!);
 
             #region weird delegators
             if (block.Cycle > 0)

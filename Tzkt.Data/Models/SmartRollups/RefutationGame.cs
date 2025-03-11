@@ -4,16 +4,16 @@ namespace Tzkt.Data.Models
 {
     public class RefutationGame
     {
-        public int Id { get; set; }
-        public int SmartRollupId { get; set; }
-        public int InitiatorId { get; set; }
-        public int OpponentId { get; set; }
-        public int InitiatorCommitmentId { get; set; }
-        public int OpponentCommitmentId { get; set; }
-        public long LastMoveId { get; set; }
-        
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int Id { get; set; }
+        public required int SmartRollupId { get; set; }
+        public required int InitiatorId { get; set; }
+        public required int OpponentId { get; set; }
+        public required int InitiatorCommitmentId { get; set; }
+        public required int OpponentCommitmentId { get; set; }
+        public required long LastMoveId { get; set; }
+
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public long? InitiatorReward { get; set; }
         public long? InitiatorLoss { get; set; }

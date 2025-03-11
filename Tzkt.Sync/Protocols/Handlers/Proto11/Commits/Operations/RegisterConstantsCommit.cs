@@ -1,20 +1,16 @@
-﻿using Netezos.Encoding;
-using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto11
 {
-    class RegisterConstantsCommit : ProtocolCommit
+    class RegisterConstantsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public RegisterConstantsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = (User)await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var result = content.Required("metadata").Required("operation_result");
             var registerConstant = new RegisterConstantOperation
@@ -92,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto11
                 }
 
                 registerConstant.Address = result.RequiredString("global_address");
-                registerConstant.Value = Micheline.FromJson(content.Required("value")).ToBytes();
+                registerConstant.Value = content.RequiredMicheline("value").ToBytes();
                 registerConstant.Refs = 0;
 
                 Cache.AppState.Get().ConstantsCount++;
@@ -110,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto11
         {
             #region entities
             var blockBaker = Context.Proposer;
-            var sender = await Cache.Accounts.GetAsync(registerConstant.SenderId) as User;
+            var sender = (User)await Cache.Accounts.GetAsync(registerConstant.SenderId);
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);

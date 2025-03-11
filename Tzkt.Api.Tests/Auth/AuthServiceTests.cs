@@ -1,6 +1,3 @@
-using System;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Netezos.Encoding;
 using Netezos.Keys;

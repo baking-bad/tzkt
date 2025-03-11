@@ -4,11 +4,12 @@
 		<AssemblyVersion>1.14.9</AssemblyVersion>
 	</PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>disable</Nullable>
-    </PropertyGroup>
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>

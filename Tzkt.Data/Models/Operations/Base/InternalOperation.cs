@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Tzkt.Data.Models.Base
+﻿namespace Tzkt.Data.Models.Base
 {
     public class InternalOperation : ManagerOperation
     {

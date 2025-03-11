@@ -1,17 +1,16 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class ProposalOperation : BaseOperation
     {
-        public int Epoch { get; set; }
-        public int Period { get; set; }
-        public int ProposalId { get; set; }
-        public int SenderId { get; set; }
-        public long VotingPower { get; set; }
+        public required int Epoch { get; set; }
+        public required int Period { get; set; }
+        public required int ProposalId { get; set; }
+        public required int SenderId { get; set; }
 
+        public long VotingPower { get; set; }
         public bool Duplicated { get; set; }
     }
 

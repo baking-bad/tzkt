@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text.Json;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Services
 {
@@ -53,14 +48,14 @@ namespace Tzkt.Sync.Services
             var _to = (long)(to - DateTime.UnixEpoch).TotalSeconds;
 
             return (await Client.GetObjectAsync<CoingeckoQuotes>(
-                $"coins/tezos/market_chart/range?vs_currency={currency}&from={_from}&to={_to}")).Prices;
+                $"coins/tezos/market_chart/range?vs_currency={currency}&from={_from}&to={_to}"))!.Prices;
         }
     }
 
     public class CoingeckoQuotes
     {
         [JsonPropertyName("prices")]
-        public List<CoingeckoQuote> Prices { get; set; }
+        public required List<CoingeckoQuote> Prices { get; set; }
     }
 
     public class CoingeckoQuote : List<double>, IDefaultQuote

@@ -2,11 +2,9 @@
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class DelegatorCycleCommit : Proto18.DelegatorCycleCommit
+    class DelegatorCycleCommit(ProtocolHandler protocol) : Proto18.DelegatorCycleCommit(protocol)
     {
-        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public override async Task Apply(Block block, Cycle futureCycle)
+        public override async Task Apply(Block block, Cycle? futureCycle)
         {
             if (block.Cycle == Context.Protocol.FirstCycle)
             {

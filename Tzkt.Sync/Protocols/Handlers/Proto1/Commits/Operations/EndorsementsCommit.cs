@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class EndorsementsCommit : ProtocolCommit
+    class EndorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -20,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .EnumerateArray()
                     .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
 
-            var sender = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate"));
+            var sender = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
 
             var endorsement = new EndorsementOperation
             {

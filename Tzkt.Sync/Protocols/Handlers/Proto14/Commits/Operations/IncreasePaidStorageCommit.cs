@@ -5,16 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto14
 {
-    class IncreasePaidStorageCommit : ProtocolCommit
+    class IncreasePaidStorageCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public IncreasePaidStorageOperation Operation { get; private set; }
-
-        public IncreasePaidStorageCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var contract = await Cache.Accounts.GetAsync(content.RequiredString("destination")) as Contract;
 
             var result = content.Required("metadata").Required("operation_result");
@@ -35,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                ContractId = contract.Id,
+                ContractId = contract?.Id,
                 Amount = BigInteger.Parse(content.RequiredString("amount")),
                 Status = result.RequiredString("status") switch
                 {
@@ -76,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.IncreasePaidStorageCount++;
-            contract.IncreasePaidStorageCount++;
+            if (contract != null) contract.IncreasePaidStorageCount++;
 
             block.Operations |= Operations.IncreasePaidStorage;
             block.Fees += operation.BakerFee;
@@ -107,7 +103,6 @@ namespace Tzkt.Sync.Protocols.Proto14
             Proto.Manager.Set(sender);
             Db.IncreasePaidStorageOps.Add(operation);
             Context.IncreasePaidStorageOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, IncreasePaidStorageOperation operation)
@@ -151,10 +146,10 @@ namespace Tzkt.Sync.Protocols.Proto14
             blockBaker.StakingBalance -= operation.BakerFee;
 
             sender.IncreasePaidStorageCount--;
-            contract.IncreasePaidStorageCount--;
+            if (contract != null) contract.IncreasePaidStorageCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().IncreasePaidStorageOpsCount--;
             #endregion

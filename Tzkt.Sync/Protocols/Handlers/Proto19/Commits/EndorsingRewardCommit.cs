@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class EndorsingRewardCommit : Proto18.EndorsingRewardCommit
+    class EndorsingRewardCommit(ProtocolHandler protocol) : Proto18.EndorsingRewardCommit(protocol)
     {
-        public EndorsingRewardCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public override async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -47,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                         var staker = nextUpdate.Required("staker");
                         if (staker.TryGetProperty("baker_own_stake", out var p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected attesting rewards balance update");
 
@@ -55,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                         }
                         else if (staker.TryGetProperty("baker_edge", out p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected attesting rewards balance update");
 
@@ -63,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                         }
                         else if (staker.TryGetProperty("delegate", out p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected attesting rewards balance update");
 
@@ -76,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract")
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("contract"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("contract"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected attesting rewards balance update");
 
@@ -84,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                     }
                     else if (nextUpdate.RequiredString("kind") == "burned" && nextUpdate.RequiredString("category") == "lost attesting rewards")
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("delegate"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("delegate"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected attesting rewards balance update");
 

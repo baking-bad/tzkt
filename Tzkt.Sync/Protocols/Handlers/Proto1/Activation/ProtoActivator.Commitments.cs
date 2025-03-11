@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var commitments = parameters["commitments"]?.Select(x => new Commitment
             {
+                Id = 0,
                 Address = x[0].Value<string>(),
                 Balance = x[1].Value<long>()
             });
@@ -20,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var state = Cache.AppState.Get();
                 var statistics = Cache.Statistics.Current;
 
-                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
                 using var writer = conn.BeginBinaryImport(@"COPY ""Commitments"" (""Balance"", ""Address"") FROM STDIN (FORMAT BINARY)");
 
                 foreach (var commitment in commitments)

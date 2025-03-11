@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {
-    class ProtoActivator : Proto3.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto3.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -30,7 +28,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
+            var account = (await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi"))!;
             Db.TryAttach(account);
             account.FirstLevel = account.LastLevel = state.Level;
             account.Balance += 100_000_000;
@@ -64,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto4
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
+                .FirstAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);

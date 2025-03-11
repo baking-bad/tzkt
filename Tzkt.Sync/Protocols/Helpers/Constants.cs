@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Tzkt.Data;
 using Tzkt.Data.Models;
@@ -17,19 +14,19 @@ namespace Tzkt.Sync.Protocols
             {
                 var pendingConstants = new HashSet<string>(Find(nodes));
                 foreach (var constant in res)
-                    pendingConstants.Remove(constant.Address);
+                    pendingConstants.Remove(constant.Address!);
 
                 if (pendingConstants.Count == 0)
                     break;
 
                 var constants = await db.RegisterConstantOps
-                    .Where(x => pendingConstants.Contains(x.Address))
+                    .Where(x => x.Address != null && pendingConstants.Contains(x.Address))
                     .ToListAsync();
 
                 foreach (var constant in constants)
                     res.Add(constant);
 
-                nodes = constants.Select(x => Micheline.FromBytes(x.Value));
+                nodes = constants.Select(x => Micheline.FromBytes(x.Value!));
             }
             return res;
         }
@@ -54,7 +51,7 @@ namespace Tzkt.Sync.Protocols
             {
                 if (prim.Prim == PrimType.constant)
                 {
-                    yield return (prim.Args[0] as MichelineString).Value;
+                    yield return (prim.Args[0] as MichelineString)!.Value;
                 }
                 else
                 {
@@ -79,7 +76,7 @@ namespace Tzkt.Sync.Protocols
                 return node;
 
             if (prim.Prim == PrimType.constant)
-                return Expand(constants[(prim.Args[0] as MichelineString).Value], constants);
+                return Expand(constants[(prim.Args[0] as MichelineString)!.Value], constants);
 
             for (int i = 0; i < prim.Args.Count; i++)
                 prim.Args[i] = Expand(prim.Args[i], constants);

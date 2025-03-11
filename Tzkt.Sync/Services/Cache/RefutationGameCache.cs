@@ -4,19 +4,13 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class RefutationGameCache
+    public class RefutationGameCache(TzktContext db)
     {
-        public const int MaxItems = 257; //TODO: set limits in app settings
-
+        const int MaxItems = 257; //TODO: set limits in app settings
         static readonly Dictionary<int, RefutationGame> CachedById = new(257);
         static readonly Dictionary<(int, int, int), RefutationGame> CachedByKey = new(257);
 
-        readonly TzktContext Db;
-
-        public RefutationGameCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Add(RefutationGame item)
         {
@@ -80,7 +74,7 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public async Task<RefutationGame> GetOrDefaultAsync(int? rollupId, int? initiatorId, int? opponentId)
+        public async Task<RefutationGame?> GetOrDefaultAsync(int? rollupId, int? initiatorId, int? opponentId)
         {
             if (rollupId is not int _rollupId ||
                 initiatorId is not int _initiatorId ||

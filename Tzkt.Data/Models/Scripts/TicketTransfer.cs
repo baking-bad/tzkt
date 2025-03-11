@@ -5,10 +5,10 @@ namespace Tzkt.Data.Models
 {
     public class TicketTransfer
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public int TicketerId { get; set; }
-        public long TicketId { get; set; }
+        public required long Id { get; set; }
+        public required long TicketId { get; set; }
+        public required int TicketerId { get; set; }
+        public required int Level { get; set; }
         public BigInteger Amount { get; set; }
 
         public int? FromId { get; set; }

@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class ActivationsCommit : Proto1.ActivationsCommit
+    class ActivationsCommit(ProtocolHandler protocol) : Proto1.ActivationsCommit(protocol)
     {
-        public ActivationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public override async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             await base.Apply(block, op, content);

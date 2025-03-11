@@ -241,7 +241,7 @@ namespace Tzkt.Sync
                     if (content.RequiredString("kind") == "transaction")
                     {
                         if (content.TryGetProperty("destination", out var dest))
-                            accounts.Add(dest.GetString());
+                            accounts.Add(dest.RequiredString());
 
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
@@ -250,7 +250,7 @@ namespace Tzkt.Sync
                                 if (internalContent.RequiredString("kind") == "transaction")
                                 {
                                     if (internalContent.TryGetProperty("destination", out var internalDest))
-                                        accounts.Add(internalDest.GetString());
+                                        accounts.Add(internalDest.RequiredString());
                                 }
                             }
                     }
@@ -278,7 +278,7 @@ namespace Tzkt.Sync
         {
             var currBlock = Cache.Blocks.Get(state.Level);
             Context.Block = currBlock;
-            Context.Proposer = Cache.Accounts.GetDelegate(currBlock.ProposerId);
+            Context.Proposer = Cache.Accounts.GetDelegate(currBlock.ProposerId!.Value);
             Context.Protocol = await Cache.Protocols.GetAsync(currBlock.ProtoCode);
 
             if (currBlock.Operations.HasFlag(Operations.Endorsements))
@@ -427,12 +427,12 @@ namespace Tzkt.Sync
         void TouchAccounts()
         {
             var state = Cache.AppState.Get();
-            var block = Db.ChangeTracker.Entries()
-                .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block;
+            var block = (Db.ChangeTracker.Entries()
+                .First(x => x.Entity is Block block && block.Level == state.Level).Entity as Block)!;
 
             foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account).ToList())
             {
-                var account = entry.Entity as Account;
+                var account = (entry.Entity as Account)!;
 
                 if (entry.State == EntityState.Modified)
                 {
@@ -452,7 +452,7 @@ namespace Tzkt.Sync
 
             foreach (var entry in Db.ChangeTracker.Entries().Where(x => x.Entity is Account).ToList())
             {
-                var account = entry.Entity as Account;
+                var account = (entry.Entity as Account)!;
 
                 if (entry.State == EntityState.Modified)
                     account.LastLevel = level;

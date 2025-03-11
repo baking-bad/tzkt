@@ -4,18 +4,18 @@ namespace Tzkt.Data.Models
 {
     public class BigMapUpdate
     {
-        public int Id { get; set; }
-        public int BigMapPtr { get; set; }
-        public BigMapAction Action { get; set; }
+        public required int Id { get; set; }
+        public required int BigMapPtr { get; set; }
+        public required int Level { get; set; }
+        public required BigMapAction Action { get; set; }
 
-        public int Level { get; set; }
         public long? OriginationId { get; set; }
         public long? TransactionId { get; set; }
         public long? MigrationId { get; set; }
 
         public int? BigMapKeyId { get; set; }
-        public byte[] RawValue { get; set; }
-        public string JsonValue { get; set; }
+        public byte[]? RawValue { get; set; }
+        public string? JsonValue { get; set; }
     }
 
     public enum BigMapAction

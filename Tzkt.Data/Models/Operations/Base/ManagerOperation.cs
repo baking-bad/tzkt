@@ -1,10 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Tzkt.Data.Models.Base
+﻿namespace Tzkt.Data.Models.Base
 {
     public class ManagerOperation : BaseOperation
     {
-        public int SenderId { get; set; }
+        public required int SenderId { get; set; }
         public int Counter { get; set; }
 
         public long BakerFee { get; set; }
@@ -18,7 +16,7 @@ namespace Tzkt.Data.Models.Base
         public int StorageUsed { get; set; }
 
         public OperationStatus Status { get; set; }
-        public string Errors { get; set; }
+        public string? Errors { get; set; }
     }
 
     public enum OperationStatus : byte

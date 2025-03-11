@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto2
@@ -8,6 +7,6 @@ namespace Tzkt.Sync.Protocols.Proto2
     {
         public OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override Task<User> GetWeirdDelegate(JsonElement content) => Task.FromResult<User>(null);
+        protected override Task<User?> GetWeirdDelegate(JsonElement content) => Task.FromResult<User?>(null);
     }
 }

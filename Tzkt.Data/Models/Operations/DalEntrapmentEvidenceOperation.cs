@@ -5,8 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class DalEntrapmentEvidenceOperation : BaseOperation
     {
-        public int AccuserId { get; set; }
-        public int OffenderId { get; set; }
+        public required int AccuserId { get; set; }
+        public required int OffenderId { get; set; }
 
         public int TrapLevel { get; set; }
         public int TrapSlotIndex { get; set; }

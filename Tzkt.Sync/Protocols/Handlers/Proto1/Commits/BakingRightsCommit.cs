@@ -1,21 +1,15 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class BakingRightsCommit : ProtocolCommit
+    class BakingRightsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public List<BakingRight> CurrentRights { get; protected set; }
-        public IEnumerable<JsonElement> FutureBakingRights { get; protected set; }
-        public IEnumerable<JsonElement> FutureEndorsingRights { get; protected set; }
-
-        public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
+        public List<BakingRight> CurrentRights { get; protected set; } = null!;
+        public IEnumerable<JsonElement>? FutureBakingRights { get; protected set; }
+        public IEnumerable<JsonElement>? FutureEndorsingRights { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -152,13 +146,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (!await Cache.Accounts.ExistsAsync(br.RequiredString("delegate")))
                         throw new Exception($"Account {br.RequiredString("delegate")} doesn't exist");
 
-                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
                 foreach (var er in FutureEndorsingRights)
                 {
                     // WTF: [level:28680] - Baking rights were given to non-baker account
-                    var acc = await Cache.Accounts.GetAsync(er.RequiredString("delegate"));
+                    var acc = await Cache.Accounts.GetExistingAsync(er.RequiredString("delegate"));
                     
                     writer.StartRow();
                     writer.Write(Context.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
@@ -173,7 +167,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var br in FutureBakingRights)
                 {
                     // WTF: [level:28680] - Baking rights were given to non-baker account
-                    var acc = await Cache.Accounts.GetAsync(br.RequiredString("delegate"));
+                    var acc = await Cache.Accounts.GetExistingAsync(br.RequiredString("delegate"));
 
                     writer.StartRow();
                     writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);

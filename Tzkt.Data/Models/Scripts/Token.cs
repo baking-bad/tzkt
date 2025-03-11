@@ -1,19 +1,18 @@
-﻿using System;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Token
     {
-        public long Id { get; set; }
-        public int ContractId { get; set; }
-        public BigInteger TokenId { get; set; }
+        public required long Id { get; set; }
+        public required int ContractId { get; set; }
+        public required BigInteger TokenId { get; set; }
         public TokenTags Tags { get; set; }
 
-        public int FirstMinterId { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int FirstMinterId { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public int TransfersCount { get; set; }
         public int BalancesCount { get; set; }

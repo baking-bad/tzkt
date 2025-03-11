@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class ProposalsCache
+    public class ProposalsCache(TzktContext db)
     {
-        public const int MaxProposals = 32; //TODO: set limits in app settings
-
+        const int MaxProposals = 32; //TODO: set limits in app settings
         static readonly Dictionary<int, Proposal> CachedById = new(37);
         static readonly Dictionary<(int, string), Proposal> CachedByKey = new(37);
 
-        readonly TzktContext Db;
-
-        public ProposalsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -62,7 +51,7 @@ namespace Tzkt.Sync.Services.Cache
             return proposal;
         }
 
-        public async Task<Proposal> GetOrDefaultAsync(int epoch, string hash)
+        public async Task<Proposal?> GetOrDefaultAsync(int epoch, string hash)
         {
             if (!CachedByKey.TryGetValue((epoch, hash), out var proposal))
             {

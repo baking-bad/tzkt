@@ -4,15 +4,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class StatisticsCommit : ProtocolCommit
+    class StatisticsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public StatisticsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(JsonElement rawBlock)
         {
             var prev = Cache.Statistics.Current;
             var statistics = new Statistics
             {
+                Id = 0,
                 Level = prev.Level + 1,
                 TotalActivated = prev.TotalActivated,
                 TotalBootstrapped = prev.TotalBootstrapped,

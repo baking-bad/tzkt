@@ -2,7 +2,7 @@
 {
     public class TokenMetadataState
     {
-        public Dictionary<string, DipDupState> DipDup { get; set; } = new();
+        public Dictionary<string, DipDupState> DipDup { get; set; } = [];
     }
 
     public class DipDupState

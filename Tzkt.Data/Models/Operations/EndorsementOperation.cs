@@ -1,12 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class EndorsementOperation : BaseOperation
     {
-        public int DelegateId { get; set; }
+        public required int DelegateId { get; set; }
         public int Slots { get; set; }
         public long Reward { get; set; }
         public long Deposit { get; set; }

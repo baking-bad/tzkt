@@ -4,17 +4,12 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class ProtocolsCache
+    public class ProtocolsCache(TzktContext db)
     {
         static readonly Dictionary<int, Protocol> CachedByCode = new(37);
         static readonly Dictionary<string, Protocol> CachedByHash = new(37);
 
-        readonly TzktContext Db;
-
-        public ProtocolsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public async Task ResetAsync()
         {

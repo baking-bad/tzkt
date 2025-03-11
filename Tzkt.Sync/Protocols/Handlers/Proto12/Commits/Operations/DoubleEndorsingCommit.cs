@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class DoubleEndorsingCommit : ProtocolCommit
+    class DoubleEndorsingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DoubleEndorsingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual void Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -27,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 : 0;
 
             var accuser = Context.Proposer;
-            var offender = Cache.Accounts.GetDelegate(offenderAddr);
+            var offender = Cache.Accounts.GetExistingDelegate(offenderAddr);
 
             var doubleEndorsing = new DoubleEndorsingOperation
             {

@@ -7,17 +7,15 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    partial class ProtoActivator : Proto17.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto17.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
             var accounts = await base.BootstrapAccounts(protocol, parameters);
 
             var bakers = accounts
                 .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             Cache.Statistics.Current.TotalFrozen = 0;
 
@@ -41,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var bakers = accounts
                 .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             var issuances = Proto.Rpc.GetExpectedIssuance(1).Result;
 
@@ -75,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             foreach (var cycle in cycles)
             {
@@ -83,6 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var bakerCycle = new BakerCycle
                     {
+                        Id = 0,
                         Cycle = cycle.Index,
                         BakerId = x.Id,
                         OwnDelegatedBalance = x.Balance - x.OwnStakedBalance,
@@ -282,8 +281,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             var valueType = new MichelinePrim
             {
                 Prim = PrimType.pair,
-                Args = new(2)
-                {
+                Args =
+                [
                     new MichelinePrim
                     {
                         Prim = PrimType.timestamp
@@ -291,19 +290,19 @@ namespace Tzkt.Sync.Protocols.Proto18
                     new MichelinePrim
                     {
                         Prim = PrimType.ticket,
-                        Args = new(1)
-                        {
+                        Args =
+                        [
                             new MichelinePrim
                             {
                                 Prim = PrimType.@string,
-                                Annots = new(1)
-                                {
+                                Annots =
+                                [
                                     new FieldAnnotation("data")
-                                }
+                                ]
                             }
-                        }
+                        ]
                     }
-                }
+                ]
             };
 
             var bigmap = await Db.BigMaps
@@ -327,7 +326,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             foreach (var key in keys)
             {
                 var value = Micheline.FromBytes(key.RawValue);
-                if (((((value as MichelinePrim).Args[1] as MichelinePrim).Args[1] as MichelinePrim).Args[1] as MichelineInt).Value == BigInteger.Zero)
+                if (((((value as MichelinePrim)!.Args![1] as MichelinePrim)!.Args![1] as MichelinePrim)!.Args![1] as MichelineInt)!.Value == BigInteger.Zero)
                 {
                     var migration = new MigrationOperation
                     {
@@ -382,7 +381,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var bakers = stakes
                 .Where(x => x.Value > 0)
-                .Select(x => Cache.Accounts.GetDelegate(x.Key));
+                .Select(x => Cache.Accounts.GetExistingDelegate(x.Key));
 
             Cache.Statistics.Current.TotalFrozen = 0;
 

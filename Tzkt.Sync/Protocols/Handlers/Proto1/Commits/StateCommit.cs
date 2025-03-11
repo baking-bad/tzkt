@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class StateCommit : ProtocolCommit
+    class StateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public StateCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual Task Apply(Block block, JsonElement rawBlock)
         {
             var nextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");

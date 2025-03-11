@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class VotingCommit : ProtocolCommit
+    class VotingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             var state = Cache.AppState.Get();
@@ -99,7 +97,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 var pendings = Db.ChangeTracker.Entries()
                     .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
-                    .Select(x => x.Entity as Proposal)
+                    .Select(x => (x.Entity as Proposal)!)
                     .ToList();
 
                 foreach (var pending in pendings)
@@ -155,6 +153,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch + 1,
                 FirstLevel = block.Level + 1,
@@ -168,6 +167,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
@@ -210,6 +210,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch,
                 FirstLevel = block.Level + 1,
@@ -223,6 +224,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
@@ -270,6 +272,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch,
                 FirstLevel = block.Level + 1,
@@ -283,6 +286,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
@@ -322,8 +326,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
-                return ((int)prev.ParticipationEma * 8000 + (int)participation * 2000) / 10000;
+                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                return (int)((prev.ParticipationEma!.Value * 8000 + participation * 2000) / 10000);
             }
 
             return 8000;
@@ -338,8 +342,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
-                return ((int)prev.BallotsQuorum * 8000 + (int)participation * 2000) / 10000;
+                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                return (int)((prev.BallotsQuorum!.Value * 8000 + participation * 2000) / 10000);
             }
 
             return 8000;

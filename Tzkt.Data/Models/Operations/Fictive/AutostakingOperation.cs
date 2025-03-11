@@ -5,12 +5,13 @@ namespace Tzkt.Data.Models
 {
     public class AutostakingOperation : IOperation
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public StakingAction Action { get; set; }
+        public required long Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required int BakerId { get; set; }
+        public required StakingAction Action { get; set; }
 
         public long Amount { get; set; }
-        public int BakerId { get; set; }
         public int StakingUpdatesCount { get; set; }
     }
 

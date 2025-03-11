@@ -1,51 +1,34 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Text;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Npgsql;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public class QuotesService
+    public class QuotesService(TzktContext db, CacheService cache, IQuoteProvider provider, IConfiguration config, ILogger<QuotesService> logger)
     {
         #region settings
         const int Chunk = 100_000;
         const int CacheSize = 10_000;
         #endregion
 
-        readonly TzktContext Db;
-        readonly CacheService Cache;
-        readonly IQuoteProvider Provider;
-        readonly QuotesServiceConfig Config;
-        readonly ILogger Logger;
-
-        public QuotesService(TzktContext db, CacheService cache, IQuoteProvider provider, IConfiguration config, ILogger<QuotesService> logger)
-        {
-            Db = db;
-            Cache = cache;
-            Provider = provider;
-            Config = config.GetQuotesServiceConfig();
-            Logger = logger;
-        }
+        readonly TzktContext Db = db;
+        readonly CacheService Cache = cache;
+        readonly IQuoteProvider Provider = provider;
+        readonly QuotesServiceConfig Config = config.GetQuotesServiceConfig();
+        readonly ILogger Logger = logger;
 
         public async Task Init()
         {
-            Logger.LogInformation($"Quote provider: {Provider.GetType().Name} ({(Config.Async ? "Async" : "Sync")})");
+            Logger.LogInformation("Quote provider: {name} ({mode})", Provider.GetType().Name, Config.Async ? "Async" : "Sync");
 
             var state = Cache.AppState.Get();
             if (state.QuoteLevel < state.Level)
             {
                 try
                 {
-                    Logger.LogDebug($"{state.Level - state.QuoteLevel} quotes missed. Start sync...");
+                    Logger.LogDebug("{cnt} quotes missed. Start sync...", state.Level - state.QuoteLevel);
                     while (state.QuoteLevel < state.Level)
                     {
                         var quotes = await Db.Blocks
@@ -55,6 +38,7 @@ namespace Tzkt.Sync.Services
                             .Take(Chunk)
                             .Select(x => new Quote
                             {
+                                Id = 0,
                                 Level = x.Level,
                                 Timestamp = x.Timestamp
                             })
@@ -70,7 +54,7 @@ namespace Tzkt.Sync.Services
                             UpdateState(state, quotes[filled - 1]);
 
                             await tx.CommitAsync();
-                            Logger.LogDebug($"{filled} quotes added");
+                            Logger.LogDebug("{cnt} quotes added", filled);
                         }
                         catch
                         {
@@ -98,6 +82,7 @@ namespace Tzkt.Sync.Services
                     {
                         quotes.Add(new Quote
                         {
+                            Id = 0,
                             Level = level,
                             Timestamp = (await Cache.Blocks.GetAsync(level)).Timestamp
                         });
@@ -131,6 +116,7 @@ namespace Tzkt.Sync.Services
                             .Take(Chunk)
                             .Select(x => new Quote
                             {
+                                Id = 0,
                                 Level = x.Level,
                                 Timestamp = x.Timestamp
                             })
@@ -158,9 +144,10 @@ namespace Tzkt.Sync.Services
             {
                 try
                 {
-                    await Db.Database.ExecuteSqlRawAsync($@"
-                        DELETE FROM ""Quotes"" WHERE ""Level"" >= {state.Level};
-                        UPDATE ""AppState"" SET ""QuoteLevel"" = {state.Level - 1};");
+                    await Db.Database.ExecuteSqlRawAsync($"""
+                        DELETE FROM "Quotes" WHERE "Level" >= {state.Level};
+                        UPDATE "AppState" SET "QuoteLevel" = {state.Level - 1};
+                        """);
 
                     state.QuoteLevel = state.Level - 1;
                 }
@@ -174,7 +161,7 @@ namespace Tzkt.Sync.Services
 
         void SaveQuotes(IEnumerable<Quote> quotes)
         {
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             if (conn.State != System.Data.ConnectionState.Open) conn.Open();
             using var writer = conn.BeginBinaryImport(@"COPY ""Quotes"" (""Level"", ""Timestamp"", ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp"") FROM STDIN (FORMAT BINARY)");
 
@@ -286,8 +273,11 @@ namespace Tzkt.Sync.Services
             state.QuoteGbp = last.Gbp;
         }
 
-        IQuote LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
+        IQuote? LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
         {
+            Id = 0,
+            Level = 0,
+            Timestamp = DateTime.MinValue,
             Btc = state.QuoteBtc,
             Eur = state.QuoteEur,
             Usd = state.QuoteUsd,

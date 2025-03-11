@@ -5,10 +5,8 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupRefuteCommit : ProtocolCommit
+    class SmartRollupRefuteCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupRefuteCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -22,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 _ => throw new NotImplementedException("Unknown refutation kind")
             };
 
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var opponent = await Cache.Accounts.GetAsync(content.RequiredString("opponent"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var game = move != RefutationMove.Start 
@@ -133,7 +131,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     var initiatorCommitmentHash = refutation.RequiredString("player_commitment_hash");
                     var opponentCommitmentHash = refutation.RequiredString("opponent_commitment_hash");
 
-                    var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(initiatorCommitmentHash, rollup.Id);
+                    var initiatorCommitment = await Cache.SmartRollupCommitments.GetAsync(initiatorCommitmentHash, rollup!.Id);
                     var opponentCommitment = await Cache.SmartRollupCommitments.GetAsync(opponentCommitmentHash, rollup.Id);
 
                     game = new RefutationGame
@@ -141,7 +139,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         Id = Cache.AppState.NextRefutationGameId(),
                         SmartRollupId = rollup.Id,
                         InitiatorId = sender.Id,
-                        OpponentId = opponent.Id,
+                        OpponentId = opponent!.Id,
                         InitiatorCommitmentId = initiatorCommitment.Id,
                         OpponentCommitmentId = opponentCommitment.Id,
                         LastMoveId = operation.Id,
@@ -168,7 +166,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 }
                 else
                 {
-                    game.LastMoveId = operation.Id;
+                    game!.LastMoveId = operation.Id;
 
                     if (operation.GameStatus != RefutationGameStatus.Ongoing)
                     {
@@ -212,7 +210,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.InitiatorLoss = -initiatorChange;
                             initiator.SmartRollupBonds -= game.InitiatorLoss.Value;
-                            rollup.SmartRollupBonds -= game.InitiatorLoss.Value;
+                            rollup!.SmartRollupBonds -= game.InitiatorLoss.Value;
                             rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, initiator, block);
@@ -257,7 +255,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.OpponentLoss = -opponentChange;
                             opponent.SmartRollupBonds -= game.OpponentLoss.Value;
-                            rollup.SmartRollupBonds -= game.OpponentLoss.Value;
+                            rollup!.SmartRollupBonds -= game.OpponentLoss.Value;
                             rollup.ActiveStakers--;
 
                             var bondOp = await GetBondOperation(rollup, opponent, block);
@@ -305,7 +303,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                         initiator.ActiveRefutationGamesCount--;
                         opponent.ActiveRefutationGamesCount--;
-                        rollup.ActiveRefutationGamesCount--;
+                        rollup!.ActiveRefutationGamesCount--;
 
                         var totalLoss = (game.InitiatorLoss ?? 0) + (game.OpponentLoss ?? 0);
                         var totalReward = (game.InitiatorReward ?? 0) + (game.OpponentReward ?? 0);
@@ -338,7 +336,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                var game = await Cache.RefutationGames.GetAsync((int)operation.GameId);
+                var game = await Cache.RefutationGames.GetAsync(operation.GameId!.Value);
                 var opponent = await Cache.Accounts.GetAsync(game.OpponentId);
                 
                 Db.TryAttach(game);
@@ -356,7 +354,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     opponent.RefutationGamesCount--;
                     opponent.ActiveRefutationGamesCount--;
                     
-                    rollup.RefutationGamesCount--;
+                    rollup!.RefutationGamesCount--;
                     rollup.ActiveRefutationGamesCount--;
                 }
                 else
@@ -394,7 +392,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.InitiatorLoss = null;
                             initiator.SmartRollupBonds -= initiatorChange;
-                            rollup.SmartRollupBonds -= initiatorChange;
+                            rollup!.SmartRollupBonds -= initiatorChange;
                             rollup.ActiveStakers++;
 
                             var bondOp = await GetBondOperation(rollup.Id, initiator.Id);
@@ -432,7 +430,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.OpponentLoss = null;
                             opponent.SmartRollupBonds -= opponentChange;
-                            rollup.SmartRollupBonds -= opponentChange;
+                            rollup!.SmartRollupBonds -= opponentChange;
                             rollup.ActiveStakers++;
 
                             var bondOp = await GetBondOperation(rollup.Id, opponent.Id);
@@ -480,7 +478,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                         initiator.ActiveRefutationGamesCount++;
                         opponent.ActiveRefutationGamesCount++;
-                        rollup.ActiveRefutationGamesCount++;
+                        rollup!.ActiveRefutationGamesCount++;
                     }
                 }
             }
@@ -501,7 +499,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (rollup != null) rollup.SmartRollupRefuteCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             // game.LastLevel is not reverted
 
@@ -547,7 +545,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     x.o.SmartRollupId == rollup.Id &&
                     x.o.Status == OperationStatus.Applied &&
                     x.c.InboxLevel > rollup.InboxLevel)
-                .Select(x => (int)x.o.CommitmentId)
+                .Select(x => x.o.CommitmentId!.Value)
                 .ToListAsync())
                 .ToHashSet();
 
@@ -557,9 +555,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                     op.SenderId == staker.Id &&
                     op.SmartRollupId == rollup.Id &&
                     op.Status == OperationStatus.Applied &&
-                    (await Cache.SmartRollupCommitments.GetAsync((int)op.CommitmentId)).InboxLevel > rollup.InboxLevel)
+                    (await Cache.SmartRollupCommitments.GetAsync(op.CommitmentId!.Value)).InboxLevel > rollup.InboxLevel)
                 {
-                    ids.Add((int)op.CommitmentId);
+                    ids.Add(op.CommitmentId.Value);
                 }
             }
 
@@ -585,7 +583,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     x.o.SmartRollupId == rollup.Id &&
                     x.o.Status == OperationStatus.Applied &&
                     x.c.InboxLevel > rollup.InboxLevel)
-                .Select(x => (int)x.o.CommitmentId)
+                .Select(x => x.o.CommitmentId!.Value)
                 .ToListAsync())
                 .ToHashSet();
 

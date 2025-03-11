@@ -1,30 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BakerCyclesCache
+    public class BakerCyclesCache(TzktContext db)
     {
         static int CachedCycle = -1;
-        static Dictionary<int, BakerCycle> CachedBakerCycles = null;
+        static Dictionary<int, BakerCycle> CachedBakerCycles = [];
 
-        readonly TzktContext Db;
-
-        public BakerCyclesCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
             CachedCycle = -1;
-            CachedBakerCycles = null;
+            CachedBakerCycles = [];
         }
 
         public async Task<bool> ExistsAsync(int cycle, int bakerId)
@@ -72,7 +62,7 @@ namespace Tzkt.Sync.Services.Cache
             return CachedBakerCycles[bakerId];
         }
 
-        public async Task<BakerCycle> GetOrDefaultAsync(int cycle, int bakerId)
+        public async Task<BakerCycle?> GetOrDefaultAsync(int cycle, int bakerId)
         {
             if (CachedCycle != cycle)
             {
@@ -91,6 +81,7 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (CachedCycle != bc.Cycle)
                 throw new InvalidOperationException();
+
             CachedBakerCycles[bc.BakerId] = bc;
         }
     }

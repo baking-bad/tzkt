@@ -5,12 +5,12 @@ namespace Tzkt.Data.Models
 {
     public class TokenBalance
     {
-        public long Id { get; set; }
-        public int ContractId { get; set; }
-        public long TokenId { get; set; }
-        public int AccountId { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required long Id { get; set; }
+        public required long TokenId { get; set; }
+        public required int ContractId { get; set; }
+        public required int AccountId { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
         public int TransfersCount { get; set; }
         public BigInteger Balance { get; set; }
         public int? IndexedAt { get; set; }

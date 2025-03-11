@@ -1,22 +1,17 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.CodeAnalysis;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class TicketsCache
+    public class TicketsCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
-
+        const int MaxItems = 4 * 4096; //TODO: set limits in app settings
         static readonly Dictionary<long, Ticket> CachedById = new(MaxItems);
         static readonly Dictionary<(int TicketerId, HashableBytes RawType, HashableBytes RawContent), Ticket> CachedByKey = new(MaxItems);
 
-        readonly TzktContext Db;
-
-        public TicketsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -57,7 +52,7 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public bool TryGetCached(int ticketerId, byte[] rawType, byte[] rawContent, out Ticket token)
+        public bool TryGetCached(int ticketerId, byte[] rawType, byte[] rawContent, [NotNullWhen(true)] out Ticket? token)
         {
             return CachedByKey.TryGetValue((ticketerId, rawType, rawContent), out token);
         }

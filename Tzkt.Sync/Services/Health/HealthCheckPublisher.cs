@@ -1,19 +1,10 @@
-﻿using System.IO;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Diagnostics.HealthChecks;
+﻿using Microsoft.Extensions.Diagnostics.HealthChecks;
 
 namespace Tzkt.Sync.Services
 {
-    class HealthCheckPublisher : IHealthCheckPublisher
+    class HealthCheckPublisher(IConfiguration config) : IHealthCheckPublisher
     {
-        readonly string FilePath;
-
-        public HealthCheckPublisher(IConfiguration config)
-        {
-            FilePath = config.GetHealthChecksConfig().FilePath ?? "sync.health";
-        }
+        readonly string FilePath = config.GetHealthChecksConfig().FilePath ?? "sync.health";
 
         public Task PublishAsync(HealthReport report, CancellationToken cancellationToken)
         {

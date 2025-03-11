@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto22
 {
-    partial class ProtoActivator : Proto21.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto21.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override long GetDalAttestationRewardPerShard(JsonElement issuance)
         {
             return issuance.RequiredInt64("dal_attesting_reward_per_shard");
@@ -153,8 +151,8 @@ namespace Tzkt.Sync.Protocols.Proto22
                 WHERE "Cycle" > {0}
                 """, state.Cycle);
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {

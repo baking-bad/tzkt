@@ -4,11 +4,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class BlockCommit : ProtocolCommit
+    class BlockCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Block Block { get; private set; }
-
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Block Block { get; private set; } = null!;
 
         public virtual async Task Apply(JsonElement rawBlock)
         {
@@ -16,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var metadata = rawBlock.Required("metadata");
 
             var level = header.RequiredInt32("level");
-            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
-            var producer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
+            var proposer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("proposer"));
+            var producer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("baker"));
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
             var events = BlockEvents.None;
 
@@ -135,7 +133,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
-            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
+            var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
             producer.Balance -= Block.BonusDelegated;
             producer.StakingBalance -= Block.BonusDelegated;

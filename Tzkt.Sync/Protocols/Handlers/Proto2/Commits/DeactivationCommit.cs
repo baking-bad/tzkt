@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -14,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)> delegates = null;
+            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
                 var deactivated = rawBlock
@@ -63,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Revert(Block block)
         {
             #region init
-            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)> delegates = null;
+            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 delegates = (await Db.Delegates

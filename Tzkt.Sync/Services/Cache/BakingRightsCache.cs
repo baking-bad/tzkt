@@ -1,30 +1,20 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BakingRightsCache
+    public class BakingRightsCache(TzktContext db)
     {
         static int CachedCycle = -1;
-        static List<BakingRight>[] CachedRights = Array.Empty<List<BakingRight>>();
+        static List<BakingRight>[] CachedRights = [];
 
-        readonly TzktContext Db;
-
-        public BakingRightsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
             CachedCycle = -1;
-            CachedRights = Array.Empty<List<BakingRight>>();
+            CachedRights = [];
         }
 
         public async Task<List<BakingRight>> GetAsync(int cycle, int level)

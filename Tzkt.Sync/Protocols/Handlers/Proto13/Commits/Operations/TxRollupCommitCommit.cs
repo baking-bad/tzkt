@@ -4,16 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupCommitCommit : ProtocolCommit
+    class TxRollupCommitCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupCommitOperation Operation { get; private set; }
-
-        public TxRollupCommitCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -84,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (operation.Status == OperationStatus.Applied)
             {
                 sender.RollupBonds += operation.Bond;
-                rollup.RollupBonds += operation.Bond;
+                rollup!.RollupBonds += operation.Bond;
 
                 Cache.Statistics.Current.TotalRollupBonds += operation.Bond;
             }
@@ -93,7 +89,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupCommitOps.Add(operation);
             Context.TxRollupCommitOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupCommitOperation operation)
@@ -114,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (operation.Status == OperationStatus.Applied)
             {
                 sender.RollupBonds -= operation.Bond;
-                rollup.RollupBonds -= operation.Bond;
+                rollup!.RollupBonds -= operation.Bond;
             }
             #endregion
 
@@ -133,7 +128,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupCommitCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupCommitOpsCount--;
             #endregion
