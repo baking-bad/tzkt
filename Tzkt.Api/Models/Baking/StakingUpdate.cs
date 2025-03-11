@@ -23,24 +23,24 @@ namespace Tzkt.Api.Models
         public DateTime Timestamp { get; set; }
 
         /// <summary>
-        /// For `unstake`, `restake`, `finalize` and `slash_unstaked` update types it's freezer cycle, othrewise it's cycle of the block.
+        /// For `unstake`, `restake`, `finalize` and `slash_unstaked` update types it's freezer cycle, otherwise it's cycle of the block.
         /// </summary>
         public int Cycle { get; set; }
 
         /// <summary>
         /// Related baker.
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Related staker.
         /// </summary>
-        public Alias Staker { get; set; }
+        public required Alias Staker { get; set; }
 
         /// <summary>
         /// Staking update type (`stake`, `unstake`, `restake`, `finalize`, `slash_staked`, `slash_unstaked`).
         /// </summary>
-        public string Type { get; set; }
+        public required string Type { get; set; }
 
         /// <summary>
         /// Amount (mutez).

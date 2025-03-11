@@ -14,7 +14,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance=1234`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -22,7 +22,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ne=1234`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         /// <summary>
         /// **Greater than** filter mode. \
@@ -30,7 +30,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.gt=1234`.
         /// </summary>
-        public string Gt { get; set; }
+        public string? Gt { get; set; }
 
         /// <summary>
         /// **Greater or equal** filter mode. \
@@ -38,7 +38,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ge=1234`.
         /// </summary>
-        public string Ge { get; set; }
+        public string? Ge { get; set; }
 
         /// <summary>
         /// **Less than** filter mode. \
@@ -46,7 +46,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.lt=1234`.
         /// </summary>
-        public string Lt { get; set; }
+        public string? Lt { get; set; }
 
         /// <summary>
         /// **Less or equal** filter mode. \
@@ -54,7 +54,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.le=1234`.
         /// </summary>
-        public string Le { get; set; }
+        public string? Le { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -62,7 +62,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
-        public List<string> In { get; set; }
+        public List<string>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -70,7 +70,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
-        public List<string> Ni { get; set; }
+        public List<string>? Ni { get; set; }
 
         public string Normalize(string name)
         {

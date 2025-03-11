@@ -15,7 +15,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status=completed`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -23,7 +23,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status.ne=no_proposals`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -31,7 +31,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status.in=completed,failed`.
         /// </summary>
-        public List<string> In { get; set; }
+        public List<string>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -39,7 +39,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status.ni=completed,failed`.
         /// </summary>
-        public List<string> Ni { get; set; }
+        public List<string>? Ni { get; set; }
 
         public string Normalize(string name)
         {

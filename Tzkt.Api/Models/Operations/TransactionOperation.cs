@@ -25,12 +25,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -40,12 +40,12 @@
         /// <summary>
         /// Information about the initiator of the transaction call
         /// </summary>
-        public Alias Initiator { get; set; }
+        public Alias? Initiator { get; set; }
 
         /// <summary>
         /// Information about the account sent the transaction
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// Hash of the sender contract code, or `null` is the sender is not a contract
@@ -95,7 +95,7 @@
         /// <summary>
         /// Information about the target of the transaction
         /// </summary>
-        public Alias Target { get; set; }
+        public Alias? Target { get; set; }
 
         /// <summary>
         /// Hash of the target contract code, or `null` is the target is not a contract
@@ -110,17 +110,17 @@
         /// <summary>
         /// Transaction parameter, including called entrypoint and value passed to the entrypoint.
         /// </summary>
-        public TxParameter Parameter { get; set; }
+        public TxParameter? Parameter { get; set; }
 
         /// <summary>
         /// Contract storage after executing the transaction converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
         /// </summary>
-        public object Storage { get; set; }
+        public object? Storage { get; set; }
 
         /// <summary>
         /// List of bigmap updates (aka big_map_diffs) caused by the transaction.
         /// </summary>
-        public List<BigMapDiff> Diffs { get; set; }
+        public List<BigMapDiff>? Diffs { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -128,12 +128,12 @@
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         /// <summary>
         /// An indication of whether the transaction has an internal operations
@@ -161,7 +161,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 
@@ -170,11 +170,11 @@
         /// <summary>
         /// Entrypoint called on the target contract
         /// </summary>
-        public string Entrypoint { get; set; }
+        public required string Entrypoint { get; set; }
 
         /// <summary>
         /// Value passed to the called entrypoint converted to human-readable JSON. Note: you can configure parameters format by setting `micheline` query parameter.
         /// </summary>
-        public object Value { get; set; }
+        public object? Value { get; set; }
     }
 }

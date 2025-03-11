@@ -10,13 +10,13 @@ namespace Tzkt.Api
         /// You can see what fields can be used for sorting in the response description, below.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public SortParameter sort { get; set; }
+        public SortParameter? sort { get; set; }
 
         /// <summary>
         /// Specifies which or how many items should be skipped.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public OffsetParameter offset { get; set; }
+        public OffsetParameter? offset { get; set; }
 
         /// <summary>
         /// Maximum number of items to return.

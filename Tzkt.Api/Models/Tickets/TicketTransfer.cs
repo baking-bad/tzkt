@@ -26,19 +26,19 @@ namespace Tzkt.Api.Models
         /// Ticket info.  
         /// Click on the field to expand more details.
         /// </summary>
-        public TicketInfo Ticket { get; set; }
+        public required TicketInfo Ticket { get; set; }
 
         /// <summary>
         /// Sender account.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias From { get; set; }
+        public Alias? From { get; set; }
 
         /// <summary>
-        /// Recepient account.  
+        /// Recipient account.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias To { get; set; }
+        public Alias? To { get; set; }
 
         /// <summary>
         /// Amount of tickets transferred.  

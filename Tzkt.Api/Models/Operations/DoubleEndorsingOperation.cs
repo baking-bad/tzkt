@@ -26,12 +26,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Height of the block from the genesis, at which double endorsing occurred 
@@ -46,7 +46,7 @@
         /// <summary>
         /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
-        public Alias Accuser { get; set; }
+        public required Alias Accuser { get; set; }
 
         /// <summary>
         /// Reward of the baker, produced the block, in which the accusation was included
@@ -56,7 +56,7 @@
         /// <summary>
         /// Information about the baker, accused for producing two different endorsements at the same level
         /// </summary>
-        public Alias Offender { get; set; }
+        public required Alias Offender { get; set; }
 
         /// <summary>
         /// Amount slashed from baker's own staked balance
@@ -87,7 +87,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

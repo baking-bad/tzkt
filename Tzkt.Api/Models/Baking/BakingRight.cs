@@ -7,7 +7,7 @@
         /// - `baking` - right to bake (produce) a block;
         /// - `endorsing` - right to endorse (validate) a block.
         /// </summary>
-        public string Type { get; set; }
+        public required string Type { get; set; }
 
         /// <summary>
         /// Cycle on which the right can be realized.
@@ -39,7 +39,7 @@
         /// <summary>
         /// Baker to which baking or endorsing right has been given.
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Status of the baking or endorsing right:
@@ -47,7 +47,7 @@
         /// - `realized` - the right was successfully realized;
         /// - `missed` - the right was not realized.
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         #region deprecated
         /// <summary>

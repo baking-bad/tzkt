@@ -25,27 +25,27 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the proposal period for which the proposal was submitted (upvoted)
         /// </summary>
-        public PeriodInfo Period { get; set; }
+        public required PeriodInfo Period { get; set; }
 
         /// <summary>
         /// Information about the submitted (upvoted) proposal
         /// </summary>
-        public ProposalAlias Proposal { get; set; }
+        public required ProposalAlias Proposal { get; set; }
 
         /// <summary>
         /// Information about the baker (delegate), submitted (upvoted) the proposal operation
         /// </summary>
-        public Alias Delegate { get; set; }
+        public required Alias Delegate { get; set; }
 
         /// <summary>
         /// Baker's voting power
@@ -61,7 +61,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

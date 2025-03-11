@@ -25,12 +25,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Information about the delegate (baker) who has lost rewards due to unrevealed seed nonces 
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Height of the block, which contains hash of the seed nonce, which was to be revealed
@@ -46,7 +46,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

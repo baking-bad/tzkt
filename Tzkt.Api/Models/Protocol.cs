@@ -12,7 +12,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Hash of the protocol
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Global version number
@@ -38,21 +38,21 @@ namespace Tzkt.Api.Models
         /// Block height where the protocol ends. `null` if the protocol is active
         /// </summary>
         public int? LastLevel { get; set; }
-        
+
         /// <summary>
         /// Information about the protocol constants
         /// </summary>
-        public ProtocolConstants Constants { get; set; }
+        public required ProtocolConstants Constants { get; set; }
 
         /// <summary>
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata => Extras;
+        public RawJson? Metadata => Extras;
     }
 }

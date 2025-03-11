@@ -28,17 +28,17 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the account who has sent the operation
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -78,12 +78,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the target to which the operation was sent
         /// </summary>
-        public Alias Target { get; set; }
+        public Alias? Target { get; set; }
 
         /// <summary>
         /// Information about the ticketer
         /// </summary>
-        public Alias Ticketer { get; set; }
+        public Alias? Ticketer { get; set; }
 
         /// <summary>
         /// Amount sent
@@ -94,7 +94,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Entrypoint
         /// </summary>
-        public string Entrypoint { get; set; }
+        public required string Entrypoint { get; set; }
 
         /// <summary>
         /// Number of ticket transfers produced by the operation, or `null` if there are no transfers
@@ -104,12 +104,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Micheline type of the content
         /// </summary>
-        public RawJson ContentType { get; set; }
+        public RawJson? ContentType { get; set; }
 
         /// <summary>
         /// Ticket content
         /// </summary>
-        public object Content { get; set; }
+        public object? Content { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -117,18 +117,18 @@ namespace Tzkt.Api.Models
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

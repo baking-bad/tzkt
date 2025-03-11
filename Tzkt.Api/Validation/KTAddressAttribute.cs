@@ -4,11 +4,11 @@ namespace System.ComponentModel.DataAnnotations
 {
     public sealed class KTAddressAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^KT1[0-9A-Za-z]{33}$")
+            return value is string str && !Regex.IsMatch(str, "^KT1[0-9A-Za-z]{33}$")
                 ? new ValidationResult("Invalid KT1-address.")
-                : ValidationResult.Success;
+                : ValidationResult.Success!;
         }
     }
 }

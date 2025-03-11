@@ -25,22 +25,22 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the baker, produced the block, in which the evidence was included
         /// </summary>
-        public Alias Accuser { get; set; }
+        public required Alias Accuser { get; set; }
 
         /// <summary>
         /// Information about the baker, accused for attesting trapped shard
         /// </summary>
-        public Alias Offender { get; set; }
+        public required Alias Offender { get; set; }
 
         /// <summary>
         /// Height of the block from the genesis, where the trap was attested
@@ -56,7 +56,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

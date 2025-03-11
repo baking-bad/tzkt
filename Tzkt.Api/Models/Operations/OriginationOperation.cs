@@ -25,12 +25,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -40,12 +40,12 @@
         /// <summary>
         /// Information about the initiator of the contract call
         /// </summary>
-        public Alias Initiator { get; set; }
+        public Alias? Initiator { get; set; }
 
         /// <summary>
         /// Information about the account, created a contract
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// Hash of the sender contract code, or `null` is the sender is not a contract
@@ -100,27 +100,27 @@
         /// <summary>
         /// Information about the account, which was marked as a manager in the operation
         /// </summary>
-        public Alias ContractManager { get; set; }
+        public Alias? ContractManager { get; set; }
 
         /// <summary>
         /// Information about the baker (delegate), which was marked as a delegate in the operation
         /// </summary>
-        public Alias ContractDelegate { get; set; }
+        public Alias? ContractDelegate { get; set; }
 
         /// <summary>
         /// Contract code. Note: you can configure code format by setting `micheline` query parameter (`0 | 2` - raw micheline, `1 | 3` - raw micheline string).
         /// </summary>
-        public object Code { get; set; }
+        public object? Code { get; set; }
 
         /// <summary>
         /// Initial contract storage value converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
         /// </summary>
-        public object Storage { get; set; }
+        public object? Storage { get; set; }
 
         /// <summary>
         /// List of bigmap updates (aka big_map_diffs) caused by the origination.
         /// </summary>
-        public List<BigMapDiff> Diffs { get; set; }
+        public List<BigMapDiff>? Diffs { get; set; }
 
         /// <summary>
         /// Operation status (`applied` - an operation applied by the node and successfully added to the blockchain,
@@ -128,17 +128,17 @@
         /// `backtracked` - an operation which was a successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         /// <summary>
         /// Information about the originated ( deployed / created ) contract
         /// </summary>
-        public OriginatedContract OriginatedContract { get; set; }
+        public OriginatedContract? OriginatedContract { get; set; }
 
         /// <summary>
         /// Number of token transfers produced by the operation, or `null` if there are no transfers
@@ -149,7 +149,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

@@ -5,7 +5,7 @@ namespace Tzkt.Api.Utils
     public class JsonPath
     {
         public JsonPathType Type { get; }
-        public string Value { get; }
+        public string? Value { get; }
 
         public JsonPath(string value)
         {
@@ -58,7 +58,7 @@ namespace Tzkt.Api.Utils
             return $"{{\"{path[ind].Value}\":{Merge(path, value, ++ind)}}}";
         }
 
-        public static string[] Select(JsonPath[] path)
+        public static string?[] Select(JsonPath[] path)
         {
             return path.Select(x => x.Value).ToArray();
         }

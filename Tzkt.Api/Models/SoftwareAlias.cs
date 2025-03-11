@@ -5,7 +5,7 @@
         /// <summary>
         /// Software version (commit tag)
         /// </summary>
-        public string Version { get; set; }
+        public required string Version { get; set; }
 
         /// <summary>
         /// Date of the commit or when the software was first seen

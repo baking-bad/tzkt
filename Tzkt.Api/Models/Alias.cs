@@ -8,12 +8,12 @@ namespace Tzkt.Api.Models
         /// Account alias name (off-chain data).
         /// </summary>
         [JsonPropertyName("alias")]
-        public string Name { get; set; }
+        public string? Name { get; set; }
 
         /// <summary>
         /// Account address (public key hash).
         /// </summary>
         [JsonPropertyName("address")]
-        public string Address { get; set; }
+        public required string Address { get; set; }
     }
 }

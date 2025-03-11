@@ -5,7 +5,7 @@
         /// <summary>
         /// Address of the delegator
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         /// <summary>
         /// Amount delegated to the baker at the snapshot time (micro tez).

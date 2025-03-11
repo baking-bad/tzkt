@@ -20,17 +20,17 @@
         /// <summary>
         /// Information about the account who has sent the operation.
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// Player's move (`start`, `dissection`, `proof`, `timeout`).
         /// </summary>
-        public string Move { get; set; }
+        public required string Move { get; set; }
 
         /// <summary>
         /// Game status after the move
         /// (`ongoing` - game in progress, `loser` - one of the players lost, `draw` - both players lost).
         /// </summary>
-        public string GameStatus { get; set; }
+        public required string GameStatus { get; set; }
     }
 }

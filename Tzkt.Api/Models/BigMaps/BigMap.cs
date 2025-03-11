@@ -13,17 +13,17 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Smart contract in which's storage the bigmap is allocated
         /// </summary>
-        public Alias Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Path to the bigmap in the contract storage 
         /// </summary>
-        public string Path { get; set; }
+        public required string Path { get; set; }
 
         /// <summary>
         /// List of tags ( `metadata`, `token_metadata`,`ledger`, or `null` if there are no tags)
         /// </summary>
-        public List<string> Tags => BigMapTags.ToList(TagFlags);
+        public List<string>? Tags => BigMapTags.ToList(TagFlags);
 
         /// <summary>
         /// Bigmap status (`true` - active, `false` - removed)
@@ -58,12 +58,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Bigmap key type as JSON schema or Micheline, depending on the `micheline` query parameter.
         /// </summary>
-        public object KeyType { get; set; }
+        public required object KeyType { get; set; }
 
         /// <summary>
         /// Bigmap value type as JSON schema or Micheline, depending on the `micheline` query parameter.
         /// </summary>
-        public object ValueType { get; set; }
+        public required object ValueType { get; set; }
 
         [JsonIgnore]
         public BigMapTag TagFlags { get; set; }

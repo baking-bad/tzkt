@@ -14,7 +14,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address=expr...`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -22,7 +22,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address.ne=expr...`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -30,7 +30,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address.in=expr1,expr2`.
         /// </summary>
-        public List<string> In { get; set; }
+        public List<string>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -38,7 +38,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address.ni=expr1,expr2`.
         /// </summary>
-        public List<string> Ni { get; set; }
+        public List<string>? Ni { get; set; }
 
         #region operators
         public static implicit operator ExpressionParameter(string value) => new() { Eq = value };

@@ -20,12 +20,12 @@
         /// <summary>
         /// Operation that caused the storage change
         /// </summary>
-        public SourceOperation Operation { get; set; }
+        public required SourceOperation Operation { get; set; }
 
         /// <summary>
         /// New storage value
         /// </summary>
-        public object Value { get; set; }
+        public required object Value { get; set; }
     }
 
     public class SourceOperation
@@ -33,12 +33,12 @@
         /// <summary>
         /// Operation type
         /// </summary>
-        public string Type { get; set; }
+        public required string Type { get; set; }
 
         /// <summary>
         /// Operation hash
         /// </summary>
-        public string Hash { get; set; }
+        public string? Hash { get; set; }
 
         /// <summary>
         /// Operation counter (null in case of synthetic operations)
@@ -53,6 +53,6 @@
         /// <summary>
         /// Transaction parameter, including called entrypoint and value passed to the entrypoint.
         /// </summary>
-        public TxParameter Parameter { get; set; }
+        public TxParameter? Parameter { get; set; }
     }
 }

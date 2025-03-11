@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -32,7 +33,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetBigIntegerList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<BigInteger> result)
+        public static bool TryGetBigIntegerList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<BigInteger>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -68,7 +69,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -92,7 +93,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetNatList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetNatList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -152,7 +153,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetInt32List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetInt32List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -212,7 +213,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetInt64List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<long> result)
+        public static bool TryGetInt64List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<long>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -248,7 +249,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMicheline(this ModelBindingContext bindingContext, string name, ref bool hasValue, out IMicheline result)
+        public static bool TryGetMicheline(this ModelBindingContext bindingContext, string name, ref bool hasValue, out IMicheline? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -274,7 +275,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMichelineList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<IMicheline> result)
+        public static bool TryGetMichelineList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<IMicheline>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -288,7 +289,7 @@ namespace Tzkt.Api
                     {
                         var json = valueObject.FirstValue.Trim();
                         if (json[0] != '[') json = $"[{json}]";
-                        var values = JsonSerializer.Deserialize<List<IMicheline>>(json);
+                        var values = JsonSerializer.Deserialize<List<IMicheline>>(json) ?? [];
 
                         if (values.Count == 0)
                         {
@@ -334,7 +335,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetDateTimeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<DateTime> result)
+        public static bool TryGetDateTimeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<DateTime>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -370,7 +371,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -394,7 +395,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetAddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -433,7 +434,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddressNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetAddressNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string?>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -452,7 +453,7 @@ namespace Tzkt.Api
                     }
 
                     hasValue = true;
-                    result = new List<string>(rawValues.Length);
+                    result = new(rawValues.Length);
 
                     foreach (var rawValue in rawValues)
                     {
@@ -479,7 +480,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSr1Address(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetSr1Address(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -503,7 +504,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSr1AddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetSr1AddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -542,7 +543,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -566,7 +567,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetProtocolList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetProtocolList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -695,7 +696,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetExpression(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetExpression(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -719,7 +720,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetExpressionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetExpressionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -756,7 +757,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetOpHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetOpHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -780,7 +781,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetOpHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetOpHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -817,7 +818,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrc1Hash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetSrc1Hash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -841,7 +842,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrc1HashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetSrc1HashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -878,7 +879,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetEpochStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetEpochStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -901,7 +902,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetEpochStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetEpochStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -961,7 +962,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetContractKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetContractKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1023,7 +1024,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
@@ -1163,7 +1164,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetVotesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetVotesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1223,7 +1224,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetVoterStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetVoterStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1283,7 +1284,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetRefutationMoveList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetRefutationMoveList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1343,7 +1344,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetRefutationGameStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetRefutationGameStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1403,7 +1404,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMigrationKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetMigrationKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1440,7 +1441,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1486,7 +1487,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrCommitmentStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrCommitmentStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1546,7 +1547,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrBondStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrBondStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1606,7 +1607,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1666,7 +1667,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStakingUpdateTypesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingUpdateTypesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1726,7 +1727,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrMessageTypeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrMessageTypeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1813,7 +1814,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetString(this ModelBindingContext bindingContext, string name, out string result)
+        public static bool TryGetString(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1830,7 +1831,7 @@ namespace Tzkt.Api
             return false;
         }
 
-        public static bool TryGetJson(this ModelBindingContext bindingContext, string name, out string result)
+        public static bool TryGetJson(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1853,7 +1854,7 @@ namespace Tzkt.Api
             return false;
         }
 
-        public static bool TryGetJsonArray(this ModelBindingContext bindingContext, string name, out string[] result)
+        public static bool TryGetJsonArray(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string[]? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1908,7 +1909,7 @@ namespace Tzkt.Api
             }
         }
 
-        public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1926,7 +1927,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[] result)
+        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[]? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1952,7 +1953,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStringListEscaped(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetStringListEscaped(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1983,7 +1984,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSelectionFields(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<SelectionField> result)
+        public static bool TryGetSelectionFields(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<SelectionField>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);

@@ -34,7 +34,7 @@ namespace Tzkt.Api
         /// Example: `?sender.in=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -43,7 +43,7 @@ namespace Tzkt.Api
         /// Example: `?sender.ni=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         /// <summary>
         /// **Equal to another field** filter mode. \
@@ -51,7 +51,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?sender.eqx=target`.
         /// </summary>
-        public string Eqx { get; set; }
+        public string? Eqx { get; set; }
 
         /// <summary>
         /// **Not equal to another field** filter mode. \
@@ -59,7 +59,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?sender.nex=initiator`.
         /// </summary>
-        public string Nex { get; set; }
+        public string? Nex { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \

@@ -5,6 +5,6 @@ namespace Tzkt.Api.Models
     public class ChartPoint<T>
     {
         public DateTime Date { get; set; }
-        public T Value { get; set; }
+        public required T Value { get; set; }
     }
 }

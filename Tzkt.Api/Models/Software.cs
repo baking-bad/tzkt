@@ -7,7 +7,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Software ID (short commit hash)
         /// </summary>
-        public string ShortHash { get; set; }
+        public required string ShortHash { get; set; }
 
         /// <summary>
         /// Level of the first block baked with this software
@@ -38,11 +38,11 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata => Extras;
+        public RawJson? Metadata => Extras;
     }
 }

@@ -4,11 +4,11 @@ namespace System.ComponentModel.DataAnnotations
 {
     public sealed class AddressAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^[0-9A-Za-z]{36,37}$")
+            return value is string str && !Regex.IsMatch(str, "^[0-9A-Za-z]{36,37}$")
                 ? new ValidationResult("Invalid account address.")
-                : ValidationResult.Success;
+                : ValidationResult.Success!;
         }
     }
 }

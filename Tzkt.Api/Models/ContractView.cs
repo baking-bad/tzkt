@@ -8,38 +8,38 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Contract view name
         /// </summary>
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         /// <summary>
         /// Parameter type in human-readable JSON format
         /// </summary>
         [JsonSchemaType(typeof(object))]
-        public RawJson JsonParameterType { get; set; }
+        public RawJson? JsonParameterType { get; set; }
 
         /// <summary>
         /// Return type in human-readable JSON format
         /// </summary>
         [JsonSchemaType(typeof(object))]
-        public RawJson JsonReturnType { get; set; }
+        public RawJson? JsonReturnType { get; set; }
 
         /// <summary>
         /// Parameter type in micheline format
         /// </summary>
-        public IMicheline MichelineParameterType { get; set; }
+        public IMicheline? MichelineParameterType { get; set; }
 
         /// <summary>
         /// Return type in micheline format
         /// </summary>
-        public IMicheline MichelineReturnType { get; set; }
+        public IMicheline? MichelineReturnType { get; set; }
 
         /// <summary>
         /// Parameter type in michelson format
         /// </summary>
-        public string MichelsonParameterType { get; set; }
+        public string? MichelsonParameterType { get; set; }
 
         /// <summary>
         /// Return type in michelson format
         /// </summary>
-        public string MichelsonReturnType { get; set; }
+        public string? MichelsonReturnType { get; set; }
     }
 }

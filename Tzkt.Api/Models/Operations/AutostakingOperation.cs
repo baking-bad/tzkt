@@ -26,12 +26,12 @@
         /// <summary>
         /// Baker for which autostaking event happened
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Autostaking action (`stake`, `unstake`, `finalize`)
         /// </summary>
-        public string Action { get; set; }
+        public required string Action { get; set; }
 
         /// <summary>
         /// Amount (micro tez)
@@ -47,7 +47,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

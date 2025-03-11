@@ -25,22 +25,22 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the drained delegate
         /// </summary>
-        public Alias Delegate { get; set; }
+        public required Alias Delegate { get; set; }
 
         /// <summary>
         /// Information about the recipient account
         /// </summary>
-        public Alias Target { get; set; }
+        public required Alias Target { get; set; }
 
         /// <summary>
         /// Amount sent from the drained baker to the target
@@ -61,7 +61,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

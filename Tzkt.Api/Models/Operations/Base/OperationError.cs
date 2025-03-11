@@ -20,10 +20,8 @@ namespace Tzkt.Api.Models
         public abstract string Type { get; set; }
     }
 
-    public class OperationErrorJsonInheritanceConverter : JsonInheritanceConverter<OperationError>
+    public class OperationErrorJsonInheritanceConverter(string name) : JsonInheritanceConverter<OperationError>(name)
     {
-        public OperationErrorJsonInheritanceConverter(string name) : base(name) { }
-
         public override string GetDiscriminatorValue(Type type)
         {
             if (type == typeof(BaseOperationError))

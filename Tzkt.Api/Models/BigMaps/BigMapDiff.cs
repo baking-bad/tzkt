@@ -10,17 +10,17 @@
         /// <summary>
         /// Path to the bigmap in the contract storage
         /// </summary>
-        public string Path { get; set; }
+        public required string Path { get; set; }
 
         /// <summary>
         /// Action with the bigmap (`allocate`, `add_key`, `update_key`, `remove_key`, `remove`)
         /// </summary>
-        public string Action { get; set; }
+        public required string Action { get; set; }
 
         /// <summary>
         /// Affected key.
-        /// If the action is `allocate` or `remove` the key will be `null`.
+        /// If the action is `allocate` or `remove` the content will be `null`.
         /// </summary>
-        public BigMapKeyShort Content { get; set; }
+        public BigMapKeyShort? Content { get; set; }
     }
 }

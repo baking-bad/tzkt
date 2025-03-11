@@ -28,7 +28,7 @@ namespace Tzkt.Api
             return res != -1;
         }
 
-        public static List<string> ToList(BigMapTag tags)
+        public static List<string>? ToList(BigMapTag tags)
         {
             if (tags >= BigMapTag.Metadata)
             {

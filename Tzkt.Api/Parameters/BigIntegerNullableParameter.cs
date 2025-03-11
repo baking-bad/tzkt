@@ -70,7 +70,7 @@ namespace Tzkt.Api
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>), IsNullable = true)]
-        public List<BigInteger> In { get; set; }
+        public List<BigInteger>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -79,7 +79,7 @@ namespace Tzkt.Api
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>), IsNullable = true)]
-        public List<BigInteger> Ni { get; set; }
+        public List<BigInteger>? Ni { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \

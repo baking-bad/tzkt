@@ -9,12 +9,12 @@ namespace Tzkt.Api.Models
         /// https://tezos.gitlab.io/api/errors.html - full list of errors
         /// </summary>
         [JsonPropertyName("type")]
-        public override string Type { get; set; }
+        public override required string Type { get; set; }
 
         /// <summary>
         /// Public key hash of the account to which in the operation tried to send to
         /// </summary>
         [JsonPropertyName("contract")]
-        public string Contract { get; set; }
+        public required string Contract { get; set; }
     }
 }

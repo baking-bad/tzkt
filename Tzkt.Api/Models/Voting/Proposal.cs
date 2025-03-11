@@ -7,12 +7,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Hash of the proposal, which representing a tarball of concatenated .ml/.mli source files
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the baker (delegate) submitted the proposal
         /// </summary>
-        public Alias Initiator { get; set; }
+        public required Alias Initiator { get; set; }
 
         /// <summary>
         /// The first voting period where the proposal was active
@@ -46,13 +46,13 @@ namespace Tzkt.Api.Models
         /// `rejected` - the proposal was rejected due to too many "nay" ballots
         /// `skipped` - the proposal was skipped due to the quorum was not reached
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         #region deprecated
         /// <summary>
@@ -63,7 +63,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata => Extras;
+        public RawJson? Metadata => Extras;
         #endregion
     }
 }

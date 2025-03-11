@@ -7,12 +7,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Global address (expression hash)
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         /// <summary>
         /// Constant value (either micheline, michelson or bytes, depending on the `format` parameter)
         /// </summary>
-        public object Value { get; set; }
+        public required object Value { get; set; }
 
         /// <summary>
         /// Constant size in bytes
@@ -27,7 +27,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Account registered this constant
         /// </summary>
-        public Alias Creator { get; set; }
+        public required Alias Creator { get; set; }
 
         /// <summary>
         /// Level of the first block baked with this software
@@ -43,11 +43,11 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata => Extras;
+        public RawJson? Metadata => Extras;
     }
 }

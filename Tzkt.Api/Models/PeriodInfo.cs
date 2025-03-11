@@ -20,7 +20,7 @@
         /// `promotion` - delegates can cast one vote to promote or not the tested proposal using the ballot operation
         /// `adoption` - after the proposal is actually accepted, the ecosystem has some time to prepare to the upgrade
         /// </summary>
-        public string Kind { get; set; }
+        public required string Kind { get; set; }
 
         /// <summary>
         /// The height of the block in which the period starts
