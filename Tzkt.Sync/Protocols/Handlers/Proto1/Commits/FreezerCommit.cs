@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class FreezerCommit : ProtocolCommit
+    class FreezerCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public void Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -20,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'd':
                         break;
                     case 'r':
-                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
                         delegat.StakingBalance -= change;
                         break;
@@ -51,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'd':
                         break;
                     case 'r':
-                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
                         delegat.StakingBalance += change;
                         break;

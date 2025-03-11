@@ -1,22 +1,17 @@
-﻿using System;
-using System.Linq;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class SetDepositsLimitCommit : ProtocolCommit
+    class SetDepositsLimitCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SetDepositsLimitCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = (User)await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = (User)await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var result = content.Required("metadata").Required("operation_result");
             var limit = content.OptionalString("limit");
@@ -83,13 +78,13 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 if (operation.Limit != null)
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = operation.Limit > long.MaxValue / 100
+                    (sender as Data.Models.Delegate)!.FrozenDepositLimit = operation.Limit > long.MaxValue / 100
                         ? long.MaxValue / 100
                         : (long)operation.Limit;
                 }
                 else
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = null;
+                    (sender as Data.Models.Delegate)!.FrozenDepositLimit = null;
                 }
             }
             #endregion
@@ -103,7 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             #region entities
             var blockBaker = Context.Proposer;
-            var sender = await Cache.Accounts.GetAsync(op.SenderId) as User;
+            var sender = (User)await Cache.Accounts.GetAsync(op.SenderId);
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -121,13 +116,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 
                 if (prevOp?.Limit != null)
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = prevOp.Limit > long.MaxValue / 100
+                    (sender as Data.Models.Delegate)!.FrozenDepositLimit = prevOp.Limit > long.MaxValue / 100
                         ? long.MaxValue / 100
                         : (long)prevOp.Limit;
                 }
                 else
                 {
-                    (sender as Data.Models.Delegate).FrozenDepositLimit = null;
+                    (sender as Data.Models.Delegate)!.FrozenDepositLimit = null;
                 }
             }
             #endregion

@@ -5,10 +5,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class DelegationsCommit : Proto14.DelegationsCommit
+    class DelegationsCommit(ProtocolHandler protocol) : Proto14.DelegationsCommit(protocol)
     {
-        public DelegationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         protected override async Task Unstake(DelegationOperation operation, List<JsonElement> balanceUpdates)
         {
             if (!balanceUpdates.Any())
@@ -83,8 +81,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Id = ++Cache.AppState.Get().StakingUpdatesCount,
                             Level = operation.Level,
                             Cycle = cycle,
-                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                            StakerId = (await Cache.Accounts.GetAsync(staker)).Id,
+                            BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                            StakerId = (await Cache.Accounts.GetExistingAsync(staker)).Id,
                             Type = StakingUpdateType.Unstake,
                             Amount = change,
                             Pseudotokens = pseudotokens,
@@ -115,8 +113,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                             Id = ++Cache.AppState.Get().StakingUpdatesCount,
                             Level = operation.Level,
                             Cycle = cycle,
-                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
-                            StakerId = (await Cache.Accounts.GetAsync(staker)).Id,
+                            BakerId = Cache.Accounts.GetExistingDelegate(baker).Id,
+                            StakerId = (await Cache.Accounts.GetExistingAsync(staker)).Id,
                             Type = StakingUpdateType.Finalize,
                             Amount = change,
                             Pseudotokens = null,

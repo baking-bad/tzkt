@@ -1,15 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Migrations;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class ProtoActivator : Proto4.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto4.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -82,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region invoice
-            var account = await Cache.Accounts.GetAsync("KT1DUfaMfTRZZkvZAYQT5b3byXnvqoAykc43");
+            var account = (await Cache.Accounts.GetAsync("KT1DUfaMfTRZZkvZAYQT5b3byXnvqoAykc43"))!;
             Db.TryAttach(account);
             account.Balance += 500_000_000;
             account.MigrationsCount++;
@@ -121,17 +118,17 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Cache.Accounts.Add(contract);
 
                 var script = scripts[contract.Id];
-                var storage = await Cache.Storages.GetAsync(contract);
+                var storage = await Cache.Storages.GetKnownAsync(contract);
                 var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
 
-                var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                var code = (Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray)!;
                 var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                 var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                 var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                 var newSchema = new Netezos.Contracts.ContractScript(code);
-                var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"))!;
                 var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 
                 if (script.ParameterSchema.IsEqual(micheParameter) &&
@@ -183,7 +180,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     .OrderBy(x => x, new BytesComparer())
                     .SelectMany(x => x)
                     .ToArray()
-                    ?? Array.Empty<byte>();
+                    ?? [];
                 var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                 var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                 contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
@@ -212,8 +209,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     var newTree = newScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(newStorage.RawValue));
                     var newBigmap = newTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
-                    if (newBigmap.Value is not MichelineInt mi)
-                        throw new System.Exception("Expected micheline int");
+                    if (newBigmap?.Value is not MichelineInt mi)
+                        throw new Exception("Expected micheline int");
                     var newPtr = (int)mi.Value;
 
                     if (newBigmap.Path != bigmap.Path)
@@ -233,7 +230,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         var prevValue = Micheline.FromBytes(prevStorage.RawValue);
                         var prevTree = script.Schema.Storage.Schema.ToTreeView(prevValue);
                         var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
-                        (prevBigmap.Value as MichelineInt).Value = newPtr;
+                        (prevBigmap.Value as MichelineInt)!.Value = newPtr;
 
                         prevStorage.RawValue = prevValue.ToBytes();
                         prevStorage.JsonValue = script.Schema.HumanizeStorage(prevValue);
@@ -269,7 +266,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region invoice
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Level == state.Level && x.Kind == MigrationKind.ProposalInvoice);
+                .FirstAsync(x => x.Level == state.Level && x.Kind == MigrationKind.ProposalInvoice);
 
             var invoiceAccount = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(invoiceAccount);
@@ -296,7 +293,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             foreach (var change in codeChanges)
             {
-                var contract = await Cache.Accounts.GetAsync(change.op.AccountId) as Contract;
+                var contract = (await Cache.Accounts.GetAsync(change.op.AccountId) as Contract)!;
                 Db.TryAttach(contract);
 
                 var oldScript = oldScripts[contract.Id];
@@ -310,7 +307,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (bigmap != null)
                 {
                     var oldTree = oldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(oldStorage.RawValue));
-                    var oldBigmap = oldTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                    var oldBigmap = oldTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
 
                     if (bigmap.Value is not MichelineInt mi)
                         throw new System.Exception("Expected micheline int");
@@ -333,7 +330,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         var prevValue = Micheline.FromBytes(prevStorage.RawValue);
                         var prevTree = oldScript.Schema.Storage.Schema.ToTreeView(prevValue);
                         var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
-                        (prevBigmap.Value as MichelineInt).Value = contract.Id;
+                        (prevBigmap.Value as MichelineInt)!.Value = contract.Id;
 
                         prevStorage.RawValue = prevValue.ToBytes();
                         prevStorage.JsonValue = oldScript.Schema.HumanizeStorage(prevValue);

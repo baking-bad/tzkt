@@ -28,7 +28,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
+            var account = (await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb"))!;
             Db.TryAttach(account);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
@@ -71,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
+                .FirstAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);

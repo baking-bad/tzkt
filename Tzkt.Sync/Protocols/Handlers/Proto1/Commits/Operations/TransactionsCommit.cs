@@ -8,19 +8,17 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class TransactionsCommit : ProtocolCommit
+    class TransactionsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TransactionOperation Transaction { get; private set; }
-        public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
-        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
-        public Account Target { get; private set; }
-
-        public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
+        public TransactionOperation Transaction { get; private set; } = null!;
+        public IEnumerable<BigMapDiff>? BigMapDiffs { get; private set; }
+        public IEnumerable<TicketUpdates>? TicketUpdates { get; private set; }
+        public Account? Target { get; private set; }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -120,7 +118,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance -= spent;
                 }
 
-                target.Balance += transaction.Amount;
+                target!.Balance += transaction.Amount;
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += transaction.Amount;
@@ -157,18 +155,14 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
-            var id = Cache.AppState.NextOperationId();
-
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? throw new ValidationException("Transaction source address doesn't exist");
-
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
 
             var result = content.Required("result");
 
             var transaction = new TransactionOperation
             {
-                Id = id,
+                Id = Cache.AppState.NextOperationId(),
                 InitiatorId = parent.SenderId,
                 Level = parent.Level,
                 Timestamp = parent.Timestamp,
@@ -262,7 +256,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance -= transaction.Amount;
                 }
 
-                target.Balance += transaction.Amount;
+                target!.Balance += transaction.Amount;
                 if (target.Id == parentSender.Id)
                     Proto.Manager.Credit(transaction.Amount);
 
@@ -319,7 +313,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target.Balance -= transaction.Amount;
+                target!.Balance -= transaction.Amount;
 
                 if (targetDelegate != null)
                 {
@@ -350,7 +344,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 if (transaction.StorageId != null)
-                    await RevertStorage(transaction, target);
+                    await RevertStorage(transaction, (target as Contract)!);
             }
             #endregion
 
@@ -382,7 +376,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task RevertInternal(Block block, TransactionOperation transaction)
         {
             #region entities
-            var parentSender = await Cache.Accounts.GetAsync(transaction.InitiatorId);
+            var parentSender = await Cache.Accounts.GetAsync(transaction.InitiatorId!.Value);
             var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
             var sender = await Cache.Accounts.GetAsync(transaction.SenderId);
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
@@ -404,7 +398,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target.Balance -= transaction.Amount;
+                target!.Balance -= transaction.Amount;
 
                 if (targetDelegate != null)
                 {
@@ -444,7 +438,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 if (transaction.StorageId != null)
-                    await RevertStorage(transaction, target);
+                    await RevertStorage(transaction, (target as Contract)!);
             }
             #endregion
 
@@ -478,16 +472,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual BlockEvents GetBlockEvents(Account target)
+        protected virtual BlockEvents GetBlockEvents(Account? target)
         {
             return target is Contract c && c.Kind == ContractKind.SmartContract
                 ? BlockEvents.SmartContracts
                 : BlockEvents.None;
         }
 
-        protected virtual async Task ProcessParameters(TransactionOperation transaction, Account target, JsonElement parameters)
+        protected virtual async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement parameters)
         {
-            var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters));
+            var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters)!);
 
             if (target is Contract contract)
             {
@@ -503,7 +497,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     try
                     {
-                        var schema = await Cache.Schemas.GetAsync(contract);
+                        var schema = await Cache.Schemas.GetKnownAsync(contract);
                         var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
 
                         transaction.Entrypoint = normEp;
@@ -532,10 +526,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (target is not Contract contract || contract.Kind == ContractKind.DelegatorContract)
                 return;
 
-            var schema = await Cache.Schemas.GetAsync(contract);
-            var currentStorage = await Cache.Storages.GetAsync(contract);
+            var schema = await Cache.Schemas.GetKnownAsync(contract);
+            var currentStorage = await Cache.Storages.GetKnownAsync(contract);
 
-            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage), false);
+            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage)!, false);
             newStorageMicheline = NormalizeStorage(transaction, newStorageMicheline, schema);
             var newStorageBytes = newStorageMicheline.ToBytes();
 
@@ -565,11 +559,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             transaction.StorageId = newStorage.Id;
         }
 
-        public async Task RevertStorage(TransactionOperation transaction, Account target)
+        public async Task RevertStorage(TransactionOperation transaction, Contract contract)
         {
-            var contract = target as Contract;
-            var storage = await Cache.Storages.GetAsync(contract);
-
+            var storage = await Cache.Storages.GetKnownAsync(contract);
             if (storage.TransactionId == transaction.Id)
             {
                 var prevStorage = await Db.Storages
@@ -590,66 +582,66 @@ namespace Tzkt.Sync.Protocols.Proto1
             var view = schema.Storage.Schema.ToTreeView(storage);
             var bigmap = view.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
             if (bigmap != null)
-                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.TargetId.Value));
+                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.TargetId!.Value));
             return storage;
         }
 
-        protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
+        protected virtual IEnumerable<BigMapDiff>? ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
         {
             if (transaction.Level != 5993)
                 return null;
             // It seems there were no big_map diffs at all in proto 1
             // thus there was no an adequate way to track big_map updates,
             // so the only way to handle this single big_map update is hardcoding
-            return new List<BigMapDiff>
-            {
+            return
+            [
                 new UpdateDiff
                 {
-                    Ptr = transaction.TargetId.Value,
+                    Ptr = transaction.TargetId!.Value,
                     KeyHash = "exprteAx9hWkXvYSQ4nN9SqjJGVR1sTneHQS1QEcSdzckYdXZVvsqY",
                     Key = new MichelineString("KT1R3uoZ6W1ZxEwzqtv75Ro7DhVY6UAcxuK2"),
                     Value = new MichelinePrim
                     {
                         Prim = PrimType.Pair,
-                        Args = new List<IMicheline>
-                        {
+                        Args =
+                        [
                             new MichelineString("Aliases Contract"),
                             new MichelinePrim
                             {
                                 Prim = PrimType.Pair,
-                                Args = new List<IMicheline>
-                                {
+                                Args =
+                                [
                                     new MichelinePrim { Prim = PrimType.None },
                                     new MichelinePrim
                                     {
                                         Prim = PrimType.Pair,
-                                        Args = new List<IMicheline>
-                                        {
+                                        Args =
+                                        [
                                             new MichelineInt(0),
                                             new MichelinePrim
                                             {
                                                 Prim = PrimType.Pair,
-                                                Args = new List<IMicheline>
-                                                {
+                                                Args =
+                                                [
                                                     new MichelinePrim
                                                     {
                                                         Prim = PrimType.Left,
-                                                        Args = new List<IMicheline>
-                                                        {
+                                                        Args =
+                                                        [
                                                             new MichelinePrim { Prim = PrimType.Unit }
-                                                        }
+                                                        ]
                                                     },
                                                     new MichelineInt(1530741267)
-                                                }
+                                                ]
                                             }
-                                        }
+                                        ]
                                     }
-                                }
+                                ]
                             }
-                        }
+                        ]
                     },
                 }
-            };
+            ];
         }
 
         protected virtual int GetConsumedGas(JsonElement result)
@@ -657,7 +649,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(string property, JsonElement result)
+        protected virtual IEnumerable<TicketUpdates>? ParseTicketUpdates(string property, JsonElement result)
         {
             if (!result.TryGetProperty(property, out var ticketUpdates))
                 return null;
@@ -682,16 +674,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (list.Count > 0)
                 {
                     var ticketToken = updates.Required("ticket_token");
-                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var type = Micheline.FromJson(ticketToken.Required("content_type"))!;
+                    var value = Micheline.FromJson(ticketToken.Required("content"))!;
                     var rawType = type.ToBytes();
 
                     byte[] rawContent;
-                    string jsonContent;
+                    string? jsonContent;
 
                     try
                     {
-                        var schema = Schema.Create(type as MichelinePrim);
+                        var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
                         jsonContent = schema.Humanize(value);
                     }

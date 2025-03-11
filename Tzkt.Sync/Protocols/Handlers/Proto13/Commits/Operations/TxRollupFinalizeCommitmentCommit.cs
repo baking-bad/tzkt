@@ -1,22 +1,15 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
-
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupFinalizeCommitmentCommit : ProtocolCommit
+    class TxRollupFinalizeCommitmentCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupFinalizeCommitmentOperation Operation { get; private set; }
-
-        public TxRollupFinalizeCommitmentCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -89,7 +82,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupFinalizeCommitmentOps.Add(operation);
             Context.TxRollupFinalizeCommitmentOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupFinalizeCommitmentOperation operation)
@@ -127,7 +119,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupFinalizeCommitmentCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupFinalizeCommitmentOpsCount--;
             #endregion

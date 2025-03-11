@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class IncreasePaidStorageOperation : ManagerOperation
     {
-        public int ContractId { get; set; }
+        public int? ContractId { get; set; }
         public BigInteger Amount { get; set; }
     }
 

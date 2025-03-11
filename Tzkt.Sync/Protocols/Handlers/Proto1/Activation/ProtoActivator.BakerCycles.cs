@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             var totalPower = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
 
@@ -26,6 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     var share = (double)bakingPower / totalPower;
                     return new BakerCycle
                     {
+                        Id = 0,
                         Cycle = cycle.Index,
                         BakerId = x.Id,
                         OwnDelegatedBalance = x.Balance,

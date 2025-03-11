@@ -3,13 +3,11 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> Snapshots { get; protected set; }
-        public Dictionary<int, long> SelectedStakes { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? Snapshots { get; protected set; }
+        public Dictionary<int, long>? SelectedStakes { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -63,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
-            var endorsingRewards = activation ? new() : await Db.BakerCycles
+            var endorsingRewards = activation ? [] : await Db.BakerCycles
                 .AsNoTracking()
                 .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsDelegated > 0)
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
@@ -88,6 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             FutureCycle = new Cycle
             {
+                Id = 0,
                 Index = futureCycle,
                 FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
                 LastLevel = Context.Protocol.GetCycleEnd(futureCycle),

@@ -1,17 +1,12 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto14
 {
-    class ProposalsCommit : Proto3.ProposalsCommit
+    class ProposalsCommit(ProtocolHandler protocol) : Proto3.ProposalsCommit(protocol)
     {
         public bool DictatorSeen = false;
-
-        public ProposalsCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public override async Task Apply(Block block, JsonElement op, JsonElement content)
         {
@@ -26,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             // Dictator's actions cause one-way changes, so in case of reorg the indexer won't be able to revert them
             DictatorSeen = true;
 
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
             var proposalHashes = content.RequiredArray("proposals").EnumerateArray().Select(x => x.RequiredString()).ToList();
 
@@ -34,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             if (period.Kind == PeriodKind.Proposal)
             {
                 var proposalOps = (await Db.ProposalOps.Where(x => x.Period == period.Index).ToListAsync())
-                    .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is ProposalOperation && x.State == EntityState.Added).Select(x => x.Entity as ProposalOperation));
+                    .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is ProposalOperation && x.State == EntityState.Added).Select(x => (x.Entity as ProposalOperation)!));
 
                 foreach (var proposalOp in proposalOps)
                 {
@@ -54,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             else if (period.Kind == PeriodKind.Exploration || period.Kind == PeriodKind.Promotion)
             {
                 var ballotOps = (await Db.BallotOps.Where(x => x.Period == period.Index).ToListAsync())
-                    .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is BallotOperation && x.State == EntityState.Added).Select(x => x.Entity as BallotOperation));
+                    .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is BallotOperation && x.State == EntityState.Added).Select(x => (x.Entity as BallotOperation)!));
                 
                 foreach (var ballotOp in ballotOps)
                 {
@@ -75,7 +70,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             #region remove proposals
             var proposals = (await Db.Proposals.Where(x => x.FirstPeriod == period.Index).ToListAsync())
-                .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is Proposal && x.State == EntityState.Added).Select(x => x.Entity as Proposal));
+                .Concat(Db.ChangeTracker.Entries().Where(x => x.Entity is Proposal && x.State == EntityState.Added).Select(x => (x.Entity as Proposal)!));
 
             foreach (var proposal in proposals)
             {

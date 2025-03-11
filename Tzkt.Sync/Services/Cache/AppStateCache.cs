@@ -5,24 +5,16 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class AppStateCache
+    public class AppStateCache(TzktContext db)
     {
-        static AppState AppState = null;
+        static AppState AppState = null!;
 
-        readonly TzktContext Db;
-
-        public AppStateCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void UpdateSyncState(int knownHead, DateTime lastSync)
         {
-            if (AppState != null)
-            {
-                AppState.KnownHead = knownHead;
-                AppState.LastSync = lastSync;
-            }
+            AppState.KnownHead = knownHead;
+            AppState.LastSync = lastSync;
         }
 
         public async Task ResetAsync()

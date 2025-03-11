@@ -1,9 +1,7 @@
 ﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using App.Metrics;
 using Tzkt.Data;
 using Tzkt.Data.Models;
-using Tzkt.Data.Models.Base;
 using Tzkt.Sync.Services;
 using Tzkt.Sync.Protocols.Proto20;
 
@@ -168,7 +166,7 @@ namespace Tzkt.Sync.Protocols
                             var orig = new OriginationsCommit(this);
                             await orig.Apply(blockCommit.Block, operation, content);
                             if (orig.BigMapDiffs != null)
-                                bigMapCommit.Append(orig.Origination, orig.Contract, orig.BigMapDiffs);
+                                bigMapCommit.Append(orig.Origination, orig.Contract!, orig.BigMapDiffs);
                             break;
                         case "transaction":
                             var src = content.RequiredString("source");
@@ -192,7 +190,7 @@ namespace Tzkt.Sync.Protocols
                             var parent = new TransactionsCommit(this);
                             await parent.Apply(blockCommit.Block, operation, content);
                             if (parent.BigMapDiffs != null)
-                                bigMapCommit.Append(parent.Transaction, parent.Target as Contract, parent.BigMapDiffs);
+                                bigMapCommit.Append(parent.Transaction, (parent.Target as Contract)!, parent.BigMapDiffs);
                             if (parent.TicketUpdates != null)
                                 ticketsCommit.Append(parent.Transaction, parent.Transaction, parent.TicketUpdates);
 
@@ -209,13 +207,13 @@ namespace Tzkt.Sync.Protocols
                                             var internalOrig = new OriginationsCommit(this);
                                             await internalOrig.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalOrig.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Contract, internalOrig.BigMapDiffs);
+                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Contract!, internalOrig.BigMapDiffs);
                                             break;
                                         case "transaction":
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent.Transaction, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, (internalTx.Target as Contract)!, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
                                                 ticketsCommit.Append(parent.Transaction, internalTx.Transaction, internalTx.TicketUpdates);
                                             break;
@@ -243,7 +241,7 @@ namespace Tzkt.Sync.Protocols
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent1.Operation, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, (internalTx.Target as Contract)!, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
                                                 ticketsCommit.Append(parent1.Operation, internalTx.Transaction, internalTx.TicketUpdates);
                                             break;
@@ -280,13 +278,13 @@ namespace Tzkt.Sync.Protocols
                                             var internalOrig = new OriginationsCommit(this);
                                             await internalOrig.ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
                                             if (internalOrig.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Contract, internalOrig.BigMapDiffs);
+                                                bigMapCommit.Append(internalOrig.Origination, internalOrig.Contract!, internalOrig.BigMapDiffs);
                                             break;
                                         case "transaction":
                                             var internalTx = new TransactionsCommit(this);
                                             await internalTx.ApplyInternal(blockCommit.Block, parent2.Operation, internalContent);
                                             if (internalTx.BigMapDiffs != null)
-                                                bigMapCommit.Append(internalTx.Transaction, internalTx.Target as Contract, internalTx.BigMapDiffs);
+                                                bigMapCommit.Append(internalTx.Transaction, (internalTx.Target as Contract)!, internalTx.BigMapDiffs);
                                             if (internalTx.TicketUpdates != null)
                                                 ticketsCommit.Append(parent2.Operation, internalTx.Transaction, internalTx.TicketUpdates);
                                             break;

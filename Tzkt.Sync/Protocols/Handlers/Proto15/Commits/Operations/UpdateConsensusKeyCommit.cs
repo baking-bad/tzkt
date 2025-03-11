@@ -1,20 +1,16 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Netezos.Keys;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    class UpdateConsensusKeyCommit : ProtocolCommit
+    class UpdateConsensusKeyCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public UpdateConsensusKeyCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var pubKey = content.RequiredString("pk");
             var pubKeyHash = PubKey.FromBase58(pubKey).Address;

@@ -5,12 +5,12 @@ namespace Tzkt.Data.Models
 {
     public class TicketBalance
     {
-        public long Id { get; set; }
-        public int TicketerId { get; set; }
-        public long TicketId { get; set; }
-        public int AccountId { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required long Id { get; set; }
+        public required long TicketId { get; set; }
+        public required int TicketerId { get; set; }
+        public required int AccountId { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
         public int TransfersCount { get; set; }
         public BigInteger Balance { get; set; }
     }

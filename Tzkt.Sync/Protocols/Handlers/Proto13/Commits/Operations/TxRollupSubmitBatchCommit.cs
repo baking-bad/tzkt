@@ -4,16 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupSubmitBatchCommit : ProtocolCommit
+    class TxRollupSubmitBatchCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupSubmitBatchOperation Operation { get; private set; }
-
-        public TxRollupSubmitBatchCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -102,7 +98,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupSubmitBatchOps.Add(operation);
             Context.TxRollupSubmitBatchOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupSubmitBatchOperation operation)
@@ -149,7 +144,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupSubmitBatchCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupSubmitBatchOpsCount--;
             #endregion

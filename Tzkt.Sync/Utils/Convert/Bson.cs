@@ -1,5 +1,4 @@
-﻿using System.IO;
-using Newtonsoft.Json.Bson;
+﻿using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
 
 namespace Tzkt.Sync.Utils

@@ -5,14 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupCementCommit : ProtocolCommit
+    class SmartRollupCementCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupCementCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var commitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(GetCommitment(content), rollup?.Id);
 
@@ -88,7 +86,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                rollup.InboxLevel = commitment.InboxLevel;
+                rollup!.InboxLevel = commitment!.InboxLevel;
                 rollup.LastCommitment = commitment.Hash;
                 rollup.CementedCommitments++;
                 rollup.PendingCommitments--;
@@ -127,12 +125,12 @@ namespace Tzkt.Sync.Protocols.Proto16
                     .FirstOrDefaultAsync();
                 var prevCementedCommitment = await Cache.SmartRollupCommitments.GetOrDefaultAsync(prevCement?.CommitmentId);
 
-                rollup.InboxLevel = prevCementedCommitment?.InboxLevel ?? 0;
+                rollup!.InboxLevel = prevCementedCommitment?.InboxLevel ?? 0;
                 rollup.LastCommitment = prevCementedCommitment?.Hash ?? rollup.GenesisCommitment;
                 rollup.CementedCommitments--;
                 rollup.PendingCommitments++;
 
-                commitment.Status = SmartRollupCommitmentStatus.Pending;
+                commitment!.Status = SmartRollupCommitmentStatus.Pending;
             }
             #endregion
 
@@ -151,7 +149,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (rollup != null) rollup.SmartRollupCementCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             // commitment.LastLevel is not reverted
 
@@ -163,6 +161,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual string GetCommitment(JsonElement content) => content.RequiredString("commitment");
+        protected virtual string? GetCommitment(JsonElement content) => content.RequiredString("commitment");
     }
 }

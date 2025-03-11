@@ -4,16 +4,14 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto21
 {
-    class Validator : IValidator
+    class Validator(ProtocolHandler protocol) : IValidator
     {
-        readonly CacheService Cache;
-        Protocol Protocol;
-        string Proposer;
-        string Producer;
+        readonly CacheService Cache = protocol.Cache;
+        Protocol Protocol = null!;
+        string Proposer = null!;
+        string Producer = null!;
         int Level;
         int Cycle;
-
-        public Validator(ProtocolHandler protocol) => Cache = protocol.Cache;
 
         public virtual async Task ValidateBlock(JsonElement block)
         {
@@ -84,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto21
 
             #region deactivation
             foreach (var baker in metadata.RequiredArray("deactivated").EnumerateArray())
-                if (!Cache.Accounts.DelegateExists(baker.GetString()))
+                if (!Cache.Accounts.DelegateExists(baker.RequiredString()))
                     throw new ValidationException($"non-existent deactivated baker {baker}");
             #endregion
 
@@ -250,7 +248,7 @@ namespace Tzkt.Sync.Protocols.Proto21
             var account = content.RequiredString("pkh");
 
             if (await Cache.Accounts.ExistsAsync(account, AccountType.User) &&
-                ((await Cache.Accounts.GetAsync(account)) as User).ActivationsCount > 0)
+                ((await Cache.Accounts.GetExistingAsync(account)) as User)!.ActivationsCount > 0)
                 throw new ValidationException("account is already activated");
 
             if (content.Required("metadata").RequiredArray("balance_updates", 2)[1].RequiredString("contract") != account)
@@ -974,7 +972,7 @@ namespace Tzkt.Sync.Protocols.Proto21
             }
         }
 
-        protected virtual void ValidateTransferBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, string target, long amount, long storageFee, long allocationFee, string initiator = null)
+        protected virtual void ValidateTransferBalanceUpdates(IEnumerable<JsonElement> balanceUpdates, string sender, string? target, long amount, long storageFee, long allocationFee, string? initiator = null)
         {
             if (balanceUpdates.Count() != (amount != 0 ? 2 : 0) + (storageFee != 0 ? 2 : 0) + (allocationFee != 0 ? 2 : 0))
                 throw new ValidationException("invalid transfer balance updates count");

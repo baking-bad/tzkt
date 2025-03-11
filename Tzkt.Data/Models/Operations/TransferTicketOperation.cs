@@ -10,10 +10,10 @@ namespace Tzkt.Data.Models
         public int? TicketerId { get; set; }
         public BigInteger Amount { get; set; }
 
-        public byte[] RawType { get; set; }
-        public byte[] RawContent { get; set; }
-        public string JsonContent { get; set; }
-        public string Entrypoint { get; set; }
+        public byte[]? RawType { get; set; }
+        public byte[]? RawContent { get; set; }
+        public string? JsonContent { get; set; }
+        public required string Entrypoint { get; set; }
 
         public int? TicketTransfers { get; set; }
         public int? SubIds { get; set; }

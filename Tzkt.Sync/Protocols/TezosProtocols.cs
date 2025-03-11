@@ -4,11 +4,11 @@ namespace Tzkt.Sync
 {
     public static class TezosProtocols
     {
-        static string Fallback = null;
+        static string? Fallback = null;
 
-        static string GetFallback(IServiceProvider services)
+        static string? GetFallback(IServiceProvider services)
         {
-            return Fallback ??= services.GetRequiredService<IConfiguration>().GetValue<string>("Protocols:Fallback");
+            return Fallback ??= services.GetRequiredService<IConfiguration>().GetValue<string?>("Protocols:Fallback");
         }
 
         public static void AddTezosProtocols(this IServiceCollection services)
@@ -69,7 +69,7 @@ namespace Tzkt.Sync
             }
         }
 
-        private static ProtocolHandler GetProtocolHandler(IServiceProvider services, string protocol)
+        private static ProtocolHandler? GetProtocolHandler(IServiceProvider services, string protocol)
         {
             return protocol switch
             {

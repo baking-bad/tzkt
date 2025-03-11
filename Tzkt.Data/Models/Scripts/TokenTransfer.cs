@@ -5,10 +5,10 @@ namespace Tzkt.Data.Models
 {
     public class TokenTransfer
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public int ContractId { get; set; }
-        public long TokenId { get; set; }
+        public required long Id { get; set; }
+        public required long TokenId { get; set; }
+        public required int ContractId { get; set; }
+        public required int Level { get; set; }
         public BigInteger Amount { get; set; }
 
         public int? FromId { get; set; }

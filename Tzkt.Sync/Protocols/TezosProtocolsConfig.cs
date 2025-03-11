@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class TezosProtocolsConfig
     {
@@ -12,7 +10,7 @@ namespace Tzkt.Sync.Services
     {
         public static TezosProtocolsConfig GetTezosProtocolsConfig(this IConfiguration config)
         {
-            return config.GetSection("Protocols")?.Get<TezosProtocolsConfig>() ?? new TezosProtocolsConfig();
+            return config.GetSection("Protocols")?.Get<TezosProtocolsConfig>() ?? new();
         }
     }
 }

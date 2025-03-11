@@ -1,19 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class EndorsingRewardCommit : ProtocolCommit
+    class EndorsingRewardCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public List<EndorsingRewardOperation> Ops { get; set; }
-
-        public EndorsingRewardCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -23,14 +14,14 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.RequiredString("origin") == "block" &&
                             x.RequiredString("kind") == "burned" &&
                             x.RequiredString("category") == "lost endorsing rewards")
-                .ToDictionary(x => Cache.Accounts.GetDelegate(x.RequiredString("delegate")).Id, x => x.RequiredInt64("change"));
+                .ToDictionary(x => Cache.Accounts.GetExistingDelegate(x.RequiredString("delegate")).Id, x => x.RequiredInt64("change"));
 
             var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
-            Ops = new(bakerCycles.Count);
+            var ops = new List<EndorsingRewardOperation>(bakerCycles.Count);
 
             foreach (var (bakerId, bakerCycle) in bakerCycles.Where(x => x.Value.FutureEndorsementRewards > 0))
             {
-                Ops.Add(new()
+                ops.Add(new()
                 {
                     Id = Cache.AppState.NextOperationId(),
                     BakerId = bakerId,
@@ -46,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (bakerCycle.FutureEndorsementRewards != loss)
                         throw new Exception("FutureEndorsementRewards != loss");
 
-                    Ops[^1].RewardDelegated = 0; 
+                    ops[^1].RewardDelegated = 0; 
                     bakerCycle.MissedEndorsementRewards += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
@@ -57,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
             }
 
-            foreach (var op in Ops)
+            foreach (var op in ops)
             {
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
@@ -71,10 +62,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Cache.Statistics.Current.TotalCreated += op.RewardDelegated;
             }
 
-            Cache.AppState.Get().EndorsingRewardOpsCount += Ops.Count;
+            Cache.AppState.Get().EndorsingRewardOpsCount += ops.Count;
 
-            Db.EndorsingRewardOps.AddRange(Ops);
-            Context.EndorsingRewardOps.AddRange(Ops);
+            Db.EndorsingRewardOps.AddRange(ops);
+            Context.EndorsingRewardOps.AddRange(ops);
         }
 
         public virtual async Task Revert(Block block)

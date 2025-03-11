@@ -8,14 +8,12 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto10
 {
-    class ProtoActivator : Proto9.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto9.ProtoActivator(proto)
     {
         public const string CpmmContract = "KT1TxqZ8QtKvLu3V3JH7Gx58n7Co8pgtpQU5";
         public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
         public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
         public const string Tzbtc = "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn";
-
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
@@ -201,8 +199,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, (int)er.Slots);
-                bakerCycle.FutureEndorsements -= (int)er.Slots;
+                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, er.Slots!.Value);
+                bakerCycle.FutureEndorsements -= er.Slots.Value;
             }
 
             await Db.Database.ExecuteSqlRawAsync($@"
@@ -217,9 +215,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                 {
                     newErs.Add(new BakingRight
                     {
+                        Id = 0,
                         Type = BakingRightType.Endorsing,
                         Status = BakingRightStatus.Future,
-                        BakerId = Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id,
+                        BakerId = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id,
                         Cycle = state.Cycle,
                         Level = level,
                         Slots = er.RequiredArray("slots").Count()
@@ -236,8 +235,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(nextProto, state.Cycle, (int)er.Slots);
-                bakerCycle.FutureEndorsements += (int)er.Slots;
+                bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(nextProto, state.Cycle, er.Slots!.Value);
+                bakerCycle.FutureEndorsements += er.Slots.Value;
             }
         }
 
@@ -254,7 +253,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 {string.Join(',', shiftedRights.Select(er => $@"(
                     {nextCycle},
                     {nextCycleStart},
-                    {Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id},
+                    {Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id},
                     {(byte)BakingRightType.Endorsing},
                     {(byte)BakingRightStatus.Future},
                     {er.RequiredArray("slots").Count()}
@@ -288,12 +287,12 @@ namespace Tzkt.Sync.Protocols.Proto10
             if (!rights.Any() || rights.Count(x => x.RequiredInt32("priority") == 0) != protocol.BlocksPerCycle)
                 throw new ValidationException("Rpc returned less baking rights (with priority 0) than it should be");
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var br in rights)
             {
-                var bakerId = Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id;
+                var bakerId = Cache.Accounts.GetExistingDelegate(br.RequiredString("delegate")).Id;
                 var round = br.RequiredInt32("priority");
                 if (round == 0)
                 {
@@ -342,7 +341,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
 
             #region save rights
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
             foreach (var er in rights)
@@ -350,7 +349,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 writer.StartRow();
                 writer.Write(protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write(Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                 writer.WriteNull();
@@ -362,7 +361,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             foreach (var er in rights.Where(x => x.RequiredInt32("level") != cycle.LastLevel))
             {
-                var baker = Cache.Accounts.GetDelegate(er.RequiredString("delegate"));
+                var baker = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate"));
                 var slots = er.RequiredArray("slots").Count();
 
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
@@ -374,7 +373,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             foreach (var er in shiftedRights)
             {
-                var baker = Cache.Accounts.GetDelegate(er.RequiredString("delegate"));
+                var baker = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate"));
                 var slots = er.RequiredArray("slots").Count();
 
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
@@ -394,6 +393,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                     bakerCycle = new BakerCycle
                     {
+                        Id = 0,
                         Cycle = cycle.Index,
                         BakerId = baker.Id,
                         OwnDelegatedBalance = stakingBalance - delegatedBalance,
@@ -415,8 +415,9 @@ namespace Tzkt.Sync.Protocols.Proto10
                         var snapshottedDelegator = await Proto.Rpc.GetContractAsync(cycle.SnapshotLevel, delegatorAddress);
                         Db.DelegatorCycles.Add(new DelegatorCycle
                         {
+                            Id = 0,
                             Cycle = cycle.Index,
-                            DelegatorId = (await Cache.Accounts.GetAsync(delegatorAddress)).Id,
+                            DelegatorId = (await Cache.Accounts.GetExistingAsync(delegatorAddress)).Id,
                             BakerId = baker.Id,
                             DelegatedBalance = snapshottedDelegator.RequiredInt64("balance"),
                             StakedBalance = 0
@@ -447,7 +448,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
             #region contract
             Contract contract;
-            var creator = await Cache.Accounts.GetAsync(NullAddress.Address);
+            var creator = await Cache.Accounts.GetExistingAsync(NullAddress.Address);
             var ghost = await Cache.Accounts.GetAsync(address);
             if (ghost != null)
             {
@@ -492,7 +493,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             #endregion
 
             #region script
-            var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+            var code = (rawContract.Required("script").RequiredMicheline("code") as MichelineArray)!;
             var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
             var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
             var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
@@ -515,7 +516,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 .OrderBy(x => x, new BytesComparer())
                 .SelectMany(x => x)
                 .ToArray()
-                ?? Array.Empty<byte>();
+                ?? [];
             var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
@@ -539,7 +540,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             #endregion
 
             #region storage
-            var storageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+            var storageValue = rawContract.Required("script").RequiredMicheline("storage");
             var storage = new Storage
             {
                 Id = Cache.AppState.NextStorageId(),
@@ -590,7 +591,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             var storageTree = storageScript.Schema.ToTreeView(storageValue);
             var bigmaps = storageTree.Nodes()
                 .Where(x => x.Schema is BigMapSchema)
-                .Select(x => (x, x.Schema as BigMapSchema, (int)(x.Value as MichelineInt).Value));
+                .Select(x => (x, (x.Schema as BigMapSchema)!, (int)(x.Value as MichelineInt)!.Value));
 
             foreach (var (bigmap, schema, ptr) in bigmaps)
             {
@@ -730,7 +731,7 @@ namespace Tzkt.Sync.Protocols.Proto10
 
         async Task RemoveContract(string address)
         {
-            var contract = await Cache.Accounts.GetAsync(address) as Contract;
+            var contract = (await Cache.Accounts.GetExistingAsync(address) as Contract)!;
             Db.TryAttach(contract);
 
             var bigmaps = await Db.BigMaps.AsNoTracking()
@@ -741,7 +742,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             Db.TryAttach(state);
             state.MigrationOpsCount--;
 
-            var creator = await Cache.Accounts.GetAsync(contract.CreatorId);
+            var creator = await Cache.Accounts.GetAsync(contract.CreatorId!.Value);
             Db.TryAttach(creator);
             creator.ContractsCount--;
 

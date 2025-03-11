@@ -8,34 +8,27 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class SetDelegateParametersCommit : ProtocolCommit
+    class SetDelegateParametersCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
         #region static
         public static readonly string Entrypoint = "set_delegate_parameters";
-        static readonly Schema Parameters = Schema.Create(Micheline.FromJson("""
-            {
-                "prim": "pair",
-                "args": [
-                    {
-                        "prim": "int"
-                    },
-                    {
-                        "prim": "int"
-                    },
-                    {
-                        "prim": "unit"
-                    }
-                ]
-            }
-            """) as MichelinePrim);
-        #endregion
+        static readonly Schema Parameters = Schema.Create(new MichelinePrim
+        {
+            Prim = PrimType.pair,
+            Args =
+            [
+                new MichelinePrim { Prim = PrimType.@int },
+                new MichelinePrim { Prim = PrimType.@int },
+                new MichelinePrim { Prim = PrimType.unit },
+            ]
+        });
 
-        public SetDelegateParametersCommit(ProtocolHandler protocol) : base(protocol) { }
+        #endregion
 
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source")) as User;
+            var sender = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
@@ -52,9 +45,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             var edge = BigInteger.Zero;
             try
             {
-                var param = Parameters.Optimize(Micheline.FromJson(content.Required("parameters").Required("value")));
-                limit = ((param as MichelinePrim).Args[0] as MichelineInt).Value;
-                edge = (((param as MichelinePrim).Args[1] as MichelinePrim).Args[0] as MichelineInt).Value;
+                var param = Parameters.Optimize(content.Required("parameters").RequiredMicheline("value"));
+                limit = ((param as MichelinePrim)!.Args![0] as MichelineInt)!.Value;
+                edge = (((param as MichelinePrim)!.Args![1] as MichelinePrim)!.Args![0] as MichelineInt)!.Value;
             }
             catch when (status != OperationStatus.Applied) { }
 
@@ -123,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         public async Task Revert(Block block, SetDelegateParametersOperation operation)
         {
-            var sender = await Cache.Accounts.GetAsync(operation.SenderId) as User;
+            var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             Db.TryAttach(sender);

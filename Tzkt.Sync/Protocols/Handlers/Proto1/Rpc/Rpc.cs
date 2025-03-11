@@ -3,11 +3,9 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class Rpc : IRpc
+    class Rpc(TezosNode node) : IRpc
     {
-        protected readonly TezosNode Node;
-
-        public Rpc(TezosNode node) => Node = node;
+        protected readonly TezosNode Node = node;
 
         #region indexer
         public virtual Task<JsonElement> GetBlockAsync(int level)

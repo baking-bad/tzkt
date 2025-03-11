@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto22
 {
-    class DalAttestationRewardCommit : ProtocolCommit
+    class DalAttestationRewardCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DalAttestationRewardCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -48,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                         var staker = nextUpdate.Required("staker");
                         if (staker.TryGetProperty("baker_own_stake", out var p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected DAL attesting rewards balance update");
 
@@ -56,7 +54,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                         }
                         else if (staker.TryGetProperty("baker_edge", out p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected DAL attesting rewards balance update");
 
@@ -64,7 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                         }
                         else if (staker.TryGetProperty("delegate", out p))
                         {
-                            var baker = Cache.Accounts.GetDelegate(p.GetString());
+                            var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
                                 throw new Exception("Unexpected DAL attesting rewards balance update");
 
@@ -77,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract")
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("contract"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("contract"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected DAL attesting rewards balance update");
 
@@ -85,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     }
                     else if (nextUpdate.RequiredString("kind") == "burned" && nextUpdate.RequiredString("category") == "lost DAL attesting rewards")
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("delegate"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("delegate"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected DAL attesting rewards balance update");
 

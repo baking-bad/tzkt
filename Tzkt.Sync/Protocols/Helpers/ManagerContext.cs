@@ -3,16 +3,11 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols
 {
-    public class ManagerContext
+    public class ManagerContext(ProtocolHandler proto)
     {
-        readonly ProtocolHandler Proto;
-        Account Account = null;
+        readonly ProtocolHandler Proto = proto;
+        Account? Account = null;
         long Change = 0;
-
-        public ManagerContext(ProtocolHandler proto)
-        {
-            Proto = proto;
-        }
 
         public void Init(JsonElement operation)
         {

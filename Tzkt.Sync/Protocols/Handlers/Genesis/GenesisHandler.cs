@@ -31,6 +31,7 @@ namespace Tzkt.Sync.Protocols
             #region add protocol
             var protocol = new Protocol
             {
+                Id = 0,
                 Hash = rawBlock.RequiredString("protocol"),
                 Code = -1,
                 Version = VersionNumber,
@@ -59,7 +60,11 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             #region add empty stats
-            var stats = new Statistics();
+            var stats = new Statistics
+            {
+                Id = 0,
+                Level = block.Level
+            };
             Db.Statistics.Add(stats);
             Cache.Statistics.SetCurrent(stats);
             #endregion
@@ -94,14 +99,14 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
-            state.ChainId = null;
-            state.Chain = null;
+            state.ChainId = string.Empty;
+            state.Chain = string.Empty;
             state.Cycle = -1;
             state.Level = -1;
             state.Timestamp = DateTimeOffset.MinValue.UtcDateTime;
-            state.Protocol = "";
-            state.NextProtocol = "";
-            state.Hash = "";
+            state.Protocol = string.Empty;
+            state.NextProtocol = string.Empty;
+            state.Hash = string.Empty;
             state.BlocksCount--;
             state.ProtocolsCount--;
 

@@ -6,17 +6,17 @@
         /// Kind of the contract (`delegator_contract` or `smart_contract`),
         /// where `delegator_contract` - manager.tz smart contract for delegation purpose only
         /// </summary>
-        public string Kind { get; set; }
+        public required string Kind { get; set; }
 
         /// <summary>
         /// Name of the project behind the contract or contract description
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Public key hash of the contract
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         /// <summary>
         /// Contract balance (micro tez)
@@ -26,7 +26,7 @@
         /// <summary>
         /// Information about the current delegate of the contract. `null` if it's not delegated
         /// </summary>
-        public DelegateInfo Delegate { get; set; }
+        public DelegateInfo? Delegate { get; set; }
 
         /// <summary>
         /// Height of the block where the contract was created

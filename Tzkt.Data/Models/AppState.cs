@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -7,9 +6,9 @@ namespace Tzkt.Data.Models
     {
         public const int SubIdBits = 20;
 
-        public int Id { get; set; }
-        public string Chain { get; set; }
-        public string ChainId { get; set; }
+        public required int Id { get; set; }
+        public required string Chain { get; set; }
+        public required string ChainId { get; set; }
         public int KnownHead { get; set; }
         public DateTime LastSync { get; set; }
 
@@ -17,9 +16,9 @@ namespace Tzkt.Data.Models
         public int Cycle { get; set; }
         public int Level { get; set; }
         public DateTime Timestamp { get; set; }
-        public string Protocol { get; set; }
-        public string NextProtocol { get; set; }
-        public string Hash { get; set; }
+        public required string Protocol { get; set; }
+        public required string NextProtocol { get; set; }
+        public required string Hash { get; set; }
         public int VotingEpoch { get; set; }
         public int VotingPeriod { get; set; }
         #endregion
@@ -128,7 +127,7 @@ namespace Tzkt.Data.Models
         public double QuoteEth { get; set; }
         public double QuoteGbp { get; set; }
 
-        public string DomainsNameRegistry { get; set; }
+        public required string DomainsNameRegistry { get; set; }
         public int DomainsLevel { get; set; }
         #endregion 
     }
@@ -154,15 +153,18 @@ namespace Tzkt.Data.Models
                 new AppState
                 {
                     Id = -1,
+                    Chain = string.Empty,
+                    ChainId = string.Empty,
                     Cycle = -1,
                     Level = -1,
                     Timestamp = DateTimeOffset.MinValue.UtcDateTime,
-                    Protocol = "",
-                    NextProtocol = "",
-                    Hash = "",
+                    Protocol = string.Empty,
+                    NextProtocol = string.Empty,
+                    Hash = string.Empty,
                     VotingEpoch = -1,
                     VotingPeriod = -1,
-                    QuoteLevel = -1
+                    QuoteLevel = -1,
+                    DomainsNameRegistry = string.Empty,
                 });
             #endregion
         }

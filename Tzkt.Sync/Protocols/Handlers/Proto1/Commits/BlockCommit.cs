@@ -3,11 +3,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class BlockCommit : ProtocolCommit
+    class BlockCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Block Block { get; private set; }
-
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Block Block { get; private set; } = null!;
 
         public virtual async Task Apply(JsonElement rawBlock)
         {
@@ -35,7 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 events |= BlockEvents.BalanceSnapshot;
 
             var round = rawBlock.Required("header").RequiredInt32("priority");
-            var baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker"));
+            var baker = Cache.Accounts.GetExistingDelegate(rawBlock.Required("metadata").RequiredString("baker"));
             Block = new Block
             {
                 Id = Cache.AppState.NextOperationId(),
@@ -93,7 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Block = block;
 
             #region entities
-            var baker = Cache.Accounts.GetDelegate(block.ProposerId);
+            var baker = Context.Proposer;
             Db.TryAttach(baker);
             #endregion
 

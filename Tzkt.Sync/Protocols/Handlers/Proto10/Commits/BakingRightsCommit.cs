@@ -1,20 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto10
 {
-    class BakingRightsCommit : Proto3.BakingRightsCommit
+    class BakingRightsCommit(ProtocolHandler protocol) : Proto3.BakingRightsCommit(protocol)
     {
-        public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         // Tezos node is no longer able to normally return endorsing rights for a cycle,
         // so we have to temporarily add some crutches, until we implement rights calculation
         protected override async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, Protocol protocol, int cycle)

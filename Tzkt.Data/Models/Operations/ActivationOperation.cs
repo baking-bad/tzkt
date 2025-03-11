@@ -1,12 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class ActivationOperation : BaseOperation
     {
-        public int AccountId { get; set; }
+        public required int AccountId { get; set; }
         public long Balance { get; set; }
     }
 

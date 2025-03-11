@@ -4,16 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupDispatchTicketsCommit : ProtocolCommit
+    class TxRollupDispatchTicketsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupDispatchTicketsOperation Operation { get; private set; }
-
-        public TxRollupDispatchTicketsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("tx_rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -104,7 +100,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             Proto.Manager.Set(sender);
             Db.TxRollupDispatchTicketsOps.Add(operation);
             Context.TxRollupDispatchTicketsOps.Add(operation);
-            Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TxRollupDispatchTicketsOperation operation)
@@ -153,7 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupDispatchTicketsCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupDispatchTicketsOpsCount--;
             #endregion

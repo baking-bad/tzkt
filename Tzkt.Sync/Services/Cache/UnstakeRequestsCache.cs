@@ -4,18 +4,12 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class UnstakeRequestsCache
+    public class UnstakeRequestsCache(TzktContext db)
     {
-        public const int SoftCap = 4096; //TODO: set limits in app settings
-
+        const int SoftCap = 4096; //TODO: set limits in app settings
         static readonly Dictionary<(int, int?, int), UnstakeRequest> Cached = new((int)(SoftCap * 1.1));
 
-        readonly TzktContext Db;
-
-        public UnstakeRequestsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -46,7 +40,7 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove((item.BakerId, item.StakerId, item.Cycle));
         }
 
-        public async Task<UnstakeRequest> GetOrDefaultAsync(int bakerId, int? stakerId, int cycle)
+        public async Task<UnstakeRequest?> GetOrDefaultAsync(int bakerId, int? stakerId, int cycle)
         {
             if (!Cached.TryGetValue((bakerId, stakerId, cycle), out var item))
             {

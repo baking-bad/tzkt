@@ -5,10 +5,10 @@ namespace Tzkt.Data.Models
 {
     public class SnapshotBalance
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int AccountId { get; set; }
-        public int BakerId { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int AccountId { get; set; }
+        public required int BakerId { get; set; }
         
         public long OwnDelegatedBalance { get; set; }
         public long ExternalDelegatedBalance { get; set; }

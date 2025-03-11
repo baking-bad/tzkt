@@ -1,5 +1,4 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Services
@@ -7,14 +6,9 @@ namespace Tzkt.Sync.Services
     /// <summary>
     /// Writes numbers as strings and trims JSON up to MaxDepth
     /// </summary>
-    class TokenMetadataConverter : JsonConverter<JsonElement>
+    class TokenMetadataConverter(int maxDepth = 999) : JsonConverter<JsonElement>
     {
-        readonly int MaxDepth;
-
-        public TokenMetadataConverter(int maxDepth = 999)
-        {
-            MaxDepth = maxDepth;
-        }
+        readonly int MaxDepth = maxDepth;
 
         public override JsonElement Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {

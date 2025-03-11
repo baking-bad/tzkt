@@ -4,10 +4,8 @@ using Tzkt.Sync.Utils;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class Diagnostics : Proto5.Diagnostics
+    class Diagnostics(ProtocolHandler handler) : Proto5.Diagnostics(handler)
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
-
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
         {
             var remote = await Rpc.GetDelegateAsync(level, delegat.Address);
@@ -42,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var bakers = Cache.Accounts.GetDelegates().ToList();
             var bakerCycles = Db.ChangeTracker.Entries()
                 .Where(x => x.Entity is BakerCycle bc && bc.Cycle == state.Cycle)
-                .Select(x => x.Entity as BakerCycle)
+                .Select(x => (x.Entity as BakerCycle)!)
                 .ToDictionary(x => x.BakerId);
 
             foreach (var baker in bakers)

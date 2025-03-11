@@ -1,19 +1,12 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Dynamic.Json;
+﻿using Dynamic.Json;
 using Dynamic.Json.Extensions;
 using Xunit;
 
 namespace Tzkt.Api.Tests.Api
 {
-    public class TestBlocksQueries : IClassFixture<SettingsFixture>
+    public class TestBlocksQueries(SettingsFixture settings) : IClassFixture<SettingsFixture>
     {
-        readonly HttpClient Client;
-
-        public TestBlocksQueries(SettingsFixture settings)
-        {
-            Client = settings.Client;
-        }
+        readonly HttpClient Client = settings.Client;
 
         [Fact]
         public async Task TestBlocksCount()

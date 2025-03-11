@@ -161,7 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 WHERE "Cycle" > {0}
                 """, state.Cycle);
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
 
             foreach (var cycle in cycles)

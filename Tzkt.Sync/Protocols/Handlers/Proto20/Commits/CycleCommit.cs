@@ -5,13 +5,11 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto20
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> Snapshots { get; protected set; }
-        public Dictionary<int, long> SelectedStakes { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? Snapshots { get; protected set; }
+        public Dictionary<int, long>? SelectedStakes { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -31,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto20
             SelectedStakes = context.RequiredArray("selected_stake_distribution")
                 .EnumerateArray()
                 .ToDictionary(
-                    x => Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id,
+                    x => Cache.Accounts.GetExistingDelegate(x.RequiredString("baker")).Id,
                     x => x.Required("active_stake").RequiredInt64("frozen") + x.Required("active_stake").RequiredInt64("delegated"));
 
             Snapshots = await Db.SnapshotBalances
@@ -41,6 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto20
 
             FutureCycle = new Cycle
             {
+                Id = 0,
                 Index = index,
                 FirstLevel = Context.Protocol.GetCycleStart(index),
                 LastLevel = Context.Protocol.GetCycleEnd(index),

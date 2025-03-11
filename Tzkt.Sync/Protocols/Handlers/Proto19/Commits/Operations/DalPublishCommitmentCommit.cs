@@ -4,14 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class DalPublishCommitmentCommit : ProtocolCommit
+    class DalPublishCommitmentCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DalPublishCommitmentCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source")) as User;
+            var sender = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
@@ -83,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
         public async Task Revert(Block block, DalPublishCommitmentOperation operation)
         {
-            var sender = await Cache.Accounts.GetAsync(operation.SenderId) as User;
+            var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             Db.TryAttach(sender);

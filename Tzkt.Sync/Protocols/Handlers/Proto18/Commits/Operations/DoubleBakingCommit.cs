@@ -5,10 +5,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class DoubleBakingCommit : ProtocolCommit
+    class DoubleBakingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DoubleBakingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -22,11 +20,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                     .EnumerateArray()
                     .First(x => x.RequiredInt32("level") == accusedLevel && x.RequiredInt32("round") == accusedRound)
                     .RequiredString("delegate");
-                accusedBakerId = Cache.Accounts.GetDelegate(accusedBaker).Id;
+                accusedBakerId = Cache.Accounts.GetExistingDelegate(accusedBaker).Id;
             }
 
             var accuser = Context.Proposer;
-            var offender = Cache.Accounts.GetDelegate(accusedBakerId);
+            var offender = Cache.Accounts.GetDelegate(accusedBakerId.Value);
 
             var operation = new DoubleBakingOperation
             {

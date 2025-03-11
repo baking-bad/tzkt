@@ -1,26 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class TokenBalancesCache
+    public class TokenBalancesCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
-
+        const int MaxItems = 4 * 4096; //TODO: set limits in app settings
         static readonly Dictionary<(int, long), TokenBalance> Cached = new(MaxItems);
 
-        readonly TzktContext Db;
-
-        public TokenBalancesCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -66,7 +56,7 @@ namespace Tzkt.Sync.Services.Cache
             return tokenBalance;
         }
 
-        public bool TryGet(int accountId, long tokenId, out TokenBalance tokenBalance)
+        public bool TryGet(int accountId, long tokenId, [NotNullWhen(true)] out TokenBalance? tokenBalance)
         {
             return Cached.TryGetValue((accountId, tokenId), out tokenBalance);
         }

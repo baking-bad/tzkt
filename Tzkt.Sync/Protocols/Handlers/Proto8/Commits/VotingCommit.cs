@@ -1,12 +1,9 @@
-﻿using System;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto8
 {
-    class VotingCommit : Proto5.VotingCommit
+    class VotingCommit(ProtocolHandler protocol) : Proto5.VotingCommit(protocol)
     {
-        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         // new voting period
         protected override ProposalStatus GetProposalStatus(Proposal proposal, VotingPeriod period)
         {

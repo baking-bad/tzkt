@@ -5,10 +5,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class Diagnostics : Proto16.Diagnostics
+    class Diagnostics(ProtocolHandler handler) : Proto16.Diagnostics(handler)
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
-
         protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
             return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance;
@@ -54,7 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             var bakers = Cache.Accounts.GetDelegates().ToList();
             var bakerCycles = Db.ChangeTracker.Entries()
                 .Where(x => x.Entity is BakerCycle bc && bc.Cycle == state.Cycle)
-                .Select(x => x.Entity as BakerCycle)
+                .Select(x => (x.Entity as BakerCycle)!)
                 .ToDictionary(x => x.BakerId);
 
             foreach (var baker in bakers)

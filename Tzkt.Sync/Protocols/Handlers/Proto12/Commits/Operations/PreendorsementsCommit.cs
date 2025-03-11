@@ -1,17 +1,14 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class PreendorsementsCommit : ProtocolCommit
+    class PreendorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public PreendorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual void Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate"));
+            var baker = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
 
             var preendorsement = new PreendorsementOperation
             {

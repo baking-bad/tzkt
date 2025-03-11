@@ -6,10 +6,8 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class SlashingCommit : ProtocolCommit
+    class SlashingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SlashingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -34,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     ?? Context.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? Db.DoubleBakingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? Db.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? (BaseOperation)Db.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? (BaseOperation?)Db.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? throw new Exception($"Cannot find delayed operation '{opHash}'");
 
                 var (accuserId, offenderId) = accusation switch
@@ -296,7 +294,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.RequiredString("kind") == "freezer")
                 .Select(GetFreezerBaker)
                 .ToHashSet()
-                .Select(Cache.Accounts.GetDelegate);
+                .Select(Cache.Accounts.GetExistingDelegate);
 
             var slashedRequests = new Dictionary<int, List<(int, int, long)>>();
             foreach (var baker in slashedBakers)
@@ -316,7 +314,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         Cache.UnstakeRequests.Add(request);
 
                     var stakers = requests
-                        .Select(x => x.StakerId)
+                        .Select(x => x.StakerId!.Value)
                         .ToHashSet();
 
                     var slashedBakerRequests = new List<(int, int, long)>(requests.Count);
@@ -362,7 +360,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .ToDictionary(x => x.Key, x => x.Value / (double)burnedByBaker[bakerByOp[x.Key]]);
 
             var opsByBaker = burnedByOp.Keys
-                .GroupBy(x => Cache.Accounts.GetDelegate(bakerByOp[x]).Id)
+                .GroupBy(x => Cache.Accounts.GetExistingDelegate(bakerByOp[x]).Id)
                 .ToDictionary(x => x.Key, x => x.ToList());
 
             var res = shares.Keys.ToDictionary(x => x, x => new List<(int stakerId, int cycle, long slashed)>());
@@ -396,7 +394,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.RequiredString("kind") == "freezer")
                 .Select(GetFreezerBaker)
                 .First();
-            var baker = Cache.Accounts.GetDelegate(bakerAddress);
+            var baker = Cache.Accounts.GetExistingDelegate(bakerAddress);
             var res = new List<StakingUpdate>();
 
             var slashedOwn = balanceUpdates
@@ -477,11 +475,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                     Cache.Accounts.Add(staker);
 
                     var prevStake = staker.StakedPseudotokens != baker.IssuedPseudotokens
-                        ? (long)((BigInteger)baker.ExternalStakedBalance * staker.StakedPseudotokens / baker.IssuedPseudotokens)
+                        ? (long)((BigInteger)baker.ExternalStakedBalance * staker.StakedPseudotokens!.Value / baker.IssuedPseudotokens!.Value)
                         : baker.ExternalStakedBalance;
 
                     var newStake = staker.StakedPseudotokens != baker.IssuedPseudotokens
-                        ? (long)((BigInteger)newExternalStake * staker.StakedPseudotokens / baker.IssuedPseudotokens)
+                        ? (long)((BigInteger)newExternalStake * staker.StakedPseudotokens!.Value / baker.IssuedPseudotokens!.Value)
                         : newExternalStake;
 
                     if (prevStake != newStake)

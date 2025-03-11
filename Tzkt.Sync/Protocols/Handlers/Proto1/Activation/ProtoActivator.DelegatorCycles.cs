@@ -9,21 +9,23 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             for (int cycle = 0; cycle <= protocol.ConsensusRightsDelay; cycle++)
             {
-                Db.DelegatorCycles.AddRange(accounts.Where(x => x.DelegateId != null)
+                Db.DelegatorCycles.AddRange(accounts
+                    .Where(x => x.DelegateId != null)
                     .Select(x =>
                     {
                         var stakedBalance = 0L;
                         if (x is User user && user.StakedPseudotokens != null)
                         {
-                            var baker = Cache.Accounts.GetDelegate(user.DelegateId);
-                            stakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens);
+                            var baker = Cache.Accounts.GetDelegate(x.DelegateId!.Value);
+                            stakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens!);
                         }
 
                         return new DelegatorCycle
                         {
+                            Id = 0,
                             Cycle = cycle,
                             DelegatorId = x.Id,
-                            BakerId = (int)x.DelegateId,
+                            BakerId = x.DelegateId!.Value,
                             DelegatedBalance = x.Balance,
                             StakedBalance = stakedBalance
                         };

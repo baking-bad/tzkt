@@ -1,18 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Block
     {
-        public long Id { get; set; }
-        public int Cycle { get; set; }
-        public int Level { get; set; }
-        public string Hash { get; set; }
-        public DateTime Timestamp { get; set; }
-        public int ProtoCode { get; set; }
+        public required long Id { get; set; }
+        public required int Cycle { get; set; }
+        public required int Level { get; set; }
+        public required string Hash { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required int ProtoCode { get; set; }
+
         public int? SoftwareId { get; set; }
 
         public int PayloadRound { get; set; }

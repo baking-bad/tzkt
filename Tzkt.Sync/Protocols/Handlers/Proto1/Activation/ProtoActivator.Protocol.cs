@@ -12,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var protocol = new Protocol
             {
+                Id = 0,
                 Code = 1,
                 Version = Proto.VersionNumber,
                 Hash = rawBlock.Required("metadata").RequiredString("next_protocol"),
@@ -76,6 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var protocol = new Protocol
             {
+                Id = 0,
                 Code = prev.Code + 1,
                 Version = Proto.VersionNumber,
                 Hash = state.NextProtocol,

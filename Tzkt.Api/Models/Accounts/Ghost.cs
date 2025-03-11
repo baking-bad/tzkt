@@ -17,12 +17,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Address of the contract
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// Name of the ghost contract
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Number of account tokens with non-zero balances
@@ -78,11 +78,11 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata { get; set; }
+        public RawJson? Metadata { get; set; }
     }
 }

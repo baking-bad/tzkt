@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
@@ -15,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto10
         {
             var balanceUpdate = content.RequiredArray("balance_updates").EnumerateArray()
                 .First(x => x.RequiredString("kind") == "contract");
-            var contract = await Cache.Accounts.GetAsync(balanceUpdate.RequiredString("contract")) as Contract;
+            var contract = (await Cache.Accounts.GetExistingAsync(balanceUpdate.RequiredString("contract")) as Contract)!;
             Db.TryAttach(contract);
             var op = new MigrationOperation
             {
@@ -38,13 +36,13 @@ namespace Tzkt.Sync.Protocols.Proto10
             block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
             
-            var schema = await Cache.Schemas.GetAsync(contract);
-            var currStorage = await Cache.Storages.GetAsync(contract);
+            var schema = await Cache.Schemas.GetKnownAsync(contract);
+            var currStorage = await Cache.Storages.GetKnownAsync(contract);
 
             Db.TryAttach(currStorage);
             currStorage.Current = false;
 
-            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(content.Required("storage")), false);
+            var newStorageMicheline = schema.OptimizeStorage(content.RequiredMicheline("storage"), false);
             var newStorageBytes = newStorageMicheline.ToBytes();
             var newStorage = new Storage
             {
@@ -67,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto10
         {
             foreach (var op in Context.MigrationOps.Where(x => x.Kind == MigrationKind.Subsidy))
             {
-                var contract = await Cache.Accounts.GetAsync(op.AccountId) as Contract;
+                var contract = (await Cache.Accounts.GetAsync(op.AccountId) as Contract)!;
                 Db.TryAttach(contract);
                 contract.Balance -= op.BalanceChange;
                 contract.MigrationsCount--;
@@ -76,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 Cache.AppState.ReleaseOperationId();
                 Db.MigrationOps.Remove(op);
                 
-                var storage = await Cache.Storages.GetAsync(contract);
+                var storage = await Cache.Storages.GetKnownAsync(contract);
                 if (storage.MigrationId == op.Id)
                 {
                     var prevStorage = await Db.Storages

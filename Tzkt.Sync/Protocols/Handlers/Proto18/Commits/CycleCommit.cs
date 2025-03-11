@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class CycleCommit : Proto14.CycleCommit
+    class CycleCommit(ProtocolHandler protocol) : Proto14.CycleCommit(protocol)
     {
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public override async Task Apply(Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
@@ -16,9 +14,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             await base.Apply(block);
 
             var res = await Proto.Rpc.GetExpectedIssuance(block.Level);
-            var issuance = res.EnumerateArray().First(x => x.RequiredInt32("cycle") == FutureCycle.Index);
+            var issuance = res.EnumerateArray().First(x => x.RequiredInt32("cycle") == FutureCycle!.Index);
 
-            FutureCycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
+            FutureCycle!.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
             FutureCycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
             FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
             FutureCycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
@@ -26,10 +24,10 @@ namespace Tzkt.Sync.Protocols.Proto18
             FutureCycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
         }
 
-        protected override async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol)
+        protected override async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol, List<SnapshotBalance> snapshots)
         {
             if (block.Cycle == protocol.FirstCycle)
-                return await base.GetSelectedStakes(block, protocol);
+                return await base.GetSelectedStakes(block, protocol, snapshots);
 
             var slashings = new Dictionary<int, int>();
             var prevBlock = Cache.Blocks.Get(block.Level - 1);
@@ -52,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleEndorsingSlashedPercentage;
             }
 
-            return Snapshots.Select(x =>
+            return snapshots.Select(x =>
             {
                 var ownStaked = x.OwnStakedBalance;
                 var externalStaked = x.ExternalStakedBalance;

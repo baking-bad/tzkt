@@ -1,14 +1,10 @@
-﻿using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {
-    class DoubleEndorsingCommit : ProtocolCommit
+    class DoubleEndorsingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DoubleEndorsingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -33,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             var lostFeesValue = lostFees.ValueKind != JsonValueKind.Undefined ? -lostFees.RequiredInt64("change") : 0;
 
             var accuser = Context.Proposer;
-            var offender = Cache.Accounts.GetDelegate(offenderAddr);
+            var offender = Cache.Accounts.GetExistingDelegate(offenderAddr);
 
             var doubleEndorsing = new DoubleEndorsingOperation
             {

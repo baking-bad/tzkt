@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
     public class User : Account
     {
         public bool Revealed { get; set; }
-        public string PublicKey { get; set; }
+        public string? PublicKey { get; set; }
 
         public BigInteger? StakedPseudotokens { get; set; }
         public long UnstakedBalance { get; set; }

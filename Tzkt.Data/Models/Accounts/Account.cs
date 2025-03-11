@@ -1,16 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
     public class Account
     {
-        public int Id { get; set; }
-        public string Address { get; set; }
-        public AccountType Type { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int Id { get; set; }
+        public required string Address { get; set; }
+        public required AccountType Type { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public long Balance { get; set; }
         public long RollupBonds { get; set; }

@@ -17,17 +17,17 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Address of the account
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// Name of the account
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Information about the account, which has deployed the rollup to the blockchain
         /// </summary>       
-        public Alias Creator { get; set; }
+        public required Alias Creator { get; set; }
 
         /// <summary>
         /// Amount of mutez locked as bonds
@@ -138,11 +138,11 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata { get; set; }
+        public RawJson? Metadata { get; set; }
     }
 }

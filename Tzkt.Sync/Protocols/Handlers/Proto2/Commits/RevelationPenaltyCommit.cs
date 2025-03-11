@@ -11,13 +11,13 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            List<RevelationPenaltyOperation> revelationPenalties = null;
+            List<RevelationPenaltyOperation>? revelationPenalties = null;
 
             if (block.Events.HasFlag(BlockEvents.CycleEnd))
             {
                 if (HasPenaltiesUpdates(block, Context.Protocol, rawBlock))
                 {
-                    revelationPenalties = new List<RevelationPenaltyOperation>();
+                    revelationPenalties = [];
 
                     var missedBlocks = await Db.Blocks
                         .Join(Db.Protocols, x => x.ProtoCode, x => x.Code, (block, protocol) => new { block, protocol })
@@ -42,8 +42,8 @@ namespace Tzkt.Sync.Protocols.Proto2
 
                     foreach (var missedBlock in missedBlocks)
                     {
-                        var missedBlockProposer = Cache.Accounts.GetDelegate(missedBlock.ProposerId);
-                        var slashed = slashedBakers.Contains((int)missedBlock.ProposerId);
+                        var missedBlockProposer = Cache.Accounts.GetDelegate(missedBlock.ProposerId!.Value);
+                        var slashed = slashedBakers.Contains(missedBlockProposer.Id);
                         revelationPenalties.Add(new RevelationPenaltyOperation
                         {
                             Id = Cache.AppState.NextOperationId(),

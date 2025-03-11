@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             foreach (var cycle in cycles)
             {
@@ -23,6 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var bakerCycle = new BakerCycle
                     {
+                        Id = 0,
                         Cycle = cycle.Index,
                         BakerId = x.Id,
                         OwnDelegatedBalance = x.Balance,

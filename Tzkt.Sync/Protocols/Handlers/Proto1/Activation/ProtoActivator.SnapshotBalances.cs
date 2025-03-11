@@ -19,12 +19,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                     }
                     else if (x is User user && user.StakedPseudotokens != null)
                     {
-                        baker = Cache.Accounts.GetDelegate(user.DelegateId);
-                        ownStakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens);
+                        baker = Cache.Accounts.GetDelegate(user.DelegateId!.Value);
+                        ownStakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens!);
                     }
 
                     return new SnapshotBalance
                     {
+                        Id = 0,
                         Level = 1,
                         AccountId = x.Id,
                         BakerId = x.DelegateId ?? x.Id,

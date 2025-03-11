@@ -4,18 +4,12 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class SmartRollupStakesCache
+    public class SmartRollupStakesCache(TzktContext db)
     {
-        public const int MaxItems = 4096; //TODO: set limits in app settings
-
+        const int MaxItems = 4096; //TODO: set limits in app settings
         static readonly Dictionary<int, Dictionary<int, int>> Cache = new(4097);
 
-        readonly TzktContext Db;
-
-        public SmartRollupStakesCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Add(SmartRollupCommitment commitment)
         {

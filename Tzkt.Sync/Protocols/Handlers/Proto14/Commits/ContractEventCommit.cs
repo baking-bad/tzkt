@@ -1,9 +1,5 @@
-﻿using System;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Data.Models;
@@ -11,14 +7,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto14
 {
-    class ContractEventCommit : ProtocolCommit
+    class ContractEventCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public ContractEventCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement content)
         {
             #region init
-            var contract = await Cache.Accounts.GetAsync(content.RequiredString("source")) as Contract;
+            var contract = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as Contract)!;
             var parentTx = Context.TransactionOps.OrderByDescending(x => x.Id).FirstOrDefault(x => x.TargetId == contract.Id)
                 ?? throw new Exception("Event parent transaction not found");
 
@@ -40,13 +34,11 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             try
             {
-                var type = Micheline.FromJson(content.Required("type"));
-                var schema = Schema.Create(type as MichelinePrim);
+                var type = (content.RequiredMicheline("type") as MichelinePrim)!;
+                var schema = Schema.Create(type);
                 contractEvent.Type = type.ToBytes();
 
-                var rawPayload = content.TryGetProperty("payload", out var payload) 
-                    ? Micheline.FromJson(payload)
-                    : new MichelinePrim { Prim = PrimType.Unit };
+                var rawPayload = content.OptionalMicheline("payload") ?? new MichelinePrim { Prim = PrimType.Unit };
 
                 contractEvent.JsonPayload = schema.Humanize(rawPayload);
                 contractEvent.RawPayload = schema.Optimize(rawPayload).ToBytes();
@@ -80,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             foreach (var contractEvent in events)
             {
-                var contract = await Cache.Accounts.GetAsync(contractEvent.ContractId) as Contract;
+                var contract = (await Cache.Accounts.GetAsync(contractEvent.ContractId) as Contract)!;
                 Db.TryAttach(contract);
                 contract.EventsCount--;
 

@@ -1,13 +1,10 @@
-﻿using System;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class Diagnostics : Proto1.Diagnostics
+    class Diagnostics(ProtocolHandler handler) : Proto1.Diagnostics(handler)
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
-
         protected override void TestDelegatorsCount(JsonElement remote, Data.Models.Delegate local)
         {
             var delegators = remote.RequiredArray("delegated_contracts").Count();

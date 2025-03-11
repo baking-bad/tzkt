@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class CoingeckoProviderConfig
     {
@@ -12,7 +10,7 @@ namespace Tzkt.Sync.Services
     {
         public static CoingeckoProviderConfig GetCoingeckoProviderConfig(this IConfiguration config)
         {
-            return config.GetSection("Quotes:Provider")?.Get<CoingeckoProviderConfig>() ?? new CoingeckoProviderConfig();
+            return config.GetSection("Quotes:Provider")?.Get<CoingeckoProviderConfig>() ?? new();
         }
     }
 }

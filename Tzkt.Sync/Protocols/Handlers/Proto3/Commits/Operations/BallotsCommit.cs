@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -15,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region init
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
             var proposal = await Cache.Proposals.GetAsync(period.Epoch, content.RequiredString("proposal"));
-            var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
+            var sender = Cache.Accounts.GetExistingDelegate(content.RequiredString("source"));
 
             var snapshot = await Db.VotingSnapshots
                 .FirstOrDefaultAsync(x => x.Period == period.Index && x.BakerId == sender.Id)

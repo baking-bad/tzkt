@@ -1,11 +1,15 @@
-﻿using System.Collections.Generic;
-
-namespace Tzkt.Sync
+﻿namespace Tzkt.Sync
 {
     class BytesComparer : IComparer<byte[]>
     {        
-        public int Compare(byte[] x, byte[] y)
+        public int Compare(byte[]? x, byte[]? y)
         {
+            if (x == null)
+                return y == null ? 0 : -1;
+
+            if (y == null)
+                return 1;
+
             if (x.Length != y.Length)
                 return x.Length.CompareTo(y.Length);
 

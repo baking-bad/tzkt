@@ -1,27 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class SoftwareCache
+    public class SoftwareCache(TzktContext db)
     {
-        public const int MaxItems = 32; //TODO: set limits in app settings
-
+        const int MaxItems = 32; //TODO: set limits in app settings
         static readonly Dictionary<int, Software> CachedById = new(37);
         static readonly Dictionary<string, Software> CachedByHash = new(37);
 
-        readonly TzktContext Db;
-
-        public SoftwareCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -36,11 +25,9 @@ namespace Tzkt.Sync.Services.Cache
             CachedByHash[item.ShortHash] = item;
         }
 
-        public async Task<Software> GetAsync(int? id)
+        public async Task<Software> GetAsync(int id)
         {
-            if (id == null) return null;
-
-            if (!CachedById.TryGetValue((int)id, out var item))
+            if (!CachedById.TryGetValue(id, out var item))
             {
                 item = await Db.Software.FirstOrDefaultAsync(x => x.Id == id)
                     ?? throw new Exception($"Software #{id} doesn't exist");

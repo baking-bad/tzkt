@@ -3,13 +3,11 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> Snapshots { get; protected set; }
-        public Dictionary<int, long> SelectedStakes { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? Snapshots { get; protected set; }
+        public Dictionary<int, long>? SelectedStakes { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -49,10 +47,11 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
-            SelectedStakes = await GetSelectedStakes(block, Context.Protocol);
+            SelectedStakes = await GetSelectedStakes(block, Context.Protocol, Snapshots);
 
             FutureCycle = new Cycle
             {
+                Id = 0,
                 Index = futureCycle,
                 FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
                 LastLevel = Context.Protocol.GetCycleEnd(futureCycle),
@@ -77,16 +76,16 @@ namespace Tzkt.Sync.Protocols.Proto13
                 WHERE   ""Index"" = {futureCycle}");
         }
 
-        protected virtual Task<byte[]> GetVdfSolution(Block block) => Task.FromResult<byte[]>(null);
+        protected virtual Task<byte[]?> GetVdfSolution(Block block) => Task.FromResult<byte[]?>(null);
 
-        protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol)
+        protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol, List<SnapshotBalance> snapshots)
         {
             var endorsingRewards = await Db.BakerCycles
                 .AsNoTracking()
                 .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsDelegated > 0)
                 .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
 
-            return Snapshots
+            return snapshots
                 .Where(x => x.StakingBalance >= protocol.MinimalStake)
                 .ToDictionary(x => x.AccountId, x =>
                 {

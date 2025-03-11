@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Proto17
     {
         public SmartRollupCementCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override string GetCommitment(JsonElement content)
+        protected override string? GetCommitment(JsonElement content)
             => content.Required("metadata").Required("operation_result").OptionalString("commitment_hash");
     }
 }

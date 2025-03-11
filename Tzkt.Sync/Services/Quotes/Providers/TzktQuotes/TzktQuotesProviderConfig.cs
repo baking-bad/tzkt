@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class TzktQuotesProviderConfig
     {
@@ -12,7 +10,7 @@ namespace Tzkt.Sync.Services
     {
         public static TzktQuotesProviderConfig GetTzktQuotesProviderConfig(this IConfiguration config)
         {
-            return config.GetSection("Quotes:Provider")?.Get<TzktQuotesProviderConfig>() ?? new TzktQuotesProviderConfig();
+            return config.GetSection("Quotes:Provider")?.Get<TzktQuotesProviderConfig>() ?? new();
         }
     }
 }

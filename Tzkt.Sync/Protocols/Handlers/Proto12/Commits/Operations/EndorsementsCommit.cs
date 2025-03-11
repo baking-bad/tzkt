@@ -1,17 +1,14 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class EndorsementsCommit : ProtocolCommit
+    class EndorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate"));
+            var baker = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
 
             var endorsement = new EndorsementOperation
             {

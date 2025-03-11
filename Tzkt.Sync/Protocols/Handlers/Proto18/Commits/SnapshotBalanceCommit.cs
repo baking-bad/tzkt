@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class SnapshotBalanceCommit : Proto12.SnapshotBalanceCommit
+    class SnapshotBalanceCommit(ProtocolHandler protocol) : Proto12.SnapshotBalanceCommit(protocol)
     {
-        public SnapshotBalanceCommit(ProtocolHandler protocol) : base(protocol) { }
-
         protected override Task TakeSnapshot(Block block)
         {
             return Db.Database.ExecuteSqlRawAsync($"""
@@ -132,7 +130,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                             0,
                             0,
                             delegator is User u && u.StakedPseudotokens != null
-                                ? (long)(baker.ExternalStakedBalance * u.StakedPseudotokens / baker.IssuedPseudotokens)
+                                ? (long)(baker.ExternalStakedBalance * u.StakedPseudotokens.Value / baker.IssuedPseudotokens!.Value)
                                 : 0L,
                             0,
                             0) + ")");

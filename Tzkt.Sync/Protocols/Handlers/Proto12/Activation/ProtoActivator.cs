@@ -194,8 +194,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var bakerCycle = bakerCycles[er.BakerId];
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsements -= (int)er.Slots;
-                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, (int)er.Slots);
+                bakerCycle.FutureEndorsements -= er.Slots!.Value;
+                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, er.Slots.Value);
             }
 
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level} AND ""Cycle"" = {state.Cycle}");
@@ -206,8 +206,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 if (!bakerCycles.TryGetValue(baker.Id, out var bc))
                 {
-                    bc = new()
+                    bc = new BakerCycle
                     {
+                        Id = 0,
                         Cycle = state.Cycle,
                         BakerId = baker.Id
                     };
@@ -298,7 +299,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
             }
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");
@@ -347,7 +348,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             var cycles = await Db.Cycles.AsNoTracking().Where(x => x.Index >= state.Cycle).OrderBy(x => x.Index).ToListAsync();
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
 
             #region save shifted
             var currentCycle = cycles.First();
@@ -438,6 +439,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     var bc = new BakerCycle
                     {
+                        Id = 0,
                         BakerId = x.Id,
                         Cycle = cycle.Index,
                         OwnDelegatedBalance = x.StakingBalance - x.DelegatedBalance,

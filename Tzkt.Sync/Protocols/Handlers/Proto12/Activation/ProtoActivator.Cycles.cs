@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -14,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             
             var delegates = accounts
                 .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             foreach (var cycle in cycles)
             {

@@ -1,26 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BigMapKeysCache
+    public class BigMapKeysCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
-
+        const int MaxItems = 4 * 4096; //TODO: set limits in app settings
         static readonly Dictionary<(int, string), BigMapKey> Cached = new(MaxItems);
 
-        readonly TzktContext Db;
-
-        public BigMapKeysCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -63,7 +53,7 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
-        public bool TryGet(int ptr, string hash, out BigMapKey key)
+        public bool TryGet(int ptr, string hash, [NotNullWhen(true)] out BigMapKey? key)
         {
             return Cached.TryGetValue((ptr, hash), out key);
         }

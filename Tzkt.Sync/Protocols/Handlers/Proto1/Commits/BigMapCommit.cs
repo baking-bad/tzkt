@@ -1,25 +1,18 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
-
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class BigMapCommit : ProtocolCommit
+    class BigMapCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public List<(BigMap, BigMapKey, BigMapUpdate, ContractOperation)> Updates = new();
+        public List<(BigMap, BigMapKey?, BigMapUpdate, ContractOperation)> Updates = [];
 
-        readonly List<(ContractOperation op, Contract contract, BigMapDiff diff)> Diffs = new();
+        readonly List<(ContractOperation op, Contract contract, BigMapDiff diff)> Diffs = [];
         readonly Dictionary<int, int> TempPtrs = new(7);
         int TempPtr = 0;
-
-        public BigMapCommit(ProtocolHandler protocol) : base(protocol) { }
 
         public virtual void Append(ContractOperation op, Contract contract, IEnumerable<BigMapDiff> diffs)
         {
@@ -78,14 +71,17 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             await Cache.BigMapKeys.Prefetch(Diffs
                 .Where(x => x.diff.Ptr >= 0 && !allocated.Contains(x.diff.Ptr) && x.diff.Action == BigMapDiffAction.Update)
-                .Select(x => (x.diff.Ptr, (x.diff as UpdateDiff).KeyHash)));
+                .Select(x => (x.diff.Ptr, (x.diff as UpdateDiff)!.KeyHash)));
 
-            var copiedKeys = copiedFrom.Count == 0 ? new(0) :
-                await Db.BigMapKeys.AsNoTracking().Where(x => copiedFrom.Contains(x.BigMapPtr)).ToListAsync();
+            var copiedKeys = copiedFrom.Count == 0 ? [] :
+                await Db.BigMapKeys
+                    .AsNoTracking()
+                    .Where(x => copiedFrom.Contains(x.BigMapPtr))
+                    .ToListAsync();
             #endregion
 
             BigMapUpdate bigMapUpdate;
-            var images = new Dictionary<int, Dictionary<string, BigMapKey>>();
+            var images = new Dictionary<int, Dictionary<string, (byte[] RawKey, byte[] RawValue)>>();
             foreach (var diff in Diffs)
             {
                 switch (diff.diff)
@@ -94,23 +90,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (alloc.Ptr >= 0)
                         {
                             #region allocate new
-                            var script = await Cache.Schemas.GetAsync(diff.contract);
-                            var storage = await Cache.Storages.GetAsync(diff.contract);
+                            var script = await Cache.Schemas.GetKnownAsync(diff.contract);
+                            var storage = await Cache.Storages.GetKnownAsync(diff.contract);
                             var storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                             var bigMapNode = storageView.Nodes()
                                 .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == alloc.Ptr);
 
                             if (bigMapNode == null)
                             {
-                                storage = Db.ChangeTracker.Entries()
-                                    .FirstOrDefault(x => x.Entity is Storage s && (s.OriginationId == diff.op.Id || s.TransactionId == diff.op.Id))
-                                    .Entity as Storage;
+                                storage = (Db.ChangeTracker.Entries()
+                                    .First(x => x.Entity is Storage s && (s.OriginationId == diff.op.Id || s.TransactionId == diff.op.Id))
+                                    .Entity as Storage)!;
                                 storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                                 bigMapNode = storageView.Nodes()
                                     .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == alloc.Ptr)
                                         ?? throw new Exception($"Allocated big_map {alloc.Ptr} missed in the storage");
                             }
-                            var bigMapSchema = bigMapNode.Schema as BigMapSchema;
+                            var bigMapSchema = (bigMapNode.Schema as BigMapSchema)!;
                             var allocatedBigMap = new BigMap
                             {
                                 Id = Cache.AppState.NextBigMapId(),
@@ -143,13 +139,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                             Updates.Add((allocatedBigMap, null, bigMapUpdate, diff.op));
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
 
-                            images.Add(alloc.Ptr, new());
+                            images.Add(alloc.Ptr, []);
                             #endregion
                         }
                         else
                         {
                             #region alloc temp
-                            images.Add(alloc.Ptr, new());
+                            images.Add(alloc.Ptr, []);
                             #endregion
                         }
                         break;
@@ -160,40 +156,40 @@ namespace Tzkt.Sync.Protocols.Proto1
                         {
                             src = copiedKeys
                                 .Where(x => x.BigMapPtr == copy.SourcePtr)
-                                .ToDictionary(x => x.KeyHash);
+                                .ToDictionary(x => x.KeyHash, x => (x.RawKey, x.RawValue));
                         }
                         if (copy.Ptr >= 0)
                         {
                             #region copy to new
-                            var script = await Cache.Schemas.GetAsync(diff.contract);
-                            var storage = await Cache.Storages.GetAsync(diff.contract);
+                            var script = await Cache.Schemas.GetKnownAsync(diff.contract);
+                            var storage = await Cache.Storages.GetKnownAsync(diff.contract);
                             var storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                             var bigMapNode = storageView.Nodes()
                                 .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == copy.Ptr);
 
                             if (bigMapNode == null)
                             {
-                                storage = Db.ChangeTracker.Entries()
-                                    .FirstOrDefault(x => x.Entity is Storage s && (s.OriginationId == diff.op.Id || s.TransactionId == diff.op.Id))
-                                    .Entity as Storage;
+                                storage = (Db.ChangeTracker.Entries()
+                                    .First(x => x.Entity is Storage s && (s.OriginationId == diff.op.Id || s.TransactionId == diff.op.Id))
+                                    .Entity as Storage)!;
                                 storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                                 bigMapNode = storageView.Nodes()
                                     .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == copy.Ptr)
                                         ?? throw new Exception($"Copied big_map {copy.Ptr} missed in the storage");
                             }
 
-                            var bigMapSchema = bigMapNode.Schema as BigMapSchema;
+                            var bigMapSchema = (bigMapNode.Schema as BigMapSchema)!;
 
-                            var keys = src.Values.Select(x =>
+                            var keys = src.Select(kv =>
                             {
-                                var rawKey = Micheline.FromBytes(x.RawKey);
-                                var rawValue = Micheline.FromBytes(x.RawValue);
+                                var rawKey = Micheline.FromBytes(kv.Value.RawKey);
+                                var rawValue = Micheline.FromBytes(kv.Value.RawValue);
                                 return new BigMapKey
                                 {
                                     Id = Cache.AppState.NextBigMapKeyId(),
                                     BigMapPtr = copy.Ptr,
                                     Active = true,
-                                    KeyHash = x.KeyHash,
+                                    KeyHash = kv.Key,
                                     JsonKey = bigMapSchema.Key.Humanize(rawKey),
                                     JsonValue = bigMapSchema.Value.Humanize(rawValue),
                                     RawKey = bigMapSchema.Key.Optimize(rawKey).ToBytes(),
@@ -257,20 +253,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                             }
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + keys.Count + 1;
 
-                            images.Add(copy.Ptr, keys.ToDictionary(x => x.KeyHash));
+                            images.Add(copy.Ptr, keys.ToDictionary(x => x.KeyHash, x => (x.RawKey, x.RawValue)));
                             #endregion
                         }
                         else
                         {
                             #region copy to temp
-                            images.Add(copy.Ptr, src.Values
-                                .Select(x => new BigMapKey
-                                {
-                                    KeyHash = x.KeyHash,
-                                    RawKey = x.RawKey,
-                                    RawValue = x.RawValue
-                                })
-                                .ToDictionary(x => x.KeyHash));
+                            images.Add(copy.Ptr, src.ToDictionary(x => x.Key, x => x.Value));
                             #endregion
                         }
                         break;
@@ -399,7 +388,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             {
                                 if (update.Value != null)
                                 {
-                                    key.RawValue = update.Value.ToBytes();
+                                    image[update.KeyHash] = (key.RawKey, update.Value.ToBytes());
                                 }
                                 else
                                 {
@@ -408,12 +397,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             }
                             else if (update.Value != null) // WTF: edo2net:34839 - non-existent key was removed
                             {
-                                image.Add(update.KeyHash, new BigMapKey
-                                {
-                                    KeyHash = update.KeyHash,
-                                    RawKey = update.Key.ToBytes(),
-                                    RawValue = update.Value.ToBytes()
-                                });
+                                image.Add(update.KeyHash, (update.Key.ToBytes(), update.Value.ToBytes()));
                             }
                             #endregion
                         }
@@ -507,8 +491,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                             bigmap.ActiveKeys++;
 
                         key.Active = prevActive;
-                        key.JsonValue = prevUpdate.JsonValue;
-                        key.RawValue = prevUpdate.RawValue;
+                        key.JsonValue = prevUpdate.JsonValue!;
+                        key.RawValue = prevUpdate.RawValue!;
                         key.LastLevel = prevUpdate.Level;
                         key.Updates -= updates.Count(x => x.KeyId == key.Id);
                     }

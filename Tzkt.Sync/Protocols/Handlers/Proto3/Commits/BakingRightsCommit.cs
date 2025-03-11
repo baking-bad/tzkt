@@ -1,16 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto3
 {
-    class BakingRightsCommit : Proto1.BakingRightsCommit
+    class BakingRightsCommit(ProtocolHandler protocol) : Proto1.BakingRightsCommit(protocol)
     {
-        public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public override async Task Apply(Block block)
         {
             #region current rights
@@ -50,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto3
 
                     foreach (var br in bakingRights.EnumerateArray().SkipWhile(x => x.RequiredInt32("priority") <= maxExistedRound))
                         sqlInsert += $@"
-                            ({block.Cycle}, {block.Level}, {Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.RequiredInt32("priority")}, null),";
+                            ({block.Cycle}, {block.Level}, {Cache.Accounts.GetExistingDelegate(br.RequiredString("delegate")).Id}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.RequiredInt32("priority")}, null),";
 
                     await Db.Database.ExecuteSqlRawAsync(sqlInsert[..^1]);
 
@@ -116,7 +111,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                 FutureBakingRights = await GetBakingRights(block, Context.Protocol, futureCycle);
                 FutureEndorsingRights = await GetEndorsingRights(block, Context.Protocol, futureCycle);
 
-                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
                 foreach (var er in FutureEndorsingRights)
@@ -124,7 +119,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     writer.StartRow();
                     writer.Write(Context.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
                     writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                          // level + 1 (shifted)
-                    writer.Write(Cache.Accounts.GetDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.WriteNull();
@@ -136,7 +131,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                     writer.StartRow();
                     writer.Write(futureCycle, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write(br.RequiredInt32("level"), NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(Cache.Accounts.GetDelegate(br.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(Cache.Accounts.GetExistingDelegate(br.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
                     writer.Write(br.RequiredInt32("priority"), NpgsqlTypes.NpgsqlDbType.Integer);

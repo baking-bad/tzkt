@@ -4,13 +4,13 @@ namespace Tzkt.Data.Models
 {
     public class VotingPeriod
     {
-        public int Id { get; set; }
-        public int Index { get; set; }
-        public int Epoch { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int Id { get; set; }
+        public required int Index { get; set; }
+        public required int Epoch { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
-        public PeriodKind Kind { get; set; }
+        public required PeriodKind Kind { get; set; }
         public PeriodStatus Status { get; set; }
         public DictatorStatus Dictator { get; set; }
 

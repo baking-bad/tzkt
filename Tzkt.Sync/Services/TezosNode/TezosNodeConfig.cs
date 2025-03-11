@@ -1,10 +1,8 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class TezosNodeConfig
     {
-        public string Endpoint { get; set; }
+        public string Endpoint { get; set; } = "https://rpc.tzkt.io/mainnet";
         public int Timeout { get; set; } = 60;
         public int Lag { get; set; } = 0;
     }
@@ -13,7 +11,7 @@ namespace Tzkt.Sync.Services
     {
         public static TezosNodeConfig GetTezosNodeConfig(this IConfiguration config)
         {
-            return config.GetSection("TezosNode")?.Get<TezosNodeConfig>() ?? new TezosNodeConfig();
+            return config.GetSection("TezosNode")?.Get<TezosNodeConfig>() ?? new();
         }
     }
 }

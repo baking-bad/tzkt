@@ -1,7 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
-
-namespace Tzkt.Data.Models.Base
+﻿namespace Tzkt.Data.Models.Base
 {
     public interface IOperation
     {
@@ -10,9 +7,9 @@ namespace Tzkt.Data.Models.Base
 
     public class BaseOperation : IOperation
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public DateTime Timestamp { get; set; }
-        public string OpHash { get; set; }
+        public required long Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required string OpHash { get; set; }
     }
 }

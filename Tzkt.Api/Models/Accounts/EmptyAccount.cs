@@ -10,7 +10,7 @@
         /// <summary>
         /// Public key hash of the account
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay

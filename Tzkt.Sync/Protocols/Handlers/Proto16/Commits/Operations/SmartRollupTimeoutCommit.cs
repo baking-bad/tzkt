@@ -5,14 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupTimeoutCommit : ProtocolCommit
+    class SmartRollupTimeoutCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupTimeoutCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup")) as SmartRollup;
 
             var aliceId = await Cache.Accounts.GetIdOrDefaultAsync(content.Required("stakers").RequiredString("alice"));
@@ -108,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                game.LastMoveId = operation.Id;
+                game!.LastMoveId = operation.Id;
 
                 var initiator = await Cache.Accounts.GetAsync(game.InitiatorId);
                 var initiatorBaker = Cache.Accounts.GetDelegate(initiator.DelegateId) ?? (initiator as Data.Models.Delegate);
@@ -150,7 +148,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     game.InitiatorLoss = -initiatorChange;
                     initiator.SmartRollupBonds -= game.InitiatorLoss.Value;
-                    rollup.SmartRollupBonds -= game.InitiatorLoss.Value;
+                    rollup!.SmartRollupBonds -= game.InitiatorLoss.Value;
                     rollup.ActiveStakers--;
 
                     var bondOp = await GetBondOperation(rollup, initiator, block);
@@ -195,7 +193,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 {
                     game.OpponentLoss = -opponentChange;
                     opponent.SmartRollupBonds -= game.OpponentLoss.Value;
-                    rollup.SmartRollupBonds -= game.OpponentLoss.Value;
+                    rollup!.SmartRollupBonds -= game.OpponentLoss.Value;
                     rollup.ActiveStakers--;
 
                     var bondOp = await GetBondOperation(rollup, opponent, block);
@@ -243,7 +241,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 initiator.ActiveRefutationGamesCount--;
                 opponent.ActiveRefutationGamesCount--;
-                rollup.ActiveRefutationGamesCount--;
+                rollup!.ActiveRefutationGamesCount--;
 
                 var totalLoss = (game.InitiatorLoss ?? 0) + (game.OpponentLoss ?? 0);
                 var totalReward = (game.InitiatorReward ?? 0) + (game.OpponentReward ?? 0);
@@ -281,7 +279,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     x.o.SmartRollupId == rollup.Id &&
                     x.o.Status == OperationStatus.Applied &&
                     x.c.InboxLevel > rollup.InboxLevel)
-                .Select(x => (int)x.o.CommitmentId)
+                .Select(x => x.o.CommitmentId!.Value)
                 .ToListAsync())
                 .ToHashSet();
 
@@ -291,9 +289,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                     op.SenderId == staker.Id &&
                     op.SmartRollupId == rollup.Id &&
                     op.Status == OperationStatus.Applied &&
-                    (await Cache.SmartRollupCommitments.GetAsync((int)op.CommitmentId)).InboxLevel > rollup.InboxLevel)
+                    (await Cache.SmartRollupCommitments.GetAsync(op.CommitmentId!.Value)).InboxLevel > rollup.InboxLevel)
                 {
-                    ids.Add((int)op.CommitmentId);
+                    ids.Add(op.CommitmentId!.Value);
                 }
             }
 

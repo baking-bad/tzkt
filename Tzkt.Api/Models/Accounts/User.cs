@@ -16,17 +16,17 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Public key hash of the account
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// Name of the project behind the account or account description
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Base58 representation of account's public key, revealed by the account
         /// </summary>
-        public string PublicKey { get; set; }
+        public string? PublicKey { get; set; }
         
         /// <summary>
         /// Public key revelation status. Unrevealed account can't send manager operation (transaction, origination etc.)
@@ -68,7 +68,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the baker, for which there are pending unstake requests
         /// </summary>
-        public Alias UnstakedBaker { get; set; }
+        public Alias? UnstakedBaker { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -78,7 +78,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the current delegate of the account. `null` if it's not delegated
         /// </summary>
-        public DelegateInfo Delegate { get; set; }
+        public DelegateInfo? Delegate { get; set; }
 
         /// <summary>
         /// Block height of latest delegation. `null` if it's not delegated
@@ -321,12 +321,12 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public RawJson Metadata { get; set; }
+        public RawJson? Metadata { get; set; }
 
         #region deprecated
         /// <summary>

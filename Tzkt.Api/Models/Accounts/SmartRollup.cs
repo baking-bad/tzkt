@@ -17,32 +17,32 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Address of the account
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// Name of the account
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Information about the account, which has deployed the rollup to the blockchain
         /// </summary>       
-        public Alias Creator { get; set; }
+        public required Alias Creator { get; set; }
 
         /// <summary>
         /// PVM kind: `arith` or `wasm`
         /// </summary>
-        public string PvmKind { get; set; }
+        public required string PvmKind { get; set; }
 
         /// <summary>
         /// Genesis commitment hash
         /// </summary>
-        public string GenesisCommitment { get; set; }
+        public required string GenesisCommitment { get; set; }
 
         /// <summary>
         /// The most recent cemented commitment hash
         /// </summary>
-        public string LastCommitment { get; set; }
+        public required string LastCommitment { get; set; }
 
         /// <summary>
         /// Inbox level of the most recent cemented commitment
@@ -193,6 +193,6 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
     }
 }

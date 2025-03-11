@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
@@ -15,6 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 Id = Cache.AppState.NextSoftwareId(),
                 FirstLevel = block.Level,
+                LastLevel = block.Level,
                 ShortHash = version
             });
 
@@ -28,14 +28,14 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             block.SoftwareId = software.Id;
 
-            var blockProducer = Cache.Accounts.GetDelegate(block.ProducerId);
+            var blockProducer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             //Db.TryAttach(blockProducer);
             blockProducer.SoftwareId = software.Id;
         }
 
         public virtual async Task Revert(Block block)
         {
-            var software = await Cache.Software.GetAsync(block.SoftwareId);
+            var software = await Cache.Software.GetAsync(block.SoftwareId!.Value);
 
             Db.TryAttach(software);
             software.BlocksCount--;

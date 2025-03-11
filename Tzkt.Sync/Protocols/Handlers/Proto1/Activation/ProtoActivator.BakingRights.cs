@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Tzkt.Data.Models;
 
@@ -24,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 bakingRights.Add(futureBakingRights);
                 endorsingRights.Add(futureEndorsingRights);
 
-                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+                var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
                 using var writer = conn.BeginBinaryImport(@"
                     COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                     FROM STDIN (FORMAT BINARY)");
@@ -70,7 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray()
                 .Select(x => new RightsGenerator.BR
                 {
-                    Baker = Cache.Accounts.GetDelegate(x.RequiredString("delegate")).Id,
+                    Baker = Cache.Accounts.GetExistingDelegate(x.RequiredString("delegate")).Id,
                     Level = x.RequiredInt32("level"),
                     Round = x.RequiredInt32("priority")
                 });
@@ -79,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray()
                 .Select(x => new RightsGenerator.ER
                 {
-                    Baker = Cache.Accounts.GetDelegate(x.RequiredString("delegate")).Id,
+                    Baker = Cache.Accounts.GetExistingDelegate(x.RequiredString("delegate")).Id,
                     Level = x.RequiredInt32("level"),
                     Slots = x.RequiredArray("slots").Count()
                 });

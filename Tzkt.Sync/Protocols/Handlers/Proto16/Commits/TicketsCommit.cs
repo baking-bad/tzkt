@@ -5,10 +5,8 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class TicketsCommit : ProtocolCommit
+    class TicketsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TicketsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         readonly Dictionary<ManagerOperation, Dictionary<TicketIdentity, List<(ManagerOperation Op, TicketUpdate Update)>>> Updates = new();
 
         public virtual void Append(ManagerOperation parent, ManagerOperation op, IEnumerable<TicketUpdates> updates)
@@ -75,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             {
                 foreach (var (ticketIdentity, ticketUpdates) in opUpdates.OrderBy(x => x.Value[0].Op.Id).ThenBy(x => x.Key.ContentHash + x.Key.TypeHash))
                 {
-                    var ticketer = GetOrCreateAccount(ticketUpdates[0].Op, ticketIdentity.Ticketer) as Contract;
+                    var ticketer = (GetOrCreateAccount(ticketUpdates[0].Op, ticketIdentity.Ticketer) as Contract)!;
                     var ticket = GetOrCreateTicket(ticketUpdates[0].Op, ticketer, ticketIdentity);
 
                     if (ticketUpdates.Count == 1 || ticketUpdates.BigSum(x => x.Update.Amount) != BigInteger.Zero)
@@ -507,7 +505,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 else if (transfer.ToId != null)
                 {
                     #region revert mint
-                    var to = Cache.Accounts.GetCached((int)transfer.ToId);
+                    var to = Cache.Accounts.GetCached(transfer.ToId.Value);
                     var toBalance = Cache.TicketBalances.Get(to.Id, ticket.Id);
 
                     Db.TryAttach(to);
@@ -536,7 +534,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 else
                 {
                     #region revert burn
-                    var from = Cache.Accounts.GetCached((int)transfer.FromId);
+                    var from = Cache.Accounts.GetCached(transfer.FromId!.Value);
                     var fromBalance = Cache.TicketBalances.Get(from.Id, ticket.Id);
 
                     Db.TryAttach(from);

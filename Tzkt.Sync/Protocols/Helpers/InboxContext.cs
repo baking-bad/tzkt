@@ -2,9 +2,9 @@
 {
     public class InboxContext
     {
-        public List<(long, byte[])> Messages { get; } = new();
+        public List<(long, byte[]?)> Messages { get; } = [];
 
-        public void Push(long operationId, byte[] payload = null)
+        public void Push(long operationId, byte[]? payload = null)
         {
             Messages.Add((operationId, payload));
         }

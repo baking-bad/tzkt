@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    partial class ProtoActivator : Proto14.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto14.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -62,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
                 var pendings = Db.ChangeTracker.Entries()
                     .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
-                    .Select(x => x.Entity as Proposal)
+                    .Select(x => (x.Entity as Proposal)!)
                     .ToList();
 
                 foreach (var pending in pendings)
@@ -86,6 +84,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .ToListAsync())
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     BakerId = x.BakerId,
                     Level = x.Level,
                     Period = x.Period + 1,
@@ -102,6 +101,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             Db.VotingPeriods.Add(new VotingPeriod
             {
+                Id = 0,
                 Index = currentPeriod.Index + 1,
                 Epoch = currentPeriod.Epoch + 1,
                 FirstLevel = currentPeriod.LastLevel + 1,
@@ -128,7 +128,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync(address);
+            var account = (await Cache.Accounts.GetAsync(address))!;
             Db.TryAttach(account);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
@@ -184,7 +184,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 var bakerCycle = bakerCycles[er.BakerId];
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsements -= (int)er.Slots;
+                bakerCycle.FutureEndorsements -= er.Slots!.Value;
             }
 
             await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level} AND ""Cycle"" = {state.Cycle}");
@@ -224,7 +224,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 }
             }
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");
@@ -267,8 +267,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .OrderBy(x => x.Index)
                 .ToListAsync();
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {
@@ -396,18 +396,18 @@ namespace Tzkt.Sync.Protocols.Proto15
                     Db.TryAttach(contract);
 
                     var oldScript = await Db.Scripts.FirstAsync(x => x.ContractId == contract.Id && x.Current);
-                    var oldStorage = await Cache.Storages.GetAsync(contract);
+                    var oldStorage = await Cache.Storages.GetKnownAsync(contract);
 
                     var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
 
-                    var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                    var code = (rawContract.Required("script").RequiredMicheline("code") as MichelineArray)!;
                     var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                     var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                     var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                     var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                     var newSchema = new ContractScript(code);
-                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                    var newStorageValue = rawContract.Required("script").RequiredMicheline("storage");
                     var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 
                     if (oldScript.ParameterSchema.IsEqual(micheParameter) &&
@@ -459,7 +459,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                         .OrderBy(x => x, new BytesComparer())
                         .SelectMany(x => x)
                         .ToArray()
-                        ?? Array.Empty<byte>();
+                        ?? [];
                     var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                     var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
@@ -492,7 +492,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .ThenByDescending(x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.id);
-                    return new byte[] { (byte)baker.PublicKey[0] }.Concat(Base58.Parse(baker.Address));
+                    return new byte[] { (byte)baker.PublicKey![0] }.Concat(Base58.Parse(baker.Address));
                 }, new BytesComparer());
 
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());

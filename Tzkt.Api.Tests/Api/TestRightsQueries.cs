@@ -1,19 +1,12 @@
-﻿using System.Net.Http;
-using System.Threading.Tasks;
-using Dynamic.Json;
+﻿using Dynamic.Json;
 using Dynamic.Json.Extensions;
 using Xunit;
 
 namespace Tzkt.Api.Tests.Api
 {
-    public class TestRightsQueries : IClassFixture<SettingsFixture>
+    public class TestRightsQueries(SettingsFixture settings) : IClassFixture<SettingsFixture>
     {
-        readonly HttpClient Client;
-
-        public TestRightsQueries(SettingsFixture settings)
-        {
-            Client = settings.Client;
-        }
+        readonly HttpClient Client = settings.Client;
 
         [Fact]
         public async Task TestRightsCount()

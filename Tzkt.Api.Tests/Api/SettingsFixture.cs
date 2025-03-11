@@ -1,6 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using Dynamic.Json;
+﻿using Dynamic.Json;
 
 namespace Tzkt.Api.Tests.Api
 {
