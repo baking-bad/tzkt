@@ -17,12 +17,12 @@
         /// <summary>
         /// Related baker.
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Related staker.
         /// </summary>
-        public Alias Staker { get; set; }
+        public Alias? Staker { get; set; }
 
         /// <summary>
         /// Initially requested amount (mutez).
@@ -57,7 +57,7 @@
         /// <summary>
         /// Status of the unstake request (`pending`, `finalizable`, `finalized`).
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Number of staking updates related to the unstake request.

@@ -62,7 +62,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
-        public List<long> In { get; set; }
+        public List<long>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -70,7 +70,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
-        public List<long> Ni { get; set; }
+        public List<long>? Ni { get; set; }
 
         public bool Empty =>
             Eq == null &&

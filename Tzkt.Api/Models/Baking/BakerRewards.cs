@@ -338,7 +338,7 @@
         /// <summary>
         /// Injected historical quote at the end of the cycle
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

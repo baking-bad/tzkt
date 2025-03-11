@@ -337,7 +337,7 @@
         /// <summary>
         /// List of delegators (including stakers) at the snapshot time
         /// </summary>
-        public IEnumerable<SplitDelegator> Delegators { get; set; }
+        public required IEnumerable<SplitDelegator> Delegators { get; set; }
 
         #region deprecated
         /// <summary>

@@ -34,16 +34,16 @@
         /// `completed` - voting successfully completed and the proposal was accepted
         /// `failed` - voting was not completed due to either quorum or supermajority was not reached
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Voting periods in the epoch
         /// </summary>
-        public IEnumerable<VotingPeriod> Periods { get; set; }
+        public required IEnumerable<VotingPeriod> Periods { get; set; }
 
         /// <summary>
         /// Proposals pushed during the voting epoch (null, if there were no proposals).
         /// </summary>
-        public IEnumerable<Proposal> Proposals { get; set; }
+        public required IEnumerable<Proposal> Proposals { get; set; }
     }
 }

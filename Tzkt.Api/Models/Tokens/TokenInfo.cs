@@ -13,7 +13,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Contract, created the token.
         /// </summary>
-        public Alias Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Token id, unique within the contract.
@@ -24,7 +24,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Token standard (either `fa1.2` or `fa2`).
         /// </summary>
-        public string Standard { get; set; }
+        public required string Standard { get; set; }
 
         /// <summary>
         /// Total number of existing tokens (raw value, not divided by `decimals`).
@@ -37,6 +37,6 @@ namespace Tzkt.Api.Models
         /// **[sortable]**
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Metadata { get; set; }
+        public RawJson? Metadata { get; set; }
     }
 }

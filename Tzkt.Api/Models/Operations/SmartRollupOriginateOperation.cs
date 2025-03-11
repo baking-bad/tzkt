@@ -26,12 +26,12 @@
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the account who has sent the operation
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -74,43 +74,43 @@
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// PVM kind (`arith` or `wasm`).
         /// </summary>
-        public string PvmKind { get; set; }
+        public required string PvmKind { get; set; }
 
         /// <summary>
         /// Kernel bytes (in base64).
         /// </summary>
-        public byte[] Kernel { get; set; }
+        public required byte[] Kernel { get; set; }
 
         /// <summary>
         /// Smart rollup parameter type. Note: you can configure format by setting `micheline` query parameter.
         /// </summary>
-        public object ParameterType { get; set; }
+        public object? ParameterType { get; set; }
 
         /// <summary>
         /// Genesis commitment hash.
         /// </summary>
-        public string GenesisCommitment { get; set; }
+        public string? GenesisCommitment { get; set; }
 
         /// <summary>
         /// Originated smart rollup.
         /// </summary>
-        public Alias Rollup { get; set; }
+        public Alias? Rollup { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

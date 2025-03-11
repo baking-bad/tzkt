@@ -25,27 +25,27 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the voting period for which the ballot was submitted
         /// </summary>
-        public PeriodInfo Period { get; set; }
+        public required PeriodInfo Period { get; set; }
 
         /// <summary>
         /// Information about the proposal for which ballot was submitted
         /// </summary>
-        public ProposalAlias Proposal { get; set; }
+        public required ProposalAlias Proposal { get; set; }
 
         /// <summary>
         /// Information about the delegate (baker), submitted the ballot
         /// </summary>
-        public Alias Delegate { get; set; }
+        public required Alias Delegate { get; set; }
 
         /// <summary>
         /// Baker's voting power
@@ -55,13 +55,13 @@
         /// <summary>
         /// Vote, given in the ballot (`yay`, `nay`, or `pass`)
         /// </summary>
-        public string Vote { get; set; }
+        public required string Vote { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

@@ -15,22 +15,22 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Contract, issued the ticket.
         /// </summary>
-        public Alias Ticketer { get; set; }
-        
+        public required Alias Ticketer { get; set; }
+
         /// <summary>
         /// Ticket content type in Micheline format.
         /// </summary>
-        public IMicheline RawType { get; set; }
+        public required IMicheline RawType { get; set; }
 
         /// <summary>
         /// Ticket content in Micheline format.
         /// </summary>
-        public IMicheline RawContent { get; set; }
+        public required IMicheline RawContent { get; set; }
 
         /// <summary>
         /// Ticket content in JSON format.
         /// </summary>
-        public RawJson Content { get; set; }
+        public RawJson? Content { get; set; }
 
         /// <summary>
         /// 32-bit hash of the ticket content type.
@@ -45,7 +45,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Account, minted the ticket first.
         /// </summary>
-        public Alias FirstMinter { get; set; }
+        public required Alias FirstMinter { get; set; }
 
         /// <summary>
         /// Level of the block where the ticket was first seen.  

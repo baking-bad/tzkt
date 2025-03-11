@@ -35,7 +35,7 @@
         /// <summary>
         /// Randomly generated seed used by the network for things like baking rights distribution etc.
         /// </summary>
-        public string RandomSeed { get; set; }
+        public required string RandomSeed { get; set; }
 
         /// <summary>
         /// Total number of all active in this cycle bakers
@@ -81,7 +81,7 @@
         /// <summary>
         /// Injected historical quote at the end of the cycle
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

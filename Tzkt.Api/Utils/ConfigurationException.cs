@@ -1,7 +1,6 @@
 ﻿namespace Tzkt.Api
 {
-    class ConfigurationException : Exception
+    class ConfigurationException(string message) : Exception($"Bad configuration: {message}")
     {
-        public ConfigurationException(string message) : base($"Bad configuration: {message}") { }
     }
 }

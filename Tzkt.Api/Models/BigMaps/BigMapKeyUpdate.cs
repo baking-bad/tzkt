@@ -20,12 +20,12 @@
         /// <summary>
         /// Action with the key (`add_key`, `update_key`, `remove_key`)
         /// </summary>
-        public string Action { get; set; }
+        public required string Action { get; set; }
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
         /// Note, if the action is `remove_key` it will contain the last non-null value.
         /// </summary>
-        public object Value { get; set; }
+        public required object Value { get; set; }
     }
 }

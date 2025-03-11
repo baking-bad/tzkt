@@ -86,17 +86,17 @@
         /// <summary>
         /// Reward for baking (producing) a block (micro tez)
         /// </summary>
-        public List<long> BlockReward { get; set; }
+        public required List<long> BlockReward { get; set; }
 
         /// <summary>
         /// Security deposit for sending an endorsement operation (micro tez)
         /// </summary>
         public long EndorsementDeposit { get; set; }
-        
+
         /// <summary>
         /// Reward for sending an endorsement operation (micro tez)
         /// </summary>
-        public List<long> EndorsementReward { get; set; }
+        public required List<long> EndorsementReward { get; set; }
 
         /// <summary>
         /// Initial storage size of an originated (created) account (bytes)
@@ -196,7 +196,7 @@
         /// <summary>
         /// Governance dictator
         /// </summary>
-        public string Dictator { get; set; }
+        public string? Dictator { get; set; }
 
         #region deprecated
         /// <summary>

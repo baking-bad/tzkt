@@ -5,7 +5,7 @@
         /// <summary>
         /// Voter identity
         /// </summary>
-        public Alias Delegate { get; set; }
+        public required Alias Delegate { get; set; }
 
         /// <summary>
         /// Baker's voting power
@@ -20,7 +20,7 @@
         /// `voted_nay` - the voter voted "nay"
         /// `voted_pass` - the voter voted "pass"
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         #region deprecated
         /// <summary>

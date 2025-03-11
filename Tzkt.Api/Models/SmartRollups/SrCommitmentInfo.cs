@@ -10,7 +10,7 @@
         /// <summary>
         /// Account that published the commitment first.
         /// </summary>
-        public Alias Initiator { get; set; }
+        public required Alias Initiator { get; set; }
 
         /// <summary>
         /// Inbox level
@@ -20,12 +20,12 @@
         /// <summary>
         /// State hash
         /// </summary>
-        public string State { get; set; }
+        public required string State { get; set; }
 
         /// <summary>
         /// Commitment hash
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Number of ticks

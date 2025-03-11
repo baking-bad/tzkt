@@ -28,7 +28,7 @@
                     document.Info.Description = File.Exists("Swagger/Description.md")
                         ? File.ReadAllText("Swagger/Description.md")
                         : null;
-                    document.Info.ExtensionData = new Dictionary<string, object>
+                    document.Info.ExtensionData = new Dictionary<string, object?>
                     {
                         { "x-logo", new { url = "https://tzkt.io/logo.png", href = "https://tzkt.io/" } }
                     };
@@ -38,7 +38,7 @@
                         Description = File.Exists("Swagger/WsGetStarted.md")
                             ? File.ReadAllText("Swagger/WsGetStarted.md")
                             : null,
-                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
+                        ExtensionData = new Dictionary<string, object?>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -46,7 +46,7 @@
                         Description = File.Exists("Swagger/WsSubscriptions.md")
                             ? File.ReadAllText("Swagger/WsSubscriptions.md")
                             : null,
-                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
+                        ExtensionData = new Dictionary<string, object?>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -54,7 +54,7 @@
                         Description = File.Exists("Swagger/WsExamples.md")
                             ? File.ReadAllText("Swagger/WsExamples.md")
                             : null,
-                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "ws"}}
+                        ExtensionData = new Dictionary<string, object?>{{"x-tagGroup", "ws"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -62,7 +62,7 @@
                         Description = File.Exists("Swagger/TypescriptSdk.md")
                             ? File.ReadAllText("Swagger/TypescriptSdk.md")
                             : null,
-                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
+                        ExtensionData = new Dictionary<string, object?>{{"x-tagGroup", "sdk"}}
                     });
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
@@ -70,9 +70,9 @@
                         Description = File.Exists("Swagger/TaquitoExt.md")
                             ? File.ReadAllText("Swagger/TaquitoExt.md")
                             : null,
-                        ExtensionData = new Dictionary<string, object>{{"x-tagGroup", "sdk"}}
+                        ExtensionData = new Dictionary<string, object?>{{"x-tagGroup", "sdk"}}
                     });
-                    document.ExtensionData = new Dictionary<string, object>
+                    document.ExtensionData = new Dictionary<string, object?>
                     {
                         {
                             "x-tagGroups", new []
@@ -86,7 +86,7 @@
                                 {
                                     name = "WebSocket API",
                                     tags = document.Tags
-                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("ws"))
+                                        .Where(x => x.ExtensionData?["x-tagGroup"]?.Equals("ws") == true)
                                         .Select(x => x.Name)
                                         .ToList()
                                 },
@@ -94,14 +94,14 @@
                                 {
                                     name = "Libraries",
                                     tags = document.Tags
-                                        .Where(x => x.ExtensionData["x-tagGroup"].Equals("sdk"))
+                                        .Where(x => x.ExtensionData?["x-tagGroup"]?.Equals("sdk") == true)
                                         .Select(x => x.Name)
                                         .ToList()
                                 }
                             }
                         }
                     };
-                    document.Produces = new[] { "application/json" };
+                    document.Produces = ["application/json"];
                 };
             });
         }

@@ -2,16 +2,15 @@
 
 namespace System.ComponentModel.DataAnnotations
 {
-    public sealed class HexAttribute : ValidationAttribute
+    public sealed class HexAttribute(int len) : ValidationAttribute
     {
-        readonly string Pattern;
-        public HexAttribute(int len) => Pattern = $@"^[0-9A-Fa-f]{{{len}}}$";
+        readonly string Pattern = $@"^[0-9A-Fa-f]{{{len}}}$";
 
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, Pattern)
+            return value is string str && !Regex.IsMatch(str, Pattern)
                 ? new ValidationResult("Invalid hex format or length")
-                : ValidationResult.Success;
+                : ValidationResult.Success!;
         }
     }
 }

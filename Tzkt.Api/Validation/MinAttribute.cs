@@ -1,19 +1,14 @@
 ﻿namespace System.ComponentModel.DataAnnotations
 {
-    public sealed class MinAttribute : ValidationAttribute
+    public sealed class MinAttribute(int minimum) : ValidationAttribute
     {
-        readonly int Minimum;
-        
-        public MinAttribute(int minimum)
-        {
-            Minimum = minimum;
-        }
+        readonly int Minimum = minimum;
 
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value != null && (int)value < Minimum
+            return value is int v && v < Minimum
                 ? new ValidationResult($"The value must be greater than or equal to {Minimum}.")
-                : ValidationResult.Success;
+                : ValidationResult.Success!;
         }
     }
 }

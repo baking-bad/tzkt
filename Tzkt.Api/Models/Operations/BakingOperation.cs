@@ -25,17 +25,17 @@
         /// <summary>
         /// Block hash
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Baker who proposed the block payload
         /// </summary>
-        public Alias Proposer { get; set; }
+        public required Alias Proposer { get; set; }
 
         /// <summary>
         /// Baker who produced the block
         /// </summary>
-        public Alias Producer { get; set; }
+        public required Alias Producer { get; set; }
 
         /// <summary>
         /// Round at which the block payload was proposed
@@ -109,7 +109,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

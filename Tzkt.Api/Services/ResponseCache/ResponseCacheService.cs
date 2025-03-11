@@ -83,7 +83,7 @@ namespace Tzkt.Api.Services
             }
         }
 
-        public static string BuildKey(string path, params (string, object)[] query)
+        public static string BuildKey(string path, params (string, object?)[] query)
         {
             var sb = new StringBuilder(path);
 

@@ -61,10 +61,8 @@ namespace Tzkt.Api.Models
         public abstract long Id { get; set; }
     }
 
-    public class OperationJsonInheritanceConverter : JsonInheritanceConverter<Operation>
+    public class OperationJsonInheritanceConverter(string name) : JsonInheritanceConverter<Operation>(name)
     {
-        public OperationJsonInheritanceConverter(string name) : base(name) { }
-
         public override string GetDiscriminatorValue(Type type)
         {
             if (type == typeof(EndorsementOperation))

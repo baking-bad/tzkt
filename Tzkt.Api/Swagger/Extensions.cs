@@ -11,10 +11,10 @@ namespace Tzkt.Api.Swagger
             {
                 if (param.Schema.HasOneOfSchemaReference)
                 {
-                    var extensionData = param.Schema.OneOf.First().Reference.ExtensionData;
+                    var extensionData = param.Schema.OneOf.First().Reference?.ExtensionData;
                     if (extensionData != null)
                     {
-                        param.ExtensionData ??= new Dictionary<string, object>();
+                        param.ExtensionData ??= new Dictionary<string, object?>();
                         foreach (var item in extensionData)
                             param.ExtensionData.TryAdd(item.Key, item.Value);
                     }
@@ -24,18 +24,12 @@ namespace Tzkt.Api.Swagger
         }
     }
 
-    public class AnyOfExtensionProcessor : IOperationProcessor
+    public class AnyOfExtensionProcessor(string operationId, string anyOfValues) : IOperationProcessor
     {
-        private string OperationId { get; }
-        private string AnyOfValues { get; }
+        private string OperationId { get; } = operationId;
+        private string AnyOfValues { get; } = anyOfValues;
         private const string AnyOfName = "anyof";
         private const string AnyOfExtensionKey = "x-tzkt-anyof-parameter";
-
-        public AnyOfExtensionProcessor(string operationId, string anyOfValues)
-        {
-            OperationId = operationId;
-            AnyOfValues = anyOfValues;
-        }
 
         public bool Process(OperationProcessorContext context)
         {
@@ -45,7 +39,7 @@ namespace Tzkt.Api.Swagger
                 {
                     if (param.Name == AnyOfName)
                     {
-                        param.ExtensionData ??= new Dictionary<string, object>();
+                        param.ExtensionData ??= new Dictionary<string, object?>();
                         param.ExtensionData.Add(AnyOfExtensionKey, AnyOfValues);
                     }
                 }

@@ -15,13 +15,13 @@ namespace Tzkt.Api.Models
         /// Ticket info.  
         /// Click on the field to expand more details.
         /// </summary>
-        public TicketInfoShort Ticket { get; set; }
+        public required TicketInfoShort Ticket { get; set; }
 
         /// <summary>
         /// Owner account.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias Account { get; set; }
+        public required Alias Account { get; set; }
 
         /// <summary>
         /// Balance.  

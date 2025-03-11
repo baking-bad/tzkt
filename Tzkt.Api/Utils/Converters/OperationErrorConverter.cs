@@ -22,11 +22,11 @@ namespace Tzkt.Api
 
             return type switch
             {
-                "contract.balance_too_low" => JsonSerializer.Deserialize<BalanceTooLowError>(ref reader, options),
-                "contract.manager.unregistered_delegate" => JsonSerializer.Deserialize<UnregisteredDelegateError>(ref reader, options),
-                "contract.non_existing_contract" => JsonSerializer.Deserialize<NonExistingContractError>(ref reader, options),
-                "Expression_already_registered" => JsonSerializer.Deserialize<ExpressionAlreadyRegisteredError>(ref reader, options),
-                _ => JsonSerializer.Deserialize<BaseOperationError>(ref reader, options)
+                "contract.balance_too_low" => JsonSerializer.Deserialize<BalanceTooLowError>(ref reader, options)!,
+                "contract.manager.unregistered_delegate" => JsonSerializer.Deserialize<UnregisteredDelegateError>(ref reader, options)!,
+                "contract.non_existing_contract" => JsonSerializer.Deserialize<NonExistingContractError>(ref reader, options)!,
+                "Expression_already_registered" => JsonSerializer.Deserialize<ExpressionAlreadyRegisteredError>(ref reader, options)!,
+                _ => JsonSerializer.Deserialize<BaseOperationError>(ref reader, options)!
             };
         }
 
@@ -47,6 +47,6 @@ namespace Tzkt.Api
         }
 
         public static List<OperationError> Deserialize(string json)
-            => JsonSerializer.Deserialize<List<OperationError>>(json, Options);
+            => JsonSerializer.Deserialize<List<OperationError>>(json, Options) ?? [];
     }
 }

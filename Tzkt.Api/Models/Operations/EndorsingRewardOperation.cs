@@ -25,12 +25,12 @@
         /// <summary>
         /// Block hash
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Baker expected to receive endorsing reward
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Expected endorsing reward, based on baker's active stake (micro tez)
@@ -65,7 +65,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated

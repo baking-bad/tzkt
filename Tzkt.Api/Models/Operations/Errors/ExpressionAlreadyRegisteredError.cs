@@ -10,12 +10,12 @@ namespace Tzkt.Api.Models
         /// https://tezos.gitlab.io/api/errors.html - full list of errors
         /// </summary>
         [JsonPropertyName("type")]
-        public override string Type { get; set; }
+        public override required string Type { get; set; }
 
         /// <summary>
         /// Global address of the constant
         /// </summary>
         [JsonPropertyName("expression")]
-        public string Expression { get; set; }
+        public required string Expression { get; set; }
     }
 }

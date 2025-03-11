@@ -21,7 +21,7 @@
         /// <summary>
         /// Baker at the snapshot time.
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Baker's baking power
@@ -344,7 +344,7 @@
         /// <summary>
         /// Injected historical quote at the end of the cycle
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
 
         #region deprecated
