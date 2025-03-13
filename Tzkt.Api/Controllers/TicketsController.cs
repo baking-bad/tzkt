@@ -78,7 +78,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTickets(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTickets(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -153,7 +153,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTicketBalances(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTicketBalances(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -240,7 +240,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetTicketTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetTicketTransfers(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -298,7 +298,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tickets.GetHistoricalTicketBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tickets.GetHistoricalTicketBalances(level, filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);

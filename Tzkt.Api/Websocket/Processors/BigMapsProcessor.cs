@@ -13,18 +13,18 @@ namespace Tzkt.Api.Websocket.Processors
         const string BigMapsChannel = "bigmaps";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly HashSet<string> AllSubs = new();
-        static readonly Dictionary<int, HashSet<string>> PtrSubs = new();
-        static readonly Dictionary<BigMapTag, HashSet<string>> TagSubs = new();
-        static readonly Dictionary<string, ContractSub> ContractSubs = new();
+        static readonly HashSet<string> AllSubs = [];
+        static readonly Dictionary<int, HashSet<string>> PtrSubs = [];
+        static readonly Dictionary<BigMapTag, HashSet<string>> TagSubs = [];
+        static readonly Dictionary<string, ContractSub> ContractSubs = [];
 
-        static readonly Dictionary<string, int> Limits = new();
+        static readonly Dictionary<string, int> Limits = [];
 
         class ContractSub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<string, HashSet<string>> Paths { get; set; }
-            public Dictionary<BigMapTag, HashSet<string>> Tags { get; set; }
+            public HashSet<string>? All { get; set; }
+            public Dictionary<string, HashSet<string>>? Paths { get; set; }
+            public Dictionary<BigMapTag, HashSet<string>>? Tags { get; set; }
 
             public bool Empty => All == null && Paths == null && Tags == null;
         }
@@ -328,7 +328,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId)
+        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId) where TSubKey : notnull
         {
             if (!subs.TryGetValue(key, out var set))
             {
@@ -346,7 +346,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
         }
 
-        private static void TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
+        private static void TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId) where TSubKey : notnull
         {
             foreach (var (key, value) in subs)
             {

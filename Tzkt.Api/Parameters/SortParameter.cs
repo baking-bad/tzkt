@@ -13,7 +13,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?sort=balance`.
         /// </summary>
-        public string Asc { get; set; }
+        public string? Asc { get; set; }
 
         /// <summary>
         /// **Descending** sort mode. \
@@ -21,7 +21,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?sort.desc=id`.
         /// </summary>
-        public string Desc { get; set; }
+        public string? Desc { get; set; }
 
         public bool Validate(params string[] fields)
         {

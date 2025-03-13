@@ -12,17 +12,17 @@ namespace Tzkt.Api.Websocket.Processors
         const string Channel = "events";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly HashSet<string> AllSubs = new();
-        static readonly Dictionary<string, HashSet<string>> TagSubs = new();
-        static readonly Dictionary<string, Sub> ContractSubs = new();
-        static readonly Dictionary<int, Sub> CodeHashSubs = new();
+        static readonly HashSet<string> AllSubs = [];
+        static readonly Dictionary<string, HashSet<string>> TagSubs = [];
+        static readonly Dictionary<string, Sub> ContractSubs = [];
+        static readonly Dictionary<int, Sub> CodeHashSubs = [];
 
-        static readonly Dictionary<string, int> Limits = new();
+        static readonly Dictionary<string, int> Limits = [];
 
         class Sub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<string, HashSet<string>> Tags { get; set; }
+            public HashSet<string>? All { get; set; }
+            public Dictionary<string, HashSet<string>>? Tags { get; set; }
 
             public bool Empty => All == null && Tags == null;
         }
@@ -215,7 +215,7 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                     else
                     {
-                        contractSub.All ??= new();
+                        contractSub.All ??= [];
                         TryAdd(contractSub.All, connectionId);
                     }
                 }
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                     else
                     {
-                        codeHashSub.All ??= new();
+                        codeHashSub.All ??= [];
                         TryAdd(codeHashSub.All, connectionId);
                     }
                 }
@@ -343,7 +343,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId)
+        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId) where TSubKey : notnull
         {
             if (!subs.TryGetValue(key, out var set))
             {
@@ -361,7 +361,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
         }
 
-        private static void TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
+        private static void TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId) where TSubKey : notnull
         {
             foreach (var (key, value) in subs)
             {
@@ -379,7 +379,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Limits[connectionId]--;
         }
 
-        private static IEnumerable<Models.ContractEvent> Distinct(List<Models.ContractEvent> items)
+        private static IEnumerable<ContractEvent> Distinct(List<ContractEvent> items)
         {
             var set = new HashSet<int>(items.Count);
             foreach (var item in items)

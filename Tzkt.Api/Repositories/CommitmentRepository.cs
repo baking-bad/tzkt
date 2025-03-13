@@ -18,7 +18,7 @@ namespace Tzkt.Api.Repositories
             Time = time;
         }
 
-        public async Task<int> GetCount(bool? activated, Int64Parameter balance)
+        public async Task<int> GetCount(bool? activated, Int64Parameter? balance)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Commitments""")
                 .Filter("Level", activated == null ? null : new Int32NullParameter { Null = !activated })
@@ -28,7 +28,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<Commitment> Get(string address)
+        public async Task<Commitment?> Get(string address)
         {
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(@"SELECT * FROM ""Commitments"" WHERE ""Address"" = @address::character(37)", new { address });
@@ -47,10 +47,10 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Commitment>> Get(
             bool? activated,
-            Int32NullParameter activationLevel,
-            Int64Parameter balance,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32NullParameter? activationLevel,
+            Int64Parameter? balance,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Commitments""")
@@ -78,12 +78,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(
+        public async Task<object?[][]> Get(
             bool? activated,
-            Int32NullParameter activationLevel,
-            Int64Parameter balance,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32NullParameter? activationLevel,
+            Int64Parameter? balance,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields)
         {
@@ -102,7 +102,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Commitments""")
                 .Filter("Level", activated == null ? null : new Int32NullParameter { Null = !activated })
@@ -118,9 +118,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -156,12 +156,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
+        public async Task<object?[]> Get(
             bool? activated,
-            Int32NullParameter activationLevel,
-            Int64Parameter balance,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32NullParameter? activationLevel,
+            Int64Parameter? balance,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field)
         {
@@ -177,7 +177,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Commitments""")
                 .Filter("Level", activated == null ? null : new Int32NullParameter { Null = !activated })
@@ -193,7 +193,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

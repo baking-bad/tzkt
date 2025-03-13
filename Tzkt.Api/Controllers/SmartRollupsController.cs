@@ -82,7 +82,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Smart rollup address</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<ActionResult<SmartRollup>> GetSmartRollup([Address] string address)
+        public async Task<ActionResult<SmartRollup?>> GetSmartRollup([Address] string address)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);
 
@@ -135,7 +135,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Smart rollup address</param>
         /// <returns></returns>
         [HttpGet("{address}/interface")]
-        public async Task<ActionResult<ContractInterface>> GetInterface([Required][Address] string address)
+        public async Task<ActionResult<RawJson?>> GetInterface([Required][Address] string address)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);
 

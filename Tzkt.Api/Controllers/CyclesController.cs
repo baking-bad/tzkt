@@ -46,9 +46,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cycle>>> Get(
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Cycles.Get(sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -92,7 +92,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{index:int}")]
-        public Task<Cycle> GetByIndex([Min(0)] int index, Symbols quote = Symbols.None)
+        public Task<Cycle?> GetByIndex([Min(0)] int index, Symbols quote = Symbols.None)
         {
             return Cycles.Get(index, quote);
         }

@@ -65,7 +65,7 @@
         /// <summary>
         /// Information about the rollup to which the operation was sent
         /// </summary>
-        public Alias Rollup { get; set; }
+        public Alias? Rollup { get; set; }
 
         /// <summary>
         /// Amount of bonds (micro tez) locked

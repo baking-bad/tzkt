@@ -33,11 +33,11 @@ namespace Tzkt.Api
             if (tags >= BigMapTag.Metadata)
             {
                 if ((tags & BigMapTag.Metadata) != 0)
-                    return new(1) { Metadata };
+                    return [Metadata];
                 else if ((tags & BigMapTag.TokenMetadata) != 0)
-                    return new(1) { TokenMetadata };
+                    return [TokenMetadata];
                 else if ((tags & BigMapTag.Ledger) != 0)
-                    return new(1) { Ledger };
+                    return [Ledger];
             }
             return null;
         }

@@ -10,7 +10,7 @@ namespace Tzkt.Api.Repositories
 {
     public partial class AccountRepository
     {
-        async Task<IEnumerable<dynamic>> QueryContractsAsync(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryContractsAsync(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = $@"
                 c.*,
@@ -80,7 +80,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -116,7 +116,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
-        public async Task<Contract> GetContract(string address, bool legacy)
+        public async Task<Contract?> GetContract(string address, bool legacy)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract)
@@ -126,7 +126,7 @@ namespace Tzkt.Api.Repositories
                 : await Accounts.GetAsync((int)contract.CreatorId);
 
             var manager = contract.ManagerId == null ? null
-                : (RawUser)await Accounts.GetAsync((int)contract.ManagerId);
+                : await Accounts.GetAsync((int)contract.ManagerId) as RawUser;
 
             var delegat = contract.DelegateId == null ? null
                 : await Accounts.GetAsync((int)contract.DelegateId);
@@ -148,7 +148,7 @@ namespace Tzkt.Api.Repositories
                 {
                     Alias = manager.Alias,
                     Address = manager.Address,
-                    PublicKey = manager.PublicKey,
+                    PublicKey = manager.PublicKey!,
                 },
                 Delegate = delegat == null ? null : new DelegateInfo
                 {
@@ -157,7 +157,7 @@ namespace Tzkt.Api.Repositories
                     Active = delegat.Staked
                 },
                 DelegationLevel = delegat == null ? null : contract.DelegationLevel,
-                DelegationTime = delegat == null ? null : Time[(int)contract.DelegationLevel],
+                DelegationTime = delegat == null ? null : Time[contract.DelegationLevel!.Value],
                 FirstActivity = contract.FirstLevel,
                 FirstActivityTime = Time[contract.FirstLevel],
                 LastActivity = contract.LastLevel,
@@ -219,7 +219,7 @@ namespace Tzkt.Api.Repositories
                     : Accounts.Get((int)row.CreatorId);
 
                 var manager = row.ManagerId == null ? null
-                    : (RawUser)Accounts.Get((int)row.ManagerId);
+                    : Accounts.Get((int)row.ManagerId) as RawUser;
 
                 var contractDelegate = row.DelegateId == null ? null
                     : Accounts.Get((int)row.DelegateId);
@@ -241,7 +241,7 @@ namespace Tzkt.Api.Repositories
                     {
                         Alias = manager.Alias,
                         Address = manager.Address,
-                        PublicKey = manager.PublicKey,
+                        PublicKey = manager.PublicKey!,
                     },
                     Delegate = contractDelegate == null ? null : new DelegateInfo
                     {
@@ -274,18 +274,18 @@ namespace Tzkt.Api.Repositories
                     EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
-                    Storage = row.Kind == 0 ? $"\"{manager.Address}\"" : (RawJson)row.Storage
+                    Storage = row.Kind == 0 ? $"\"{manager!.Address}\"" : (RawJson)row.Storage
                 };
             });
         }
 
-        public async Task<object[][]> GetContracts(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetContracts(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryContractsAsync(includeStorage, filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -332,35 +332,35 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "creator.alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId).Alias;
+                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId)?.Alias;
                         break;
                     case "creator.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId).Address;
+                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId)?.Address;
                         break;
                     case "manager":
                         foreach (var row in rows)
                         {
-                            var _manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
+                            var _manager = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId) as RawUser;
                             result[j++][i] = _manager == null ? null : new ManagerInfo
                             {
                                 Alias = _manager.Alias,
                                 Address = _manager.Address,
-                                PublicKey = _manager.PublicKey,
+                                PublicKey = _manager.PublicKey!,
                             };
                         }
                         break;
                     case "manager.alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId).Alias;
+                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId)?.Alias;
                         break;
                     case "manager.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId).Address;
+                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId)?.Address;
                         break;
                     case "manager.publicKey":
                         foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : ((RawUser)Accounts.Get((int)row.ManagerId)).PublicKey;
+                            result[j++][i] = row.ManagerId == null ? null : (Accounts.Get((int)row.ManagerId) as RawUser)?.PublicKey;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -376,15 +376,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "delegate.alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Alias;
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId)?.Alias;
                         break;
                     case "delegate.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Address;
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId)?.Address;
                         break;
                     case "delegate.active":
                         foreach (var row in rows)
-                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId).Staked;
+                            result[j++][i] = row.DelegateId == null ? null : Accounts.Get((int)row.DelegateId)?.Staked;
                         break;
                     case "delegationLevel":
                         foreach (var row in rows)
@@ -491,7 +491,7 @@ namespace Tzkt.Api.Repositories
                         {
                             if (row.Kind == 0)
                             {
-                                result[j++][i] = $"\"{Accounts.Get((int)row.ManagerId).Address}\"";
+                                result[j++][i] = $"\"{Accounts.Get((int)row.ManagerId)!.Address}\"";
                             }
                             else
                             {
@@ -502,7 +502,7 @@ namespace Tzkt.Api.Repositories
                     default:
                         if (fields[i].Full.StartsWith("storage."))
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string)!;
                         break;
                 }
             }
@@ -510,7 +510,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<byte[]> GetByteCode(string address)
+        public async Task<byte[]?> GetByteCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -526,13 +526,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToBytes();
         }
 
-        public async Task<byte[]> GetByteCode(string address, int level)
+        public async Task<byte[]?> GetByteCode(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -562,13 +562,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToBytes();
         }
 
-        public async Task<IMicheline> GetMichelineCode(string address)
+        public async Task<IMicheline?> GetMichelineCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -584,13 +584,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code;
         }
 
-        public async Task<IMicheline> GetMichelineCode(string address, int level)
+        public async Task<IMicheline?> GetMichelineCode(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -620,13 +620,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code;
         }
 
-        public async Task<string> GetMichelsonCode(string address)
+        public async Task<string?> GetMichelsonCode(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -642,13 +642,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToMichelson();
         }
 
-        public async Task<string> GetMichelsonCode(string address, int level)
+        public async Task<string?> GetMichelsonCode(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -678,13 +678,13 @@ namespace Tzkt.Api.Repositories
             code.Add(Micheline.FromBytes(row.ParameterSchema));
             code.Add(Micheline.FromBytes(row.StorageSchema));
             if (row.Views != null)
-                code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
+                code.AddRange(((byte[][])row.Views).Select(Micheline.FromBytes));
             code.Add(Micheline.FromBytes(row.CodeSchema));
 
             return code.ToMichelson();
         }
 
-        public async Task<ContractInterface> GetContractInterface(string address)
+        public async Task<ContractInterface?> GetContractInterface(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -715,16 +715,16 @@ namespace Tzkt.Api.Repositories
             }
 
             var rawStorage = await GetRawStorageValue(address);
-            var storageTreeView = storage.Schema.ToTreeView(rawStorage);
+            var storageTreeView = storage.Schema.ToTreeView(rawStorage!);
 
             return new ContractInterface
             {
-                StorageSchema = storage.GetJsonSchema(),
+                StorageSchema = storage.GetJsonSchema()!,
                 Entrypoints = param.Entrypoints
                     .Select(x => new EntrypointInterface
                     {
                         Name = x.Key,
-                        ParameterSchema = x.Value.GetJsonSchema()
+                        ParameterSchema = x.Value.GetJsonSchema()!
                     })
                     .ToList(),
                 BigMaps = storageTreeView.Nodes()
@@ -733,22 +733,22 @@ namespace Tzkt.Api.Repositories
                     {
                         Name = x.Name,
                         Path = x.Path,
-                        KeySchema = (x.Schema as BigMapSchema).Key.GetJsonSchema(),
-                        ValueSchema = (x.Schema as BigMapSchema).Value.GetJsonSchema()
+                        KeySchema = (x.Schema as BigMapSchema)!.Key.GetJsonSchema()!,
+                        ValueSchema = (x.Schema as BigMapSchema)!.Value.GetJsonSchema()!
                     })
                     .ToList(),
                 Events = code
                     .FindPrimNodes(x => x.Prim == PrimType.EMIT && x.Annots?.Count == 1 && x.Args?.Count == 1)
                     .Select(x => new EventInterface()
                     {
-                        Tag = x.Annots[0].Value,
-                        EventSchema = Schema.Create(x.Args[0] as MichelinePrim).GetJsonSchema()
+                        Tag = x.Annots![0].Value,
+                        EventSchema = Schema.Create((x.Args![0] as MichelinePrim)!).GetJsonSchema()!
                     })
                     .ToList()
             };
         }
         
-        public async Task<MichelinePrim> GetViewMicheline(string address, string name)
+        public async Task<MichelinePrim?> GetViewMicheline(string address, string name)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -762,11 +762,11 @@ namespace Tzkt.Api.Repositories
                 """, new { id = contract.Id });
             
             return row?.Views == null ? null : ((byte[][])row.Views)
-                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
-                .FirstOrDefault(x => (x.Args[0] as MichelineString)?.Value == name);
+                .Select(x => (Micheline.FromBytes(x) as MichelinePrim)!)
+                .FirstOrDefault(x => (x.Args![0] as MichelineString)?.Value == name);
         }
 
-        public async Task<IMicheline> BuildEntrypointParameters(string address, string name, object value)
+        public async Task<IMicheline?> BuildEntrypointParameters(string address, string name, object value)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -788,7 +788,7 @@ namespace Tzkt.Api.Repositories
             return param.BuildOptimized(name, value);
         }
 
-        public async Task<Entrypoint> GetEntrypoint(string address, string name, bool json, bool micheline, bool michelson)
+        public async Task<Entrypoint?> GetEntrypoint(string address, string name, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -811,7 +811,7 @@ namespace Tzkt.Api.Repositories
             return new Entrypoint
             {
                 Name = name,
-                JsonParameters = json ? (RawJson)ep.Humanize() : null,
+                JsonParameters = json ? ep.Humanize() : null,
                 MichelineParameters = mich,
                 MichelsonParameters = michelson ? (mich ?? ep.ToMicheline()).ToMichelson() : null,
                 Unused = !param.IsEntrypointUseful(name)
@@ -821,7 +821,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Entrypoint>> GetEntrypoints(string address, bool all, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract) return Enumerable.Empty<Entrypoint>();
+            if (rawAccount is not RawContract contract) return [];
 
             ContractParameter param;
             if (contract.Kind == 0)
@@ -832,7 +832,7 @@ namespace Tzkt.Api.Repositories
             {
                 await using var db = await DataSource.OpenConnectionAsync();
                 var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-                if (row == null) return Enumerable.Empty<Entrypoint>();
+                if (row == null) return [];
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             }
 
@@ -844,7 +844,7 @@ namespace Tzkt.Api.Repositories
                     return new Entrypoint
                     {
                         Name = x.Key,
-                        JsonParameters = json ? (RawJson)x.Value.Humanize() : null,
+                        JsonParameters = json ? x.Value.Humanize() : null,
                         MichelineParameters = mich,
                         MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
                         Unused = all && !param.IsEntrypointUseful(x.Key)
@@ -852,26 +852,26 @@ namespace Tzkt.Api.Repositories
                 });
         }
 
-        public async Task<ContractView> GetView(string address, string name, bool json, bool micheline, bool michelson)
+        public async Task<ContractView?> GetView(string address, string name, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract || contract.Kind == 0) return null;
 
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-            if (row == null || row.Views == null) return null;
+            if (row?.Views == null) return null;
 
             var view = ((byte[][])row.Views)
-                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
-                .Where(x => (x.Args[0] as MichelineString).Value == name)
+                .Select(x => (Micheline.FromBytes(x) as MichelinePrim)!)
+                .Where(x => (x.Args![0] as MichelineString)?.Value == name)
                 .FirstOrDefault();
             if (view == null) return null;
 
             return new ContractView
             {
-                Name = (view.Args[0] as MichelineString).Value,
-                JsonParameterType = json ? Schema.Create(view.Args[1] as MichelinePrim).Humanize() : null,
-                JsonReturnType = json ? Schema.Create(view.Args[2] as MichelinePrim).Humanize() : null,
+                Name = (view.Args![0] as MichelineString)!.Value,
+                JsonParameterType = json ? Schema.Create((view.Args[1] as MichelinePrim)!).Humanize() : null,
+                JsonReturnType = json ? Schema.Create((view.Args[2] as MichelinePrim)!).Humanize() : null,
                 MichelineParameterType = micheline ? view.Args[1] : null,
                 MichelineReturnType = micheline ? view.Args[2] : null,
                 MichelsonParameterType = michelson ? view.Args[1].ToMichelson() : null,
@@ -882,19 +882,19 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<ContractView>> GetViews(string address, bool json, bool micheline, bool michelson)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract || contract.Kind == 0) return Enumerable.Empty<ContractView>();
+            if (rawAccount is not RawContract contract || contract.Kind == 0) return [];
 
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-            if (row == null || row.Views == null) return Enumerable.Empty<ContractView>();
+            if (row?.Views == null) return [];
 
             return ((byte[][])row.Views)
-                .Select(x => Micheline.FromBytes(x) as MichelinePrim)
+                .Select(x => (Micheline.FromBytes(x) as MichelinePrim)!)
                 .Select(view => new ContractView
                 {
-                    Name = (view.Args[0] as MichelineString).Value,
-                    JsonParameterType = json ? Schema.Create(view.Args[1] as MichelinePrim).Humanize() : null,
-                    JsonReturnType = json ? Schema.Create(view.Args[2] as MichelinePrim).Humanize() : null,
+                    Name = (view.Args![0] as MichelineString)!.Value,
+                    JsonParameterType = json ? Schema.Create((view.Args[1] as MichelinePrim)!).Humanize() : null,
+                    JsonReturnType = json ? Schema.Create((view.Args[2] as MichelinePrim)!).Humanize() : null,
                     MichelineParameterType = micheline ? view.Args[1] : null,
                     MichelineReturnType = micheline ? view.Args[2] : null,
                     MichelsonParameterType = michelson ? view.Args[1].ToMichelson() : null,
@@ -902,15 +902,15 @@ namespace Tzkt.Api.Repositories
                 });
         }
 
-        public async Task<string> GetStorageValue(string address, JsonPath[] path)
+        public async Task<string?> GetStorageValue(string address, JsonPath[]? path)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
             if (contract.Kind == 0)
             {
-                var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return path?.Length > 0 ? null : $"\"{manager.Address}\"";
+                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
+                return path?.Length > 0 ? null : $"\"{manager!.Address}\"";
             }
 
             var pathSelector = path == null ? string.Empty : " #> @path";
@@ -927,7 +927,7 @@ namespace Tzkt.Api.Repositories
             return row?.JsonValue;
         }
 
-        public async Task<string> GetStorageValue(string address, JsonPath[] path, int level)
+        public async Task<string?> GetStorageValue(string address, JsonPath[]? path, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -939,8 +939,8 @@ namespace Tzkt.Api.Repositories
             {
                 if (level < 655_360 && State.Current.Chain == "mainnet")
                     return null;
-                var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return path?.Length > 0 ? null : $"\"{manager.Address}\"";
+                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
+                return path?.Length > 0 ? null : $"\"{manager!.Address}\"";
             }
 
             if (level >= contract.LastLevel)
@@ -962,15 +962,15 @@ namespace Tzkt.Api.Repositories
             return row?.JsonValue;
         }
 
-        public async Task<IMicheline> GetRawStorageValue(string address)
+        public async Task<IMicheline?> GetRawStorageValue(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
             if (contract.Kind == 0)
             {
-                var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return new MichelineString(manager.Address);
+                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
+                return new MichelineString(manager!.Address);
             }
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -984,7 +984,7 @@ namespace Tzkt.Api.Repositories
             return Micheline.FromBytes(row.RawValue);
         }
 
-        public async Task<IMicheline> GetRawStorageValue(string address, int level)
+        public async Task<IMicheline?> GetRawStorageValue(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -996,8 +996,8 @@ namespace Tzkt.Api.Repositories
             {
                 if (level < 655_360 && State.Current.Chain == "mainnet")
                     return null;
-                var manager = await Accounts.GetAsync((int)contract.ManagerId);
-                return new MichelineString(manager.Address);
+                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
+                return new MichelineString(manager!.Address);
             }
 
             if (level >= contract.LastLevel)
@@ -1016,7 +1016,7 @@ namespace Tzkt.Api.Repositories
             return Micheline.FromBytes(row.RawValue);
         }
 
-        public async Task<string> GetStorageSchema(string address)
+        public async Task<string?> GetStorageSchema(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -1036,7 +1036,7 @@ namespace Tzkt.Api.Repositories
             return schema.Humanize();
         }
 
-        public async Task<string> GetStorageSchema(string address, int level)
+        public async Task<string?> GetStorageSchema(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -1066,7 +1066,7 @@ namespace Tzkt.Api.Repositories
             return schema.Humanize();
         }
 
-        public async Task<IMicheline> GetRawStorageSchema(string address)
+        public async Task<IMicheline?> GetRawStorageSchema(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -1082,10 +1082,10 @@ namespace Tzkt.Api.Repositories
                 LIMIT       1");
 
             if (row == null) return null;
-            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim).Args[0];
+            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim)!.Args![0];
         }
 
-        public async Task<IMicheline> GetRawStorageSchema(string address, int level)
+        public async Task<IMicheline?> GetRawStorageSchema(string address, int level)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
@@ -1111,13 +1111,13 @@ namespace Tzkt.Api.Repositories
                 LIMIT       1");
 
             if (row == null) return null;
-            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim).Args[0];
+            return (Micheline.FromBytes(row.StorageSchema) as MichelinePrim)!.Args![0];
         }
 
         public async Task<IEnumerable<StorageRecord>> GetStorageHistory(string address, int lastId, int limit)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
+            if (rawAccount is not RawContract contract) return [];
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync($@"
@@ -1149,7 +1149,7 @@ namespace Tzkt.Api.Repositories
                 {(lastId > 0 ? $@"AND ss.""Id"" < {lastId}" : "")}
                 ORDER BY    ss.""Id"" DESC
                 LIMIT       {limit}");
-            if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
+            if (!rows.Any()) return [];
 
             return rows.Select(row =>
             {
@@ -1206,7 +1206,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<StorageRecord>> GetRawStorageHistory(string address, int lastId, int limit)
         {
             var rawAccount = await Accounts.GetAsync(address);
-            if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
+            if (rawAccount is not RawContract contract) return [];
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync($@"
@@ -1238,7 +1238,7 @@ namespace Tzkt.Api.Repositories
                 {(lastId > 0 ? $@"AND ss.""Id"" < {lastId}" : "")}
                 ORDER BY    ss.""Id"" DESC
                 LIMIT       {limit}");
-            if (!rows.Any()) return Enumerable.Empty<StorageRecord>();
+            if (!rows.Any()) return [];
 
             return rows.Select(row =>
             {
@@ -1294,7 +1294,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public static async Task<Dictionary<int, object>> GetStorages(IDbConnection db, List<int> ids, MichelineFormat format)
+        public static async Task<Dictionary<int, object>?> GetStorages(IDbConnection db, List<int> ids, MichelineFormat format)
         {
             if (ids.Count == 0) return null;
 

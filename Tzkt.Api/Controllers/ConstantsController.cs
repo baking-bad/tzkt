@@ -39,15 +39,15 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Constant>>> Get(
-            ExpressionParameter address,
-            Int32Parameter creationLevel,
-            TimestampParameter creationTime,
-            AccountParameter creator,
-            Int32Parameter refs,
-            Int32Parameter size,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            ExpressionParameter? address,
+            Int32Parameter? creationLevel,
+            TimestampParameter? creationTime,
+            AccountParameter? creator,
+            Int32Parameter? refs,
+            Int32Parameter? size,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             [Range(0, 2)] int format = 0)
         {
@@ -68,7 +68,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Constants.Get(address, creationLevel, creationTime, creator, refs, size, sort, offset, limit, select.Fields[0], format));
                 else
                 {
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="format">Constant value format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<Constant> GetByAddress(
+        public async Task<Constant?> GetByAddress(
             [Required][ExpressionHash] string address, [Range(0, 2)] int format = 0)
         {
             var res = await Constants.Get(address, null, null, null, null, null, null, null, 1, format);
@@ -107,7 +107,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="refs">Filters constants by number of refs.</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(Int32Parameter refs)
+        public Task<int> GetCount(Int32Parameter? refs)
         {
             if (refs == null)
                 return Task.FromResult(State.Current.ConstantsCount);

@@ -35,7 +35,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetBigMapsCount()
         {
-            var query = Request.Path.Value;
+            var query = Request.Path.Value!;
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -64,14 +64,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
-            AccountParameter contract,
-            StringParameter path,
-            BigMapTagsParameter tags,
+            AccountParameter? contract,
+            StringParameter? path,
+            BigMapTagsParameter? tags,
             bool? active,
-            Int32Parameter lastLevel,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? lastLevel,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -103,7 +103,7 @@ namespace Tzkt.Api.Controllers
                 }
                 else
                 {
-                    if (select.Fields.Length == 1)
+                    if (select.Fields!.Length == 1)
                         res = await BigMaps.Get(contract, path, tags, active, lastLevel, sort, offset, limit, select.Fields[0], micheline);
                     else
                     {
@@ -153,7 +153,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await BigMaps.GetBigMapKeys(filter, pagination, micheline, selection.select.Fields ?? selection.select.Values)
+                    Rows = await BigMaps.GetBigMapKeys(filter, pagination, micheline, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -178,14 +178,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("updates/count")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
-            Int32Parameter bigmap,
-            StringParameter path,
-            AccountParameter contract,
-            BigMapTagsParameter tags,
-            BigMapActionParameter action,
-            JsonParameter value,
-            Int32Parameter level,
-            TimestampParameter timestamp)
+            Int32Parameter? bigmap,
+            StringParameter? path,
+            AccountParameter? contract,
+            BigMapTagsParameter? tags,
+            BigMapActionParameter? action,
+            JsonParameter? value,
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             if (bigmap != null ||
                 path != null ||
@@ -233,16 +233,16 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("updates")]
         public async Task<ActionResult<IEnumerable<BigMapUpdate>>> GetBigMapUpdates(
-            Int32Parameter bigmap,
-            StringParameter path,
-            AccountParameter contract,
-            BigMapTagsParameter tags,
-            BigMapActionParameter action,
-            JsonParameter value,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? bigmap,
+            StringParameter? path,
+            AccountParameter? contract,
+            BigMapTagsParameter? tags,
+            BigMapActionParameter? action,
+            JsonParameter? value,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -282,7 +282,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value type: `0` - JSON, `2` - Micheline</param>
         /// <returns></returns>
         [HttpGet("{id:int}")]
-        public async Task<ActionResult<BigMap>> GetBigMapById(
+        public async Task<ActionResult<BigMap?>> GetBigMapById(
             [Min(0)] int id,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -305,9 +305,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="id">Bigmap Id</param>
         /// <returns></returns>
         [HttpGet("{id:int}/type")]
-        public async Task<ActionResult<MichelinePrim>> GetBigMapType([Min(0)] int id)
+        public async Task<ActionResult<MichelinePrim?>> GetBigMapType([Min(0)] int id)
         {
-            var query = Request.Path.Value;
+            var query = Request.Path.Value!;
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -340,12 +340,12 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BigMapKey>>> GetKeys(
             [Min(0)] int id,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            Int32Parameter lastLevel,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            Int32Parameter? lastLevel,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -375,7 +375,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await BigMaps.GetKeys(id, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline);
                 else
                 {
@@ -402,7 +402,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/keys/{key}")]
-        public async Task<ActionResult<BigMapKey>> GetKey(
+        public async Task<ActionResult<BigMapKey?>> GetKey(
             [Min(0)] int id,
             [Required] string key,
             MichelineFormat micheline = MichelineFormat.Json)
@@ -414,7 +414,7 @@ namespace Tzkt.Api.Controllers
                 if (ResponseCache.TryGet(query, out var cached))
                     return this.Bytes(cached);
 
-                object res;
+                object? res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
                 {
                     res = await BigMaps.GetKeyByHash(id, key, micheline);
@@ -451,8 +451,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BigMapKeyUpdate>>> GetKeyUpdates(
             [Min(0)] int id,
             [Required] string key,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -512,11 +512,11 @@ namespace Tzkt.Api.Controllers
             [Min(0)] int id,
             [Min(0)] int level,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -548,7 +548,7 @@ namespace Tzkt.Api.Controllers
                 }
                 else
                 {
-                    if (select.Fields.Length == 1)
+                    if (select.Fields!.Length == 1)
                         res = await BigMaps.GetHistoricalKeys(id, level, active, key, value, sort, offset, limit, select.Fields[0], micheline);
                     else
                     {
@@ -577,7 +577,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{id:int}/historical_keys/{level:int}/{key}")]
-        public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
+        public async Task<ActionResult<BigMapKeyHistorical?>> GetKey(
             [Min(0)] int id,
             [Min(0)] int level,
             [Required] string key,
@@ -590,7 +590,7 @@ namespace Tzkt.Api.Controllers
                 if (ResponseCache.TryGet(query, out var cached))
                     return this.Bytes(cached);
 
-                object res;
+                object? res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
                 {
                     res = await BigMaps.GetHistoricalKeyByHash(id, level, key, micheline);

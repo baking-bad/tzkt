@@ -159,12 +159,12 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsements")]
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
-            AccountParameter @delegate,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -206,7 +206,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -257,8 +257,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsements/count")]
         public async Task<ActionResult<int>> GetEndorsementsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.EndorsementOpsCount);
@@ -293,12 +293,12 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("preendorsements")]
         public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsements(
-            AccountParameter @delegate,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -340,7 +340,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -391,8 +391,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("preendorsements/count")]
         public async Task<ActionResult<int>> GetPreendorsementsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.PreendorsementOpsCount);
@@ -431,16 +431,16 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("ballots")]
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
-            AccountParameter @delegate,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter epoch,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            VoteParameter vote,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            Int32Parameter? epoch,
+            Int32Parameter? period,
+            ProtocolParameter? proposal,
+            VoteParameter? vote,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -483,7 +483,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -534,8 +534,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("ballots/count")]
         public async Task<ActionResult<int>> GetBallotsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.BallotOpsCount);
@@ -574,16 +574,16 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
-            AccountParameter @delegate,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter epoch,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            BoolParameter duplicated,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            Int32Parameter? epoch,
+            Int32Parameter? period,
+            ProtocolParameter? proposal,
+            BoolParameter? duplicated,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -626,7 +626,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -677,8 +677,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals/count")]
         public  async Task<ActionResult<int>> GetProposalsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.ProposalOpsCount);
@@ -713,12 +713,12 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("activations")]
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
-            AccountParameter account,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? account,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -760,7 +760,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -811,8 +811,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("activations/count")]
         public async Task<ActionResult<int>> GetActivationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.ActivationOpsCount);
@@ -852,15 +852,15 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DalEntrapmentEvidenceOperation>>> GetDalEntrapmentEvidenceOps(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
-            AnyOfParameter anyof,
-            AccountParameter accuser,
-            AccountParameter offender,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -923,7 +923,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -974,8 +974,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("dal_entrapment_evidence/count")]
         public async Task<ActionResult<int>> GetDalEntrapmentEvidenceOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DalEntrapmentEvidenceOpsCount);
@@ -1015,15 +1015,15 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DoubleBakingOperation>>> GetDoubleBaking(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
-            AnyOfParameter anyof,
-            AccountParameter accuser,
-            AccountParameter offender,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1086,7 +1086,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1137,8 +1137,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_baking/count")]
         public async Task<ActionResult<int>> GetDoubleBakingCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoubleBakingOpsCount);
@@ -1178,15 +1178,15 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
-            AnyOfParameter anyof,
-            AccountParameter accuser,
-            AccountParameter offender,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1249,7 +1249,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1300,8 +1300,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_endorsing/count")]
         public async Task<ActionResult<int>> GetDoubleEndorsingCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoubleEndorsingOpsCount);
@@ -1341,15 +1341,15 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DoublePreendorsingOperation>>> GetDoublePreendorsing(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
-            AnyOfParameter anyof,
-            AccountParameter accuser,
-            AccountParameter offender,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1412,7 +1412,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1463,8 +1463,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("double_preendorsing/count")]
         public async Task<ActionResult<int>> GetDoublePreendorsingCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoublePreendorsingOpsCount);
@@ -1504,15 +1504,15 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<NonceRevelationOperation>>> GetNonceRevelations(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "baker,sender")]
-            AnyOfParameter anyof,
-            AccountParameter baker,
-            AccountParameter sender,
-            Int32Parameter level,
-            Int32Parameter revealedCycle,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? baker,
+            AccountParameter? sender,
+            Int32Parameter? level,
+            Int32Parameter? revealedCycle,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1575,7 +1575,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1626,8 +1626,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("nonce_revelations/count")]
         public async Task<ActionResult<int>> GetNonceRevelationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.NonceRevelationOpsCount);
@@ -1663,13 +1663,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("vdf_revelations")]
         public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelations(
-            AccountParameter baker,
-            Int32Parameter level,
-            Int32Parameter cycle,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            Int32Parameter? cycle,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1711,7 +1711,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1762,8 +1762,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("vdf_revelations/count")]
         public async Task<ActionResult<int>> GetVdfRevelationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.VdfRevelationOpsCount);
@@ -1802,14 +1802,14 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DrainDelegateOperation>>> GetDrainDelegateOps(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "delegate,target")]
-            AnyOfParameter anyof,
-            AccountParameter @delegate,
-            AccountParameter target,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? @delegate,
+            AccountParameter? target,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -1863,7 +1863,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -1914,8 +1914,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("drain_delegate/count")]
         public async Task<ActionResult<int>> GetDrainDelegateOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DrainDelegateOpsCount);
@@ -1959,19 +1959,19 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<DelegationOperation>>> GetDelegations(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,prevDelegate,newDelegate")]
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter prevDelegate,
-            AccountParameter newDelegate,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter senderCodeHash,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? prevDelegate,
+            AccountParameter? newDelegate,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            Int32Parameter? senderCodeHash,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -2059,7 +2059,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -2129,8 +2129,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("delegations/count")]
         public async Task<ActionResult<int>> GetDelegationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DelegationOpsCount);
@@ -2179,23 +2179,23 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "initiator,sender,contractManager,contractDelegate,originatedContract")]
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            Int64Parameter id,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter senderCodeHash,
-            Int32Parameter anyCodeHash,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? contractManager,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            Int64Parameter? id,
+            Int32Parameter? typeHash,
+            Int32Parameter? codeHash,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? senderCodeHash,
+            Int32Parameter? anyCodeHash,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -2297,7 +2297,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
@@ -2371,8 +2371,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("originations/count")]
         public async Task<ActionResult<int>> GetOriginationsCount(
-            Int32Parameter level,
-            TimestampParameter timestamp)
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.OriginationOpsCount);
@@ -2424,24 +2424,24 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TransactionOperation>>> GetTransactions(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,initiator")]
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int64Parameter id,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter senderCodeHash,
-            Int32Parameter targetCodeHash,
-            Int32Parameter codeHash,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? senderCodeHash,
+            Int32Parameter? targetCodeHash,
+            Int32Parameter? codeHash,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None) 
@@ -2520,7 +2520,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
@@ -2666,16 +2666,16 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<int>> GetTransactionsCount(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,initiator")]
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            OperationStatusParameter status)
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            OperationStatusParameter? status)
         {
             if (anyof == null &&
                 initiator == null &&
@@ -2721,13 +2721,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("reveals")]
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
-            AccountParameter sender,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -2769,7 +2769,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -2841,8 +2841,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("reveals/count")]
         public async Task<ActionResult<int>> GetRevealsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RevealOpsCount);
@@ -2880,14 +2880,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("register_constants")]
         public async Task<ActionResult<IEnumerable<RegisterConstantOperation>>> GetRegisterConstants(
-            AccountParameter sender,
-            ExpressionParameter address,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            ExpressionParameter? address,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -2930,7 +2930,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
@@ -3004,8 +3004,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("register_constants/count")]
         public async Task<ActionResult<int>> GetRegisterConstantsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RegisterConstantOpsCount);
@@ -3041,13 +3041,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("set_deposits_limits")]
         public async Task<ActionResult<IEnumerable<SetDepositsLimitOperation>>> GetSetDepositsLimits(
-            AccountParameter sender,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -3089,7 +3089,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -3161,8 +3161,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("set_deposits_limits/count")]
         public async Task<ActionResult<int>> GetSetDepositsLimitsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.SetDepositsLimitOpsCount);
@@ -3205,17 +3205,17 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TransferTicketOperation>>> GetTransferTicketOps(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,target,ticketer")]
-            AnyOfParameter anyof,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter id,
-            AccountParameter ticketer,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? id,
+            AccountParameter? ticketer,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -3273,7 +3273,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, select.Fields[0], micheline, quote));
                 else
                 {
@@ -3337,8 +3337,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("transfer_ticket/count")]
         public Task<int> GetTransferTicketOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TransferTicketOpsCount);
@@ -3367,14 +3367,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_commit")]
         public async Task<ActionResult<IEnumerable<TxRollupCommitOperation>>> GetTxRollupCommitOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -3419,7 +3419,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupCommitOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -3481,8 +3481,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_commit/count")]
         public Task<int> GetTxRollupCommitOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupCommitOpsCount);
@@ -3511,14 +3511,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_dispatch_tickets")]
         public async Task<ActionResult<IEnumerable<TxRollupDispatchTicketsOperation>>> GetTxRollupDispatchTicketsOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -3563,7 +3563,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupDispatchTicketsOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -3625,8 +3625,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_dispatch_tickets/count")]
         public Task<int> GetTxRollupDispatchTicketsOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupDispatchTicketsOpsCount);
@@ -3655,14 +3655,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_finalize_commitment")]
         public async Task<ActionResult<IEnumerable<TxRollupFinalizeCommitmentOperation>>> GetTxRollupFinalizeCommitmentOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -3707,7 +3707,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupFinalizeCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -3769,8 +3769,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_finalize_commitment/count")]
         public Task<int> GetTxRollupFinalizeCommitmentOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupFinalizeCommitmentOpsCount);
@@ -3799,14 +3799,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_origination")]
         public async Task<ActionResult<IEnumerable<TxRollupOriginationOperation>>> GetTxRollupOriginationOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -3851,7 +3851,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupOriginationOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -3913,8 +3913,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_origination/count")]
         public Task<int> GetTxRollupOriginationOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupOriginationOpsCount);
@@ -3947,16 +3947,16 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<TxRollupRejectionOperation>>> GetTxRollupRejectionOps(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "sender,committer")]
-            AnyOfParameter anyof,
-            AccountParameter sender,
-            AccountParameter committer,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? sender,
+            AccountParameter? committer,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4013,7 +4013,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupRejectionOps(anyof, sender, committer, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -4075,8 +4075,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_rejection/count")]
         public Task<int> GetTxRollupRejectionOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupRejectionOpsCount);
@@ -4105,14 +4105,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_remove_commitment")]
         public async Task<ActionResult<IEnumerable<TxRollupRemoveCommitmentOperation>>> GetTxRollupRemoveCommitmentOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4157,7 +4157,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupRemoveCommitmentOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -4219,8 +4219,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_remove_commitment/count")]
         public Task<int> GetTxRollupRemoveCommitmentOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupRemoveCommitmentOpsCount);
@@ -4249,14 +4249,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_return_bond")]
         public async Task<ActionResult<IEnumerable<TxRollupReturnBondOperation>>> GetTxRollupReturnBondOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4301,7 +4301,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupReturnBondOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -4363,8 +4363,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_return_bond/count")]
         public Task<int> GetTxRollupReturnBondOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupReturnBondOpsCount);
@@ -4393,14 +4393,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_submit_batch")]
         public async Task<ActionResult<IEnumerable<TxRollupSubmitBatchOperation>>> GetTxRollupSubmitBatchOps(
-            AccountParameter sender,
-            AccountParameter rollup,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? rollup,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4445,7 +4445,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Operations.GetTxRollupSubmitBatchOps(sender, rollup, level, timestamp, status, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -4507,8 +4507,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("tx_rollup_submit_batch/count")]
         public Task<int> GetTxRollupSubmitBatchOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupSubmitBatchOpsCount);
@@ -4537,14 +4537,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("increase_paid_storage")]
         public async Task<ActionResult<IEnumerable<IncreasePaidStorageOperation>>> GetIncreasePaidStorageOps(
-            AccountParameter sender,
-            AccountParameter contract,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            AccountParameter? contract,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4595,7 +4595,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -4645,8 +4645,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("increase_paid_storage/count")]
         public async Task<ActionResult<int>> GetIncreasePaidStorageCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.IncreasePaidStorageOpsCount);
@@ -4684,15 +4684,15 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("update_consensus_key")]
         public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyOps(
-            AccountParameter sender,
-            Int32Parameter activationCycle,
-            AddressParameter publicKeyHash,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? sender,
+            Int32Parameter? activationCycle,
+            AddressParameter? publicKeyHash,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -4735,8 +4735,8 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                if (select.Fields!.Length == 1)
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
@@ -4785,8 +4785,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("update_consensus_key/count")]
         public async Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.UpdateConsensusKeyOpsCount);
@@ -5283,15 +5283,15 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("migrations")]
         public async Task<ActionResult<IEnumerable<MigrationOperation>>> GetMigrations(
-            AccountParameter account,
-            MigrationKindParameter kind,
-            Int64Parameter balanceChange,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? account,
+            MigrationKindParameter? kind,
+            Int64Parameter? balanceChange,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json,
             Symbols quote = Symbols.None)
@@ -5335,7 +5335,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
@@ -5361,7 +5361,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("migrations/{id:long}")]
-        public async Task<ActionResult<MigrationOperation>> GetMigrationById(
+        public async Task<ActionResult<MigrationOperation?>> GetMigrationById(
             [Required][Min64(0)] long id,
             MichelineFormat micheline = MichelineFormat.Json, 
             Symbols quote = Symbols.None)
@@ -5388,8 +5388,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("migrations/count")]
         public async Task<ActionResult<int>> GetMigrationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.MigrationOpsCount);
@@ -5425,13 +5425,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("revelation_penalties")]
         public async Task<ActionResult<IEnumerable<RevelationPenaltyOperation>>> GetRevelationPenalties(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -5473,7 +5473,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -5498,7 +5498,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("revelation_penalties/{id:long}")]
-        public async Task<ActionResult<RevelationPenaltyOperation>> GetRevelationPenaltyById(
+        public async Task<ActionResult<RevelationPenaltyOperation?>> GetRevelationPenaltyById(
             [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
@@ -5524,8 +5524,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("revelation_penalties/count")]
         public async Task<ActionResult<int>> GetRevelationPenaltiesCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RevelationPenaltyOpsCount);
@@ -5564,18 +5564,18 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
-            AccountParameter baker,
+            AccountParameter? baker,
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
-            AnyOfParameter anyof,
-            AccountParameter proposer,
-            AccountParameter producer,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? proposer,
+            AccountParameter? producer,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -5640,7 +5640,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -5665,7 +5665,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("baking/{id:long}")]
-        public async Task<ActionResult<BakingOperation>> GetBakingById(
+        public async Task<ActionResult<BakingOperation?>> GetBakingById(
             [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
@@ -5691,8 +5691,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("baking/count")]
         public async Task<ActionResult<int>> GetBakingCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.BlocksCount - 2);
@@ -5728,13 +5728,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsing_rewards")]
         public async Task<ActionResult<IEnumerable<EndorsingRewardOperation>>> GetEndorsingRewards(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -5776,7 +5776,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -5801,7 +5801,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("endorsing_rewards/{id:long}")]
-        public async Task<ActionResult<EndorsingRewardOperation>> GetEndorsingRewardById(
+        public async Task<ActionResult<EndorsingRewardOperation?>> GetEndorsingRewardById(
             [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
@@ -5827,8 +5827,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("endorsing_rewards/count")]
         public async Task<ActionResult<int>> GetEndorsingRewardsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.EndorsingRewardOpsCount);
@@ -5864,13 +5864,13 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("dal_attestation_reward")]
         public async Task<ActionResult<IEnumerable<DalAttestationRewardOperation>>> GetDalAttestationRewards(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -5912,7 +5912,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
@@ -5937,7 +5937,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("dal_attestation_reward/{id:long}")]
-        public async Task<ActionResult<DalAttestationRewardOperation>> GetDalAttestationRewardById(
+        public async Task<ActionResult<DalAttestationRewardOperation?>> GetDalAttestationRewardById(
             [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
@@ -5963,8 +5963,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("dal_attestation_reward/count")]
         public async Task<ActionResult<int>> GetDalAttestationRewardsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DalAttestationRewardOpsCount);

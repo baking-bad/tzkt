@@ -10,9 +10,9 @@ namespace Tzkt.Api.Websocket.Processors
         #region static
         const string CycleChannel = "cycles";
         static readonly SemaphoreSlim Sema = new(1, 1);
-        static readonly Dictionary<int, HashSet<string>> DelaySubs = new();
-        static readonly HashSet<string> Subs = new();
-        static Cycle CurrentCycle = null;
+        static readonly Dictionary<int, HashSet<string>> DelaySubs = [];
+        static readonly HashSet<string> Subs = [];
+        static Cycle? CurrentCycle = null;
         #endregion
 
         readonly StateCache StateCache;
@@ -42,7 +42,7 @@ namespace Tzkt.Api.Websocket.Processors
 
                 if (CurrentCycle == null || StateCache.Current.Level < CurrentCycle.FirstLevel || StateCache.Current.Level > CurrentCycle.LastLevel)
                 {
-                    CurrentCycle = await CyclesRepo.Get(StateCache.Current.Cycle, Symbols.None);
+                    CurrentCycle = (await CyclesRepo.Get(StateCache.Current.Cycle, Symbols.None))!;
                 }
 
                 // we notify only group of clients with matching delay

@@ -48,10 +48,10 @@ namespace Tzkt.Api.Controllers
         [HttpGet("bakers/{address}")]
         public async Task<ActionResult<IEnumerable<BakerRewards>>> GetBakerRewards(
             [Required][TzAddress] string address,
-            Int32Parameter cycle,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -72,7 +72,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -88,7 +88,7 @@ namespace Tzkt.Api.Controllers
         // deprecated
         [OpenApiIgnore]
         [HttpGet("bakers/{address}/{cycle:int}")]
-        public async Task<BakerRewards> GetBakerRewardsByCycle([Required][TzAddress] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
+        public async Task<BakerRewards?> GetBakerRewardsByCycle([Required][TzAddress] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
             return (await Rewards.GetBakerRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
         }
@@ -124,10 +124,10 @@ namespace Tzkt.Api.Controllers
         [HttpGet("delegators/{address}")]
         public async Task<ActionResult<IEnumerable<DelegatorRewards>>> GetDelegatorRewards(
             [Required][Address] string address,
-            Int32Parameter cycle,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -148,7 +148,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -164,7 +164,7 @@ namespace Tzkt.Api.Controllers
         // deprecated
         [OpenApiIgnore]
         [HttpGet("delegators/{address}/{cycle:int}")]
-        public async Task<DelegatorRewards> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
+        public async Task<DelegatorRewards?> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
         {
             return (await Rewards.GetDelegatorRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
         }
@@ -181,7 +181,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of delegators to return</param>
         /// <returns></returns>
         [HttpGet("split/{baker}/{cycle:int}")]
-        public Task<RewardSplit> GetRewardSplit([Required][TzAddress] string baker, [Min(0)] int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
+        public Task<RewardSplit?> GetRewardSplit([Required][TzAddress] string baker, [Min(0)] int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
         {
             return Rewards.GetRewardSplit(baker, cycle, offset, limit);
         }
@@ -197,7 +197,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="delegator">Delegator address</param>
         /// <returns></returns>
         [HttpGet("split/{baker}/{cycle:int}/{delegator}")]
-        public Task<SplitDelegator> GetRewardSplitDelegator([Required][TzAddress] string baker, [Min(0)] int cycle, [Required][Address] string delegator)
+        public Task<SplitDelegator?> GetRewardSplitDelegator([Required][TzAddress] string baker, [Min(0)] int cycle, [Required][Address] string delegator)
         {
             return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
         }

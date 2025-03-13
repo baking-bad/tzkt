@@ -135,15 +135,13 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((decimal)row.Received / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
+                csv.Write(row.From == null ? "" : Accounts.Get(row.From)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
                 csv.Write(row.Fee == null ? "" : ((decimal)-row.Fee / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
+                csv.Write(row.To == null ? "" : Accounts.Get(row.To)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Nonce != null
                     ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"
@@ -304,8 +302,7 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
+                csv.Write(row.From == null ? "" : Accounts.Get(row.From)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
@@ -315,8 +312,7 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(row.Fee == null ? "" : ((double)-row.Fee / 1_000_000d * price).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
+                csv.Write(row.To == null ? "" : Accounts.Get(row.To)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Nonce != null
                     ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"
@@ -478,8 +474,7 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(row.Received == null ? "" : ((double)row.Received / 1_000_000d * price).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.From == null ? "" : Accounts.Get(row.From).Address);
+                csv.Write(row.From == null ? "" : Accounts.Get(row.From)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Sent == null ? "" : ((decimal)-row.Sent / 1_000_000m).ToString(format));
                 csv.Write(delimiter);
@@ -489,8 +484,7 @@ namespace Tzkt.Api.Repositories
                 csv.Write(delimiter);
                 csv.Write(row.Fee == null ? "" : ((double)-row.Fee / 1_000_000d * price).ToString(format));
                 csv.Write(delimiter);
-                // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-                csv.Write(row.To == null ? "" : Accounts.Get(row.To).Address);
+                csv.Write(row.To == null ? "" : Accounts.Get(row.To)?.Address ?? "unknown");
                 csv.Write(delimiter);
                 csv.Write(row.Nonce != null
                     ? $"https://tzkt.io/{row.OpHash}/{row.Counter}/{row.Nonce}"

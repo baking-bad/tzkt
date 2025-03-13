@@ -6,7 +6,7 @@ namespace Tzkt.Api.Repositories
 {
     public partial class AccountRepository
     {
-        public async Task<Models.Delegate> GetDelegate(string address)
+        public async Task<Models.Delegate?> GetDelegate(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawDelegate delegat)
@@ -18,7 +18,7 @@ namespace Tzkt.Api.Repositories
                 Alias = delegat.Alias,
                 Active = delegat.Staked,
                 Address = delegat.Address,
-                PublicKey = delegat.PublicKey,
+                PublicKey = delegat.PublicKey!,
                 Revealed = delegat.Revealed,
                 Balance = delegat.Balance,
                 RollupBonds = delegat.RollupBonds,
@@ -108,7 +108,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<int> GetDelegatesCount(BoolParameter active)
+        public async Task<int> GetDelegatesCount(BoolParameter? active)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
                 .Filter("Type", 1)
@@ -119,10 +119,10 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Models.Delegate>> GetDelegates(
-            BoolParameter active,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+            BoolParameter? active,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder($@"SELECT *, {AliasQuery} AS ""Alias"" FROM ""Accounts""")
@@ -245,11 +245,11 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDelegates(
-            BoolParameter active,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetDelegates(
+            BoolParameter? active,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields)
         {
@@ -355,7 +355,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
@@ -378,9 +378,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -764,11 +764,11 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetDelegates(
-            BoolParameter active,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetDelegates(
+            BoolParameter? active,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field)
         {
@@ -871,7 +871,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
                 .Filter("Type", 1)
@@ -894,7 +894,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

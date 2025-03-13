@@ -9,25 +9,25 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64Parameter id { get; set; }
+        public Int64Parameter? id { get; set; }
 
         /// <summary>
         /// Filter by level of the block where the transfer was made.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter level { get; set; }
+        public Int32Parameter? level { get; set; }
 
         /// <summary>
         /// Filter by timestamp (ISO 8601) of the block where the transfer was made.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public TimestampParameter timestamp { get; set; }
+        public TimestampParameter? timestamp { get; set; }
 
         /// <summary>
         /// Filter by ticket.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public TicketInfoFilter ticket { get; set; }
+        public TicketInfoFilter ticket { get; set; } = new();
 
         /// <summary>
         /// Filter by any of the specified fields (`from` or `to`).
@@ -35,50 +35,50 @@ namespace Tzkt.Api
         /// This parameter is useful when you need to get both incoming and outgoing transfers of the account at once.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AnyOfParameter anyof { get; set; }
+        public AnyOfParameter? anyof { get; set; }
 
         /// <summary>
         /// Filter by sender address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter from { get; set; }
+        public AccountParameter? from { get; set; }
 
         /// <summary>
         /// Filter by recepient address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter to { get; set; }
+        public AccountParameter? to { get; set; }
 
         /// <summary>
         /// Filter by amount.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public NatParameter amount { get; set; }
+        public NatParameter? amount { get; set; }
 
         /// <summary>
         /// Filter by id of the transaction, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter transactionId { get; set; }
+        public Int64NullParameter? transactionId { get; set; }
 
         /// <summary>
         /// Filter by id of the transfer_ticket operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter transferTicketId { get; set; }
+        public Int64NullParameter? transferTicketId { get; set; }
 
         /// <summary>
         /// Filter by id of the smart_rollup_execute operation, caused the ticket transfer.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter smartRollupExecuteId { get; set; }
+        public Int64NullParameter? smartRollupExecuteId { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             level == null &&
             timestamp == null &&
-            (ticket == null || ticket.Empty) &&
+            ticket.Empty &&
             anyof == null &&
             from == null &&
             to == null &&

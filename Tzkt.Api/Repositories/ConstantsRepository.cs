@@ -26,14 +26,14 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Constant>> Get(
-            ExpressionParameter address,
-            Int32Parameter creationLevel,
-            TimestampParameter creationTime,
-            AccountParameter creator,
-            Int32Parameter refs,
-            Int32Parameter size,
-            SortParameter sort,
-            OffsetParameter offset,
+            ExpressionParameter? address,
+            Int32Parameter? creationLevel,
+            TimestampParameter? creationTime,
+            AccountParameter? creator,
+            Int32Parameter? refs,
+            Int32Parameter? size,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             int format)
         {
@@ -69,15 +69,15 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(
-            ExpressionParameter address,
-            Int32Parameter creationLevel,
-            TimestampParameter creationTime,
-            AccountParameter creator,
-            Int32Parameter refs,
-            Int32Parameter size,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> Get(
+            ExpressionParameter? address,
+            Int32Parameter? creationLevel,
+            TimestampParameter? creationTime,
+            AccountParameter? creator,
+            Int32Parameter? refs,
+            Int32Parameter? size,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             int format)
@@ -99,7 +99,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RegisterConstantOps""")
                 .Filter(@"""Address"" IS NOT NULL")
@@ -120,9 +120,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -158,7 +158,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "extras":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Extras;
+                            result[j++][i] = (RawJson?)row.Extras;
                         break;
                 }
             }
@@ -166,15 +166,15 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
-            ExpressionParameter address,
-            Int32Parameter creationLevel,
-            TimestampParameter creationTime,
-            AccountParameter creator,
-            Int32Parameter refs,
-            Int32Parameter size,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> Get(
+            ExpressionParameter? address,
+            Int32Parameter? creationLevel,
+            TimestampParameter? creationTime,
+            AccountParameter? creator,
+            Int32Parameter? refs,
+            Int32Parameter? size,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             int format)
@@ -193,7 +193,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RegisterConstantOps""")
                 .Filter(@"""Address"" IS NOT NULL")
@@ -214,7 +214,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -249,14 +249,14 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "extras":
                     foreach (var row in rows)
-                        result[j++] = (RawJson)row.Extras;
+                        result[j++] = (RawJson?)row.Extras;
                     break;
             }
 
             return result;
         }
 
-        static object FormatConstantValue(byte[] value, int format) => format switch
+        static object? FormatConstantValue(byte[] value, int format) => format switch
         {
             0 => Micheline.FromBytes(value),
             1 => Micheline.FromBytes(value).ToMichelson(),

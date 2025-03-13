@@ -59,11 +59,11 @@ namespace Tzkt.Api
             }
 
             int? _eq = null;
-            List<int> _listIn = null;
+            List<int>? _listIn = null;
             var inHasNull = false;
 
             if ((value ?? eq) != null)
-                _eq = (await Accounts.GetAsync(value ?? eq))?.Id ?? -1;
+                _eq = (await Accounts.GetAsync((value ?? eq)!))?.Id ?? -1;
 
             if (@in != null)
             {

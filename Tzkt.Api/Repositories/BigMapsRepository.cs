@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""BigMaps""");
         }
 
-        public async Task<MichelinePrim> GetMicheType(int ptr)
+        public async Task<MichelinePrim?> GetMicheType(int ptr)
         {
             var sql = @"
                 SELECT  ""KeyType"", ""ValueType""
@@ -54,7 +54,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<BigMap> Get(int ptr, MichelineFormat micheline)
+        public async Task<BigMap?> Get(int ptr, MichelineFormat micheline)
         {
             var sql = @"
                 SELECT  *
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Repositories
             return ReadBigMap(row, micheline);
         }
 
-        public async Task<BigMap> Get(int contractId, string path, MichelineFormat micheline)
+        public async Task<BigMap?> Get(int contractId, string path, MichelineFormat micheline)
         {
             var sql = @"
                 SELECT  *
@@ -92,13 +92,13 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<BigMap>> Get(
-            AccountParameter contract,
-            StringParameter path,
-            BigMapTagsParameter tags,
+            AccountParameter? contract,
+            StringParameter? path,
+            BigMapTagsParameter? tags,
             bool? active,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -125,14 +125,14 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => (BigMap)ReadBigMap(row, micheline));
         }
 
-        public async Task<object[][]> Get(
-            AccountParameter contract,
-            StringParameter path,
-            BigMapTagsParameter tags,
+        public async Task<object?[][]> Get(
+            AccountParameter? contract,
+            StringParameter? path,
+            BigMapTagsParameter? tags,
             bool? active,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat micheline)
@@ -158,7 +158,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
@@ -180,9 +180,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -227,13 +227,13 @@ namespace Tzkt.Api.Repositories
                     case "keyType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                                ? (RawJson)Schema.Create((Micheline.FromBytes(row.KeyType) as MichelinePrim)!).Humanize()!
                                 : (RawJson)Micheline.ToJson(row.KeyType);
                         break;
                     case "valueType":
                         foreach (var row in rows)
                             result[j++][i] = (int)micheline < 2
-                                ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                                ? (RawJson)Schema.Create((Micheline.FromBytes(row.ValueType) as MichelinePrim)!).Humanize()!
                                 : (RawJson)Micheline.ToJson(row.ValueType);
                         break;
                     case "tags":
@@ -246,14 +246,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
-            AccountParameter contract,
-            StringParameter path,
-            BigMapTagsParameter tags,
+        public async Task<object?[]> Get(
+            AccountParameter? contract,
+            StringParameter? path,
+            BigMapTagsParameter? tags,
             bool? active,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat micheline)
@@ -276,7 +276,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMaps""")
                 .Filter("ContractId", contract)
@@ -299,7 +299,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -343,13 +343,13 @@ namespace Tzkt.Api.Repositories
                 case "keyType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                            ? (RawJson)Schema.Create((Micheline.FromBytes(row.KeyType) as MichelinePrim)!).Humanize()!
                             : (RawJson)Micheline.ToJson(row.KeyType);
                     break;
                 case "valueType":
                     foreach (var row in rows)
                         result[j++] = (int)micheline < 2
-                            ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                            ? (RawJson)Schema.Create((Micheline.FromBytes(row.ValueType) as MichelinePrim)!).Humanize()!
                             : (RawJson)Micheline.ToJson(row.ValueType);
                     break;
                 case "tags":
@@ -363,7 +363,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region all bigmap keys
-        async Task<IEnumerable<dynamic>> QueryBigMapKeysAsync(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryBigMapKeysAsync(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -419,7 +419,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -485,13 +485,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetBigMapKeys(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
+        public async Task<object?[][]> GetBigMapKeys(BigMapKeyFilter filter, Pagination pagination, MichelineFormat format, List<SelectionField> fields)
         {
             var rows = await QueryBigMapKeysAsync(filter, pagination, format, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -544,7 +544,7 @@ namespace Tzkt.Api.Repositories
                     default:
                         if (fields[i].Field == "key" || fields[i].Field == "value")
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)![fields[i].Column!] as string)!;
                         break;
                 }
             }
@@ -554,7 +554,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region bigmap keys
-        public async Task<BigMapKey> GetKey(
+        public async Task<BigMapKey?> GetKey(
             int ptr,
             string key,
             MichelineFormat micheline)
@@ -573,7 +573,7 @@ namespace Tzkt.Api.Repositories
             return ReadBigMapKey(row, micheline);
         }
 
-        public async Task<BigMapKey> GetKeyByHash(
+        public async Task<BigMapKey?> GetKeyByHash(
             int ptr,
             string hash,
             MichelineFormat micheline)
@@ -595,11 +595,11 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BigMapKey>> GetKeys(
             int ptr,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -623,14 +623,14 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => (BigMapKey)ReadBigMapKey(row, micheline));
         }
 
-        public async Task<object[][]> GetKeys(
+        public async Task<object?[][]> GetKeys(
             int ptr,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat micheline)
@@ -655,7 +655,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMapKeys""")
                 .Filter("BigMapPtr", ptr)
@@ -674,9 +674,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -716,14 +716,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetKeys(
+        public async Task<object?[]> GetKeys(
             int ptr,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            Int32Parameter lastLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            Int32Parameter? lastLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat micheline)
@@ -745,7 +745,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BigMapKeys""")
                 .Filter("BigMapPtr", ptr)
@@ -765,7 +765,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -805,8 +805,8 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region historical keys
-        async Task<BigMapKeyHistorical> GetHistoricalKey(
-            BigMapKey key,
+        async Task<BigMapKeyHistorical?> GetHistoricalKey(
+            BigMapKey? key,
             int level,
             MichelineFormat micheline)
         {
@@ -847,7 +847,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<BigMapKeyHistorical> GetHistoricalKey(
+        public async Task<BigMapKeyHistorical?> GetHistoricalKey(
             int ptr,
             int level,
             string key,
@@ -856,7 +856,7 @@ namespace Tzkt.Api.Repositories
             return await GetHistoricalKey(await GetKey(ptr, key, micheline), level, micheline);
         }
 
-        public async Task<BigMapKeyHistorical> GetHistoricalKeyByHash(
+        public async Task<BigMapKeyHistorical?> GetHistoricalKeyByHash(
             int ptr,
             int level,
             string hash,
@@ -869,10 +869,10 @@ namespace Tzkt.Api.Repositories
             int ptr,
             int level,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -903,14 +903,14 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => (BigMapKeyHistorical)ReadBigMapKeyShort(row, micheline));
         }
 
-        public async Task<object[][]> GetHistoricalKeys(
+        public async Task<object?[][]> GetHistoricalKeys(
             int ptr,
             int level,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat micheline)
@@ -933,7 +933,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var subQuery = $@"
                 SELECT DISTINCT ON (""BigMapKeyId"")
@@ -955,9 +955,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -989,14 +989,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetHistoricalKeys(
+        public async Task<object?[]> GetHistoricalKeys(
             int ptr,
             int level,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat micheline)
@@ -1016,7 +1016,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var subQuery = $@"
                 SELECT DISTINCT ON (""BigMapKeyId"")
@@ -1039,7 +1039,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -1074,8 +1074,8 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BigMapKeyUpdate>> GetKeyUpdates(
             int ptr,
             string key,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -1088,7 +1088,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1",
                 new { ptr, key });
 
-            if (keyRow == null) return Enumerable.Empty<BigMapKeyUpdate>();
+            if (keyRow == null) return [];
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
                 .Filter("BigMapKeyId", (int)keyRow.Id)
@@ -1101,8 +1101,8 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<BigMapKeyUpdate>> GetKeyByHashUpdates(
             int ptr,
             string hash,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -1115,7 +1115,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1",
                 new { ptr, hash });
 
-            if (keyRow == null) return Enumerable.Empty<BigMapKeyUpdate>();
+            if (keyRow == null) return [];
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BigMapUpdates""")
                 .Filter("BigMapKeyId", (int)keyRow.Id)
@@ -1128,14 +1128,14 @@ namespace Tzkt.Api.Repositories
 
         #region bigmap updates
         public async Task<int> GetUpdatesCount(
-            Int32Parameter ptr,
-            StringParameter path,
-            AccountParameter contract,
-            BigMapActionParameter action,
-            JsonParameter value,
-            BigMapTagsParameter tags,
-            Int32Parameter level,
-            TimestampParameter timestamp)
+            Int32Parameter? ptr,
+            StringParameter? path,
+            AccountParameter? contract,
+            BigMapActionParameter? action,
+            JsonParameter? value,
+            BigMapTagsParameter? tags,
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             var query = @"SELECT COUNT(*) FROM ""BigMapUpdates"" as u";
             if (path != null || contract != null || tags != null)
@@ -1156,13 +1156,13 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
-            Int32Parameter ptr,
-            BigMapActionParameter action,
-            JsonParameter value,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? ptr,
+            BigMapActionParameter? action,
+            JsonParameter? value,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -1183,7 +1183,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var updateRows = await db.QueryAsync(sql.Query, sql.Params);
             if (!updateRows.Any())
-                return Enumerable.Empty<BigMapUpdate>();
+                return [];
 
             #region fetch keys
             var keyIds = updateRows
@@ -1215,7 +1215,7 @@ namespace Tzkt.Api.Repositories
             return updateRows.Select(row =>
             {
                 var bigmap = bigmapRows[(int)row.BigMapPtr];
-                var key = row.BigMapKeyId == null ? null : keyRows[(int)row.BigMapKeyId];
+                var key = row.BigMapKeyId == null ? null : keyRows![(int)row.BigMapKeyId];
 
                 return new BigMapUpdate
                 {
@@ -1239,16 +1239,16 @@ namespace Tzkt.Api.Repositories
         }
         
         public async Task<IEnumerable<BigMapUpdate>> GetUpdates(
-            Int32Parameter ptr,
-            StringParameter path,
-            AccountParameter contract,
-            BigMapActionParameter action,
-            JsonParameter value,
-            BigMapTagsParameter tags,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? ptr,
+            StringParameter? path,
+            AccountParameter? contract,
+            BigMapActionParameter? action,
+            JsonParameter? value,
+            BigMapTagsParameter? tags,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat micheline)
         {
@@ -1276,7 +1276,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var updateRows = await db.QueryAsync(sql.Query, sql.Params);
             if (!updateRows.Any())
-                return Enumerable.Empty<BigMapUpdate>();
+                return [];
 
             #region fetch keys
             var keyIds = updateRows
@@ -1295,7 +1295,7 @@ namespace Tzkt.Api.Repositories
 
             return updateRows.Select(row =>
             {
-                var key = row.BigMapKeyId == null ? null : keyRows[(int)row.BigMapKeyId];
+                var key = row.BigMapKeyId == null ? null : keyRows![(int)row.BigMapKeyId];
 
                 return new BigMapUpdate
                 {
@@ -1320,16 +1320,16 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region diffs
-        public static Task<Dictionary<long, List<BigMapDiff>>> GetTransactionDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>?> GetTransactionDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.TransactionId), format);
 
-        public static Task<Dictionary<long, List<BigMapDiff>>> GetOriginationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>?> GetOriginationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.OriginationId), format);
 
-        public static Task<Dictionary<long, List<BigMapDiff>>> GetMigrationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
+        public static Task<Dictionary<long, List<BigMapDiff>>?> GetMigrationDiffs(IDbConnection db, List<long> ops, MichelineFormat format)
             => GetBigMapDiffs(db, ops, nameof(Data.Models.BigMapUpdate.MigrationId), format);
 
-        static async Task<Dictionary<long, List<BigMapDiff>>> GetBigMapDiffs(IDbConnection db, List<long> ops, string opCol, MichelineFormat format)
+        static async Task<Dictionary<long, List<BigMapDiff>>?> GetBigMapDiffs(IDbConnection db, List<long> ops, string opCol, MichelineFormat format)
         {
             if (ops.Count == 0) return null;
 
@@ -1374,7 +1374,7 @@ namespace Tzkt.Api.Repositories
             {
                 if (!res.TryGetValue((long)row.OpId, out var list))
                 {
-                    list = new List<BigMapDiff>();
+                    list = [];
                     res.Add((long)row.OpId, list);
                 }
                 list.Add(new BigMapDiff
@@ -1384,7 +1384,7 @@ namespace Tzkt.Api.Repositories
                     Action = BigMapActions.ToString(row.Action),
                     Content = row.BigMapKeyId == null ? null : new BigMapKeyShort
                     {
-                        Hash = keys[row.BigMapKeyId].KeyHash,
+                        Hash = keys![row.BigMapKeyId].KeyHash,
                         Key = FormatKey(keys[row.BigMapKeyId], format),
                         Value = FormatValue(row, format),
                     }
@@ -1408,10 +1408,10 @@ namespace Tzkt.Api.Repositories
                 ActiveKeys = row.ActiveKeys,
                 Updates = row.Updates,
                 KeyType = (int)format < 2
-                    ? (RawJson)Schema.Create(Micheline.FromBytes(row.KeyType) as MichelinePrim).Humanize()
+                    ? (RawJson)Schema.Create((Micheline.FromBytes(row.KeyType) as MichelinePrim)!).Humanize()!
                     : (RawJson)Micheline.ToJson(row.KeyType),
                 ValueType = (int)format < 2
-                    ? (RawJson)Schema.Create(Micheline.FromBytes(row.ValueType) as MichelinePrim).Humanize()
+                    ? (RawJson)Schema.Create((Micheline.FromBytes(row.ValueType) as MichelinePrim)!).Humanize()!
                     : (RawJson)Micheline.ToJson(row.ValueType),
                 TagFlags = (Data.Models.BigMapTag)row.Tags
             };
@@ -1456,7 +1456,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        static object FormatKey(dynamic row, MichelineFormat format) => format switch
+        static object? FormatKey(dynamic row, MichelineFormat format) => format switch
         {
             MichelineFormat.Json => (RawJson)row.JsonKey,
             MichelineFormat.JsonString => row.JsonKey,
@@ -1465,7 +1465,7 @@ namespace Tzkt.Api.Repositories
             _ => null
         };
 
-        static object FormatValue(dynamic row, MichelineFormat format) => format switch
+        static object? FormatValue(dynamic row, MichelineFormat format) => format switch
         {
             MichelineFormat.Json => (RawJson)row.JsonValue,
             MichelineFormat.JsonString => row.JsonValue,

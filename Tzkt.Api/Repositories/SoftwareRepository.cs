@@ -22,7 +22,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""Software""");
         }
 
-        public async Task<IEnumerable<Software>> Get(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<Software>> Get(SortParameter? sort, OffsetParameter? offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Software""")
                 .Take(sort, offset, limit, x => x switch
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(SortParameter sort, OffsetParameter offset, int limit, string[] fields)
+        public async Task<object?[][]> Get(SortParameter? sort, OffsetParameter? offset, int limit, string[] fields)
         {
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -66,7 +66,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Software""")
                 .Take(sort, offset, limit, x => x switch
@@ -80,9 +80,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -114,7 +114,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "extras":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Extras;
+                            result[j++][i] = (RawJson?)row.Extras;
                         break;
                 }
             }
@@ -122,7 +122,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(SortParameter sort, OffsetParameter offset, int limit, string field)
+        public async Task<object?[]> Get(SortParameter? sort, OffsetParameter? offset, int limit, string field)
         {
             var columns = new HashSet<string>(1);
             switch (field)
@@ -137,7 +137,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Software""")
                 .Take(sort, offset, limit, x => x switch
@@ -151,7 +151,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -182,7 +182,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "extras":
                     foreach (var row in rows)
-                        result[j++] = (RawJson)row.Extras;
+                        result[j++] = (RawJson?)row.Extras;
                     break;
             }
 

@@ -26,16 +26,16 @@
             return res != -1;
         }
 
-        public static List<string> ToList(Data.Models.ContractTags tags)
+        public static List<string>? ToList(Data.Models.ContractTags tags)
         {
             if ((tags & Data.Models.ContractTags.FA) != 0)
             {
                 if ((tags & Data.Models.ContractTags.FA2) == Data.Models.ContractTags.FA2)
-                    return new(1) { Fa2 };
+                    return [Fa2];
                 else if ((tags & Data.Models.ContractTags.FA12) == Data.Models.ContractTags.FA12)
-                    return new(1) { Fa12 };
+                    return [Fa12];
                 else if ((tags & Data.Models.ContractTags.FA1) == Data.Models.ContractTags.FA1)
-                    return new(1) { Fa1 };
+                    return [Fa1];
             }
             return null;
         }

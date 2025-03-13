@@ -86,7 +86,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Events.GetContractEvents(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Events.GetContractEvents(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);

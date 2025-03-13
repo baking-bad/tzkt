@@ -31,7 +31,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address.in=tz123..,tz345..`.
         /// </summary>
-        public List<string>? In { get; set; }
+        public List<string?>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -39,7 +39,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?address.ni=tz123..,tz345..`.
         /// </summary>
-        public List<string>? Ni { get; set; }
+        public List<string?>? Ni { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \

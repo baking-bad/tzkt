@@ -14,7 +14,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameters=abc`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -22,7 +22,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameters.ne=abc`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         /// <summary>
         /// **Same as** filter mode. \
@@ -31,7 +31,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameters.as=*mid*` or `?parameters.as=*end`.
         /// </summary>
-        public string As { get; set; }
+        public string? As { get; set; }
 
         /// <summary>
         /// **Unlike** filter mode. \
@@ -40,7 +40,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?parameters.un=*mid*` or `?parameters.un=*end`.
         /// </summary>
-        public string Un { get; set; }
+        public string? Un { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -49,7 +49,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?errors.in=bla,bal,abl`.
         /// </summary>
-        public List<string> In { get; set; }
+        public List<string>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -58,7 +58,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?errors.ni=bla,bal,abl`.
         /// </summary>
-        public List<string> Ni { get; set; }
+        public List<string>? Ni { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \

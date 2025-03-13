@@ -7,25 +7,16 @@ using Tzkt.Api.Utils;
 
 namespace Tzkt.Api.Services
 {
-    public class ResponseCacheService
+    public class ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger, IMetrics metrics)
     {
-        readonly JsonSerializerOptions Options;
-        readonly ILogger Logger;
-        readonly IMetrics Metrics;
-        readonly Dictionary<string, byte[]> Cache;
-        readonly long CacheSize;
+        readonly JsonSerializerOptions Options = options.Value.JsonSerializerOptions;
+        readonly ILogger Logger = logger;
+        readonly IMetrics Metrics = metrics;
+        readonly Dictionary<string, byte[]?> Cache = new(4096);
+        readonly long CacheSize = configuration.GetOutputCacheConfig().CacheSize * 1024 * 1024;
         long CacheUsed = 0;
 
-        public ResponseCacheService(IConfiguration configuration, IOptions<JsonOptions> options, ILogger<ResponseCacheService> logger, IMetrics metrics)
-        {
-            Options = options.Value.JsonSerializerOptions;
-            Logger = logger;
-            Metrics = metrics;
-            CacheSize = configuration.GetOutputCacheConfig().CacheSize * 1024 * 1024;
-            Cache = new Dictionary<string, byte[]>(4096);
-        }
-
-        public bool TryGet(string key, out byte[] response)
+        public bool TryGet(string key, out byte[]? response)
         {
             lock (Cache)
             {
@@ -42,7 +33,7 @@ namespace Tzkt.Api.Services
             }
         }
 
-        public byte[] Set(string key, object obj, bool isSerialized = false)
+        public byte[]? Set(string key, object? obj, bool isSerialized = false)
         {
             var bytes = obj == null 
                 ? null
@@ -83,7 +74,7 @@ namespace Tzkt.Api.Services
             }
         }
 
-        public static string BuildKey(string path, params (string, object?)[] query)
+        public static string BuildKey(string? path, params (string, object?)[] query)
         {
             var sb = new StringBuilder(path);
 

@@ -7,11 +7,13 @@ namespace Tzkt.Api.Services.Cache
     public class SoftwareCache
     {
         #region static
-        const string SelectQuery = @"
-        SELECT  ""Id"", ""FirstLevel"",
-                ""Extras""->>'version' as ""Version"",
-                ""Extras""->>'commitDate' as ""CommitDate""
-        FROM    ""Software""";
+        const string SelectQuery = """
+        SELECT  "Id",
+                "FirstLevel",
+                "Extras"->>'version' as "Version",
+                "Extras"->>'commitDate' as "CommitDate"
+        FROM    "Software"
+        """;
         #endregion
 
         public SoftwareAlias this[int id]

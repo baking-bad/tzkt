@@ -10,13 +10,13 @@ namespace Tzkt.Api
         /// This parameter is useful when you need to get all operations somehow related to the account in a single request.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AnyOfParameter anyof { get; set; }
+        public AnyOfParameter? anyof { get; set; }
 
         /// <summary>
         /// Filter by staker address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter staker { get; set; }
+        public AccountParameter? staker { get; set; }
 
         public override bool Empty => base.Empty && staker == null && anyof == null;
 

@@ -6,11 +6,11 @@ namespace Tzkt.Api.Websocket
 {
     public class OperationsParameter
     {
-        public string Address { get; set; }
-        public string Types { get; set; }
+        public string? Address { get; set; }
+        public string? Types { get; set; }
         public int? CodeHash { get; set; }
 
-        List<Operations> _TypesList = null;
+        List<Operations>? _TypesList = null;
         public List<Operations> TypesList
         {
             get
@@ -19,7 +19,7 @@ namespace Tzkt.Api.Websocket
                 {
                     if (Types == null)
                     {
-                        _TypesList = new(1) { Operations.Transactions };
+                        _TypesList = [Operations.Transactions];
                     }
                     else
                     {

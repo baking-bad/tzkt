@@ -34,7 +34,7 @@ namespace Tzkt.Api
         /// Example: `?action.in=stake,unstake`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -43,7 +43,7 @@ namespace Tzkt.Api
         /// Example: `?action.ni=unstake,finalize`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         public string Normalize(string name)
         {
