@@ -12,22 +12,22 @@ namespace Tzkt.Api.Websocket.Processors
         const string TicketTransfersChannel = "ticket_transfers";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly HashSet<string> AllSubs = new();
-        static readonly Dictionary<string, AccountSub> AccountSubs = new();
-        static readonly Dictionary<string, TicketerSub> TicketerSubs = new();
+        static readonly HashSet<string> AllSubs = [];
+        static readonly Dictionary<string, AccountSub> AccountSubs = [];
+        static readonly Dictionary<string, TicketerSub> TicketerSubs = [];
 
-        static readonly Dictionary<string, int> Limits = new();
+        static readonly Dictionary<string, int> Limits = [];
 
         class AccountSub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<string, TicketerSub> Ticketers { get; set; }
+            public HashSet<string>? All { get; set; }
+            public Dictionary<string, TicketerSub>? Ticketers { get; set; }
 
             public bool Empty => All == null && Ticketers == null;
         }
         class TicketerSub
         {
-            public HashSet<string> All { get; set; }
+            public HashSet<string>? All { get; set; }
 
             public bool Empty => All == null;
         }
@@ -92,8 +92,7 @@ namespace Tzkt.Api.Websocket.Processors
                         {
                             Gt = State.ValidLevel,
                             Le = State.Current.Level
-                        },
-                    ticket = new()
+                        }
                 };
                 var limit = 1_000_000;
 
@@ -113,7 +112,7 @@ namespace Tzkt.Api.Websocket.Processors
                     {
                         if (!toSend.TryGetValue(clientId, out var list))
                         {
-                            list = new();
+                            list = [];
                             toSend.Add(clientId, list);
                         }
                         list.Add(transfer);
@@ -262,7 +261,7 @@ namespace Tzkt.Api.Websocket.Processors
                         TicketerSubs.Add(parameter.Ticketer, ticketerSub);
                     }
 
-                    ticketerSub.All ??= new();
+                    ticketerSub.All ??= [];
                     TryAdd(ticketerSub.All, connectionId);
                 }
                 else
@@ -379,7 +378,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
         }
 
-        private static HashSet<string> TryRemove(HashSet<string> set, string connectionId)
+        private static HashSet<string>? TryRemove(HashSet<string>? set, string connectionId)
         {
             if (set == null) return null;
             if (set.Remove(connectionId))

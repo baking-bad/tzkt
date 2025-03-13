@@ -8,7 +8,7 @@ namespace Tzkt.Api
         public Task BindModelAsync(ModelBindingContext ctx)
         {
             var model = ctx.ModelName;
-            JsonParameter res = null;
+            JsonParameter? res = null;
 
             foreach (var key in ctx.HttpContext.Request.Query.Keys)
             {
@@ -17,7 +17,7 @@ namespace Tzkt.Api
                     if (!ctx.TryGetJson(key, out var val))
                         return Task.CompletedTask;
                     res ??= new();
-                    res.Eq ??= new();
+                    res.Eq ??= [];
                     res.Eq.Add((Array.Empty<JsonPath>(), val));
                 }
                 else if (key.StartsWith($"{model}."))
@@ -41,43 +41,43 @@ namespace Tzkt.Api
                         case "eq":
                             if (!ctx.TryGetJson(key, out var eq))
                                 return Task.CompletedTask;
-                            res.Eq ??= new();
+                            res.Eq ??= [];
                             res.Eq.Add((path[..^1], eq));
                             break;
                         case "ne":
                             if (!ctx.TryGetJson(key, out var ne))
                                 return Task.CompletedTask;
-                            res.Ne ??= new();
+                            res.Ne ??= [];
                             res.Ne.Add((path[..^1], ne));
                             break;
                         case "gt":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var gt))
                                 return Task.CompletedTask;
-                            res.Gt ??= new();
+                            res.Gt ??= [];
                             res.Gt.Add((path[..^1], gt));
                             break;
                         case "ge":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var ge))
                                 return Task.CompletedTask;
-                            res.Ge ??= new();
+                            res.Ge ??= [];
                             res.Ge.Add((path[..^1], ge));
                             break;
                         case "lt":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var lt))
                                 return Task.CompletedTask;
-                            res.Lt ??= new();
+                            res.Lt ??= [];
                             res.Lt.Add((path[..^1], lt));
                             break;
                         case "le":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var le))
                                 return Task.CompletedTask;
-                            res.Le ??= new();
+                            res.Le ??= [];
                             res.Le.Add((path[..^1], le));
                             break;
                         case "as":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var @as))
                                 return Task.CompletedTask;
-                            res.As ??= new();
+                            res.As ??= [];
                             res.As.Add((path[..^1], @as
                                 .Replace("%", "\\%")
                                 .Replace("\\*", "ъуъ")
@@ -87,7 +87,7 @@ namespace Tzkt.Api
                         case "un":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetString(key, out var un))
                                 return Task.CompletedTask;
-                            res.Un ??= new();
+                            res.Un ??= [];
                             res.Un.Add((path[..^1], un
                                 .Replace("%", "\\%")
                                 .Replace("\\*", "ъуъ")
@@ -97,25 +97,25 @@ namespace Tzkt.Api
                         case "in":
                             if (!ctx.TryGetJsonArray(key, out var @in))
                                 return Task.CompletedTask;
-                            res.In ??= new();
+                            res.In ??= [];
                             res.In.Add((path[..^1], @in));
                             break;
                         case "ni":
                             if (!ctx.TryGetJsonArray(key, out var ni))
                                 return Task.CompletedTask;
-                            res.Ni ??= new();
+                            res.Ni ??= [];
                             res.Ni.Add((path[..^1], ni));
                             break;
                         case "null":
                             if (HasWildcard(ctx, key, path) || !ctx.TryGetBool(key, out var isNull))
                                 return Task.CompletedTask;
-                            res.Null ??= new();
-                            res.Null.Add((path[..^1], (bool)isNull));
+                            res.Null ??= [];
+                            res.Null.Add((path[..^1], isNull ?? true));
                             break;
                         default:
                             if (!ctx.TryGetJson(key, out var val))
                                 return Task.CompletedTask;
-                            res.Eq ??= new();
+                            res.Eq ??= [];
                             res.Eq.Add((path, val));
                             break;
                     }

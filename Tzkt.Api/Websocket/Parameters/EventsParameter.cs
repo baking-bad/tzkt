@@ -6,8 +6,8 @@ namespace Tzkt.Api.Websocket
     public class EventsParameter
     {
         public int? CodeHash { get; set; }
-        public string Contract { get; set; }
-        public string Tag { get; set; }
+        public string? Contract { get; set; }
+        public string? Tag { get; set; }
 
         public void EnsureValid()
         {

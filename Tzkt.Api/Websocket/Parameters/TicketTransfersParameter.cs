@@ -5,8 +5,8 @@ namespace Tzkt.Api.Websocket
 {
     public class TicketTransfersParameter
     {
-        public string Account { get; set; }
-        public string Ticketer { get; set; }
+        public string? Account { get; set; }
+        public string? Ticketer { get; set; }
 
         public void EnsureValid()
         {

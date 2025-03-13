@@ -44,7 +44,7 @@ namespace Tzkt.Api.Websocket.Hubs
             return base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
             lock (Crit)
             {

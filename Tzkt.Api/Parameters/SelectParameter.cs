@@ -13,7 +13,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?select=address,balance` => `[ { "address": "asd", "balance": 10 } ]`.
         /// </summary>
-        public string[] Fields { get; set; }
+        public string[]? Fields { get; set; }
 
         /// <summary>
         /// **Values** selection mode. \
@@ -21,12 +21,13 @@ namespace Tzkt.Api
         /// 
         /// Example: `?select.values=address,balance` => `[ [ "asd", 10 ] ]`.
         /// </summary>
-        public string[] Values { get; set; }
+        public string[]? Values { get; set; }
 
         public string Normalize(string name)
         {
-            //TODO: we can't order values, but perhaps we can order fields.
-            return Values != null ? $"select.values={string.Join(",", Values)}&" : $"select.fields={string.Join(",", Fields)}&";
+            return Fields != null
+                ? $"select.fields={string.Join(",", Fields.OrderBy(x => x))}&"
+                : $"select.values={string.Join(",", Values!)}&";
         }
     }
 }

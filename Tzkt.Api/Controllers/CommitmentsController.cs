@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services.Cache;
@@ -28,7 +28,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Blinded address (starting with btz)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Commitment> Get([Required][BlindedAddress] string address)
+        public Task<Commitment?> Get([Required][BlindedAddress] string address)
         {
             return Commitments.Get(address);
         }
@@ -50,11 +50,11 @@ namespace Tzkt.Api.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Commitment>>> Get(
             bool? activated,
-            Int32NullParameter activationLevel,
-            Int64Parameter balance,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32NullParameter? activationLevel,
+            Int64Parameter? balance,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -74,7 +74,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Commitments.Get(activated, activationLevel, balance, sort, offset, limit, select.Fields[0]));
                 else
                 {
@@ -97,7 +97,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="balance">Filters commitments by activated balance</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(bool? activated, Int64Parameter balance)
+        public Task<int> GetCount(bool? activated, Int64Parameter? balance)
         {
             #region optimize
             if (balance == null)

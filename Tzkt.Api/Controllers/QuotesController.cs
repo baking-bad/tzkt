@@ -56,11 +56,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Quote>>> Get(
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -80,7 +80,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Quotes.Get(level, timestamp, sort, offset, limit, select.Fields[0]));
                 else
                 {

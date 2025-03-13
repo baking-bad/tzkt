@@ -22,7 +22,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region rollups
-        async Task<IEnumerable<dynamic>> QuerySmartRollupsAsync(SrFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupsAsync(SrFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 r."Id",
@@ -108,7 +108,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -161,7 +161,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<SmartRollup> GetSmartRollup(string address)
+        public async Task<SmartRollup?> GetSmartRollup(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
@@ -213,20 +213,20 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
-                return Enumerable.Empty<Entrypoint>();
+                return [];
 
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Accounts"" WHERE ""Id"" = {rollup.Id}");
             if (row == null)
-                return Enumerable.Empty<Entrypoint>();
+                return [];
 
             var param = new ContractParameter(new MichelinePrim
             {
                 Prim = PrimType.parameter,
-                Args = new List<IMicheline>
-                {
+                Args =
+                [
                     Micheline.FromBytes(row.ParameterSchema)
-                }
+                ]
             });
 
             return param.Entrypoints
@@ -237,7 +237,7 @@ namespace Tzkt.Api.Repositories
                     return new Entrypoint
                     {
                         Name = x.Key,
-                        JsonParameters = json ? (RawJson)x.Value.Humanize() : null,
+                        JsonParameters = json ? x.Value.Humanize() : null,
                         MichelineParameters = mich,
                         MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
                         Unused = all && !param.IsEntrypointUseful(x.Key)
@@ -245,7 +245,7 @@ namespace Tzkt.Api.Repositories
                 });
         }
 
-        public async Task<RawJson> GetSmartRollupInterface(string address)
+        public async Task<RawJson?> GetSmartRollupInterface(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
@@ -259,10 +259,10 @@ namespace Tzkt.Api.Repositories
                 WHERE       ""SmartRollupId"" = {rollup.Id}
                 LIMIT       1"
             );
-            if (origination.ParameterType is not byte[] bytes)
+            if (origination?.ParameterType is not byte[] bytes)
                 return null;
 
-            return Schema.Create(Micheline.FromBytes(bytes) as MichelinePrim).GetJsonSchema();
+            return Schema.Create((Micheline.FromBytes(bytes) as MichelinePrim)!).GetJsonSchema();
         }
 
         public async Task<IEnumerable<SmartRollup>> GetSmartRollups(SrFilter filter, Pagination pagination)
@@ -310,13 +310,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollups(SrFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetSmartRollups(SrFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QuerySmartRollupsAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -486,7 +486,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region stakers
-        async Task<IEnumerable<dynamic>> QueryStakersAsync(RawSmartRollup rollup, SrStakerFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryStakersAsync(RawSmartRollup rollup, SrStakerFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 s."SenderId",
@@ -511,7 +511,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -547,7 +547,7 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
-                return Enumerable.Empty<SrStaker>();
+                return [];
 
             var rows = await QueryStakersAsync(rollup, filter, pagination);
             return rows.Select(row => new SrStaker
@@ -561,17 +561,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetStakers(string address, SrStakerFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetStakers(string address, SrStakerFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
-                return Array.Empty<object[]>();
+                return [];
 
             var rows = await QueryStakersAsync(rollup, filter, pagination);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -609,7 +609,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region commitments
-        async Task<IEnumerable<dynamic>> QueryCommitmentsAsync(SrCommitmentFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryCommitmentsAsync(SrCommitmentFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 c."Id",
@@ -669,7 +669,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"c.""PredecessorId"" as ""pId"""); break;
                                     case "initiator": columns.Add(@"p.""InitiatorId"" as ""pInitiatorId"""); break;
@@ -686,7 +686,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -704,8 +704,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastLevel)
                 .FilterA(@"c.""LastLevel""", filter.lastTime)
                 .FilterA(@"c.""Status""", filter.status)
-                .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
-                .FilterA(@"p.""Hash""", filter.predecessor?.hash)
+                .FilterA(@"c.""PredecessorId""", filter.predecessor.id)
+                .FilterA(@"p.""Hash""", filter.predecessor.hash)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"c.""Id""", @"c.""Id"""),
@@ -737,8 +737,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastLevel)
                 .FilterA(@"c.""LastLevel""", filter.lastTime)
                 .FilterA(@"c.""Status""", filter.status)
-                .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
-                .FilterA(@"p.""Hash""", filter.predecessor?.hash);
+                .FilterA(@"c.""PredecessorId""", filter.predecessor.id)
+                .FilterA(@"p.""Hash""", filter.predecessor.hash);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -778,13 +778,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetCommitments(SrCommitmentFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetCommitments(SrCommitmentFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryCommitmentsAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -928,7 +928,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region games
-        async Task<IEnumerable<dynamic>> QueryGamesAsync(SrGameFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryGamesAsync(SrGameFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 g."Id",
@@ -989,7 +989,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"g.""InitiatorCommitmentId"" as ""icId"""); break;
                                     case "initiator": columns.Add(@"ic.""InitiatorId"" as ""icInitiatorId"""); break;
@@ -1016,7 +1016,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"g.""OpponentCommitmentId"" as ""ocId"""); break;
                                     case "initiator": columns.Add(@"oc.""InitiatorId"" as ""ocInitiatorId"""); break;
@@ -1041,7 +1041,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"g.""LastMoveId"" as ""mId"""); break;
                                     case "level": columns.Add(@"m.""Level"" as ""mLevel"""); break;
@@ -1064,7 +1064,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -1077,11 +1077,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"g.""Id""", filter.id)
                 .FilterA(@"g.""SmartRollupId""", filter.rollup)
                 .FilterA(@"g.""InitiatorId""", filter.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment?.id)
-                .FilterA(@"ic.""Hash""", filter.initiatorCommitment?.hash)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment.id)
+                .FilterA(@"ic.""Hash""", filter.initiatorCommitment.hash)
                 .FilterA(@"g.""OpponentId""", filter.opponent)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment?.id)
-                .FilterA(@"oc.""Hash""", filter.opponentCommitment?.hash)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment.id)
+                .FilterA(@"oc.""Hash""", filter.opponentCommitment.hash)
                 .FilterA(@"g.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"g.""FirstLevel""", filter.firstTime)
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
@@ -1108,10 +1108,10 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"g.""Id""", filter.id)
                 .FilterA(@"g.""SmartRollupId""", filter.rollup)
                 .FilterA(@"g.""InitiatorId""", filter.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment?.id)
-                .FilterA(@"ic.""Hash""", filter.initiatorCommitment?.hash)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment?.id)
-                .FilterA(@"oc.""Hash""", filter.opponentCommitment?.hash)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.initiatorCommitment.id)
+                .FilterA(@"ic.""Hash""", filter.initiatorCommitment.hash)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.opponentCommitment.id)
+                .FilterA(@"oc.""Hash""", filter.opponentCommitment.hash)
                 .FilterA(@"g.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"g.""FirstLevel""", filter.firstTime)
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
@@ -1129,7 +1129,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Rollup = Accounts.GetAlias(row.SmartRollupId),
                 Initiator = Accounts.GetAlias(row.InitiatorId),
-                InitiatorCommitment = row.icId == null ? null : new()
+                InitiatorCommitment = new()
                 {
                     Id = row.icId,
                     Initiator = Accounts.GetAlias(row.icInitiatorId),
@@ -1141,7 +1141,7 @@ namespace Tzkt.Api.Repositories
                     FirstTime = Times[row.icFirstLevel]
                 },
                 Opponent = Accounts.GetAlias(row.OpponentId),
-                OpponentCommitment = row.ocId == null ? null : new()
+                OpponentCommitment = new()
                 {
                     Id = row.ocId,
                     Initiator = Accounts.GetAlias(row.ocInitiatorId),
@@ -1152,7 +1152,7 @@ namespace Tzkt.Api.Repositories
                     FirstLevel = row.ocFirstLevel,
                     FirstTime = Times[row.ocFirstLevel]
                 },
-                LastMove = row.mId == null ? null : new()
+                LastMove = new()
                 {
                     Id = row.mId,
                     Level = row.mLevel,
@@ -1172,13 +1172,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetGames(SrGameFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetGames(SrGameFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryGamesAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -1416,7 +1416,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region inbox
-        async Task<IEnumerable<dynamic>> QueryInboxMessagesAsync(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryInboxMessagesAsync(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField>? fields = null)
         {
             var select = """
                 m."Id",
@@ -1468,7 +1468,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -1523,7 +1523,7 @@ namespace Tzkt.Api.Repositories
                 Entrypoint = row.tEntrypoint,
                 Parameter = micheline switch
                 {
-                    MichelineFormat.Json => (RawJson)row.tJsonParameters,
+                    MichelineFormat.Json => (RawJson?)row.tJsonParameters,
                     MichelineFormat.JsonString => row.tJsonParameters,
                     MichelineFormat.Raw => row.tRawParameters == null ? null : (RawJson)Micheline.ToJson(row.tRawParameters),
                     MichelineFormat.RawString => row.tRawParameters == null ? null : Micheline.ToJson(row.tRawParameters),
@@ -1534,13 +1534,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetInboxMessages(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField> fields)
+        public async Task<object?[][]> GetInboxMessages(SrMessageFilter filter, Pagination pagination, MichelineFormat micheline, List<SelectionField> fields)
         {
             var rows = await QueryInboxMessagesAsync(filter, pagination, micheline, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -1618,7 +1618,7 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = micheline switch
                             {
-                                MichelineFormat.Json => (RawJson)row.tJsonParameters,
+                                MichelineFormat.Json => (RawJson?)row.tJsonParameters,
                                 MichelineFormat.JsonString => row.tJsonParameters,
                                 MichelineFormat.Raw => row.tRawParameters == null ? null : (RawJson)Micheline.ToJson(row.tRawParameters),
                                 MichelineFormat.RawString => row.tRawParameters == null ? null : Micheline.ToJson(row.tRawParameters),

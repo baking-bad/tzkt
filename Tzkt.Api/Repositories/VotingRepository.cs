@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<Proposal> GetProposal(string hash)
+        public async Task<Proposal?> GetProposal(string hash)
         {
             var sql = @"
                 SELECT      *
@@ -59,10 +59,10 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Proposal>> GetProposals(
-            ProtocolParameter hash,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+            ProtocolParameter? hash,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Proposals""")
@@ -92,11 +92,11 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetProposals(
-            ProtocolParameter hash,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetProposals(
+            ProtocolParameter? hash,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields)
         {
@@ -119,7 +119,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals""")
                 .Filter("Hash", hash)
@@ -134,9 +134,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -176,7 +176,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "extras":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Extras;
+                            result[j++][i] = (RawJson?)row.Extras;
                         break;
                 }
             }
@@ -184,11 +184,11 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetProposals(
-            ProtocolParameter hash,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetProposals(
+            ProtocolParameter? hash,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field)
         {
@@ -208,7 +208,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Proposals""")
                 .Filter("Hash", hash)
@@ -224,7 +224,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -259,7 +259,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "extras":
                     foreach (var row in rows)
-                        result[j++] = (RawJson)row.Extras;
+                        result[j++] = (RawJson?)row.Extras;
                     break;
             }
 
@@ -268,7 +268,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region periods
-        public async Task<VotingPeriod> GetPeriod(int index)
+        public async Task<VotingPeriod?> GetPeriod(int index)
         {
             var sql = $@"
                 SELECT  *
@@ -309,11 +309,11 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<VotingPeriod>> GetPeriods(
-            Int32Parameter firstLevel,
-            Int32Parameter lastLevel,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? firstLevel,
+            Int32Parameter? lastLevel,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""VotingPeriods""")
@@ -353,12 +353,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetPeriods(
-            Int32Parameter firstLevel,
-            Int32Parameter lastLevel,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetPeriods(
+            Int32Parameter? firstLevel,
+            Int32Parameter? lastLevel,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields)
         {
@@ -395,7 +395,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
                 .Filter("FirstLevel", firstLevel)
@@ -406,9 +406,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -512,12 +512,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetPeriods(
-            Int32Parameter firstLevel,
-            Int32Parameter lastLevel,
-            Int32Parameter epoch,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetPeriods(
+            Int32Parameter? firstLevel,
+            Int32Parameter? lastLevel,
+            Int32Parameter? epoch,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field)
         {
@@ -551,7 +551,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VotingPeriods""")
                 .Filter("FirstLevel", firstLevel)
@@ -563,7 +563,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -665,7 +665,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<VoterSnapshot> GetVoter(int period, string address)
+        public async Task<VoterSnapshot?> GetVoter(int period, string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawDelegate baker) return null;
@@ -691,9 +691,9 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<VoterSnapshot>> GetVoters(
             int period,
-            VoterStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            VoterStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder($@"SELECT * FROM ""VotingSnapshots""")
@@ -714,7 +714,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region epochs
-        public async Task<VotingEpoch> GetEpoch(int index)
+        public async Task<VotingEpoch?> GetEpoch(int index)
         {
             var sql = $@"
                 SELECT  *
@@ -770,7 +770,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<VotingEpoch>> GetEpochs(EpochStatusParameter status, SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<VotingEpoch>> GetEpochs(EpochStatusParameter? status, SortParameter? sort, OffsetParameter? offset, int limit)
         {
             var sql = new SqlBuilder($"""
                 WITH
@@ -803,7 +803,7 @@ namespace Tzkt.Api.Repositories
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
-            if (!rows.Any()) return Enumerable.Empty<VotingEpoch>();
+            if (!rows.Any()) return [];
 
             var epochs = rows.Select(x => (int)x.Index).ToList();
 
@@ -842,7 +842,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<VotingEpoch> GetLatestVoting()
+        public async Task<VotingEpoch?> GetLatestVoting()
         {
             var sql = $@"
                 SELECT  period.*

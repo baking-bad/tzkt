@@ -33,13 +33,13 @@ namespace Tzkt.Api.Repositories
                     "initiator" => @"g.""InitiatorId""",
                     _ => @"g.""OpponentId"""
                 })
-                .FilterA(@"o.""GameId""", filter.game?.id)
-                .FilterA(@"g.""InitiatorId""", filter.game?.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.game?.initiatorCommitment?.id)
-                .FilterA(@"ic.""Hash""", filter.game?.initiatorCommitment?.hash)
-                .FilterA(@"g.""OpponentId""", filter.game?.opponent)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.game?.opponentCommitment?.id)
-                .FilterA(@"oc.""Hash""", filter.game?.opponentCommitment?.hash)
+                .FilterA(@"o.""GameId""", filter.game.id)
+                .FilterA(@"g.""InitiatorId""", filter.game.initiator)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.game.initiatorCommitment.id)
+                .FilterA(@"ic.""Hash""", filter.game.initiatorCommitment.hash)
+                .FilterA(@"g.""OpponentId""", filter.game.opponent)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.game.opponentCommitment.id)
+                .FilterA(@"oc.""Hash""", filter.game.opponentCommitment.hash)
                 .FilterA(@"o.""Move""", filter.move)
                 .FilterA(@"o.""GameStatus""", filter.gameStatus);
 
@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QuerySmartRollupRefuteOps(SrRefuteOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupRefuteOps(SrRefuteOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 o."Id",
@@ -142,12 +142,12 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"o.""GameId"" as ""gId"""); break;
                                     case "initiator": columns.Add(@"g.""InitiatorId"" as ""gInitiatorId"""); break;
                                     case "initiatorCommitment":
-                                        if (field.SubField().Path == null)
+                                        if (field.SubField()!.Path == null)
                                         {
                                             columns.Add(@"g.""InitiatorCommitmentId"" as ""icId""");
                                             columns.Add(@"ic.""InitiatorId"" as ""icInitiatorId""");
@@ -159,7 +159,7 @@ namespace Tzkt.Api.Repositories
                                         }
                                         else
                                         {
-                                            switch (field.SubField().SubField().Field)
+                                            switch (field.SubField()!.SubField()!.Field)
                                             {
                                                 case "id": columns.Add(@"g.""InitiatorCommitmentId"" as ""icId"""); break;
                                                 case "initiator": columns.Add(@"ic.""InitiatorId"" as ""icInitiatorId"""); break;
@@ -174,7 +174,7 @@ namespace Tzkt.Api.Repositories
                                         break;
                                     case "opponent": columns.Add(@"g.""OpponentId"" as ""gOpponentId"""); break;
                                     case "opponentCommitment":
-                                        if (field.SubField().Path == null)
+                                        if (field.SubField()!.Path == null)
                                         {
                                             columns.Add(@"g.""OpponentCommitmentId"" as ""ocId""");
                                             columns.Add(@"oc.""InitiatorId"" as ""ocInitiatorId""");
@@ -186,7 +186,7 @@ namespace Tzkt.Api.Repositories
                                         }
                                         else
                                         {
-                                            switch (field.SubField().SubField().Field)
+                                            switch (field.SubField()!.SubField()!.Field)
                                             {
                                                 case "id": columns.Add(@"g.""OpponentCommitmentId"" as ""ocId"""); break;
                                                 case "initiator": columns.Add(@"oc.""InitiatorId"" as ""ocInitiatorId"""); break;
@@ -229,7 +229,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -253,13 +253,13 @@ namespace Tzkt.Api.Repositories
                     "initiator" => @"g.""InitiatorId""",
                     _ => @"g.""OpponentId"""
                 })
-                .FilterA(@"o.""GameId""", filter.game?.id)
-                .FilterA(@"g.""InitiatorId""", filter.game?.initiator)
-                .FilterA(@"g.""InitiatorCommitmentId""", filter.game?.initiatorCommitment?.id)
-                .FilterA(@"ic.""Hash""", filter.game?.initiatorCommitment?.hash)
-                .FilterA(@"g.""OpponentId""", filter.game?.opponent)
-                .FilterA(@"g.""OpponentCommitmentId""", filter.game?.opponentCommitment?.id)
-                .FilterA(@"oc.""Hash""", filter.game?.opponentCommitment?.hash)
+                .FilterA(@"o.""GameId""", filter.game.id)
+                .FilterA(@"g.""InitiatorId""", filter.game.initiator)
+                .FilterA(@"g.""InitiatorCommitmentId""", filter.game.initiatorCommitment.id)
+                .FilterA(@"ic.""Hash""", filter.game.initiatorCommitment.hash)
+                .FilterA(@"g.""OpponentId""", filter.game.opponent)
+                .FilterA(@"g.""OpponentCommitmentId""", filter.game.opponentCommitment.id)
+                .FilterA(@"oc.""Hash""", filter.game.opponentCommitment.hash)
                 .FilterA(@"o.""Move""", filter.move)
                 .FilterA(@"o.""GameStatus""", filter.gameStatus)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
@@ -327,13 +327,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollupRefuteOps(SrRefuteOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetSmartRollupRefuteOps(SrRefuteOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QuerySmartRollupRefuteOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {

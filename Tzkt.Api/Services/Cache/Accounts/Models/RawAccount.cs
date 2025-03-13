@@ -5,7 +5,7 @@ namespace Tzkt.Api.Services.Cache
     public class RawAccount
     {
         public int Id { get; set; }
-        public string Address { get; set; }
+        public required string Address { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
 
@@ -59,11 +59,11 @@ namespace Tzkt.Api.Services.Cache
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
-        public string Extras { get; set; }
+        public string? Extras { get; set; }
 
         #region helpers
-        public string Alias { get; set; }
-        public string Profile { get; set; }
+        public string? Alias { get; set; }
+        public string? Profile { get; set; }
         public Alias Info => new()
         {
             Name = Alias,

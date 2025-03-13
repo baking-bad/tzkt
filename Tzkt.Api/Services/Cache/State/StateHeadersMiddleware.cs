@@ -2,17 +2,16 @@
 
 namespace Tzkt.Api.Services.Cache
 {
-    public class StateHeadersMiddleware
+    public class StateHeadersMiddleware(RequestDelegate next)
     {
-        readonly static string Version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+        readonly static string Version = Assembly.GetExecutingAssembly().GetName().Version?.ToString() ?? "0.0.0";
 
         public const string TZKT_VERSION = "Tzkt-Version";
         public const string TZKT_LEVEL = "Tzkt-Level";
         public const string TZKT_KNOWN_LEVEL = "Tzkt-Known-Level";
         public const string TZKT_SYNCED_AT = "Tzkt-Synced-At";
 
-        readonly RequestDelegate Next;
-        public StateHeadersMiddleware(RequestDelegate next) => Next = next;
+        readonly RequestDelegate Next = next;
 
         public Task InvokeAsync(HttpContext context, StateCache stateCache)
         {

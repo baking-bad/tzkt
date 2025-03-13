@@ -7,9 +7,9 @@ namespace Tzkt.Api
         /// <summary>
         /// Filter by commitment
         /// </summary>
-        public SrCommitmentInfoFilter commitment { get; set; }
+        public SrCommitmentInfoFilter commitment { get; set; } = new();
 
-        public override bool Empty => base.Empty && commitment == null;
+        public override bool Empty => base.Empty && commitment.Empty;
 
         public override string Normalize(string name)
         {

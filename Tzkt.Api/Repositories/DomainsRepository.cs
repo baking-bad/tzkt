@@ -18,7 +18,7 @@ namespace Tzkt.Api.Repositories
             Times = times;
         }
 
-        async Task<IEnumerable<dynamic>> QueryAsync(DomainFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryAsync(DomainFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -55,7 +55,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -105,7 +105,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<Domain> Get(string name)
+        public async Task<Domain?> Get(string name)
         {
             var sql = @"
                 SELECT  *
@@ -122,7 +122,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Name = row.Name,
-                Owner = row.Owner == null ? null : Accounts.GetAlias(row.Owner),
+                Owner = Accounts.GetAlias(row.Owner),
                 Address = row.Address == null ? null : Accounts.GetAlias(row.Address),
                 Reverse = row.Reverse,
                 Expiration = row.Expiration,
@@ -142,7 +142,7 @@ namespace Tzkt.Api.Repositories
                 Id = row.Id,
                 Level = row.Level,
                 Name = row.Name,
-                Owner = row.Owner == null ? null : Accounts.GetAlias(row.Owner),
+                Owner = Accounts.GetAlias(row.Owner),
                 Address = row.Address == null ? null : Accounts.GetAlias(row.Address),
                 Reverse = row.Reverse,
                 Expiration = row.Expiration,
@@ -154,13 +154,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(DomainFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> Get(DomainFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -180,15 +180,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "owner":
                         foreach (var row in rows)
-                            result[j++][i] = row.Owner == null ? null : Accounts.GetAlias(row.Owner);
+                            result[j++][i] = Accounts.GetAlias(row.Owner);
                         break;
                     case "owner.alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.Owner == null ? null : Accounts.GetAlias(row.Owner).Name;
+                            result[j++][i] = Accounts.GetAlias(row.Owner).Name;
                         break;
                     case "owner.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.Owner == null ? null : Accounts.GetAlias(row.Owner).Address;
+                            result[j++][i] = Accounts.GetAlias(row.Owner).Address;
                         break;
                     case "address":
                         foreach (var row in rows)
@@ -212,7 +212,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "data":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Data;
+                            result[j++][i] = (RawJson?)row.Data;
                         break;
                     case "firstLevel":
                         foreach (var row in rows)
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Repositories
                     default:
                         if (fields[i].Field == "data")
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string)!;
                         break;
                 }
             }

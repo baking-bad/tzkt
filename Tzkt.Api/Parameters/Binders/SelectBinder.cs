@@ -12,10 +12,10 @@ namespace Tzkt.Api
             if (!bindingContext.TryGetStringList($"{model}", ref hasValue, out var value))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringList($"{model}.fields", ref hasValue, out var rec))
+            if (!bindingContext.TryGetStringList($"{model}.fields", ref hasValue, out var fields))
                 return Task.CompletedTask;
 
-            if (!bindingContext.TryGetStringList($"{model}.values", ref hasValue, out var tup))
+            if (!bindingContext.TryGetStringList($"{model}.values", ref hasValue, out var values))
                 return Task.CompletedTask;
 
             if (!hasValue)
@@ -26,8 +26,8 @@ namespace Tzkt.Api
 
             bindingContext.Result = ModelBindingResult.Success(new SelectParameter
             {
-                Fields = value ?? rec,
-                Values = tup
+                Fields = value ?? fields,
+                Values = values
             });
 
             return Task.CompletedTask;

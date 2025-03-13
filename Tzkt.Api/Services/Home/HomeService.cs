@@ -11,42 +11,42 @@ namespace Tzkt.Api.Services
     public class HomeService
     {
         #region static
-        public static object[][] AccountsTab { get; private set; } = Array.Empty<object[]>();
-        public static readonly string[] AccountFields = new[]
-        {
+        public static object?[][] AccountsTab { get; private set; } = [];
+        public static readonly string[] AccountFields =
+        [
             "alias", "address", "type", "delegate", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
-        };
+        ];
 
-        public static object[][] BakersTab { get; private set; } = Array.Empty<object[]>();
-        public static readonly string[] BakerFields = new[]
-        {
+        public static object?[][] BakersTab { get; private set; } = [];
+        public static readonly string[] BakerFields =
+        [
             "alias", "address", "firstActivityTime", "balance", "stakingBalance", "numDelegators", "lastActivityTime"
-        };
+        ];
 
-        public static object[][] AssetsTab { get; private set; } = Array.Empty<object[]>();
-        public static readonly string[] AssetFields = new[]
-        {
+        public static object?[][] AssetsTab { get; private set; } = [];
+        public static readonly string[] AssetFields =
+        [
             "alias", "address", "tzips", "creator", "firstActivityTime", "balance", "numTransactions", "lastActivityTime"
-        };
+        ];
 
-        public static object[][] BlocksTab { get; private set; } = Array.Empty<object[]>();
-        public static readonly string[] BlockFields = new[]
-        {
+        public static object?[][] BlocksTab { get; private set; } = [];
+        public static readonly string[] BlockFields =
+        [
             "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees", "hash",
             "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
             "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge"// TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
-        };
+        ];
         #endregion
 
         #region stats
-        static DailyData DailyData;
-        static CycleData CycleData;
-        static GovernanceData GovernanceData;
-        static StakingData StakingData;
-        static AccountsData AccountsData;
-        static TxsData TxsData;
-        static MarketData MarketData;
-        static List<Quote> MarketChart;
+        static DailyData? DailyData;
+        static CycleData? CycleData;
+        static GovernanceData? GovernanceData;
+        static StakingData? StakingData;
+        static AccountsData? AccountsData;
+        static TxsData? TxsData;
+        static MarketData? MarketData;
+        static List<Quote>? MarketChart;
         #endregion
 
         readonly NpgsqlDataSource DataSource;
@@ -85,7 +85,7 @@ namespace Tzkt.Api.Services
             _ = UpdateAsync();
         }
         
-        public static HomeStats GetCurrentStats(Symbols quote)
+        public static HomeStats? GetCurrentStats(Symbols quote)
         {
             if (LastUpdate <= 0)
                 return null;
@@ -140,14 +140,14 @@ namespace Tzkt.Api.Services
             };
             return new HomeStats
             {
-                DailyData = DailyData,
-                CycleData = CycleData,
-                GovernanceData = GovernanceData,
-                StakingData = StakingData,
-                AccountsData = AccountsData,
-                TxsData = TxsData,
-                MarketData = MarketData,
-                PriceChart = priceChart
+                DailyData = DailyData!,
+                CycleData = CycleData!,
+                GovernanceData = GovernanceData!,
+                StakingData = StakingData!,
+                AccountsData = AccountsData!,
+                TxsData = TxsData!,
+                MarketData = MarketData!,
+                PriceChart = priceChart!
             };
         }
 
@@ -199,7 +199,7 @@ namespace Tzkt.Api.Services
         }
 
         #region tabs
-        async Task<object[][]> GetBlocks()
+        async Task<object?[][]> GetBlocks()
         {
             var level = State.Current.Level;
 
@@ -211,31 +211,31 @@ namespace Tzkt.Api.Services
                 new Int32NullParameter { Eq = 0 },
                 null,
                 new SortParameter { Desc = "level" },
-                null, 5, new string[] {
+                null, 5, [
                     "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash",
                     "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
                     "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge" // TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
-                });
+                ]);
 
             var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 
                 new SortParameter { Desc = "level" }, null, 7, BlockFields, Symbols.None);
 
-            return upcoming.Concat(blocks).ToArray();
+            return [.. upcoming, .. blocks];
         }
 
-        async Task<object[][]> GetAccounts()
+        async Task<object?[][]> GetAccounts()
         {
             return await AccountsRepo.Get(null, null, null, null, null, null, null, null, null,
                 new SortParameter { Desc = "balance" }, null, 10, AccountFields);
         }
 
-        async Task<object[][]> GetBakers()
+        async Task<object?[][]> GetBakers()
         {
             return await AccountsRepo.GetDelegates(new BoolParameter { Eq = true }, null,
                 new SortParameter { Desc = "stakingBalance" }, null, 10, BakerFields);
         }
 
-        async Task<object[][]> GetAssets()
+        async Task<object?[][]> GetAssets()
         {
             return (await AccountsRepo.Get(
                     null, null,
@@ -243,7 +243,7 @@ namespace Tzkt.Api.Services
                     null, null, null, null, null,
                     new SortParameter { Desc = "numTransactions" }, null, 100, AssetFields))
                 .OrderBy(x => x[0] == null)
-                .ThenByDescending(x => (int)x[6])
+                .ThenByDescending(x => (int)x[6]!)
                 .Take(10)
                 .ToArray();
         }
@@ -252,7 +252,12 @@ namespace Tzkt.Api.Services
         #region cards
         async Task<Statistics> GetStatistics(IDbConnection db)
         {
-            var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
+            var row = await db.QueryFirstAsync("""
+                SELECT *
+                FROM "Statistics"
+                ORDER BY "Level" DESC
+                LIMIT 1
+                """);
 
             return new Statistics
             {
@@ -281,7 +286,7 @@ namespace Tzkt.Api.Services
             var currPeriod = Times.FindLevel(State.Current.Timestamp.AddDays(-1), SearchMode.ExactOrHigher);
             var prevPeriod = Times.FindLevel(State.Current.Timestamp.AddDays(-2), SearchMode.ExactOrHigher);
 
-            var txs = await db.QueryFirstOrDefaultAsync(
+            var txs = await db.QueryFirstAsync(
                 $@"SELECT COALESCE(SUM(""Amount""), 0)::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
             var calls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {currPeriod}");
@@ -299,7 +304,7 @@ namespace Tzkt.Api.Services
                 };
             }
             
-            var prevTxs = await db.QueryFirstOrDefaultAsync(
+            var prevTxs = await db.QueryFirstAsync(
                 $@"SELECT COALESCE(SUM(""Amount""), 0)::bigint AS volume, COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             var prevCalls = await db.ExecuteScalarAsync<int>(
                 $@"SELECT COUNT(*)::integer AS count FROM ""TransactionOps"" WHERE ""Status"" = 1  AND ""Entrypoint"" IS NOT NULL AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
@@ -346,7 +351,7 @@ namespace Tzkt.Api.Services
             var currPeriod = Times.FindLevel(State.Current.Timestamp.AddMonths(-1), SearchMode.ExactOrHigher);
             var prevPeriod = Times.FindLevel(State.Current.Timestamp.AddMonths(-2), SearchMode.ExactOrHigher);
 
-            var fees = await db.QueryFirstOrDefaultAsync($@"
+            var fees = await db.QueryFirstAsync($@"
                 SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DalPublishCommitmentOps"" WHERE ""Level"" >= {currPeriod}
@@ -406,7 +411,7 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
-            var txs = await db.QueryFirstOrDefaultAsync(
+            var txs = await db.QueryFirstAsync(
                 $@"SELECT COUNT(*)::integer AS count, COALESCE(SUM(""Amount""), 0)::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {currPeriod}");
             
             var calls = await db.ExecuteScalarAsync<int>(
@@ -424,7 +429,7 @@ namespace Tzkt.Api.Services
                 };
             }
             
-            var prevFees = await db.QueryFirstOrDefaultAsync($@"
+            var prevFees = await db.QueryFirstAsync($@"
                 SELECT COALESCE(SUM(fee), 0)::bigint AS paid, COALESCE(SUM(burn), 0)::bigint AS burned FROM
                 (
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""DalPublishCommitmentOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
@@ -484,7 +489,7 @@ namespace Tzkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
-            var prevTxs = await db.QueryFirstOrDefaultAsync(
+            var prevTxs = await db.QueryFirstAsync(
                 $@"SELECT COUNT(*)::integer AS count, COALESCE(SUM(""Amount""), 0)::bigint AS volume FROM ""TransactionOps"" WHERE ""Status"" = 1 AND ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}");
             
             var prevCalls = await db.ExecuteScalarAsync<int>(
@@ -509,7 +514,7 @@ namespace Tzkt.Api.Services
         {
             var protocol = Protocols.Current;
 
-            var total = await db.QueryFirstOrDefaultAsync($"""
+            var total = await db.QueryFirstAsync($"""
                 SELECT  COUNT(*)::integer as "ActiveBakers",
                         COALESCE(SUM("StakingBalance"), 0)::bigint AS "TotalStaking",
                         COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
@@ -591,7 +596,7 @@ namespace Tzkt.Api.Services
                 {
                     kind = new ContractKindParameter
                     {
-                        In = new List<int> { 1, 2 },
+                        In = [1, 2],
                     }
                 })
             };
@@ -599,7 +604,7 @@ namespace Tzkt.Api.Services
         
         async Task<GovernanceData> GetGovernanceData()
         {
-            var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);
+            var epoch = (await VotingRepo.GetEpoch(State.Current.VotingEpoch))!;
             var period = epoch.Periods.Last();
             var proposals = epoch.Proposals.OrderByDescending(x => x.VotingPower).ToList();
             var proposal = proposals.FirstOrDefault();
@@ -629,7 +634,7 @@ namespace Tzkt.Api.Services
             var result = new GovernanceData
             {
                 Epoch = period.Epoch,
-                Proposal = proposal.Hash,
+                Proposal = proposal!.Hash,
                 Protocol = proposalExtras?.alias,
                 Period = period.Kind,
                 PeriodEndTime = period.EndTime,

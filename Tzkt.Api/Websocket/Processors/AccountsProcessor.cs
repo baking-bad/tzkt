@@ -12,10 +12,10 @@ namespace Tzkt.Api.Websocket.Processors
         const string AccountsChannel = "accounts";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly HashSet<string> AllSubs = new();
-        static readonly Dictionary<string, HashSet<string>> AccountSubs = new();
+        static readonly HashSet<string> AllSubs = [];
+        static readonly Dictionary<string, HashSet<string>> AccountSubs = [];
 
-        static readonly Dictionary<string, int> Limits = new();
+        static readonly Dictionary<string, int> Limits = [];
         #endregion
 
         readonly StateCache State;
@@ -233,7 +233,7 @@ namespace Tzkt.Api.Websocket.Processors
                 {
                     if (value.Remove(connectionId))
                         Limits[connectionId]--;
-                    
+
                     if (value.Count == 0)
                         AccountSubs.Remove(key);
                 }

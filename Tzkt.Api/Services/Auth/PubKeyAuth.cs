@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using Netezos.Encoding;
 using Netezos.Keys;
 using Netezos.Utils;
@@ -8,7 +9,7 @@ namespace Tzkt.Api.Services.Auth
     {
         readonly AuthConfig Config;
         readonly Dictionary<string, long> Nonces;
-        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
+        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>?> Rights;
         readonly Dictionary<string, PubKey> PubKeys;
         
         public PubKeyAuth(IConfiguration config)
@@ -21,29 +22,29 @@ namespace Tzkt.Api.Services.Auth
                 .ToDictionary(g => g.Key, g =>
                 (
                     g.FirstOrDefault(r => r.Section == null)?.Access ?? Access.None,
-                    g.Where(r => r.Section != null).ToDictionary(r => r.Section, r => r.Access)
+                    g.Where(r => r.Section != null).ToDictionary(r => r.Section!, r => r.Access)
                 )));
-            PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey));
+            PubKeys = cfg.Users.ToDictionary(x => x.Name, x => PubKey.FromBase58(x.PubKey!));
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string? error)
         {
             if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
                 return false;
             }
 
-            if (!pubKey.Verify($"{headers.Nonce}", headers.Signature))
+            if (!pubKey.Verify($"{headers.Nonce}", headers.Signature!))
             {
                 error = $"Invalid signature";
                 return false;
             }
 
-            Nonces[headers.User] = (long) headers.Nonce;
+            Nonces[headers.User!] = (long)headers.Nonce!;
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string? json, out string? error)
         {
             if (!TryAuthenticateBase(headers, requestedRights, out error, out var pubKey))
             {
@@ -58,17 +59,17 @@ namespace Tzkt.Api.Services.Auth
 
             var hash = Hex.Convert(Blake2b.GetDigest(Utf8.Parse(json)));
             
-            if (!pubKey.Verify($"{headers.Nonce}{hash}", headers.Signature))
+            if (!pubKey.Verify($"{headers.Nonce}{hash}", headers.Signature!))
             {
                 error = $"Invalid signature";
                 return false;
             }
             
-            Nonces[headers.User] = (long)headers.Nonce;
+            Nonces[headers.User!] = (long)headers.Nonce!;
             return true;
         }
 
-        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights requestedRights, out string error, out PubKey pubKey)
+        private bool TryAuthenticateBase(AuthHeaders headers, AccessRights requestedRights, out string? error, [NotNullWhen(true)] out PubKey? pubKey)
         {
             error = null;
             pubKey = null;

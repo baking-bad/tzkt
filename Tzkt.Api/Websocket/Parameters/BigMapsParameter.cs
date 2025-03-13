@@ -7,12 +7,12 @@ namespace Tzkt.Api.Websocket
     public class BigMapsParameter
     {
         public int? Ptr { get; set; }
-        public string Path { get; set; }
-        public string Contract { get; set; }
-        public List<string> Tags { get; set; }
+        public string? Path { get; set; }
+        public string? Contract { get; set; }
+        public List<string>? Tags { get; set; }
 
-        List<BigMapTag> _TagsList = null;
-        public List<BigMapTag> TagsList
+        List<BigMapTag>? _TagsList = null;
+        public List<BigMapTag>? TagsList
         {
             get
             {

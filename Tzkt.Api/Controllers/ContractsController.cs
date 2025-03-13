@@ -64,7 +64,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Accounts.GetContracts(includeStorage, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Accounts.GetContracts(includeStorage, filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -102,7 +102,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing to switch to new functionality smoothly.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<ActionResult<Contract>> GetByAddress([Required][KTAddress] string address, bool legacy = true)
+        public async Task<ActionResult<Contract?>> GetByAddress([Required][KTAddress] string address, bool legacy = true)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));
 
@@ -155,7 +155,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { codeHash = codeHash }, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { codeHash = codeHash }, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -203,7 +203,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { typeHash = typeHash }, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Accounts.GetContracts(includeStorage, new ContractFilter { typeHash = typeHash }, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -221,7 +221,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="format">Code format (`0` - micheline, `1` - michelson, `2` - bytes (base64))</param>
         /// <returns></returns>
         [HttpGet("{address}/code")]
-        public async Task<ActionResult<object>> GetCode(
+        public async Task<ActionResult<object?>> GetCode(
             [Required][KTAddress] string address,
             [Min(0)] int level = 0,
             [Range(0, 2)] int format = 0)
@@ -231,7 +231,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            object res = level == 0
+            object? res = level == 0
                 ? format switch
                 {
                     0 => await Accounts.GetMichelineCode(address),
@@ -258,9 +258,9 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Contract address</param>
         /// <returns></returns>
         [HttpGet("{address}/interface")]
-        public async Task<ActionResult<ContractInterface>> GetInterface([Required][KTAddress] string address)
+        public async Task<ActionResult<ContractInterface?>> GetInterface([Required][KTAddress] string address)
         {
-            var query = Request.Path.Value;
+            var query = Request.Path.Value!;
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -317,7 +317,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="michelson">Include parameters schema in michelson format</param>
         /// <returns></returns>
         [HttpGet("{address}/entrypoints/{name}")]
-        public async Task<ActionResult<Entrypoint>> GetEntrypointByName([Required][KTAddress] string address,
+        public async Task<ActionResult<Entrypoint?>> GetEntrypointByName(
+            [Required][KTAddress] string address,
             [Required] string name,
             bool json = true,
             bool micheline = false,
@@ -376,7 +377,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="michelson">Include parameter and return types in michelson format</param>
         /// <returns></returns>
         [HttpGet("{address}/views/{name}")]
-        public async Task<ActionResult<ContractView>> GetContractViewByName(
+        public async Task<ActionResult<ContractView?>> GetContractViewByName(
             [Required][KTAddress] string address,
             [Required] string name,
             bool json = true,
@@ -477,10 +478,10 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult> GetStorage(
             [Required][KTAddress] string address,
             [Min(0)] int level = 0,
-            string path = null)
+            string? path = null)
         {
             #region safe path
-            JsonPath[] jsonPath = null;
+            JsonPath[]? jsonPath = null;
             if (path != null)
             {
                 if (!JsonPath.TryParse(path, out jsonPath))
@@ -570,7 +571,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage value should be taken. If `0` or not specified, the current value will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw")]
-        public async Task<ActionResult<IMicheline>> GetRawStorage(
+        public async Task<ActionResult<IMicheline?>> GetRawStorage(
             [Required][KTAddress] string address,
             [Min(0)] int level = 0)
         {
@@ -597,7 +598,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="level">Level at which storage schema should be taken. If `0` or not specified, the current schema will be returned.</param>
         /// <returns></returns>
         [HttpGet("{address}/storage/raw/schema")]
-        public async Task<ActionResult<IMicheline>> GetRawStorageSchema(
+        public async Task<ActionResult<IMicheline?>> GetRawStorageSchema(
             [Required][KTAddress] string address,
             [Min(0)] int level = 0)
         {
@@ -658,10 +659,10 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/bigmaps")]
         public async Task<ActionResult<IEnumerable<BigMap>>> GetBigMaps(
             [Required][KTAddress] string address,
-            BigMapTagsParameter tags,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            BigMapTagsParameter? tags,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -698,7 +699,7 @@ namespace Tzkt.Api.Controllers
                 }
                 else
                 {
-                    if (select.Fields.Length == 1)
+                    if (select.Fields!.Length == 1)
                         res = await BigMaps.Get(contract, null, tags, true, null, sort, offset, limit, select.Fields[0], micheline);
                     else
                     {
@@ -727,7 +728,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}")]
-        public async Task<ActionResult<BigMap>> GetBigMapByName(
+        public async Task<ActionResult<BigMap?>> GetBigMapByName(
             [Required][KTAddress] string address,
             [Required] string name,
             MichelineFormat micheline = MichelineFormat.Json)
@@ -773,12 +774,12 @@ namespace Tzkt.Api.Controllers
             [Required][KTAddress] string address,
             [Required] string name,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            Int32Parameter lastLevel,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            Int32Parameter? lastLevel,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -818,7 +819,7 @@ namespace Tzkt.Api.Controllers
                 }
                 else
                 {
-                    if (select.Fields.Length == 1)
+                    if (select.Fields!.Length == 1)
                         res = await BigMaps.GetKeys((int)ptr, active, key, value, lastLevel, sort, offset, limit, select.Fields[0], micheline);
                     else
                     {
@@ -849,7 +850,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/keys/{key}")]
-        public async Task<ActionResult<BigMapKey>> GetKey(
+        public async Task<ActionResult<BigMapKey?>> GetKey(
             [Required][KTAddress] string address,
             [Required] string name,
             [Required] string key,
@@ -870,7 +871,7 @@ namespace Tzkt.Api.Controllers
                 if (ResponseCache.TryGet(query, out var cached))
                     return this.Bytes(cached);
 
-                object res;
+                object? res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
                 {
                     res = await BigMaps.GetKeyByHash((int)ptr, key, micheline);
@@ -911,8 +912,8 @@ namespace Tzkt.Api.Controllers
             [Required][KTAddress] string address,
             [Required] string name,
             [Required] string key,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -984,11 +985,11 @@ namespace Tzkt.Api.Controllers
             [Required] string name,
             [Min(0)] int level,
             bool? active,
-            JsonParameter key,
-            JsonParameter value,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            JsonParameter? key,
+            JsonParameter? value,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             MichelineFormat micheline = MichelineFormat.Json)
         {
@@ -1028,7 +1029,7 @@ namespace Tzkt.Api.Controllers
                 }
                 else
                 {
-                    if (select.Fields.Length == 1)
+                    if (select.Fields!.Length == 1)
                         res = await BigMaps.GetHistoricalKeys((int)ptr, level, active, key, value, sort, offset, limit, select.Fields[0], micheline);
                     else
                     {
@@ -1060,7 +1061,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the bigmap key and value: `0` - JSON, `1` - JSON string, `2` - Micheline, `3` - Micheline string</param>
         /// <returns></returns>
         [HttpGet("{address}/bigmaps/{name}/historical_keys/{level:int}/{key}")]
-        public async Task<ActionResult<BigMapKeyHistorical>> GetKey(
+        public async Task<ActionResult<BigMapKeyHistorical?>> GetKey(
             [Required][KTAddress] string address,
             [Required] string name,
             [Min(0)] int level,
@@ -1082,7 +1083,7 @@ namespace Tzkt.Api.Controllers
                 if (ResponseCache.TryGet(query, out var cached))
                     return this.Bytes(cached);
 
-                object res;
+                object? res;
                 if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
                 {
                     res = await BigMaps.GetHistoricalKeyByHash((int)ptr, level, key, micheline);

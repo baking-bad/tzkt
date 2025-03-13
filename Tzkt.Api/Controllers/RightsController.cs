@@ -33,14 +33,14 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("count")]
         public Task<int> GetCount(
-            BakingRightTypeParameter type,
-            AccountParameter baker,
-            Int32Parameter cycle,
-            Int32Parameter level,
-            Int32NullParameter slots,
-            Int32NullParameter round,
-            Int32NullParameter priority,
-            BakingRightStatusParameter status)
+            BakingRightTypeParameter? type,
+            AccountParameter? baker,
+            Int32Parameter? cycle,
+            Int32Parameter? level,
+            Int32NullParameter? slots,
+            Int32NullParameter? round,
+            Int32NullParameter? priority,
+            BakingRightStatusParameter? status)
         {
             return BakingRights.GetCount(type, baker, cycle, level, slots, round ?? priority, status);
         }
@@ -66,17 +66,17 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<BakingRight>>> Get(
-            BakingRightTypeParameter type,
-            AccountParameter baker,
-            Int32Parameter cycle,
-            Int32Parameter level,
-            Int32NullParameter slots,
-            Int32NullParameter round,
-            Int32NullParameter priority,
-            BakingRightStatusParameter status,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            BakingRightTypeParameter? type,
+            AccountParameter? baker,
+            Int32Parameter? cycle,
+            Int32Parameter? level,
+            Int32NullParameter? slots,
+            Int32NullParameter? round,
+            Int32NullParameter? priority,
+            BakingRightStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -96,7 +96,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await BakingRights.Get(type, baker, cycle, level, slots, round ?? priority, status, sort, offset, limit, select.Fields[0]));
                 else
                 {

@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dapper;
 using Npgsql;
@@ -152,8 +153,8 @@ namespace Tzkt.Api.Services.Cache
         #region extras
         public Alias GetAlias(int id)
         {
-            // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-            return Get(id).Info;
+            // throws if account is deleted due to chain reorg during request execution (very unlikely)
+            return Get(id)?.Info ?? throw new Exception("You are lucky :)");
         }
 
         public Alias GetAlias(string address)
@@ -163,11 +164,11 @@ namespace Tzkt.Api.Services.Cache
 
         public async Task<Alias> GetAliasAsync(int id)
         {
-            // WARN: possible NullReferenceException if chain reorgs during request execution (very unlikely)
-            return (await GetAsync(id)).Info;
+            // throws if account is deleted due to chain reorg during request execution (very unlikely)
+            return (await GetAsync(id))?.Info ?? throw new Exception("You are lucky :)");
         }
 
-        public void OnExtrasUpdate(string address, string json)
+        public void OnExtrasUpdate(string address, string? json)
         {
             if (TryGetSafe(address, out var account))
             {
@@ -196,7 +197,7 @@ namespace Tzkt.Api.Services.Cache
         }
         #endregion
 
-        public RawAccount Get(int id)
+        public RawAccount? Get(int id)
         {
             if (!TryGetSafe(id, out var account))
             {
@@ -206,7 +207,7 @@ namespace Tzkt.Api.Services.Cache
             return account;
         }
 
-        public async Task<RawAccount> GetAsync(int id)
+        public async Task<RawAccount?> GetAsync(int id)
         {
             if (!TryGetSafe(id, out var account))
             {
@@ -216,7 +217,7 @@ namespace Tzkt.Api.Services.Cache
             return account;
         }
 
-        public RawAccount Get(string address)
+        public RawAccount? Get(string address)
         {
             if (!TryGetSafe(address, out var account))
             {
@@ -226,7 +227,7 @@ namespace Tzkt.Api.Services.Cache
             return account;
         }
 
-        public async Task<RawAccount> GetAsync(string address)
+        public async Task<RawAccount?> GetAsync(string address)
         {
             if (!TryGetSafe(address, out var account))
             {
@@ -236,31 +237,31 @@ namespace Tzkt.Api.Services.Cache
             return account;
         }
 
-        RawAccount LoadRawAccount(int id)
+        RawAccount? LoadRawAccount(int id)
         {
             var sql = $@"{SelectQuery} WHERE ""Id"" = @id LIMIT 1";
             return LoadRawAccount(sql, new { id });
         }
 
-        Task<RawAccount> LoadRawAccountAsync(int id)
+        Task<RawAccount?> LoadRawAccountAsync(int id)
         {
             var sql = $@"{SelectQuery} WHERE ""Id"" = @id LIMIT 1";
             return LoadRawAccountAsync(sql, new { id });
         }
 
-        RawAccount LoadRawAccount(string address)
+        RawAccount? LoadRawAccount(string address)
         {
             var sql = $@"{SelectQuery} WHERE ""Address"" = @address::varchar(37) LIMIT 1";
             return LoadRawAccount(sql, new { address });
         }
 
-        Task<RawAccount> LoadRawAccountAsync(string address)
+        Task<RawAccount?> LoadRawAccountAsync(string address)
         {
             var sql = $@"{SelectQuery} WHERE ""Address"" = @address::varchar(37) LIMIT 1";
             return LoadRawAccountAsync(sql, new { address });
         }
 
-        RawAccount LoadRawAccount(string sql, object param)
+        RawAccount? LoadRawAccount(string sql, object param)
         {
             using var db = DataSource.OpenConnection();
             using var reader = db.ExecuteReader(sql, param);
@@ -278,7 +279,7 @@ namespace Tzkt.Api.Services.Cache
             };
         }
 
-        async Task<RawAccount> LoadRawAccountAsync(string sql, object param)
+        async Task<RawAccount?> LoadRawAccountAsync(string sql, object param)
         {
             await using var db = await DataSource.OpenConnectionAsync();
             using var reader = await db.ExecuteReaderAsync(sql, param);
@@ -296,7 +297,7 @@ namespace Tzkt.Api.Services.Cache
             };
         }
 
-        bool TryGetSafe(int id, out RawAccount account)
+        bool TryGetSafe(int id, [NotNullWhen(true)] out RawAccount? account)
         {
             lock (Crit)
             {
@@ -304,7 +305,7 @@ namespace Tzkt.Api.Services.Cache
             }
         }
 
-        bool TryGetSafe(string address, out RawAccount account)
+        bool TryGetSafe(string address, [NotNullWhen(true)] out RawAccount? account)
         {
             lock (Crit)
             {

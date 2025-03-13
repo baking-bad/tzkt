@@ -5,7 +5,7 @@ namespace Tzkt.Api.Websocket
 {
     public class AccountsParameter
     {
-        public List<string> Addresses { get; set; }
+        public List<string>? Addresses { get; set; }
 
         public void EnsureValid()
         {

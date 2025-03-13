@@ -57,19 +57,19 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
-            AccountParameter baker,
+            AccountParameter? baker,
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
-            AnyOfParameter anyof,
-            AccountParameter proposer,
-            AccountParameter producer,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter priority,
-            Int32Parameter blockRound,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? proposer,
+            AccountParameter? producer,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            Int32Parameter? priority,
+            Int32Parameter? blockRound,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -126,7 +126,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Blocks.Get(anyof, proposer, producer, level, timestamp, blockRound, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -151,7 +151,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Block> GetByHash(
+        public Task<Block?> GetByHash(
             [Required][BlockHash] string hash,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -172,7 +172,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{level:int}")]
-        public Task<Block> GetByLevel(
+        public Task<Block?> GetByLevel(
             [Min(0)] int level,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -207,7 +207,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{timestamp:DateTime}")]
-        public Task<Block> GetByDate(
+        public Task<Block?> GetByDate(
             DateTimeOffset timestamp,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -237,7 +237,7 @@ namespace Tzkt.Api.Controllers
         public Task<IEnumerable<int>> GetSpecificBlocks(
             bool? smartContracts,
             bool? delegatorContracts,
-            OffsetParameter offset,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 10000)
         {
             var events = Data.Models.BlockEvents.None;

@@ -10,7 +10,7 @@ namespace Tzkt.Api.Services
     {
         public static HomeConfig GetHomeConfig(this IConfiguration config)
         {
-            return config.GetSection("Home")?.Get<HomeConfig>() ?? new HomeConfig();
+            return config.GetSection("Home")?.Get<HomeConfig>() ?? new();
         }
     }
 }

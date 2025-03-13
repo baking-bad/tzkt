@@ -48,11 +48,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("proposals")]
         public async Task<ActionResult<IEnumerable<Proposal>>> GetProposals(
-            ProtocolParameter hash,
-            Int32Parameter epoch,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            ProtocolParameter? hash,
+            Int32Parameter? epoch,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -72,7 +72,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Voting.GetProposals(hash, epoch, sort, offset, limit, select.Fields[0]));
                 else
                 {
@@ -94,7 +94,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Proposal hash</param>
         /// <returns></returns>
         [HttpGet("proposals/{hash}")]
-        public Task<Proposal> GetProposalByHash([Required][ProtocolHash] string hash)
+        public Task<Proposal?> GetProposalByHash([Required][ProtocolHash] string hash)
         {
             return Voting.GetProposal(hash);
         }
@@ -117,12 +117,12 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("periods")]
         public async Task<ActionResult<IEnumerable<VotingPeriod>>> GetPeriods(
-            Int32Parameter firstLevel,
-            Int32Parameter lastLevel,
-            Int32Parameter epoch,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? firstLevel,
+            Int32Parameter? lastLevel,
+            Int32Parameter? epoch,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -142,7 +142,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Voting.GetPeriods(firstLevel, lastLevel, epoch, sort, offset, limit, select.Fields[0]));
                 else
                 {
@@ -164,7 +164,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="index">Voting period index starting from zero</param>
         /// <returns></returns>
         [HttpGet("periods/{index:int}")]
-        public Task<VotingPeriod> GetPeriod([Min(0)] int index)
+        public Task<VotingPeriod?> GetPeriod([Min(0)] int index)
         {
             return Voting.GetPeriod(index);
         }
@@ -177,7 +177,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("periods/current")]
-        public Task<VotingPeriod> GetCurrentPeriod()
+        public Task<VotingPeriod?> GetCurrentPeriod()
         {
             return Voting.GetPeriod(State.Current.VotingPeriod);
         }
@@ -197,9 +197,9 @@ namespace Tzkt.Api.Controllers
         [HttpGet("periods/{index:int}/voters")]
         public async Task<ActionResult<IEnumerable<VoterSnapshot>>> GetPeriodVoters(
             [Min(0)] int index,
-            VoterStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            VoterStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -220,7 +220,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Voter address</param>
         /// <returns></returns>
         [HttpGet("periods/{index:int}/voters/{address}")]
-        public Task<VoterSnapshot> GetPeriodVoter([Min(0)] int index, [Required][TzAddress] string address)
+        public Task<VoterSnapshot?> GetPeriodVoter([Min(0)] int index, [Required][TzAddress] string address)
         {
             return Voting.GetVoter(index, address);
         }
@@ -238,9 +238,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("periods/current/voters")]
         public async Task<ActionResult<IEnumerable<VoterSnapshot>>> GetPeriodVoters(
-            VoterStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            VoterStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -260,7 +260,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Voter address</param>
         /// <returns></returns>
         [HttpGet("periods/current/voters/{address}")]
-        public Task<VoterSnapshot> GetPeriodVoter([Required][TzAddress] string address)
+        public Task<VoterSnapshot?> GetPeriodVoter([Required][TzAddress] string address)
         {
             return Voting.GetVoter(State.Current.VotingPeriod, address);
         }
@@ -280,9 +280,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("epochs")]
         public async Task<ActionResult<IEnumerable<VotingEpoch>>> GetEpochs(
-            EpochStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            EpochStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -302,7 +302,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="index">Voting epoch index starting from zero</param>
         /// <returns></returns>
         [HttpGet("epochs/{index:int}")]
-        public Task<VotingEpoch> GetEpoch([Min(0)] int index)
+        public Task<VotingEpoch?> GetEpoch([Min(0)] int index)
         {
             return Voting.GetEpoch(index);
         }
@@ -315,7 +315,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("epochs/current")]
-        public Task<VotingEpoch> GetCurrentEpoch()
+        public Task<VotingEpoch?> GetCurrentEpoch()
         {
             return Voting.GetEpoch(State.Current.VotingEpoch);
         }
@@ -328,7 +328,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("epochs/latest_voting")]
-        public Task<VotingEpoch> GetLatestVoting()
+        public Task<VotingEpoch?> GetLatestVoting()
         {
             return Voting.GetLatestVoting();
         }

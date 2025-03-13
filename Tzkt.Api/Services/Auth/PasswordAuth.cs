@@ -2,7 +2,7 @@ namespace Tzkt.Api.Services.Auth
 {
     public class PasswordAuth : IAuthService
     {
-        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>> Rights;
+        readonly Dictionary<string, Dictionary<string, (Access access, Dictionary<string, Access> sections)>?> Rights;
         readonly Dictionary<string, AuthUser> Users;
 
         public PasswordAuth(IConfiguration config)
@@ -13,12 +13,12 @@ namespace Tzkt.Api.Services.Auth
                 .ToDictionary(g => g.Key, g => 
                 (
                     g.FirstOrDefault(r => r.Section == null)?.Access ?? Access.None,
-                    g.Where(r => r.Section != null).ToDictionary(r => r.Section, r => r.Access)
+                    g.Where(r => r.Section != null).ToDictionary(r => r.Section!, r => r.Access)
                 )));
             Users = cfg.Users.ToDictionary(x => x.Name);
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, out string? error)
         {
             error = null;
 
@@ -89,7 +89,7 @@ namespace Tzkt.Api.Services.Auth
             return true;
         }
 
-        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string json, out string error)
+        public bool TryAuthenticate(AuthHeaders headers, AccessRights requestedRights, string? json, out string? error)
         {
             if (string.IsNullOrEmpty(json))
             {

@@ -49,18 +49,18 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> Get(
-            Int32Parameter id,
-            AddressParameter address,
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            AccountParameter @delegate,
-            BigIntegerNullableParameter stakedPseudotokens,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter lastActivity,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? id,
+            AddressParameter? address,
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            AccountParameter? @delegate,
+            BigIntegerNullableParameter? stakedPseudotokens,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? lastActivity,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -107,7 +107,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
@@ -136,11 +136,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount(
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter firstActivity)
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? firstActivity)
         {
             #region optimize
             if (type == null && kind == null && balance == null && staked == null && firstActivity == null)
@@ -171,7 +171,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<ActionResult<Account>> GetByAddress(
+        public async Task<ActionResult<Account?>> GetByAddress(
             [Required][Address] string address,
             bool legacy = true)
         {
@@ -199,8 +199,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/contracts")]
         public async Task<ActionResult<IEnumerable<RelatedContract>>> GetContracts(
             [Required][Address] string address,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -236,11 +236,11 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/delegators")]
         public async Task<ActionResult<IEnumerable<Delegator>>> GetDelegators(
             [Required][TzAddress] string address,
-            AccountTypeParameter type,
-            Int64Parameter balance,
-            Int32Parameter delegationLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountTypeParameter? type,
+            Int64Parameter? balance,
+            Int32Parameter? delegationLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -306,24 +306,24 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
             [Required][Address] string address,
-            string type,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter prevDelegate,
-            AccountParameter newDelegate,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            AccountParameter accuser,
-            AccountParameter offender,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
+            string? type,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? prevDelegate,
+            AccountParameter? newDelegate,
+            AccountParameter? contractManager,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
             SortMode sort = SortMode.Descending,
             long? lastId = null,
             [Range(0, 1000)] int limit = 100,
@@ -459,7 +459,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("{address}/metadata")]
-        public async Task<ActionResult<RawJson>> GetMetadata([Required][Address] string address)
+        public async Task<ActionResult<RawJson?>> GetMetadata([Required][Address] string address)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
@@ -591,8 +591,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<HistoricalBalance>>> GetBalanceHistory(
             [Required][Address] string address,
             [Min(1)] int? step,
-            SelectParameter select,
-            SortParameter sort,
+            SelectParameter? select,
+            SortParameter? sort,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
@@ -622,7 +622,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0], quote);
                 else
                 {

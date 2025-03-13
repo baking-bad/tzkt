@@ -5,8 +5,8 @@ namespace Tzkt.Api.Services
 {
     public sealed class RpcHelpers : IDisposable
     {
-        readonly TezosRpc Rpc;
-        string ChainId;
+        readonly TezosRpc? Rpc;
+        string? ChainId;
 
         public RpcHelpers(IConfiguration config)
         {
@@ -19,7 +19,7 @@ namespace Tzkt.Api.Services
             if (Rpc == null)
                 throw new InvalidOperationException("RpcHelpers disabled");
 
-            return ChainId ??= await Rpc.GetAsync<string>("chains/main/chain_id");
+            return ChainId ??= (await Rpc.GetAsync<string>("chains/main/chain_id"))!;
         }
 
         public async Task<string> Inject(string content, bool async)
@@ -27,7 +27,7 @@ namespace Tzkt.Api.Services
             if (Rpc == null)
                 throw new InvalidOperationException("RpcHelpers disabled");
 
-            return await Rpc.Inject.Operation.PostAsync<string>(content, async);
+            return (await Rpc.Inject.Operation.PostAsync<string>(content, async))!;
         }
         
         public async Task<IMicheline> RunScriptView(string contract, string view, IMicheline input)

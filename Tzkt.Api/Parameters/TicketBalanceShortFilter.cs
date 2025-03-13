@@ -9,30 +9,30 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64Parameter id { get; set; }
+        public Int64Parameter? id { get; set; }
 
         /// <summary>
         /// Filter by ticket.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public TicketInfoShortFilter ticket { get; set; }
+        public TicketInfoShortFilter ticket { get; set; } = new();
 
         /// <summary>
         /// Filter by account address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter account { get; set; }
+        public AccountParameter? account { get; set; }
 
         /// <summary>
         /// Filter by balance.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public NatParameter balance { get; set; }
+        public NatParameter? balance { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>
             id == null &&
-            (ticket == null || ticket.Empty) &&
+            ticket.Empty &&
             account == null &&
             balance == null;
 

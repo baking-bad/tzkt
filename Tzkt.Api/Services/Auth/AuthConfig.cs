@@ -6,7 +6,7 @@ namespace Tzkt.Api.Services.Auth
     {
         public AuthMethod Method { get; set; } = AuthMethod.None;
         public int NonceLifetime { get; set; } = 10;
-        public List<AuthUser> Users { get; set; } = new();
+        public List<AuthUser> Users { get; set; } = [];
     }
 
     public static class AuthConfigExt
@@ -30,6 +30,9 @@ namespace Tzkt.Api.Services.Auth
 
                 if (config.Method == AuthMethod.PubKey)
                 {
+                    if (user.PubKey == null)
+                        throw new ConfigurationException("Invalid user pubkey");
+
                     try { _ = PubKey.FromBase58(user.PubKey); }
                     catch { throw new ConfigurationException("Invalid user pubkey"); }
                 }

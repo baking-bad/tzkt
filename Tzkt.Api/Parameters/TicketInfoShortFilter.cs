@@ -9,13 +9,13 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64Parameter id { get; set; }
+        public Int64Parameter? id { get; set; }
 
         /// <summary>
         /// Filter by ticketer address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter ticketer { get; set; }
+        public AccountParameter? ticketer { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>

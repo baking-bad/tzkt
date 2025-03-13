@@ -6,8 +6,8 @@ namespace Tzkt.Api.Websocket
 {
     public class TokenTransfersParameter
     {
-        public string Account { get; set; }
-        public string Contract { get; set; }
+        public string? Account { get; set; }
+        public string? Contract { get; set; }
         public BigInteger? TokenId { get; set; }
 
         public void EnsureValid()

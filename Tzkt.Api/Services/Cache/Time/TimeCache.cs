@@ -72,8 +72,8 @@ namespace Tzkt.Api.Services.Cache
 
             #region binary search
             var from = 0;
-            var mid = 0;
             var to = Times.Count - 1;
+            int mid;
 
             while (from <= to)
             {
