@@ -112,10 +112,10 @@ namespace Tzkt.Sync.Protocols.Proto3
                     if (bakingRights[0].Round == 0)
                         bakerCycle.FutureBlockRewards -= GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized

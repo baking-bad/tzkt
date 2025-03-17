@@ -50,11 +50,10 @@ namespace Tzkt.Data.Models
                 .Property<string>("Metadata")
                 .HasColumnType("jsonb");
 
-            // TODO: resolve issues with npgsql numeric-string mapping
-            //// shadow property
-            //modelBuilder.Entity<Token>()
-            //    .Property<string>("Value")
-            //    .HasColumnType("numeric");
+            // shadow property
+            modelBuilder.Entity<Token>()
+                .Property<decimal>("Value")
+                .HasColumnType("numeric");
             #endregion
 
             #region indexes

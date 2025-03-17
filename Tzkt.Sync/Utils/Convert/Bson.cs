@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json.Bson;
 using Newtonsoft.Json.Linq;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync.Utils
 {

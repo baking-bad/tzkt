@@ -36,7 +36,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearProtocol()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Protocols"" WHERE ""Code"" = 1");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Protocols"
+                WHERE "Code" = 1
+                """);
+                
             await Cache.Protocols.ResetAsync();
         }
 
@@ -62,7 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             protocol.OriginationSize = (parameters["origination_burn"]?.Value<int>() ?? 257_000) / protocol.ByteCost;
             protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
             protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
-            protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
+            protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0]!.Value<int>() ?? 60;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 10_000_000_000;
             protocol.BallotQuorumMin = 0;
             protocol.BallotQuorumMax = 10000;
@@ -142,7 +146,11 @@ namespace Tzkt.Sync.Protocols.Proto1
         public async Task DowngradeProtocol(AppState state)
         {
             var current = await Cache.Protocols.GetAsync(state.NextProtocol);
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Protocols"" WHERE ""Code"" = {current.Code}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Protocols"
+                WHERE "Code" = {0}
+                """, current.Code);
+                
 
             var prev = await Cache.Protocols.GetAsync(state.Protocol);
             Db.TryAttach(prev);

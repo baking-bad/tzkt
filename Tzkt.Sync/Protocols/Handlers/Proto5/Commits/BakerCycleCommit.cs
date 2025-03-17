@@ -516,9 +516,10 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE  FROM ""BakerCycles""
-                    WHERE   ""Cycle"" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}");
+                await Db.Database.ExecuteSqlRawAsync("""
+                    DELETE FROM "BakerCycles"
+                    WHERE "Cycle" = {0}
+                    """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
             }
             #endregion
         }

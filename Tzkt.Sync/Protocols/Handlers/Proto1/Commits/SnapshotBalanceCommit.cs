@@ -20,15 +20,15 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (!block.Events.HasFlag(BlockEvents.BalanceSnapshot))
                 return;
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "SnapshotBalances"
-                WHERE "Level" = {block.Level}
-                """);
+                WHERE "Level" = {0}
+                """, block.Level);
         }
 
         protected virtual Task TakeSnapshot(Block block)
         {
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "SnapshotBalances" (
                     "Level",
                     "AccountId",
@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     "StakersCount"
                 )
                 SELECT
-                    {block.Level},
+                    {0},
                     "Id",
                     COALESCE("DelegateId", "Id"),
                     COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
@@ -52,16 +52,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     0
                 FROM "Accounts"
                 WHERE "Staked" = true
-                """);
+                """, block.Level);
         }
 
         protected Task RemoveOutdated(Block block, Protocol protocol)
         {
             var level = block.Level - (protocol.ConsensusRightsDelay + 3) * protocol.BlocksPerCycle;
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "SnapshotBalances"
-                WHERE "Level" <= {level}
-                """);
+                WHERE "Level" <= {0}
+                """, level);
         }
 
         protected virtual async Task TakeDeactivatedSnapshot(Block block)
@@ -72,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.baker.DeactivationLevel == block.Level)
                 .ToListAsync();
 
-            if (deactivated.Any())
+            if (deactivated.Count != 0)
             {
                 var values = string.Join(",\n", deactivated
                     .SelectMany(row =>
@@ -81,6 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (values.Length > 0)
                 {
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
@@ -96,6 +97,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         VALUES
                         {values}
                         """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
                 }
             }
         }
@@ -116,6 +118,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (rewards.Length > 0)
             {
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                 await Db.Database.ExecuteSqlRawAsync($"""
                     UPDATE "SnapshotBalances" as sb
                     SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - reward.value
@@ -127,6 +130,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     AND sb."AccountId" = reward.baker
                     AND sb."BakerId" = reward.baker
                     """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
             }
         }
 
@@ -166,6 +170,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (values.Length > 0)
                 {
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
@@ -181,6 +186,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         VALUES
                         {values}
                         """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
                 }
             }
         }

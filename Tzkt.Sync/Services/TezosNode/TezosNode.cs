@@ -64,10 +64,11 @@ namespace Tzkt.Sync.Services
                         var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
 
                         var syncTime = DateTime.UtcNow;
-                        await db.Database.ExecuteSqlRawAsync($@"
-                        UPDATE  ""{nameof(TzktContext.AppState)}""
-                        SET     ""{nameof(AppState.KnownHead)}"" = {header.Level},
-                                ""{nameof(AppState.LastSync)}"" = '{syncTime:yyyy-MM-ddTHH:mm:ssZ}';");
+                        await db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "AppState"
+                            SET "KnownHead" = {0},
+                                "LastSync" = {1}
+                            """, header.Level, syncTime);
                         cache.AppState.UpdateSyncState(header.Level, syncTime);
 
                         NextSyncStateUpdate = syncTime.AddSeconds(5);

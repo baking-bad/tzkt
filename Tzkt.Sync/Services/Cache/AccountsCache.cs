@@ -181,7 +181,11 @@ namespace Tzkt.Sync.Services.Cache
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
-                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "Accounts"
+                        WHERE "Address" = @p0::varchar(37)
+                        """, address)
                     .FirstOrDefaultAsync()
                     ?? throw new Exception($"Account {address} doesn't exist");
 
@@ -205,7 +209,11 @@ namespace Tzkt.Sync.Services.Cache
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
-                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "Accounts"
+                        WHERE "Address" = @p0::varchar(37)
+                        """, address)
                     .FirstOrDefaultAsync()
                     ?? (address[0] == 't' && address[1] == 'z' ? CreateUser(address) : null);
 
@@ -229,7 +237,11 @@ namespace Tzkt.Sync.Services.Cache
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
-                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "Accounts"
+                        WHERE "Address" = @p0::varchar(37)
+                        """, address)
                     .AsNoTracking()
                     .FirstOrDefaultAsync();
             }
@@ -245,7 +257,11 @@ namespace Tzkt.Sync.Services.Cache
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
-                    .FromSqlRaw(@"SELECT * FROM ""Accounts"" WHERE ""Address"" = @p0::varchar(37)", address)
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "Accounts"
+                        WHERE "Address" = @p0::varchar(37)
+                        """, address)
                     .FirstOrDefaultAsync();
                 if (account != null) Add(account);
             }
@@ -328,7 +344,7 @@ namespace Tzkt.Sync.Services.Cache
                 .Select(x => (Data.Models.Delegate)x);
         }
 
-        Account CreateUser(string address)
+        User CreateUser(string address)
         {
             var account = new User
             {

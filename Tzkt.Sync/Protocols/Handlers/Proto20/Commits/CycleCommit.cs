@@ -66,10 +66,10 @@ namespace Tzkt.Sync.Protocols.Proto20
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "Cycles"
-                WHERE "Index" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
-                """);
+                WHERE "Index" = {0}
+                """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
         }
 
         protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;

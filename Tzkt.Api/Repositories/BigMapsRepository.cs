@@ -46,11 +46,11 @@ namespace Tzkt.Api.Repositories
             return new MichelinePrim
             {
                 Prim = PrimType.big_map,
-                Args = new List<IMicheline>
-                {
+                Args =
+                [
                     Micheline.FromBytes(row.KeyType),
                     Micheline.FromBytes(row.ValueType),
-                }
+                ]
             };
         }
 
@@ -1192,7 +1192,7 @@ namespace Tzkt.Api.Repositories
                 .Distinct()
                 .ToList();
 
-            var keyRows = keyIds.Any()
+            var keyRows = keyIds.Count != 0
                 ? (await db.QueryAsync($@"
                     SELECT ""Id"", ""KeyHash"", ""{fCol}Key"" FROM ""BigMapKeys""
                     WHERE ""Id"" = ANY(@keyIds)",
@@ -1285,7 +1285,7 @@ namespace Tzkt.Api.Repositories
                 .Distinct()
                 .ToList();
 
-            var keyRows = keyIds.Any()
+            var keyRows = keyIds.Count != 0
                 ? (await db.QueryAsync($@"
                     SELECT ""Id"", ""KeyHash"", ""{fCol}Key"" FROM ""BigMapKeys""
                     WHERE ""Id"" = ANY(@keyIds)",

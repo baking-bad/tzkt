@@ -2062,8 +2062,8 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
-        static readonly string[] Operations = new[]
-        {
+        static readonly string[] Operations =
+        [
             "baking",               // 0
             "endorsement",          // 1
 
@@ -2121,6 +2121,6 @@ namespace Tzkt.Api.Repositories
             "stake",                            // 46
             "unstake",                          // 47
             "slashing",                         // 48
-        };
+        ];
     }
 }

@@ -49,7 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearCycles()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Cycles""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Cycles"
+                """);
             var state = Cache.AppState.Get();
             state.CyclesCount = 0;
         }

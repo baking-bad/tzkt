@@ -16,10 +16,10 @@ namespace Tzkt.Api.Services.Cache
         public Task InvokeAsync(HttpContext context, StateCache stateCache)
         {
             var state = stateCache.Current;
-            context.Response.Headers.Add(TZKT_VERSION, Version);
-            context.Response.Headers.Add(TZKT_LEVEL, state.Level.ToString());
-            context.Response.Headers.Add(TZKT_KNOWN_LEVEL, state.KnownHead.ToString());
-            context.Response.Headers.Add(TZKT_SYNCED_AT, state.LastSync.ToString("yyyy-MM-ddTHH:mm:ssZ"));
+            context.Response.Headers.Append(TZKT_VERSION, Version);
+            context.Response.Headers.Append(TZKT_LEVEL, state.Level.ToString());
+            context.Response.Headers.Append(TZKT_KNOWN_LEVEL, state.KnownHead.ToString());
+            context.Response.Headers.Append(TZKT_SYNCED_AT, state.LastSync.ToString("yyyy-MM-ddTHH:mm:ssZ"));
             return Next(context);
         }
     }

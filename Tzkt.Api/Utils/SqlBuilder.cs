@@ -842,7 +842,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, AddressNullParameter? address, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, AddressNullParameter? address)
         {
             if (address == null) return this;
 
@@ -882,7 +882,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, StringParameter? str, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, StringParameter? str)
         {
             if (str == null) return this;
 
@@ -914,7 +914,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, JsonParameter? json, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, JsonParameter? json)
         {
             if (json == null) return this;
 
@@ -1056,7 +1056,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, JsonParameter? json, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, JsonParameter? json)
         {
             if (json == null) return this;
 
@@ -1198,7 +1198,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, NatParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, NatParameter? value)
         {
             if (value == null) return this;
 
@@ -1229,7 +1229,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, NatParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, NatParameter? value)
         {
             if (value == null) return this;
 
@@ -1329,7 +1329,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int32Parameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, Int32Parameter? value)
         {
             if (value == null) return this;
 
@@ -1360,7 +1360,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int32Parameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, Int32Parameter? value)
         {
             if (value == null) return this;
 
@@ -1391,7 +1391,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int32NullParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, Int32NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1429,7 +1429,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int32NullParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, Int32NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1555,7 +1555,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int64Parameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, Int64Parameter? value)
         {
             if (value == null) return this;
 
@@ -1586,7 +1586,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int64Parameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, Int64Parameter? value)
         {
             if (value == null) return this;
 
@@ -1661,7 +1661,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int64NullParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, Int64NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1699,7 +1699,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int64NullParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, Int64NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1737,7 +1737,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BoolParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, BoolParameter? value)
         {
             if (value == null) return this;
 
@@ -1754,7 +1754,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, BoolParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, BoolParameter? value)
         {
             if (value == null) return this;
 
@@ -1771,7 +1771,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, MichelineParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, MichelineParameter? value)
         {
             if (value == null) return this;
 
@@ -1790,7 +1790,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, MichelineParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, MichelineParameter? value)
         {
             if (value == null) return this;
 
@@ -1809,7 +1809,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, DateTimeParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, DateTimeParameter? value)
         {
             if (value == null) return this;
 
@@ -1840,7 +1840,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, DateTimeParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, DateTimeParameter? value)
         {
             if (value == null) return this;
             if (value.Eq != null)
@@ -1870,7 +1870,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, TimestampParameter? value, Func<string, string>? map = null)
+        public SqlBuilder Filter(string column, TimestampParameter? value)
         {
             if (value == null) return this;
 
@@ -1901,7 +1901,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, TimestampParameter? value, Func<string, string>? map = null)
+        public SqlBuilder FilterA(string column, TimestampParameter? value)
         {
             if (value == null) return this;
 

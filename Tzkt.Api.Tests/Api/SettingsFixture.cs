@@ -4,7 +4,7 @@ namespace Tzkt.Api.Tests.Api
 {
     public class SettingsFixture : IDisposable
     {
-        static readonly object Crit = new();
+        static readonly Lock Crit = new();
 
         public HttpClient Client { get; }
         public string Baker { get; }

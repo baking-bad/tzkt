@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
+using Netezos.Encoding;
 using Tzkt.Data.Models;
-using Tzkt.Sync.Utils;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {

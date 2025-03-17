@@ -90,13 +90,14 @@ namespace Tzkt.Sync.Protocols.Proto10
             state.TokenBalancesCount--;
             state.TokenTransfersCount--;
 
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""BigMapUpdates"";
-                DELETE FROM ""BigMapKeys"";
-                DELETE FROM ""BigMaps"";
-                DELETE FROM ""Tokens"";
-                DELETE FROM ""TokenBalances"";
-                DELETE FROM ""TokenTransfers"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BigMapUpdates";
+                DELETE FROM "BigMapKeys";
+                DELETE FROM "BigMaps";
+                DELETE FROM "Tokens";
+                DELETE FROM "TokenBalances";
+                DELETE FROM "TokenTransfers";
+                """);
             Cache.BigMapKeys.Reset();
             Cache.BigMaps.Reset();
             Cache.Tokens.Reset();
@@ -119,7 +120,10 @@ namespace Tzkt.Sync.Protocols.Proto10
             #endregion
 
             var cycles = await MigrateCycles(state, nextProto);
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Cycle" > {0}
+                """, state.Cycle);
             await MigrateCurrentRights(state, prevProto, nextProto, state.Level);
             await MigrateFutureRights(cycles, state, nextProto, state.Level);
             MigrateDelegates(state, prevProto, nextProto);
@@ -147,7 +151,10 @@ namespace Tzkt.Sync.Protocols.Proto10
             #endregion
 
             var cycles = await MigrateCycles(state, prevProto);
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Cycle" > {0}
+                """, state.Cycle);
             await MigrateCurrentRights(state, nextProto, prevProto, state.Level - 1);
             await MigrateFutureRights(cycles, state, prevProto, state.Level - 1);
             MigrateDelegates(state, nextProto, prevProto);
@@ -203,10 +210,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                 bakerCycle.FutureEndorsements -= er.Slots.Value;
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""BakingRights""
-                WHERE ""Level"" > {state.Level}
-                AND ""Type"" = {(int)BakingRightType.Endorsing}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Level" > {0}
+                AND "Type" = {1}
+                """, state.Level, (int)BakingRightType.Endorsing);
 
             var newErs = new List<BakingRight>();
             for (int level = state.Level + 1; level < nextProto.GetCycleStart(state.Cycle + 1); level++)
@@ -226,9 +234,12 @@ namespace Tzkt.Sync.Protocols.Proto10
                 }
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Slots"") VALUES
-                {string.Join(',', newErs.Select(er => $"({er.Cycle},{er.Level},{er.BakerId},{(int)er.Type},{(int)er.Status},{er.Slots})"))}");
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
+            await Db.Database.ExecuteSqlRawAsync($"""
+                INSERT INTO "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Slots") VALUES
+                {string.Join(',', newErs.Select(er => $"({er.Cycle},{er.Level},{er.BakerId},{(int)er.Type},{(int)er.Status},{er.Slots})"))}
+                """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
             foreach (var er in newErs)
             {
@@ -248,8 +259,9 @@ namespace Tzkt.Sync.Protocols.Proto10
                 .EnumerateArray()
                 .ToList();
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Slots"") VALUES
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
+            await Db.Database.ExecuteSqlRawAsync($"""
+                INSERT INTO "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Slots") VALUES
                 {string.Join(',', shiftedRights.Select(er => $@"(
                     {nextCycle},
                     {nextCycleStart},
@@ -257,7 +269,9 @@ namespace Tzkt.Sync.Protocols.Proto10
                     {(byte)BakingRightType.Endorsing},
                     {(byte)BakingRightStatus.Future},
                     {er.RequiredArray("slots").Count()}
-                )"))}");
+                )"))}
+                """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
             foreach (var cycle in cycles)
             {
@@ -753,11 +767,11 @@ namespace Tzkt.Sync.Protocols.Proto10
                     .Where(x => x.ContractId == contract.Id)
                     .SingleAsync();
 
-                await Db.Database.ExecuteSqlRawAsync(@"
-                    DELETE FROM ""TokenTransfers"" WHERE ""TokenId"" = {0};
-                    DELETE FROM ""TokenBalances"" WHERE ""TokenId"" = {0};
-                    DELETE FROM ""Tokens"" WHERE ""Id"" = {0};",
-                    token.Id);
+                await Db.Database.ExecuteSqlRawAsync("""
+                    DELETE FROM "TokenTransfers" WHERE "TokenId" = {0};
+                    DELETE FROM "TokenBalances" WHERE "TokenId" = {0};
+                    DELETE FROM "Tokens" WHERE "Id" = {0};
+                    """, token.Id);
 
                 state.TokenTransfersCount--;
                 state.TokenBalancesCount--;
@@ -770,14 +784,14 @@ namespace Tzkt.Sync.Protocols.Proto10
                 creator.TokenTransfersCount--;
             }
 
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""MigrationOps"" WHERE ""AccountId"" = {1};
-                DELETE FROM ""Storages"" WHERE ""ContractId"" = {1};
-                DELETE FROM ""Scripts"" WHERE ""ContractId"" = {1};
-                DELETE FROM ""BigMapUpdates"" WHERE ""BigMapPtr"" = ANY({0});
-                DELETE FROM ""BigMapKeys"" WHERE ""BigMapPtr"" = ANY({0});
-                DELETE FROM ""BigMaps"" WHERE ""Ptr"" = ANY({0});",
-                bigmaps.Select(x => x.Ptr).ToList(), contract.Id);
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "MigrationOps" WHERE "AccountId" = {0};
+                DELETE FROM "Storages" WHERE "ContractId" = {0};
+                DELETE FROM "Scripts" WHERE "ContractId" = {0};
+                DELETE FROM "BigMapUpdates" WHERE "BigMapPtr" = ANY({1});
+                DELETE FROM "BigMapKeys" WHERE "BigMapPtr" = ANY({1});
+                DELETE FROM "BigMaps" WHERE "Ptr" = ANY({1});
+                """, contract.Id, bigmaps.Select(x => x.Ptr).ToList());
 
             Cache.AppState.ReleaseOperationId();
             Cache.AppState.ReleaseScriptId();

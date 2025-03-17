@@ -16,13 +16,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (block.Cycle > 0)
             {
                 //one-way change...
-                await Db.Database.ExecuteSqlRawAsync($"""
+                await Db.Database.ExecuteSqlRawAsync("""
                     DELETE FROM "DelegatorCycles" as dc
                     USING "Accounts" as acc
                     WHERE acc."Id" = dc."BakerId"
-                    AND dc."Cycle" = {block.Cycle - 1}
-                    AND acc."Type" != {(int)AccountType.Delegate}
-                    """);
+                    AND dc."Cycle" = {0}
+                    AND acc."Type" != {1}
+                    """, block.Cycle - 1, (int)AccountType.Delegate);
             }
             #endregion
         }
@@ -33,16 +33,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
-                await Db.Database.ExecuteSqlRawAsync($"""
+                await Db.Database.ExecuteSqlRawAsync("""
                     DELETE FROM "DelegatorCycles"
-                    WHERE "Cycle" = {futureCycle}
-                    """);
+                    WHERE "Cycle" = {0}
+                    """, futureCycle);
             }
         }
 
         protected virtual Task CreateFromSnapshots(Cycle futureCycle)
         {
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "DelegatorCycles" (
                     "Cycle",
                     "DelegatorId",
@@ -51,15 +51,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     "StakedBalance"
                 )
                 SELECT
-                    {futureCycle.Index},
+                    {0},
                     "AccountId",
                     "BakerId",
                     "OwnDelegatedBalance",
                     "OwnStakedBalance"
                 FROM "SnapshotBalances"
-                WHERE "Level" = {futureCycle.SnapshotLevel}
+                WHERE "Level" = {1}
                 AND "AccountId" != "BakerId"
-                """);
+                """, futureCycle.Index, futureCycle.SnapshotLevel);
         }
     }
 }

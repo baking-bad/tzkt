@@ -18,7 +18,7 @@ namespace Tzkt.Api
                         return Task.CompletedTask;
                     res ??= new();
                     res.Eq ??= [];
-                    res.Eq.Add((Array.Empty<JsonPath>(), val));
+                    res.Eq.Add(([], val));
                 }
                 else if (key.StartsWith($"{model}."))
                 {

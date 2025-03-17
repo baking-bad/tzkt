@@ -40,7 +40,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [OpenApiIgnore]
-        [HttpGet("proposals/{search}")]
+        [HttpGet("proposals/{_}")]
         public IEnumerable<object> GetProposals([Required] string _)
         {
             // obsolete
@@ -56,7 +56,7 @@ namespace Tzkt.Api.Controllers
         }
 
         [OpenApiIgnore]
-        [HttpGet("protocols/{search}")]
+        [HttpGet("protocols/{_}")]
         public IEnumerable<object> GetProtocols([Required] string _)
         {
             // obsolete

@@ -33,7 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
             protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
             protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
-            protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
+            protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0]!.Value<int>() ?? 60;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
             protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
@@ -62,22 +62,24 @@ namespace Tzkt.Sync.Protocols.Proto6
         {
             var block = await Cache.Blocks.CurrentAsync();
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                UPDATE  ""BakerCycles""
-                SET     ""FutureBlockRewards"" = ""FutureBlocks"" * 40000000 :: bigint,
-                        ""FutureEndorsementRewards"" = ""FutureEndorsements"" * 1250000 :: bigint
-                WHERE ""Cycle"" > {block.Cycle};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                UPDATE  "BakerCycles"
+                SET     "FutureBlockRewards" = "FutureBlocks" * 40000000 :: bigint,
+                        "FutureEndorsementRewards" = "FutureEndorsements" * 1250000 :: bigint
+                WHERE   "Cycle" > {0};
+                """, block.Cycle);
         }
 
         protected override async Task RevertContext(AppState state)
         {
             var block = await Cache.Blocks.CurrentAsync();
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                UPDATE  ""BakerCycles""
-                SET     ""FutureBlockRewards"" = ""FutureBlocks"" * 16000000 :: bigint,
-                        ""FutureEndorsementRewards"" = ""FutureEndorsements"" * 2000000 :: bigint
-                WHERE ""Cycle"" > {block.Cycle};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                UPDATE  "BakerCycles"
+                SET     "FutureBlockRewards" = "FutureBlocks" * 16000000 :: bigint,
+                        "FutureEndorsementRewards" = "FutureEndorsements" * 2000000 :: bigint
+                WHERE   "Cycle" > {0};
+                """, block.Cycle);
         }
     }
 }

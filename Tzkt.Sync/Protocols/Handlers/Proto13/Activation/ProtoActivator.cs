@@ -39,8 +39,10 @@ namespace Tzkt.Sync.Protocols.Proto13
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             #region voting snapshots
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {state.VotingPeriod}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingSnapshots"
+                WHERE "Period" = {0}
+                """, state.VotingPeriod);
 
             var snapshots = Cache.Accounts.GetDelegates()
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)

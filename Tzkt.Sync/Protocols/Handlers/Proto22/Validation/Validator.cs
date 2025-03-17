@@ -332,7 +332,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -362,7 +362,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     throw new ValidationException("unknown delegate account");
 
             ValidateFeeBalanceUpdates(
-                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -407,7 +407,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             var metadata = content.Required("metadata");
 
             ValidateFeeBalanceUpdates(
-                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -483,7 +483,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -496,7 +496,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -509,7 +509,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -522,7 +522,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -535,7 +535,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -548,7 +548,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -561,7 +561,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -586,7 +586,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -611,7 +611,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -645,7 +645,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -662,7 +662,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -679,7 +679,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -713,7 +713,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -726,7 +726,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -739,7 +739,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -752,7 +752,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -777,7 +777,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -797,7 +797,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             var metadata = content.Required("metadata");
 
             ValidateFeeBalanceUpdates(
-                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -838,7 +838,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -863,7 +863,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -898,7 +898,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
 
@@ -932,7 +932,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }
@@ -945,7 +945,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 throw new ValidationException("unknown source account");
 
             ValidateFeeBalanceUpdates(
-                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? Enumerable.Empty<JsonElement>(),
+                content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
                 content.RequiredInt64("fee"));
         }

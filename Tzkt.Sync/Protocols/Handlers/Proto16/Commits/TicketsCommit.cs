@@ -7,17 +7,17 @@ namespace Tzkt.Sync.Protocols.Proto16
 {
     class TicketsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        readonly Dictionary<ManagerOperation, Dictionary<TicketIdentity, List<(ManagerOperation Op, TicketUpdate Update)>>> Updates = new();
+        readonly Dictionary<ManagerOperation, Dictionary<TicketIdentity, List<(ManagerOperation Op, TicketUpdate Update)>>> Updates = [];
 
         public virtual void Append(ManagerOperation parent, ManagerOperation op, IEnumerable<TicketUpdates> updates)
         {
             if (!Updates.TryGetValue(parent, out var opUpdates))
-                Updates.Add(parent, opUpdates = new());
+                Updates.Add(parent, opUpdates = []);
 
             foreach (var update in updates)
             {
                 if (!opUpdates.TryGetValue(update.Ticket, out var ticketUpdates))
-                    opUpdates.Add(update.Ticket, ticketUpdates = new());
+                    opUpdates.Add(update.Ticket, ticketUpdates = []);
 
                 ticketUpdates.AddRange(update.Updates.Select(update => (op, update)));
             }
@@ -590,10 +590,10 @@ namespace Tzkt.Sync.Protocols.Proto16
                 state.TicketsCount--;
             }
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "TicketTransfers"
-                WHERE "Level" = {block.Level}
-                """);
+                WHERE "Level" = {0}
+                """, block.Level);
         }
     }
 }

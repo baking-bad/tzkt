@@ -12,8 +12,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             var commitments = parameters["commitments"]?.Select(x => new Commitment
             {
                 Id = 0,
-                Address = x[0].Value<string>(),
-                Balance = x[1].Value<long>()
+                Address = x[0]!.Value<string>()!,
+                Balance = x[1]!.Value<long>()
             });
 
             if (commitments != null)
@@ -40,7 +40,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task ClearCommitments()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Commitments""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Commitments"
+                """);
 
             var state = Cache.AppState.Get();
             state.CommitmentsCount = 0;

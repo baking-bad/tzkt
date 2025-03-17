@@ -353,7 +353,7 @@ namespace Tzkt.Api.Repositories
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (new string[1] { col }, col);
                 }
-                return (new string[1] { @"tb.""Id""" }, @"tb.""Id""");
+                return ([@"tb.""Id"""], @"tb.""Id""");
             }
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -403,13 +403,13 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"t.""Metadata""", filter.token.metadata)
                 .Take(pagination, x => x switch
                 {
-                    "id" => (new string[1] { @"tb.""Id""" }, @"tb.""Id"""),
-                    "balance" => (new string[1] { @"tb.""Balance""" }, @"tb.""Balance"""),
-                    "balanceValue" => (new string[2] { @"""BalanceValue""", @"tb.""Balance""" }, @"""BalanceValue"""),
-                    "transfersCount" => (new string[1] { @"tb.""TransfersCount""" }, @"tb.""TransfersCount"""),
-                    "firstLevel" => (new string[1] { @"tb.""Id""" }, @"tb.""FirstLevel"""),
-                    "lastLevel" => (new string[1] { @"tb.""LastLevel""" }, @"tb.""LastLevel"""),
-                    "token.metadata" => (new string[1] { @"t.""Metadata""" }, @"t.""Metadata"""),
+                    "id" => ([@"tb.""Id"""], @"tb.""Id"""),
+                    "balance" => ([@"tb.""Balance"""], @"tb.""Balance"""),
+                    "balanceValue" => ([@"""BalanceValue""", @"tb.""Balance"""], @"""BalanceValue"""),
+                    "transfersCount" => ([@"tb.""TransfersCount"""], @"tb.""TransfersCount"""),
+                    "firstLevel" => ([@"tb.""Id"""], @"tb.""FirstLevel"""),
+                    "lastLevel" => ([@"tb.""LastLevel"""], @"tb.""LastLevel"""),
+                    "token.metadata" => ([@"t.""Metadata"""], @"t.""Metadata"""),
                     _ => TryMetaSort(x)
                 }, @"tb.""Id""", 100);
 

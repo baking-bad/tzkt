@@ -35,7 +35,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearDelegatorCycles()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""DelegatorCycles""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "DelegatorCycles"
+                """);
         }
     }
 }

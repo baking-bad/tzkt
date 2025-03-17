@@ -8,7 +8,7 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         protected override Task TakeSnapshot(Block block)
         {
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "SnapshotBalances" (
                     "Level",
                     "AccountId",
@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 )
                 
                 SELECT
-                    {block.Level},
+                    {0},
                     "Id",
                     "Id",
                     "Balance" - "OwnStakedBalance" - (CASE
@@ -38,12 +38,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                     "StakersCount"
                 FROM "Accounts"
                 WHERE "Staked" = true
-                AND "Type" = {(int)AccountType.Delegate}
+                AND "Type" = {1}
                 
                 UNION ALL
 
                 SELECT
-                    {block.Level},
+                    {0},
                     staker."Id",
                     staker."DelegateId",
                     staker."Balance" - (CASE
@@ -63,12 +63,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                 INNER JOIN "Accounts" AS baker
                 ON baker."Id" = staker."DelegateId"
                 WHERE staker."Staked" = true
-                AND staker."Type" != {(int)AccountType.Delegate}
+                AND staker."Type" != {1}
 
                 UNION ALL
                 
                 SELECT
-                    {block.Level},
+                    {0},
                     account."Id",
                     account."UnstakedBakerId",
                     account."UnstakedBalance",
@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 WHERE unstakedBaker."Staked" = true
                 AND account."UnstakedBakerId" IS DISTINCT FROM account."DelegateId"
                 AND account."UnstakedBakerId" != account."Id"
-                """);
+                """, block.Level, (int)AccountType.Delegate);
         }
 
         protected override async Task TakeDeactivatedSnapshot(Block block)
@@ -107,7 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 x.UnstakedBakerId != x.DelegateId &&
                                 x.UnstakedBakerId != x.Id)
                             .ToListAsync()
-                        : new(0);
+                        : [];
 
                     values.Add("(" + string.Join(',',
                         block.Level,
@@ -152,6 +152,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
                 if (values.Count > 0)
                 {
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
@@ -167,6 +168,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         VALUES
                         {string.Join(",\n", values)}
                         """);
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
                 }
             }
         }
@@ -176,7 +178,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE "SnapshotBalances" as sb
                 SET 
                     "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated",
@@ -185,13 +187,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                 FROM (
                     SELECT "BakerId", "EndorsementRewardsDelegated", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedEdge", "EndorsementRewardsStakedShared"
                     FROM "BakerCycles"
-                    WHERE "Cycle" = {block.Cycle}
+                    WHERE "Cycle" = {0}
                     AND ("EndorsementRewardsDelegated" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedEdge" != 0 OR "EndorsementRewardsStakedShared" != 0)
                 ) as bc
-                WHERE sb."Level" = {block.Level}
+                WHERE sb."Level" = {1}
                 AND sb."AccountId" = bc."BakerId"
                 AND sb."BakerId" = bc."BakerId"
-                """);
+                """, block.Cycle, block.Level);
         }
     }
 }

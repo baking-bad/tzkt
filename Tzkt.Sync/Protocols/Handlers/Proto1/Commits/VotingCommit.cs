@@ -51,9 +51,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""VotingPeriods"" WHERE ""Index"" = {current.Index};
-                DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {current.Index};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingPeriods" WHERE "Index" = {0};
+                DELETE FROM "VotingSnapshots" WHERE "Period" = {0};
+                """, current.Index);
             Cache.Periods.Remove(current);
                 
             state.VotingPeriod = prev.Index;

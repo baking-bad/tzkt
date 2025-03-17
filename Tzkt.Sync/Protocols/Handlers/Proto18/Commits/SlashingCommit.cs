@@ -338,7 +338,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         }
                     }
 
-                    if (slashedBakerRequests.Any())
+                    if (slashedBakerRequests.Count != 0)
                         slashedRequests.Add(baker.Id, slashedBakerRequests);
                 }
             }

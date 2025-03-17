@@ -132,11 +132,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                 });
         }
 
-        Task MigrateSnapshots(AppState state)
+        Task<int> MigrateSnapshots(AppState state)
         {
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "SnapshotBalances"
-                WHERE "Level" = {state.Level};
+                WHERE "Level" = {0};
 
                 INSERT INTO "SnapshotBalances" (
                     "Level",
@@ -150,7 +150,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     "StakersCount"
                 )
                 SELECT
-                    {state.Level},
+                    {0},
                     "Id",
                     COALESCE("DelegateId", "Id"),
                     COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
@@ -161,7 +161,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     0
                 FROM "Accounts"
                 WHERE "Staked" = true;
-                """);
+                """, state.Level);
         }
 
         async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
@@ -198,7 +198,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, er.Slots.Value);
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level} AND ""Cycle"" = {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Level" > {0} AND "Cycle" = {1}
+                """, state.Level, state.Cycle);
+                
             #endregion
 
             #region add missed baker cycles
@@ -217,7 +221,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                     if (baker.DelegatorsCount > 0)
                     {
-                        await Db.Database.ExecuteSqlRawAsync($"""
+                        await Db.Database.ExecuteSqlRawAsync("""
                             INSERT INTO "DelegatorCycles" (
                                 "Cycle",
                                 "DelegatorId",
@@ -226,16 +230,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                                 "StakedBalance"
                             )
                             SELECT
-                                {state.Cycle},
+                                {0},
                                 "AccountId",
                                 "BakerId",
                                 "OwnDelegatedBalance",
                                 "OwnStakedBalance"
                             FROM "SnapshotBalances"
-                            WHERE "Level" = {state.Level}
+                            WHERE "Level" = {1}
                             AND "AccountId" != "BakerId"
-                            AND "BakerId" = {baker.Id}
-                            """);
+                            AND "BakerId" = {2}
+                            """, state.Cycle, state.Level, baker.Id);
                     }
                 }
             }
@@ -334,9 +338,11 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         async Task MigrateFutureRights(AppState state, Protocol nextProto)
         {
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Cycle"" > {state.Cycle}");
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakerCycles"" WHERE ""Cycle"" > {state.Cycle}");
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""DelegatorCycles"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights" WHERE "Cycle" > {0};
+                DELETE FROM "BakerCycles" WHERE "Cycle" > {0};
+                DELETE FROM "DelegatorCycles" WHERE "Cycle" > {0};
+                """, state.Cycle);
 
             var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked).ToListAsync();
             var sampler = GetSampler(bakers
@@ -414,7 +420,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #endregion
 
                 #region save delegator cycles
-                await Db.Database.ExecuteSqlRawAsync($"""
+                await Db.Database.ExecuteSqlRawAsync("""
                     INSERT INTO "DelegatorCycles" (
                         "Cycle",
                         "DelegatorId",
@@ -423,15 +429,15 @@ namespace Tzkt.Sync.Protocols.Proto12
                         "StakedBalance"
                     )
                     SELECT
-                        {cycle.Index},
+                        {0},
                         "AccountId",
                         "BakerId",
                         "OwnDelegatedBalance",
                         "OwnStakedBalance"
                     FROM "SnapshotBalances"
-                    WHERE "Level" = {cycle.SnapshotLevel}
+                    WHERE "Level" = {1}
                     AND "AccountId" != "BakerId"
-                    """);
+                    """, cycle.Index, cycle.SnapshotLevel);
                 #endregion
 
                 #region save baker cycles

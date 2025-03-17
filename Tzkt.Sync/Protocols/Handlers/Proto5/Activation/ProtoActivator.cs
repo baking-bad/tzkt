@@ -214,15 +214,17 @@ namespace Tzkt.Sync.Protocols.Proto5
                     var newPtr = (int)mi.Value;
 
                     if (newBigmap.Path != bigmap.Path)
-                        await Db.Database.ExecuteSqlRawAsync($@"
-                            UPDATE ""BigMaps"" SET ""StoragePath"" = '{newBigmap.Path}' WHERE ""Ptr"" = {contract.Id};
-                        ");
+                        await Db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "BigMaps"
+                            SET "StoragePath" = {0}
+                            WHERE "Ptr" = {1}
+                            """, newBigmap.Path, contract.Id);
 
-                    await Db.Database.ExecuteSqlRawAsync($@"
-                        UPDATE ""BigMaps"" SET ""Ptr"" = {newPtr} WHERE ""Ptr"" = {contract.Id};
-                        UPDATE ""BigMapKeys"" SET ""BigMapPtr"" = {newPtr} WHERE ""BigMapPtr"" = {contract.Id};
-                        UPDATE ""BigMapUpdates"" SET ""BigMapPtr"" = {newPtr} WHERE ""BigMapPtr"" = {contract.Id};
-                    ");
+                    await Db.Database.ExecuteSqlRawAsync("""
+                        UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
+                        UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                        UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                        """, newPtr, contract.Id);
 
                     var storages = await Db.Storages.Where(x => x.ContractId == contract.Id).ToListAsync();
                     foreach (var prevStorage in storages)
@@ -314,15 +316,17 @@ namespace Tzkt.Sync.Protocols.Proto5
                     var newPtr = (int)mi.Value;
 
                     if (oldBigmap.Path != bigmap.Path)
-                        await Db.Database.ExecuteSqlRawAsync($@"
-                            UPDATE ""BigMaps"" SET ""StoragePath"" = '{oldBigmap.Path}' WHERE ""Ptr"" = {newPtr};
-                        ");
+                        await Db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "BigMaps"
+                            SET "StoragePath" = {0}
+                            WHERE "Ptr" = {1}
+                            """, oldBigmap.Path, newPtr);
 
-                    await Db.Database.ExecuteSqlRawAsync($@"
-                        UPDATE ""BigMaps"" SET ""Ptr"" = {contract.Id} WHERE ""Ptr"" = {newPtr};
-                        UPDATE ""BigMapKeys"" SET ""BigMapPtr"" = {contract.Id} WHERE ""BigMapPtr"" = {newPtr};
-                        UPDATE ""BigMapUpdates"" SET ""BigMapPtr"" = {contract.Id} WHERE ""BigMapPtr"" = {newPtr};
-                    ");
+                    await Db.Database.ExecuteSqlRawAsync("""
+                        UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
+                        UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                        UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                        """, contract.Id, newPtr);
 
                     var storages = await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.op.Level).ToListAsync();
                     foreach (var prevStorage in storages)

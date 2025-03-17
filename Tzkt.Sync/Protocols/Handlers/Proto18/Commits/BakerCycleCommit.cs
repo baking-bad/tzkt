@@ -339,10 +339,10 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual async Task RevertNewCycle(Block block)
         {
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakerCycles"
-                WHERE "Cycle" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
-                """);
+                WHERE "Cycle" = {0}
+                """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
         }
     }
 }

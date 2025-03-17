@@ -88,7 +88,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearBakerCycles()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""BakerCycles""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakerCycles"
+                """);
         }
 
         #region helpers

@@ -100,10 +100,11 @@ namespace Tzkt.Sync.Protocols
             var prev = await Cache.Blocks.PreviousAsync();
             var prevProtocol = await Cache.Protocols.GetAsync(prev.ProtoCode);
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""Statistics"" WHERE ""Level"" = {curr.Level};
-                DELETE FROM ""Protocols"" WHERE ""FirstLevel"" = {curr.Level};
-                DELETE FROM ""Blocks"" WHERE ""Level"" = {curr.Level};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Statistics" WHERE "Level" = {0};
+                DELETE FROM "Protocols" WHERE "FirstLevel" = {0};
+                DELETE FROM "Blocks" WHERE "Level" = {0};
+                """, curr.Level);
 
             await Cache.Statistics.ResetAsync();
             await Cache.Protocols.ResetAsync();

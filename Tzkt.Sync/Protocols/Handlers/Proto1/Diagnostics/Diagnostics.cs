@@ -14,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected readonly IRpc Rpc = handler.Rpc;
 
         int AddedOperations = 0;
-        readonly Dictionary<int, Account> ChangedAccounts = new();
-        readonly Dictionary<long, TicketBalance> ChangedTicketBalances = new();
+        readonly Dictionary<int, Account> ChangedAccounts = [];
+        readonly Dictionary<long, TicketBalance> ChangedTicketBalances = [];
 
         public void TrackChanges()
         {

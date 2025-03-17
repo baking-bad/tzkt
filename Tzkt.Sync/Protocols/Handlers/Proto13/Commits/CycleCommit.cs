@@ -23,7 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 .FirstOrDefaultAsync()
                 ?? throw new Exception($"Seed for cycle {futureCycle - 1} is missed");
 
-            var nonces = block.Cycle < 2 ? Enumerable.Empty<byte[]>() : await Db.NonceRevelationOps
+            var nonces = block.Cycle < 2 ? [] : await Db.NonceRevelationOps
                 .AsNoTracking()
                 .Where(x => x.RevealedCycle == block.Cycle - 2)
                 .OrderByDescending(x => x.RevealedLevel)
@@ -71,9 +71,10 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE  FROM ""Cycles""
-                WHERE   ""Index"" = {futureCycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Cycles"
+                WHERE "Index" = {0}
+                """, futureCycle);
         }
 
         protected virtual Task<byte[]?> GetVdfSolution(Block block) => Task.FromResult<byte[]?>(null);

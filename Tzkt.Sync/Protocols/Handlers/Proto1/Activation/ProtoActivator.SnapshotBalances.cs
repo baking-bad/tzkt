@@ -43,7 +43,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearSnapshotBalances()
         {
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""{nameof(TzktContext.SnapshotBalances)}""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "SnapshotBalances"
+                """);
         }
     }
 }
