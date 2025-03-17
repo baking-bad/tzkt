@@ -5,9 +5,9 @@
         public static string GetName(string chainId) => chainId switch
         {
             "NetXdQprcVkpaWU" => "mainnet",
-            "NetXUrNc8uioxP8" => "basenet",
+            "NetXnHfVqm9iesp" => "basenet",
             "NetXUrNc8uioxP8" => "atlasnet",
-            "NetXUrNc8uioxP8" => "boreasnet",
+            "NetXRp4kyGKJTuB" => "weeklynet",
             _ => "private"
         };
     }
