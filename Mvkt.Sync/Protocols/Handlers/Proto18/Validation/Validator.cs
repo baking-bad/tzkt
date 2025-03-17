@@ -1,4 +1,4 @@
-﻿namespace Mvkt.Sync.Protocols.Proto18
+namespace Mvkt.Sync.Protocols.Proto18
 {
     class Validator : Proto1.Validator
     {

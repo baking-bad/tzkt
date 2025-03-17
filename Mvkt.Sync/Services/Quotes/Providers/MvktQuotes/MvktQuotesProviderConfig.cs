@@ -4,7 +4,7 @@ namespace Mvkt.Sync.Services
 {
     public class MvktQuotesProviderConfig
     {
-        public string BaseUrl { get; set; } = "https://services.Mvkt.io";
+        public string BaseUrl { get; set; } = "https://services.mvkt.io";
         public int Timeout { get; set; } = 10;
     }
 
