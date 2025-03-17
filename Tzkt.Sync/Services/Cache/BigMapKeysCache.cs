@@ -41,11 +41,15 @@ namespace Tzkt.Sync.Services.Cache
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
                     var ptrHashes = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.ptr}, '{x.hash}')")); // TODO: use parameters
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     var loaded = await Db.BigMapKeys
-                        .FromSqlRaw($@"
-                        SELECT * FROM ""{nameof(TzktContext.BigMapKeys)}""
-                        WHERE (""{nameof(BigMapKey.BigMapPtr)}"", ""{nameof(BigMapKey.KeyHash)}"") IN ({ptrHashes})")
+                        .FromSqlRaw($"""
+                            SELECT *
+                            FROM "BigMapKeys"
+                            WHERE ("BigMapPtr", "KeyHash") IN ({ptrHashes})
+                            """)
                         .ToListAsync();
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
                     foreach (var item in loaded)
                         Cached.TryAdd((item.BigMapPtr, item.KeyHash), item);

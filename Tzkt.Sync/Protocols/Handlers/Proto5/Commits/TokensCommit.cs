@@ -1019,7 +1019,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""TokenTransfers"" WHERE ""Level"" = {block.Level};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "TokenTransfers"
+                WHERE "Level" = {0}
+                """, block.Level);
         }
 
         static List<(string, string, BigInteger, BigInteger)> ParseTransferParam(IMicheline micheline)

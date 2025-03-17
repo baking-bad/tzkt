@@ -18,7 +18,7 @@ namespace Tzkt.Api.Services.Cache
             """;
         #endregion
         
-        readonly object Crit = new();
+        readonly Lock Crit = new();
         readonly Dictionary<int, RawAccount> AccountsById;
         readonly Dictionary<string, RawAccount> AccountsByAddress;
         int LastUpdate;

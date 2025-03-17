@@ -81,7 +81,11 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             Cache.AppState.ReleaseEventId(events.Count);
 
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""Events"" WHERE ""Level"" = {block.Level};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Events"
+                WHERE "Level" = {0}
+                """, block.Level);
+                
         }
     }
 }

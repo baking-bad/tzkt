@@ -84,10 +84,10 @@ namespace Tzkt.Sync.Protocols.Proto19
                 }
             }
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "Cycles"
-                WHERE "Index" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
-                """);
+                WHERE "Index" = {0}
+                """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
         }
     }
 }

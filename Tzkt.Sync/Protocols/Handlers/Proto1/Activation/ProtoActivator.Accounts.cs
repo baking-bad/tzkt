@@ -12,26 +12,26 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
             var bootstrapAccounts = parameters["bootstrap_accounts"]?
-                .Select(x => (x[0].Value<string>(), x[1].Value<long>(), x.Count() > 2 ? x[2].Value<string>() : null))
+                .Select(x => (x[0]!.Value<string>()!, x[1]!.Value<long>(), x.Count() > 2 ? x[2]!.Value<string>()! : null))
                 .ToList() ?? [];
 
             var bootstrapContracts = parameters["bootstrap_contracts"]?
                 .Select(x =>
                 (
-                    x["amount"].Value<long>(),
-                    x["delegate"]?.Value<string>() ?? null,
-                    x["script"]["code"].ToString(),
-                    x["script"]["storage"].ToString(),
-                    x["hash"]?.Value<string>() ?? null
+                    x["amount"]!.Value<long>(),
+                    x["delegate"]?.Value<string>(),
+                    x["script"]!["code"]!.ToString(),
+                    x["script"]!["storage"]!.ToString(),
+                    x["hash"]?.Value<string>()
                 ))
                 .ToList() ?? [];
 
             var bootstrapSmartRollups = parameters["bootstrap_smart_rollups"]?
                 .Select(x =>
                 (
-                    x["address"].Value<string>(),
-                    x["pvm_kind"].Value<string>(),
-                    x["parameters_ty"].ToString()
+                    x["address"]!.Value<string>()!,
+                    x["pvm_kind"]!.Value<string>()!,
+                    x["parameters_ty"]!.ToString()
                 ))
                 .ToList() ?? [];
 
@@ -180,7 +180,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .OrderBy(x => x, new BytesComparer())
                     .SelectMany(x => x)
                     .ToArray()
-                    ?? Array.Empty<byte>();
+                    ?? [];
                 var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
                 var fullSchema = typeSchema.Concat(script.CodeSchema);
                 contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
@@ -317,11 +317,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task ClearAccounts()
         { 
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""Accounts"";
-                DELETE FROM ""MigrationOps"";
-                DELETE FROM ""Scripts"";
-                DELETE FROM ""Storages"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Accounts";
+                DELETE FROM "MigrationOps";
+                DELETE FROM "Scripts";
+                DELETE FROM "Storages";
+                """);
 
             await Cache.Accounts.ResetAsync();
             Cache.Schemas.Reset();

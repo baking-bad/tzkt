@@ -58,7 +58,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearBakingRights()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""BakingRights""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                """);
         }
 
         protected virtual async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(Protocol protocol, List<Account> accounts, Cycle cycle)

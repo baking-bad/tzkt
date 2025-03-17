@@ -13,19 +13,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE "SnapshotBalances" as sb
                 SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated"	                        
                 FROM (
                     SELECT "BakerId", "EndorsementRewardsDelegated"
                     FROM "BakerCycles"
-                    WHERE "Cycle" = {block.Cycle}
+                    WHERE "Cycle" = {0}
                     AND "EndorsementRewardsDelegated" != 0
                 ) as bc
-                WHERE sb."Level" = {block.Level}
+                WHERE sb."Level" = {1}
                 AND sb."AccountId" = bc."BakerId"
                 AND sb."BakerId" = bc."BakerId"
-                """);
+                """, block.Cycle, block.Level);
         }
     }
 }

@@ -836,8 +836,8 @@ namespace Tzkt.Api.Repositories
                     LastLevel = row.LastLevel,
                     EndTime = Time[row.LastLevel],
                     Status = row.Status,
-                    Periods = periods.GetValueOrDefault((int)row.Index) ?? Enumerable.Empty<VotingPeriod>(),
-                    Proposals = proposals.GetValueOrDefault((int)row.Index) ?? Enumerable.Empty<Proposal>()
+                    Periods = periods.GetValueOrDefault((int)row.Index) ?? [],
+                    Proposals = proposals.GetValueOrDefault((int)row.Index) ?? []
                 };
             });
         }

@@ -144,10 +144,10 @@ namespace Tzkt.Sync.Services
             {
                 try
                 {
-                    await Db.Database.ExecuteSqlRawAsync($"""
-                        DELETE FROM "Quotes" WHERE "Level" >= {state.Level};
-                        UPDATE "AppState" SET "QuoteLevel" = {state.Level - 1};
-                        """);
+                    await Db.Database.ExecuteSqlRawAsync("""
+                        DELETE FROM "Quotes" WHERE "Level" >= {0};
+                        UPDATE "AppState" SET "QuoteLevel" = {1};
+                        """, state.Level, state.Level - 1);
 
                     state.QuoteLevel = state.Level - 1;
                 }
@@ -273,7 +273,7 @@ namespace Tzkt.Sync.Services
             state.QuoteGbp = last.Gbp;
         }
 
-        IQuote? LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
+        Quote? LastQuote(AppState state) => state.QuoteLevel == -1 ? null : new Quote
         {
             Id = 0,
             Level = 0,

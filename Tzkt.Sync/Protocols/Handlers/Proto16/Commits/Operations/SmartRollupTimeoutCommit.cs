@@ -151,10 +151,10 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup!.SmartRollupBonds -= game.InitiatorLoss.Value;
                     rollup.ActiveStakers--;
 
-                    var bondOp = await GetBondOperation(rollup, initiator, block);
+                    var bondOp = await GetBondOperation(rollup, initiator);
                     bondOp.BondStatus = SmartRollupBondStatus.Lost;
 
-                    foreach (var commitment in await GetFundedCommitments(rollup, initiator, bondOp, block))
+                    foreach (var commitment in await GetFundedCommitments(rollup, initiator, bondOp))
                     {
                         commitment.ActiveStakers--;
                         await Cache.SmartRollupStakes.SetAsync(commitment, initiator.Id, 0);
@@ -196,10 +196,10 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup!.SmartRollupBonds -= game.OpponentLoss.Value;
                     rollup.ActiveStakers--;
 
-                    var bondOp = await GetBondOperation(rollup, opponent, block);
+                    var bondOp = await GetBondOperation(rollup, opponent);
                     bondOp.BondStatus = SmartRollupBondStatus.Lost;
 
-                    foreach (var commitment in await GetFundedCommitments(rollup, opponent, bondOp, block))
+                    foreach (var commitment in await GetFundedCommitments(rollup, opponent, bondOp))
                     {
                         commitment.ActiveStakers--;
                         await Cache.SmartRollupStakes.SetAsync(commitment, opponent.Id, 0);
@@ -255,7 +255,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             Context.SmartRollupRefuteOps.Add(operation);
         }
 
-        async Task<SmartRollupPublishOperation> GetBondOperation(SmartRollup rollup, Account staker, Block block)
+        async Task<SmartRollupPublishOperation> GetBondOperation(SmartRollup rollup, Account staker)
         {
             return Context.SmartRollupPublishOps
                 .FirstOrDefault(x =>
@@ -269,7 +269,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
         }
 
-        async Task<List<SmartRollupCommitment>> GetFundedCommitments(SmartRollup rollup, Account staker, SmartRollupPublishOperation bondOp, Block block)
+        async Task<List<SmartRollupCommitment>> GetFundedCommitments(SmartRollup rollup, Account staker, SmartRollupPublishOperation bondOp)
         {
             var ids = (await Db.SmartRollupPublishOps.AsNoTracking()
                 .Join(Db.SmartRollupCommitments, o => o.CommitmentId, c => c.Id, (o, c) => new { o, c })

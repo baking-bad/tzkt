@@ -122,10 +122,10 @@ namespace Tzkt.Sync.Protocols.Proto16
 
         public async Task Revert(Block block)
         {
-            var cnt = await Db.Database.ExecuteSqlInterpolatedAsync($"""
+            var cnt = await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "InboxMessages"
-                WHERE "Level" = {block.Level}
-                """);
+                WHERE "Level" = {0}
+                """, block.Level);
 
             Cache.AppState.ReleaseInboxMessageId(cnt);
         }

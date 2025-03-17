@@ -187,7 +187,11 @@ namespace Tzkt.Sync.Protocols.Proto15
                 bakerCycle.FutureEndorsements -= er.Slots!.Value;
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level} AND ""Cycle"" = {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Level" > {0} AND "Cycle" = {1}
+                """, state.Level, state.Cycle);
+                
             #endregion
 
             #region apply new rights
@@ -259,7 +263,11 @@ namespace Tzkt.Sync.Protocols.Proto15
 
         async Task MigrateFutureRights(AppState state, Protocol nextProto)
         {
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Cycle" > {0}
+                """, state.Cycle);
+                
 
             var cycles = await Db.Cycles
                 .AsNoTracking()

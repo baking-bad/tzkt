@@ -41,7 +41,7 @@ builder.Services.AddDbContext<TzktContext>(options => options.UseNpgsql(connecti
 builder.Services.AddSingleton(serviceProvider =>
 {
     var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-    dataSourceBuilder.AddTypeResolverFactory(new CustomTypeHandlerResolverFactory());
+    dataSourceBuilder.AddTypeInfoResolverFactory(new BigIntegerNumericTypeInfoResolverFactory());
     dataSourceBuilder.UseLoggerFactory(serviceProvider.GetService<ILoggerFactory>());
     return dataSourceBuilder.Build();
 });

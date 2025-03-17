@@ -69,11 +69,15 @@ namespace Tzkt.Sync.Services.Cache
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
                     var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, {x.Item2})"));
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     var items = await Db.TicketBalances
-                        .FromSqlRaw($@"
-                            SELECT * FROM ""{nameof(TzktContext.TicketBalances)}""
-                            WHERE (""{nameof(TicketBalance.AccountId)}"", ""{nameof(TicketBalance.TicketId)}"") IN ({corteges})")
+                        .FromSqlRaw($"""
+                            SELECT *
+                            FROM "TicketBalances"
+                            WHERE ("AccountId", "TicketId") IN ({corteges})
+                            """)
                         .ToListAsync();
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
                     foreach (var item in items)
                         Add(item);

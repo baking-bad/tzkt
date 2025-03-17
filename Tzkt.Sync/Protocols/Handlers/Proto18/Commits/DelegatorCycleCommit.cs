@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected override Task CreateFromSnapshots(Cycle futureCycle)
         {
-            return Db.Database.ExecuteSqlRawAsync($"""
+            return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "DelegatorCycles" (
                     "Cycle",
                     "DelegatorId",
@@ -18,15 +18,15 @@ namespace Tzkt.Sync.Protocols.Proto18
                     "StakedBalance"
                 )
                 SELECT
-                    {futureCycle.Index},
+                    {0},
                     "AccountId",
                     "BakerId",
                     "OwnDelegatedBalance",
                     "OwnStakedBalance"
                 FROM "SnapshotBalances"
-                WHERE "Level" = {futureCycle.SnapshotLevel}
+                WHERE "Level" = {1}
                 AND "AccountId" != "BakerId"
-                """);
+                """, futureCycle.Index, futureCycle.SnapshotLevel);
         }
     }
 }

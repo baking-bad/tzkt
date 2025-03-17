@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     }
                 }
 
-                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
+                if (rights.Count == 0 || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                     throw new ValidationException("Rpc returned less endorsing rights (slots) than expected");
 
                 return rights;

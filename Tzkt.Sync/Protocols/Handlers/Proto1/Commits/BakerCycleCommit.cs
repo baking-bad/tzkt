@@ -116,10 +116,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (bakingRights[0].Round == 0 && bakerCycle.FutureBlockRewards != 0) // FutureBlockRewards is always 0 for weirds
                         bakerCycle.FutureBlockRewards -= GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle);
                     
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
@@ -350,13 +350,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (block.Cycle > 0)
                 {
                     //one-way change...
-                    await Db.Database.ExecuteSqlRawAsync($"""
+                    await Db.Database.ExecuteSqlRawAsync("""
                         DELETE FROM "BakerCycles" as bc
                         USING "Accounts" as acc
                         WHERE acc."Id" = bc."BakerId"
-                        AND bc."Cycle" = {block.Cycle - 1}
-                        AND acc."Type" != {(int)AccountType.Delegate}
-                        """);
+                        AND bc."Cycle" = {0}
+                        AND acc."Type" != {1}
+                        """, block.Cycle - 1, (int)AccountType.Delegate);
                 }
                 #endregion
             }
@@ -472,10 +472,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (bakingRights[0].Round == 0)
                         bakerCycle.FutureBlockRewards += GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle)
                         : 0;
 
                     //var maxReward = endorsingRight?.Status > BakingRightStatus.Realized
@@ -567,10 +567,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($"""
+                await Db.Database.ExecuteSqlRawAsync("""
                     DELETE FROM "BakerCycles"
-                    WHERE "Cycle" = {block.Cycle + Context.Protocol.ConsensusRightsDelay}
-                    """);
+                    WHERE "Cycle" = {0}
+                    """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
             }
             #endregion
         }
@@ -582,7 +582,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
 
-        protected long GetBlockReward(Protocol protocol, int cycle, int priority, int slots)
+        protected long GetBlockReward(Protocol protocol, int cycle)
             => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
         protected long GetEndorsementReward(Protocol protocol, int cycle, int slots, int prevPriority)

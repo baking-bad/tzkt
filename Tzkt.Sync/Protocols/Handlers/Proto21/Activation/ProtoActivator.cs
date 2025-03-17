@@ -55,30 +55,34 @@ namespace Tzkt.Sync.Protocols.Proto21
             var lastCycle = state.Cycle + nextProto.ConsensusRightsDelay + 1;
             var lastCycleStart = nextProto.GetCycleStart(lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakerCycles"
-                WHERE "Cycle" > {lastCycle};
-                """);
+                WHERE "Cycle" > {0}
+                """, lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakingRights"
-                WHERE "Type" = {(int)BakingRightType.Baking}
-                AND "Cycle" > {lastCycle};
+                WHERE "Type" = {0}
+                AND "Cycle" > {1};
                 
                 DELETE FROM "BakingRights"
-                WHERE "Type" = {(int)BakingRightType.Endorsing}
-                AND "Level" > {lastCycleStart};
-                """);
+                WHERE "Type" = {2}
+                AND "Level" > {3};
+                """,
+                (int)BakingRightType.Baking,
+                lastCycle,
+                (int)BakingRightType.Endorsing,
+                lastCycleStart);
 
-            var removedCycles = await Db.Database.ExecuteSqlRawAsync($"""
+            var removedCycles = await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "Cycles"
-                WHERE "Index" > {lastCycle};
-                """);
+                WHERE "Index" > {0}
+                """, lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "DelegatorCycles"
-                WHERE "Cycle" > {lastCycle};
-                """);
+                WHERE "Cycle" > {0}
+                """, lastCycle);
 
             Cache.BakerCycles.Reset();
             Cache.BakingRights.Reset();
@@ -162,7 +166,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 """, state.Cycle);
 
             var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {

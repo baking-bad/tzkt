@@ -192,19 +192,24 @@ namespace Tzkt.Sync.Protocols.Proto1
             foreach (var cr in CurrentRights)
                 cr.Status = BakingRightStatus.Future;
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                UPDATE  ""BakingRights""
-                SET     ""Status"" = {(int)BakingRightStatus.Future}
-                WHERE   ""Level"" = {block.Level}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                UPDATE "BakingRights"
+                SET "Status" = {0}
+                WHERE "Level" = {1}
+                """, (int)BakingRightStatus.Future, block.Level);
             #endregion
 
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE FROM ""BakingRights""
-                    WHERE   ""Cycle"" = {block.Cycle + Context.Protocol.ConsensusRightsDelay} AND ""Type"" = 0
-                    OR      ""Level"" > {Context.Protocol.GetCycleStart(block.Cycle + Context.Protocol.ConsensusRightsDelay)}");
+                await Db.Database.ExecuteSqlRawAsync("""
+                    DELETE FROM "BakingRights"
+                    WHERE "Cycle" = {0} AND "Type" = {1}
+                    OR "Level" > {2}
+                    """,
+                    block.Cycle + Context.Protocol.ConsensusRightsDelay,
+                    (int)BakingRightType.Baking,
+                    Context.Protocol.GetCycleStart(block.Cycle + Context.Protocol.ConsensusRightsDelay));
             }
             #endregion
         }

@@ -738,7 +738,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .OrderBy(x => x, new BytesComparer())
                 .SelectMany(x => x)
                 .ToArray()
-                ?? Array.Empty<byte>();
+                ?? [];
             var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);

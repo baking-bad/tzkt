@@ -43,7 +43,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public virtual async Task Revert(Block block)
         {
-            await Db.Database.ExecuteSqlRawAsync($"""DELETE FROM "Statistics" WHERE "Level" = {block.Level}""");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Statistics"
+                WHERE "Level" = {0}
+                """, block.Level);
             await Cache.Statistics.ResetAsync();
         }
     }

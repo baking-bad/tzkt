@@ -22,7 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto5
         protected override async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement param)
         {
             string? rawEp = null;
-            IMicheline? rawParam = null;
+            IMicheline? rawParam;
             try
             {
                 rawEp = param.RequiredString("entrypoint");

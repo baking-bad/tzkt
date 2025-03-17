@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         protected override async Task Unstake(DelegationOperation operation, List<JsonElement> balanceUpdates)
         {
-            if (!balanceUpdates.Any())
+            if (balanceUpdates.Count == 0)
                 return;
 
             var updates = await ParseStakingUpdates(operation, balanceUpdates);

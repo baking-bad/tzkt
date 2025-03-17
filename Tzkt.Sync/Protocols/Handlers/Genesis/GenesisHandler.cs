@@ -88,10 +88,11 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Revert()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""Statistics"";
-                DELETE FROM ""Protocols"";
-                DELETE FROM ""Blocks"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Statistics";
+                DELETE FROM "Protocols";
+                DELETE FROM "Blocks";
+                """);
 
             await Cache.Statistics.ResetAsync();
             await Cache.Protocols.ResetAsync();
