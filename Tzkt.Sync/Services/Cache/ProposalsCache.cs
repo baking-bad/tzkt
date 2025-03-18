@@ -6,23 +6,44 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class ProposalsCache(TzktContext db)
     {
-        const int MaxProposals = 32; //TODO: set limits in app settings
+        const int MaxCount = 32; //TODO: set limits in app settings
+        const int TargetCount = MaxCount * 3 / 4;
+
         static readonly Dictionary<int, Proposal> CachedById = new(37);
-        static readonly Dictionary<(int, string), Proposal> CachedByKey = new(37);
+        static readonly Dictionary<(int, string), Proposal> CachedByHash = new(37);
 
         readonly TzktContext Db = db;
 
         public void Reset()
         {
             CachedById.Clear();
-            CachedByKey.Clear();
+            CachedByHash.Clear();
+        }
+
+        public void Trim()
+        {
+            if (CachedById.Count > MaxCount)
+            {
+                var toRemove = CachedById.Values
+                    .OrderBy(x => x.LastPeriod)
+                    .Take(CachedById.Count - TargetCount)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
         }
 
         public void Add(Proposal proposal)
         {
-            CheckSpace();
             CachedById[proposal.Id] = proposal;
-            CachedByKey[(proposal.Epoch, proposal.Hash)] = proposal;
+            CachedByHash[(proposal.Epoch, proposal.Hash)] = proposal;
+        }
+
+        public void Remove(Proposal proposal)
+        {
+            CachedById.Remove(proposal.Id);
+            CachedByHash.Remove((proposal.Epoch, proposal.Hash));
         }
 
         public async Task<Proposal> GetAsync(int id)
@@ -40,7 +61,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task<Proposal> GetAsync(int epoch, string hash)
         {
-            if (!CachedByKey.TryGetValue((epoch, hash), out var proposal))
+            if (!CachedByHash.TryGetValue((epoch, hash), out var proposal))
             {
                 proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch)
                     ?? throw new Exception($"Proposal {hash} from epoch {epoch} doesn't exist");
@@ -53,7 +74,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task<Proposal?> GetOrDefaultAsync(int epoch, string hash)
         {
-            if (!CachedByKey.TryGetValue((epoch, hash), out var proposal))
+            if (!CachedByHash.TryGetValue((epoch, hash), out var proposal))
             {
                 proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch);
                 if (proposal != null) Add(proposal);
@@ -64,38 +85,15 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task<Proposal> GetOrCreateAsync(int epoch, string hash, Func<Proposal> create)
         {
-            if (!CachedByKey.TryGetValue((epoch, hash), out var proposal))
+            if (!CachedByHash.TryGetValue((epoch, hash), out var proposal))
             {
                 proposal = await Db.Proposals.FirstOrDefaultAsync(x => x.Hash == hash && x.Epoch == epoch)
                     ?? create();
 
-                // just created proposal has id = 0 so CachedById will contain wrong key, but it's fine
                 Add(proposal);
             }
 
             return proposal;
-        }
-
-        public void Remove(Proposal proposal)
-        {
-            CachedById.Remove(proposal.Id);
-            CachedByKey.Remove((proposal.Epoch, proposal.Hash));
-        }
-
-        void CheckSpace()
-        {
-            if (CachedById.Count >= MaxProposals)
-            {
-                var oldest = CachedById.Values
-                    .Take(MaxProposals / 4)
-                    .ToList();
-
-                foreach (var item in oldest)
-                {
-                    CachedById.Remove(item.Id);
-                    CachedByKey.Remove((item.Epoch, item.Hash));
-                }
-            }
         }
     }
 }

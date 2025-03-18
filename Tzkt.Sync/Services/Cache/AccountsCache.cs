@@ -7,9 +7,11 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class AccountsCache(CacheService cache, TzktContext db)
     {
-        const int MaxAccounts = 16 * 4096; //TODO: set limits in app settings
-        static readonly Dictionary<int, Account> CachedById = new(MaxAccounts);
-        static readonly Dictionary<string, Account> CachedByAddress = new(MaxAccounts);
+        const int MaxCount = 16 * 4096; //TODO: set limits in app settings
+        const int TargetCount = MaxCount * 3 / 4;
+
+        static readonly Dictionary<int, Account> CachedById = new(MaxCount);
+        static readonly Dictionary<string, Account> CachedByAddress = new(MaxCount);
 
         readonly CacheService Cache = cache;
         readonly TzktContext Db = db;
@@ -19,89 +21,33 @@ namespace Tzkt.Sync.Services.Cache
             CachedById.Clear();
             CachedByAddress.Clear();
 
-            var delegates = await Db.Delegates.AsNoTracking().ToListAsync();
+            var delegates = await Db.Delegates
+                .AsNoTracking()
+                .ToListAsync();
+
             foreach (var delegat in delegates)
-            {
-                CachedById.Add(delegat.Id, delegat);
-                CachedByAddress.Add(delegat.Address, delegat);
-            }
+                Add(delegat);
         }
 
-        public async Task Preload(IEnumerable<int> ids)
+        public void Trim()
         {
-            var missed = ids.Where(x => !CachedById.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (CachedById.Count > MaxCount)
             {
-                CheckSpaceFor(missed.Count);
+                var toRemove = CachedById.Values
+                    .Where(x => x.Type != AccountType.Delegate)
+                    .OrderBy(x => x.LastLevel)
+                    .Take(CachedById.Count - TargetCount)
+                    .ToList();
 
-                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Id)).ToListAsync();
-                
-                foreach (var account in accounts)
-                {
-                    CachedById[account.Id] = account;
-                    CachedByAddress[account.Address] = account;
-                }
-            }
-        }
-
-        public async Task Preload(IEnumerable<string> addresses)
-        {
-            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
-            {
-                CheckSpaceFor(missed.Count);
-
-                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Address)).ToListAsync();
-
-                foreach (var account in accounts)
-                {
-                    CachedById[account.Id] = account;
-                    CachedByAddress[account.Address] = account;
-                }
-            }
-        }
-
-        public async Task LoadAsync(IEnumerable<string> addresses)
-        {
-            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
-            {
-                CheckSpaceFor(missed.Count);
-
-                var accounts = await Db.Accounts.Where(x => missed.Contains(x.Address)).ToListAsync();
-
-                foreach (var account in accounts)
-                {
-                    CachedById[account.Id] = account;
-                    CachedByAddress[account.Address] = account;
-                }
-
-                if (accounts.Count < missed.Count)
-                {
-                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't' && x[1] == 'z'))
-                    {
-                        var account = CreateUser(address);
-                        CachedById[account.Id] = account;
-                        CachedByAddress[account.Address] = account;
-                    }
-                }
+                foreach (var item in toRemove)
+                    Remove(item);
             }
         }
 
         public void Add(Account account)
         {
-            CheckSpaceFor(1);
             CachedById[account.Id] = account;
             CachedByAddress[account.Address] = account;
-        }
-
-        public void Remove(IEnumerable<Account> accounts)
-        {
-            foreach (var account in accounts)
-            {
-                CachedById.Remove(account.Id);
-                CachedByAddress.Remove(account.Address);
-            }
         }
 
         public void Remove(Account account)
@@ -110,37 +56,71 @@ namespace Tzkt.Sync.Services.Cache
             CachedByAddress.Remove(account.Address);
         }
 
-        public async Task<bool> ExistsAsync(string? address, AccountType? type = null)
+        public async Task Preload(IEnumerable<int> ids)
         {
-            if (string.IsNullOrEmpty(address))
-                return false;
+            var missed = ids.Where(x => !CachedById.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var accounts = await Db.Accounts
+                    .Where(x => missed.Contains(x.Id))
+                    .ToListAsync();
+                
+                foreach (var account in accounts)
+                    Add(account);
+            }
+        }
 
+        public async Task Preload(IEnumerable<string> addresses)
+        {
+            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var accounts = await Db.Accounts
+                    .Where(x => missed.Contains(x.Address))
+                    .ToListAsync();
+
+                foreach (var account in accounts)
+                    Add(account);
+            }
+        }
+
+        public async Task LoadAsync(IEnumerable<string> addresses)
+        {
+            var missed = addresses.Where(x => !CachedByAddress.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var accounts = await Db.Accounts
+                    .Where(x => missed.Contains(x.Address))
+                    .ToListAsync();
+
+                foreach (var account in accounts)
+                    Add(account);
+
+                if (accounts.Count != missed.Count)
+                {
+                    foreach (var address in missed.Where(x => !CachedByAddress.ContainsKey(x) && x[0] == 't' && x[1] == 'z'))
+                    {
+                        var user = CreateUser(address);
+                        Add(user);
+                    }
+                }
+            }
+        }
+
+        public async Task<bool> ExistsAsync(string address, AccountType? type = null)
+        {
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
-                account = type switch
-                {
-                    AccountType.User => await Db.Users.FirstOrDefaultAsync(x => x.Address == address),
-                    AccountType.Delegate => await Db.Delegates.FirstOrDefaultAsync(x => x.Address == address),
-                    AccountType.Contract => await Db.Contracts.FirstOrDefaultAsync(x => x.Address == address),
-                    AccountType.Rollup => await Db.Rollups.FirstOrDefaultAsync(x => x.Address == address),
-                    AccountType.SmartRollup => await Db.SmartRollups.FirstOrDefaultAsync(x => x.Address == address),
-                    _ => await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address)
-                };
-
+                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Address == address);
                 if (account != null) Add(account);
             }
 
-            return account != null && (account.Type == type || type == null);
+            return account != null && (type == null || account.Type == type);
         }
 
         public Account GetCached(int id)
         {
             return CachedById[id];
-        }
-
-        public Account GetCached(string address)
-        {
-            return CachedByAddress[address];
         }
 
         public bool TryGetCached(string address, [NotNullWhen(true)] out Account? account)
@@ -167,8 +147,8 @@ namespace Tzkt.Sync.Services.Cache
 
             if (!CachedById.TryGetValue(_id, out var account))
             {
-                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == id)
-                    ?? throw new Exception($"Account #{id} doesn't exist");
+                account = await Db.Accounts.FirstOrDefaultAsync(x => x.Id == _id)
+                    ?? throw new Exception($"Account #{_id} doesn't exist");
 
                 Add(account);
             }
@@ -203,8 +183,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task<Account?> GetAsync(string? address)
         {
-            if (string.IsNullOrEmpty(address))
-                return null;
+            if (address is null) return null;
 
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
@@ -229,11 +208,8 @@ namespace Tzkt.Sync.Services.Cache
             return account;
         }
 
-        public async Task<int?> GetIdOrDefaultAsync(string? address)
+        public async Task<int?> GetIdOrDefaultAsync(string address)
         {
-            if (string.IsNullOrEmpty(address))
-                return null;
-
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
@@ -249,11 +225,8 @@ namespace Tzkt.Sync.Services.Cache
             return account?.Id;
         }
 
-        public async Task<SmartRollup?> GetSmartRollupOrDefaultAsync(string? address)
+        public async Task<SmartRollup?> GetSmartRollupOrDefaultAsync(string address)
         {
-            if (string.IsNullOrEmpty(address))
-                return null;
-
             if (!CachedByAddress.TryGetValue(address, out var account))
             {
                 account = await Db.Accounts
@@ -263,6 +236,7 @@ namespace Tzkt.Sync.Services.Cache
                         WHERE "Address" = @p0::varchar(37)
                         """, address)
                     .FirstOrDefaultAsync();
+
                 if (account != null) Add(account);
             }
 
@@ -271,12 +245,12 @@ namespace Tzkt.Sync.Services.Cache
 
         public bool DelegateExists(int id)
         {
-            return CachedById.TryGetValue(id, out var account) && account is Data.Models.Delegate;
+            return CachedById.TryGetValue(id, out var account) && account.Type == AccountType.Delegate;
         }
 
         public bool DelegateExists(string address)
         {
-            return CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate;
+            return CachedByAddress.TryGetValue(address, out var account) && account.Type == AccountType.Delegate;
         }
 
         public Data.Models.Delegate? GetDelegate(int? id)
@@ -299,8 +273,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public Data.Models.Delegate? GetDelegate(string? address)
         {
-            if (string.IsNullOrEmpty(address))
-                return null;
+            if (address is null) return null;
 
             if (CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate delegat)
                 return delegat;
@@ -328,8 +301,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public Data.Models.Delegate? GetDelegateOrDefault(string? address)
         {
-            if (string.IsNullOrEmpty(address))
-                return null;
+            if (address is null) return null;
 
             if (CachedByAddress.TryGetValue(address, out var account) && account is Data.Models.Delegate delegat)
                 return delegat;
@@ -341,7 +313,7 @@ namespace Tzkt.Sync.Services.Cache
         {
             return CachedById.Values
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => (Data.Models.Delegate)x);
+                .Select(x => (x as Data.Models.Delegate)!);
         }
 
         User CreateUser(string address)
@@ -357,23 +329,6 @@ namespace Tzkt.Sync.Services.Cache
 
             Db.Accounts.Add(account);
             return account;
-        }
-
-        void CheckSpaceFor(int count)
-        {
-            if (CachedById.Count + count > MaxAccounts)
-            {
-                var oldest = CachedById.Values
-                    .Where(x => x.Type != AccountType.Delegate)
-                    .OrderBy(x => x.LastLevel)
-                    .TakeLast(MaxAccounts / 4);
-
-                foreach (var id in oldest.Select(x => x.Id).ToList())
-                    CachedById.Remove(id);
-
-                foreach (var address in oldest.Select(x => x.Address).ToList())
-                    CachedByAddress.Remove(address);
-            }
         }
     }
 }

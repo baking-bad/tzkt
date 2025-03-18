@@ -83,6 +83,12 @@ namespace Tzkt.Sync.Services
 
         public void Trim()
         {
+            Accounts.Trim();
+            BigMapKeys.Trim();
+            BigMaps.Trim();
+            Blocks.Trim();
+            Periods.Trim();
+            Proposals.Trim();
             Tokens.Trim();
             TokenBalances.Trim();
             Tickets.Trim();
