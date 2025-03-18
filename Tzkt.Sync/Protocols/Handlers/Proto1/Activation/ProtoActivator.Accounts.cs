@@ -49,6 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (nullAddress.Id != NullAddress.Id)
                 throw new Exception("Failed to allocate null-address");
             Cache.Accounts.Add(nullAddress);
+            Db.Accounts.Add(nullAddress);
             #endregion
 
             #region bootstrap bakers

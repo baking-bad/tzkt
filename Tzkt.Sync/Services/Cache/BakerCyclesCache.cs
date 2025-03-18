@@ -7,74 +7,14 @@ namespace Tzkt.Sync.Services.Cache
     public class BakerCyclesCache(TzktContext db)
     {
         static int CachedCycle = -1;
-        static Dictionary<int, BakerCycle> CachedBakerCycles = [];
+        static Dictionary<int, BakerCycle> Cached = [];
 
         readonly TzktContext Db = db;
 
         public void Reset()
         {
             CachedCycle = -1;
-            CachedBakerCycles = [];
-        }
-
-        public async Task<bool> ExistsAsync(int cycle, int bakerId)
-        {
-            if (CachedCycle != cycle)
-            {
-                var bakerCycles = await Db.BakerCycles
-                    .Where(x => x.Cycle == cycle)
-                    .ToListAsync();
-
-                CachedBakerCycles = bakerCycles.ToDictionary(x => x.BakerId);
-                CachedCycle = cycle;
-            }
-
-            return CachedBakerCycles.ContainsKey(bakerId);
-        }
-
-        public async Task<Dictionary<int, BakerCycle>> GetAsync(int cycle)
-        {
-            if (CachedCycle != cycle)
-            {
-                var bakerCycles = await Db.BakerCycles
-                    .Where(x => x.Cycle == cycle)
-                    .ToListAsync();
-
-                CachedBakerCycles = bakerCycles.ToDictionary(x => x.BakerId);
-                CachedCycle = cycle;
-            }
-
-            return CachedBakerCycles;
-        }
-
-        public async Task<BakerCycle> GetAsync(int cycle, int bakerId)
-        {
-            if (CachedCycle != cycle)
-            {
-                var bakerCycles = await Db.BakerCycles
-                    .Where(x => x.Cycle == cycle)
-                    .ToListAsync();
-
-                CachedBakerCycles = bakerCycles.ToDictionary(x => x.BakerId);
-                CachedCycle = cycle;
-            }
-
-            return CachedBakerCycles[bakerId];
-        }
-
-        public async Task<BakerCycle?> GetOrDefaultAsync(int cycle, int bakerId)
-        {
-            if (CachedCycle != cycle)
-            {
-                var bakerCycles = await Db.BakerCycles
-                    .Where(x => x.Cycle == cycle)
-                    .ToListAsync();
-
-                CachedBakerCycles = bakerCycles.ToDictionary(x => x.BakerId);
-                CachedCycle = cycle;
-            }
-
-            return CachedBakerCycles.TryGetValue(bakerId, out var res) ? res : null;
+            Cached = [];
         }
 
         public void Add(BakerCycle bc)
@@ -82,7 +22,38 @@ namespace Tzkt.Sync.Services.Cache
             if (CachedCycle != bc.Cycle)
                 throw new InvalidOperationException();
 
-            CachedBakerCycles[bc.BakerId] = bc;
+            Cached[bc.BakerId] = bc;
+        }
+
+        async Task EnsureCachedCycle(int cycle)
+        {
+            if (CachedCycle != cycle)
+            {
+                var bakerCycles = await Db.BakerCycles
+                    .Where(x => x.Cycle == cycle)
+                    .ToListAsync();
+
+                Cached = bakerCycles.ToDictionary(x => x.BakerId);
+                CachedCycle = cycle;
+            }
+        }
+
+        public async Task<Dictionary<int, BakerCycle>> GetAsync(int cycle)
+        {
+            await EnsureCachedCycle(cycle);
+            return Cached;
+        }
+
+        public async Task<BakerCycle> GetAsync(int cycle, int bakerId)
+        {
+            await EnsureCachedCycle(cycle);
+            return Cached[bakerId];
+        }
+
+        public async Task<BakerCycle?> GetOrDefaultAsync(int cycle, int bakerId)
+        {
+            await EnsureCachedCycle(cycle);
+            return Cached.TryGetValue(bakerId, out var res) ? res : null;
         }
     }
 }

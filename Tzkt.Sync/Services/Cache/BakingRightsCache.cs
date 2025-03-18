@@ -7,14 +7,14 @@ namespace Tzkt.Sync.Services.Cache
     public class BakingRightsCache(TzktContext db)
     {
         static int CachedCycle = -1;
-        static List<BakingRight>[] CachedRights = [];
+        static List<BakingRight>[] Cached = [];
 
         readonly TzktContext Db = db;
 
         public void Reset()
         {
             CachedCycle = -1;
-            CachedRights = [];
+            Cached = [];
         }
 
         public async Task<List<BakingRight>> GetAsync(int cycle, int level)
@@ -29,19 +29,19 @@ namespace Tzkt.Sync.Services.Cache
 
                 var length = rights[^1].Level - rights[0].Level + 1;
 
-                if (CachedRights.Length != length)
-                    CachedRights = new List<BakingRight>[length];
+                if (Cached.Length != length)
+                    Cached = new List<BakingRight>[length];
 
                 for (int i = 0; i < length; i++)
-                    CachedRights[i] = new List<BakingRight>(40);
+                    Cached[i] = new List<BakingRight>(40);
 
                 foreach (var r in rights)
-                    CachedRights[r.Level - rights[0].Level].Add(r);
+                    Cached[r.Level - rights[0].Level].Add(r);
 
                 CachedCycle = cycle;
             }
 
-            return CachedRights[level - CachedRights[0][0].Level];
+            return Cached[level - Cached[0][0].Level];
         }
     }
 }

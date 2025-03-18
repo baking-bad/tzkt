@@ -124,7 +124,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Tags = GetTags(diff.contract, bigMapNode)
                             };
                             Db.BigMaps.Add(allocatedBigMap);
-                            Cache.BigMaps.Cache(allocatedBigMap);
+                            Cache.BigMaps.Add(allocatedBigMap);
 
                             bigMapUpdate = new BigMapUpdate
                             {
@@ -201,7 +201,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             }).ToList();
 
                             Db.BigMapKeys.AddRange(keys);
-                            Cache.BigMapKeys.Cache(keys);
+                            Cache.BigMapKeys.Add(keys);
 
                             var copiedBigMap = new BigMap
                             {
@@ -220,7 +220,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 Tags = GetTags(diff.contract, bigMapNode)
                             };
                             Db.BigMaps.Add(copiedBigMap);
-                            Cache.BigMaps.Cache(copiedBigMap);
+                            Cache.BigMaps.Add(copiedBigMap);
 
                             bigMapUpdate = new BigMapUpdate
                             {
@@ -358,7 +358,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 };
 
                                 Db.BigMapKeys.Add(key);
-                                Cache.BigMapKeys.Cache(key);
+                                Cache.BigMapKeys.Add(key);
 
                                 bigMapUpdate = new BigMapUpdate
                                 {
@@ -467,8 +467,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 foreach (var key in keys)
                 {
                     var bigmap = bigmaps.First(x => x.Ptr == key.BigMapPtr);
-                    Cache.BigMaps.Cache(bigmap);
-                    Cache.BigMapKeys.Cache(key);
+                    Cache.BigMaps.Add(bigmap);
+                    Cache.BigMapKeys.Add(key);
 
                     if (key.FirstLevel == block.Level)
                     {
@@ -501,7 +501,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 foreach (var bigmap in bigmaps)
                 {
-                    Cache.BigMaps.Cache(bigmap);
+                    Cache.BigMaps.Add(bigmap);
                     if (bigmap.FirstLevel == block.Level)
                     {
                         Db.BigMaps.Remove(bigmap);
