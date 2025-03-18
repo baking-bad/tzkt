@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Netezos.Encoding;
 
@@ -79,7 +78,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, @"^[0-9]+$"))
+                    if (!Regexes.Number().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid nat value.");
                         return false;
@@ -116,7 +115,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, @"^[0-9]+$"))
+                        if (!Regexes.Number().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid nat value.");
                             return false;
@@ -381,7 +380,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-Za-z]{36,37}$"))
+                    if (!Regexes.Address().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid account address.");
                         return false;
@@ -418,7 +417,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
+                        if (!Regexes.Address().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
                             return false;
@@ -457,7 +456,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
+                        if (!Regexes.Address().IsMatch(rawValue))
                         {
                             if (rawValue != "null")
                             {
@@ -490,7 +489,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^sr1[0-9A-Za-z]{33}$"))
+                    if (!Regexes.Sr1Address().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup address.");
                         return false;
@@ -527,7 +526,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^sr1[0-9A-Za-z]{33}$"))
+                        if (!Regexes.Sr1Address().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup address.");
                             return false;
@@ -553,7 +552,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^P[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Protocol().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid protocol hash.");
                         return false;
@@ -590,7 +589,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^P[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Protocol().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid protocol hash.");
                             return false;
@@ -706,7 +705,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^expr[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Expression().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid expression hash.");
                         return false;
@@ -743,7 +742,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^expr[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Expression().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid expression hash.");
                             return false;
@@ -767,7 +766,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^o[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Operation().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid operation hash.");
                         return false;
@@ -804,7 +803,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^o[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Operation().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid operation hash.");
                             return false;
@@ -828,7 +827,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^src1[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Src1Hash().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup commitment hash.");
                         return false;
@@ -865,7 +864,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^src1[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Src1Hash().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup commitment hash.");
                             return false;
@@ -1865,7 +1864,7 @@ namespace Tzkt.Api
                 {
                     try
                     {
-                        if (Regex.IsMatch(valueObject.FirstValue, @"^[\w\s,]+$"))
+                        if (Regexes.CommaSeparatedWords().IsMatch(valueObject.FirstValue))
                         {
                             result = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => NormalizeJson(x)).ToArray();
                         }

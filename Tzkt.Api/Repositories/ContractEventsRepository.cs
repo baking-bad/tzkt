@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
@@ -70,7 +69,7 @@ namespace Tzkt.Api.Repositories
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^payload(\.[\w]+)+$"))
+                if (field.StartsWith("payload.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""JsonPayload""#>'{{{field[8..].Replace('.', ',')}}}'";
                     return (col, col);

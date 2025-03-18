@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
@@ -426,12 +425,12 @@ namespace Tzkt.Api.Repositories
 
             static (string, string) DeepSort(string field)
             {
-                if (Regex.IsMatch(field, @"^key(\.[\w]+)+$"))
+                if (field.StartsWith("key.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""JsonKey""#>'{{{field[4..].Replace('.', ',')}}}'";
                     return (col, col);
                 }
-                else if (Regex.IsMatch(field, @"^value(\.[\w]+)+$"))
+                else if (field.StartsWith("value.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""JsonValue""#>'{{{field[6..].Replace('.', ',')}}}'";
                     return (col, col);

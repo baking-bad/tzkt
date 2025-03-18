@@ -1,7 +1,6 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
@@ -13,7 +12,6 @@ namespace Tzkt.Sync.Services
         readonly string ConnectionString = config.GetDefaultConnectionString();
         readonly ContractMetadataConfig Config = config.GetContractMetadataConfig();
         readonly ILogger Logger = logger;
-        readonly Regex Regex = new(@"(?<=(^|[^\\])(\\\\)*)\\u0000", RegexOptions.Compiled);
 
         ContractMetadataState State = null!;
 
@@ -145,7 +143,7 @@ namespace Tzkt.Sync.Services
                     var item = items[i + j];
                     if (j > 0) sql.Append(",\n");
                     param.Add($"@c{j}", item.Contract);
-                    param.Add($"@m{j}", Regex.Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
+                    param.Add($"@m{j}", Regexes.Metadata().Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
                     sql.Append($"(@c{j}::varchar(37), @m{j}::jsonb)");
                 }
                 sql.AppendLine("\n) as v(contract, metadata)");

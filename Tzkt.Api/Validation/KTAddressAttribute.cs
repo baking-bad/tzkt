@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+﻿using Tzkt.Api;
 
 namespace System.ComponentModel.DataAnnotations
 {
@@ -6,7 +6,7 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value is string str && !Regex.IsMatch(str, "^KT1[0-9A-Za-z]{33}$")
+            return value is string str && !Regexes.Kt1Address().IsMatch(str)
                 ? new ValidationResult("Invalid KT1-address.")
                 : ValidationResult.Success!;
         }

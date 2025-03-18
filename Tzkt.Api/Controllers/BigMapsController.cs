@@ -1,6 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
@@ -415,7 +414,7 @@ namespace Tzkt.Api.Controllers
                     return this.Bytes(cached);
 
                 object? res;
-                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                if (Regexes.Expression().IsMatch(key))
                 {
                     res = await BigMaps.GetKeyByHash(id, key, micheline);
                 }
@@ -470,7 +469,7 @@ namespace Tzkt.Api.Controllers
                     return this.Bytes(cached);
 
                 object res;
-                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                if (Regexes.Expression().IsMatch(key))
                 {
                     res = await BigMaps.GetKeyByHashUpdates(id, key, sort, offset, limit, micheline);
                 }
@@ -591,7 +590,7 @@ namespace Tzkt.Api.Controllers
                     return this.Bytes(cached);
 
                 object? res;
-                if (Regex.IsMatch(key, @"^expr[0-9A-z]{50}$"))
+                if (Regexes.Expression().IsMatch(key))
                 {
                     res = await BigMaps.GetHistoricalKeyByHash(id, level, key, micheline);
                 }
