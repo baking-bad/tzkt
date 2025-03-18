@@ -1,5 +1,4 @@
 ﻿using System.Text;
-using System.Text.RegularExpressions;
 using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Utils;
@@ -945,7 +944,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $@"{fld} > {val}");
                 }
@@ -958,7 +957,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $@"{fld} >= {val}");
                 }
@@ -971,7 +970,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $@"{fld} < {val}");
                 }
@@ -984,7 +983,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $@"{fld} <= {val}");
                 }
@@ -1087,7 +1086,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $"{fld} > {val}");
                 }
@@ -1100,7 +1099,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $"{fld} >= {val}");
                 }
@@ -1113,7 +1112,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $"{fld} < {val}");
                 }
@@ -1126,7 +1125,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $"{fld} <= {val}");
                 }

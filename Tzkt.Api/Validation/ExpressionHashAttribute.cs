@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+﻿using Tzkt.Api;
 
 namespace System.ComponentModel.DataAnnotations
 {
@@ -6,7 +6,7 @@ namespace System.ComponentModel.DataAnnotations
     {
         protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value is string str && !Regex.IsMatch(str, "^expr[0-9A-Za-z]{50}$")
+            return value is string str && !Regexes.Expression().IsMatch(str)
                 ? new ValidationResult("Invalid expression hash.")
                 : ValidationResult.Success!;
         }

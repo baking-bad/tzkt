@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics.CodeAnalysis;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -39,9 +38,6 @@ namespace Tzkt.Api
 
     public class SelectionField
     {
-        static readonly Regex FieldRegex = new(@"^[\w]+$", RegexOptions.Compiled);
-        static readonly Regex FieldPathRegex = new(@"^[\w:]+(\.[\w:]+)+$", RegexOptions.Compiled);
-
         public required string Alias { get; init; }
         public required string Field { get; init; }
         public required string Full { get; init; }
@@ -62,9 +58,9 @@ namespace Tzkt.Api
         public static bool TryParse(string value, [NotNullWhen(true)] out SelectionField? field)
         {
             var ss = value.Split(" as ");
-            if (ss.Length == 1 || ss.Length == 2 && FieldRegex.IsMatch(ss[1]))
+            if (ss.Length == 1 || ss.Length == 2 && Regexes.Field().IsMatch(ss[1]))
             {
-                if (FieldRegex.IsMatch(ss[0]))
+                if (Regexes.Field().IsMatch(ss[0]))
                 {
                     field = new()
                     {
@@ -74,7 +70,7 @@ namespace Tzkt.Api
                     };
                     return true;
                 }
-                else if (FieldPathRegex.IsMatch(ss[0]))
+                else if (Regexes.FieldPath().IsMatch(ss[0]))
                 {
                     var sss = ss[0].Split('.');
                     field = new()

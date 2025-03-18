@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Websocket
@@ -35,7 +34,7 @@ namespace Tzkt.Api.Websocket
             if (Ptr != null && Ptr < 0)
                 throw new HubException("Invalid ptr");
             
-            if (Contract != null && !Regex.IsMatch(Contract, "^KT1[0-9A-Za-z]{33}$"))
+            if (Contract != null && !Regexes.Kt1Address().IsMatch(Contract))
                 throw new HubException("Invalid contract address");
 
             if (Path != null && Path.Length > 256)

@@ -1,6 +1,4 @@
-﻿using System.Text.RegularExpressions;
-
-namespace Tzkt.Api.Utils
+﻿namespace Tzkt.Api.Utils
 {
     public class JsonPath
     {
@@ -9,17 +7,17 @@ namespace Tzkt.Api.Utils
 
         public JsonPath(string value)
         {
-            if (Regex.IsMatch(value, @"^\w+$"))
+            if (Regexes.Field().IsMatch(value))
             {
                 Type = JsonPathType.Field;
                 Value = value;
             }
-            else if (Regex.IsMatch(value, @"^"".*""$"))
+            else if (Regexes.Quoted().IsMatch(value))
             {
                 Type = JsonPathType.Key;
                 Value = value[1..^1];
             }
-            else if (Regex.IsMatch(value, @"^\[[0-9]+\]$"))
+            else if (Regexes.ArrayIndex().IsMatch(value))
             {
                 Type = JsonPathType.Index;
                 Value = value[1..^1];
@@ -39,7 +37,7 @@ namespace Tzkt.Api.Utils
         public static bool TryParse(string path, out JsonPath[] res)
         {
             res = (path.Contains('"')
-                ? Regex.Matches(path, @"(?:""(?:(?:\\"")|(?:[^""]))*"")|(?:[^"".]+)").Select(x => x.Value)
+                ? Regexes.JsonPathParser().Matches(path).Select(x => x.Value)
                 : path.Split("."))
                 .Select(x => new JsonPath(x))
                 .ToArray();

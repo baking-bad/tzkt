@@ -1,5 +1,4 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Websocket
@@ -39,7 +38,7 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Address != null && !Regex.IsMatch(Address, "^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$"))
+            if (Address != null && !Regexes.Address().IsMatch(Address))
                 throw new HubException("Invalid address");
 
             if (TypesList.Count == 0)

@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.SignalR;
 
 namespace Tzkt.Api.Websocket
@@ -12,10 +11,10 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Account != null && !Regex.IsMatch(Account, "^[0-9A-Za-z]{36,37}$"))
+            if (Account != null && !Regexes.Address().IsMatch(Account))
                 throw new HubException("Invalid account address");
 
-            if (Contract != null && !Regex.IsMatch(Contract, "^KT1[0-9A-Za-z]{33}$"))
+            if (Contract != null && !Regexes.Kt1Address().IsMatch(Contract))
                 throw new HubException("Invalid contract address");
 
             if (TokenId != null && Contract == null)

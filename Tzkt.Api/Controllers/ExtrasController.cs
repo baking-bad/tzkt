@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using Tzkt.Api.Services.Auth;
@@ -132,7 +131,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body)!;
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")))
+                if (extras.Any(x => !Regexes.Address().IsMatch(x.Key)))
                     return new BadRequest("body", "Invalid account address");
 
                 return Ok(await Extras.UpdateAccountExtras(extras, section));
@@ -205,7 +204,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body)!;
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                if (extras.Any(x => !Regexes.Protocol().IsMatch(x.Key)))
                     return BadRequest("Invalid proposal hash");
 
                 return Ok(await Extras.UpdateProposalExtras(extras, section));
@@ -278,7 +277,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body)!;
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^P[0-9A-Za-z]{50}$")))
+                if (extras.Any(x => !Regexes.Protocol().IsMatch(x.Key)))
                     return BadRequest("Invalid protocol hash");
 
                 return Ok(await Extras.UpdateProtocolExtras(extras, section));
@@ -350,7 +349,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body)!;
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^[0-9a-f]{8}$")))
+                if (extras.Any(x => !Regexes.Software().IsMatch(x.Key)))
                     return BadRequest("Invalid software short hash");
 
                 return Ok(await Extras.UpdateSoftwareExtras(extras, section));
@@ -422,7 +421,7 @@ namespace Tzkt.Api.Controllers
                     return Unauthorized(error);
 
                 var extras = JsonSerializer.Deserialize<List<ExtrasUpdate<string>>>(body)!;
-                if (extras.Any(x => !Regex.IsMatch(x.Key, "^expr[0-9A-Za-z]{50}$")))
+                if (extras.Any(x => !Regexes.Expression().IsMatch(x.Key)))
                     return BadRequest("Invalid expression hash");
 
                 return Ok(await Extras.UpdateConstantExtras(extras, section));

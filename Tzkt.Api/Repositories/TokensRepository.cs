@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Numerics;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Tzkt.Api.Models;
@@ -85,7 +84,7 @@ namespace Tzkt.Api.Repositories
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^metadata(\.[\w]+)+$"))
+                if (field.StartsWith("metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""Metadata""#>'{{{field[9..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -348,7 +347,7 @@ namespace Tzkt.Api.Repositories
 
             static (string[], string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (new string[1] { col }, col);
@@ -657,7 +656,7 @@ namespace Tzkt.Api.Repositories
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -933,7 +932,7 @@ namespace Tzkt.Api.Repositories
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (col, col);
