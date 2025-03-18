@@ -833,7 +833,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Schemas.Remove(contract);
             Cache.AppState.ReleaseScriptId();
 
-            var storage = await Cache.Storages.GetKnownAsync(contract);
+            var storage = await Cache.Storages.GetAsync(contract);
             Db.Storages.Remove(storage);
             Cache.Storages.Remove(contract);
             Cache.AppState.ReleaseStorageId();

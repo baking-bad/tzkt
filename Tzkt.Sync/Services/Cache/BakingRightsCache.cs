@@ -6,8 +6,10 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class BakingRightsCache(TzktContext db)
     {
+        #region static
         static int CachedCycle = -1;
         static List<BakingRight>[] Cached = [];
+        #endregion
 
         readonly TzktContext Db = db;
 

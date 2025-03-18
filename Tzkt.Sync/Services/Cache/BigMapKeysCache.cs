@@ -7,10 +7,18 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class BigMapKeysCache(TzktContext db)
     {
-        const int MaxCount = 4 * 4096; //TODO: set limits in app settings
-        const int TargetCount = MaxCount * 3 / 4;
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<(int, string), BigMapKey> Cached = [];
 
-        static readonly Dictionary<(int, string), BigMapKey> Cached = new(MaxCount);
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 120_000;
+            TargetCap = size?.TargetCap ?? 100_000;
+            Cached = new(SoftCap + 16_384);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
@@ -21,11 +29,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (Cached.Count > MaxCount)
+            if (Cached.Count > SoftCap)
             {
                 var toRemove = Cached.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(Cached.Count - TargetCount)
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)

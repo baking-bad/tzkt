@@ -291,7 +291,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     var script = (Db.ChangeTracker.Entries()
                         .First(x => x.Entity is Script s && s.ContractId == contract.Id).Entity as Script)!;
-                    var storage = await Cache.Storages.GetKnownAsync(contract);
+                    var storage = await Cache.Storages.GetAsync(contract);
                     
                     script.MigrationId = migration.Id;
                     storage.MigrationId = migration.Id;

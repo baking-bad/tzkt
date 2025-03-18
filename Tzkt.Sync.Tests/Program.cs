@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Tests
             builder.Services.AddDbContext<TzktContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-            builder.Services.AddCaches();
+            builder.Services.AddCache(builder.Configuration);
             builder.Services.AddTezosNode();
             builder.Services.AddTezosProtocols();
             builder.Services.AddSingleton<IQuoteProvider, DefaultQuotesProvider>();

@@ -6,34 +6,33 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class SmartRollupStakesCache(TzktContext db)
     {
-        const int MaxItems = 4096; //TODO: set limits in app settings
-        static readonly Dictionary<int, Dictionary<int, int>> Cache = new(4097);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Dictionary<int, int>> Cached = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 10_000;
+            TargetCap = size?.TargetCap ?? 5000;
+            Cached = new(SoftCap + 512);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
-        public void Add(SmartRollupCommitment commitment)
+        public void Reset()
         {
-            Cache.Add(commitment.Id, new() { { commitment.InitiatorId, 1 } });
-        }
-
-        public void Remove(int commitmentId)
-        {
-            Cache.Remove(commitmentId);
-        }
-
-        public void Remove(int commitmentId, int stakerId)
-        {
-            if (Cache.TryGetValue(commitmentId, out var stakers))
-                stakers.Remove(stakerId);
+            Cached.Clear();
         }
 
         public void Trim()
         {
-            if (Cache.Count > MaxItems)
+            if (Cached.Count > SoftCap)
             {
-                var toRemove = Cache.Keys
+                var toRemove = Cached.Keys
                     .OrderBy(x => x)
-                    .Take(Cache.Count - (int)(MaxItems * 0.75))
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
@@ -41,34 +40,45 @@ namespace Tzkt.Sync.Services.Cache
             }
         }
 
-        public void Reset()
+        public void Add(SmartRollupCommitment commitment)
         {
-            Cache.Clear();
+            Cached.Add(commitment.Id, new() { { commitment.InitiatorId, 1 } });
+        }
+
+        public void Remove(int commitmentId)
+        {
+            Cached.Remove(commitmentId);
+        }
+
+        public void Remove(int commitmentId, int stakerId)
+        {
+            if (Cached.TryGetValue(commitmentId, out var stakers))
+                stakers.Remove(stakerId);
         }
 
         public async Task<int?> GetAsync(SmartRollupCommitment commitment, int stakerId)
         {
-            if (!Cache.TryGetValue(commitment.Id, out var stakers))
+            if (!Cached.TryGetValue(commitment.Id, out var stakers))
             {
                 stakers = await GetStakers(commitment);
-                Cache.Add(commitment.Id, stakers);
+                Cached.Add(commitment.Id, stakers);
             }
             return stakers.TryGetValue(stakerId, out var stake) ? stake : null;
         }
 
         public async Task SetAsync(SmartRollupCommitment commitment, int stakerId, int stake)
         {
-            if (!Cache.TryGetValue(commitment.Id, out var stakers))
+            if (!Cached.TryGetValue(commitment.Id, out var stakers))
             {
                 stakers = await GetStakers(commitment);
-                Cache.Add(commitment.Id, stakers);
+                Cached.Add(commitment.Id, stakers);
             }
             stakers[stakerId] = stake;
         }
 
         public void Set(int commitmentId, int stakerId, int stake)
         {
-            if (Cache.TryGetValue(commitmentId, out var stakers))
+            if (Cached.TryGetValue(commitmentId, out var stakers))
                 stakers[stakerId] = stake;
         }
 

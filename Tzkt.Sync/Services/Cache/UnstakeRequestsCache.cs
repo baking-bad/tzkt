@@ -6,8 +6,18 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class UnstakeRequestsCache(TzktContext db)
     {
-        const int SoftCap = 4096; //TODO: set limits in app settings
-        static readonly Dictionary<(int, int?, int), UnstakeRequest> Cached = new((int)(SoftCap * 1.1));
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<(int, int?, int), UnstakeRequest> Cached = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 4000;
+            TargetCap = size?.TargetCap ?? 3000;
+            Cached = new(SoftCap + 256);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
@@ -22,7 +32,7 @@ namespace Tzkt.Sync.Services.Cache
             {
                 var toRemove = Cached.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(SoftCap / 2)
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)

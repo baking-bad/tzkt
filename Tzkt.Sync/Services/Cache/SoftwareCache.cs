@@ -6,9 +6,20 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class SoftwareCache(TzktContext db)
     {
-        const int MaxItems = 32; //TODO: set limits in app settings
-        static readonly Dictionary<int, Software> CachedById = new(37);
-        static readonly Dictionary<string, Software> CachedByHash = new(37);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Software> CachedById = [];
+        static Dictionary<string, Software> CachedByHash = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 64;
+            TargetCap = size?.TargetCap ?? 32;
+            CachedById = new(SoftCap + 3);
+            CachedByHash = new(SoftCap + 3);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
@@ -18,11 +29,30 @@ namespace Tzkt.Sync.Services.Cache
             CachedByHash.Clear();
         }
 
+        public void Trim()
+        {
+            if (CachedById.Count > SoftCap)
+            {
+                var toRemove = CachedById.Values
+                    .OrderBy(x => x.LastLevel)
+                    .Take(CachedById.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
+        }
+
         public void Add(Software item)
         {
-            CheckSpace();
             CachedById[item.Id] = item;
             CachedByHash[item.ShortHash] = item;
+        }
+
+        public void Remove(Software item)
+        {
+            CachedById.Remove(item.Id);
+            CachedByHash.Remove(item.ShortHash);
         }
 
         public async Task<Software> GetAsync(int id)
@@ -45,32 +75,10 @@ namespace Tzkt.Sync.Services.Cache
                 item = await Db.Software.FirstOrDefaultAsync(x => x.ShortHash == hash)
                     ?? create();
 
-                // just created software has id = 0 so CachedById will contain wrong key, but it's fine
                 Add(item);
             }
 
             return item;
-        }
-
-        public void Remove(Software item)
-        {
-            CachedById.Remove(item.Id);
-            CachedByHash.Remove(item.ShortHash);
-        }
-
-        void CheckSpace()
-        {
-            if (CachedByHash.Count >= MaxItems)
-            {
-                var oldest = CachedByHash.Values
-                    .Take(MaxItems / 4);
-
-                foreach (var key in oldest.Select(x => x.Id).ToList())
-                    CachedById.Remove(key);
-
-                foreach (var key in oldest.Select(x => x.ShortHash).ToList())
-                    CachedByHash.Remove(key);
-            }
         }
     }
 }

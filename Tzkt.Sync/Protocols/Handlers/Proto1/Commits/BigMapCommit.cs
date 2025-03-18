@@ -90,8 +90,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (alloc.Ptr >= 0)
                         {
                             #region allocate new
-                            var script = await Cache.Schemas.GetKnownAsync(diff.contract);
-                            var storage = await Cache.Storages.GetKnownAsync(diff.contract);
+                            var script = await Cache.Schemas.GetAsync(diff.contract);
+                            var storage = await Cache.Storages.GetAsync(diff.contract);
                             var storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                             var bigMapNode = storageView.Nodes()
                                 .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == alloc.Ptr);
@@ -161,8 +161,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         if (copy.Ptr >= 0)
                         {
                             #region copy to new
-                            var script = await Cache.Schemas.GetKnownAsync(diff.contract);
-                            var storage = await Cache.Storages.GetKnownAsync(diff.contract);
+                            var script = await Cache.Schemas.GetAsync(diff.contract);
+                            var storage = await Cache.Storages.GetAsync(diff.contract);
                             var storageView = script.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
                             var bigMapNode = storageView.Nodes()
                                 .FirstOrDefault(x => x.Schema.Prim == PrimType.big_map && x.Value is MichelineInt v && v.Value == copy.Ptr);

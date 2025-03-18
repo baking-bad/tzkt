@@ -39,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             if (target is Contract contract)
             {
                 var schema = contract.Kind > ContractKind.DelegatorContract
-                    ? (await Cache.Schemas.GetKnownAsync(contract))
+                    ? (await Cache.Schemas.GetAsync(contract))
                     : Script.ManagerTz;
 
                 try
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
             else if (target is SmartRollup smartRollup)
             {
-                var schema = await Cache.Schemas.GetKnownAsync(smartRollup);
+                var schema = await Cache.Schemas.GetAsync(smartRollup);
 
                 try
                 {

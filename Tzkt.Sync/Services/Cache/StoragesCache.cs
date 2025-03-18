@@ -6,68 +6,61 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class StoragesCache(TzktContext db)
     {
-        const int MaxItems = 4 * 4096; //TODO: set limits in app settings
-        static readonly Dictionary<int, Storage> CachedByContractId = new(MaxItems);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Storage> Cached = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 60_000;
+            TargetCap = size?.TargetCap ?? 50_000;
+            Cached = new(SoftCap + 1024);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
         public void Reset()
         {
-            CachedByContractId.Clear();
+            Cached.Clear();
+        }
+
+        public void Trim()
+        {
+            if (Cached.Count > SoftCap)
+            {
+                var toRemove = Cached.Values
+                    .OrderBy(x => x.Level)
+                    .Take(Cached.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Cached.Remove(item.ContractId);
+            }
         }
 
         public void Add(Contract contract, Storage storage)
         {
-            CheckSpace();
-            CachedByContractId[contract.Id] = storage;
-        }
-
-        public async Task<Storage> GetKnownAsync(Contract contract)
-        {
-            if (!CachedByContractId.TryGetValue(contract.Id, out var item))
-            {
-                item = await Db.Storages.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)
-                    ?? throw new Exception($"Storage for contract #{contract.Id} doesn't exist");
-
-                Add(contract, item);
-            }
-
-            return item;
-        }
-
-        public async Task<Storage?> GetAsync(Contract? contract)
-        {
-            if (contract == null) return null;
-
-            if (!CachedByContractId.TryGetValue(contract.Id, out var item))
-            {
-                item = await Db.Storages.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)
-                    ?? throw new Exception($"Storage for contract #{contract.Id} doesn't exist");
-
-                Add(contract, item);
-            }
-
-            return item;
+            Cached[contract.Id] = storage;
         }
 
         public void Remove(Contract contract)
         {
-            CachedByContractId.Remove(contract.Id);
+            Cached.Remove(contract.Id);
         }
 
-        void CheckSpace()
+        public async Task<Storage> GetAsync(Contract contract)
         {
-            if (CachedByContractId.Count >= MaxItems)
+            if (!Cached.TryGetValue(contract.Id, out var item))
             {
-                var oldest = CachedByContractId.Values
-                    .OrderBy(x => x.Level)
-                    .Take(MaxItems / 4)
-                    .Select(x => x.ContractId)
-                    .ToList();
+                item = await Db.Storages.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)
+                    ?? throw new Exception($"Storage for contract #{contract.Id} doesn't exist");
 
-                foreach (var key in oldest)
-                    CachedByContractId.Remove(key);
+                Add(contract, item);
             }
+
+            return item;
         }
     }
 }

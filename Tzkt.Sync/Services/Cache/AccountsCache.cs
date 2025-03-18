@@ -7,11 +7,20 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class AccountsCache(CacheService cache, TzktContext db)
     {
-        const int MaxCount = 16 * 4096; //TODO: set limits in app settings
-        const int TargetCount = MaxCount * 3 / 4;
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Account> CachedById = [];
+        static Dictionary<string, Account> CachedByAddress = [];
 
-        static readonly Dictionary<int, Account> CachedById = new(MaxCount);
-        static readonly Dictionary<string, Account> CachedByAddress = new(MaxCount);
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 120_000;
+            TargetCap = size?.TargetCap ?? 100_000;
+            CachedById = new(SoftCap + 4096);
+            CachedByAddress = new(SoftCap + 4096);
+        }
+        #endregion
 
         readonly CacheService Cache = cache;
         readonly TzktContext Db = db;
@@ -31,12 +40,12 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (CachedById.Count > MaxCount)
+            if (CachedById.Count > SoftCap)
             {
                 var toRemove = CachedById.Values
                     .Where(x => x.Type != AccountType.Delegate)
                     .OrderBy(x => x.LastLevel)
-                    .Take(CachedById.Count - TargetCount)
+                    .Take(CachedById.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
