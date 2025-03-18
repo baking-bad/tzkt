@@ -77,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     Db.TryAttach(contract);
 
                     var oldScript = await Db.Scripts.FirstAsync(x => x.ContractId == contract.Id && x.Current);
-                    var oldStorage = await Cache.Storages.GetKnownAsync(contract);
+                    var oldStorage = await Cache.Storages.GetAsync(contract);
 
                     var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
 

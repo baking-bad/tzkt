@@ -6,8 +6,10 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class ProtocolsCache(TzktContext db)
     {
+        #region static
         static readonly Dictionary<int, Protocol> CachedByCode = new(37);
         static readonly Dictionary<string, Protocol> CachedByHash = new(37);
+        #endregion
 
         readonly TzktContext Db = db;
 

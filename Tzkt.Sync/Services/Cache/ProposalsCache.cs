@@ -6,11 +6,20 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class ProposalsCache(TzktContext db)
     {
-        const int MaxCount = 32; //TODO: set limits in app settings
-        const int TargetCount = MaxCount * 3 / 4;
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Proposal> CachedById = [];
+        static Dictionary<(int, string), Proposal> CachedByHash = [];
 
-        static readonly Dictionary<int, Proposal> CachedById = new(37);
-        static readonly Dictionary<(int, string), Proposal> CachedByHash = new(37);
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 64;
+            TargetCap = size?.TargetCap ?? 32;
+            CachedById = new(SoftCap + 20);
+            CachedByHash = new(SoftCap + 20);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
@@ -22,11 +31,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (CachedById.Count > MaxCount)
+            if (CachedById.Count > SoftCap)
             {
                 var toRemove = CachedById.Values
                     .OrderBy(x => x.LastPeriod)
-                    .Take(CachedById.Count - TargetCount)
+                    .Take(CachedById.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)

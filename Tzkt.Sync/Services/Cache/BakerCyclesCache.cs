@@ -6,8 +6,10 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class BakerCyclesCache(TzktContext db)
     {
+        #region static
         static int CachedCycle = -1;
         static Dictionary<int, BakerCycle> Cached = [];
+        #endregion
 
         readonly TzktContext Db = db;
 

@@ -118,7 +118,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Cache.Accounts.Add(contract);
 
                 var script = scripts[contract.Id];
-                var storage = await Cache.Storages.GetKnownAsync(contract);
+                var storage = await Cache.Storages.GetAsync(contract);
                 var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
 
                 var code = (Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray)!;

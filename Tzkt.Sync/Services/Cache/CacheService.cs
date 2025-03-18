@@ -5,80 +5,79 @@ namespace Tzkt.Sync.Services
 {
     public class CacheService
     {
-        public AppStateCache AppState { get; private set; }
-        public AccountsCache Accounts { get; private set; }
-        public BakerCyclesCache BakerCycles { get; private set; }
-        public BakingRightsCache BakingRights { get; private set; }
-        public BlocksCache Blocks { get; private set; }
-        public PeriodsCache Periods { get; private set; }
-        public ProposalsCache Proposals { get; private set; }
-        public ProtocolsCache Protocols { get; private set; }
-        public StatisticsCache Statistics { get; private set; }
-        public SoftwareCache Software { get; private set; }
-        public SchemasCache Schemas { get; private set; }
-        public StoragesCache Storages { get; private set; }
-        public BigMapsCache BigMaps { get; private set; }
-        public BigMapKeysCache BigMapKeys { get; private set; }
-        public TokensCache Tokens { get; private set; }
-        public TokenBalancesCache TokenBalances { get; private set; }
-        public TicketsCache Tickets { get; private set; }
-        public TicketBalancesCache TicketBalances { get; private set; }
-        public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
-        public SmartRollupStakesCache SmartRollupStakes { get; private set; }
-        public RefutationGameCache RefutationGames { get; private set; }
-        public UnstakeRequestsCache UnstakeRequests { get; private set; }
+        public AccountsCache Accounts { get; }
+        public AppStateCache AppState { get; }
+        public BakerCyclesCache BakerCycles { get; }
+        public BakingRightsCache BakingRights { get; }
+        public BigMapKeysCache BigMapKeys { get; }
+        public BigMapsCache BigMaps { get; }
+        public BlocksCache Blocks { get; }
+        public PeriodsCache Periods { get; }
+        public ProposalsCache Proposals { get; }
+        public ProtocolsCache Protocols { get; }
+        public RefutationGameCache RefutationGames { get; }
+        public SchemasCache Schemas { get; }
+        public SmartRollupCommitmentCache SmartRollupCommitments { get; }
+        public SmartRollupStakesCache SmartRollupStakes { get; }
+        public SoftwareCache Software { get; }
+        public StatisticsCache Statistics { get; }
+        public StoragesCache Storages { get; }
+        public TicketBalancesCache TicketBalances { get; }
+        public TicketsCache Tickets { get; }
+        public TokenBalancesCache TokenBalances { get; }
+        public TokensCache Tokens { get; }
+        public UnstakeRequestsCache UnstakeRequests { get; }
 
         public CacheService(TzktContext db)
         {
+            Accounts = new(this, db);
             AppState = new(db);
             BakerCycles = new(db);
             BakingRights = new(db);
-            Accounts = new(this, db);
+            BigMapKeys = new(db);
+            BigMaps = new(db);
             Blocks = new(this, db);
             Periods = new(db);
             Proposals = new(db);
             Protocols = new(db);
-            Statistics = new(db);
-            Software = new(db);
+            RefutationGames = new(db);
             Schemas = new(db);
-            Storages = new(db);
-            BigMaps = new(db);
-            BigMapKeys = new(db);
-            Tokens = new(db);
-            TokenBalances = new(db);
-            Tickets = new(db);
-            TicketBalances = new(db);
             SmartRollupCommitments = new(db);
             SmartRollupStakes = new(db);
-            RefutationGames = new(db);
+            Software = new(db);
+            Statistics = new(db);
+            Storages = new(db);
+            TicketBalances = new(db);
+            Tickets = new(db);
+            TokenBalances = new(db);
+            Tokens = new(db);
             UnstakeRequests = new(db);
         }
 
         public async Task ResetAsync()
         {
+            await Accounts.ResetAsync();
+            await AppState.ResetAsync();
             BakerCycles.Reset();
             BakingRights.Reset();
-            Blocks.Reset();
-            Proposals.Reset();
-            Periods.Reset();
-            Software.Reset();
-            Schemas.Reset();
-            Storages.Reset();
-            BigMaps.Reset();
             BigMapKeys.Reset();
-            Tokens.Reset();
-            TokenBalances.Reset();
-            Tickets.Reset();
-            TicketBalances.Reset();
+            BigMaps.Reset();
+            Blocks.Reset();
+            Periods.Reset();
+            Proposals.Reset();
+            await Protocols.ResetAsync();
+            RefutationGames.Reset();
+            Schemas.Reset();
             SmartRollupCommitments.Reset();
             SmartRollupStakes.Reset();
-            RefutationGames.Reset();
-            UnstakeRequests.Reset();
-
-            await Protocols.ResetAsync();
-            await AppState.ResetAsync();
-            await Accounts.ResetAsync();
+            Software.Reset();
             await Statistics.ResetAsync();
+            Storages.Reset();
+            TicketBalances.Reset();
+            Tickets.Reset();
+            TokenBalances.Reset();
+            Tokens.Reset();
+            UnstakeRequests.Reset();
         }
 
         public void Trim()
@@ -89,21 +88,43 @@ namespace Tzkt.Sync.Services
             Blocks.Trim();
             Periods.Trim();
             Proposals.Trim();
-            Tokens.Trim();
-            TokenBalances.Trim();
-            Tickets.Trim();
-            TicketBalances.Trim();
+            RefutationGames.Trim();
+            Schemas.Trim();
             SmartRollupCommitments.Trim();
             SmartRollupStakes.Trim();
-            RefutationGames.Trim();
+            Software.Trim();
+            Storages.Trim();
+            TicketBalances.Trim();
+            Tickets.Trim();
+            TokenBalances.Trim();
+            Tokens.Trim();
             UnstakeRequests.Trim();
         }
     }
 
     public static class CacheServiceExt
     {
-        public static void AddCaches(this IServiceCollection services)
+        public static void AddCache(this IServiceCollection services, IConfiguration config)
         {
+            var cacheConfig = config.GetCacheConfig();
+            AccountsCache.Configure(cacheConfig.Accounts);
+            BigMapKeysCache.Configure(cacheConfig.BigMapKeys);
+            BigMapsCache.Configure(cacheConfig.BigMaps);
+            BlocksCache.Configure(cacheConfig.Blocks);
+            PeriodsCache.Configure(cacheConfig.Periods);
+            ProposalsCache.Configure(cacheConfig.Proposals);
+            RefutationGameCache.Configure(cacheConfig.RefutationGames);
+            SchemasCache.Configure(cacheConfig.Schemas);
+            SmartRollupCommitmentCache.Configure(cacheConfig.SmartRollupCommitments);
+            SmartRollupStakesCache.Configure(cacheConfig.SmartRollupStakes);
+            SoftwareCache.Configure(cacheConfig.Software);
+            StoragesCache.Configure(cacheConfig.Storages);
+            TicketBalancesCache.Configure(cacheConfig.TicketBalances);
+            TicketsCache.Configure(cacheConfig.Tickets);
+            TokenBalancesCache.Configure(cacheConfig.TokenBalances);
+            TokensCache.Configure(cacheConfig.Tokens);
+            UnstakeRequestsCache.Configure(cacheConfig.UnstakeRequests);
+
             services.AddScoped<CacheService>();
         }
     }

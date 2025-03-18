@@ -36,8 +36,8 @@ namespace Tzkt.Sync.Protocols.Proto10
             block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
             
-            var schema = await Cache.Schemas.GetKnownAsync(contract);
-            var currStorage = await Cache.Storages.GetKnownAsync(contract);
+            var schema = await Cache.Schemas.GetAsync(contract);
+            var currStorage = await Cache.Storages.GetAsync(contract);
 
             Db.TryAttach(currStorage);
             currStorage.Current = false;
@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 Cache.AppState.ReleaseOperationId();
                 Db.MigrationOps.Remove(op);
                 
-                var storage = await Cache.Storages.GetKnownAsync(contract);
+                var storage = await Cache.Storages.GetAsync(contract);
                 if (storage.MigrationId == op.Id)
                 {
                     var prevStorage = await Db.Storages

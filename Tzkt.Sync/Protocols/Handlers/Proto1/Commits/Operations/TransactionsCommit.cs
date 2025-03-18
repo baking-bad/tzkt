@@ -497,7 +497,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 {
                     try
                     {
-                        var schema = await Cache.Schemas.GetKnownAsync(contract);
+                        var schema = await Cache.Schemas.GetAsync(contract);
                         var (normEp, normParam) = schema.NormalizeParameter(rawEp, rawParam);
 
                         transaction.Entrypoint = normEp;
@@ -526,8 +526,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (target is not Contract contract || contract.Kind == ContractKind.DelegatorContract)
                 return;
 
-            var schema = await Cache.Schemas.GetKnownAsync(contract);
-            var currentStorage = await Cache.Storages.GetKnownAsync(contract);
+            var schema = await Cache.Schemas.GetAsync(contract);
+            var currentStorage = await Cache.Storages.GetAsync(contract);
 
             var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage)!, false);
             newStorageMicheline = NormalizeStorage(transaction, newStorageMicheline, schema);
@@ -561,7 +561,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task RevertStorage(TransactionOperation transaction, Contract contract)
         {
-            var storage = await Cache.Storages.GetKnownAsync(contract);
+            var storage = await Cache.Storages.GetAsync(contract);
             if (storage.TransactionId == transaction.Id)
             {
                 var prevStorage = await Db.Storages

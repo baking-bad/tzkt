@@ -6,11 +6,42 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class RefutationGameCache(TzktContext db)
     {
-        const int MaxItems = 257; //TODO: set limits in app settings
-        static readonly Dictionary<int, RefutationGame> CachedById = new(257);
-        static readonly Dictionary<(int, int, int), RefutationGame> CachedByKey = new(257);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, RefutationGame> CachedById = [];
+        static Dictionary<(int, int, int), RefutationGame> CachedByKey = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 64;
+            TargetCap = size?.TargetCap ?? 32;
+            CachedById = new(SoftCap + 20);
+            CachedByKey = new(SoftCap + 20);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
+
+        public void Reset()
+        {
+            CachedById.Clear();
+            CachedByKey.Clear();
+        }
+
+        public void Trim()
+        {
+            if (CachedById.Count > SoftCap)
+            {
+                var toRemove = CachedById.Values
+                    .OrderBy(x => x.LastLevel)
+                    .Take(CachedById.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
+        }
 
         public void Add(RefutationGame item)
         {
@@ -26,49 +57,12 @@ namespace Tzkt.Sync.Services.Cache
             CachedByKey.Remove((item.SmartRollupId, aliceId, bobId));
         }
 
-        public void Trim()
-        {
-            if (CachedByKey.Count > MaxItems)
-            {
-                var toRemove = CachedByKey.Values
-                    .OrderBy(x => x.LastLevel)
-                    .Take(CachedByKey.Count - (int)(MaxItems * 0.75))
-                    .ToList();
-
-                foreach (var item in toRemove)
-                    Remove(item);
-            }
-        }
-
-        public void Reset()
-        {
-            CachedById.Clear();
-            CachedByKey.Clear();
-        }
-
         public async Task<RefutationGame> GetAsync(int id)
         {
             if (!CachedById.TryGetValue(id, out var item))
             {
                 item = await Db.RefutationGames.SingleOrDefaultAsync(x => x.Id == id)
                     ?? throw new Exception($"Refutation game #{id} doesn't exist");
-                Add(item);
-            }
-            return item;
-        }
-
-        public async Task<RefutationGame> GetAsync(int rollupId, int initiatorId, int opponentId)
-        {
-            var (aliceId, bobId) = Order(initiatorId, opponentId);
-            if (!CachedByKey.TryGetValue((rollupId, aliceId, bobId), out var item))
-            {
-                item = await Db.RefutationGames
-                    .Where(x =>
-                        x.SmartRollupId == rollupId &&
-                        (x.InitiatorId == initiatorId && x.OpponentId == opponentId || x.InitiatorId == opponentId && x.OpponentId == initiatorId))
-                    .OrderByDescending(x => x.Id)
-                    .FirstOrDefaultAsync()
-                    ?? throw new Exception($"Refutation game ({rollupId}, {initiatorId}, {opponentId}) doesn't exist");
                 Add(item);
             }
             return item;

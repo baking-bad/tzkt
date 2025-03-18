@@ -7,8 +7,18 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class TicketBalancesCache(TzktContext db)
     {
-        const int MaxItems = 4 * 4096; //TODO: set limits in app settings
-        static readonly Dictionary<(int, long), TicketBalance> Cached = new(MaxItems);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<(int, long), TicketBalance> Cached = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 16_000;
+            TargetCap = size?.TargetCap ?? 12_000;
+            Cached = new(SoftCap + 1024);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
 
@@ -19,11 +29,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (Cached.Count > MaxItems * 0.9)
+            if (Cached.Count > SoftCap)
             {
                 var toRemove = Cached.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(MaxItems / 2)
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
@@ -41,14 +51,6 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove((ticketBalance.AccountId, ticketBalance.TicketId));
         }
 
-        public TicketBalance GetOrAdd(TicketBalance ticketBalance)
-        {
-            if (Cached.TryGetValue((ticketBalance.AccountId, ticketBalance.TicketId), out var res))
-                return res;
-            Add(ticketBalance);
-            return ticketBalance;
-        }
-
         public TicketBalance Get(int accountId, long ticketId)
         {
             if (!Cached.TryGetValue((accountId, ticketId), out var ticketBalance))
@@ -64,7 +66,7 @@ namespace Tzkt.Sync.Services.Cache
         public async Task Preload(IEnumerable<(int, long)> ids)
         {
             var missed = ids.Where(x => !Cached.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (missed.Count != 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {

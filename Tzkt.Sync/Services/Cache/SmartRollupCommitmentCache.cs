@@ -6,11 +6,42 @@ namespace Tzkt.Sync.Services.Cache
 {
     public class SmartRollupCommitmentCache(TzktContext db)
     {
-        const int MaxItems = 4096; //TODO: set limits in app settings
-        static readonly Dictionary<int, SmartRollupCommitment> CachedById = new(4097);
-        static readonly Dictionary<(string, int), SmartRollupCommitment> CachedByKey = new(4097);
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, SmartRollupCommitment> CachedById = [];
+        static Dictionary<(string, int), SmartRollupCommitment> CachedByKey = [];
+
+        public static void Configure(CacheSize? size)
+        {
+            SoftCap = size?.SoftCap ?? 10_000;
+            TargetCap = size?.TargetCap ?? 5000;
+            CachedById = new(SoftCap + 512);
+            CachedByKey = new(SoftCap + 512);
+        }
+        #endregion
 
         readonly TzktContext Db = db;
+
+        public void Reset()
+        {
+            CachedById.Clear();
+            CachedByKey.Clear();
+        }
+
+        public void Trim()
+        {
+            if (CachedByKey.Count > SoftCap)
+            {
+                var toRemove = CachedByKey.Values
+                    .OrderBy(x => x.LastLevel)
+                    .Take(CachedByKey.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
+        }
 
         public void Add(SmartRollupCommitment item)
         {
@@ -22,26 +53,6 @@ namespace Tzkt.Sync.Services.Cache
         {
             CachedById.Remove(item.Id);
             CachedByKey.Remove((item.Hash, item.SmartRollupId));
-        }
-
-        public void Trim()
-        {
-            if (CachedByKey.Count > MaxItems)
-            {
-                var toRemove = CachedByKey.Values
-                    .OrderBy(x => x.LastLevel)
-                    .Take(CachedByKey.Count - (int)(MaxItems * 0.75))
-                    .ToList();
-
-                foreach (var item in toRemove)
-                    Remove(item);
-            }
-        }
-
-        public void Reset()
-        {
-            CachedById.Clear();
-            CachedByKey.Clear();
         }
 
         public async Task<SmartRollupCommitment> GetAsync(int id)
