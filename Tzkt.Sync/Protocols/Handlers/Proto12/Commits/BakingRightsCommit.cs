@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual async Task ApplyCurrentRights(Block block)
         {
-            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
             var sql = string.Empty;
 
             if (block.BlockRound == 0 && block.Validations == Context.Protocol.EndorsersPerBlock)
@@ -179,7 +179,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         public virtual async Task RevertCurrentRights(Block block)
         {
-            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
 
             foreach (var cr in CurrentRights)
                 cr.Status = BakingRightStatus.Future;

@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto3
         public override async Task Apply(Block block)
         {
             #region current rights
-            CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
             var sql = string.Empty;
 
             if (block.BlockRound == 0 && block.Validations == Context.Protocol.EndorsersPerBlock)
