@@ -4,7 +4,7 @@ MvKT is the most widely used tool in Mavryk that provides you with convenient an
 You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. MvKT was built by the joint efforts of the entire Mavryk community 
 to help developers build more services and dapps on top of Mavryk.
 
-MvKT Indexer and API are [open-source](https://github.com/baking-bad/tzkt), so don't be afraid to depend on the third-party service,
+MvKT Indexer and API are [open-source](https://github.com/mavryk-network/mvkt), so don't be afraid to depend on the third-party service,
 because you can always clone, build and run it yourself to have full control over all the components.
 
 Feel free to contact us if you have any questions or feature requests.
@@ -36,18 +36,18 @@ If you use free-tier MvKT API, you **must** mention it on your website or applic
 
 It's available for the following Mavryk networks with the following base URLs:
 
-- Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
-- Parisnet: `https://api.parisnet.tzkt.io/` ([view docs](https://api.parisnet.tzkt.io))
+- Mainnet: `https://api.mavryk.network/` or `https://api.mainnet.mavryk.network` ([view docs](https://api.mavryk.network))
+- Basenet: `https://api.basenet.mavryk.network/` ([view docs](hhttps://api.basenet.mavryk.network))
+- Atlasnet: `https://api.atlasnet.mavryk.network/` ([view docs](https://api.atlasnet.mavryk.network))
 
 ### Sending Requests
 
 To send a request to Free MvKT API you need literally nothing. Just take the base URL of the particular network
-(for example, Mavryk mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
+(for example, Mavryk mainnet: `https://api.mavryk.network`) and append the path of the particular endpoint
 (for example, chain's head: `/v1/head`), that's pretty much it: 
 
 ```bash
-curl https://api.tzkt.io/v1/head
+curl https://api.mavryk.network/v1/head
 ```
 
 Read through this documentation to explore available endpoints, query parameters
@@ -67,7 +67,7 @@ MvKT Pro service is provided via paid subscriptions. Please, refer to [Pricing P
 
 It's available for the following Mavryk networks with the following base URLs:
 
-- Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.tzkt.io))
+- Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.mavryk.network))
 - Testnets: *let us know if you need MvKT Pro for testnets*
 
 ### Authorization
