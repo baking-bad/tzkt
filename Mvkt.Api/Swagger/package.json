@@ -1,0 +1,11 @@
+{
+  "name": "mvkt-api-docs",
+  "version": "1.0.0",
+  "description": "MvKT API Documentation Generator",
+  "scripts": {
+    "generate-docs": "npx @redocly/cli build-docs ${SWAGGER_URL:-https://atlasnet.api.mavryk.network/v1/swagger.json} -o ./docs/index.html"
+  },
+  "dependencies": {
+    "@redocly/cli": "^1.0.0"
+  }
+} 
