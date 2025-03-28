@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region current rights
             var prevBlock = await Cache.Blocks.CurrentAsync();
             var prevBakingRights = prevBlock.Level == 1 ? [] 
-                : await Cache.BakingRights.GetAsync(prevBlock.Cycle, prevBlock.Level);
+                : await Cache.BakingRights.GetAsync(prevBlock.Level);
 
             foreach (var rights in currentRights.GroupBy(x => x.BakerId))
             {
@@ -368,9 +368,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region current rights
             var prevBlock = await Cache.Blocks.PreviousAsync();
             var prevBakingRights = prevBlock.Level == 1 ? []
-                : await Cache.BakingRights.GetAsync(prevBlock.Cycle, prevBlock.Level);
+                : await Cache.BakingRights.GetAsync(prevBlock.Level);
 
-            var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            var currentRights = await Cache.BakingRights.GetAsync(block.Level);
 
             foreach (var rights in currentRights.GroupBy(x => x.BakerId))
             {

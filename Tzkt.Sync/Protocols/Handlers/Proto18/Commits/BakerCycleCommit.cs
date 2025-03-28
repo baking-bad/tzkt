@@ -220,7 +220,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual async Task RevertCurrentRights(Block block)
         {
-            var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            var currentRights = await Cache.BakingRights.GetAsync(block.Level);
             var currentCycle = await Db.Cycles.SingleAsync(x => x.Index == block.Cycle);
 
             if (block.BlockRound == 0)

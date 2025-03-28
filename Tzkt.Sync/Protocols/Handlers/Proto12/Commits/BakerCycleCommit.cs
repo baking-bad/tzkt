@@ -234,7 +234,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         public virtual async Task Revert(Block block)
         {
             #region current rights
-            var currentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
+            var currentRights = await Cache.BakingRights.GetAsync(block.Level);
 
             if (block.BlockRound == 0)
             {
