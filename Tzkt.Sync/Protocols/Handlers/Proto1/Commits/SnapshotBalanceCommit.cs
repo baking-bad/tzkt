@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
@@ -149,24 +150,25 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task TakeWeirdsSnapshot(Block block, Protocol protocol)
         {
-            var weirdDelegators = (await Db.Contracts
+            var weirdOriginations = (await Db.OriginationOps
                 .AsNoTracking()
-                .Join(Db.Users, x => x.WeirdDelegateId, x => x.Id, (contract, weirdDelegate) => new { contract, weirdDelegate })
+                .Join(Db.Accounts, x => x.DelegateId, x => x.Id, (op, delegat) => new { op, delegat })
+                .Join(Db.Accounts, x => x.op.ContractId, x => x.Id, (opDelegat, contract) => new { opDelegat.op, opDelegat.delegat, contract })
                 .Where(x =>
-                    x.contract.DelegateId == null &&
-                    x.contract.WeirdDelegateId != null &&
-                    x.weirdDelegate.Type != AccountType.Delegate)
-                .Select(x => x.contract)
+                    x.op.Status == OperationStatus.Applied &&
+                    x.op.DelegateId != null &&
+                    x.delegat.Type != AccountType.Delegate &&
+                    x.contract.DelegateId == null)
                 .ToListAsync())
-                .GroupBy(x => x.WeirdDelegateId);
+                .GroupBy(x => x.delegat.Id);
 
-            if (weirdDelegators.Any())
+            if (weirdOriginations.Any())
             {
-                var values = string.Join(",\n", weirdDelegators
-                    .Where(weirds => weirds.Sum(x => x.Balance) >= protocol.MinimalStake)
+                var values = string.Join(",\n", weirdOriginations
+                    .Where(weirds => weirds.Sum(x => x.contract.Balance) >= protocol.MinimalStake)
                     .SelectMany(weirds =>
-                        new[] { $"({block.Level}, {weirds.First().WeirdDelegateId}, {weirds.First().WeirdDelegateId}, 0, {weirds.Sum(x => x.Balance)}, {weirds.Count()}, 0, 0, 0)" }
-                        .Concat(weirds.Select(x => $"({block.Level}, {x.Id}, {x.WeirdDelegateId}, {x.Balance}, 0, 0, 0, 0, 0)"))));
+                        new[] { $"({block.Level}, {weirds.Key}, {weirds.Key}, 0, {weirds.Sum(x => x.contract.Balance)}, {weirds.Count()}, 0, 0, 0)" }
+                        .Concat(weirds.Select(x => $"({block.Level}, {x.contract.Id}, {weirds.Key}, {x.contract.Balance}, 0, 0, 0, 0, 0)"))));
 
                 if (values.Length > 0)
                 {

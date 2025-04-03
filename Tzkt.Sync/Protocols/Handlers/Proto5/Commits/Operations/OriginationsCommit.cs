@@ -4,15 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class OriginationsCommit(ProtocolHandler protocol) : Proto2.OriginationsCommit(protocol)
+    class OriginationsCommit(ProtocolHandler protocol) : Proto1.OriginationsCommit(protocol)
     {
-        protected override async Task<User?> GetManager(JsonElement content)
-        {
-            return ManagerTz.Test(content.Required("script").Required("code"), content.Required("script").Required("storage"))
-                ? await Cache.Accounts.GetAsync(ManagerTz.GetManager(content.Required("script").Required("storage"))) as User
-                : null;
-        }
-
         protected override ContractKind GetContractKind(JsonElement content)
         {
             return ManagerTz.Test(content.Required("script").Required("code"), content.Required("script").Required("storage"))
@@ -26,8 +19,6 @@ namespace Tzkt.Sync.Protocols.Proto5
                 ? BlockEvents.DelegatorContracts
                 : BlockEvents.SmartContracts;
         }
-
-        protected override bool? GetSpendable(JsonElement content) => null;
 
         protected override IEnumerable<BigMapDiff>? ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)
         {

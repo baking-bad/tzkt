@@ -184,19 +184,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                 - account.SmartRollupBonds - ((account as User)?.UnstakedBalance ?? 0))
                 throw new Exception($"Diagnostics failed: wrong balance {account.Address}");
 
-            await TestAccountDelegate(remote, account);
+            TestAccountDelegate(remote, account);
             TestAccountCounter(remote, account);
         }
         
         protected virtual Task TestTicketBalance(int level, TicketBalance ticketBalance) => Task.CompletedTask;
 
-        protected virtual async Task TestAccountDelegate(JsonElement remote, Account local)
+        protected virtual void TestAccountDelegate(JsonElement remote, Account local)
         {
+            if (local.Type != AccountType.User)
+                return;
+
             var remoteDelegate = remote.Required("delegate").OptionalString("value");
             var localDelegate = Cache.Accounts.GetDelegate(local.DelegateId);
 
-            if (local is not Data.Models.Delegate && remoteDelegate != localDelegate?.Address &&
-                !(local is Contract c && (c.ManagerId == null || (await Cache.Accounts.GetAsync(c.ManagerId!.Value)).Address == remoteDelegate)))
+            if (remoteDelegate != localDelegate?.Address)
                 throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
 

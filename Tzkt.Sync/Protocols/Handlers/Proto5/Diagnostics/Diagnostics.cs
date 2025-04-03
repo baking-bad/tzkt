@@ -13,15 +13,14 @@ namespace Tzkt.Sync.Protocols.Proto5
                 throw new Exception($"Diagnostics failed: wrong delegators count {local.Address}");
         }
 
-        protected override Task TestAccountDelegate(JsonElement remote, Account local)
+        protected override void TestAccountDelegate(JsonElement remote, Account local)
         {
-            if (local.Type != AccountType.Delegate)
-            {
-                var delegat = Cache.Accounts.GetDelegateOrDefault(local.DelegateId);
-                if (delegat?.Address != remote.OptionalString("delegate"))
-                    throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
-            }
-            return Task.CompletedTask;
+            if (local.Type == AccountType.Delegate)
+                return;
+             
+            var delegat = Cache.Accounts.GetDelegateOrDefault(local.DelegateId);
+            if (delegat?.Address != remote.OptionalString("delegate"))
+                throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
 
         protected override void TestAccountCounter(JsonElement remote, Account local)

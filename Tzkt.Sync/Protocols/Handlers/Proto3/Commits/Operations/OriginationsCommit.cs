@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Sync.Protocols.Proto3
 {
-    class OriginationsCommit : Proto2.OriginationsCommit
+    class OriginationsCommit : Proto1.OriginationsCommit
     {
         public OriginationsCommit(ProtocolHandler protocol) : base(protocol) { }
     }

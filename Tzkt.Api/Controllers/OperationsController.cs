@@ -2155,10 +2155,9 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of origination operations.
         /// </remarks>
         /// <param name="anyof">Filters originations by any of the specified fields. Example: `anyof.sender.initiator=tz1...` will return operations where `sender` OR `initiator` is equal to the specified value. This parameter is useful when you need to retrieve all originations associated with a specified account.</param>
-        /// <param name="initiator">Filters origination operations by initiator. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
-        /// <param name="sender">Filters origination operations by sender. Allowed fields for `.eqx` mode: `contractManager`, `contractDelegate`.</param>
-        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractDelegate`.</param>
-        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`, `contractManager`.</param>
+        /// <param name="initiator">Filters origination operations by initiator. Allowed fields for `.eqx` mode: `contractDelegate`.</param>
+        /// <param name="sender">Filters origination operations by sender. Allowed fields for `.eqx` mode: `contractDelegate`.</param>
+        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: `initiator`, `sender`.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="id">Filters origination operations by internal TzKT id</param>
         /// <param name="typeHash">Filters origination operations by 32-bit hash of originated contract parameter and storage types (helpful for searching originations of similar contracts)</param>
@@ -2178,11 +2177,10 @@ namespace Tzkt.Api.Controllers
         [HttpGet("originations")]
         public async Task<ActionResult<IEnumerable<OriginationOperation>>> GetOriginations(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
-            [OpenApiExtensionData("x-tzkt-anyof-parameter", "initiator,sender,contractManager,contractDelegate,originatedContract")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "initiator,sender,contractDelegate,originatedContract")]
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             Int64Parameter? id,
@@ -2203,8 +2201,8 @@ namespace Tzkt.Api.Controllers
             #region validates
             if (anyof != null)
             {
-                if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "contractManager" && x != "contractDelegate" && x != "originatedContract"))
-                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `contractManager`, `contractDelegate`, `originatedContract` fields only.");
+                if (anyof.Fields.Any(x => x != "initiator" && x != "sender" && x != "contractDelegate" && x != "originatedContract"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `initiator`, `sender`, `contractDelegate`, `originatedContract` fields only.");
 
                 if (anyof.Eq == -1 || anyof.In?.Count == 0 && !anyof.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
@@ -2212,11 +2210,11 @@ namespace Tzkt.Api.Controllers
 
             if (initiator != null)
             {
-                if (initiator.Eqx != null && initiator.Eqx != "contractManager" && initiator.Eqx != "contractDelegate")
-                    return new BadRequest($"{nameof(initiator)}.eqx", "The 'initiator' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+                if (initiator.Eqx != null && initiator.Eqx != "contractDelegate")
+                    return new BadRequest($"{nameof(initiator)}.eqx", "The 'initiator' field can be compared with the 'contractDelegate' field only.");
 
-                if (initiator.Nex != null && initiator.Nex != "contractManager" && initiator.Nex != "contractDelegate")
-                    return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+                if (initiator.Nex != null && initiator.Nex != "contractDelegate")
+                    return new BadRequest($"{nameof(initiator)}.nex", "The 'initiator' field can be compared with the 'contractDelegate' field only.");
 
                 if (initiator.Eq == -1 || initiator.In?.Count == 0 && !initiator.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
@@ -2224,35 +2222,23 @@ namespace Tzkt.Api.Controllers
 
             if (sender != null)
             {
-                if (sender.Eqx != null && sender.Eqx != "contractManager" && sender.Eqx != "contractDelegate")
-                    return new BadRequest($"{nameof(sender)}.eqx", "The 'sender' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+                if (sender.Eqx != null && sender.Eqx != "contractDelegate")
+                    return new BadRequest($"{nameof(sender)}.eqx", "The 'sender' field can be compared with the 'contractDelegate' field only.");
 
-                if (sender.Nex != null && sender.Nex != "contractManager" && sender.Nex != "contractDelegate")
-                    return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'contractManager' or 'contractDelegate' field only.");
+                if (sender.Nex != null && sender.Nex != "contractDelegate")
+                    return new BadRequest($"{nameof(sender)}.nex", "The 'sender' field can be compared with the 'contractDelegate' field only.");
 
                 if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
                     return Ok(Enumerable.Empty<OriginationOperation>());
             }
 
-            if (contractManager != null)
-            {
-                if (contractManager.Eqx != null && contractManager.Eqx != "initiator" && contractManager.Eqx != "sender" && contractManager.Eqx != "contractDelegate")
-                    return new BadRequest($"{nameof(contractManager)}.eqx", "The 'contractManager' field can be compared with the 'initiator', 'sender' or 'contractDelegate' field only.");
-
-                if (contractManager.Nex != null && contractManager.Nex != "initiator" && contractManager.Nex != "sender" && contractManager.Nex != "contractDelegate")
-                    return new BadRequest($"{nameof(contractManager)}.nex", "The 'contractManager' field can be compared with the 'initiator', 'sender' or 'contractDelegate' field only.");
-
-                if (contractManager.Eq == -1 || contractManager.In?.Count == 0 && !contractManager.InHasNull)
-                    return Ok(Enumerable.Empty<OriginationOperation>());
-            }
-
             if (contractDelegate != null)
             {
-                if (contractDelegate.Eqx != null && contractDelegate.Eqx != "initiator" && contractDelegate.Eqx != "sender" && contractDelegate.Eqx != "contractManager")
-                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "The 'contractDelegate' field can be compared with the 'initiator', 'sender' or 'contractManager' field only.");
+                if (contractDelegate.Eqx != null && contractDelegate.Eqx != "initiator" && contractDelegate.Eqx != "sender")
+                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "The 'contractDelegate' field can be compared with the 'initiator' or 'sender' field only.");
 
-                if (contractDelegate.Nex != null && contractDelegate.Nex != "initiator" && contractDelegate.Nex != "sender" && contractDelegate.Nex != "contractManager")
-                    return new BadRequest($"{nameof(contractDelegate)}.nex", "The 'contractDelegate' field can be compared with the 'initiator', 'sender' or 'contractManager' field only.");
+                if (contractDelegate.Nex != null && contractDelegate.Nex != "initiator" && contractDelegate.Nex != "sender")
+                    return new BadRequest($"{nameof(contractDelegate)}.nex", "The 'contractDelegate' field can be compared with the 'initiator' or 'sender' field only.");
 
                 if (contractDelegate.Eq == -1 || contractDelegate.In?.Count == 0 && !contractDelegate.InHasNull)
                     return Ok(Enumerable.Empty<OriginationOperation>());
@@ -2275,7 +2261,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("initiator", initiator), ("sender", sender), ("contractManager", contractManager), 
+                ("anyof", anyof), ("initiator", initiator), ("sender", sender), 
                 ("contractDelegate", contractDelegate), ("originatedContract", originatedContract), ("id", id),  ("typeHash", typeHash),
                 ("codeHash", codeHash), ("level", level), ("timestamp", timestamp), ("senderCodeHash", senderCodeHash), ("anyCodeHash", anyCodeHash),
                 ("status", status), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("micheline", micheline), ("quote", quote));
@@ -2286,25 +2272,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values[0], micheline, quote);
                 else
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values, micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Values, micheline, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields[0], micheline, quote);
+                    res = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields[0], micheline, quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractManager, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields, micheline, quote)
+                        Rows = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, select.Fields, micheline, quote)
                     };
                 }
             }

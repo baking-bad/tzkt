@@ -137,7 +137,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
                 var originations = TypeSubs.TryGetValue(Operations.Originations, out var originationsSub)
-                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, null, level, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, level, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = TypeSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
@@ -584,15 +584,6 @@ namespace Tzkt.Api.Websocket.Processors
 
                                 if (senderSubs.CodeHashSubs != null)
                                     AddByCodeHash(senderSubs.CodeHashSubs, op);
-                            }
-
-                            if (op.ContractManager != null && originationsSub.AddressSubs.TryGetValue(op.ContractManager.Address, out var managerSubs))
-                            {
-                                if (managerSubs.Subs != null)
-                                    Add(managerSubs.Subs, op);
-
-                                if (managerSubs.CodeHashSubs != null)
-                                    AddByCodeHash(managerSubs.CodeHashSubs, op);
                             }
 
                             if (op.ContractDelegate != null && originationsSub.AddressSubs.TryGetValue(op.ContractDelegate.Address, out var delegateSubs))

@@ -137,6 +137,53 @@ namespace Tzkt.Sync.Services.Cache
             return CachedByAddress.TryGetValue(address, out account);
         }
 
+        public async Task<Account> GetOrCreateAsync(string address)
+        {
+            if (!CachedByAddress.TryGetValue(address, out var account))
+            {
+                account = await Db.Accounts
+                    .FromSqlRaw("""
+                        SELECT *
+                        FROM "Accounts"
+                        WHERE "Address" = @p0::varchar(37)
+                        """, address)
+                    .SingleOrDefaultAsync();
+
+                if (account == null)
+                {
+                    account = address[0] == 't' && address[1] == 'z'
+                        ? new User
+                        {
+                            Id = ++Cache.AppState.Get().AccountCounter,
+                            Address = address,
+                            Type = AccountType.User,
+                            FirstLevel = Cache.AppState.GetNextLevel(),
+                            LastLevel = Cache.AppState.GetNextLevel()
+                        }
+                        : new Account
+                        {
+                            Id = ++Cache.AppState.Get().AccountCounter,
+                            Address = address,
+                            Type = AccountType.Ghost,
+                            FirstLevel = Cache.AppState.GetNextLevel(),
+                            LastLevel = Cache.AppState.GetNextLevel()
+                        };
+
+                    Db.Accounts.Add(account);
+                }
+
+                Add(account);
+            }
+
+            if (account.Balance == 0 && account.Type == AccountType.User)
+            {
+                Db.TryAttach(account);
+                account.Counter = Cache.AppState.GetManagerCounter();
+            }
+
+            return account;
+        }
+
         public async Task<Account> GetAsync(int id)
         {
             if (!CachedById.TryGetValue(id, out var account))

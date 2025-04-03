@@ -46,13 +46,7 @@ namespace Tzkt.Api.Models
         /// Information about the account, which has deployed the contract to the blockchain.  
         /// Click on the field to expand more details.
         /// </summary>       
-        public CreatorInfo? Creator { get; set; }
-
-        /// <summary>
-        /// Information about the account, which was marked as a manager when contract was deployed to the blockchain.  
-        /// Click on the field to expand more details.
-        /// </summary>
-        public ManagerInfo? Manager { get; set; }
+        public required Alias Creator { get; set; }
 
         /// <summary>
         /// Information about the current delegate of the contract. `null` if it's not delegated.  

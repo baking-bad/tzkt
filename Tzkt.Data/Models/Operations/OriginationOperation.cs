@@ -6,7 +6,6 @@ namespace Tzkt.Data.Models
     public class OriginationOperation : ContractOperation
     {
         public int? SenderCodeHash { get; set; }
-        public int? ManagerId { get; set; }
         public int? DelegateId { get; set; }
         public int? ContractId { get; set; }
         public int? ContractCodeHash { get; set; }
@@ -48,9 +47,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.InitiatorId);
-
-            modelBuilder.Entity<OriginationOperation>()
-                .HasIndex(x => x.ManagerId);
 
             modelBuilder.Entity<OriginationOperation>()
                 .HasIndex(x => x.DelegateId);

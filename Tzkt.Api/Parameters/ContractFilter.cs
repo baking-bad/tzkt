@@ -41,12 +41,6 @@ namespace Tzkt.Api
         public AccountParameter? creator { get; set; }
 
         /// <summary>
-        /// Filter by manager.  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public AccountParameter? manager { get; set; }
-
-        /// <summary>
         /// Filter by delegate.  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -91,9 +85,9 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("address", address), ("kind", kind), ("tzips", tzips), ("balance", balance), ("creator", creator), ("manager", manager),
-                ("@delegate", @delegate), ("firstActivity", firstActivity), ("firstActivityTime", firstActivityTime), ("lastActivity", lastActivity),
-                ("lastActivityTime", lastActivityTime), ("typeHash", typeHash), ("codeHash", codeHash));
+                ("id", id), ("address", address), ("kind", kind), ("tzips", tzips), ("balance", balance), ("creator", creator),
+                ("@delegate", @delegate), ("firstActivity", firstActivity), ("firstActivityTime", firstActivityTime),
+                ("lastActivity", lastActivity), ("lastActivityTime", lastActivityTime), ("typeHash", typeHash), ("codeHash", codeHash));
         }
     }
 }

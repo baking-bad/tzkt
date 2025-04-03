@@ -264,12 +264,6 @@ namespace Tzkt.Api.Repositories
                     #endregion
                 case RawContract contract:
                     #region build contract
-                    var creator = contract.CreatorId == null ? null
-                        : await Accounts.GetAsync(contract.CreatorId.Value);
-
-                    var manager = contract.ManagerId == null ? null
-                        : await Accounts.GetAsync(contract.ManagerId.Value) as RawUser;
-
                     var contractDelegate = contract.DelegateId == null ? null
                         : await Accounts.GetAsync(contract.DelegateId.Value);
 
@@ -283,17 +277,7 @@ namespace Tzkt.Api.Repositories
                         Balance = contract.Balance,
                         TransferTicketCount = contract.TransferTicketCount,
                         IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
-                        Creator = creator == null ? null : new CreatorInfo
-                        {
-                            Alias = creator.Alias,
-                            Address = creator.Address
-                        },
-                        Manager = manager == null ? null : new ManagerInfo
-                        {
-                            Alias = manager.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey!,
-                        },
+                        Creator = await Accounts.GetAliasAsync(contract.CreatorId),
                         Delegate = contractDelegate == null ? null : new DelegateInfo
                         {
                             Alias = contractDelegate.Alias,
@@ -681,12 +665,6 @@ namespace Tzkt.Api.Repositories
                         break;
                     case 2:
                         #region build contract
-                        var creator = row.CreatorId == null ? null
-                            : await Accounts.GetAsync((int)row.CreatorId);
-
-                        var manager = row.ManagerId == null ? null
-                            : await Accounts.GetAsync((int)row.ManagerId) as RawUser;
-
                         var contractDelegate = row.DelegateId == null ? null
                             : await Accounts.GetAsync((int)row.DelegateId);
 
@@ -700,17 +678,7 @@ namespace Tzkt.Api.Repositories
                             Balance = row.Balance,
                             TransferTicketCount = row.TransferTicketCount,
                             IncreasePaidStorageCount = row.IncreasePaidStorageCount,
-                            Creator = creator == null ? null : new CreatorInfo
-                            {
-                                Alias = creator.Alias,
-                                Address = creator.Address
-                            },
-                            Manager = manager == null ? null : new ManagerInfo
-                            {
-                                Alias = manager.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey!,
-                            },
+                            Creator = await Accounts.GetAliasAsync((int)row.CreatorId),
                             Delegate = contractDelegate == null ? null : new DelegateInfo
                             {
                                 Alias = contractDelegate.Alias,
@@ -972,7 +940,6 @@ namespace Tzkt.Api.Repositories
                     case "kind": columns.Add(@"acc.""Kind"""); break;
                     case "tzips": columns.Add(@"acc.""Tags"""); break;
                     case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                    case "manager": columns.Add(@"acc.""ManagerId"""); break;
                     case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                     case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
@@ -1437,26 +1404,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "creator":
                         foreach (var row in rows)
-                        {
-                            var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            result[j++][i] = creator == null ? null : new CreatorInfo
-                            {
-                                Alias = creator.Alias,
-                                Address = creator.Address
-                            };
-                        }
-                        break;
-                    case "manager":
-                        foreach (var row in rows)
-                        {
-                            var manager = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId) as RawUser;
-                            result[j++][i] = manager == null ? null : new ManagerInfo
-                            {
-                                Alias = manager.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey!,
-                            };
-                        }
+                            result[j++][i] = await Accounts.GetAliasAsync((int)row.CreatorId);
                         break;
                     case "tokensCount":
                         foreach (var row in rows)
@@ -1646,7 +1594,6 @@ namespace Tzkt.Api.Repositories
                 case "kind": columns.Add(@"acc.""Kind"""); break;
                 case "tzips": columns.Add(@"acc.""Tags"""); break;
                 case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                case "manager": columns.Add(@"acc.""ManagerId"""); break;
                 case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                 case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
@@ -2107,26 +2054,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "creator":
                     foreach (var row in rows)
-                    {
-                        var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        result[j++] = creator == null ? null : new CreatorInfo
-                        {
-                            Alias = creator.Alias,
-                            Address = creator.Address
-                        };
-                    }
-                    break;
-                case "manager":
-                    foreach (var row in rows)
-                    {
-                        var manager = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId) as RawUser;
-                        result[j++] = manager == null ? null : new ManagerInfo
-                        {
-                            Alias = manager.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey!,
-                        };
-                    }
+                        result[j++] = await Accounts.GetAliasAsync((int)row.CreatorId);
                     break;
                 case "tokensCount":
                     foreach (var row in rows)
@@ -2210,7 +2138,7 @@ namespace Tzkt.Api.Repositories
                 FROM "Accounts" AS acc
                 """)
                 .FilterA(@"acc.""Type""", 2)
-                .Filter($@"(acc.""CreatorId"" = {account.Id} OR acc.""ManagerId"" = {account.Id})")
+                .FilterA(@"acc.""CreatorId""", account.Id)
                 .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -2303,7 +2231,6 @@ namespace Tzkt.Api.Repositories
             AccountParameter? target,
             AccountParameter? prevDelegate,
             AccountParameter? newDelegate,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             AccountParameter? accuser,
@@ -2419,7 +2346,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractManager", "contractDelegate", "originatedContract"], Eq = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = delegat.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
@@ -2656,7 +2583,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractManager", "contractDelegate", "originatedContract"], Eq = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = user.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
@@ -2833,7 +2760,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractManager", "contractDelegate", "originatedContract"], Eq = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = contract.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions1 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction) && contract.Kind == 0
