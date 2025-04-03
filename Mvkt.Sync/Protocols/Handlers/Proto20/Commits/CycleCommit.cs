@@ -44,8 +44,6 @@ namespace Mvkt.Sync.Protocols.Proto20
                 FirstLevel = block.Protocol.GetCycleStart(index),
                 LastLevel = block.Protocol.GetCycleEnd(index),
                 SnapshotLevel = block.Level - 1,
-                TotalBakers = 0,
-                TotalBakingPower = 0,
                 TotalBakers = SelectedStakes.Count,
                 TotalBakingPower = SelectedStakes.Values.Sum(),
                 Seed = Hex.Parse(context.RequiredString("random_seed")),
