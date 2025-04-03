@@ -32,7 +32,10 @@ namespace Mvkt.Sync.Protocols.Proto18
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, (int)block.ProposerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureBlockRewards -= bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                if (bakerCycle.FutureBlocks > 0)
+                {
+                    bakerCycle.FutureBlockRewards -= bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                }
                 bakerCycle.FutureBlocks--;
                 bakerCycle.Blocks++;
                 bakerCycle.BlockRewardsDelegated += block.RewardDelegated + block.BonusDelegated;
@@ -53,7 +56,10 @@ namespace Mvkt.Sync.Protocols.Proto18
 
                         if (br.Round == 0)
                         {
-                            bakerCycle.FutureBlockRewards -= bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                            if (bakerCycle.FutureBlocks > 0)
+                            {
+                                bakerCycle.FutureBlockRewards -= bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                            }
                             bakerCycle.FutureBlocks--;
                         }
 
