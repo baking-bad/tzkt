@@ -112,7 +112,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 {
                     Proto.Manager.Credit(operation.Reward);
 
-                    if (committer.Balance == 0 && committer is User user && user.Revealed)
+                    if (committer.Balance == 0 && committer is User user && user.Type == AccountType.User && user.Revealed)
                     {
                         user.Counter = Cache.AppState.GetManagerCounter();
                         user.Revealed = false;
@@ -171,7 +171,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                 if (sender.Id != committer.Id)
                 {
-                    if (committer.Balance == operation.Loss && committer is User user && !user.Revealed)
+                    if (committer.Balance == operation.Loss && committer is User user && user.Type == AccountType.User && !user.Revealed)
                     {
                         user.Counter = await RestoreCounter(user, operation.Id);
                         user.Revealed = true;
