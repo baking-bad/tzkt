@@ -14,7 +14,7 @@ namespace Mvkt.Sync.Protocols.Proto10
         public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
         public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
         public const string Tzbtc = "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn";
-        public const string ProtocolTreasuryContract = "KT1RfKYjLYpGBQ1YGSKoSoYEYwpJPFZrvmwH";
+        public const string ProtocolTreasuryContract = "KT1J1w34sDTh1dwjn9B7urJse9Dm53qKd9AM";
 
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
