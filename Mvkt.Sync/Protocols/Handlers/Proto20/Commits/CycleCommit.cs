@@ -27,6 +27,10 @@ namespace Mvkt.Sync.Protocols.Proto20
             var issuance = await issuanceTask;
             var cycleIssuance = issuance.EnumerateArray().First(x => x.RequiredInt32("cycle") == index);
 
+            // TODO
+            Console.Writeline(block.Cycle);
+            Console.Writeline(index);
+            Console.Writeline(block.Protocol.ConsensusRightsDelay);
             SelectedStakes = context.RequiredArray("selected_stake_distribution")
                 .EnumerateArray()
                 .ToDictionary(
