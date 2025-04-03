@@ -52,11 +52,11 @@ namespace Mvkt.Sync.Protocols.Proto20
                 throw new ValidationException($"non-existent block baker");
             #endregion
 
-            #region level info
-            Cycle = metadata.Required("level_info").RequiredInt32("cycle");
-            if (Cycle != Protocol.GetCycle(Level))
-                throw new ValidationException($"invalid block cycle", true);
-            #endregion
+            // #region level info
+            // Cycle = metadata.Required("level_info").RequiredInt32("cycle");
+            // if (Cycle != Protocol.GetCycle(Level))
+            //     throw new ValidationException($"invalid block cycle", true);
+            // #endregion
 
             #region voting info
             var periodInfo = metadata.Required("voting_period_info").Required("voting_period");

@@ -30,7 +30,8 @@
                         : null;
                     document.Info.ExtensionData = new Dictionary<string, object>
                     {
-                        { "x-logo", new { url = "https://equiteez.s3.ap-southeast-1.amazonaws.com/mvkt/MVKT_medium.png", href = "https://atlasnet.api.mavryk.network/" } }
+                        { "x-logo", new { url = "https://equiteez.s3.ap-southeast-1.amazonaws.com/mvkt/MVKT_medium.png", href = "https://atlasnet.api.mavryk.network/" } },
+                        { "x-favicon", "https://equiteez.s3.ap-southeast-1.amazonaws.com/mvkt/favicon.ico" }
                     };
                     document.Tags.Add(new NSwag.OpenApiTag
                     {
