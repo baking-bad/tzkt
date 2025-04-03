@@ -27,15 +27,11 @@ namespace Mvkt.Sync.Protocols.Proto20
             var issuance = await issuanceTask;
             var cycleIssuance = issuance.EnumerateArray().First(x => x.RequiredInt32("cycle") == index);
 
-            // TODO
-            Console.WriteLine(block.Cycle);
-            Console.WriteLine(index);
-            Console.WriteLine(block.Protocol.ConsensusRightsDelay);
-            // SelectedStakes = context.RequiredArray("selected_stake_distribution")
-            //     .EnumerateArray()
-            //     .ToDictionary(
-            //         x => Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id,
-            //         x => x.Required("active_stake").RequiredInt64("frozen") + x.Required("active_stake").RequiredInt64("delegated"));
+            SelectedStakes = context.RequiredArray("selected_stake_distribution")
+                .EnumerateArray()
+                .ToDictionary(
+                    x => Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id,
+                    x => x.Required("active_stake").RequiredInt64("frozen") + x.Required("active_stake").RequiredInt64("delegated"));
 
             Snapshots = await Db.SnapshotBalances
                 .AsNoTracking()
@@ -50,8 +46,8 @@ namespace Mvkt.Sync.Protocols.Proto20
                 SnapshotLevel = block.Level - 1,
                 TotalBakers = 0,
                 TotalBakingPower = 0,
-                // TotalBakers = SelectedStakes.Count,
-                // TotalBakingPower = SelectedStakes.Values.Sum(),
+                TotalBakers = SelectedStakes.Count,
+                TotalBakingPower = SelectedStakes.Values.Sum(),
                 Seed = Hex.Parse(context.RequiredString("random_seed")),
                 BlockReward = cycleIssuance.RequiredInt64("baking_reward_fixed_portion"),
                 BlockBonusPerSlot = cycleIssuance.RequiredInt64("baking_reward_bonus_per_slot"),

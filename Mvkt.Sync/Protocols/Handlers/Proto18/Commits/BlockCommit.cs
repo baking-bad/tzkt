@@ -79,6 +79,7 @@ namespace Mvkt.Sync.Protocols.Proto18
             var proposer = Cache.Accounts.GetDelegate(Block.ProposerId);
             var producer = Cache.Accounts.GetDelegate(Block.ProducerId);
             var burnAddress = await Cache.Accounts.GetAsync(BurnAddress.Address);
+            var buffer = await Cache.Accounts.GetAsync(Proto10.ProtoActivator.BufferContract);
             var protocolTreasury = await Cache.Accounts.GetAsync(Proto10.ProtoActivator.ProtocolTreasuryContract);
 
             var balanceUpdates = rawBlock
@@ -293,7 +294,7 @@ namespace Mvkt.Sync.Protocols.Proto18
 
                     var nextUpdate = balanceUpdates[i + 1];
                     if (nextUpdate.RequiredString("kind") == "contract" &&
-                        nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.ProtocolTreasuryContract &&
+                        (nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.ProtocolTreasuryContract || nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.BufferContract) &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
                         feeProtocolTreasury += change;

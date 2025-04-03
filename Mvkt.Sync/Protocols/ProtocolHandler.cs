@@ -239,7 +239,6 @@ namespace Mvkt.Sync
                     {
                         if (content.TryGetProperty("destination", out var dest))
                             accounts.Add(dest.GetString());
-
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
                             {

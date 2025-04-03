@@ -14,6 +14,7 @@ namespace Mvkt.Sync.Protocols.Proto10
         public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
         public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
         public const string Tzbtc = "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn";
+        public const string BufferContract = "KT1RfKYjLYpGBQ1YGSKoSoYEYwpJPFZrvmwH";
         public const string ProtocolTreasuryContract = "KT1J1w34sDTh1dwjn9B7urJse9Dm53qKd9AM";
 
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
@@ -82,6 +83,7 @@ namespace Mvkt.Sync.Protocols.Proto10
             var block = await Cache.Blocks.CurrentAsync();
             await OriginateContract(block, CpmmContract);
             await OriginateContract(block, LiquidityToken);
+            await OriginateContract(block, BufferContract);
             await OriginateContract(block, ProtocolTreasuryContract);
             if (!await Cache.Accounts.ExistsAsync(Tzbtc))
                 await OriginateContract(block, FallbackToken);
@@ -134,6 +136,7 @@ namespace Mvkt.Sync.Protocols.Proto10
             var block = await Cache.Blocks.CurrentAsync();
             await OriginateContract(block, CpmmContract);
             await OriginateContract(block, LiquidityToken);
+            await OriginateContract(block, BufferContract);
             await OriginateContract(block, ProtocolTreasuryContract);
             if (!await Cache.Accounts.ExistsAsync(Tzbtc))
                 await OriginateContract(block, FallbackToken);
@@ -162,6 +165,7 @@ namespace Mvkt.Sync.Protocols.Proto10
 
             await RemoveContract(CpmmContract);
             await RemoveContract(LiquidityToken);
+            await RemoveContract(BufferContract);
             await RemoveContract(ProtocolTreasuryContract);
             if (await Cache.Accounts.ExistsAsync(FallbackToken))
                 await RemoveContract(FallbackToken);
