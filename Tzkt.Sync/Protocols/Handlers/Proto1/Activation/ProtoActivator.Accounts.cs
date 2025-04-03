@@ -127,7 +127,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region contract
                 var delegat = Cache.Accounts.GetDelegate(delegatePkh);
-                var manager = nullAddress;
+                var creator = nullAddress;
 
                 var contract = new Contract
                 {
@@ -136,16 +136,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
-                    Spendable = false,
                     DelegationLevel = delegat == null ? null : 1,
                     DelegateId = delegat?.Id,
-                    ManagerId = manager.Id,
+                    CreatorId = creator.Id,
                     Staked = delegat != null,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
 
-                manager.ContractsCount++;
+                creator.ContractsCount++;
+
                 if (delegat != null)
                 {
                     delegat.DelegatorsCount++;

@@ -7,8 +7,6 @@ namespace Tzkt.Data.Models
     {
         public required int DelegateId { get; set; }
         public int Slots { get; set; }
-
-        public int? ResetDeactivation { get; set; }
     }
 
     public static class PreendorsementOperationModel

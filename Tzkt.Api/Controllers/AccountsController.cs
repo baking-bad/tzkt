@@ -284,7 +284,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="accuser">Filters double baking and double endorsing by accuser. Allowed fields for `.eqx` mode: none.</param>
@@ -312,7 +311,6 @@ namespace Tzkt.Api.Controllers
             AccountParameter? target,
             AccountParameter? prevDelegate,
             AccountParameter? newDelegate,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             AccountParameter? accuser,
@@ -376,15 +374,6 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(newDelegate)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (contractManager != null)
-            {
-                if (contractManager.Eqx != null)
-                    return new BadRequest($"{nameof(contractManager)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (contractManager.Nex != null)
-                    return new BadRequest($"{nameof(contractManager)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
             if (contractDelegate != null)
             {
                 if (contractDelegate.Eqx != null)
@@ -444,7 +433,7 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
-                ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
+                ("newDelegate", newDelegate), ("contractDelegate", contractDelegate),
                 ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
                 ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
                 ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));  
@@ -452,7 +441,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
+            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

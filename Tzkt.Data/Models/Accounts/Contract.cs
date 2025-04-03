@@ -15,12 +15,8 @@ namespace Tzkt.Data.Models
         public int EventsCount { get; set; }
         public int TicketsCount { get; set; }
 
-        public bool? Spendable { get; set; }
-
         [Column("CreatorId")]
-        public int? CreatorId { get; set; }
-        public int? ManagerId { get; set; }
-        public int? WeirdDelegateId { get; set; }
+        public int CreatorId { get; set; }
     }
 
     public enum ContractKind : byte
@@ -55,13 +51,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.CreatorId);
-
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.ManagerId);
-
-            modelBuilder.Entity<Contract>()
-                .HasIndex(x => x.WeirdDelegateId)
-                .HasFilter($@"""{nameof(Contract.WeirdDelegateId)}"" IS NOT NULL");
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.TypeHash);

@@ -8,24 +8,23 @@ namespace Tzkt.Data.Models
         public const int MaxRound = 7;
         #endregion
 
-        public required int Id { get; set; }
+        public required long Id { get; set; }
         public required int Cycle { get; set; }
         public required int Level { get; set; }
         public required int BakerId { get; set; }
         public required BakingRightType Type { get; set; }
-
         public BakingRightStatus Status { get; set; }
         public int? Round { get; set; }
         public int? Slots { get; set; }
     }
 
-    public enum BakingRightType : byte
+    public enum BakingRightType
     {
         Baking = 0,
         Endorsing = 1
     }
 
-    public enum BakingRightStatus : byte
+    public enum BakingRightStatus
     {
         Future = 0,
         Realized = 1,

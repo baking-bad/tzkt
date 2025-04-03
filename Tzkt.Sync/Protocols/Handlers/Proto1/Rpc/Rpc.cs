@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/global_counter");
 
         public virtual Task<JsonElement> GetDelegatesAsync(int level)
-            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates");
+            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates?active=true&inactive=true");
 
         public virtual Task<JsonElement> GetActiveDelegatesAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates?active=true");

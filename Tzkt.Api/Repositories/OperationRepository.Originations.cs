@@ -109,7 +109,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -200,7 +199,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -291,7 +289,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -347,7 +344,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, block.Level)
@@ -359,7 +355,6 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             Int64Parameter? id,
@@ -404,14 +399,12 @@ namespace Tzkt.Api.Repositories
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -495,7 +488,6 @@ namespace Tzkt.Api.Repositories
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((long)row.Id),
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -507,7 +499,6 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             Int64Parameter? id,
@@ -552,7 +543,6 @@ namespace Tzkt.Api.Repositories
                     case "contractBalance": columns.Add(@"o.""Balance"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "originatedContract": columns.Add(@"o.""ContractId"""); break;
-                    case "contractManager": columns.Add(@"o.""ManagerId"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -602,14 +592,12 @@ namespace Tzkt.Api.Repositories
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -774,10 +762,6 @@ namespace Tzkt.Api.Repositories
                             };
                         }
                         break;
-                    case "contractManager":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ManagerId != null ? await Accounts.GetAliasAsync(row.ManagerId) : null;
-                        break;
                     case "errors":
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
@@ -800,7 +784,6 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
-            AccountParameter? contractManager,
             AccountParameter? contractDelegate,
             AccountParameter? originatedContract,
             Int64Parameter? id,
@@ -843,7 +826,6 @@ namespace Tzkt.Api.Repositories
                 case "contractBalance": columns.Add(@"o.""Balance"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "originatedContract": columns.Add(@"o.""ContractId"""); break;
-                case "contractManager": columns.Add(@"o.""ManagerId"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -892,14 +874,12 @@ namespace Tzkt.Api.Repositories
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -1061,10 +1041,6 @@ namespace Tzkt.Api.Repositories
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         };
                     }
-                    break;
-                case "contractManager":
-                    foreach (var row in rows)
-                        result[j++] = row.ManagerId != null ? await Accounts.GetAliasAsync(row.ManagerId) : null;
                     break;
                 case "errors":
                     foreach (var row in rows)

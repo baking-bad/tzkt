@@ -8,7 +8,8 @@ namespace Tzkt.Data.Models
         public int? SenderCodeHash { get; set; }
         public int? DelegateId { get; set; }
         public int? PrevDelegateId { get; set; }
-        public int? ResetDeactivation { get; set; }
+        public int? PrevDelegationLevel { get; set; }
+        public int? PrevDeactivationLevel { get; set; }
 
         public long Amount { get; set; }
 

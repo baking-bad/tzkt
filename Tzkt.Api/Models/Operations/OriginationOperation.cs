@@ -98,11 +98,6 @@
         public long ContractBalance { get; set; }
 
         /// <summary>
-        /// Information about the account, which was marked as a manager in the operation
-        /// </summary>
-        public Alias? ContractManager { get; set; }
-
-        /// <summary>
         /// Information about the baker (delegate), which was marked as a delegate in the operation
         /// </summary>
         public Alias? ContractDelegate { get; set; }

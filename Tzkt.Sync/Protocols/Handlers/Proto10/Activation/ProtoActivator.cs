@@ -266,8 +266,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                     {nextCycle},
                     {nextCycleStart},
                     {Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id},
-                    {(byte)BakingRightType.Endorsing},
-                    {(byte)BakingRightStatus.Future},
+                    {(int)BakingRightType.Endorsing},
+                    {(int)BakingRightStatus.Future},
                     {er.RequiredArray("slots").Count()}
                 )"))}
                 """);
@@ -319,8 +319,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                 writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(br.RequiredInt32("level"), NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(bakerId, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((int)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(round, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
             }
@@ -364,8 +364,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                 writer.Write(protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
                 writer.Write(er.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
             }
@@ -756,7 +756,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             Db.TryAttach(state);
             state.MigrationOpsCount--;
 
-            var creator = await Cache.Accounts.GetAsync(contract.CreatorId!.Value);
+            var creator = await Cache.Accounts.GetAsync(contract.CreatorId);
             Db.TryAttach(creator);
             creator.ContractsCount--;
 

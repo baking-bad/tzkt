@@ -35,47 +35,37 @@ namespace Tzkt.Sync.Protocols.Proto5
             Db.TryAttach(statistics);
 
             #region airdrop
-            var emptiedManagers = await Db.Contracts
-                .AsNoTracking()
-                .Join(Db.Users, x => x.ManagerId, x => x.Id, (contract, manager) => new { contract, manager })
-                .Where(x => x.contract.Spendable == null &&
-                            x.manager.Type == AccountType.User &&
-                            x.manager.Balance == 0 &&
-                            x.manager.Counter > 0)
-                .Select(x => x.manager)
-                .ToListAsync();
-
-            var dict = new Dictionary<string, User>(8000);
-            foreach (var manager in emptiedManagers)
-                dict[manager.Address] = manager;
-
-            foreach (var manager in dict.Values)
+            var managers = File.ReadAllLines("./Protocols/Handlers/Proto5/Activation/airdropped.contracts");
+            await Cache.Accounts.Preload(managers);
+            foreach (var address in managers)
             {
-                Db.TryAttach(manager);
-                Cache.Accounts.Add(manager);
-
-                manager.Balance = 1;
-                manager.Counter = state.ManagerCounter;
-                manager.MigrationsCount++;
-                manager.LastLevel = block.Level;
-
-                block.Operations |= Operations.Migrations;
-
-                var airdropMigration = new MigrationOperation
+                if (Cache.Accounts.TryGetCached(address, out var manager))
                 {
-                    Id = Cache.AppState.NextOperationId(),
-                    Level = state.Level,
-                    Timestamp = state.Timestamp,
-                    AccountId = manager.Id,
-                    Kind = MigrationKind.AirDrop,
-                    BalanceChange = 1
-                };
-                Db.MigrationOps.Add(airdropMigration);
-                Context.MigrationOps.Add(airdropMigration);
-            }
+                    Db.TryAttach(manager);
 
-            state.MigrationOpsCount += dict.Values.Count;
-            statistics.TotalCreated += dict.Values.Count;
+                    manager.Balance = 1;
+                    manager.Counter = state.ManagerCounter;
+                    manager.MigrationsCount++;
+                    manager.LastLevel = block.Level;
+
+                    block.Operations |= Operations.Migrations;
+
+                    var airdropMigration = new MigrationOperation
+                    {
+                        Id = Cache.AppState.NextOperationId(),
+                        Level = state.Level,
+                        Timestamp = state.Timestamp,
+                        AccountId = manager.Id,
+                        Kind = MigrationKind.AirDrop,
+                        BalanceChange = 1
+                    };
+                    Db.MigrationOps.Add(airdropMigration);
+                    Context.MigrationOps.Add(airdropMigration);
+
+                    state.MigrationOpsCount++;
+                    statistics.TotalCreated += airdropMigration.BalanceChange;
+                }
+            }
             #endregion
 
             #region invoice

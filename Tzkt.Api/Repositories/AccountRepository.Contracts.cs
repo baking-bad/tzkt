@@ -36,7 +36,6 @@ namespace Tzkt.Api.Repositories
                         case "alias": columns.Add(@"c.""Extras""#>>'{profile,alias}' as ""Alias"""); break;
                         case "balance": columns.Add(@"c.""Balance"""); break;
                         case "creator": columns.Add(@"c.""CreatorId"""); break;
-                        case "manager": columns.Add(@"c.""ManagerId"""); break;
                         case "delegate": columns.Add(@"c.""DelegateId"""); break;
                         case "delegationLevel": columns.Add(@"c.""DelegationLevel"""); columns.Add(@"c.""DelegateId"""); break;
                         case "delegationTime": columns.Add(@"c.""DelegationLevel"""); columns.Add(@"c.""DelegateId"""); break;
@@ -67,7 +66,6 @@ namespace Tzkt.Api.Repositories
                             if (field.Path == null)
                             {   
                                 columns.Add(@"c.""Kind""");
-                                columns.Add(@"c.""ManagerId""");
                                 columns.Add(@"s.""JsonValue"" as ""Storage""");
                             }
                             else
@@ -94,9 +92,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""Kind""", filter.kind)
                 .FilterA(@"c.""Tags""", filter.tzips)
                 .FilterA(@"c.""Balance""", filter.balance)
-                .FilterA(@"c.""CreatorId""", filter.creator, x => x == "manager" ? @"c.""ManagerId""" : @"c.""DelegateId""")
-                .FilterA(@"c.""ManagerId""", filter.manager, x => x == "creator" ? @"c.""CreatorId""" : @"c.""DelegateId""")
-                .FilterA(@"c.""DelegateId""", filter.@delegate, x => x == "manager" ? @"c.""ManagerId""" : @"c.""CreatorId""")
+                .FilterA(@"c.""CreatorId""", filter.creator, x => @"c.""DelegateId""")
+                .FilterA(@"c.""DelegateId""", filter.@delegate, x => @"c.""CreatorId""")
                 .FilterA(@"c.""FirstLevel""", filter.firstActivity)
                 .FilterA(@"c.""FirstLevel""", filter.firstActivityTime)
                 .FilterA(@"c.""LastLevel""", filter.lastActivity)
@@ -122,12 +119,6 @@ namespace Tzkt.Api.Repositories
             if (rawAccount is not RawContract contract)
                 return null;
 
-            var creator = contract.CreatorId == null ? null
-                : await Accounts.GetAsync((int)contract.CreatorId);
-
-            var manager = contract.ManagerId == null ? null
-                : await Accounts.GetAsync((int)contract.ManagerId) as RawUser;
-
             var delegat = contract.DelegateId == null ? null
                 : await Accounts.GetAsync((int)contract.DelegateId);
 
@@ -139,17 +130,7 @@ namespace Tzkt.Api.Repositories
                 Kind = ContractKinds.ToString(contract.Kind),
                 Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags),
                 Balance = contract.Balance,
-                Creator = creator == null ? null : new CreatorInfo
-                {
-                    Alias = creator.Alias,
-                    Address = creator.Address
-                },
-                Manager = manager == null ? null : new ManagerInfo
-                {
-                    Alias = manager.Alias,
-                    Address = manager.Address,
-                    PublicKey = manager.PublicKey!,
-                },
+                Creator = await Accounts.GetAliasAsync(contract.CreatorId),
                 Delegate = delegat == null ? null : new DelegateInfo
                 {
                     Alias = delegat.Alias,
@@ -196,9 +177,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""Kind""", filter.kind)
                 .FilterA(@"c.""Tags""", filter.tzips)
                 .FilterA(@"c.""Balance""", filter.balance)
-                .FilterA(@"c.""CreatorId""", filter.creator, x => x == "manager" ? @"c.""ManagerId""" : @"c.""DelegateId""")
-                .FilterA(@"c.""ManagerId""", filter.manager, x => x == "creator" ? @"c.""CreatorId""" : @"c.""DelegateId""")
-                .FilterA(@"c.""DelegateId""", filter.@delegate, x => x == "manager" ? @"c.""ManagerId""" : @"c.""CreatorId""")
+                .FilterA(@"c.""CreatorId""", filter.creator, x => @"c.""DelegateId""")
+                .FilterA(@"c.""DelegateId""", filter.@delegate, x => @"c.""CreatorId""")
                 .FilterA(@"c.""FirstLevel""", filter.firstActivity)
                 .FilterA(@"c.""FirstLevel""", filter.firstActivityTime)
                 .FilterA(@"c.""LastLevel""", filter.lastActivity)
@@ -215,12 +195,6 @@ namespace Tzkt.Api.Repositories
             var rows = await QueryContractsAsync(includeStorage, filter, pagination);
             return rows.Select(row =>
             {
-                var creator = row.CreatorId == null ? null
-                    : Accounts.Get((int)row.CreatorId);
-
-                var manager = row.ManagerId == null ? null
-                    : Accounts.Get((int)row.ManagerId) as RawUser;
-
                 var contractDelegate = row.DelegateId == null ? null
                     : Accounts.Get((int)row.DelegateId);
 
@@ -232,17 +206,7 @@ namespace Tzkt.Api.Repositories
                     Kind = ContractKinds.ToString(row.Kind),
                     Tzips = ContractTags.ToList((Data.Models.ContractTags)row.Tags),
                     Balance = row.Balance,
-                    Creator = creator == null ? null : new CreatorInfo
-                    {
-                        Alias = creator.Alias,
-                        Address = creator.Address
-                    },
-                    Manager = manager == null ? null : new ManagerInfo
-                    {
-                        Alias = manager.Alias,
-                        Address = manager.Address,
-                        PublicKey = manager.PublicKey!,
-                    },
+                    Creator = Accounts.GetAlias((int)row.CreatorId),
                     Delegate = contractDelegate == null ? null : new DelegateInfo
                     {
                         Alias = contractDelegate.Alias,
@@ -274,7 +238,9 @@ namespace Tzkt.Api.Repositories
                     EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
-                    Storage = row.Kind == 0 ? $"\"{manager!.Address}\"" : (RawJson)row.Storage
+                    Storage = row.Kind == 0 // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                        ? $"\"{Accounts.GetAlias((int)row.CreatorId).Address}\""
+                        : (RawJson)row.Storage
                 };
             });
         }
@@ -321,46 +287,15 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "creator":
                         foreach (var row in rows)
-                        {
-                            var _creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            result[j++][i] = _creator == null ? null : new CreatorInfo
-                            {
-                                Alias = _creator.Alias,
-                                Address = _creator.Address
-                            };
-                        }
+                            result[j++][i] = await Accounts.GetAliasAsync((int)row.CreatorId);
                         break;
-                    case "creator.alias":
+                    case "creator.name":
                         foreach (var row in rows)
-                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId)?.Alias;
+                            result[j++][i] = (await Accounts.GetAliasAsync((int)row.CreatorId)).Name;
                         break;
                     case "creator.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId)?.Address;
-                        break;
-                    case "manager":
-                        foreach (var row in rows)
-                        {
-                            var _manager = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId) as RawUser;
-                            result[j++][i] = _manager == null ? null : new ManagerInfo
-                            {
-                                Alias = _manager.Alias,
-                                Address = _manager.Address,
-                                PublicKey = _manager.PublicKey!,
-                            };
-                        }
-                        break;
-                    case "manager.alias":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId)?.Alias;
-                        break;
-                    case "manager.address":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : Accounts.Get((int)row.ManagerId)?.Address;
-                        break;
-                    case "manager.publicKey":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ManagerId == null ? null : (Accounts.Get((int)row.ManagerId) as RawUser)?.PublicKey;
+                            result[j++][i] = (await Accounts.GetAliasAsync((int)row.CreatorId)).Address;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -491,7 +426,8 @@ namespace Tzkt.Api.Repositories
                         {
                             if (row.Kind == 0)
                             {
-                                result[j++][i] = $"\"{Accounts.Get((int)row.ManagerId)!.Address}\"";
+                                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                                result[j++][i] = row.CreatorId != null ? $"\"{Accounts.GetAlias((int)row.CreatorId).Address}\"" : "";
                             }
                             else
                             {
@@ -909,8 +845,9 @@ namespace Tzkt.Api.Repositories
 
             if (contract.Kind == 0)
             {
-                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
-                return path?.Length > 0 ? null : $"\"{manager!.Address}\"";
+                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                var creator = await Accounts.GetAsync(contract.CreatorId);
+                return path?.Length > 0 ? null : $"\"{creator?.Address}\"";
             }
 
             var pathSelector = path == null ? string.Empty : " #> @path";
@@ -939,8 +876,10 @@ namespace Tzkt.Api.Repositories
             {
                 if (level < 655_360 && State.Current.Chain == "mainnet")
                     return null;
-                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
-                return path?.Length > 0 ? null : $"\"{manager!.Address}\"";
+
+                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                var creator = await Accounts.GetAsync(contract.CreatorId);
+                return path?.Length > 0 ? null : $"\"{creator?.Address}\"";
             }
 
             if (level >= contract.LastLevel)
@@ -969,8 +908,9 @@ namespace Tzkt.Api.Repositories
 
             if (contract.Kind == 0)
             {
-                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
-                return new MichelineString(manager!.Address);
+                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                var creator = await Accounts.GetAsync(contract.CreatorId);
+                return new MichelineString(creator?.Address ?? "");
             }
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -996,8 +936,10 @@ namespace Tzkt.Api.Repositories
             {
                 if (level < 655_360 && State.Current.Chain == "mainnet")
                     return null;
-                var manager = await Accounts.GetAsync(contract.ManagerId!.Value);
-                return new MichelineString(manager!.Address);
+
+                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
+                var creator = await Accounts.GetAsync(contract.CreatorId);
+                return new MichelineString(creator?.Address ?? "");
             }
 
             if (level >= contract.LastLevel)
