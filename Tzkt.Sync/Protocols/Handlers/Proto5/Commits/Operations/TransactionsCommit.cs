@@ -10,15 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override BlockEvents GetBlockEvents(Account? target)
-        {
-            return target is Contract c
-                ? c.Kind == ContractKind.DelegatorContract
-                    ? BlockEvents.DelegatorContracts
-                    : BlockEvents.SmartContracts
-                : BlockEvents.None;
-        }
-
         protected override async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement param)
         {
             string? rawEp = null;
@@ -93,7 +84,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (ticketType.Annots.Count == 0)
                         ticketType.Annots.Add(new FieldAnnotation("data"));
 
-                    var schema = Netezos.Contracts.Schema.Create(new MichelinePrim
+                    var schema = Schema.Create(new MichelinePrim
                     {
                         Prim = PrimType.pair,
                         Args =

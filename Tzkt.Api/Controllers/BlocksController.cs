@@ -230,21 +230,5 @@ namespace Tzkt.Api.Controllers
         {
             return Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
         }
-
-        // BCD bootstrap
-        [OpenApiIgnore]
-        [HttpGet("levels")]
-        public Task<IEnumerable<int>> GetSpecificBlocks(
-            bool? smartContracts,
-            bool? delegatorContracts,
-            OffsetParameter? offset,
-            [Range(0, 10000)] int limit = 10000)
-        {
-            var events = Data.Models.BlockEvents.None;
-            if (smartContracts == true) events |= Data.Models.BlockEvents.SmartContracts;
-            if (delegatorContracts == true) events |= Data.Models.BlockEvents.DelegatorContracts;
-
-            return Blocks.GetEventLevels(events, offset, limit);
-        }
     }
 }

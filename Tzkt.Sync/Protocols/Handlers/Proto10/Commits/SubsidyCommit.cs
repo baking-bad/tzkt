@@ -33,7 +33,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             contract.MigrationsCount++;
             contract.Balance += op.BalanceChange;
 
-            block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
             
             var schema = await Cache.Schemas.GetAsync(contract);

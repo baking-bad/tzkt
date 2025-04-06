@@ -94,138 +94,173 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region scripts
-            var smartContracts = await Db.Contracts
-                .Where(x => x.Kind > ContractKind.DelegatorContract)
-                .ToListAsync();
+            var contracts = await Db.Contracts.ToListAsync(); // ~27k
+            var scripts = await Db.Scripts.Where(x => x.Current).ToDictionaryAsync(x => x.ContractId);
+            var storages = await Db.Storages.Where(x => x.Current).ToDictionaryAsync(x => x.ContractId);
+            var originations = await Db.OriginationOps.Where(x => x.ContractId != null).ToDictionaryAsync(x => x.ContractId!.Value);
 
-            var scripts = (await Db.Scripts
-                .AsNoTracking()
-                .ToListAsync())
-                .ToDictionary(x => x.ContractId);
+            Cache.Schemas.Reset();
+            Cache.Storages.Reset();
 
-            foreach (var contract in smartContracts)
+            foreach (var contract in contracts)
             {
-                Cache.Accounts.Add(contract);
+                Cache.Accounts.Update(contract);
 
-                var script = scripts[contract.Id];
-                var storage = await Cache.Storages.GetAsync(contract);
-                var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
-
-                var code = (Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray)!;
-                var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
-                var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
-                var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
-                var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
-
-                var newSchema = new Netezos.Contracts.ContractScript(code);
-                var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"))!;
-                var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
-
-                if (script.ParameterSchema.IsEqual(micheParameter) &&
-                    script.StorageSchema.IsEqual(micheStorage) &&
-                    script.CodeSchema.IsEqual(micheCode) &&
-                    storage.RawValue.IsEqual(newRawStorageValue))
-                    continue;
-
-                Db.TryAttach(script);
-                script.Current = false;
-
-                Db.TryAttach(storage);
-                storage.Current = false;
-
-                var migration = new MigrationOperation
+                if (contract.Kind == ContractKind.DelegatorContract)
                 {
-                    Id = Cache.AppState.NextOperationId(),
-                    Level = block.Level,
-                    Timestamp = block.Timestamp,
-                    AccountId = contract.Id,
-                    Kind = MigrationKind.CodeChange
-                };
-                var newScript = new Script
-                {
-                    Id = Cache.AppState.NextScriptId(),
-                    Level = migration.Level,
-                    ContractId = contract.Id,
-                    MigrationId = migration.Id,
-                    ParameterSchema = micheParameter,
-                    StorageSchema = micheStorage,
-                    CodeSchema = micheCode,
-                    Views = micheViews.Any()
-                        ? micheViews.Select(x => x.ToBytes()).ToArray()
-                        : null,
-                    Current = true
-                };
-                var newStorage = new Storage
-                {
-                    Id = Cache.AppState.NextStorageId(),
-                    Level = migration.Level,
-                    ContractId = contract.Id,
-                    MigrationId = migration.Id,
-                    RawValue = newRawStorageValue,
-                    JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
-                    Current = true
-                };
+                    var script = scripts[contract.Id];
+                    script.Level = block.Level;
+                    script.OriginationId = null;
 
-                var viewsBytes = newScript.Views?
-                    .OrderBy(x => x, new BytesComparer())
-                    .SelectMany(x => x)
-                    .ToArray()
-                    ?? [];
-                var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
-                var fullSchema = typeSchema.Concat(newScript.CodeSchema);
-                contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
-                contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
+                    var storage = storages[contract.Id];
+                    storage.Level = block.Level;
+                    storage.OriginationId = null;
 
-                migration.ScriptId = newScript.Id;
-                migration.StorageId = newStorage.Id;
+                    var origination = originations[contract.Id];
+                    origination.ScriptId = null;
+                    origination.StorageId = null;
 
-                contract.MigrationsCount++;
-                contract.LastLevel = block.Level;
-
-                state.MigrationOpsCount++;
-
-                Db.MigrationOps.Add(migration);
-                Context.MigrationOps.Add(migration);
-
-                Db.Scripts.Add(newScript);
-                Cache.Schemas.Add(contract, newScript.Schema);
-
-                Db.Storages.Add(newStorage);
-                Cache.Storages.Add(contract, newStorage);
-
-                var tree = script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
-                var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
-                if (bigmap != null)
-                {
-                    var newTree = newScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(newStorage.RawValue));
-                    var newBigmap = newTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
-                    if (newBigmap?.Value is not MichelineInt mi)
-                        throw new Exception("Expected micheline int");
-                    var newPtr = (int)mi.Value;
-
-                    if (newBigmap.Path != bigmap.Path)
-                        await Db.Database.ExecuteSqlRawAsync("""
-                            UPDATE "BigMaps"
-                            SET "StoragePath" = {0}
-                            WHERE "Ptr" = {1}
-                            """, newBigmap.Path, contract.Id);
-
-                    await Db.Database.ExecuteSqlRawAsync("""
-                        UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
-                        UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
-                        UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
-                        """, newPtr, contract.Id);
-
-                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id).ToListAsync();
-                    foreach (var prevStorage in storages)
+                    var migration = new MigrationOperation
                     {
-                        var prevValue = Micheline.FromBytes(prevStorage.RawValue);
-                        var prevTree = script.Schema.Storage.Schema.ToTreeView(prevValue);
-                        var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
-                        (prevBigmap.Value as MichelineInt)!.Value = newPtr;
+                        Id = Cache.AppState.NextOperationId(),
+                        Level = block.Level,
+                        Timestamp = block.Timestamp,
+                        AccountId = contract.Id,
+                        Kind = MigrationKind.CodeChange,
+                        ScriptId = script.Id,
+                        StorageId = storage.Id
+                    };
 
-                        prevStorage.RawValue = prevValue.ToBytes();
-                        prevStorage.JsonValue = script.Schema.HumanizeStorage(prevValue);
+                    script.MigrationId = migration.Id;
+                    storage.MigrationId = migration.Id;
+
+                    contract.MigrationsCount++;
+                    contract.LastLevel = block.Level;
+
+                    state.MigrationOpsCount++;
+
+                    Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
+                }
+                else
+                {
+                    var script = scripts[contract.Id];
+                    var storage = storages[contract.Id];
+
+                    var rawContract = await Proto.Rpc.GetContractAsync(block.Level, contract.Address);
+
+                    var code = (Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray)!;
+                    var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
+                    var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
+                    var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
+                    var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
+
+                    var newSchema = new Netezos.Contracts.ContractScript(code);
+                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"))!;
+                    var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
+
+                    if (script.ParameterSchema.IsEqual(micheParameter) &&
+                        script.StorageSchema.IsEqual(micheStorage) &&
+                        script.CodeSchema.IsEqual(micheCode) &&
+                        storage.RawValue.IsEqual(newRawStorageValue))
+                        continue;
+
+                    script.Current = false;
+                    storage.Current = false;
+
+                    var migration = new MigrationOperation
+                    {
+                        Id = Cache.AppState.NextOperationId(),
+                        Level = block.Level,
+                        Timestamp = block.Timestamp,
+                        AccountId = contract.Id,
+                        Kind = MigrationKind.CodeChange
+                    };
+                    var newScript = new Script
+                    {
+                        Id = Cache.AppState.NextScriptId(),
+                        Level = migration.Level,
+                        ContractId = contract.Id,
+                        MigrationId = migration.Id,
+                        ParameterSchema = micheParameter,
+                        StorageSchema = micheStorage,
+                        CodeSchema = micheCode,
+                        Views = micheViews.Any()
+                            ? micheViews.Select(x => x.ToBytes()).ToArray()
+                            : null,
+                        Current = true
+                    };
+                    var newStorage = new Storage
+                    {
+                        Id = Cache.AppState.NextStorageId(),
+                        Level = migration.Level,
+                        ContractId = contract.Id,
+                        MigrationId = migration.Id,
+                        RawValue = newRawStorageValue,
+                        JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
+                        Current = true
+                    };
+
+                    var viewsBytes = newScript.Views?
+                        .OrderBy(x => x, new BytesComparer())
+                        .SelectMany(x => x)
+                        .ToArray()
+                        ?? [];
+                    var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
+                    var fullSchema = typeSchema.Concat(newScript.CodeSchema);
+                    contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
+                    contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
+
+                    migration.ScriptId = newScript.Id;
+                    migration.StorageId = newStorage.Id;
+
+                    contract.MigrationsCount++;
+                    contract.LastLevel = block.Level;
+
+                    state.MigrationOpsCount++;
+
+                    Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
+
+                    Db.Scripts.Add(newScript);
+                    Cache.Schemas.Add(contract, newScript.Schema);
+
+                    Db.Storages.Add(newStorage);
+                    Cache.Storages.Add(contract, newStorage);
+
+                    var tree = script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
+                    var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                    if (bigmap != null)
+                    {
+                        var newTree = newScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(newStorage.RawValue));
+                        var newBigmap = newTree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                        if (newBigmap?.Value is not MichelineInt micheInt)
+                            throw new Exception("Expected micheline int");
+                        var newPtr = (int)micheInt.Value;
+
+                        if (newBigmap.Path != bigmap.Path)
+                            await Db.Database.ExecuteSqlRawAsync("""
+                                UPDATE "BigMaps"
+                                SET "StoragePath" = {0}
+                                WHERE "Ptr" = {1}
+                                """, newBigmap.Path, contract.Id);
+
+                        await Db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
+                            UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                            UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                            """, newPtr, contract.Id);
+
+                        foreach (var prevStorage in await Db.Storages.Where(x => x.ContractId == contract.Id).ToListAsync())
+                        {
+                            var prevValue = Micheline.FromBytes(prevStorage.RawValue);
+                            var prevTree = script.Schema.Storage.Schema.ToTreeView(prevValue);
+                            var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
+                            (prevBigmap.Value as MichelineInt)!.Value = newPtr;
+
+                            prevStorage.RawValue = prevValue.ToBytes();
+                            prevStorage.JsonValue = script.Schema.HumanizeStorage(prevValue);
+                        }
                     }
                 }
             }
@@ -273,81 +308,112 @@ namespace Tzkt.Sync.Protocols.Proto5
             #endregion
 
             #region scripts
-            var codeChanges = await Db.MigrationOps
-                .Join(Db.Scripts, x => x.ScriptId, x => x.Id, (op, script) => new { op, script })
-                .Join(Db.Storages, x => x.op.StorageId, x => x.Id, (pair, storage) => new { pair.op, pair.script, storage })
-                .Where(x => x.op.Kind == MigrationKind.CodeChange)
-                .ToListAsync();
+            var contracts = await Db.Contracts.ToDictionaryAsync(x => x.Id); // ~27k
+            var scripts = await Db.Scripts.Where(x => x.Current).ToDictionaryAsync(x => x.ContractId);
+            var storages = await Db.Storages.Where(x => x.Current).ToDictionaryAsync(x => x.ContractId);
+            var originations = await Db.OriginationOps.Where(x => x.ContractId != null).ToDictionaryAsync(x => x.ContractId!.Value);
 
-            var oldScripts = (await Db.Scripts.Where(x => !x.Current)
-                .ToListAsync())
-                .ToDictionary(x => x.ContractId);
+            var codeChanges = await Db.MigrationOps.Where(x => x.Kind == MigrationKind.CodeChange).ToListAsync();
+
+            Cache.Schemas.Reset();
+            Cache.Storages.Reset();
 
             foreach (var change in codeChanges)
             {
-                var contract = (await Cache.Accounts.GetAsync(change.op.AccountId) as Contract)!;
-                Db.TryAttach(contract);
+                var contract = contracts[change.AccountId];
+                Cache.Accounts.Update(contract);
 
-                var oldScript = oldScripts[contract.Id];
-                var oldStorage = await Db.Storages
-                    .Where(x => x.ContractId == contract.Id && x.Id < change.op.StorageId)
-                    .OrderByDescending(x => x.Id)
-                    .FirstAsync();
-
-                var tree = change.script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(change.storage.RawValue));
-                var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
-                if (bigmap != null)
+                if (contract.Kind == ContractKind.DelegatorContract)
                 {
-                    var oldTree = oldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(oldStorage.RawValue));
-                    var oldBigmap = oldTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
+                    var origination = originations[contract.Id];
 
-                    if (bigmap.Value is not MichelineInt mi)
-                        throw new System.Exception("Expected micheline int");
-                    var newPtr = (int)mi.Value;
+                    var script = scripts[contract.Id];
+                    script.Level = origination.Level;
+                    script.OriginationId = origination.Id;
 
-                    if (oldBigmap.Path != bigmap.Path)
-                        await Db.Database.ExecuteSqlRawAsync("""
-                            UPDATE "BigMaps"
-                            SET "StoragePath" = {0}
-                            WHERE "Ptr" = {1}
-                            """, oldBigmap.Path, newPtr);
+                    var storage = storages[contract.Id];
+                    storage.Level = origination.Level;
+                    storage.OriginationId = origination.Id;
 
-                    await Db.Database.ExecuteSqlRawAsync("""
-                        UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
-                        UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
-                        UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
-                        """, contract.Id, newPtr);
+                    origination.ScriptId = script.Id;
+                    origination.StorageId = storage.Id;
 
-                    var storages = await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.op.Level).ToListAsync();
-                    foreach (var prevStorage in storages)
-                    {
-                        var prevValue = Micheline.FromBytes(prevStorage.RawValue);
-                        var prevTree = oldScript.Schema.Storage.Schema.ToTreeView(prevValue);
-                        var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
-                        (prevBigmap.Value as MichelineInt)!.Value = contract.Id;
+                    script.MigrationId = null;
+                    storage.MigrationId = null;
 
-                        prevStorage.RawValue = prevValue.ToBytes();
-                        prevStorage.JsonValue = oldScript.Schema.HumanizeStorage(prevValue);
-                    }
+                    contract.MigrationsCount--;
+                    contract.LastLevel = state.Level;
                 }
+                else
+                {
+                    var script = scripts[contract.Id];
+                    var storage = storages[contract.Id];
 
-                oldScript.Current = true;
-                Cache.Schemas.Add(contract, oldScript.Schema);
+                    var oldScript = await Db.Scripts
+                        .Where(x => x.ContractId == contract.Id && x.Id < script.Id)
+                        .OrderByDescending(x => x.Id)
+                        .FirstAsync();
 
-                oldStorage.Current = true;
-                Cache.Storages.Add(contract, oldStorage);
+                    var oldStorage = await Db.Storages
+                        .Where(x => x.ContractId == contract.Id && x.Id < storage.Id)
+                        .OrderByDescending(x => x.Id)
+                        .FirstAsync();
 
-                Db.Scripts.Remove(change.script);
-                Cache.AppState.ReleaseScriptId();
-                Db.Storages.Remove(change.storage);
-                Cache.AppState.ReleaseStorageId();
+                    var tree = script.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(storage.RawValue));
+                    var bigmap = tree.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
+                    if (bigmap != null)
+                    {
+                        var oldTree = oldScript.Schema.Storage.Schema.ToTreeView(Micheline.FromBytes(oldStorage.RawValue));
+                        var oldBigmap = oldTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
 
-                contract.TypeHash = oldScript.TypeHash;
-                contract.CodeHash = oldScript.CodeHash;
-                contract.MigrationsCount--;
+                        if (bigmap.Value is not MichelineInt mi)
+                            throw new Exception("Expected micheline int");
+                        var newPtr = (int)mi.Value;
+
+                        if (oldBigmap.Path != bigmap.Path)
+                            await Db.Database.ExecuteSqlRawAsync("""
+                                UPDATE "BigMaps"
+                                SET "StoragePath" = {0}
+                                WHERE "Ptr" = {1}
+                                """, oldBigmap.Path, newPtr);
+
+                        await Db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "BigMaps" SET "Ptr" = {0} WHERE "Ptr" = {1};
+                            UPDATE "BigMapKeys" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                            UPDATE "BigMapUpdates" SET "BigMapPtr" = {0} WHERE "BigMapPtr" = {1};
+                            """, contract.Id, newPtr);
+
+                        foreach (var prevStorage in await Db.Storages.Where(x => x.ContractId == contract.Id && x.Level < change.Level).ToListAsync())
+                        {
+                            var prevValue = Micheline.FromBytes(prevStorage.RawValue);
+                            var prevTree = oldScript.Schema.Storage.Schema.ToTreeView(prevValue);
+                            var prevBigmap = prevTree.Nodes().First(x => x.Schema.Prim == PrimType.big_map);
+                            (prevBigmap.Value as MichelineInt)!.Value = contract.Id;
+
+                            prevStorage.RawValue = prevValue.ToBytes();
+                            prevStorage.JsonValue = oldScript.Schema.HumanizeStorage(prevValue);
+                        }
+                    }
+
+                    oldScript.Current = true;
+                    Cache.Schemas.Add(contract, oldScript.Schema);
+
+                    oldStorage.Current = true;
+                    Cache.Storages.Add(contract, oldStorage);
+
+                    Db.Scripts.Remove(script);
+                    Cache.AppState.ReleaseScriptId();
+
+                    Db.Storages.Remove(storage);
+                    Cache.AppState.ReleaseStorageId();
+
+                    contract.TypeHash = oldScript.TypeHash;
+                    contract.CodeHash = oldScript.CodeHash;
+                    contract.MigrationsCount--;
+                }
             }
 
-            Db.MigrationOps.RemoveRange(codeChanges.Select(x => x.op));
+            Db.MigrationOps.RemoveRange(codeChanges);
             Cache.AppState.ReleaseOperationId(codeChanges.Count);
             state.MigrationOpsCount -= codeChanges.Count;
             #endregion

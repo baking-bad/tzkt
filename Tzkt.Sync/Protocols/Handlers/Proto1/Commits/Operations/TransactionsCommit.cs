@@ -94,7 +94,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
 
-            block.Events |= GetBlockEvents(target);
             block.Operations |= Operations.Transactions;
             block.Fees += transaction.BakerFee;
 
@@ -228,7 +227,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (target != null && target != sender) target.TransactionsCount++;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
 
-            block.Events |= GetBlockEvents(target);
             block.Operations |= Operations.Transactions;
 
             Cache.AppState.Get().TransactionOpsCount++;
@@ -470,13 +468,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     delegat.DeactivationLevel = newDeactivationLevel;
                 }
             }
-        }
-
-        protected virtual BlockEvents GetBlockEvents(Account? target)
-        {
-            return target is Contract c && c.Kind == ContractKind.SmartContract
-                ? BlockEvents.SmartContracts
-                : BlockEvents.None;
         }
 
         protected virtual async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement parameters)
