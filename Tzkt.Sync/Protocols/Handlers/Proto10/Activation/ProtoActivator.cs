@@ -585,7 +585,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             storage.MigrationId = migration.Id;
 
             Db.TryAttach(block);
-            block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
 
             var state = Cache.AppState.Get();

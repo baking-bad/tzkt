@@ -11,14 +11,12 @@
         Deactivations               = 0b_0000_0000_0001_0000,
         NewAccounts                 = 0b_0000_0000_0010_0000,
         BalanceSnapshot             = 0b_0000_0000_0100_0000,
-        SmartContracts              = 0b_0000_0000_1000_0000,
-        DelegatorContracts          = 0b_0000_0001_0000_0000,
-        Bigmaps                     = 0b_0000_0010_0000_0000,
-        Tokens                      = 0b_0000_0100_0000_0000,
-        Events                      = 0b_0000_1000_0000_0000,
-        Tickets                     = 0b_0001_0000_0000_0000,
-        DoubleBakingSlashing        = 0b_0010_0000_0000_0000,
-        DoubleEndorsingSlashing     = 0b_0100_0000_0000_0000,
-        DoublePreendorsingSlashing  = 0b_1000_0000_0000_0000
+        Bigmaps                     = 0b_0000_0000_1000_0000,
+        Tokens                      = 0b_0000_0001_0000_0000,
+        Events                      = 0b_0000_0010_0000_0000,
+        Tickets                     = 0b_0000_0100_0000_0000,
+        DoubleBakingSlashing        = 0b_0000_1000_0000_0000,
+        DoubleEndorsingSlashing     = 0b_0001_0000_0000_0000,
+        DoublePreendorsingSlashing  = 0b_0010_0000_0000_0000
     }
 }

@@ -6,18 +6,14 @@ namespace Tzkt.Sync.Protocols.Proto5
 {
     class OriginationsCommit(ProtocolHandler protocol) : Proto1.OriginationsCommit(protocol)
     {
-        protected override ContractKind GetContractKind(JsonElement content)
+        protected override IMicheline GetCode(JsonElement content)
         {
-            return ManagerTz.Test(content.Required("script").Required("code"), content.Required("script").Required("storage"))
-                ? ContractKind.DelegatorContract
-                : ContractKind.SmartContract;
+            return Micheline.FromJson(content.Required("script").Required("code"))!;
         }
 
-        protected override BlockEvents GetBlockEvents(Contract contract)
+        protected override IMicheline GetStorage(JsonElement content)
         {
-            return contract.Kind == ContractKind.DelegatorContract
-                ? BlockEvents.DelegatorContracts
-                : BlockEvents.SmartContracts;
+            return Micheline.FromJson(content.Required("script").Required("storage"))!;
         }
 
         protected override IEnumerable<BigMapDiff>? ParseBigMapDiffs(OriginationOperation origination, JsonElement result, MichelineArray code, IMicheline storage)

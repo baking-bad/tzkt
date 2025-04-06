@@ -272,8 +272,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             var block = Cache.Blocks.Current();
 
             block.Operations |= Operations.Migrations;
-            if (accounts.Any(x => x.Type == AccountType.Contract))
-                block.Events |= BlockEvents.SmartContracts;
 
             foreach (var account in accounts)
             {

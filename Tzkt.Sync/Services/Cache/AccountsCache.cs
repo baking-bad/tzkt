@@ -59,6 +59,15 @@ namespace Tzkt.Sync.Services.Cache
             CachedByAddress[account.Address] = account;
         }
 
+        public void Update(Account account)
+        {
+            if (CachedById.ContainsKey(account.Id))
+            {
+                CachedById[account.Id] = account;
+                CachedByAddress[account.Address] = account;
+            }
+        }
+
         public void Remove(Account account)
         {
             CachedById.Remove(account.Id);

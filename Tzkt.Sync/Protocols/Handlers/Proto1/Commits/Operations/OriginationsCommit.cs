@@ -135,7 +135,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         CreatorId = sender.Id,
                         Staked = _contractDelegate?.Staked ?? false,
                         Type = AccountType.Contract,
-                        Kind = GetContractKind(content),
+                        Kind = ContractKind.SmartContract,
                         OriginationsCount = 1,
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
@@ -161,30 +161,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                         CreatorId = sender.Id,
                         Staked = _contractDelegate?.Staked ?? false,
                         Type = AccountType.Contract,
-                        Kind = GetContractKind(content),
+                        Kind = ContractKind.SmartContract,
                         OriginationsCount = 1
                     };
                     Db.Contracts.Add(contract);
                 }
                 Cache.Accounts.Add(contract);
                 origination.ContractId = contract.Id;
+                Contract = contract;
 
-                if (contract.Kind > ContractKind.DelegatorContract)
-                {
-                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code"))!);
-                    var storage = Micheline.FromJson(content.Required("script").Required("storage"))!;
+                var code = await ExpandCode(contract, GetCode(content));
+                var storage = GetStorage(content);
 
-                    BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, contract, code, storage);
-
-                    origination.ContractCodeHash = contract.CodeHash;
-                }
-
-                block.Events |= GetBlockEvents(contract);
+                BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
+                await ProcessScript(origination, contract, code, storage);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-
-                Contract = contract;
             }
             #endregion
 
@@ -324,7 +316,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         CreatorId = sender.Id,
                         Staked = _contractDelegate?.Staked ?? false,
                         Type = AccountType.Contract,
-                        Kind = GetContractKind(content),
+                        Kind = ContractKind.SmartContract,
                         OriginationsCount = 1,
                         ActiveTokensCount = ghost.ActiveTokensCount,
                         TokenBalancesCount = ghost.TokenBalancesCount,
@@ -351,30 +343,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                         CreatorId = sender.Id,
                         Staked = _contractDelegate?.Staked ?? false,
                         Type = AccountType.Contract,
-                        Kind = GetContractKind(content),
+                        Kind = ContractKind.SmartContract,
                         OriginationsCount = 1
                     };
                     Db.Contracts.Add(contract);
                 }
                 Cache.Accounts.Add(contract);
                 origination.ContractId = contract.Id;
+                Contract = contract;
 
-                if (contract!.Kind > ContractKind.DelegatorContract)
-                {
-                    var code = await ProcessCode(contract, Micheline.FromJson(content.Required("script").Required("code"))!);
-                    var storage = Micheline.FromJson(content.Required("script").Required("storage"))!;
+                var code = await ExpandCode(contract, GetCode(content));
+                var storage = GetStorage(content);
 
-                    BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
-                    await ProcessScript(origination, contract, code, storage);
-
-                    origination.ContractCodeHash = contract.CodeHash;
-                }
-
-                block.Events |= GetBlockEvents(contract!);
+                BigMapDiffs = ParseBigMapDiffs(origination, result, code, storage);
+                await ProcessScript(origination, contract, code, storage);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-
-                Contract = contract;
             }
             #endregion
 
@@ -426,10 +410,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _contractDelegate.DelegatedBalance -= origination.Balance;
                 }
 
-                if (contract!.Kind > ContractKind.DelegatorContract)
-                    await RevertScript(origination, contract);
+                await RevertScript(origination, contract!);
 
-                contract.OriginationsCount--;
+                contract!.OriginationsCount--;
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
                     Db.Accounts.Remove(contract);
@@ -549,10 +532,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     _contractDelegate.DelegatedBalance -= contract.Balance;
                 }
 
-                if (contract!.Kind > ContractKind.DelegatorContract)
-                    await RevertScript(origination, contract);
+                await RevertScript(origination, contract!);
 
-                contract.OriginationsCount--;
+                contract!.OriginationsCount--;
                 if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
                 {
                     Db.Accounts.Remove(contract);
@@ -605,26 +587,28 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual ContractKind GetContractKind(JsonElement content)
-        {
-            return content.TryGetProperty("script", out var _)
-                ? ContractKind.SmartContract
-                : ContractKind.DelegatorContract;
-        }
-
-        protected virtual BlockEvents GetBlockEvents(Contract contract)
-        {
-            return contract.Kind == ContractKind.SmartContract
-                ? BlockEvents.SmartContracts
-                : BlockEvents.None;
-        }
-
         protected virtual int GetConsumedGas(JsonElement result)
         {
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        protected async Task<MichelineArray> ProcessCode(Contract contract, IMicheline code)
+        protected virtual IMicheline GetCode(JsonElement content)
+        {
+            return content.TryGetProperty("script", out var script)
+                ? Micheline.FromJson(script.Required("code"))!
+                // WTF: Before Proto5 some contracts had no code nor storage
+                : Micheline.FromBytes(Script.ManagerTzBytes);
+        }
+
+        protected virtual IMicheline GetStorage(JsonElement content)
+        {
+            return content.TryGetProperty("script", out var script)
+                ? Micheline.FromJson(script.Required("storage"))!
+                // WTF: Different nodes return different manager prop name.
+                : new MichelineString(content.OptionalString("managerPubkey") ?? content.RequiredString("manager_pubkey"));
+        }
+
+        protected async Task<MichelineArray> ExpandCode(Contract contract, IMicheline code)
         {
             if (code is not MichelineArray array)
             {
@@ -717,20 +701,28 @@ namespace Tzkt.Sync.Protocols.Proto1
             var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
             var fullSchema = typeSchema.Concat(script.CodeSchema);
             contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
-            contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
+            origination.ContractCodeHash = contract.CodeHash = script.CodeHash = Script.GetHash(fullSchema);
 
-            if (script.Schema.IsFA1())
+            if ((storageValue.Type == MichelineType.String || storageValue.Type == MichelineType.Bytes) &&
+                code.ToBytes().IsEqual(Script.ManagerTzBytes))
             {
-                if (script.Schema.IsFA12())
-                    contract.Tags |= ContractTags.FA12;
-
-                contract.Tags |= ContractTags.FA1;
-                contract.Kind = ContractKind.Asset;
+                contract.Kind = ContractKind.DelegatorContract;
             }
-            if (script.Schema.IsFA2())
+            else
             {
-                contract.Tags |= ContractTags.FA2;
-                contract.Kind = ContractKind.Asset;
+                if (script.Schema.IsFA1())
+                {
+                    if (script.Schema.IsFA12())
+                        contract.Tags |= ContractTags.FA12;
+
+                    contract.Tags |= ContractTags.FA1;
+                    contract.Kind = ContractKind.Asset;
+                }
+                if (script.Schema.IsFA2())
+                {
+                    contract.Tags |= ContractTags.FA2;
+                    contract.Kind = ContractKind.Asset;
+                }
             }
 
             if (BigMapDiffs != null)
@@ -808,8 +800,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Schemas.Remove(contract);
             Cache.AppState.ReleaseScriptId();
 
-            var storage = await Cache.Storages.GetAsync(contract);
-            Db.Storages.Remove(storage);
+            Db.Storages.Remove(new Storage
+            {
+                Id = origination.StorageId!.Value,
+                RawValue = [],
+                JsonValue = string.Empty,
+                Level = 0,
+                ContractId = 0,
+            });
             Cache.Storages.Remove(contract);
             Cache.AppState.ReleaseStorageId();
         }

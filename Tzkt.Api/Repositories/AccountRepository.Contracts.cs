@@ -65,7 +65,6 @@ namespace Tzkt.Api.Repositories
                         case "storage" when includeStorage:
                             if (field.Path == null)
                             {   
-                                columns.Add(@"c.""Kind""");
                                 columns.Add(@"s.""JsonValue"" as ""Storage""");
                             }
                             else
@@ -238,9 +237,7 @@ namespace Tzkt.Api.Repositories
                     EventsCount = row.EventsCount,
                     TypeHash = row.TypeHash,
                     CodeHash = row.CodeHash,
-                    Storage = row.Kind == 0 // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                        ? $"\"{Accounts.GetAlias((int)row.CreatorId).Address}\""
-                        : (RawJson)row.Storage
+                    Storage = (RawJson)row.Storage
                 };
             });
         }
@@ -423,17 +420,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "storage":
                         foreach (var row in rows)
-                        {
-                            if (row.Kind == 0)
-                            {
-                                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                                result[j++][i] = row.CreatorId != null ? $"\"{Accounts.GetAlias((int)row.CreatorId).Address}\"" : "";
-                            }
-                            else
-                            {
-                                result[j++][i] = (RawJson)row.Storage;
-                            }
-                        }
+                            result[j++][i] = (RawJson)row.Storage;
                         break;
                     default:
                         if (fields[i].Full.StartsWith("storage."))
@@ -450,9 +437,6 @@ namespace Tzkt.Api.Repositories
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
-
-            if (contract.Kind == 0)
-                return Data.Models.Script.ManagerTzBytes;
 
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
@@ -475,11 +459,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-                return level < 655_360 && State.Current.Chain == "mainnet"
-                    ? null
-                    : Data.Models.Script.ManagerTzBytes;
 
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetByteCode(address);
@@ -509,9 +488,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
-
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
@@ -533,11 +509,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-                return level < 655_360 && State.Current.Chain == "mainnet"
-                    ? null
-                    : Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
 
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetMichelineCode(address);
@@ -567,9 +538,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-                return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
-
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
@@ -591,11 +559,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-                return level < 655_360 && State.Current.Chain == "mainnet"
-                    ? null
-                    : Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
 
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetMichelsonCode(address);
@@ -625,30 +588,18 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            ContractParameter param;
-            ContractStorage storage;
-            IMicheline code;
+            await using var db = await DataSource.OpenConnectionAsync();
+            var script = await db.QueryFirstOrDefaultAsync($@"
+                SELECT      ""StorageSchema"", ""ParameterSchema"", ""CodeSchema""
+                FROM        ""Scripts""
+                WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
+                LIMIT       1"
+            );
+            if (script == null) return null;
 
-            if (contract.Kind == 0)
-            {
-                param = Data.Models.Script.ManagerTz.Parameter;
-                storage = Data.Models.Script.ManagerTz.Storage;
-                code = new MichelineArray();
-            }
-            else
-            {
-                await using var db = await DataSource.OpenConnectionAsync();
-                var script = await db.QueryFirstOrDefaultAsync($@"
-                    SELECT      ""StorageSchema"", ""ParameterSchema"", ""CodeSchema""
-                    FROM        ""Scripts""
-                    WHERE       ""ContractId"" = {contract.Id} AND ""Current"" = true
-                    LIMIT       1"
-                );
-                if (script == null) return null;
-                param = new ContractParameter(Micheline.FromBytes(script.ParameterSchema));
-                storage = new ContractStorage(Micheline.FromBytes(script.StorageSchema));
-                code = Micheline.FromBytes(script.CodeSchema);
-            }
+            var param = new ContractParameter(Micheline.FromBytes((byte[])script.ParameterSchema));
+            var storage = new ContractStorage(Micheline.FromBytes((byte[])script.StorageSchema));
+            var code = Micheline.FromBytes((byte[])script.CodeSchema);
 
             var rawStorage = await GetRawStorageValue(address);
             var storageTreeView = storage.Schema.ToTreeView(rawStorage!);
@@ -707,18 +658,11 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            ContractParameter param;
-            if (contract.Kind == 0)
-            {
-                param = Data.Models.Script.ManagerTz.Parameter;
-            }
-            else
-            {
-                await using var db = await DataSource.OpenConnectionAsync();
-                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-                if (row == null) return null;
-                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
-            }
+            await using var db = await DataSource.OpenConnectionAsync();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null) return null;
+            
+            var param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             if (!param.Entrypoints.ContainsKey(name)) return null;
 
             return param.BuildOptimized(name, value);
@@ -729,18 +673,11 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            ContractParameter param;
-            if (contract.Kind == 0)
-            {
-                param = Data.Models.Script.ManagerTz.Parameter;
-            }
-            else
-            {
-                await using var db = await DataSource.OpenConnectionAsync();
-                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-                if (row == null) return null;
-                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
-            }
+            await using var db = await DataSource.OpenConnectionAsync();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null) return null;
+
+            var param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             if (!param.Entrypoints.TryGetValue(name, out var ep)) return null;
 
             var mich = micheline ? ep.ToMicheline() : null;
@@ -759,19 +696,11 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return [];
 
-            ContractParameter param;
-            if (contract.Kind == 0)
-            {
-                param = Data.Models.Script.ManagerTz.Parameter;
-            }
-            else
-            {
-                await using var db = await DataSource.OpenConnectionAsync();
-                var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
-                if (row == null) return [];
-                param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
-            }
-
+            await using var db = await DataSource.OpenConnectionAsync();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
+            if (row == null) return [];
+                
+            var param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
             return param.Entrypoints
                 .Where(x => all || param.IsEntrypointUseful(x.Key))
                 .Select(x =>
@@ -843,13 +772,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-            {
-                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                var creator = await Accounts.GetAsync(contract.CreatorId);
-                return path?.Length > 0 ? null : $"\"{creator?.Address}\"";
-            }
-
             var pathSelector = path == null ? string.Empty : " #> @path";
             var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
 
@@ -871,16 +793,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-            {
-                if (level < 655_360 && State.Current.Chain == "mainnet")
-                    return null;
-
-                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                var creator = await Accounts.GetAsync(contract.CreatorId);
-                return path?.Length > 0 ? null : $"\"{creator?.Address}\"";
-            }
 
             if (level >= contract.LastLevel)
                 return await GetStorageValue(address, path);
@@ -906,13 +818,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-            {
-                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                var creator = await Accounts.GetAsync(contract.CreatorId);
-                return new MichelineString(creator?.Address ?? "");
-            }
-
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT   ""RawValue""
@@ -931,16 +836,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-            {
-                if (level < 655_360 && State.Current.Chain == "mainnet")
-                    return null;
-
-                // TODO: FIX MANAGER.TZ SCRIPTS ASAP
-                var creator = await Accounts.GetAsync(contract.CreatorId);
-                return new MichelineString(creator?.Address ?? "");
-            }
 
             if (level >= contract.LastLevel)
                 return await GetRawStorageValue(address);
@@ -963,9 +858,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-                return Data.Models.Script.ManagerTz.Storage.Humanize();
-
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
@@ -985,11 +877,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-                return level < 655_360 && State.Current.Chain == "mainnet"
-                    ? null
-                    : Data.Models.Script.ManagerTz.Storage.Humanize();
 
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetStorageSchema(address);
@@ -1013,9 +900,6 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
 
-            if (contract.Kind == 0)
-                return Data.Models.Script.ManagerTz.Storage.Schema.ToMicheline();
-
             await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
@@ -1034,11 +918,6 @@ namespace Tzkt.Api.Repositories
 
             if (level < contract.FirstLevel)
                 return null;
-
-            if (contract.Kind == 0)
-                return level < 655_360 && State.Current.Chain == "mainnet"
-                    ? null
-                    : Data.Models.Script.ManagerTz.Storage.Schema.ToMicheline();
 
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetRawStorageSchema(address);
