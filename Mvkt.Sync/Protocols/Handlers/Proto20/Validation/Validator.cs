@@ -90,7 +90,7 @@ namespace Mvkt.Sync.Protocols.Proto20
 
             #region balance updates
             var balanceUpdates = metadata.RequiredArray("balance_updates").EnumerateArray();
-            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && x.RequiredString("origin") == "block" && !Cache.Accounts.DelegateExists(x.RequiredString("contract")) && x.RequiredString("contract") != Proto10.ProtoActivator.ProtocolTreasuryContract && x.RequiredString("contract") != Proto10.ProtoActivator.BufferContract && x.RequiredString("contract") != BurnAddress.Address))
+            if (balanceUpdates.Any(x => x.RequiredString("kind") == "contract" && x.RequiredString("origin") == "block" && !Cache.Accounts.DelegateExists(x.RequiredString("contract")) && x.RequiredString("contract") != Proto20.ProtoActivator.ProtocolTreasuryContract && x.RequiredString("contract") != Proto10.ProtoActivator.BufferContract && x.RequiredString("contract") != BurnAddress.Address))
                 throw new ValidationException("non-existent delegate in block balance updates");
 
             if (Cycle < Protocol.NoRewardCycles)
@@ -126,7 +126,7 @@ namespace Mvkt.Sync.Protocols.Proto20
                     if (subsidy.Any(x => x.RequiredString("origin") != "subsidy"))
                         throw new ValidationException("invalid subsidy origin");
 
-                    if (subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.ProtocolTreasuryContract) && subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.BufferContract))
+                    if (subsidy.Any(x => x.RequiredString("contract") != Proto20.ProtoActivator.ProtocolTreasuryContract) && subsidy.Any(x => x.RequiredString("contract") != Proto10.ProtoActivator.BufferContract))
                         throw new ValidationException("invalid subsidy recepient");
                 }
                 else if (kind == "origination" && Level == Protocol.FirstLevel)

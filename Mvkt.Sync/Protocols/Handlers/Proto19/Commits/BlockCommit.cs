@@ -111,7 +111,7 @@ namespace Mvkt.Sync.Protocols.Proto19
 
                     var nextUpdate = balanceUpdates[i + 1];
                     if (nextUpdate.RequiredString("kind") == "contract" &&
-                        (nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.ProtocolTreasuryContract || nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.BufferContract) &&
+                        (nextUpdate.RequiredString("contract") == Proto10.ProtoActivator.BufferContract) &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
                         feeProtocolTreasury += change;
