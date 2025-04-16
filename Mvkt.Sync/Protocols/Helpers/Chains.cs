@@ -7,6 +7,7 @@
             "NetXdQprcVkpaWU" => "mainnet",
             "NetXnHfVqm9iesp" => "basenet",
             "NetXUrNc8uioxP8" => "atlasnet",
+            "NetXi75cGgZdsGN" => "dailynet",
             "NetXRp4kyGKJTuB" => "weeklynet",
             _ => "private"
         };

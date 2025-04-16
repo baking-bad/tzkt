@@ -73,6 +73,7 @@ namespace Mvkt.Sync
             {
                 "PtAtLasomUEW99aVhVTrqjCHjJSpFUa8uHNEAEamx9v2SNeTaNp" => services.GetRequiredService<Proto18Handler>(),
                 "PtBzwViMCC1gfm98y5TDKqz2e3vjBXPAUoWu7jfEcN6yj2ZhCyT" => services.GetRequiredService<Proto20Handler>(),
+                "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK" => services.GetRequiredService<Proto20Handler>(),
                 _ => null,
             };
         }
