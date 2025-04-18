@@ -63,6 +63,20 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove(smartRollup.Id);
         }
 
+        public async Task PreloadAsync(IEnumerable<int> contracts)
+        {
+            var missed = contracts.Where(x => !Cached.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var scripts = await Db.Scripts
+                    .Where(x => missed.Contains(x.ContractId) && x.Current)
+                    .ToListAsync();
+
+                foreach (var script in scripts)
+                    Cached.Add(script.ContractId, script.Schema);
+            }
+        }
+
         public async Task<ContractScript> GetAsync(Contract contract)
         {
             if (!Cached.TryGetValue(contract.Id, out var item))

@@ -58,6 +58,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected Task RemoveOutdated(Block block, Protocol protocol)
         {
+            if (!block.Events.HasFlag(BlockEvents.CycleEnd))
+                return Task.CompletedTask;
+
             var level = block.Level - (protocol.ConsensusRightsDelay + 3) * protocol.BlocksPerCycle;
             return Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "SnapshotBalances"

@@ -61,6 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakingRights"
                 """);
+            Cache.BakingRights.Reset();
         }
 
         protected virtual async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(Protocol protocol, List<Account> accounts, Cycle cycle)

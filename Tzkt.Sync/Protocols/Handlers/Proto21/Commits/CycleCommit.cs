@@ -8,6 +8,9 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         public override async Task Apply(Block block)
         {
+            if (!block.Events.HasFlag(BlockEvents.CycleBegin))
+                return;
+
             if (block.Cycle == Context.Protocol.FirstCycle)
             {
                 var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);

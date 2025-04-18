@@ -28,6 +28,9 @@ namespace Tzkt.Sync.Protocols.Proto15
             await MigrateFutureRights(state, nextProto);
             await PatchContracts(state);
 
+            Cache.BakingRights.Reset();
+            Cache.BakerCycles.Reset();
+
             if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet: amend broken voting period
             {
                 await RestartVotingPeriod(state, nextProto);

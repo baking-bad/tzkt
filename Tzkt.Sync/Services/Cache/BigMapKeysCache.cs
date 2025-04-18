@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task Prefetch(IEnumerable<(int ptr, string hash)> keys)
         {
-            var missed = keys.Where(x => !Cached.ContainsKey((x.ptr, x.hash))).ToList();
+            var missed = keys.Where(x => !Cached.ContainsKey((x.ptr, x.hash))).ToHashSet();
             if (missed.Count != 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)

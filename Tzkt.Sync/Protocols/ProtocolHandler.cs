@@ -92,7 +92,9 @@ namespace Tzkt.Sync
                 Logger.LogDebug("Save changes");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.SaveChangesTime))
                 {
-                    nextProtocol.Diagnostics.TrackChanges();
+                    if (Config.Diagnostics || _ForceDiagnostics)
+                        nextProtocol.Diagnostics.TrackChanges();
+                    Context.Apply(Db);
                     await Db.SaveChangesAsync();
                 }
 
@@ -100,8 +102,8 @@ namespace Tzkt.Sync
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.PostProcessingTime))
                 {
                     await AfterCommit(block);
-
-                    nextProtocol.Diagnostics.TrackChanges();
+                    if (Config.Diagnostics || _ForceDiagnostics)
+                        nextProtocol.Diagnostics.TrackChanges();
                     await Db.SaveChangesAsync();
                 }
 
@@ -115,8 +117,8 @@ namespace Tzkt.Sync
                 {
                     Logger.LogDebug("Activate protocol {hash}", state.NextProtocol);
                     await nextProtocol.Activate(state, block);
-
-                    nextProtocol.Diagnostics.TrackChanges();
+                    if (Config.Diagnostics || _ForceDiagnostics)
+                        nextProtocol.Diagnostics.TrackChanges();
                     await Db.SaveChangesAsync();
                 }
 
@@ -195,6 +197,7 @@ namespace Tzkt.Sync
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertSaveChangesTime))
                 {
                     nextProtocol.Diagnostics.TrackChanges();
+                    await Context.Revert(Db);
                     await Db.SaveChangesAsync();
                 }
 
@@ -221,9 +224,10 @@ namespace Tzkt.Sync
             return Cache.AppState.Get();
         }
 
-        public virtual Task WarmUpCache(JsonElement block)
+        public virtual async Task WarmUpCache(JsonElement block)
         {
             var accounts = new HashSet<string>(64);
+            var contracts = new HashSet<string>(64);
             var operations = block.RequiredArray("operations", 4);
 
             foreach (var op in operations[2].RequiredArray().EnumerateArray())
@@ -240,8 +244,12 @@ namespace Tzkt.Sync
                     accounts.Add(content.RequiredString("source"));
                     if (content.RequiredString("kind") == "transaction")
                     {
-                        if (content.TryGetProperty("destination", out var dest))
-                            accounts.Add(dest.RequiredString());
+                        if (content.OptionalString("destination") is string dest)
+                        {
+                            accounts.Add(dest);
+                            if (dest[0] == 'K')
+                                contracts.Add(dest);
+                        }
 
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
@@ -249,15 +257,35 @@ namespace Tzkt.Sync
                                 accounts.Add(internalContent.RequiredString("source"));
                                 if (internalContent.RequiredString("kind") == "transaction")
                                 {
-                                    if (internalContent.TryGetProperty("destination", out var internalDest))
-                                        accounts.Add(internalDest.RequiredString());
+                                    if (internalContent.OptionalString("destination") is string internalDest)
+                                    {
+                                        accounts.Add(internalDest);
+                                        if (internalDest[0] == 'K')
+                                            contracts.Add(internalDest);
+                                    }
                                 }
                             }
                     }
                 }
             }
 
-            return Cache.Accounts.LoadAsync(accounts);
+            if (accounts.Count != 0)
+            {
+                await Cache.Accounts.LoadAsync(accounts);
+            }
+            if (contracts.Count != 0)
+            {
+                var contractIds = new List<int>();
+                foreach (var contract in contracts)
+                    if (Cache.Accounts.TryGetCached(contract, out var _contract))
+                        contractIds.Add(_contract.Id);
+
+                if (contractIds.Count != 0)
+                {
+                    await Cache.Storages.PreloadAsync(contractIds);
+                    await Cache.Schemas.PreloadAsync(contractIds);
+                }
+            }
         }
 
         public virtual Task Activate(AppState state, JsonElement block) => Task.CompletedTask;

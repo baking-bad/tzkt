@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Cache.AppState.Get().EndorsementOpsCount++;
 
-            Db.EndorsementOps.Add(endorsement);
+            //Db.EndorsementOps.Add(endorsement);
             Context.EndorsementOps.Add(endorsement);
         }
 
@@ -62,10 +62,10 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Cache.AppState.Get().EndorsementOpsCount--;
 
-            Db.EndorsementOps.Remove(endorsement);
+            //Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
+        protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.OptionalInt32("endorsement_power") ?? metadata.RequiredInt32("consensus_power");
     }
 }

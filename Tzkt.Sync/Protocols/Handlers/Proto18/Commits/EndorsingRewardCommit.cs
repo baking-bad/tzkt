@@ -30,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             for (int i = 0; i < balanceUpdates.Count; i++)
             {
                 var update = balanceUpdates[i];
-                if (update.RequiredString("kind") == "minted" && update.RequiredString("category") == "endorsing rewards")
+                if (update.RequiredString("kind") == "minted" && (update.RequiredString("category") == "endorsing rewards" || update.RequiredString("category") == "attesting rewards"))
                 {
                     if (i == balanceUpdates.Count - 1)
                         throw new Exception("Unexpected endorsing rewards balance updates behavior");
@@ -61,7 +61,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         op.RewardDelegated = change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "burned" &&
-                        nextUpdate.RequiredString("category") == "lost endorsing rewards" &&
+                        (nextUpdate.RequiredString("category") == "lost endorsing rewards" || nextUpdate.RequiredString("category") == "lost attesting rewards") &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
                         var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("delegate"));

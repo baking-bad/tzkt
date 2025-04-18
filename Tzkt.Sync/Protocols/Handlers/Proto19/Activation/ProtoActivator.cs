@@ -56,6 +56,9 @@ namespace Tzkt.Sync.Protocols.Proto19
             await MigrateVotingPeriods(state, nextProto);
             var cycles = await MigrateCycles(state, nextProto);
             await MigrateFutureRights(state, nextProto, cycles);
+
+            Cache.BakerCycles.Reset();
+            Cache.BakingRights.Reset();
         }
 
         async Task RemoveFutureCycles(AppState state, Protocol prevProto, Protocol nextProto)

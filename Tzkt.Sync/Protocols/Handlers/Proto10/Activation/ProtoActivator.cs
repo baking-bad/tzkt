@@ -402,8 +402,6 @@ namespace Tzkt.Sync.Protocols.Proto10
 
                     var stakingBalance = snapshottedBaker.RequiredInt64("staking_balance");
                     var delegatedBalance = snapshottedBaker.RequiredInt64("delegated_balance");
-                    var bakingPower = stakingBalance - stakingBalance % protocol.MinimalStake;
-                    var share = (double)bakingPower / cycle.TotalBakingPower;
 
                     bakerCycle = new BakerCycle
                     {
@@ -416,10 +414,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                         OwnStakedBalance = 0,
                         ExternalStakedBalance = 0,
                         StakersCount = 0,
-                        BakingPower = bakingPower,
+                        BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower,
-                        ExpectedBlocks = protocol.BlocksPerCycle * share,
-                        ExpectedEndorsements = protocol.EndorsersPerBlock * protocol.BlocksPerCycle * share
+                        ExpectedBlocks = 0,
+                        ExpectedEndorsements = 0
                     };
                     bakerCycles.Add(baker.Id, bakerCycle);
                     Db.BakerCycles.Add(bakerCycle);

@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
@@ -50,6 +51,20 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove(contract.Id);
         }
 
+        public async Task PreloadAsync(IEnumerable<int> contracts)
+        {
+            var missed = contracts.Where(x => !Cached.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var storages = await Db.Storages
+                    .Where(x => missed.Contains(x.ContractId) && x.Current)
+                    .ToListAsync();
+
+                foreach (var storage in storages)
+                    Cached.Add(storage.ContractId, storage);
+            }
+        }
+
         public async Task<Storage> GetAsync(Contract contract)
         {
             if (!Cached.TryGetValue(contract.Id, out var item))
@@ -61,6 +76,11 @@ namespace Tzkt.Sync.Services.Cache
             }
 
             return item;
+        }
+
+        public bool TryGetCached(Contract contract, [NotNullWhen(true)] out Storage? storage)
+        {
+            return Cached.TryGetValue(contract.Id, out storage);
         }
     }
 }

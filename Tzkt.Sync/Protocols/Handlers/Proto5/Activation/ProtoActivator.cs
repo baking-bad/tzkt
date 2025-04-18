@@ -36,7 +36,12 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             #region airdrop
             var managers = File.ReadAllLines("./Protocols/Handlers/Proto5/Activation/airdropped.contracts");
-            await Cache.Accounts.Preload(managers);
+
+            if (state.Chain == "mainnet")
+                await Cache.Accounts.LoadAsync(managers);
+            else
+                await Cache.Accounts.Preload(managers);
+
             foreach (var address in managers)
             {
                 if (Cache.Accounts.TryGetCached(address, out var manager))
