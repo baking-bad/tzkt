@@ -1,4 +1,7 @@
-﻿using Tzkt.Data.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using Tzkt.Data;
+using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols
@@ -114,6 +117,32 @@ namespace Tzkt.Sync.Protocols
             if (SmartRollupRefuteOps.Count != 0) ops = ops.Concat(SmartRollupRefuteOps);
 
             return ops;
+        }
+
+        public void Apply(TzktContext db)
+        {
+            var conn = (db.Database.GetDbConnection() as NpgsqlConnection)!;
+
+            if (TransactionOps.Count != 0)
+                TransactionOperation.Write(conn, TransactionOps);
+
+            if (EndorsementOps.Count != 0)
+                EndorsementOperation.Write(conn, EndorsementOps);
+        }
+
+        public async Task Revert(TzktContext db)
+        {
+            if (TransactionOps.Count != 0)
+                await db.Database.ExecuteSqlRawAsync($$"""
+                    DELETE FROM "{{nameof(TzktContext.TransactionOps)}}"
+                    WHERE "{{nameof(TransactionOperation.Level)}}" = {0}
+                    """, Block.Level);
+
+            if (EndorsementOps.Count != 0)
+                await db.Database.ExecuteSqlRawAsync($$"""
+                    DELETE FROM "{{nameof(TzktContext.EndorsementOps)}}"
+                    WHERE "{{nameof(EndorsementOperation.Level)}}" = {0}
+                    """, Block.Level);
         }
     }
 }

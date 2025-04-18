@@ -91,6 +91,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakerCycles"
                 """);
+            Cache.BakerCycles.Reset();
         }
 
         #region helpers

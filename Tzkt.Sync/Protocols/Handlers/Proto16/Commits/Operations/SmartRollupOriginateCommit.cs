@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             #region init
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);

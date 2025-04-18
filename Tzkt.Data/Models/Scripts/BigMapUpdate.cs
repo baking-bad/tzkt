@@ -1,4 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using NpgsqlTypes;
 
 namespace Tzkt.Data.Models
 {
@@ -16,6 +18,45 @@ namespace Tzkt.Data.Models
         public int? BigMapKeyId { get; set; }
         public byte[]? RawValue { get; set; }
         public string? JsonValue { get; set; }
+
+        #region binary writer
+        public static void Write(NpgsqlConnection conn, IEnumerable<BigMapUpdate> updates)
+        {
+            using var writer = conn.BeginBinaryImport($"""
+                COPY "{nameof(TzktContext.BigMapUpdates)}" (
+                    "{nameof(Id)}",
+                    "{nameof(BigMapPtr)}",
+                    "{nameof(Level)}",
+                    "{nameof(Action)}",
+                    "{nameof(OriginationId)}",
+                    "{nameof(TransactionId)}",
+                    "{nameof(MigrationId)}",
+                    "{nameof(BigMapKeyId)}",
+                    "{nameof(RawValue)}",
+                    "{nameof(JsonValue)}"
+                )
+                FROM STDIN (FORMAT BINARY)
+                """);
+
+            foreach (var update in updates)
+            {
+                writer.StartRow();
+
+                writer.Write(update.Id, NpgsqlDbType.Integer);
+                writer.Write(update.BigMapPtr, NpgsqlDbType.Integer);
+                writer.Write(update.Level, NpgsqlDbType.Integer);
+                writer.Write((int)update.Action, NpgsqlDbType.Integer);
+                writer.WriteNullable(update.OriginationId, NpgsqlDbType.Bigint);
+                writer.WriteNullable(update.TransactionId, NpgsqlDbType.Bigint);
+                writer.WriteNullable(update.MigrationId, NpgsqlDbType.Bigint);
+                writer.WriteNullable(update.BigMapKeyId, NpgsqlDbType.Integer);
+                writer.WriteNullable(update.RawValue, NpgsqlDbType.Bytea);
+                writer.WriteNullable(update.JsonValue, NpgsqlDbType.Jsonb);
+            }
+
+            writer.Complete();
+        }
+        #endregion
     }
 
     public enum BigMapAction

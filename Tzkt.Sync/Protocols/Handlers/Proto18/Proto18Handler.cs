@@ -59,9 +59,11 @@ namespace Tzkt.Sync.Protocols
                 {
                     switch (content.RequiredString("kind"))
                     {
+                        case "attestation":
                         case "endorsement":
                             await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
+                        case "preattestation":
                         case "preendorsement":
                             new PreendorsementsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;

@@ -145,7 +145,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             Proto.Manager.Set(sender);
-            Db.TransactionOps.Add(transaction);
+            //Db.TransactionOps.Add(transaction);
             Context.TransactionOps.Add(transaction);
             Transaction = transaction;
             Target = target;
@@ -284,7 +284,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             #endregion
 
-            Db.TransactionOps.Add(transaction);
+            //Db.TransactionOps.Add(transaction);
             Context.TransactionOps.Add(transaction);
             Transaction = transaction;
             Target = target;
@@ -366,7 +366,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AppState.Get().TransactionOpsCount--;
             #endregion
 
-            Db.TransactionOps.Remove(transaction);
+            //Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
         }
@@ -448,7 +448,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AppState.Get().TransactionOpsCount--;
             #endregion
 
-            Db.TransactionOps.Remove(transaction);
+            //Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseOperationId();
         }
 

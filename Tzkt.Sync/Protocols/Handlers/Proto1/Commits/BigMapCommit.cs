@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Contracts;
 using Netezos.Encoding;
+using Npgsql;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -81,6 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             BigMapUpdate bigMapUpdate;
+            var bigMapUpdates = new List<BigMapUpdate>(Updates.Count);
             var images = new Dictionary<int, Dictionary<string, (byte[] RawKey, byte[] RawValue)>>();
             foreach (var diff in Diffs)
             {
@@ -135,7 +137,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             };
-                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            //Db.BigMapUpdates.Add(bigMapUpdate);
+                            bigMapUpdates.Add(bigMapUpdate);
                             Updates.Add((allocatedBigMap, null, bigMapUpdate, diff.op));
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
 
@@ -231,7 +234,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             };
-                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            //Db.BigMapUpdates.Add(bigMapUpdate);
+                            bigMapUpdates.Add(bigMapUpdate);
                             Updates.Add((copiedBigMap, null, bigMapUpdate, diff.op));
 
                             foreach (var key in keys)
@@ -248,7 +252,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     TransactionId = (diff.op as TransactionOperation)?.Id,
                                     OriginationId = (diff.op as OriginationOperation)?.Id
                                 };
-                                Db.BigMapUpdates.Add(bigMapUpdate);
+                                //Db.BigMapUpdates.Add(bigMapUpdate);
+                                bigMapUpdates.Add(bigMapUpdate);
                                 Updates.Add((copiedBigMap, key, bigMapUpdate, diff.op));
                             }
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + keys.Count + 1;
@@ -297,7 +302,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
                                     };
-                                    Db.BigMapUpdates.Add(bigMapUpdate);
+                                    //Db.BigMapUpdates.Add(bigMapUpdate);
+                                    bigMapUpdates.Add(bigMapUpdate);
                                     Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                     diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
@@ -327,7 +333,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                         TransactionId = (diff.op as TransactionOperation)?.Id,
                                         OriginationId = (diff.op as OriginationOperation)?.Id
                                     };
-                                    Db.BigMapUpdates.Add(bigMapUpdate);
+                                    //Db.BigMapUpdates.Add(bigMapUpdate);
+                                    bigMapUpdates.Add(bigMapUpdate);
                                     Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                     diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                     #endregion
@@ -372,7 +379,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     TransactionId = (diff.op as TransactionOperation)?.Id,
                                     OriginationId = (diff.op as OriginationOperation)?.Id
                                 };
-                                Db.BigMapUpdates.Add(bigMapUpdate);
+                                //Db.BigMapUpdates.Add(bigMapUpdate);
+                                bigMapUpdates.Add(bigMapUpdate);
                                 Updates.Add((bigMap, key, bigMapUpdate, diff.op));
                                 diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                 #endregion
@@ -421,7 +429,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                 TransactionId = (diff.op as TransactionOperation)?.Id,
                                 OriginationId = (diff.op as OriginationOperation)?.Id
                             };
-                            Db.BigMapUpdates.Add(bigMapUpdate);
+                            //Db.BigMapUpdates.Add(bigMapUpdate);
+                            bigMapUpdates.Add(bigMapUpdate);
                             Updates.Add((removedBigMap, null, bigMapUpdate, diff.op));
                             diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                         }
@@ -430,6 +439,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         break;
                 }
             }
+            if (bigMapUpdates.Count != 0)
+                BigMapUpdate.Write((Db.Database.GetDbConnection() as NpgsqlConnection)!, bigMapUpdates);
         }
 
         int GetOrigin(CopyDiff copy)

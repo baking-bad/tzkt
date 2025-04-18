@@ -12,6 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected readonly TzktContext Db = handler.Db;
         protected readonly CacheService Cache = handler.Cache;
         protected readonly IRpc Rpc = handler.Rpc;
+        protected readonly BlockContext Context = handler.Context;
 
         int AddedOperations = 0;
         readonly Dictionary<int, Account> ChangedAccounts = [];
@@ -70,9 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task RunDiagnostics(int level, int ops = -1)
         {
-            var entries = Db.ChangeTracker.Entries();
-
-            if (ops != -1 && ops != AddedOperations)
+            if (ops != -1 && ops != AddedOperations + Context.TransactionOps.Count + Context.EndorsementOps.Count)
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = Cache.AppState.Get();
@@ -96,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
-                foreach (var cycle in entries.Where(x => x.Entity is Cycle).Select(x => (x.Entity as Cycle)!))
+                foreach (var cycle in Db.ChangeTracker.Entries().Where(x => x.Entity is Cycle).Select(x => (x.Entity as Cycle)!))
                     await TestCycle(state, cycle);
                 
                 await TestParticipation(state);
@@ -163,7 +162,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : (await Cache.Blocks.GetAsync(delegat.DeactivationLevel - 1)).Cycle;
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
-
+            
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 

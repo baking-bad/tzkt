@@ -45,6 +45,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             return Task.CompletedTask;
         }
 
-        protected virtual int GetPreendorsedSlots(JsonElement metadata) => metadata.RequiredInt32("preendorsement_power");
+        protected virtual int GetPreendorsedSlots(JsonElement metadata) => metadata.OptionalInt32("preendorsement_power") ?? metadata.RequiredInt32("consensus_power");
     }
 }

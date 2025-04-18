@@ -800,14 +800,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Schemas.Remove(contract);
             Cache.AppState.ReleaseScriptId();
 
-            Db.Storages.Remove(new Storage
+            if (!Cache.Storages.TryGetCached(contract, out var storage))
             {
-                Id = origination.StorageId!.Value,
-                RawValue = [],
-                JsonValue = string.Empty,
-                Level = 0,
-                ContractId = 0,
-            });
+                storage = new Storage
+                {
+                    Id = origination.StorageId!.Value,
+                    RawValue = [],
+                    JsonValue = string.Empty,
+                    Level = 0,
+                    ContractId = 0,
+                };
+            }
+            Db.Storages.Remove(storage);
             Cache.Storages.Remove(contract);
             Cache.AppState.ReleaseStorageId();
         }

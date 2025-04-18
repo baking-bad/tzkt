@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.Statistics.Current.TotalFrozen += endorsement.Reward + endorsement.Deposit;
             #endregion
 
-            Db.EndorsementOps.Add(endorsement);
+            //Db.EndorsementOps.Add(endorsement);
             Context.EndorsementOps.Add(endorsement);
         }
 
@@ -87,7 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             Cache.AppState.Get().EndorsementOpsCount--;
             #endregion
 
-            Db.EndorsementOps.Remove(endorsement);
+            //Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();
         }
     }
