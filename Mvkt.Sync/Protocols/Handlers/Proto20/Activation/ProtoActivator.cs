@@ -10,7 +10,7 @@ namespace Mvkt.Sync.Protocols.Proto20
 {
     partial class ProtoActivator : Proto19.ProtoActivator
     {
-        public const string ProtocolTreasuryContract = "KT1ULoxMrsUwGVh6TSWfudtyxjWwV1M1VhsQ";
+        public const string ProtocolTreasuryContract = "KT1NnjUA9n26CQGmPd9HtGTUxT1LvuAjBWs6";
         
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
