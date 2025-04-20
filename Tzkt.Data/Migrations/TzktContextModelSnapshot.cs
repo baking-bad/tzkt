@@ -297,6 +297,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("CyclesCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DalAttestationRewardOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DalEntrapmentEvidenceOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DalPublishCommitmentOpsCount")
                         .HasColumnType("integer");
 
@@ -557,6 +563,8 @@ namespace Tzkt.Data.Migrations
                             ConstantsCount = 0,
                             Cycle = -1,
                             CyclesCount = 0,
+                            DalAttestationRewardOpsCount = 0,
+                            DalEntrapmentEvidenceOpsCount = 0,
                             DalPublishCommitmentOpsCount = 0,
                             DelegationOpsCount = 0,
                             DomainsLevel = 0,
@@ -705,6 +713,18 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Cycle")
                         .HasColumnType("integer");
 
+                    b.Property<long>("DalAttestationRewardsDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedEdge")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedOwn")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedShared")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
 
@@ -771,6 +791,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<double>("ExpectedBlocks")
                         .HasColumnType("double precision");
 
+                    b.Property<long>("ExpectedDalShards")
+                        .HasColumnType("bigint");
+
                     b.Property<double>("ExpectedEndorsements")
                         .HasColumnType("double precision");
 
@@ -786,6 +809,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("FutureBlocks")
                         .HasColumnType("integer");
 
+                    b.Property<long>("FutureDalAttestationRewards")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("FutureEndorsementRewards")
                         .HasColumnType("bigint");
 
@@ -800,6 +826,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("MissedBlocks")
                         .HasColumnType("integer");
+
+                    b.Property<long>("MissedDalAttestationRewards")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("MissedEndorsementRewards")
                         .HasColumnType("bigint");
@@ -1345,6 +1374,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BlockReward")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("DalAttestationRewardPerShard")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("EndorsementRewardPerSlot")
                         .HasColumnType("bigint");
 
@@ -1387,6 +1419,92 @@ namespace Tzkt.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("Cycles");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationRewardOperation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Expected")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RewardDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedEdge")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedOwn")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedShared")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("DalAttestationRewardOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalEntrapmentEvidenceOperation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccuserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OffenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TrapLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrapSlotIndex")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccuserId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OffenderId");
+
+                    b.HasIndex("OpHash");
+
+                    b.ToTable("DalEntrapmentEvidenceOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
@@ -2513,6 +2631,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegateParametersActivationDelay")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DenunciationPeriod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Dictator")
                         .HasColumnType("text");
 
@@ -2579,9 +2700,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("MaxExternalOverOwnStakeRatio")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxSlashingPeriod")
-                        .HasColumnType("integer");
-
                     b.Property<int>("MinParticipationDenominator")
                         .HasColumnType("integer");
 
@@ -2597,6 +2715,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("NoRewardCycles")
                         .HasColumnType("integer");
 
+                    b.Property<int>("NumberOfShards")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OriginationSize")
                         .HasColumnType("integer");
 
@@ -2604,6 +2725,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("RampUpCycles")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SlashingDelay")
                         .HasColumnType("integer");
 
                     b.Property<int>("SmartRollupChallengeWindow")
@@ -2625,6 +2749,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("TimeBetweenBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToleratedInactivityPeriod")
                         .HasColumnType("integer");
 
                     b.Property<int>("Version")
@@ -5745,6 +5872,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("BlocksCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DalAttestationRewardsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DalEntrapmentEvidenceOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DeactivationLevel")
                         .HasColumnType("integer");
 
@@ -5922,6 +6055,18 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Revelation");
 
                     b.Navigation("Software");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalEntrapmentEvidenceOperation", b =>
+                {
+                    b.HasOne("Tzkt.Data.Models.Block", "Block")
+                        .WithMany("DalEntrapmentEvidenceOps")
+                        .HasForeignKey("Level")
+                        .HasPrincipalKey("Level")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Block");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
@@ -6837,6 +6982,8 @@ namespace Tzkt.Data.Migrations
                     b.Navigation("Ballots");
 
                     b.Navigation("CreatedAccounts");
+
+                    b.Navigation("DalEntrapmentEvidenceOps");
 
                     b.Navigation("DalPublishCommitmentOps");
 

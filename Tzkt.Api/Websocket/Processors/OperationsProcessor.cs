@@ -108,6 +108,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetActivations(null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ActivationOperation>());
 
+                var dalEntrapmentEvidences = TypeSubs.TryGetValue(Operations.DalEntrapmentEvidence, out var dalEntrapmentEvidencesSub)
+                    ? Repo.GetDalEntrapmentEvidences(null, null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DalEntrapmentEvidenceOperation>());
+
                 var doubleBaking = TypeSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
                     ? Repo.GetDoubleBakings(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
@@ -256,6 +260,10 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetEndorsingRewards(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
 
+                var dalAttestationRewards = TypeSubs.TryGetValue(Operations.DalAttestationReward, out var dalAttestationRewardsSub)
+                    ? Repo.GetDalAttestationRewards(null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DalAttestationRewardOperation>());
+
                 var autostakingOps = TypeSubs.TryGetValue(Operations.Autostaking, out var autostakingOpsSub)
                     ? Repo.GetAutostakingOps(new() { level = level }, new() { limit = -1 }, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.AutostakingOperation>());
@@ -266,6 +274,7 @@ namespace Tzkt.Api.Websocket.Processors
                     proposals,
                     ballots,
                     activations,
+                    dalEntrapmentEvidences,
                     doubleBaking,
                     doubleEndorsing,
                     doublePreendorsing,
@@ -303,6 +312,7 @@ namespace Tzkt.Api.Websocket.Processors
                     penalties,
                     baking,
                     endorsingRewards,
+                    dalAttestationRewards,
                     autostakingOps);
                 #endregion
 
@@ -388,6 +398,22 @@ namespace Tzkt.Api.Websocket.Processors
                         foreach (var op in activations.Result)
                             if (activationsSub.AddressSubs.TryGetValue(op.Account.Address, out var accountSubs))
                                 Add(accountSubs.Subs, op);
+                }
+
+                if (dalEntrapmentEvidences.Result.Any())
+                {
+                    if (dalEntrapmentEvidencesSub.Subs != null)
+                        AddRange(dalEntrapmentEvidencesSub.Subs, dalEntrapmentEvidences.Result);
+
+                    if (dalEntrapmentEvidencesSub.AddressSubs != null)
+                        foreach (var op in dalEntrapmentEvidences.Result)
+                        {
+                            if (dalEntrapmentEvidencesSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs))
+                                Add(accuserSubs.Subs, op);
+
+                            if (dalEntrapmentEvidencesSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs))
+                                Add(offenderSubs.Subs, op);
+                        }
                 }
 
                 if (doubleBaking.Result.Any())
@@ -1060,6 +1086,17 @@ namespace Tzkt.Api.Websocket.Processors
                     if (endorsingRewardsSub.AddressSubs != null)
                         foreach (var op in endorsingRewards.Result)
                             if (endorsingRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
+                                Add(bakerSubs.Subs, op);
+                }
+
+                if (dalAttestationRewards.Result.Any())
+                {
+                    if (dalAttestationRewardsSub.Subs != null)
+                        AddRange(dalAttestationRewardsSub.Subs, dalAttestationRewards.Result);
+
+                    if (dalAttestationRewardsSub.AddressSubs != null)
+                        foreach (var op in dalAttestationRewards.Result)
+                            if (dalAttestationRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs))
                                 Add(bakerSubs.Subs, op);
                 }
 

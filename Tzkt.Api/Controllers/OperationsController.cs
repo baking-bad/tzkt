@@ -829,6 +829,169 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
+        #region dal entrapment evidence
+        /// <summary>
+        /// Get dal entrapment evidences
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of dal entrapment evidence operations.
+        /// </remarks>
+        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filters by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `trapLevel`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("dal_entrapment_evidence")]
+        public async Task<ActionResult<IEnumerable<DalEntrapmentEvidenceOperation>>> GetDalEntrapmentEvidenceOps(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
+            AnyOfParameter anyof,
+            AccountParameter accuser,
+            AccountParameter offender,
+            Int64Parameter id,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (anyof != null)
+            {
+                if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
+                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
+
+                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
+                    return Ok(Enumerable.Empty<DalEntrapmentEvidenceOperation>());
+            }
+
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null && accuser.Eqx != "offender")
+                    return new BadRequest($"{nameof(accuser)}.eqx", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Nex != null && accuser.Nex != "offender")
+                    return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
+
+                if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
+                    return Ok(Enumerable.Empty<DalEntrapmentEvidenceOperation>());
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null && offender.Eqx != "accuser")
+                    return new BadRequest($"{nameof(offender)}.eqx", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Nex != null && offender.Nex != "accuser")
+                    return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
+
+                if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
+                    return Ok(Enumerable.Empty<DalEntrapmentEvidenceOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level", "trapLevel"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get dal entrapment evidence by hash
+        /// </summary>
+        /// <remarks>
+        /// Returns dal entrapment evidence operations with specified hash.
+        /// </remarks>
+        /// <param name="hash">Operation hash</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("dal_entrapment_evidence/{hash}")]
+        public async Task<ActionResult<IEnumerable<DalEntrapmentEvidenceOperation>>> GetDalEntrapmentEvidenceOpsByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDalEntrapmentEvidences(hash, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get dal entrapment evidences count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of dal entrapment evidence operations.
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("dal_entrapment_evidence/count")]
+        public async Task<ActionResult<int>> GetDalEntrapmentEvidenceOpsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.DalEntrapmentEvidenceOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDalEntrapmentEvidencesCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
         #region double baking
         /// <summary>
         /// Get double baking
@@ -5582,7 +5745,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
-                    return Ok(Enumerable.Empty<RevelationPenaltyOperation>());
+                    return Ok(Enumerable.Empty<EndorsingRewardOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level"))
@@ -5674,6 +5837,142 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Operations.GetEndorsingRewardsCount(level, timestamp);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
+
+        #region dal attestation rewards
+        /// <summary>
+        /// Get dal attestation rewards
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of dal attestation reward operations (synthetic type).
+        /// </remarks>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
+        /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
+        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="offset">Specifies which or how many items should be skipped</param>
+        /// <param name="limit">Maximum number of items to return</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("dal_attestation_reward")]
+        public async Task<ActionResult<IEnumerable<DalAttestationRewardOperation>>> GetDalAttestationRewards(
+            Int64Parameter id,
+            AccountParameter baker,
+            Int32Parameter level,
+            DateTimeParameter timestamp,
+            SelectParameter select,
+            SortParameter sort,
+            OffsetParameter offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+
+                if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
+                    return Ok(Enumerable.Empty<DalAttestationRewardOperation>());
+            }
+
+            if (sort != null && !sort.Validate("id", "level"))
+                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("id", id), ("baker", baker), ("level", level), ("timestamp", timestamp),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (select == null)
+            {
+                res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, quote);
+            }
+            else if (select.Values != null)
+            {
+                if (select.Values.Length == 1)
+                    res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                else
+                    res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Values, quote);
+            }
+            else
+            {
+                if (select.Fields.Length == 1)
+                    res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                else
+                {
+                    res = new SelectionResponse
+                    {
+                        Cols = select.Fields,
+                        Rows = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                    };
+                }
+            }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get dal attestation reward by id
+        /// </summary>
+        /// <remarks>
+        /// Returns dal attestation reward operation with specified id.
+        /// </remarks>
+        /// <param name="id">Operation id</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("dal_attestation_reward/{id:long}")]
+        public async Task<ActionResult<DalAttestationRewardOperation>> GetDalAttestationRewardById(
+            [Required][Min64(0)] long id,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDalAttestationReward(id, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get dal attestation rewards count
+        /// </summary>
+        /// <remarks>
+        /// Returns the total number of dal attestation reward operations (synthetic type).
+        /// </remarks>
+        /// <param name="level">Filters by level.</param>
+        /// <param name="timestamp">Filters by timestamp.</param>
+        /// <returns></returns>
+        [HttpGet("dal_attestation_reward/count")]
+        public async Task<ActionResult<int>> GetDalAttestationRewardsCount(
+            Int32Parameter level,
+            DateTimeParameter timestamp)
+        {
+            if (level == null && timestamp == null)
+                return Ok(State.Current.DalAttestationRewardOpsCount);
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("level", level), ("timestamp", timestamp));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Operations.GetDalAttestationRewardsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

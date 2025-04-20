@@ -146,7 +146,12 @@
         /// <summary>
         /// Number of cycles after double baking/(pre)endorsing where an accusation operation can be injected
         /// </summary>
-        public int MaxSlashingPeriod { get; set; }
+        public int DenunciationPeriod { get; set; }
+
+        /// <summary>
+        /// Number of cycles after double baking/(pre)endorsing evidence where slashing happens
+        /// </summary>
+        public int SlashingDelay { get; set; }
 
         /// <summary>
         /// The ratio of delegated tez over the baker’s frozen stake
@@ -184,11 +189,21 @@
         public int SmartRollupTimeoutPeriod { get; set; }
 
         /// <summary>
+        /// Number of DAL Shards
+        /// </summary>
+        public int DalNumberOfShards { get; set; }
+
+        /// <summary>
         /// Governance dictator
         /// </summary>
         public string Dictator { get; set; }
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int MaxSlashingPeriod => DenunciationPeriod + SlashingDelay;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

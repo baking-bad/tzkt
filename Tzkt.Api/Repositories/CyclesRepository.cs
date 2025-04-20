@@ -54,6 +54,7 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
+                DalAttestationRewardPerShard = row.DalAttestationRewardPerShard,
                 Quote = Quotes.Get(quote, row.LastLevel)
             };
         }
@@ -86,6 +87,7 @@ namespace Tzkt.Api.Repositories
                 EndorsementRewardPerSlot = row.EndorsementRewardPerSlot,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
+                DalAttestationRewardPerShard = row.DalAttestationRewardPerShard,
                 Quote = Quotes.Get(quote, row.LastLevel)
             });
         }
@@ -116,6 +118,7 @@ namespace Tzkt.Api.Repositories
                     case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
                     case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                     case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
+                    case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
                     #region deprecated
                     case "snapshotIndex": columns.Add("0"); break;
@@ -202,6 +205,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.VdfRevelationReward;
                         break;
+                    case "dalAttestationRewardPerShard":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardPerShard;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.LastLevel);
@@ -266,6 +273,7 @@ namespace Tzkt.Api.Repositories
                 case "endorsementRewardPerSlot": columns.Add(@"""EndorsementRewardPerSlot"""); break;
                 case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                 case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
+                case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
                 #region deprecated
                 case "snapshotIndex": columns.Add("0"); break;
@@ -348,6 +356,10 @@ namespace Tzkt.Api.Repositories
                 case "vdfRevelationReward":
                     foreach (var row in rows)
                         result[j++] = row.VdfRevelationReward;
+                    break;
+                case "dalAttestationRewardPerShard":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardPerShard;
                     break;
                 case "quote":
                     foreach (var row in rows)

@@ -53,6 +53,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.BlocksCount +
                 state.AutostakingOpsCount +
                 state.EndorsingRewardOpsCount +
+                state.DalAttestationRewardOpsCount +
                 state.MigrationOpsCount +
                 state.RevelationPenaltyOpsCount +
 
@@ -60,6 +61,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.BallotOpsCount +
                 state.DalPublishCommitmentOpsCount +
                 state.DelegationOpsCount +
+                state.DalEntrapmentEvidenceOpsCount +
                 state.DoubleBakingOpsCount +
                 state.DoubleEndorsingOpsCount +
                 state.DoublePreendorsingOpsCount +
@@ -177,6 +179,9 @@ namespace Tzkt.Sync.Tests.Database
             if (state.DelegationOpsCount != await db.DelegationOps.CountAsync())
                 throw new Exception("Invalid AppState.DelegationOpsCount");
 
+            if (state.DalEntrapmentEvidenceOpsCount != await db.DalEntrapmentEvidenceOps.CountAsync())
+                throw new Exception("Invalid AppState.DalEntrapmentEvidenceOpsCount");
+
             if (state.DoubleBakingOpsCount != await db.DoubleBakingOps.CountAsync())
                 throw new Exception("Invalid AppState.DoubleBakingOpsCount");
 
@@ -221,6 +226,9 @@ namespace Tzkt.Sync.Tests.Database
 
             if (state.EndorsingRewardOpsCount != await db.EndorsingRewardOps.CountAsync())
                 throw new Exception("Invalid AppState.EndorsingRewardOpsCount");
+
+            if (state.DalAttestationRewardOpsCount != await db.DalAttestationRewardOps.CountAsync())
+                throw new Exception("Invalid AppState.DalAttestationRewardOpsCount");
 
             if (state.SetDepositsLimitOpsCount != await db.SetDepositsLimitOps.CountAsync())
                 throw new Exception("Invalid AppState.SetDepositsLimitOpsCount");

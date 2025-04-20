@@ -440,6 +440,16 @@ namespace Tzkt.Api.Models
         public int DalPublishCommitmentOpsCount { get; set; }
 
         /// <summary>
+        /// Number of DAL entrapment evidences related to the account
+        /// </summary>
+        public int DalEntrapmentEvidenceOpsCount { get; set; }
+
+        /// <summary>
+        /// Number of DAL attestation rewards related to the account
+        /// </summary>
+        public int DalAttestationRewardsCount { get; set; }
+
+        /// <summary>
         /// Block height of the first operation, related to the delegate (baker)
         /// </summary>
         public int FirstActivity { get; set; }

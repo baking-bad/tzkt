@@ -71,6 +71,7 @@ namespace Tzkt.Api.Repositories
                 NumDelegators = delegat.DelegatorsCount,
                 NumBlocks = delegat.BlocksCount,
                 NumDelegations = delegat.DelegationsCount,
+                DalEntrapmentEvidenceOpsCount = delegat.DalEntrapmentEvidenceOpsCount,
                 NumDoubleBaking = delegat.DoubleBakingCount,
                 NumDoubleEndorsing = delegat.DoubleEndorsingCount,
                 NumDoublePreendorsing = delegat.DoublePreendorsingCount,
@@ -79,6 +80,7 @@ namespace Tzkt.Api.Repositories
                 NumNonceRevelations = delegat.NonceRevelationsCount,
                 NumRevelationPenalties = delegat.RevelationPenaltiesCount,
                 NumEndorsingRewards = delegat.EndorsingRewardsCount,
+                DalAttestationRewardsCount = delegat.DalAttestationRewardsCount,
                 NumOriginations = delegat.OriginationsCount,
                 NumProposals = delegat.ProposalsCount,
                 NumReveals = delegat.RevealsCount,
@@ -205,6 +207,7 @@ namespace Tzkt.Api.Repositories
                     NumDelegators = row.DelegatorsCount,
                     NumBlocks = row.BlocksCount,
                     NumDelegations = row.DelegationsCount,
+                    DalEntrapmentEvidenceOpsCount = row.DalEntrapmentEvidenceOpsCount,
                     NumDoubleBaking = row.DoubleBakingCount,
                     NumDoubleEndorsing = row.DoubleEndorsingCount,
                     NumDoublePreendorsing = row.DoublePreendorsingCount,
@@ -213,6 +216,7 @@ namespace Tzkt.Api.Repositories
                     NumNonceRevelations = row.NonceRevelationsCount,
                     NumRevelationPenalties = row.RevelationPenaltiesCount,
                     NumEndorsingRewards = row.EndorsingRewardsCount,
+                    DalAttestationRewardsCount = row.DalAttestationRewardsCount,
                     NumOriginations = row.OriginationsCount,
                     NumProposals = row.ProposalsCount,
                     NumReveals = row.RevealsCount,
@@ -289,14 +293,16 @@ namespace Tzkt.Api.Repositories
                     case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                     case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                     case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
+                    case "dalEntrapmentEvidenceOpsCount": columns.Add(@"""DalEntrapmentEvidenceOpsCount"""); break;
                     case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
                     case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
                     case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
                     case "numEndorsements": columns.Add(@"""EndorsementsCount"""); break;
                     case "numPreendorsements": columns.Add(@"""PreendorsementsCount"""); break;
                     case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
-                    case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
+                    case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break; 
                     case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
+                    case "dalAttestationRewardsCount": columns.Add(@"""DalAttestationRewardsCount"""); break;
                     case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                     case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                     case "numReveals": columns.Add(@"""RevealsCount"""); break;
@@ -520,6 +526,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DelegationsCount;
                         break;
+                    case "dalEntrapmentEvidenceOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalEntrapmentEvidenceOpsCount;
+                        break;
                     case "numDoubleBaking":
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingCount;
@@ -551,6 +561,10 @@ namespace Tzkt.Api.Repositories
                     case "numEndorsingRewards":
                         foreach (var row in rows)
                             result[j++][i] = row.EndorsingRewardsCount;
+                        break;
+                    case "dalAttestationRewardsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalAttestationRewardsCount;
                         break;
                     case "numOriginations":
                         foreach (var row in rows)
@@ -796,6 +810,7 @@ namespace Tzkt.Api.Repositories
                 case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
                 case "numBlocks": columns.Add(@"""BlocksCount"""); break;
                 case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
+                case "dalEntrapmentEvidenceOpsCount": columns.Add(@"""DalEntrapmentEvidenceOpsCount"""); break;
                 case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
                 case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
                 case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
@@ -804,6 +819,7 @@ namespace Tzkt.Api.Repositories
                 case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
                 case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
                 case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
+                case "dalAttestationRewardsCount": columns.Add(@"""DalAttestationRewardsCount"""); break;
                 case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
                 case "numProposals": columns.Add(@"""ProposalsCount"""); break;
                 case "numReveals": columns.Add(@"""RevealsCount"""); break;
@@ -1023,6 +1039,10 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DelegationsCount;
                     break;
+                case "dalEntrapmentEvidenceOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DalEntrapmentEvidenceOpsCount;
+                    break;
                 case "numDoubleBaking":
                     foreach (var row in rows)
                         result[j++] = row.DoubleBakingCount;
@@ -1054,6 +1074,10 @@ namespace Tzkt.Api.Repositories
                 case "numEndorsingRewards":
                     foreach (var row in rows)
                         result[j++] = row.EndorsingRewardsCount;
+                    break;
+                case "dalAttestationRewardsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DalAttestationRewardsCount;
                     break;
                 case "numOriginations":
                     foreach (var row in rows)

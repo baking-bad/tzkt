@@ -72,6 +72,11 @@
         /// </summary>
         public long VdfRevelationReward { get; set; }
 
+        /// <summary>
+        /// Reward for dal attestation in this cycle (micro tez)
+        /// </summary>
+        public long DalAttestationRewardPerShard { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the end of the cycle

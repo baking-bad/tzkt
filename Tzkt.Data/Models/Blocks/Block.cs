@@ -110,6 +110,8 @@ namespace Tzkt.Data.Models
 
         public List<SetDelegateParametersOperation> SetDelegateParametersOps { get; set; }
         public List<DalPublishCommitmentOperation> DalPublishCommitmentOps { get; set; }
+
+        public List<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
         #endregion
     }
 

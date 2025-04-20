@@ -12,7 +12,10 @@ namespace Tzkt.Sync.Protocols.Proto21
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             if (protocol.ConsensusRightsDelay == 3)
+            {
                 protocol.ConsensusRightsDelay = 2;
+                protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
+            }
 
             if (protocol.TimeBetweenBlocks >= 5)
             {
@@ -89,19 +92,19 @@ namespace Tzkt.Sync.Protocols.Proto21
             foreach (var op in await Db.DoubleBakingOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
-                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.MaxSlashingPeriod - 1);
+                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
 
             foreach (var op in await Db.DoubleEndorsingOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
-                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.MaxSlashingPeriod - 1);
+                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
 
             foreach (var op in await Db.DoublePreendorsingOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
-                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.MaxSlashingPeriod - 1);
+                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
         }
 

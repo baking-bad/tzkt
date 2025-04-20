@@ -56,6 +56,9 @@ namespace Tzkt.Api
         public const string SetDelegateParameters = "set_delegate_parameters";
         public const string DalPublishCommitment = "dal_publish_commitment";
 
+        public const string DalEntrapmentEvidence = "dal_entrapment_evidence";
+        public const string DalAttestationReward = "dal_attestation_reward";
+
         public static bool TryParse(string type, out Operations res)
         {
             res = Operations.None;
@@ -104,6 +107,8 @@ namespace Tzkt.Api
                 case Autostaking: res = Operations.Autostaking; break;
                 case SetDelegateParameters: res = Operations.SetDelegateParameters; break;
                 case DalPublishCommitment: res = Operations.DalPublishCommitment; break;
+                case DalEntrapmentEvidence: res = Operations.DalEntrapmentEvidence; break;
+                case DalAttestationReward: res = Operations.DalAttestationReward; break;
                 default: return false;
             }
             return true;
@@ -147,7 +152,9 @@ namespace Tzkt.Api
             SmartRollupRecoverBond,
             SmartRollupRefute,
             SetDelegateParameters,
-            DalPublishCommitment
+            DalPublishCommitment,
+            DalEntrapmentEvidence,
+            DalAttestationReward,
         };
     }
 }

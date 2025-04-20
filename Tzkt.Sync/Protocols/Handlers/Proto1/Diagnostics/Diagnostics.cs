@@ -107,12 +107,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await TestCycle(state, cycle);
                 
                 await TestParticipation(state);
+                await TestDalParticipation(state);
                 await TestBakersList(state);
                 await TestActiveBakersList(state);
             }
         }
 
         protected virtual Task TestParticipation(AppState state) => Task.CompletedTask;
+
+        protected virtual Task TestDalParticipation(AppState state) => Task.CompletedTask;
         
         protected virtual Task TestCycle(AppState state, Cycle cycle) => Task.CompletedTask;
 
