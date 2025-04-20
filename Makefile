@@ -67,27 +67,27 @@ ghost-stop:
 ghost-db-start:
 	docker-compose -f docker-compose.ghost.yml up -d ghost-db
 
-paris-init:
-	docker-compose -f docker-compose.paris.yml up   -d paris-db
-	docker-compose -f docker-compose.paris.yml exec -T paris-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.paris.yml exec -T paris-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.paris.yml exec -T paris-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.paris.yml exec -T paris-db apt update
-	docker-compose -f docker-compose.paris.yml exec -T paris-db apt install -y wget
-	docker-compose -f docker-compose.paris.yml exec -T paris-db wget "https://snapshots.tzkt.io/tzkt_v1.14_parisnet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.paris.yml exec -T paris-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.paris.yml exec -T paris-db rm tzkt_db.backup
-	docker-compose -f docker-compose.paris.yml exec -T paris-db apt autoremove --purge -y wget
+rio-init:
+	docker-compose -f docker-compose.rio.yml up   -d rio-db
+	docker-compose -f docker-compose.rio.yml exec -T rio-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.rio.yml exec -T rio-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.rio.yml exec -T rio-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.rio.yml exec -T rio-db apt update
+	docker-compose -f docker-compose.rio.yml exec -T rio-db apt install -y wget
+	docker-compose -f docker-compose.rio.yml exec -T rio-db wget "https://snapshots.tzkt.io/tzkt_v1.14_rionet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.rio.yml exec -T rio-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.rio.yml exec -T rio-db rm tzkt_db.backup
+	docker-compose -f docker-compose.rio.yml exec -T rio-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-paris-start:
-	docker-compose -f docker-compose.paris.yml up -d
+rio-start:
+	docker-compose -f docker-compose.rio.yml up -d
 
-paris-stop:
-	docker-compose -f docker-compose.paris.yml down
+rio-stop:
+	docker-compose -f docker-compose.rio.yml down
 
-paris-db-start:
-	docker-compose -f docker-compose.paris.yml up -d paris-db
+rio-db-start:
+	docker-compose -f docker-compose.rio.yml up -d rio-db
 reset:
-	docker-compose -f docker-compose.paris.yml down --volumes
-	docker-compose -f docker-compose.paris.yml up -d paris-db
+	docker-compose -f docker-compose.rio.yml down --volumes
+	docker-compose -f docker-compose.rio.yml up -d rio-db

@@ -78,9 +78,8 @@ sudo apt -y install postgresql-16 postgresql-contrib-16
 ````
 sudo -u postgres psql
 
-postgres=# create database tzkt_db;
 postgres=# create user tzkt with encrypted password 'qwerty';
-postgres=# grant all privileges on database tzkt_db to tzkt;
+postgres=# create database tzkt_db owner tzkt;
 postgres=# \q
 ````
 
@@ -99,15 +98,6 @@ sudo -u postgres pg_restore -c --if-exists -v -1 -d tzkt_db /tmp/tzkt_db.backup
 Notes:
 - to speed up the restoration replace `-1` with `-e -j {n}`, where `{n}` is a number of parallel workers (e.g., `-e -j 8`);
 - in case of Docker use you may need to add `-U tzkt` parameter.
-
-#### Grant access to the database to our user
-
-````
-sudo -u postgres psql tzkt_db
-
-tzkt_db=# grant all privileges on all tables in schema public to tzkt;
-tzkt_db=# \q
-````
 
 ---
 
@@ -268,9 +258,9 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Ghostnet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Parisnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_parisnet.backup
-   - RPC node: https://rpc.tzkt.io/parisnet/
+ - Rionet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_rionet.backup
+   - RPC node: https://rpc.tzkt.io/rionet/
 
 ### Testnets & docker
 
