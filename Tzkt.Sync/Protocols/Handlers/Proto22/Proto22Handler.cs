@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string VersionName => "next_022";
+        public override string VersionName => "r022_022";
         public override int VersionNumber => 22;
 
         public Proto22Handler(TezosNode node, TzktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto22Handler> logger, IMetrics metrics)

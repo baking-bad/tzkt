@@ -63,6 +63,21 @@ namespace Tzkt.Sync.Protocols.Proto22
             await MigrateVotingPeriods(state, nextProto);
             var cycles = await MigrateCycles(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto, cycles);
+
+            Cache.BakerCycles.Reset();
+            Cache.BakingRights.Reset();
+        }
+
+        protected override async Task RevertContext(AppState state)
+        {
+            var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
+            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
+
+            await MigrateSlashing(state, prevProto);
+            MigrateBakers(state, nextProto, prevProto);
+
+            Cache.BakerCycles.Reset();
+            Cache.BakingRights.Reset();
         }
 
         async Task MigrateSlashing(AppState state, Protocol nextProto)
