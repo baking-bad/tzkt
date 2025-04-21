@@ -54,6 +54,9 @@ namespace Mvkt.Sync.Protocols.Proto20
 
             #region level info
             Cycle = metadata.Required("level_info").RequiredInt32("cycle");
+            Console.WriteLine(Cycle)
+            Console.WriteLine(Protocol.GetCycle(Level))
+            Console.WriteLine(Level)
             if (Cycle != Protocol.GetCycle(Level))
                 throw new ValidationException($"invalid block cycle", true);
             #endregion
