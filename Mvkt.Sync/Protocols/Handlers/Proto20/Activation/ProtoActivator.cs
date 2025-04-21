@@ -14,26 +14,9 @@ namespace Mvkt.Sync.Protocols.Proto20
         
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
-        protected override async Task ActivateContext(AppState state)
-        {
-            var block = await Cache.Blocks.CurrentAsync();
-            await OriginateContract(block, ProtocolTreasuryContract);
-        }
-
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             // nothing to upgrade
-        }
-
-        protected override async Task MigrateContext(AppState state)
-        {
-            var block = await Cache.Blocks.CurrentAsync();
-            await OriginateContract(block, ProtocolTreasuryContract);
-        }        
-
-        protected override async Task RevertContext(AppState state)
-        {
-            await RemoveContract(ProtocolTreasuryContract);
         }
 
         async Task OriginateContract(Block block, string address)
