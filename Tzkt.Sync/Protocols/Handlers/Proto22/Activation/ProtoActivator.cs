@@ -33,14 +33,12 @@ namespace Tzkt.Sync.Protocols.Proto22
                 protocol.BlocksPerCycle > 10_800 && protocol.TimeBetweenBlocks == 8)
             {
                 protocol.BlocksPerCycle = 10_800;
-                protocol.BlocksPerCommitment = protocol.BlocksPerCycle / (prev.BlocksPerCycle / prev.BlocksPerCommitment);
                 protocol.BlocksPerVoting = protocol.BlocksPerCycle * 14;
                 protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
             }
             else if (protocol.BlocksPerCycle > 10_800 && protocol.TimeBetweenBlocks == 4)
             {
                 protocol.BlocksPerCycle = 10_800;
-                protocol.BlocksPerCommitment = protocol.BlocksPerCycle / (prev.BlocksPerCycle / prev.BlocksPerCommitment);
                 protocol.BlocksPerVoting = protocol.BlocksPerCycle * (prev.BlocksPerVoting / prev.BlocksPerCycle);
                 protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
             }

@@ -14,7 +14,7 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20250206170455_Proto22")]
+    [Migration("20250206170555_Rio")]
     partial class Proto22
     {
         /// <inheritdoc />

@@ -12,10 +12,9 @@ namespace Tzkt.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "MaxSlashingPeriod",
-                table: "Protocols",
-                newName: "ToleratedInactivityPeriod");
+                table: "Protocols");
 
             migrationBuilder.AddColumn<int>(
                 name: "DenunciationPeriod",
@@ -24,12 +23,11 @@ namespace Tzkt.Data.Migrations
                 nullable: false,
                 defaultValue: 0);
 
-            migrationBuilder.AddColumn<int>(
-                name: "NumberOfShards",
-                table: "Protocols",
-                type: "integer",
-                nullable: false,
-                defaultValue: 0);
+            migrationBuilder.Sql("""
+                UPDATE  "Protocols"
+                SET     "DenunciationPeriod" = 1
+                WHERE   "Version" >= 12
+                """);
 
             migrationBuilder.AddColumn<int>(
                 name: "SlashingDelay",
@@ -37,6 +35,38 @@ namespace Tzkt.Data.Migrations
                 type: "integer",
                 nullable: false,
                 defaultValue: 0);
+
+            migrationBuilder.Sql("""
+                UPDATE  "Protocols"
+                SET     "SlashingDelay" = 1
+                WHERE   "Version" >= 12
+                """);
+
+            migrationBuilder.AddColumn<int>(
+                name: "NumberOfShards",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.Sql("""
+                UPDATE  "Protocols"
+                SET     "NumberOfShards" = 512
+                WHERE   "Version" >= 19
+                """);
+
+            migrationBuilder.AddColumn<int>(
+                name: "ToleratedInactivityPeriod",
+                table: "Protocols",
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.Sql("""
+                UPDATE  "Protocols"
+                SET     "ToleratedInactivityPeriod" = "ConsensusRightsDelay" + 1
+                WHERE   "Version" >= 1
+                """);
 
             migrationBuilder.AddColumn<long>(
                 name: "DalAttestationRewardPerShard",
@@ -119,6 +149,13 @@ namespace Tzkt.Data.Migrations
                 table: "Accounts",
                 type: "integer",
                 nullable: true);
+
+            migrationBuilder.Sql("""
+                UPDATE  "Accounts"
+                SET     "DalAttestationRewardsCount" = 0,
+                        "DalEntrapmentEvidenceOpsCount" = 0
+                WHERE   "Type" = 1
+                """);
 
             migrationBuilder.CreateTable(
                 name: "DalAttestationRewardOps",
@@ -213,18 +250,6 @@ namespace Tzkt.Data.Migrations
                 name: "DalEntrapmentEvidenceOps");
 
             migrationBuilder.DropColumn(
-                name: "DenunciationPeriod",
-                table: "Protocols");
-
-            migrationBuilder.DropColumn(
-                name: "NumberOfShards",
-                table: "Protocols");
-
-            migrationBuilder.DropColumn(
-                name: "SlashingDelay",
-                table: "Protocols");
-
-            migrationBuilder.DropColumn(
                 name: "DalAttestationRewardPerShard",
                 table: "Cycles");
 
@@ -272,10 +297,34 @@ namespace Tzkt.Data.Migrations
                 name: "DalEntrapmentEvidenceOpsCount",
                 table: "Accounts");
 
-            migrationBuilder.RenameColumn(
+            migrationBuilder.DropColumn(
                 name: "ToleratedInactivityPeriod",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "NumberOfShards",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "SlashingDelay",
+                table: "Protocols");
+
+            migrationBuilder.DropColumn(
+                name: "DenunciationPeriod",
+                table: "Protocols");
+
+            migrationBuilder.AddColumn<int>(
+                name: "MaxSlashingPeriod",
                 table: "Protocols",
-                newName: "MaxSlashingPeriod");
+                type: "integer",
+                nullable: false,
+                defaultValue: 0);
+
+            migrationBuilder.Sql("""
+                UPDATE  "Protocols"
+                SET     "MaxSlashingPeriod" = 2
+                WHERE   "Version" >= 12
+                """);
         }
     }
 }
