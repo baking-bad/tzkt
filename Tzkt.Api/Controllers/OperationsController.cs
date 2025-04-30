@@ -4722,7 +4722,7 @@ namespace Tzkt.Api.Controllers
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse

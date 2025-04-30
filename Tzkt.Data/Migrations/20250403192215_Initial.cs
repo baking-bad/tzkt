@@ -15,21 +15,160 @@ namespace Tzkt.Data.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
+                name: "Accounts",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Address = table.Column<string>(type: "character varying(37)", maxLength: 37, nullable: false),
+                    Type = table.Column<byte>(type: "smallint", nullable: false),
+                    FirstLevel = table.Column<int>(type: "integer", nullable: false),
+                    LastLevel = table.Column<int>(type: "integer", nullable: false),
+                    Balance = table.Column<long>(type: "bigint", nullable: false),
+                    RollupBonds = table.Column<long>(type: "bigint", nullable: false),
+                    SmartRollupBonds = table.Column<long>(type: "bigint", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    DelegateId = table.Column<int>(type: "integer", nullable: true),
+                    DelegationLevel = table.Column<int>(type: "integer", nullable: true),
+                    Staked = table.Column<bool>(type: "boolean", nullable: false),
+                    ContractsCount = table.Column<int>(type: "integer", nullable: false),
+                    RollupsCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupsCount = table.Column<int>(type: "integer", nullable: false),
+                    ActiveTokensCount = table.Column<int>(type: "integer", nullable: false),
+                    TokenBalancesCount = table.Column<int>(type: "integer", nullable: false),
+                    TokenTransfersCount = table.Column<int>(type: "integer", nullable: false),
+                    ActiveTicketsCount = table.Column<int>(type: "integer", nullable: false),
+                    TicketBalancesCount = table.Column<int>(type: "integer", nullable: false),
+                    TicketTransfersCount = table.Column<int>(type: "integer", nullable: false),
+                    DelegationsCount = table.Column<int>(type: "integer", nullable: false),
+                    OriginationsCount = table.Column<int>(type: "integer", nullable: false),
+                    TransactionsCount = table.Column<int>(type: "integer", nullable: false),
+                    RevealsCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupOriginationCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupSubmitBatchCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupCommitCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupReturnBondCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupFinalizeCommitmentCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupRemoveCommitmentCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupRejectionCount = table.Column<int>(type: "integer", nullable: false),
+                    TxRollupDispatchTicketsCount = table.Column<int>(type: "integer", nullable: false),
+                    TransferTicketCount = table.Column<int>(type: "integer", nullable: false),
+                    IncreasePaidStorageCount = table.Column<int>(type: "integer", nullable: false),
+                    UpdateConsensusKeyCount = table.Column<int>(type: "integer", nullable: false),
+                    DrainDelegateCount = table.Column<int>(type: "integer", nullable: false),
+                    MigrationsCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupAddMessagesCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupCementCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupExecuteCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupOriginateCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupPublishCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupRecoverBondCount = table.Column<int>(type: "integer", nullable: false),
+                    SmartRollupRefuteCount = table.Column<int>(type: "integer", nullable: false),
+                    RefutationGamesCount = table.Column<int>(type: "integer", nullable: false),
+                    ActiveRefutationGamesCount = table.Column<int>(type: "integer", nullable: false),
+                    Extras = table.Column<string>(type: "jsonb", nullable: true),
+                    Metadata = table.Column<string>(type: "jsonb", nullable: true),
+                    Kind = table.Column<byte>(type: "smallint", nullable: true),
+                    TypeHash = table.Column<int>(type: "integer", nullable: true),
+                    CodeHash = table.Column<int>(type: "integer", nullable: true),
+                    Tags = table.Column<int>(type: "integer", nullable: true),
+                    TokensCount = table.Column<int>(type: "integer", nullable: true),
+                    EventsCount = table.Column<int>(type: "integer", nullable: true),
+                    TicketsCount = table.Column<int>(type: "integer", nullable: true),
+                    CreatorId = table.Column<int>(type: "integer", nullable: true),
+                    PvmKind = table.Column<int>(type: "integer", nullable: true),
+                    ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: true),
+                    GenesisCommitment = table.Column<string>(type: "text", nullable: true),
+                    LastCommitment = table.Column<string>(type: "text", nullable: true),
+                    InboxLevel = table.Column<int>(type: "integer", nullable: true),
+                    TotalStakers = table.Column<int>(type: "integer", nullable: true),
+                    ActiveStakers = table.Column<int>(type: "integer", nullable: true),
+                    ExecutedCommitments = table.Column<int>(type: "integer", nullable: true),
+                    CementedCommitments = table.Column<int>(type: "integer", nullable: true),
+                    PendingCommitments = table.Column<int>(type: "integer", nullable: true),
+                    RefutedCommitments = table.Column<int>(type: "integer", nullable: true),
+                    OrphanCommitments = table.Column<int>(type: "integer", nullable: true),
+                    Revealed = table.Column<bool>(type: "boolean", nullable: true),
+                    PublicKey = table.Column<string>(type: "text", nullable: true),
+                    StakedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true),
+                    UnstakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    UnstakedBakerId = table.Column<int>(type: "integer", nullable: true),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    ActivationsCount = table.Column<int>(type: "integer", nullable: true),
+                    RegisterConstantsCount = table.Column<int>(type: "integer", nullable: true),
+                    SetDepositsLimitsCount = table.Column<int>(type: "integer", nullable: true),
+                    StakingOpsCount = table.Column<int>(type: "integer", nullable: true),
+                    SetDelegateParametersOpsCount = table.Column<int>(type: "integer", nullable: true),
+                    DalPublishCommitmentOpsCount = table.Column<int>(type: "integer", nullable: true),
+                    ActivationLevel = table.Column<int>(type: "integer", nullable: true),
+                    DeactivationLevel = table.Column<int>(type: "integer", nullable: true),
+                    StakingBalance = table.Column<long>(type: "bigint", nullable: true),
+                    DelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
+                    OwnStakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    IssuedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true),
+                    StakersCount = table.Column<int>(type: "integer", nullable: true),
+                    ExternalUnstakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    RoundingError = table.Column<long>(type: "bigint", nullable: true),
+                    FrozenDepositLimit = table.Column<long>(type: "bigint", nullable: true),
+                    LimitOfStakingOverBaking = table.Column<long>(type: "bigint", nullable: true),
+                    EdgeOfBakingOverStaking = table.Column<long>(type: "bigint", nullable: true),
+                    BlocksCount = table.Column<int>(type: "integer", nullable: true),
+                    EndorsementsCount = table.Column<int>(type: "integer", nullable: true),
+                    PreendorsementsCount = table.Column<int>(type: "integer", nullable: true),
+                    BallotsCount = table.Column<int>(type: "integer", nullable: true),
+                    ProposalsCount = table.Column<int>(type: "integer", nullable: true),
+                    DalEntrapmentEvidenceOpsCount = table.Column<int>(type: "integer", nullable: true),
+                    DoubleBakingCount = table.Column<int>(type: "integer", nullable: true),
+                    DoubleEndorsingCount = table.Column<int>(type: "integer", nullable: true),
+                    DoublePreendorsingCount = table.Column<int>(type: "integer", nullable: true),
+                    NonceRevelationsCount = table.Column<int>(type: "integer", nullable: true),
+                    VdfRevelationsCount = table.Column<int>(type: "integer", nullable: true),
+                    RevelationPenaltiesCount = table.Column<int>(type: "integer", nullable: true),
+                    EndorsingRewardsCount = table.Column<int>(type: "integer", nullable: true),
+                    DalAttestationRewardsCount = table.Column<int>(type: "integer", nullable: true),
+                    AutostakingOpsCount = table.Column<int>(type: "integer", nullable: true),
+                    SoftwareId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Accounts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ActivationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    Balance = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ActivationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AppState",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Chain = table.Column<string>(type: "text", nullable: true),
-                    ChainId = table.Column<string>(type: "text", nullable: true),
+                    Chain = table.Column<string>(type: "text", nullable: false),
+                    ChainId = table.Column<string>(type: "text", nullable: false),
                     KnownHead = table.Column<int>(type: "integer", nullable: false),
                     LastSync = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Cycle = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    Protocol = table.Column<string>(type: "text", nullable: true),
-                    NextProtocol = table.Column<string>(type: "text", nullable: true),
-                    Hash = table.Column<string>(type: "text", nullable: true),
+                    Protocol = table.Column<string>(type: "text", nullable: false),
+                    NextProtocol = table.Column<string>(type: "text", nullable: false),
+                    Hash = table.Column<string>(type: "text", nullable: false),
                     VotingEpoch = table.Column<int>(type: "integer", nullable: false),
                     VotingPeriod = table.Column<int>(type: "integer", nullable: false),
                     PendingDelegateParameters = table.Column<int>(type: "integer", nullable: false),
@@ -45,12 +184,15 @@ namespace Tzkt.Data.Migrations
                     SmartRollupCommitmentCounter = table.Column<int>(type: "integer", nullable: false),
                     RefutationGameCounter = table.Column<int>(type: "integer", nullable: false),
                     InboxMessageCounter = table.Column<int>(type: "integer", nullable: false),
+                    ProposalCounter = table.Column<int>(type: "integer", nullable: false),
+                    SoftwareCounter = table.Column<int>(type: "integer", nullable: false),
                     CommitmentsCount = table.Column<int>(type: "integer", nullable: false),
                     BlocksCount = table.Column<int>(type: "integer", nullable: false),
                     ProtocolsCount = table.Column<int>(type: "integer", nullable: false),
                     ActivationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     BallotOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DelegationOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    DalEntrapmentEvidenceOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DoubleBakingOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DoubleEndorsingOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DoublePreendorsingOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -66,6 +208,7 @@ namespace Tzkt.Data.Migrations
                     TransactionOpsCount = table.Column<int>(type: "integer", nullable: false),
                     RegisterConstantOpsCount = table.Column<int>(type: "integer", nullable: false),
                     EndorsingRewardOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    DalAttestationRewardOpsCount = table.Column<int>(type: "integer", nullable: false),
                     SetDepositsLimitOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TxRollupOriginationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TxRollupSubmitBatchOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -90,7 +233,6 @@ namespace Tzkt.Data.Migrations
                     SmartRollupRecoverBondOpsCount = table.Column<int>(type: "integer", nullable: false),
                     SmartRollupRefuteOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DalPublishCommitmentOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    ProposalsCount = table.Column<int>(type: "integer", nullable: false),
                     CyclesCount = table.Column<int>(type: "integer", nullable: false),
                     ConstantsCount = table.Column<int>(type: "integer", nullable: false),
                     TokensCount = table.Column<int>(type: "integer", nullable: false),
@@ -111,7 +253,7 @@ namespace Tzkt.Data.Migrations
                     QuoteKrw = table.Column<double>(type: "double precision", nullable: false),
                     QuoteEth = table.Column<double>(type: "double precision", nullable: false),
                     QuoteGbp = table.Column<double>(type: "double precision", nullable: false),
-                    DomainsNameRegistry = table.Column<string>(type: "text", nullable: true),
+                    DomainsNameRegistry = table.Column<string>(type: "text", nullable: false),
                     DomainsLevel = table.Column<int>(type: "integer", nullable: false),
                     Extras = table.Column<string>(type: "jsonb", nullable: true)
                 },
@@ -127,9 +269,10 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<long>(type: "bigint", nullable: false),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
                     StakingUpdatesCount = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
@@ -171,6 +314,12 @@ namespace Tzkt.Data.Migrations
                     EndorsementRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
                     EndorsementRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
                     EndorsementRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    FutureDalAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
+                    MissedDalAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
+                    DalAttestationRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    DalAttestationRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    DalAttestationRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    DalAttestationRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
                     BlockFees = table.Column<long>(type: "bigint", nullable: false),
                     MissedBlockFees = table.Column<long>(type: "bigint", nullable: false),
                     DoubleBakingRewards = table.Column<long>(type: "bigint", nullable: false),
@@ -198,7 +347,8 @@ namespace Tzkt.Data.Migrations
                     NonceRevelationRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
                     NonceRevelationLosses = table.Column<long>(type: "bigint", nullable: false),
                     ExpectedBlocks = table.Column<double>(type: "double precision", nullable: false),
-                    ExpectedEndorsements = table.Column<double>(type: "double precision", nullable: false)
+                    ExpectedEndorsements = table.Column<double>(type: "double precision", nullable: false),
+                    ExpectedDalShards = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -209,19 +359,40 @@ namespace Tzkt.Data.Migrations
                 name: "BakingRights",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Cycle = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     BakerId = table.Column<int>(type: "integer", nullable: false),
-                    Type = table.Column<byte>(type: "smallint", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Type = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     Round = table.Column<int>(type: "integer", nullable: true),
                     Slots = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BakingRights", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "BallotOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Epoch = table.Column<int>(type: "integer", nullable: false),
+                    Period = table.Column<int>(type: "integer", nullable: false),
+                    ProposalId = table.Column<int>(type: "integer", nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    VotingPower = table.Column<long>(type: "bigint", nullable: false),
+                    Vote = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BallotOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -235,11 +406,11 @@ namespace Tzkt.Data.Migrations
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     Updates = table.Column<int>(type: "integer", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
-                    KeyHash = table.Column<string>(type: "character(54)", fixedLength: true, maxLength: 54, nullable: true),
-                    RawKey = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonKey = table.Column<string>(type: "jsonb", nullable: true),
-                    RawValue = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonValue = table.Column<string>(type: "jsonb", nullable: true)
+                    KeyHash = table.Column<string>(type: "character(54)", fixedLength: true, maxLength: 54, nullable: false),
+                    RawKey = table.Column<byte[]>(type: "bytea", nullable: false),
+                    JsonKey = table.Column<string>(type: "jsonb", nullable: false),
+                    RawValue = table.Column<byte[]>(type: "bytea", nullable: false),
+                    JsonValue = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -254,10 +425,10 @@ namespace Tzkt.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Ptr = table.Column<int>(type: "integer", nullable: false),
                     ContractId = table.Column<int>(type: "integer", nullable: false),
-                    StoragePath = table.Column<string>(type: "text", nullable: true),
+                    StoragePath = table.Column<string>(type: "text", nullable: false),
                     Active = table.Column<bool>(type: "boolean", nullable: false),
-                    KeyType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    ValueType = table.Column<byte[]>(type: "bytea", nullable: true),
+                    KeyType = table.Column<byte[]>(type: "bytea", nullable: false),
+                    ValueType = table.Column<byte[]>(type: "bytea", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
                     TotalKeys = table.Column<int>(type: "integer", nullable: false),
@@ -277,8 +448,8 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     BigMapPtr = table.Column<int>(type: "integer", nullable: false),
-                    Action = table.Column<int>(type: "integer", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
+                    Action = table.Column<int>(type: "integer", nullable: false),
                     OriginationId = table.Column<long>(type: "bigint", nullable: true),
                     TransactionId = table.Column<long>(type: "bigint", nullable: true),
                     MigrationId = table.Column<long>(type: "bigint", nullable: true),
@@ -289,6 +460,49 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_BigMapUpdates", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Blocks",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Cycle = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Hash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    ProtoCode = table.Column<int>(type: "integer", nullable: false),
+                    SoftwareId = table.Column<int>(type: "integer", nullable: true),
+                    PayloadRound = table.Column<int>(type: "integer", nullable: false),
+                    BlockRound = table.Column<int>(type: "integer", nullable: false),
+                    Validations = table.Column<int>(type: "integer", nullable: false),
+                    Events = table.Column<int>(type: "integer", nullable: false),
+                    Operations = table.Column<long>(type: "bigint", nullable: false),
+                    Deposit = table.Column<long>(type: "bigint", nullable: false),
+                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    BonusDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    BonusStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    BonusStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    BonusStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    Fees = table.Column<long>(type: "bigint", nullable: false),
+                    ProposerId = table.Column<int>(type: "integer", nullable: true),
+                    ProducerId = table.Column<int>(type: "integer", nullable: true),
+                    RevelationId = table.Column<long>(type: "bigint", nullable: true),
+                    ResetBakerDeactivation = table.Column<int>(type: "integer", nullable: true),
+                    ResetProposerDeactivation = table.Column<int>(type: "integer", nullable: true),
+                    LBToggle = table.Column<bool>(type: "boolean", nullable: true),
+                    LBToggleEma = table.Column<int>(type: "integer", nullable: false),
+                    AIToggle = table.Column<bool>(type: "boolean", nullable: true),
+                    AIToggleEma = table.Column<int>(type: "integer", nullable: false),
+                    Extras = table.Column<string>(type: "jsonb", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Blocks", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -316,20 +530,123 @@ namespace Tzkt.Data.Migrations
                     Index = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
+                    Seed = table.Column<byte[]>(type: "bytea", fixedLength: true, maxLength: 32, nullable: false),
                     SnapshotLevel = table.Column<int>(type: "integer", nullable: false),
                     TotalBakers = table.Column<int>(type: "integer", nullable: false),
                     TotalBakingPower = table.Column<long>(type: "bigint", nullable: false),
-                    Seed = table.Column<byte[]>(type: "bytea", fixedLength: true, maxLength: 32, nullable: false),
                     BlockReward = table.Column<long>(type: "bigint", nullable: false),
                     BlockBonusPerSlot = table.Column<long>(type: "bigint", nullable: false),
                     EndorsementRewardPerSlot = table.Column<long>(type: "bigint", nullable: false),
                     NonceRevelationReward = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationReward = table.Column<long>(type: "bigint", nullable: false),
+                    DalAttestationRewardPerShard = table.Column<long>(type: "bigint", nullable: false),
                     MaxBlockReward = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Cycles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DalAttestationRewardOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    Expected = table.Column<long>(type: "bigint", nullable: false),
+                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DalAttestationRewardOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DalEntrapmentEvidenceOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccuserId = table.Column<int>(type: "integer", nullable: false),
+                    OffenderId = table.Column<int>(type: "integer", nullable: false),
+                    TrapLevel = table.Column<int>(type: "integer", nullable: false),
+                    TrapSlotIndex = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DalEntrapmentEvidenceOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DalPublishCommitmentOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Slot = table.Column<int>(type: "integer", nullable: false),
+                    Commitment = table.Column<string>(type: "text", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DalPublishCommitmentOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DelegationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
+                    DelegateId = table.Column<int>(type: "integer", nullable: true),
+                    PrevDelegateId = table.Column<int>(type: "integer", nullable: true),
+                    PrevDelegationLevel = table.Column<int>(type: "integer", nullable: true),
+                    PrevDeactivationLevel = table.Column<int>(type: "integer", nullable: true),
+                    Amount = table.Column<long>(type: "bigint", nullable: false),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true),
+                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
+                    Nonce = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -356,8 +673,8 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    Name = table.Column<string>(type: "text", nullable: true),
-                    Owner = table.Column<string>(type: "text", nullable: true),
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Owner = table.Column<string>(type: "text", nullable: false),
                     Address = table.Column<string>(type: "text", nullable: true),
                     Reverse = table.Column<bool>(type: "boolean", nullable: false),
                     Expiration = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -368,6 +685,121 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Domains", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoubleBakingOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
+                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
+                    AccuserId = table.Column<int>(type: "integer", nullable: false),
+                    OffenderId = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoubleBakingOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoubleEndorsingOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
+                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
+                    AccuserId = table.Column<int>(type: "integer", nullable: false),
+                    OffenderId = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoubleEndorsingOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DoublePreendorsingOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
+                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
+                    AccuserId = table.Column<int>(type: "integer", nullable: false),
+                    OffenderId = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
+                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DoublePreendorsingOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "DrainDelegateOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DelegateId = table.Column<int>(type: "integer", nullable: false),
+                    TargetId = table.Column<int>(type: "integer", nullable: false),
+                    Amount = table.Column<long>(type: "bigint", nullable: false),
+                    Fee = table.Column<long>(type: "bigint", nullable: false),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DrainDelegateOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "EndorsementOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DelegateId = table.Column<int>(type: "integer", nullable: false),
+                    Slots = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    Deposit = table.Column<long>(type: "bigint", nullable: false),
+                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -430,12 +862,162 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "IncreasePaidStorageOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ContractId = table.Column<int>(type: "integer", nullable: true),
+                    Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_IncreasePaidStorageOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "MigrationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    Kind = table.Column<int>(type: "integer", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    BalanceChange = table.Column<long>(type: "bigint", nullable: false),
+                    ScriptId = table.Column<int>(type: "integer", nullable: true),
+                    StorageId = table.Column<int>(type: "integer", nullable: true),
+                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_MigrationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "NonceRevelationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    RevealedLevel = table.Column<int>(type: "integer", nullable: false),
+                    RevealedCycle = table.Column<int>(type: "integer", nullable: false),
+                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    Nonce = table.Column<byte[]>(type: "bytea", fixedLength: true, maxLength: 32, nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "OriginationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
+                    DelegateId = table.Column<int>(type: "integer", nullable: true),
+                    ContractId = table.Column<int>(type: "integer", nullable: true),
+                    ContractCodeHash = table.Column<int>(type: "integer", nullable: true),
+                    ScriptId = table.Column<int>(type: "integer", nullable: true),
+                    Balance = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true),
+                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
+                    Nonce = table.Column<int>(type: "integer", nullable: true),
+                    StorageId = table.Column<int>(type: "integer", nullable: true),
+                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_OriginationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PreendorsementOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DelegateId = table.Column<int>(type: "integer", nullable: false),
+                    Slots = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PreendorsementOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ProposalOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Epoch = table.Column<int>(type: "integer", nullable: false),
+                    Period = table.Column<int>(type: "integer", nullable: false),
+                    ProposalId = table.Column<int>(type: "integer", nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    VotingPower = table.Column<long>(type: "bigint", nullable: false),
+                    Duplicated = table.Column<bool>(type: "boolean", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Proposals",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Hash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: true),
+                    Hash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
                     InitiatorId = table.Column<int>(type: "integer", nullable: false),
                     FirstPeriod = table.Column<int>(type: "integer", nullable: false),
                     LastPeriod = table.Column<int>(type: "integer", nullable: false),
@@ -495,7 +1077,8 @@ namespace Tzkt.Data.Migrations
                     ConsensusThreshold = table.Column<int>(type: "integer", nullable: false),
                     MinParticipationNumerator = table.Column<int>(type: "integer", nullable: false),
                     MinParticipationDenominator = table.Column<int>(type: "integer", nullable: false),
-                    MaxSlashingPeriod = table.Column<int>(type: "integer", nullable: false),
+                    DenunciationPeriod = table.Column<int>(type: "integer", nullable: false),
+                    SlashingDelay = table.Column<int>(type: "integer", nullable: false),
                     MaxDelegatedOverFrozenRatio = table.Column<int>(type: "integer", nullable: false),
                     MaxExternalOverOwnStakeRatio = table.Column<int>(type: "integer", nullable: false),
                     StakePowerMultiplier = table.Column<int>(type: "integer", nullable: false),
@@ -507,12 +1090,13 @@ namespace Tzkt.Data.Migrations
                     Dictator = table.Column<string>(type: "text", nullable: true),
                     DoubleBakingSlashedPercentage = table.Column<int>(type: "integer", nullable: false),
                     DoubleEndorsingSlashedPercentage = table.Column<int>(type: "integer", nullable: false),
+                    NumberOfShards = table.Column<int>(type: "integer", nullable: false),
+                    ToleratedInactivityPeriod = table.Column<int>(type: "integer", nullable: false),
                     Extras = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Protocols", x => x.Id);
-                    table.UniqueConstraint("AK_Protocols_Code", x => x.Code);
                 });
 
             migrationBuilder.CreateTable(
@@ -562,6 +1146,79 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "RegisterConstantOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Address = table.Column<string>(type: "character varying(54)", maxLength: 54, nullable: true),
+                    Value = table.Column<byte[]>(type: "bytea", nullable: true),
+                    Refs = table.Column<int>(type: "integer", nullable: true),
+                    Extras = table.Column<string>(type: "jsonb", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RegisterConstantOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RevealOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RevealOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "RevelationPenaltyOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    MissedLevel = table.Column<int>(type: "integer", nullable: false),
+                    Loss = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_RevelationPenaltyOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Scripts",
                 columns: table => new
                 {
@@ -572,9 +1229,9 @@ namespace Tzkt.Data.Migrations
                     OriginationId = table.Column<long>(type: "bigint", nullable: true),
                     MigrationId = table.Column<long>(type: "bigint", nullable: true),
                     Current = table.Column<bool>(type: "boolean", nullable: false),
-                    ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: true),
-                    StorageSchema = table.Column<byte[]>(type: "bytea", nullable: true),
-                    CodeSchema = table.Column<byte[]>(type: "bytea", nullable: true),
+                    ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: false),
+                    StorageSchema = table.Column<byte[]>(type: "bytea", nullable: false),
+                    CodeSchema = table.Column<byte[]>(type: "bytea", nullable: false),
                     Views = table.Column<byte[][]>(type: "bytea[]", nullable: true),
                     TypeHash = table.Column<int>(type: "integer", nullable: false),
                     CodeHash = table.Column<int>(type: "integer", nullable: false)
@@ -582,6 +1239,117 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Scripts", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SetDelegateParametersOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    LimitOfStakingOverBaking = table.Column<long>(type: "bigint", nullable: true),
+                    EdgeOfBakingOverStaking = table.Column<long>(type: "bigint", nullable: true),
+                    ActivationCycle = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SetDelegateParametersOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SetDepositsLimitOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Limit = table.Column<BigInteger>(type: "numeric", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SetDepositsLimitOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupAddMessagesOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    MessagesCount = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupAddMessagesOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupCementOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupCementOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -594,8 +1362,8 @@ namespace Tzkt.Data.Migrations
                     SmartRollupId = table.Column<int>(type: "integer", nullable: false),
                     PredecessorId = table.Column<int>(type: "integer", nullable: true),
                     InboxLevel = table.Column<int>(type: "integer", nullable: false),
-                    State = table.Column<string>(type: "text", nullable: true),
-                    Hash = table.Column<string>(type: "text", nullable: true),
+                    State = table.Column<string>(type: "text", nullable: false),
+                    Hash = table.Column<string>(type: "text", nullable: false),
                     Ticks = table.Column<long>(type: "bigint", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
@@ -610,17 +1378,171 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SmartRollupExecuteOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
+                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupExecuteOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupOriginateOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    PvmKind = table.Column<int>(type: "integer", nullable: false),
+                    Kernel = table.Column<byte[]>(type: "bytea", nullable: false),
+                    ParameterType = table.Column<byte[]>(type: "bytea", nullable: true),
+                    GenesisCommitment = table.Column<string>(type: "text", nullable: true),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupOriginateOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupPublishOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
+                    Bond = table.Column<long>(type: "bigint", nullable: false),
+                    BondStatus = table.Column<int>(type: "integer", nullable: true),
+                    Flags = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupPublishOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupRecoverBondOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    StakerId = table.Column<int>(type: "integer", nullable: true),
+                    Bond = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupRecoverBondOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "SmartRollupRefuteOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
+                    GameId = table.Column<int>(type: "integer", nullable: true),
+                    Move = table.Column<int>(type: "integer", nullable: false),
+                    GameStatus = table.Column<int>(type: "integer", nullable: false),
+                    DissectionStart = table.Column<long>(type: "bigint", nullable: true),
+                    DissectionEnd = table.Column<long>(type: "bigint", nullable: true),
+                    DissectionSteps = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SmartRollupRefuteOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SnapshotBalances",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "integer", nullable: false)
+                    Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     AccountId = table.Column<int>(type: "integer", nullable: false),
                     BakerId = table.Column<int>(type: "integer", nullable: false),
+                    DelegatorsCount = table.Column<int>(type: "integer", nullable: false),
                     OwnDelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
                     ExternalDelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    DelegatorsCount = table.Column<int>(type: "integer", nullable: false),
                     OwnStakedBalance = table.Column<long>(type: "bigint", nullable: false),
                     ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: false),
                     StakersCount = table.Column<int>(type: "integer", nullable: false)
@@ -636,15 +1558,46 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BlocksCount = table.Column<int>(type: "integer", nullable: false),
+                    ShortHash = table.Column<string>(type: "character(8)", fixedLength: true, maxLength: 8, nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
-                    ShortHash = table.Column<string>(type: "character(8)", fixedLength: true, maxLength: 8, nullable: false),
+                    BlocksCount = table.Column<int>(type: "integer", nullable: false),
                     Extras = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Software", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "StakingOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Action = table.Column<int>(type: "integer", nullable: false),
+                    RequestedAmount = table.Column<long>(type: "bigint", nullable: false),
+                    Amount = table.Column<long>(type: "bigint", nullable: true),
+                    BakerId = table.Column<int>(type: "integer", nullable: true),
+                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StakingOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -710,8 +1663,8 @@ namespace Tzkt.Data.Migrations
                     TransactionId = table.Column<long>(type: "bigint", nullable: true),
                     MigrationId = table.Column<long>(type: "bigint", nullable: true),
                     Current = table.Column<bool>(type: "boolean", nullable: false),
-                    RawValue = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonValue = table.Column<string>(type: "jsonb", nullable: true)
+                    RawValue = table.Column<byte[]>(type: "bytea", nullable: false),
+                    JsonValue = table.Column<string>(type: "jsonb", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -724,8 +1677,8 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TicketerId = table.Column<int>(type: "integer", nullable: false),
                     TicketId = table.Column<long>(type: "bigint", nullable: false),
+                    TicketerId = table.Column<int>(type: "integer", nullable: false),
                     AccountId = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
@@ -755,8 +1708,8 @@ namespace Tzkt.Data.Migrations
                     TotalSupply = table.Column<BigInteger>(type: "numeric", nullable: false),
                     TypeHash = table.Column<int>(type: "integer", nullable: false),
                     ContentHash = table.Column<int>(type: "integer", nullable: false),
-                    RawType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
+                    RawType = table.Column<byte[]>(type: "bytea", nullable: false),
+                    RawContent = table.Column<byte[]>(type: "bytea", nullable: false),
                     JsonContent = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -770,9 +1723,9 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    TicketerId = table.Column<int>(type: "integer", nullable: false),
                     TicketId = table.Column<long>(type: "bigint", nullable: false),
+                    TicketerId = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
                     FromId = table.Column<int>(type: "integer", nullable: true),
                     ToId = table.Column<int>(type: "integer", nullable: true),
@@ -791,8 +1744,8 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ContractId = table.Column<int>(type: "integer", nullable: false),
                     TokenId = table.Column<long>(type: "bigint", nullable: false),
+                    ContractId = table.Column<int>(type: "integer", nullable: false),
                     AccountId = table.Column<int>(type: "integer", nullable: false),
                     FirstLevel = table.Column<int>(type: "integer", nullable: false),
                     LastLevel = table.Column<int>(type: "integer", nullable: false),
@@ -825,7 +1778,8 @@ namespace Tzkt.Data.Migrations
                     TotalSupply = table.Column<BigInteger>(type: "numeric", nullable: false),
                     OwnerId = table.Column<int>(type: "integer", nullable: true),
                     IndexedAt = table.Column<int>(type: "integer", nullable: true),
-                    Metadata = table.Column<string>(type: "jsonb", nullable: true)
+                    Metadata = table.Column<string>(type: "jsonb", nullable: true),
+                    Value = table.Column<decimal>(type: "numeric", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -838,9 +1792,9 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    ContractId = table.Column<int>(type: "integer", nullable: false),
                     TokenId = table.Column<long>(type: "bigint", nullable: false),
+                    ContractId = table.Column<int>(type: "integer", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
                     FromId = table.Column<int>(type: "integer", nullable: true),
                     ToId = table.Column<int>(type: "integer", nullable: true),
@@ -852,6 +1806,308 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_TokenTransfers", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransactionOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
+                    TargetId = table.Column<int>(type: "integer", nullable: true),
+                    TargetCodeHash = table.Column<int>(type: "integer", nullable: true),
+                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
+                    Amount = table.Column<long>(type: "bigint", nullable: false),
+                    Entrypoint = table.Column<string>(type: "text", nullable: true),
+                    RawParameters = table.Column<byte[]>(type: "bytea", nullable: true),
+                    JsonParameters = table.Column<string>(type: "jsonb", nullable: true),
+                    InternalOperations = table.Column<short>(type: "smallint", nullable: true),
+                    InternalDelegations = table.Column<short>(type: "smallint", nullable: true),
+                    InternalOriginations = table.Column<short>(type: "smallint", nullable: true),
+                    InternalTransactions = table.Column<short>(type: "smallint", nullable: true),
+                    EventsCount = table.Column<int>(type: "integer", nullable: true),
+                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true),
+                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
+                    Nonce = table.Column<int>(type: "integer", nullable: true),
+                    StorageId = table.Column<int>(type: "integer", nullable: true),
+                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
+                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransactionOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TransferTicketOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    TargetId = table.Column<int>(type: "integer", nullable: true),
+                    TicketerId = table.Column<int>(type: "integer", nullable: true),
+                    Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
+                    RawType = table.Column<byte[]>(type: "bytea", nullable: true),
+                    RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
+                    JsonContent = table.Column<string>(type: "text", nullable: true),
+                    Entrypoint = table.Column<string>(type: "text", nullable: false),
+                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
+                    SubIds = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TransferTicketOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupCommitOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Bond = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupCommitOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupDispatchTicketsOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupDispatchTicketsOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupFinalizeCommitmentOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupFinalizeCommitmentOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupOriginationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupOriginationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupRejectionOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    CommitterId = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    Loss = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupRejectionOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupRemoveCommitmentOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupRemoveCommitmentOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupReturnBondOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Bond = table.Column<long>(type: "bigint", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupReturnBondOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TxRollupSubmitBatchOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    RollupId = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TxRollupSubmitBatchOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -875,6 +2131,58 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_UnstakeRequests", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "UpdateConsensusKeyOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ActivationCycle = table.Column<int>(type: "integer", nullable: false),
+                    PublicKey = table.Column<string>(type: "text", nullable: false),
+                    PublicKeyHash = table.Column<string>(type: "text", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
+                    SenderId = table.Column<int>(type: "integer", nullable: false),
+                    Counter = table.Column<int>(type: "integer", nullable: false),
+                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
+                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
+                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
+                    GasLimit = table.Column<int>(type: "integer", nullable: false),
+                    GasUsed = table.Column<int>(type: "integer", nullable: false),
+                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
+                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
+                    Status = table.Column<byte>(type: "smallint", nullable: false),
+                    Errors = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_UpdateConsensusKeyOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "VdfRevelationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    Cycle = table.Column<int>(type: "integer", nullable: false),
+                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    Solution = table.Column<byte[]>(type: "bytea", nullable: false),
+                    Proof = table.Column<byte[]>(type: "bytea", nullable: false),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_VdfRevelationOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -929,1875 +2237,10 @@ namespace Tzkt.Data.Migrations
                     table.PrimaryKey("PK_VotingSnapshots", x => x.Id);
                 });
 
-            migrationBuilder.CreateTable(
-                name: "Accounts",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Address = table.Column<string>(type: "character varying(37)", maxLength: 37, nullable: false),
-                    Type = table.Column<byte>(type: "smallint", nullable: false),
-                    FirstLevel = table.Column<int>(type: "integer", nullable: false),
-                    LastLevel = table.Column<int>(type: "integer", nullable: false),
-                    Balance = table.Column<long>(type: "bigint", nullable: false),
-                    RollupBonds = table.Column<long>(type: "bigint", nullable: false),
-                    SmartRollupBonds = table.Column<long>(type: "bigint", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    DelegateId = table.Column<int>(type: "integer", nullable: true),
-                    DelegationLevel = table.Column<int>(type: "integer", nullable: true),
-                    Staked = table.Column<bool>(type: "boolean", nullable: false),
-                    ContractsCount = table.Column<int>(type: "integer", nullable: false),
-                    RollupsCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupsCount = table.Column<int>(type: "integer", nullable: false),
-                    ActiveTokensCount = table.Column<int>(type: "integer", nullable: false),
-                    TokenBalancesCount = table.Column<int>(type: "integer", nullable: false),
-                    TokenTransfersCount = table.Column<int>(type: "integer", nullable: false),
-                    ActiveTicketsCount = table.Column<int>(type: "integer", nullable: false),
-                    TicketBalancesCount = table.Column<int>(type: "integer", nullable: false),
-                    TicketTransfersCount = table.Column<int>(type: "integer", nullable: false),
-                    DelegationsCount = table.Column<int>(type: "integer", nullable: false),
-                    OriginationsCount = table.Column<int>(type: "integer", nullable: false),
-                    TransactionsCount = table.Column<int>(type: "integer", nullable: false),
-                    RevealsCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupOriginationCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupSubmitBatchCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupCommitCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupReturnBondCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupFinalizeCommitmentCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupRemoveCommitmentCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupRejectionCount = table.Column<int>(type: "integer", nullable: false),
-                    TxRollupDispatchTicketsCount = table.Column<int>(type: "integer", nullable: false),
-                    TransferTicketCount = table.Column<int>(type: "integer", nullable: false),
-                    IncreasePaidStorageCount = table.Column<int>(type: "integer", nullable: false),
-                    UpdateConsensusKeyCount = table.Column<int>(type: "integer", nullable: false),
-                    DrainDelegateCount = table.Column<int>(type: "integer", nullable: false),
-                    MigrationsCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupAddMessagesCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupCementCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupExecuteCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupOriginateCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupPublishCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupRecoverBondCount = table.Column<int>(type: "integer", nullable: false),
-                    SmartRollupRefuteCount = table.Column<int>(type: "integer", nullable: false),
-                    RefutationGamesCount = table.Column<int>(type: "integer", nullable: false),
-                    ActiveRefutationGamesCount = table.Column<int>(type: "integer", nullable: false),
-                    Extras = table.Column<string>(type: "jsonb", nullable: true),
-                    Metadata = table.Column<string>(type: "jsonb", nullable: true),
-                    Kind = table.Column<byte>(type: "smallint", nullable: true),
-                    TypeHash = table.Column<int>(type: "integer", nullable: true),
-                    CodeHash = table.Column<int>(type: "integer", nullable: true),
-                    Tags = table.Column<int>(type: "integer", nullable: true),
-                    TokensCount = table.Column<int>(type: "integer", nullable: true),
-                    EventsCount = table.Column<int>(type: "integer", nullable: true),
-                    TicketsCount = table.Column<int>(type: "integer", nullable: true),
-                    Spendable = table.Column<bool>(type: "boolean", nullable: true),
-                    CreatorId = table.Column<int>(type: "integer", nullable: true),
-                    ManagerId = table.Column<int>(type: "integer", nullable: true),
-                    WeirdDelegateId = table.Column<int>(type: "integer", nullable: true),
-                    PvmKind = table.Column<int>(type: "integer", nullable: true),
-                    ParameterSchema = table.Column<byte[]>(type: "bytea", nullable: true),
-                    GenesisCommitment = table.Column<string>(type: "text", nullable: true),
-                    LastCommitment = table.Column<string>(type: "text", nullable: true),
-                    InboxLevel = table.Column<int>(type: "integer", nullable: true),
-                    TotalStakers = table.Column<int>(type: "integer", nullable: true),
-                    ActiveStakers = table.Column<int>(type: "integer", nullable: true),
-                    ExecutedCommitments = table.Column<int>(type: "integer", nullable: true),
-                    CementedCommitments = table.Column<int>(type: "integer", nullable: true),
-                    PendingCommitments = table.Column<int>(type: "integer", nullable: true),
-                    RefutedCommitments = table.Column<int>(type: "integer", nullable: true),
-                    OrphanCommitments = table.Column<int>(type: "integer", nullable: true),
-                    Revealed = table.Column<bool>(type: "boolean", nullable: true),
-                    PublicKey = table.Column<string>(type: "text", nullable: true),
-                    StakedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true),
-                    UnstakedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    UnstakedBakerId = table.Column<int>(type: "integer", nullable: true),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    ActivationsCount = table.Column<int>(type: "integer", nullable: true),
-                    RegisterConstantsCount = table.Column<int>(type: "integer", nullable: true),
-                    SetDepositsLimitsCount = table.Column<int>(type: "integer", nullable: true),
-                    StakingOpsCount = table.Column<int>(type: "integer", nullable: true),
-                    SetDelegateParametersOpsCount = table.Column<int>(type: "integer", nullable: true),
-                    DalPublishCommitmentOpsCount = table.Column<int>(type: "integer", nullable: true),
-                    ActivationLevel = table.Column<int>(type: "integer", nullable: true),
-                    DeactivationLevel = table.Column<int>(type: "integer", nullable: true),
-                    StakingBalance = table.Column<long>(type: "bigint", nullable: true),
-                    DelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
-                    OwnStakedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    IssuedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true),
-                    StakersCount = table.Column<int>(type: "integer", nullable: true),
-                    ExternalUnstakedBalance = table.Column<long>(type: "bigint", nullable: true),
-                    RoundingError = table.Column<long>(type: "bigint", nullable: true),
-                    FrozenDepositLimit = table.Column<long>(type: "bigint", nullable: true),
-                    LimitOfStakingOverBaking = table.Column<long>(type: "bigint", nullable: true),
-                    EdgeOfBakingOverStaking = table.Column<long>(type: "bigint", nullable: true),
-                    BlocksCount = table.Column<int>(type: "integer", nullable: true),
-                    EndorsementsCount = table.Column<int>(type: "integer", nullable: true),
-                    PreendorsementsCount = table.Column<int>(type: "integer", nullable: true),
-                    BallotsCount = table.Column<int>(type: "integer", nullable: true),
-                    ProposalsCount = table.Column<int>(type: "integer", nullable: true),
-                    DoubleBakingCount = table.Column<int>(type: "integer", nullable: true),
-                    DoubleEndorsingCount = table.Column<int>(type: "integer", nullable: true),
-                    DoublePreendorsingCount = table.Column<int>(type: "integer", nullable: true),
-                    NonceRevelationsCount = table.Column<int>(type: "integer", nullable: true),
-                    VdfRevelationsCount = table.Column<int>(type: "integer", nullable: true),
-                    RevelationPenaltiesCount = table.Column<int>(type: "integer", nullable: true),
-                    EndorsingRewardsCount = table.Column<int>(type: "integer", nullable: true),
-                    AutostakingOpsCount = table.Column<int>(type: "integer", nullable: true),
-                    SoftwareId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Accounts", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Accounts_Accounts_CreatorId",
-                        column: x => x.CreatorId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Accounts_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Accounts_Accounts_ManagerId",
-                        column: x => x.ManagerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Accounts_Accounts_WeirdDelegateId",
-                        column: x => x.WeirdDelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Accounts_Software_SoftwareId",
-                        column: x => x.SoftwareId,
-                        principalTable: "Software",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ActivationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccountId = table.Column<int>(type: "integer", nullable: false),
-                    Balance = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ActivationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ActivationOps_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "BallotOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Epoch = table.Column<int>(type: "integer", nullable: false),
-                    Period = table.Column<int>(type: "integer", nullable: false),
-                    ProposalId = table.Column<int>(type: "integer", nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    VotingPower = table.Column<long>(type: "bigint", nullable: false),
-                    Vote = table.Column<int>(type: "integer", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_BallotOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_BallotOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_BallotOps_Proposals_ProposalId",
-                        column: x => x.ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Blocks",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cycle = table.Column<int>(type: "integer", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Hash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    ProtoCode = table.Column<int>(type: "integer", nullable: false),
-                    SoftwareId = table.Column<int>(type: "integer", nullable: true),
-                    PayloadRound = table.Column<int>(type: "integer", nullable: false),
-                    BlockRound = table.Column<int>(type: "integer", nullable: false),
-                    Validations = table.Column<int>(type: "integer", nullable: false),
-                    Events = table.Column<int>(type: "integer", nullable: false),
-                    Operations = table.Column<long>(type: "bigint", nullable: false),
-                    Deposit = table.Column<long>(type: "bigint", nullable: false),
-                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
-                    BonusDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    BonusStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    BonusStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    BonusStakedShared = table.Column<long>(type: "bigint", nullable: false),
-                    Fees = table.Column<long>(type: "bigint", nullable: false),
-                    ProposerId = table.Column<int>(type: "integer", nullable: true),
-                    ProducerId = table.Column<int>(type: "integer", nullable: true),
-                    RevelationId = table.Column<long>(type: "bigint", nullable: true),
-                    ResetBakerDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    ResetProposerDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    LBToggle = table.Column<bool>(type: "boolean", nullable: true),
-                    LBToggleEma = table.Column<int>(type: "integer", nullable: false),
-                    AIToggle = table.Column<bool>(type: "boolean", nullable: true),
-                    AIToggleEma = table.Column<int>(type: "integer", nullable: false),
-                    Extras = table.Column<string>(type: "jsonb", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Blocks", x => x.Id);
-                    table.UniqueConstraint("AK_Blocks_Level", x => x.Level);
-                    table.ForeignKey(
-                        name: "FK_Blocks_Accounts_ProposerId",
-                        column: x => x.ProposerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Blocks_Protocols_ProtoCode",
-                        column: x => x.ProtoCode,
-                        principalTable: "Protocols",
-                        principalColumn: "Code",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Blocks_Software_SoftwareId",
-                        column: x => x.SoftwareId,
-                        principalTable: "Software",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DalPublishCommitmentOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Slot = table.Column<int>(type: "integer", nullable: false),
-                    Commitment = table.Column<string>(type: "text", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DalPublishCommitmentOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DalPublishCommitmentOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DalPublishCommitmentOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DelegationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    DelegateId = table.Column<int>(type: "integer", nullable: true),
-                    PrevDelegateId = table.Column<int>(type: "integer", nullable: true),
-                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    Amount = table.Column<long>(type: "bigint", nullable: false),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true),
-                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
-                    Nonce = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DelegationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_InitiatorId",
-                        column: x => x.InitiatorId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_PrevDelegateId",
-                        column: x => x.PrevDelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DelegationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoubleBakingOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
-                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
-                    AccuserId = table.Column<int>(type: "integer", nullable: false),
-                    OffenderId = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoubleBakingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Accounts_AccuserId",
-                        column: x => x.AccuserId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Accounts_OffenderId",
-                        column: x => x.OffenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleBakingOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoubleEndorsingOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
-                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
-                    AccuserId = table.Column<int>(type: "integer", nullable: false),
-                    OffenderId = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoubleEndorsingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Accounts_AccuserId",
-                        column: x => x.AccuserId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Accounts_OffenderId",
-                        column: x => x.OffenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoubleEndorsingOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoublePreendorsingOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
-                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
-                    AccuserId = table.Column<int>(type: "integer", nullable: false),
-                    OffenderId = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoublePreendorsingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DoublePreendorsingOps_Accounts_AccuserId",
-                        column: x => x.AccuserId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoublePreendorsingOps_Accounts_OffenderId",
-                        column: x => x.OffenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_DoublePreendorsingOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DrainDelegateOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    TargetId = table.Column<int>(type: "integer", nullable: false),
-                    Amount = table.Column<long>(type: "bigint", nullable: false),
-                    Fee = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DrainDelegateOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_DrainDelegateOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EndorsementOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    Slots = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    Deposit = table.Column<long>(type: "bigint", nullable: false),
-                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_EndorsementOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_EndorsementOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "IncreasePaidStorageOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ContractId = table.Column<int>(type: "integer", nullable: false),
-                    Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_IncreasePaidStorageOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_IncreasePaidStorageOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_IncreasePaidStorageOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "MigrationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    AccountId = table.Column<int>(type: "integer", nullable: false),
-                    Kind = table.Column<int>(type: "integer", nullable: false),
-                    BalanceChange = table.Column<long>(type: "bigint", nullable: false),
-                    ScriptId = table.Column<int>(type: "integer", nullable: true),
-                    StorageId = table.Column<int>(type: "integer", nullable: true),
-                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
-                    SubIds = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_MigrationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_MigrationOps_Accounts_AccountId",
-                        column: x => x.AccountId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MigrationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_MigrationOps_Scripts_ScriptId",
-                        column: x => x.ScriptId,
-                        principalTable: "Scripts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_MigrationOps_Storages_StorageId",
-                        column: x => x.StorageId,
-                        principalTable: "Storages",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "NonceRevelationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    RevealedLevel = table.Column<int>(type: "integer", nullable: false),
-                    RevealedCycle = table.Column<int>(type: "integer", nullable: false),
-                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
-                    Nonce = table.Column<byte[]>(type: "bytea", fixedLength: true, maxLength: 32, nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_NonceRevelationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_NonceRevelationOps_Accounts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_NonceRevelationOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_NonceRevelationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "OriginationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    ManagerId = table.Column<int>(type: "integer", nullable: true),
-                    DelegateId = table.Column<int>(type: "integer", nullable: true),
-                    ContractId = table.Column<int>(type: "integer", nullable: true),
-                    ContractCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    ScriptId = table.Column<int>(type: "integer", nullable: true),
-                    Balance = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true),
-                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
-                    Nonce = table.Column<int>(type: "integer", nullable: true),
-                    StorageId = table.Column<int>(type: "integer", nullable: true),
-                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
-                    SubIds = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_OriginationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_ContractId",
-                        column: x => x.ContractId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_InitiatorId",
-                        column: x => x.InitiatorId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_ManagerId",
-                        column: x => x.ManagerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Scripts_ScriptId",
-                        column: x => x.ScriptId,
-                        principalTable: "Scripts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_OriginationOps_Storages_StorageId",
-                        column: x => x.StorageId,
-                        principalTable: "Storages",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PreendorsementOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    Slots = table.Column<int>(type: "integer", nullable: false),
-                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_PreendorsementOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_PreendorsementOps_Accounts_DelegateId",
-                        column: x => x.DelegateId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_PreendorsementOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ProposalOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Epoch = table.Column<int>(type: "integer", nullable: false),
-                    Period = table.Column<int>(type: "integer", nullable: false),
-                    ProposalId = table.Column<int>(type: "integer", nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    VotingPower = table.Column<long>(type: "bigint", nullable: false),
-                    Duplicated = table.Column<bool>(type: "boolean", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ProposalOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ProposalOps_Proposals_ProposalId",
-                        column: x => x.ProposalId,
-                        principalTable: "Proposals",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RegisterConstantOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Address = table.Column<string>(type: "character varying(54)", maxLength: 54, nullable: true),
-                    Value = table.Column<byte[]>(type: "bytea", nullable: true),
-                    Refs = table.Column<int>(type: "integer", nullable: true),
-                    Extras = table.Column<string>(type: "jsonb", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RegisterConstantOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RegisterConstantOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RegisterConstantOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RevealOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RevealOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RevealOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RevealOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "RevelationPenaltyOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
-                    MissedLevel = table.Column<int>(type: "integer", nullable: false),
-                    Loss = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_RevelationPenaltyOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_RevelationPenaltyOps_Accounts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_RevelationPenaltyOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SetDelegateParametersOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    LimitOfStakingOverBaking = table.Column<long>(type: "bigint", nullable: true),
-                    EdgeOfBakingOverStaking = table.Column<long>(type: "bigint", nullable: true),
-                    ActivationCycle = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SetDelegateParametersOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SetDelegateParametersOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SetDelegateParametersOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SetDepositsLimitOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Limit = table.Column<BigInteger>(type: "numeric", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SetDepositsLimitOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SetDepositsLimitOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SetDepositsLimitOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupAddMessagesOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    MessagesCount = table.Column<int>(type: "integer", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupAddMessagesOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupAddMessagesOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupAddMessagesOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupCementOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupCementOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupCementOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupCementOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupExecuteOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
-                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
-                    SubIds = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupExecuteOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupExecuteOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupExecuteOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupOriginateOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    PvmKind = table.Column<int>(type: "integer", nullable: false),
-                    Kernel = table.Column<byte[]>(type: "bytea", nullable: true),
-                    ParameterType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    GenesisCommitment = table.Column<string>(type: "text", nullable: true),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupOriginateOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupOriginateOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupOriginateOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupPublishOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    CommitmentId = table.Column<int>(type: "integer", nullable: true),
-                    Bond = table.Column<long>(type: "bigint", nullable: false),
-                    BondStatus = table.Column<int>(type: "integer", nullable: true),
-                    Flags = table.Column<int>(type: "integer", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupPublishOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupPublishOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupPublishOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupRecoverBondOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    StakerId = table.Column<int>(type: "integer", nullable: true),
-                    Bond = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupRecoverBondOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupRecoverBondOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupRecoverBondOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "SmartRollupRefuteOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SmartRollupId = table.Column<int>(type: "integer", nullable: true),
-                    GameId = table.Column<int>(type: "integer", nullable: true),
-                    Move = table.Column<int>(type: "integer", nullable: false),
-                    GameStatus = table.Column<int>(type: "integer", nullable: false),
-                    DissectionStart = table.Column<long>(type: "bigint", nullable: true),
-                    DissectionEnd = table.Column<long>(type: "bigint", nullable: true),
-                    DissectionSteps = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_SmartRollupRefuteOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupRefuteOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_SmartRollupRefuteOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "StakingOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Action = table.Column<int>(type: "integer", nullable: false),
-                    RequestedAmount = table.Column<long>(type: "bigint", nullable: false),
-                    Amount = table.Column<long>(type: "bigint", nullable: true),
-                    BakerId = table.Column<int>(type: "integer", nullable: true),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_StakingOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_StakingOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_StakingOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TransactionOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    TargetId = table.Column<int>(type: "integer", nullable: true),
-                    TargetCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    Amount = table.Column<long>(type: "bigint", nullable: false),
-                    Entrypoint = table.Column<string>(type: "text", nullable: true),
-                    RawParameters = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonParameters = table.Column<string>(type: "jsonb", nullable: true),
-                    InternalOperations = table.Column<short>(type: "smallint", nullable: true),
-                    InternalDelegations = table.Column<short>(type: "smallint", nullable: true),
-                    InternalOriginations = table.Column<short>(type: "smallint", nullable: true),
-                    InternalTransactions = table.Column<short>(type: "smallint", nullable: true),
-                    EventsCount = table.Column<int>(type: "integer", nullable: true),
-                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true),
-                    InitiatorId = table.Column<int>(type: "integer", nullable: true),
-                    Nonce = table.Column<int>(type: "integer", nullable: true),
-                    StorageId = table.Column<int>(type: "integer", nullable: true),
-                    BigMapUpdates = table.Column<int>(type: "integer", nullable: true),
-                    TokenTransfers = table.Column<int>(type: "integer", nullable: true),
-                    SubIds = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TransactionOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Accounts_InitiatorId",
-                        column: x => x.InitiatorId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Accounts_TargetId",
-                        column: x => x.TargetId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TransactionOps_Storages_StorageId",
-                        column: x => x.StorageId,
-                        principalTable: "Storages",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TransferTicketOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TargetId = table.Column<int>(type: "integer", nullable: true),
-                    TicketerId = table.Column<int>(type: "integer", nullable: true),
-                    Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
-                    RawType = table.Column<byte[]>(type: "bytea", nullable: true),
-                    RawContent = table.Column<byte[]>(type: "bytea", nullable: true),
-                    JsonContent = table.Column<string>(type: "text", nullable: true),
-                    Entrypoint = table.Column<string>(type: "text", nullable: true),
-                    TicketTransfers = table.Column<int>(type: "integer", nullable: true),
-                    SubIds = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TransferTicketOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TransferTicketOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TransferTicketOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupCommitOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Bond = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupCommitOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupCommitOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupCommitOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupDispatchTicketsOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupDispatchTicketsOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupDispatchTicketsOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupDispatchTicketsOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupFinalizeCommitmentOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupFinalizeCommitmentOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupFinalizeCommitmentOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupFinalizeCommitmentOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupOriginationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupOriginationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupOriginationOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupOriginationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupRejectionOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    CommitterId = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    Loss = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupRejectionOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupRejectionOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupRejectionOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupRemoveCommitmentOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupRemoveCommitmentOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupRemoveCommitmentOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupRemoveCommitmentOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupReturnBondOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Bond = table.Column<long>(type: "bigint", nullable: false),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupReturnBondOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupReturnBondOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupReturnBondOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TxRollupSubmitBatchOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    RollupId = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TxRollupSubmitBatchOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_TxRollupSubmitBatchOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TxRollupSubmitBatchOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "UpdateConsensusKeyOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ActivationCycle = table.Column<int>(type: "integer", nullable: false),
-                    PublicKey = table.Column<string>(type: "text", nullable: true),
-                    PublicKeyHash = table.Column<string>(type: "text", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
-                    SenderId = table.Column<int>(type: "integer", nullable: false),
-                    Counter = table.Column<int>(type: "integer", nullable: false),
-                    BakerFee = table.Column<long>(type: "bigint", nullable: false),
-                    StorageFee = table.Column<long>(type: "bigint", nullable: true),
-                    AllocationFee = table.Column<long>(type: "bigint", nullable: true),
-                    GasLimit = table.Column<int>(type: "integer", nullable: false),
-                    GasUsed = table.Column<int>(type: "integer", nullable: false),
-                    StorageLimit = table.Column<int>(type: "integer", nullable: false),
-                    StorageUsed = table.Column<int>(type: "integer", nullable: false),
-                    Status = table.Column<byte>(type: "smallint", nullable: false),
-                    Errors = table.Column<string>(type: "text", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_UpdateConsensusKeyOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_UpdateConsensusKeyOps_Accounts_SenderId",
-                        column: x => x.SenderId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_UpdateConsensusKeyOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "VdfRevelationOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Cycle = table.Column<int>(type: "integer", nullable: false),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
-                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false),
-                    Solution = table.Column<byte[]>(type: "bytea", nullable: true),
-                    Proof = table.Column<byte[]>(type: "bytea", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_VdfRevelationOps", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_VdfRevelationOps_Accounts_BakerId",
-                        column: x => x.BakerId,
-                        principalTable: "Accounts",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_VdfRevelationOps_Blocks_Level",
-                        column: x => x.Level,
-                        principalTable: "Blocks",
-                        principalColumn: "Level",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "AccountCounter", "ActivationOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "DoublePreendorsingOpsCount", "DrainDelegateOpsCount", "EndorsementOpsCount", "EndorsingRewardOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PreendorsementOpsCount", "ProposalOpsCount", "ProposalsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateConsensusKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
-                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, null, null, 0, 0, -1, 0, 0, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
+                columns: new[] { "Id", "AccountCounter", "ActivationOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalAttestationRewardOpsCount", "DalEntrapmentEvidenceOpsCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "DoublePreendorsingOpsCount", "DrainDelegateOpsCount", "EndorsementOpsCount", "EndorsingRewardOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PreendorsementOpsCount", "ProposalCounter", "ProposalOpsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "SoftwareCounter", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateConsensusKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
+                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, "", "", 0, 0, -1, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
@@ -2845,21 +2288,11 @@ namespace Tzkt.Data.Migrations
                 filter: "\"Type\" = 2");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Accounts_ManagerId",
-                table: "Accounts",
-                column: "ManagerId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Metadata",
                 table: "Accounts",
                 column: "Metadata")
                 .Annotation("Npgsql:IndexMethod", "gin")
                 .Annotation("Npgsql:IndexOperators", new[] { "jsonb_path_ops" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Accounts_SoftwareId",
-                table: "Accounts",
-                column: "SoftwareId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Staked_Partial",
@@ -2888,12 +2321,6 @@ namespace Tzkt.Data.Migrations
                 table: "Accounts",
                 column: "UnstakedBakerId",
                 filter: "\"UnstakedBakerId\" IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Accounts_WeirdDelegateId",
-                table: "Accounts",
-                column: "WeirdDelegateId",
-                filter: "\"WeirdDelegateId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ActivationOps_AccountId",
@@ -3069,22 +2496,6 @@ namespace Tzkt.Data.Migrations
                 column: "ProposerId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Blocks_ProtoCode",
-                table: "Blocks",
-                column: "ProtoCode");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Blocks_RevelationId",
-                table: "Blocks",
-                column: "RevelationId",
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Blocks_SoftwareId",
-                table: "Blocks",
-                column: "SoftwareId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Commitments_AccountId",
                 table: "Commitments",
                 column: "AccountId");
@@ -3100,6 +2511,36 @@ namespace Tzkt.Data.Migrations
                 table: "Cycles",
                 column: "Index",
                 unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalAttestationRewardOps_BakerId",
+                table: "DalAttestationRewardOps",
+                column: "BakerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalAttestationRewardOps_Level",
+                table: "DalAttestationRewardOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalEntrapmentEvidenceOps_AccuserId",
+                table: "DalEntrapmentEvidenceOps",
+                column: "AccuserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalEntrapmentEvidenceOps_Level",
+                table: "DalEntrapmentEvidenceOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalEntrapmentEvidenceOps_OffenderId",
+                table: "DalEntrapmentEvidenceOps",
+                column: "OffenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_DalEntrapmentEvidenceOps_OpHash",
+                table: "DalEntrapmentEvidenceOps",
+                column: "OpHash");
 
             migrationBuilder.CreateIndex(
                 name: "IX_DalPublishCommitmentOps_Level",
@@ -3380,16 +2821,6 @@ namespace Tzkt.Data.Migrations
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_MigrationOps_ScriptId",
-                table: "MigrationOps",
-                column: "ScriptId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_MigrationOps_StorageId",
-                table: "MigrationOps",
-                column: "StorageId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_NonceRevelationOps_BakerId",
                 table: "NonceRevelationOps",
                 column: "BakerId");
@@ -3441,19 +2872,9 @@ namespace Tzkt.Data.Migrations
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_OriginationOps_ManagerId",
-                table: "OriginationOps",
-                column: "ManagerId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_OpHash",
                 table: "OriginationOps",
                 column: "OpHash");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OriginationOps_ScriptId",
-                table: "OriginationOps",
-                column: "ScriptId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_OriginationOps_SenderCodeHash",
@@ -3465,11 +2886,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_OriginationOps_SenderId",
                 table: "OriginationOps",
                 column: "SenderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_OriginationOps_StorageId",
-                table: "OriginationOps",
-                column: "StorageId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_PreendorsementOps_DelegateId",
@@ -4266,11 +3682,6 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TransactionOps_StorageId",
-                table: "TransactionOps",
-                column: "StorageId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_TargetCodeHash",
                 table: "TransactionOps",
                 column: "TargetCodeHash",
@@ -4285,7 +3696,7 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TransactionOps_TargetId_Partial",
                 table: "TransactionOps",
                 column: "TargetId",
-                filter: "\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
+                filter: "\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransferTicketOps_Level",
@@ -4538,49 +3949,13 @@ namespace Tzkt.Data.Migrations
                 table: "VotingSnapshots",
                 columns: new[] { "Period", "BakerId" },
                 unique: true);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Accounts_Blocks_FirstLevel",
-                table: "Accounts",
-                column: "FirstLevel",
-                principalTable: "Blocks",
-                principalColumn: "Level",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_ActivationOps_Blocks_Level",
-                table: "ActivationOps",
-                column: "Level",
-                principalTable: "Blocks",
-                principalColumn: "Level",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_BallotOps_Blocks_Level",
-                table: "BallotOps",
-                column: "Level",
-                principalTable: "Blocks",
-                principalColumn: "Level",
-                onDelete: ReferentialAction.Cascade);
-
-            migrationBuilder.AddForeignKey(
-                name: "FK_Blocks_NonceRevelationOps_RevelationId",
-                table: "Blocks",
-                column: "RevelationId",
-                principalTable: "NonceRevelationOps",
-                principalColumn: "Id");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropForeignKey(
-                name: "FK_Accounts_Blocks_FirstLevel",
-                table: "Accounts");
-
-            migrationBuilder.DropForeignKey(
-                name: "FK_NonceRevelationOps_Blocks_Level",
-                table: "NonceRevelationOps");
+            migrationBuilder.DropTable(
+                name: "Accounts");
 
             migrationBuilder.DropTable(
                 name: "ActivationOps");
@@ -4610,10 +3985,19 @@ namespace Tzkt.Data.Migrations
                 name: "BigMapUpdates");
 
             migrationBuilder.DropTable(
+                name: "Blocks");
+
+            migrationBuilder.DropTable(
                 name: "Commitments");
 
             migrationBuilder.DropTable(
                 name: "Cycles");
+
+            migrationBuilder.DropTable(
+                name: "DalAttestationRewardOps");
+
+            migrationBuilder.DropTable(
+                name: "DalEntrapmentEvidenceOps");
 
             migrationBuilder.DropTable(
                 name: "DalPublishCommitmentOps");
@@ -4658,6 +4042,9 @@ namespace Tzkt.Data.Migrations
                 name: "MigrationOps");
 
             migrationBuilder.DropTable(
+                name: "NonceRevelationOps");
+
+            migrationBuilder.DropTable(
                 name: "OriginationOps");
 
             migrationBuilder.DropTable(
@@ -4665,6 +4052,12 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "ProposalOps");
+
+            migrationBuilder.DropTable(
+                name: "Proposals");
+
+            migrationBuilder.DropTable(
+                name: "Protocols");
 
             migrationBuilder.DropTable(
                 name: "Quotes");
@@ -4680,6 +4073,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "RevelationPenaltyOps");
+
+            migrationBuilder.DropTable(
+                name: "Scripts");
 
             migrationBuilder.DropTable(
                 name: "SetDelegateParametersOps");
@@ -4715,6 +4111,9 @@ namespace Tzkt.Data.Migrations
                 name: "SnapshotBalances");
 
             migrationBuilder.DropTable(
+                name: "Software");
+
+            migrationBuilder.DropTable(
                 name: "StakingOps");
 
             migrationBuilder.DropTable(
@@ -4722,6 +4121,9 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "Statistics");
+
+            migrationBuilder.DropTable(
+                name: "Storages");
 
             migrationBuilder.DropTable(
                 name: "TicketBalances");
@@ -4785,30 +4187,6 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "VotingSnapshots");
-
-            migrationBuilder.DropTable(
-                name: "Scripts");
-
-            migrationBuilder.DropTable(
-                name: "Proposals");
-
-            migrationBuilder.DropTable(
-                name: "Storages");
-
-            migrationBuilder.DropTable(
-                name: "Blocks");
-
-            migrationBuilder.DropTable(
-                name: "NonceRevelationOps");
-
-            migrationBuilder.DropTable(
-                name: "Protocols");
-
-            migrationBuilder.DropTable(
-                name: "Accounts");
-
-            migrationBuilder.DropTable(
-                name: "Software");
         }
     }
 }
