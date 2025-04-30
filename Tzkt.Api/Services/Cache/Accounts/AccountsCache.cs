@@ -1,4 +1,5 @@
 ﻿using System.Data;
+using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using Dapper;
@@ -99,9 +100,9 @@ namespace Tzkt.Api.Services.Cache
             #endregion
 
             await using var db = await DataSource.OpenConnectionAsync();
-            using IDataReader reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
+            using var reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
 
-            var parsers = new Func<IDataReader, RawAccount>[6]
+            var parsers = new Func<DbDataReader, RawAccount>[6]
             {
                 reader.GetRowParser<RawUser>(),
                 reader.GetRowParser<RawDelegate>(),

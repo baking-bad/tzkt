@@ -14,15 +14,15 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20240629103331_DrainDelegateExt")]
-    partial class DrainDelegateExt
+    [Migration("20250430141926_Triggers")]
+    partial class Triggers
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "7.0.18")
+                .HasAnnotation("ProductVersion", "9.0.1")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -283,9 +283,11 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Chain")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("ChainId")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("CommitmentsCount")
@@ -300,6 +302,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("CyclesCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DalAttestationRewardOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DalEntrapmentEvidenceOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DalPublishCommitmentOpsCount")
                         .HasColumnType("integer");
 
@@ -310,6 +318,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("DomainsNameRegistry")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("DoubleBakingOpsCount")
@@ -340,6 +349,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("jsonb");
 
                     b.Property<string>("Hash")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("InboxMessageCounter")
@@ -364,6 +374,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("NextProtocol")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("NonceRevelationOpsCount")
@@ -381,13 +392,14 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("PreendorsementOpsCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ProposalCounter")
+                        .HasColumnType("integer");
+
                     b.Property<int>("ProposalOpsCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("ProposalsCount")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Protocol")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("ProtocolsCount")
@@ -463,6 +475,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("SmartRollupRefuteOpsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SoftwareCounter")
                         .HasColumnType("integer");
 
                     b.Property<int>("StakingOpsCount")
@@ -556,13 +571,18 @@ namespace Tzkt.Data.Migrations
                             BigMapKeyCounter = 0,
                             BigMapUpdateCounter = 0,
                             BlocksCount = 0,
+                            Chain = "",
+                            ChainId = "",
                             CommitmentsCount = 0,
                             ConstantsCount = 0,
                             Cycle = -1,
                             CyclesCount = 0,
+                            DalAttestationRewardOpsCount = 0,
+                            DalEntrapmentEvidenceOpsCount = 0,
                             DalPublishCommitmentOpsCount = 0,
                             DelegationOpsCount = 0,
                             DomainsLevel = 0,
+                            DomainsNameRegistry = "",
                             DoubleBakingOpsCount = 0,
                             DoubleEndorsingOpsCount = 0,
                             DoublePreendorsingOpsCount = 0,
@@ -585,8 +605,8 @@ namespace Tzkt.Data.Migrations
                             OriginationOpsCount = 0,
                             PendingDelegateParameters = 0,
                             PreendorsementOpsCount = 0,
+                            ProposalCounter = 0,
                             ProposalOpsCount = 0,
-                            ProposalsCount = 0,
                             Protocol = "",
                             ProtocolsCount = 0,
                             QuoteBtc = 0.0,
@@ -613,6 +633,7 @@ namespace Tzkt.Data.Migrations
                             SmartRollupPublishOpsCount = 0,
                             SmartRollupRecoverBondOpsCount = 0,
                             SmartRollupRefuteOpsCount = 0,
+                            SoftwareCounter = 0,
                             StakingOpsCount = 0,
                             StakingUpdatesCount = 0,
                             StorageCounter = 0,
@@ -664,6 +685,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("StakingUpdatesCount")
                         .HasColumnType("integer");
 
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
                     b.HasKey("Id");
 
                     b.HasIndex("BakerId");
@@ -707,6 +731,18 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("Cycle")
                         .HasColumnType("integer");
+
+                    b.Property<long>("DalAttestationRewardsDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedEdge")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedOwn")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("DalAttestationRewardsStakedShared")
+                        .HasColumnType("bigint");
 
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
@@ -774,6 +810,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<double>("ExpectedBlocks")
                         .HasColumnType("double precision");
 
+                    b.Property<long>("ExpectedDalShards")
+                        .HasColumnType("bigint");
+
                     b.Property<double>("ExpectedEndorsements")
                         .HasColumnType("double precision");
 
@@ -789,6 +828,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("FutureBlocks")
                         .HasColumnType("integer");
 
+                    b.Property<long>("FutureDalAttestationRewards")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("FutureEndorsementRewards")
                         .HasColumnType("bigint");
 
@@ -803,6 +845,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("MissedBlocks")
                         .HasColumnType("integer");
+
+                    b.Property<long>("MissedDalAttestationRewards")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("MissedEndorsementRewards")
                         .HasColumnType("bigint");
@@ -860,11 +905,11 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.BakingRight", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
@@ -881,11 +926,11 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("Slots")
                         .HasColumnType("integer");
 
-                    b.Property<byte>("Status")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
-                    b.Property<byte>("Type")
-                        .HasColumnType("smallint");
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -972,6 +1017,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("KeyType")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("LastLevel")
@@ -981,6 +1027,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("StoragePath")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Tags")
@@ -993,6 +1040,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("ValueType")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.HasKey("Id");
@@ -1023,12 +1071,15 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("JsonKey")
+                        .IsRequired()
                         .HasColumnType("jsonb");
 
                     b.Property<string>("JsonValue")
+                        .IsRequired()
                         .HasColumnType("jsonb");
 
                     b.Property<string>("KeyHash")
+                        .IsRequired()
                         .HasMaxLength(54)
                         .HasColumnType("character(54)")
                         .IsFixedLength();
@@ -1037,9 +1088,11 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("RawKey")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("RawValue")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("Updates")
@@ -1239,13 +1292,6 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("ProposerId");
 
-                    b.HasIndex("ProtoCode");
-
-                    b.HasIndex("RevelationId")
-                        .IsUnique();
-
-                    b.HasIndex("SoftwareId");
-
                     b.ToTable("Blocks");
                 });
 
@@ -1348,6 +1394,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BlockReward")
                         .HasColumnType("bigint");
 
+                    b.Property<long>("DalAttestationRewardPerShard")
+                        .HasColumnType("bigint");
+
                     b.Property<long>("EndorsementRewardPerSlot")
                         .HasColumnType("bigint");
 
@@ -1392,6 +1441,92 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Cycles");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.DalAttestationRewardOperation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("Expected")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("RewardDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedEdge")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedOwn")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RewardStakedShared")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BakerId");
+
+                    b.HasIndex("Level");
+
+                    b.ToTable("DalAttestationRewardOps");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.DalEntrapmentEvidenceOperation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int>("AccuserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OffenderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OpHash")
+                        .IsRequired()
+                        .HasMaxLength(51)
+                        .HasColumnType("character(51)")
+                        .IsFixedLength();
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("TrapLevel")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TrapSlotIndex")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccuserId");
+
+                    b.HasIndex("Level");
+
+                    b.HasIndex("OffenderId");
+
+                    b.HasIndex("OpHash");
+
+                    b.ToTable("DalEntrapmentEvidenceOps");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
                 {
                     b.Property<long>("Id")
@@ -1407,6 +1542,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<string>("Commitment")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Counter")
@@ -1509,10 +1645,13 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength();
 
+                    b.Property<int?>("PrevDeactivationLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int?>("PrevDelegateId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ResetDeactivation")
+                    b.Property<int?>("PrevDelegationLevel")
                         .HasColumnType("integer");
 
                     b.Property<int?>("SenderCodeHash")
@@ -1620,9 +1759,11 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Owner")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("Reverse")
@@ -2026,7 +2167,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BakerFee")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("ContractId")
+                    b.Property<int?>("ContractId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Counter")
@@ -2124,10 +2265,6 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("AccountId");
 
                     b.HasIndex("Level");
-
-                    b.HasIndex("ScriptId");
-
-                    b.HasIndex("StorageId");
 
                     b.ToTable("MigrationOps");
                 });
@@ -2244,9 +2381,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("Level")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("ManagerId")
-                        .HasColumnType("integer");
-
                     b.Property<int?>("Nonce")
                         .HasColumnType("integer");
 
@@ -2302,18 +2436,12 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("Level");
 
-                    b.HasIndex("ManagerId");
-
                     b.HasIndex("OpHash");
-
-                    b.HasIndex("ScriptId");
 
                     b.HasIndex("SenderCodeHash")
                         .HasFilter("\"SenderCodeHash\" IS NOT NULL");
 
                     b.HasIndex("SenderId");
-
-                    b.HasIndex("StorageId");
 
                     b.ToTable("OriginationOps");
                 });
@@ -2337,9 +2465,6 @@ namespace Tzkt.Data.Migrations
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength();
-
-                    b.Property<int?>("ResetDeactivation")
-                        .HasColumnType("integer");
 
                     b.Property<int>("Slots")
                         .HasColumnType("integer");
@@ -2376,6 +2501,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
+                        .IsRequired()
                         .HasMaxLength(51)
                         .HasColumnType("character(51)")
                         .IsFixedLength();
@@ -2516,6 +2642,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegateParametersActivationDelay")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DenunciationPeriod")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Dictator")
                         .HasColumnType("text");
 
@@ -2582,9 +2711,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("MaxExternalOverOwnStakeRatio")
                         .HasColumnType("integer");
 
-                    b.Property<int>("MaxSlashingPeriod")
-                        .HasColumnType("integer");
-
                     b.Property<int>("MinParticipationDenominator")
                         .HasColumnType("integer");
 
@@ -2600,6 +2726,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("NoRewardCycles")
                         .HasColumnType("integer");
 
+                    b.Property<int>("NumberOfShards")
+                        .HasColumnType("integer");
+
                     b.Property<int>("OriginationSize")
                         .HasColumnType("integer");
 
@@ -2607,6 +2736,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("RampUpCycles")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("SlashingDelay")
                         .HasColumnType("integer");
 
                     b.Property<int>("SmartRollupChallengeWindow")
@@ -2628,6 +2760,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("TimeBetweenBlocks")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ToleratedInactivityPeriod")
                         .HasColumnType("integer");
 
                     b.Property<int>("Version")
@@ -2941,6 +3076,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("CodeSchema")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("ContractId")
@@ -2959,15 +3095,17 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("ParameterSchema")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("StorageSchema")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("TypeHash")
                         .HasColumnType("integer");
 
-                    b.Property<byte[][]>("Views")
+                    b.PrimitiveCollection<byte[][]>("Views")
                         .HasColumnType("bytea[]");
 
                     b.HasKey("Id");
@@ -3276,6 +3414,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Hash")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("InboxLevel")
@@ -3297,6 +3436,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("State")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("Status")
@@ -3433,6 +3573,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("text");
 
                     b.Property<byte[]>("Kernel")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("Level")
@@ -3738,11 +3879,11 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.SnapshotBalance", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
+                        .HasColumnType("bigint");
 
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
                     b.Property<int>("AccountId")
                         .HasColumnType("integer");
@@ -4050,6 +4191,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("boolean");
 
                     b.Property<string>("JsonValue")
+                        .IsRequired()
                         .HasColumnType("jsonb");
 
                     b.Property<int>("Level")
@@ -4062,6 +4204,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("RawValue")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<long?>("TransactionId")
@@ -4109,9 +4252,11 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("RawContent")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<byte[]>("RawType")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("TicketerId")
@@ -4312,6 +4457,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("TransfersCount")
                         .HasColumnType("integer");
+
+                    b.Property<decimal>("Value")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -4591,15 +4739,13 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("SenderId");
 
-                    b.HasIndex("StorageId");
-
                     b.HasIndex("TargetCodeHash")
                         .HasFilter("\"TargetCodeHash\" IS NOT NULL");
 
                     b.HasIndex("TargetId");
 
                     b.HasIndex(new[] { "TargetId" }, "IX_TransactionOps_TargetId_Partial")
-                        .HasFilter("\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
+                        .HasFilter("\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
 
                     b.ToTable("TransactionOps");
                 });
@@ -4625,6 +4771,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Entrypoint")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Errors")
@@ -5357,9 +5504,11 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength();
 
                     b.Property<string>("PublicKey")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("PublicKeyHash")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("SenderId")
@@ -5415,6 +5564,7 @@ namespace Tzkt.Data.Migrations
                         .IsFixedLength();
 
                     b.Property<byte[]>("Proof")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<long>("RewardDelegated")
@@ -5430,6 +5580,7 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.Property<byte[]>("Solution")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<DateTime>("Timestamp")
@@ -5573,7 +5724,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("CodeHash")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("CreatorId")
+                    b.Property<int>("CreatorId")
                         .ValueGeneratedOnUpdateSometimes()
                         .HasColumnType("integer")
                         .HasColumnName("CreatorId");
@@ -5583,12 +5734,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<byte>("Kind")
                         .HasColumnType("smallint");
-
-                    b.Property<int?>("ManagerId")
-                        .HasColumnType("integer");
-
-                    b.Property<bool?>("Spendable")
-                        .HasColumnType("boolean");
 
                     b.Property<int>("Tags")
                         .HasColumnType("integer");
@@ -5602,19 +5747,11 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("TypeHash")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("WeirdDelegateId")
-                        .HasColumnType("integer");
-
                     b.HasIndex("CodeHash");
 
                     b.HasIndex("CreatorId");
 
-                    b.HasIndex("ManagerId");
-
                     b.HasIndex("TypeHash");
-
-                    b.HasIndex("WeirdDelegateId")
-                        .HasFilter("\"WeirdDelegateId\" IS NOT NULL");
 
                     b.HasIndex(new[] { "Kind" }, "IX_Accounts_Kind_Partial")
                         .HasFilter("\"Type\" = 2");
@@ -5655,18 +5792,21 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("GenesisCommitment")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("InboxLevel")
                         .HasColumnType("integer");
 
                     b.Property<string>("LastCommitment")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("OrphanCommitments")
                         .HasColumnType("integer");
 
                     b.Property<byte[]>("ParameterSchema")
+                        .IsRequired()
                         .HasColumnType("bytea");
 
                     b.Property<int>("PendingCommitments")
@@ -5748,6 +5888,12 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("BlocksCount")
                         .HasColumnType("integer");
 
+                    b.Property<int>("DalAttestationRewardsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("DalEntrapmentEvidenceOpsCount")
+                        .HasColumnType("integer");
+
                     b.Property<int>("DeactivationLevel")
                         .HasColumnType("integer");
 
@@ -5820,8 +5966,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("VdfRevelationsCount")
                         .HasColumnType("integer");
 
-                    b.HasIndex("SoftwareId");
-
                     b.HasIndex(new[] { "DeactivationLevel" }, "IX_Accounts_DeactivationLevel_Partial")
                         .HasFilter("\"Type\" = 1");
 
@@ -5829,1103 +5973,6 @@ namespace Tzkt.Data.Migrations
                         .HasFilter("\"Type\" = 1");
 
                     b.HasDiscriminator().HasValue((byte)1);
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Account", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany("DelegatedAccounts")
-                        .HasForeignKey("DelegateId");
-
-                    b.HasOne("Tzkt.Data.Models.Block", "FirstBlock")
-                        .WithMany("CreatedAccounts")
-                        .HasForeignKey("FirstLevel")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Delegate");
-
-                    b.Navigation("FirstBlock");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.ActivationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.User", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Activations")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Block");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.BallotOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Ballots")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
-                        .WithMany()
-                        .HasForeignKey("ProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Proposal");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Proposer")
-                        .WithMany()
-                        .HasForeignKey("ProposerId");
-
-                    b.HasOne("Tzkt.Data.Models.Protocol", "Protocol")
-                        .WithMany()
-                        .HasForeignKey("ProtoCode")
-                        .HasPrincipalKey("Code")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.NonceRevelationOperation", "Revelation")
-                        .WithOne("RevealedBlock")
-                        .HasForeignKey("Tzkt.Data.Models.Block", "RevelationId");
-
-                    b.HasOne("Tzkt.Data.Models.Software", "Software")
-                        .WithMany()
-                        .HasForeignKey("SoftwareId");
-
-                    b.Navigation("Proposer");
-
-                    b.Navigation("Protocol");
-
-                    b.Navigation("Revelation");
-
-                    b.Navigation("Software");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DalPublishCommitmentOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("DalPublishCommitmentOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DelegationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany()
-                        .HasForeignKey("DelegateId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Initiator")
-                        .WithMany()
-                        .HasForeignKey("InitiatorId");
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Delegations")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "PrevDelegate")
-                        .WithMany()
-                        .HasForeignKey("PrevDelegateId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Delegate");
-
-                    b.Navigation("Initiator");
-
-                    b.Navigation("PrevDelegate");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Accuser")
-                        .WithMany()
-                        .HasForeignKey("AccuserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("DoubleBakings")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Offender")
-                        .WithMany()
-                        .HasForeignKey("OffenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Accuser");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Offender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DoubleEndorsingOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Accuser")
-                        .WithMany()
-                        .HasForeignKey("AccuserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("DoubleEndorsings")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Offender")
-                        .WithMany()
-                        .HasForeignKey("OffenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Accuser");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Offender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DoublePreendorsingOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Accuser")
-                        .WithMany()
-                        .HasForeignKey("AccuserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("DoublePreendorsings")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Offender")
-                        .WithMany()
-                        .HasForeignKey("OffenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Accuser");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Offender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.DrainDelegateOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("DrainDelegateOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.EndorsementOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany()
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Endorsements")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Delegate");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.IncreasePaidStorageOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("IncreasePaidStorageOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.MigrationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Account", "Account")
-                        .WithMany()
-                        .HasForeignKey("AccountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Migrations")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Script", "Script")
-                        .WithMany()
-                        .HasForeignKey("ScriptId");
-
-                    b.HasOne("Tzkt.Data.Models.Storage", "Storage")
-                        .WithMany()
-                        .HasForeignKey("StorageId");
-
-                    b.Navigation("Account");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Script");
-
-                    b.Navigation("Storage");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
-                        .WithMany()
-                        .HasForeignKey("BakerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Revelations")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Baker");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.OriginationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Contract", "Contract")
-                        .WithMany()
-                        .HasForeignKey("ContractId");
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany()
-                        .HasForeignKey("DelegateId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Initiator")
-                        .WithMany()
-                        .HasForeignKey("InitiatorId");
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Originations")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.User", "Manager")
-                        .WithMany()
-                        .HasForeignKey("ManagerId");
-
-                    b.HasOne("Tzkt.Data.Models.Script", "Script")
-                        .WithMany()
-                        .HasForeignKey("ScriptId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Storage", "Storage")
-                        .WithMany()
-                        .HasForeignKey("StorageId");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Contract");
-
-                    b.Navigation("Delegate");
-
-                    b.Navigation("Initiator");
-
-                    b.Navigation("Manager");
-
-                    b.Navigation("Script");
-
-                    b.Navigation("Sender");
-
-                    b.Navigation("Storage");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.PreendorsementOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Delegate")
-                        .WithMany()
-                        .HasForeignKey("DelegateId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Preendorsements")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Delegate");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.ProposalOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Proposals")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Proposal", "Proposal")
-                        .WithMany()
-                        .HasForeignKey("ProposalId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Proposal");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.RegisterConstantOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("RegisterConstants")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.RevealOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Reveals")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.RevelationPenaltyOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
-                        .WithMany()
-                        .HasForeignKey("BakerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("RevelationPenalties")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Baker");
-
-                    b.Navigation("Block");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SetDelegateParametersOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SetDelegateParametersOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SetDepositsLimitOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SetDepositsLimits")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupAddMessagesOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupAddMessagesOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupCementOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupCementOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupExecuteOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupExecuteOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupOriginateOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupOriginateOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupPublishOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupPublishOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupRecoverBondOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupRecoverBondOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.SmartRollupRefuteOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("SmartRollupRefuteOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.StakingOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("StakingOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TransactionOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Account", "Initiator")
-                        .WithMany()
-                        .HasForeignKey("InitiatorId");
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("Transactions")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Storage", "Storage")
-                        .WithMany()
-                        .HasForeignKey("StorageId");
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Target")
-                        .WithMany()
-                        .HasForeignKey("TargetId");
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Initiator");
-
-                    b.Navigation("Sender");
-
-                    b.Navigation("Storage");
-
-                    b.Navigation("Target");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TransferTicketOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TransferTicketOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupCommitOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupCommitOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupDispatchTicketsOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupDispatchTicketsOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupFinalizeCommitmentOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupFinalizeCommitmentOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupOriginationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupOriginationOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRejectionOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupRejectionOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupRemoveCommitmentOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupRemoveCommitmentOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupReturnBondOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupReturnBondOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.TxRollupSubmitBatchOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("TxRollupSubmitBatchOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.UpdateConsensusKeyOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("UpdateConsensusKeyOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Account", "Sender")
-                        .WithMany()
-                        .HasForeignKey("SenderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Block");
-
-                    b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.VdfRevelationOperation", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Delegate", "Baker")
-                        .WithMany()
-                        .HasForeignKey("BakerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Tzkt.Data.Models.Block", "Block")
-                        .WithMany("VdfRevelationOps")
-                        .HasForeignKey("Level")
-                        .HasPrincipalKey("Level")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Baker");
-
-                    b.Navigation("Block");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Contract", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Account", "Creator")
-                        .WithMany()
-                        .HasForeignKey("CreatorId");
-
-                    b.HasOne("Tzkt.Data.Models.User", "Manager")
-                        .WithMany()
-                        .HasForeignKey("ManagerId");
-
-                    b.HasOne("Tzkt.Data.Models.User", "WeirdDelegate")
-                        .WithMany()
-                        .HasForeignKey("WeirdDelegateId");
-
-                    b.Navigation("Creator");
-
-                    b.Navigation("Manager");
-
-                    b.Navigation("WeirdDelegate");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Delegate", b =>
-                {
-                    b.HasOne("Tzkt.Data.Models.Software", "Software")
-                        .WithMany()
-                        .HasForeignKey("SoftwareId");
-
-                    b.Navigation("Software");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Block", b =>
-                {
-                    b.Navigation("Activations");
-
-                    b.Navigation("Ballots");
-
-                    b.Navigation("CreatedAccounts");
-
-                    b.Navigation("DalPublishCommitmentOps");
-
-                    b.Navigation("Delegations");
-
-                    b.Navigation("DoubleBakings");
-
-                    b.Navigation("DoubleEndorsings");
-
-                    b.Navigation("DoublePreendorsings");
-
-                    b.Navigation("DrainDelegateOps");
-
-                    b.Navigation("Endorsements");
-
-                    b.Navigation("IncreasePaidStorageOps");
-
-                    b.Navigation("Migrations");
-
-                    b.Navigation("Originations");
-
-                    b.Navigation("Preendorsements");
-
-                    b.Navigation("Proposals");
-
-                    b.Navigation("RegisterConstants");
-
-                    b.Navigation("Reveals");
-
-                    b.Navigation("RevelationPenalties");
-
-                    b.Navigation("Revelations");
-
-                    b.Navigation("SetDelegateParametersOps");
-
-                    b.Navigation("SetDepositsLimits");
-
-                    b.Navigation("SmartRollupAddMessagesOps");
-
-                    b.Navigation("SmartRollupCementOps");
-
-                    b.Navigation("SmartRollupExecuteOps");
-
-                    b.Navigation("SmartRollupOriginateOps");
-
-                    b.Navigation("SmartRollupPublishOps");
-
-                    b.Navigation("SmartRollupRecoverBondOps");
-
-                    b.Navigation("SmartRollupRefuteOps");
-
-                    b.Navigation("StakingOps");
-
-                    b.Navigation("Transactions");
-
-                    b.Navigation("TransferTicketOps");
-
-                    b.Navigation("TxRollupCommitOps");
-
-                    b.Navigation("TxRollupDispatchTicketsOps");
-
-                    b.Navigation("TxRollupFinalizeCommitmentOps");
-
-                    b.Navigation("TxRollupOriginationOps");
-
-                    b.Navigation("TxRollupRejectionOps");
-
-                    b.Navigation("TxRollupRemoveCommitmentOps");
-
-                    b.Navigation("TxRollupReturnBondOps");
-
-                    b.Navigation("TxRollupSubmitBatchOps");
-
-                    b.Navigation("UpdateConsensusKeyOps");
-
-                    b.Navigation("VdfRevelationOps");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.NonceRevelationOperation", b =>
-                {
-                    b.Navigation("RevealedBlock");
-                });
-
-            modelBuilder.Entity("Tzkt.Data.Models.Delegate", b =>
-                {
-                    b.Navigation("DelegatedAccounts");
                 });
 #pragma warning restore 612, 618
         }
