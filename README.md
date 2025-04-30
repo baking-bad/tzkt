@@ -52,12 +52,10 @@ sudo apt install git
 #### Install .NET
 
 ````
-wget https://packages.microsoft.com/config/ubuntu/22.04/packages-microsoft-prod.deb -O packages-microsoft-prod.deb
-sudo dpkg -i packages-microsoft-prod.deb
-rm packages-microsoft-prod.deb
+sudo add-apt-repository ppa:dotnet/backports
 
 sudo apt update
-sudo apt install -y dotnet-sdk-7.0
+sudo apt install -y dotnet-sdk-9.0
 ````
 
 #### Install Postgresql
@@ -65,8 +63,9 @@ sudo apt install -y dotnet-sdk-7.0
 ````
 sudo sh -c 'echo "deb https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
 wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+
 sudo apt update
-sudo apt -y install postgresql-16 postgresql-contrib-16
+sudo apt install -y postgresql-17
 ````
 
 ---
@@ -162,7 +161,7 @@ cd ~/tzkt-sync
 dotnet Tzkt.Sync.dll
 ````
 
-That's it. If you want to run the indexer as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
+That's it. If you want to run the indexer as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-9.0#create-the-service-file.
 
 ---
 
@@ -250,7 +249,7 @@ cd ~/tzkt-api
 dotnet Tzkt.Api.dll
 ````
 
-That's it. If you want to run the API as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-7.0#create-the-service-file.
+That's it. If you want to run the API as a daemon, take a look at this guide: https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/linux-nginx?view=aspnetcore-9.0#create-the-service-file.
 
 ## Install Tzkt Indexer and API for testnets
 

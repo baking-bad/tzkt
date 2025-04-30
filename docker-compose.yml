@@ -4,7 +4,7 @@ services:
   db:
     container_name: tzkt-db
     restart: always
-    image: postgres:16
+    image: postgres:17
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-tzkt}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-qwerty}
