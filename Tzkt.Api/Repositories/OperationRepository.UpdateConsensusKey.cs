@@ -130,6 +130,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<UpdateConsensusKeyOperation>> GetUpdateConsensusKeys(
             AccountParameter sender,
             Int32Parameter activationCycle,
+            AddressParameter publicKeyHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -141,6 +142,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""UpdateConsensusKeyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter("SenderId", sender)
                 .Filter("ActivationCycle", activationCycle)
+                .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
@@ -180,6 +182,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[][]> GetUpdateConsensusKeys(
             AccountParameter sender,
             Int32Parameter activationCycle,
+            AddressParameter publicKeyHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -225,6 +228,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateConsensusKeyOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .Filter("ActivationCycle", activationCycle)
+                .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)
@@ -324,6 +328,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object[]> GetUpdateConsensusKeys(
             AccountParameter sender,
             Int32Parameter activationCycle,
+            AddressParameter publicKeyHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -366,6 +371,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateConsensusKeyOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .Filter("ActivationCycle", activationCycle)
+                .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Filter("Status", status)

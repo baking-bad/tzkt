@@ -4672,6 +4672,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="activationCycle">Filters by activation cycle. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="publicKeyHash">Filters by pkh (tz address).</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <param name="status">Filters by status (`applied`, `failed`, `backtracked`, `skipped`).</param>
@@ -4685,6 +4686,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyOps(
             AccountParameter sender,
             Int32Parameter activationCycle,
+            AddressParameter publicKeyHash,
             Int32Parameter level,
             DateTimeParameter timestamp,
             OperationStatusParameter status,
@@ -4712,7 +4714,8 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("sender", sender), ("activationCycle", activationCycle), ("level", level), ("timestamp", timestamp), ("status", status),
+                ("sender", sender), ("activationCycle", activationCycle), ("publicKeyHash", publicKeyHash),
+                ("level", level), ("timestamp", timestamp), ("status", status),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -4721,25 +4724,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetUpdateConsensusKeys(sender, activationCycle, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }

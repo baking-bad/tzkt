@@ -2474,7 +2474,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
                     var updateConsensusKeyOps = delegat.UpdateConsensusKeyCount > 0 && types.Contains(OpTypes.UpdateConsensusKey)
-                        ? Operations.GetUpdateConsensusKeys(_delegat, null, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetUpdateConsensusKeys(_delegat, null, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
 
                     var drainDelegateOps = delegat.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)

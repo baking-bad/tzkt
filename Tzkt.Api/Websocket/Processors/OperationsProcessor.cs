@@ -197,7 +197,7 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.IncreasePaidStorageOperation>());
 
                 var updateConsensusKeyOps = TypeSubs.TryGetValue(Operations.UpdateConsensusKey, out var updateConsensusKeySubs)
-                    ? Repo.GetUpdateConsensusKeys(null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetUpdateConsensusKeys(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.UpdateConsensusKeyOperation>());
 
                 var drainDelegateOps = TypeSubs.TryGetValue(Operations.DrainDelegate, out var drainDelegateSubs)
