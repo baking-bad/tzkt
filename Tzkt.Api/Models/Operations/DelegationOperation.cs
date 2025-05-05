@@ -116,22 +116,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? UnstakedPseudotokens => null;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? UnstakedBalance => null;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? UnstakedRewards => null;
-        #endregion
     }
 }

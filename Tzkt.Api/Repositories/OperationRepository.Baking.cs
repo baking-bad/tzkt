@@ -140,22 +140,6 @@ namespace Tzkt.Api.Repositories
                     case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                     case "fees": columns.Add(@"""Fees"""); break;
                     case "quote": columns.Add(@"""Level"""); break;
-                    #region deprecated
-                    case "rewardLiquid": columns.Add(@"""RewardDelegated"""); break;
-                    case "bonusLiquid": columns.Add(@"""BonusDelegated"""); break;
-                    case "reward":
-                        columns.Add(@"""RewardDelegated""");
-                        columns.Add(@"""RewardStakedOwn""");
-                        columns.Add(@"""RewardStakedEdge""");
-                        columns.Add(@"""RewardStakedShared""");
-                        break;
-                    case "bonus":
-                        columns.Add(@"""BonusDelegated""");
-                        columns.Add(@"""BonusStakedOwn""");
-                        columns.Add(@"""BonusStakedEdge""");
-                        columns.Add(@"""BonusStakedShared""");
-                        break;
-                    #endregion
                 }
             }
 
@@ -259,25 +243,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-
-                    #region deprecated
-                    case "rewardLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated;
-                        break;
-                    case "bonusLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BonusDelegated;
-                        break;
-                    case "reward":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                        break;
-                    case "bonus":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BonusDelegated + row.BonusStakedOwn + row.BonusStakedEdge + row.BonusStakedShared;
-                        break;
-                    #endregion
                 }
             }
 
@@ -319,22 +284,6 @@ namespace Tzkt.Api.Repositories
                 case "bonusStakedShared": columns.Add(@"""BonusStakedShared"""); break;
                 case "fees": columns.Add(@"""Fees"""); break;
                 case "quote": columns.Add(@"""Level"""); break;
-                #region deprecated
-                case "rewardLiquid": columns.Add(@"""RewardDelegated"""); break;
-                case "bonusLiquid": columns.Add(@"""BonusDelegated"""); break;
-                case "reward":
-                    columns.Add(@"""RewardDelegated""");
-                    columns.Add(@"""RewardStakedOwn""");
-                    columns.Add(@"""RewardStakedEdge""");
-                    columns.Add(@"""RewardStakedShared""");
-                    break;
-                case "bonus":
-                    columns.Add(@"""BonusDelegated""");
-                    columns.Add(@"""BonusStakedOwn""");
-                    columns.Add(@"""BonusStakedEdge""");
-                    columns.Add(@"""BonusStakedShared""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
@@ -435,25 +384,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-
-                #region deprecated
-                case "rewardLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated;
-                    break;
-                case "bonusLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.BonusDelegated;
-                    break;
-                case "reward":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                    break;
-                case "bonus":
-                    foreach (var row in rows)
-                        result[j++] = row.BonusDelegated + row.BonusStakedOwn + row.BonusStakedEdge + row.BonusStakedShared;
-                    break;
-                #endregion
             }
 
             return result;

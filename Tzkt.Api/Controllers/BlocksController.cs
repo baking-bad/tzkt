@@ -41,13 +41,11 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of blocks.
         /// </remarks>
-        /// <param name="baker">[DEPRECATED]</param>
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=tz1...`.</param>
         /// <param name="proposer">Filters blocks by block proposer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="producer">Filters blocks by block producer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters blocks by level.</param>
         /// <param name="timestamp">Filters blocks by timestamp.</param>
-        /// <param name="priority">[DEPRECATED]</param>
         /// <param name="blockRound">Filters blocks by block round.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `payloadRound`, `blockRound`, `validations`, `reward`, `bonus`, `fees`.</param>
@@ -57,7 +55,6 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
-            AccountParameter? baker,
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
             AnyOfParameter? anyof,
@@ -65,7 +62,6 @@ namespace Tzkt.Api.Controllers
             AccountParameter? producer,
             Int32Parameter? level,
             DateTimeParameter? timestamp,
-            Int32Parameter? priority,
             Int32Parameter? blockRound,
             SelectParameter? select,
             SortParameter? sort,
@@ -73,11 +69,6 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            #region deprecated
-            producer ??= baker;
-            blockRound ??= priority;
-            #endregion
-
             #region validate
             if (anyof != null)
             {

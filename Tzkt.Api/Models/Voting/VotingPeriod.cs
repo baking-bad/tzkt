@@ -135,32 +135,5 @@
         /// </summary>
         public long? PassVotingPower { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalRolls => (int)(TotalVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? TopRolls => TopVotingPower == null ? null : (int)(TopVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? YayRolls => YayVotingPower == null ? null : (int)(YayVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? NayRolls => NayVotingPower == null ? null : (int)(NayVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? PassRolls => PassVotingPower == null ? null : (int)(PassVotingPower / 6_000_000_000);
-        #endregion
     }
 }

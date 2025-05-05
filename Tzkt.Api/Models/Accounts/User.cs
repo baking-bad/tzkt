@@ -322,17 +322,5 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson? Extras { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public RawJson? Metadata { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostBalance => 0;
-        #endregion
     }
 }

@@ -85,14 +85,6 @@ namespace Tzkt.Api.Controllers
             }
         }
 
-        // deprecated
-        [OpenApiIgnore]
-        [HttpGet("bakers/{address}/{cycle:int}")]
-        public async Task<BakerRewards?> GetBakerRewardsByCycle([Required][TzAddress] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
-        {
-            return (await Rewards.GetBakerRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
-        }
-
         /// <summary>
         /// Get delegator cycle rewards count
         /// </summary>
@@ -159,14 +151,6 @@ namespace Tzkt.Api.Controllers
                     });
                 }
             }
-        }
-
-        // deprecated
-        [OpenApiIgnore]
-        [HttpGet("delegators/{address}/{cycle:int}")]
-        public async Task<DelegatorRewards?> GetDelegatorRewardsByCycle([Required][Address] string address, [Min(0)] int cycle, Symbols quote = Symbols.None)
-        {
-            return (await Rewards.GetDelegatorRewards(address, cycle, null, null, 100, quote)).FirstOrDefault();
         }
 
         /// <summary>

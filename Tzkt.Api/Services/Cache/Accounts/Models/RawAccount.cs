@@ -63,7 +63,6 @@ namespace Tzkt.Api.Services.Cache
 
         #region helpers
         public string? Alias { get; set; }
-        public string? Profile { get; set; }
         public Alias Info => new()
         {
             Name = Alias,

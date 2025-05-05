@@ -88,22 +88,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RoundingLoss => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLoss => LostStaked + LostUnstaked + LostExternalStaked + LostExternalUnstaked;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long AccuserReward => Reward;
-        #endregion
     }
 }

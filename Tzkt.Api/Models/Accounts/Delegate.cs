@@ -479,37 +479,5 @@ namespace Tzkt.Api.Models
         /// Last seen baker's software
         /// </summary>
         public SoftwareAlias? Software { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostBalance => RoundingError;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenDeposit => StakedBalance;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenDeposits => FrozenDeposit;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenRewards => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenFees => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public RawJson? Metadata { get; set; }
-        #endregion
     }
 }

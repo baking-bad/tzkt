@@ -49,9 +49,6 @@ namespace Tzkt.Api.Repositories
                         case "amount": columns.Add(@"o.""Amount"""); break;
                         case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
-                        #region deprecated
-                        case "cycle": columns.Add("1"); break;
-                        #endregion
                     }
                 }
 
@@ -150,12 +147,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "cycle":
-                        foreach (var row in rows)
-                            result[j++][i] = 0;
-                        break;
-                    #endregion
                 }
             }
 

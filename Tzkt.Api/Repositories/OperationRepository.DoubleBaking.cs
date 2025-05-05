@@ -114,10 +114,6 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
-                    #region deprecated
-                    "accuserReward" => ("Reward", "Reward"),
-                    "offenderLoss" => ("LostStaked", "LostStaked"),
-                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -184,18 +180,6 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
-                    #region deprecated
-                    case "roundingLoss": columns.Add("0"); break;
-                    case "accuserReward":
-                        columns.Add(@"o.""Reward""");
-                        break;
-                    case "offenderLoss":
-                        columns.Add(@"o.""LostStaked""");
-                        columns.Add(@"o.""LostUnstaked""");
-                        columns.Add(@"o.""LostExternalStaked""");
-                        columns.Add(@"o.""LostExternalUnstaked""");
-                        break;
-                    #endregion
                 }
             }
 
@@ -214,10 +198,6 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
-                    #region deprecated
-                    "accuserReward" => ("Reward", "Reward"),
-                    "offenderLoss" => ("LostStaked", "LostStaked"),
-                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -296,20 +276,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "roundingLoss":
-                        foreach (var row in rows)
-                            result[j++][i] = 0;
-                        break;
-                    case "accuserReward":
-                        foreach (var row in rows)
-                            result[j++][i] = row.Reward;
-                        break;
-                    case "offenderLoss":
-                        foreach (var row in rows)
-                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
-                        break;
-                    #endregion
                 }
             }
 
@@ -353,18 +319,6 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
-                #region deprecated
-                case "roundingLoss": columns.Add("0"); break;
-                case "accuserReward":
-                    columns.Add(@"o.""Reward""");
-                    break;
-                case "offenderLoss":
-                    columns.Add(@"o.""LostStaked""");
-                    columns.Add(@"o.""LostUnstaked""");
-                    columns.Add(@"o.""LostExternalStaked""");
-                    columns.Add(@"o.""LostExternalUnstaked""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
@@ -382,10 +336,6 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "accusedLevel" => ("AccusedLevel", "AccusedLevel"),
                     "slashedLevel" => ("SlashedLevel", "SlashedLevel"),
-                    #region deprecated
-                    "accuserReward" => ("Reward", "Reward"),
-                    "offenderLoss" => ("LostStaked", "LostStaked"),
-                    #endregion
                     _ => ("Id", "Id")
                 }, "o");
 
@@ -462,20 +412,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-                #region deprecated
-                case "roundingLoss":
-                    foreach (var row in rows)
-                        result[j++] = 0;
-                    break;
-                case "accuserReward":
-                    foreach (var row in rows)
-                        result[j++] = row.Reward;
-                    break;
-                case "offenderLoss":
-                    foreach (var row in rows)
-                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
-                    break;
-                #endregion
             }
 
             return result;

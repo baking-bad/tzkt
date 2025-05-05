@@ -186,7 +186,7 @@ namespace Tzkt.Api.Models
         public int CodeHash { get; set; }
 
         /// <summary>
-        /// TZIP-16 metadata (with `?legacy=true` this field will contain tzkt profile info).
+        /// TZIP-16 metadata.
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson? Metadata { get; set; }

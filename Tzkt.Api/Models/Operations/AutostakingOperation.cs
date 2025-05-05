@@ -49,12 +49,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Cycle => 0;
-        #endregion
     }
 }

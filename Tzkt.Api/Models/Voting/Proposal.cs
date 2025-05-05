@@ -53,17 +53,5 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson? Extras { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Rolls => (int)(VotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public RawJson? Metadata => Extras;
-        #endregion
     }
 }

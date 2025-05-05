@@ -12,9 +12,7 @@ namespace Tzkt.Api.Services.Cache
     {
         #region static
         const string SelectQuery = """
-            SELECT *,
-                   "Extras"#>>'{profile,alias}' AS "Alias",
-                   "Extras"->'profile' AS "Profile"
+            SELECT *, "Extras"#>>'{profile,alias}' AS "Alias",
             FROM "Accounts"
             """;
         #endregion
@@ -174,20 +172,16 @@ namespace Tzkt.Api.Services.Cache
             if (TryGetSafe(address, out var account))
             {
                 account.Extras = json;
-                #region deprecated
                 if (json != null)
                 {
                     using var doc = JsonDocument.Parse(json);
                     if (doc.RootElement.TryGetProperty("profile", out var profile) && profile.TryGetProperty("alias", out var alias))
                     {
-                        account.Profile = JsonSerializer.Serialize(profile);
                         account.Alias = alias.GetString();
                         return;
                     }
                 }
-                account.Profile = null;
                 account.Alias = null;
-                #endregion
             }
         }
 

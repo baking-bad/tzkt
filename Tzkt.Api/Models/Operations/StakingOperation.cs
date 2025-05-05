@@ -102,32 +102,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public string Kind => Action;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? Pseudotokens => null;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? LimitOfStakingOverBaking => null;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long? EdgeOfBakingOverStaking => null;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? ActivationCycle => null;
-        #endregion
     }
 }

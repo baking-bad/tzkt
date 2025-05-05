@@ -296,11 +296,6 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
-                    #region deprecated
-                    case "unstakedPseudotokens": columns.Add("0"); break;
-                    case "unstakedBalance": columns.Add("0"); break;
-                    case "unstakedRewards": columns.Add("0"); break;
-                    #endregion
                 }
             }
 
@@ -427,20 +422,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "unstakedPseudotokens":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "unstakedBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "unstakedRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    #endregion
                 }
             }
 
@@ -493,11 +474,6 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
-                #region deprecated
-                case "unstakedPseudotokens": columns.Add("0"); break;
-                case "unstakedBalance": columns.Add("0"); break;
-                case "unstakedRewards": columns.Add("0"); break;
-                #endregion
             }
 
             if (columns.Count == 0)
@@ -621,20 +597,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-                #region deprecated
-                case "unstakedPseudotokens":
-                    foreach (var row in rows)
-                        result[j++] = null;
-                    break;
-                case "unstakedBalance":
-                    foreach (var row in rows)
-                        result[j++] = null;
-                    break;
-                case "unstakedRewards":
-                    foreach (var row in rows)
-                        result[j++] = null;
-                    break;
-                #endregion
             }
 
             return result;

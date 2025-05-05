@@ -5535,7 +5535,6 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of baking operations (synthetic type).
         /// </remarks>
-        /// <param name="baker">[DEPRECATED]</param>
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=tz1...`.</param>
         /// <param name="proposer">Filters by block proposer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="producer">Filters by block producer. Allowed fields for `.eqx` mode: none.</param>
@@ -5550,7 +5549,6 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("baking")]
         public async Task<ActionResult<IEnumerable<BakingOperation>>> GetBaking(
-            AccountParameter? baker,
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
             AnyOfParameter? anyof,
@@ -5565,10 +5563,6 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            #region deprecated
-            producer ??= baker;
-            #endregion
-
             #region validate
             if (anyof != null)
             {
@@ -5606,7 +5600,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("baker", baker), ("anyof", anyof), ("proposer", proposer), ("producer", producer), ("id", id), ("level", level),
+                ("anyof", anyof), ("proposer", proposer), ("producer", producer), ("id", id), ("level", level),
                 ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
