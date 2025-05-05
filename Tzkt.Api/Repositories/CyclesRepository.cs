@@ -120,15 +120,6 @@ namespace Tzkt.Api.Repositories
                     case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
                     case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
                     case "quote": columns.Add(@"""LastLevel"""); break;
-                    #region deprecated
-                    case "snapshotIndex": columns.Add("0"); break;
-                    case "lbSubsidy": columns.Add("0"); break;
-                    case "totalDelegated": columns.Add("0"); break;
-                    case "totalDelegators": columns.Add("0"); break;
-                    case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
-                    case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
-                    case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
-                    #endregion
                 }
             }
 
@@ -213,36 +204,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.LastLevel);
                         break;
-                    #region deprecated
-                    case "snapshotIndex":
-                        foreach (var row in rows)
-                            result[j++][i] = 0;
-                        break;
-                    case "lbSubsidy":
-                        foreach (var row in rows)
-                            result[j++][i] = 833_333;
-                        break;
-                    case "totalDelegated":
-                        foreach (var row in rows)
-                            result[j++][i] = 0;
-                        break;
-                    case "totalDelegators":
-                        foreach (var row in rows)
-                            result[j++][i] = 0;
-                        break;
-                    case "totalStaking":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TotalBakingPower;
-                        break;
-                    case "selectedBakers":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TotalBakers;
-                        break;
-                    case "selectedStake":
-                        foreach (var row in rows)
-                            result[j++][i] = row.TotalBakingPower;
-                        break;
-                    #endregion
                 }
             }
 
@@ -275,15 +236,6 @@ namespace Tzkt.Api.Repositories
                 case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
                 case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
                 case "quote": columns.Add(@"""LastLevel"""); break;
-                #region deprecated
-                case "snapshotIndex": columns.Add("0"); break;
-                case "lbSubsidy": columns.Add("0"); break;
-                case "totalDelegated": columns.Add("0"); break;
-                case "totalDelegators": columns.Add("0"); break;
-                case "totalStaking": columns.Add(@"""TotalBakingPower"""); break;
-                case "selectedBakers": columns.Add(@"""TotalBakers"""); break;
-                case "selectedStake": columns.Add(@"""TotalBakingPower"""); break;
-                #endregion
             }
 
             if (columns.Count == 0)
@@ -365,36 +317,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.LastLevel);
                     break;
-                #region deprecated
-                case "snapshotIndex":
-                    foreach (var row in rows)
-                        result[j++] = 0;
-                    break;
-                case "lbSubsidy":
-                    foreach (var row in rows)
-                        result[j++] = 833_333;
-                    break;
-                case "totalDelegated":
-                    foreach (var row in rows)
-                        result[j++] = 0;
-                    break;
-                case "totalDelegators":
-                    foreach (var row in rows)
-                        result[j++] = 0;
-                    break;
-                case "totalStaking":
-                    foreach (var row in rows)
-                        result[j++] = row.TotalBakingPower;
-                    break;
-                case "selectedBakers":
-                    foreach (var row in rows)
-                        result[j++] = row.TotalBakers;
-                    break;
-                case "selectedStake":
-                    foreach (var row in rows)
-                        result[j++] = row.TotalBakingPower;
-                    break;
-                #endregion
             }
 
             return result;

@@ -283,9 +283,6 @@ app.MapControllers();
 if (builder.Configuration.GetWebsocketConfig().Enabled)
 {
     app.MapHub<DefaultHub>("/v1/ws");
-    #region DEPRECATED
-    app.MapHub<DefaultHub>("/v1/events");
-    #endregion
 }
 
 if (builder.Configuration.GetHealthChecksConfig().Enabled)

@@ -168,19 +168,17 @@ namespace Tzkt.Api.Controllers
         /// Returns an account with the specified address.
         /// </remarks>
         /// <param name="address">Account address</param>
-        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
         public async Task<ActionResult<Account?>> GetByAddress(
-            [Required][Address] string address,
-            bool legacy = true)
+            [Required][Address] string address)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.Get(address, legacy);
+            var res = await Accounts.Get(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -442,20 +440,6 @@ namespace Tzkt.Api.Controllers
                 return this.Bytes(cached);
 
             var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-
-        [OpenApiIgnore]
-        [HttpGet("{address}/metadata")]
-        public async Task<ActionResult<RawJson?>> GetMetadata([Required][Address] string address)
-        {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Accounts.GetProfileInfo(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }

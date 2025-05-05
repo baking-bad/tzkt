@@ -48,17 +48,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostReward => Loss;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostFees => 0;
-        #endregion
     }
 }

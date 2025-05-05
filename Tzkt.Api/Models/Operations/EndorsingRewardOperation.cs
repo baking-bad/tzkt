@@ -67,17 +67,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Received => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
-        #endregion
     }
 }

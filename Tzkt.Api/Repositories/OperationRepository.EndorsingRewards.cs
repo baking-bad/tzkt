@@ -115,15 +115,6 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
-                    #region deprecated
-                    case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
-                    case "received":
-                        columns.Add(@"o.""RewardDelegated""");
-                        columns.Add(@"o.""RewardStakedOwn""");
-                        columns.Add(@"o.""RewardStakedEdge""");
-                        columns.Add(@"o.""RewardStakedShared""");
-                        break;
-                    #endregion
                 }
             }
 
@@ -192,16 +183,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "rewardLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated;
-                        break;
-                    case "received":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                        break;
-                    #endregion
                 }
             }
 
@@ -238,15 +219,6 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
-                #region deprecated
-                case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
-                case "received":
-                    columns.Add(@"o.""RewardDelegated""");
-                    columns.Add(@"o.""RewardStakedOwn""");
-                    columns.Add(@"o.""RewardStakedEdge""");
-                    columns.Add(@"o.""RewardStakedShared""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
@@ -312,16 +284,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-                #region deprecated
-                case "rewardLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated;
-                    break;
-                case "received":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                    break;
-                #endregion
             }
 
             return result;

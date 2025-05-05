@@ -44,10 +44,5 @@ namespace Tzkt.Api.Models
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
         public RawJson? Extras { get; set; }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public RawJson? Metadata => Extras;
     }
 }

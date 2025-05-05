@@ -112,7 +112,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
-        public async Task<Contract?> GetContract(string address, bool legacy)
+        public async Task<Contract?> GetContract(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract)
@@ -161,8 +161,8 @@ namespace Tzkt.Api.Repositories
                 EventsCount = contract.EventsCount,
                 TypeHash = contract.TypeHash,
                 CodeHash = contract.CodeHash,
-                Metadata = legacy ? contract.Profile : contract.Metadata,
-                Extras = legacy ? null : contract.Extras
+                Metadata = contract.Metadata,
+                Extras = contract.Extras
             };
         }
 

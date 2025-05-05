@@ -23,27 +23,5 @@
         /// Emptied accounts (users with zero balance) should be re-allocated, so if you make payment to the emptied account you will pay allocation fee.
         /// </summary>
         public bool Emptied { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long CurrentDelegatedBalance => Emptied ? 0 : 257;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long CurrentStakedBalance => Emptied ? 0 : 257;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Balance => DelegatedBalance + StakedBalance;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long CurrentBalance => CurrentDelegatedBalance + CurrentStakedBalance;
-        #endregion
     }
 }

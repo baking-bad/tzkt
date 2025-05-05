@@ -59,13 +59,6 @@ namespace Tzkt.Api.Repositories
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
-                        #region deprecated
-                        case "kind": columns.Add(@"o.""Action"""); break;
-                        case "pseudotokens": columns.Add("1"); break;
-                        case "limitOfStakingOverBaking": columns.Add("1"); break;
-                        case "edgeOfBakingOverStaking": columns.Add("1"); break;
-                        case "activationCycle": columns.Add("1"); break;
-                        #endregion
                     }
                 }
 
@@ -229,28 +222,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "kind":
-                        foreach (var row in rows)
-                            result[j++][i] = StakingActions.ToString(row.Action);
-                        break;
-                    case "pseudotokens":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "limitOfStakingOverBaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "edgeOfBakingOverStaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "activationCycle":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                        #endregion
                 }
             }
 

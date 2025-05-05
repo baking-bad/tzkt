@@ -48,12 +48,5 @@
         /// - `missed` - the right was not realized.
         /// </summary>
         public required string Status { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? Priority => Round;
-        #endregion
     }
 }

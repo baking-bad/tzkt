@@ -377,47 +377,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long BonusLiquid => BonusDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Reward => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Bonus => BonusDelegated + BonusStakedOwn + BonusStakedEdge + BonusStakedShared;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Priority => BlockRound;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public Alias? Baker => Producer;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public bool LBEscapeVote => LBToggle == false;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int LBEscapeEma => LBToggleEma;
-        #endregion
     }
 }

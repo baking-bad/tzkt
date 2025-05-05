@@ -32,9 +32,9 @@ namespace Tzkt.Api.Services
         public static object?[][] BlocksTab { get; private set; } = [];
         public static readonly string[] BlockFields =
         [
-            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees", "hash",
-            "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
-            "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge"// TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
+            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "fees", "hash",
+            "rewardDelegated", "rewardStakedOwn", "rewardStakedShared", "rewardStakedEdge",
+            "bonusDelegated", "bonusStakedOwn", "bonusStakedShared", "bonusStakedEdge"
         ];
         #endregion
 
@@ -212,9 +212,9 @@ namespace Tzkt.Api.Services
                 null,
                 new SortParameter { Desc = "level" },
                 null, 5, [
-                    "timestamp", "level", "baker", "baker", "round", "round", "validations", "reward", "bonus", "fees", "hash",
-                    "rewardLiquid", "rewardStakedOwn", "rewardStakedShared", "bonusLiquid", "bonusStakedOwn", "bonusStakedShared",
-                    "rewardDelegated", "rewardStakedEdge", "bonusDelegated", "bonusStakedEdge" // TODO: remove deprecated reward, rewardLiquid, bonus and bonusLiquid
+                    "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "fees", "hash",
+                    "rewardDelegated", "rewardStakedOwn", "rewardStakedShared", "rewardStakedEdge",
+                    "bonusDelegated", "bonusStakedOwn", "bonusStakedShared", "bonusStakedEdge"
                 ]);
 
             var blocks = await BlocksRepo.Get(null, null, null, null, null, null, 

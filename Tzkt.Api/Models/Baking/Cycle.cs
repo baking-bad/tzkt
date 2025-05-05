@@ -83,47 +83,5 @@
         /// </summary>
         public QuoteShort? Quote { get; set; }
         #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int SnapshotIndex => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LBSubsidy => 833_333;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalStaking => TotalBakingPower;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalDelegators => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalDelegated => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int SelectedBakers => TotalBakers;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long SelectedStake => TotalBakingPower;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalRolls => 0;
-        #endregion
     }
 }

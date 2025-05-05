@@ -58,7 +58,7 @@ namespace Tzkt.Api.Repositories
                 : rawAccount.Counter;
         }
 
-        public async Task<Account?> Get(string address, bool legacy)
+        public async Task<Account?> Get(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount == null)
@@ -164,8 +164,7 @@ namespace Tzkt.Api.Repositories
                         StakingUpdatesCount = delegat.StakingUpdatesCount ?? 0,
                         SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
                         DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
-                        Metadata = legacy ? delegat.Profile : null,
-                        Extras = legacy ? null : delegat.Extras,
+                        Extras = delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
                     #endregion
@@ -184,8 +183,7 @@ namespace Tzkt.Api.Repositories
                         else
                         {
                             var res = (User)(await Get(user.Id, null, null, null, null, null, null, null, null, null, null, 1)).First();
-                            res.Metadata = legacy ? user.Profile : null;
-                            res.Extras = legacy ? null : user.Extras;
+                            res.Extras = user.Extras;
                             return res;
                         }
                     }
@@ -258,8 +256,7 @@ namespace Tzkt.Api.Repositories
                         StakingUpdatesCount = user.StakingUpdatesCount ?? 0,
                         SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                         DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
-                        Metadata = legacy ? user.Profile : null,
-                        Extras = legacy ? null : user.Extras
+                        Extras = user.Extras
                     };
                     #endregion
                 case RawContract contract:
@@ -307,8 +304,8 @@ namespace Tzkt.Api.Repositories
                         EventsCount = contract.EventsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
-                        Metadata = legacy ? contract.Profile : contract.Metadata,
-                        Extras = legacy ? null : contract.Extras
+                        Metadata = contract.Metadata,
+                        Extras = contract.Extras
                     };
                 #endregion
                 case RawRollup rollup:
@@ -340,8 +337,7 @@ namespace Tzkt.Api.Repositories
                         TicketBalancesCount = rollup.TicketBalancesCount,
                         TicketTransfersCount = rollup.TicketTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
-                        Metadata = legacy ? rollup.Profile : null,
-                        Extras = legacy ? null : rollup.Extras
+                        Extras = rollup.Extras
                     };
                 #endregion
                 case RawSmartRollup rollup:
@@ -384,7 +380,7 @@ namespace Tzkt.Api.Repositories
                         PendingCommitments = rollup.PendingCommitments,
                         RefutedCommitments = rollup.RefutedCommitments,
                         PvmKind = PvmKinds.ToString(rollup.PvmKind),
-                        Extras = legacy ? null : rollup.Extras
+                        Extras = rollup.Extras
                     };
                 #endregion
                 case RawAccount ghost:
@@ -404,8 +400,7 @@ namespace Tzkt.Api.Repositories
                         FirstActivityTime = Time[ghost.FirstLevel],
                         LastActivity = ghost.LastLevel,
                         LastActivityTime = Time[ghost.LastLevel],
-                        Metadata = legacy ? ghost.Profile : null,
-                        Extras = legacy ? null : ghost.Extras
+                        Extras = ghost.Extras
                     };
                 #endregion
                 default:
@@ -2931,12 +2926,6 @@ namespace Tzkt.Api.Repositories
             return sort?.Desc == null
                 ? result.OrderBy(x => x.Id).Take(limit)
                 : result.OrderByDescending(x => x.Id).Take(limit);
-        }
-
-        public async Task<RawJson?> GetProfileInfo(string address)
-        {
-            var account = await Accounts.GetAsync(address);
-            return account?.Profile;
         }
     }
 }
