@@ -5,20 +5,18 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto20
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> Snapshots { get; protected set; }
-        public Dictionary<int, long> SelectedStakes { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? Snapshots { get; protected set; }
+        public Dictionary<int, long>? SelectedStakes { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            var index = block.Cycle + block.Protocol.ConsensusRightsDelay;
+            var index = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
             var contextTask = Proto.Rpc.GetCycleAsync(block.Level, index);
             var issuanceTask = Proto.Rpc.GetExpectedIssuance(block.Level);
@@ -31,7 +29,7 @@ namespace Tzkt.Sync.Protocols.Proto20
             SelectedStakes = context.RequiredArray("selected_stake_distribution")
                 .EnumerateArray()
                 .ToDictionary(
-                    x => Cache.Accounts.GetDelegate(x.RequiredString("baker")).Id,
+                    x => Cache.Accounts.GetExistingDelegate(x.RequiredString("baker")).Id,
                     x => x.Required("active_stake").RequiredInt64("frozen") + x.Required("active_stake").RequiredInt64("delegated"));
 
             Snapshots = await Db.SnapshotBalances
@@ -41,9 +39,10 @@ namespace Tzkt.Sync.Protocols.Proto20
 
             FutureCycle = new Cycle
             {
+                Id = 0,
                 Index = index,
-                FirstLevel = block.Protocol.GetCycleStart(index),
-                LastLevel = block.Protocol.GetCycleEnd(index),
+                FirstLevel = Context.Protocol.GetCycleStart(index),
+                LastLevel = Context.Protocol.GetCycleEnd(index),
                 SnapshotLevel = block.Level - 1,
                 TotalBakers = SelectedStakes.Count,
                 TotalBakingPower = SelectedStakes.Values.Sum(),
@@ -57,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto20
             };
 
             FutureCycle.MaxBlockReward = FutureCycle.BlockReward
-                + FutureCycle.BlockBonusPerSlot * (block.Protocol.EndorsersPerBlock - block.Protocol.ConsensusThreshold);
+                + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
 
             Db.Cycles.Add(FutureCycle);
         }
@@ -67,12 +66,10 @@ namespace Tzkt.Sync.Protocols.Proto20
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "Cycles"
-                WHERE "Index" = {block.Cycle + block.Protocol.ConsensusRightsDelay}
-                """);
+                WHERE "Index" = {0}
+                """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
         }
 
         protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;

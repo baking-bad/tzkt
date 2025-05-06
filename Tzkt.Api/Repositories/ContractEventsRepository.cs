@@ -1,5 +1,4 @@
 ﻿using System.Data;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
@@ -21,7 +20,7 @@ namespace Tzkt.Api.Repositories
             Times = times;
         }
 
-        async Task<IEnumerable<dynamic>> QueryContractEventsAsync(ContractEventFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryContractEventsAsync(ContractEventFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = @"
                 ""Id"",
@@ -63,14 +62,14 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^payload(\.[\w]+)+$"))
+                if (field.StartsWith("payload.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""JsonPayload""#>'{{{field[8..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -128,18 +127,18 @@ namespace Tzkt.Api.Repositories
                 Contract = Accounts.GetAlias(row.ContractId),
                 CodeHash = row.ContractCodeHash,
                 Tag = row.Tag,
-                Payload = (RawJson)row.JsonPayload,
+                Payload = (RawJson?)row.JsonPayload,
                 TransactionId = row.TransactionId,
             });
         }
 
-        public async Task<object[][]> GetContractEvents(ContractEventFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetContractEvents(ContractEventFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryContractEventsAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -179,7 +178,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "payload":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.JsonPayload;
+                            result[j++][i] = (RawJson?)row.JsonPayload;
                         break;
                     case "transactionId":
                         foreach (var row in rows)
@@ -196,7 +195,7 @@ namespace Tzkt.Api.Repositories
                     default:
                         if (fields[i].Field == "payload")
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string)!;
                         break;
                 }
             }

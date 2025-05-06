@@ -1,27 +1,17 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class RevelationPenaltyOperation
+    public class RevelationPenaltyOperation : IOperation
     {
-        public long Id { get; set; }
-        public int Level { get; set; }
-        public DateTime Timestamp { get; set; }
+        public required long Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
+        public required int BakerId { get; set; }
 
-        public int BakerId { get; set; }
         public int MissedLevel { get; set; }
-
         public long Loss { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(Level))]
-        public Block Block { get; set; }
-
-        [ForeignKey(nameof(BakerId))]
-        public Delegate Baker { get; set; }
-        #endregion
     }
 
     public static class RevelationPenaltyOperationModel
@@ -39,14 +29,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<RevelationPenaltyOperation>()
                 .HasIndex(x => x.BakerId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<RevelationPenaltyOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.RevelationPenalties)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

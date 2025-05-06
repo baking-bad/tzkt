@@ -30,7 +30,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QueryStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "o.*";
 
@@ -59,18 +59,11 @@ namespace Tzkt.Api.Repositories
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
-                        #region deprecated
-                        case "kind": columns.Add(@"o.""Action"""); break;
-                        case "pseudotokens": columns.Add("1"); break;
-                        case "limitOfStakingOverBaking": columns.Add("1"); break;
-                        case "edgeOfBakingOverStaking": columns.Add("1"); break;
-                        case "activationCycle": columns.Add("1"); break;
-                        #endregion
                     }
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -125,13 +118,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QueryStakingOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -229,28 +222,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "kind":
-                        foreach (var row in rows)
-                            result[j++][i] = StakingActions.ToString(row.Action);
-                        break;
-                    case "pseudotokens":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "limitOfStakingOverBaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "edgeOfBakingOverStaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "activationCycle":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                        #endregion
                 }
             }
 

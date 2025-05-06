@@ -23,7 +23,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QueryDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "o.*";
 
@@ -53,7 +53,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -98,13 +98,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QueryDalPublishCommitmentOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {

@@ -3,15 +3,13 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class Rpc : IRpc
+    class Rpc(TezosNode node) : IRpc
     {
-        protected readonly TezosNode Node;
-
-        public Rpc(TezosNode node) => Node = node;
+        protected readonly TezosNode Node = node;
 
         #region indexer
         public virtual Task<JsonElement> GetBlockAsync(int level)
-            => Node.GetAsync($"chains/main/blocks/{level}?version=0");
+            => Node.GetAsync($"chains/main/blocks/{level}");
 
         public virtual Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => Node.GetAsync($"chains/main/blocks/{block}/helpers/baking_rights?cycle={cycle}&max_priority=8&all=true");
@@ -52,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/global_counter");
 
         public virtual Task<JsonElement> GetDelegatesAsync(int level)
-            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates");
+            => Node.GetAsync($"chains/main/blocks/{level}/context/delegates?active=true&inactive=true");
 
         public virtual Task<JsonElement> GetActiveDelegatesAsync(int level)
             => Node.GetAsync($"chains/main/blocks/{level}/context/delegates?active=true");

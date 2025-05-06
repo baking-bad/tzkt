@@ -1,5 +1,4 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -65,14 +64,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupPublishOperation>()
                 .HasIndex(x => new { x.SmartRollupId, x.BondStatus, x.SenderId })
                 .HasFilter($@"""{nameof(SmartRollupPublishOperation.BondStatus)}"" IS NOT NULL");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupPublishOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

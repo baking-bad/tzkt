@@ -14,10 +14,10 @@ namespace Tzkt.Sync.Protocols.Proto19
             List<SnapshotBalance> snapshots,
             Dictionary<int, long> selectedStakes)
         {
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                     return;
             }
 
@@ -26,12 +26,10 @@ namespace Tzkt.Sync.Protocols.Proto19
 
         protected override async Task RevertNewCycle(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                     return;
             }
 

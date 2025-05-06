@@ -4,11 +4,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class BlockCommit : ProtocolCommit
+    class BlockCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Block Block { get; private set; }
-
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Block Block { get; private set; } = null!;
 
         public virtual async Task Apply(JsonElement rawBlock)
         {
@@ -16,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var metadata = rawBlock.Required("metadata");
 
             var level = header.RequiredInt32("level");
-            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
-            var producer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
+            var proposer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("proposer"));
+            var producer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("baker"));
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
             var events = BlockEvents.None;
 
@@ -50,11 +48,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Cycle = protocol.GetCycle(level),
                 Level = level,
                 ProtoCode = protocol.Code,
-                Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = payloadRound,
                 BlockRound = blockRound,
-                Proposer = proposer,
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
                 Events = events,
@@ -70,7 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             proposer.BlocksCount++;
 
             #region set baker active
-            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block.Level, protocol) : GracePeriod.Init(Block.Level, protocol);
             if (proposer.DeactivationLevel < newDeactivationLevel)
             {
                 if (proposer.DeactivationLevel <= Block.Level)
@@ -89,7 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 producer.BlocksCount++;
 
                 #region set proposer active
-                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block.Level, protocol) : GracePeriod.Init(Block.Level, protocol);
                 if (producer.DeactivationLevel < newDeactivationLevel)
                 {
                     if (producer.DeactivationLevel <= Block.Level)
@@ -105,19 +101,23 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 protocol.LastLevel = Block.Level;
 
+
+            Cache.AppState.Get().BlocksCount++;
             Cache.Statistics.Current.TotalCreated += Block.RewardDelegated + Block.BonusDelegated;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
+
+            Context.Block = Block;
+            Context.Proposer = proposer;
+            Context.Protocol = protocol;
         }
 
         public virtual async Task Revert(Block block)
         {
             Block = block;
-            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-            
-            var proposer = Block.Proposer;
+
+            var proposer = Context.Proposer;
             Db.TryAttach(proposer);
             proposer.Balance -= Block.RewardDelegated;
             proposer.StakingBalance -= Block.RewardDelegated;
@@ -133,7 +133,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
-            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
+            var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
             producer.Balance -= Block.BonusDelegated;
             producer.StakingBalance -= Block.BonusDelegated;
@@ -151,6 +151,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
                 #endregion
             }
+
+            Cache.AppState.Get().BlocksCount--;
 
             Db.Blocks.Remove(Block);
             Cache.AppState.ReleaseOperationId();

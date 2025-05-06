@@ -12,23 +12,23 @@ namespace Tzkt.Api.Websocket.Processors
         const string Channel = "token_balances";
         static readonly SemaphoreSlim Sema = new(1, 1);
 
-        static readonly HashSet<string> AllSubs = new();
-        static readonly Dictionary<string, AccountSub> AccountSubs = new();
-        static readonly Dictionary<string, ContractSub> ContractSubs = new();
+        static readonly HashSet<string> AllSubs = [];
+        static readonly Dictionary<string, AccountSub> AccountSubs = [];
+        static readonly Dictionary<string, ContractSub> ContractSubs = [];
 
-        static readonly Dictionary<string, int> Limits = new();
+        static readonly Dictionary<string, int> Limits = [];
 
         class AccountSub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<string, ContractSub> Contracts { get; set; }
+            public HashSet<string>? All { get; set; }
+            public Dictionary<string, ContractSub>? Contracts { get; set; }
 
             public bool Empty => All == null && Contracts == null;
         }
         class ContractSub
         {
-            public HashSet<string> All { get; set; }
-            public Dictionary<BigInteger, HashSet<string>> Tokens { get; set; }
+            public HashSet<string>? All { get; set; }
+            public Dictionary<BigInteger, HashSet<string>>? Tokens { get; set; }
 
             public bool Empty => All == null && Tokens == null;
         }
@@ -93,9 +93,7 @@ namespace Tzkt.Api.Websocket.Processors
                         {
                             Gt = State.ValidLevel,
                             Le = State.Current.Level
-                        },
-                    account = new(),
-                    token = new()
+                        }
                 };
                 var params2 = new TokenBalanceFilter
                 {
@@ -114,9 +112,7 @@ namespace Tzkt.Api.Websocket.Processors
                             Null = false,
                             Gt = State.ValidLevel,
                             Le = State.Current.Level
-                        },
-                    account = new(),
-                    token = new()
+                        }
                 };
                 var limit = 1_000_000;
 
@@ -137,7 +133,7 @@ namespace Tzkt.Api.Websocket.Processors
                     {
                         if (!toSend.TryGetValue(clientId, out var list))
                         {
-                            list = new();
+                            list = [];
                             toSend.Add(clientId, list);
                         }
                         list.Add(balance);
@@ -286,7 +282,7 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                     else
                     {
-                        contractSub.All ??= new();
+                        contractSub.All ??= [];
                         TryAdd(contractSub.All, connectionId);
                     }
                 }
@@ -400,7 +396,7 @@ namespace Tzkt.Api.Websocket.Processors
             }
         }
 
-        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId)
+        private static void TryAdd<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, TSubKey key, string connectionId) where TSubKey : notnull
         {
             if (!subs.TryGetValue(key, out var set))
             {
@@ -418,7 +414,7 @@ namespace Tzkt.Api.Websocket.Processors
                 Limits[connectionId] = Limits.GetValueOrDefault(connectionId) + 1;
         }
 
-        private static Dictionary<TSubKey, HashSet<string>> TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>> subs, string connectionId)
+        private static Dictionary<TSubKey, HashSet<string>>? TryRemove<TSubKey>(Dictionary<TSubKey, HashSet<string>>? subs, string connectionId) where TSubKey : notnull
         {
             if (subs == null) return null;
             foreach (var (key, value) in subs)
@@ -433,7 +429,7 @@ namespace Tzkt.Api.Websocket.Processors
             return subs;
         }
 
-        private static HashSet<string> TryRemove(HashSet<string> set, string connectionId)
+        private static HashSet<string>? TryRemove(HashSet<string>? set, string connectionId)
         {
             if (set == null) return null;
             if (set.Remove(connectionId))

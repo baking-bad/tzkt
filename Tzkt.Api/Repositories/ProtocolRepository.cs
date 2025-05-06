@@ -20,7 +20,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql);
         }
 
-        public async Task<Protocol> GetByCycle(int cycle)
+        public async Task<Protocol?> GetByCycle(int cycle)
         {
             var sql = $@"
                 SELECT      *
@@ -48,8 +48,8 @@ namespace Tzkt.Api.Repositories
                     NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
-                        ? new List<long> { row.BlockReward0 }
-                        : new List<long> { row.BlockReward0, row.BlockReward1 },
+                        ? [row.BlockReward0]
+                        : [row.BlockReward0, row.BlockReward1],
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
@@ -57,8 +57,8 @@ namespace Tzkt.Api.Repositories
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
                     EndorsementReward = row.EndorsementReward1 == 0
-                        ? new List<long> { row.EndorsementReward0 }
-                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
+                        ? [row.EndorsementReward0]
+                        : [row.EndorsementReward0, row.EndorsementReward1],
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
@@ -92,7 +92,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<Protocol> Get(int code)
+        public async Task<Protocol?> Get(int code)
         {
             var sql = @"
                 SELECT  *
@@ -119,8 +119,8 @@ namespace Tzkt.Api.Repositories
                     NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
-                        ? new List<long> { row.BlockReward0 }
-                        : new List<long> { row.BlockReward0, row.BlockReward1 },
+                        ? [row.BlockReward0]
+                        : [row.BlockReward0, row.BlockReward1],
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
@@ -128,8 +128,8 @@ namespace Tzkt.Api.Repositories
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
                     EndorsementReward = row.EndorsementReward1 == 0
-                        ? new List<long> { row.EndorsementReward0 }
-                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
+                        ? [row.EndorsementReward0]
+                        : [row.EndorsementReward0, row.EndorsementReward1],
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
@@ -163,7 +163,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<Protocol> Get(string hash)
+        public async Task<Protocol?> Get(string hash)
         {
             var sql = @"
                 SELECT  *
@@ -190,8 +190,8 @@ namespace Tzkt.Api.Repositories
                     NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
-                        ? new List<long> { row.BlockReward0 }
-                        : new List<long> { row.BlockReward0, row.BlockReward1 },
+                        ? [row.BlockReward0]
+                        : [row.BlockReward0, row.BlockReward1],
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
@@ -199,8 +199,8 @@ namespace Tzkt.Api.Repositories
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
                     EndorsementReward = row.EndorsementReward1 == 0
-                        ? new List<long> { row.EndorsementReward0 }
-                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
+                        ? [row.EndorsementReward0]
+                        : [row.EndorsementReward0, row.EndorsementReward1],
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
@@ -234,7 +234,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<IEnumerable<Protocol>> Get(SortParameter sort, OffsetParameter offset, int limit)
+        public async Task<IEnumerable<Protocol>> Get(SortParameter? sort, OffsetParameter? offset, int limit)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Protocols""")
                 .Take(sort ?? new(){ Asc = "code" }, offset, limit, x => x switch
@@ -262,8 +262,8 @@ namespace Tzkt.Api.Repositories
                     NoRewardCycles = row.NoRewardCycles,
                     BlockDeposit = row.BlockDeposit,
                     BlockReward = row.BlockReward1 == 0
-                        ? new List<long> { row.BlockReward0 }
-                        : new List<long> { row.BlockReward0, row.BlockReward1 },
+                        ? [row.BlockReward0]
+                        : [row.BlockReward0, row.BlockReward1],
                     BlocksPerCommitment = row.BlocksPerCommitment,
                     BlocksPerCycle = row.BlocksPerCycle,
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
@@ -271,8 +271,8 @@ namespace Tzkt.Api.Repositories
                     ByteCost = row.ByteCost,
                     EndorsementDeposit = row.EndorsementDeposit,
                     EndorsementReward = row.EndorsementReward1 == 0
-                        ? new List<long> { row.EndorsementReward0 }
-                        : new List<long> { row.EndorsementReward0, row.EndorsementReward1 },
+                        ? [row.EndorsementReward0]
+                        : [row.EndorsementReward0, row.EndorsementReward1],
                     EndorsersPerBlock = row.EndorsersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,

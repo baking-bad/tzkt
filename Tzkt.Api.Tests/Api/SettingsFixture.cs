@@ -1,12 +1,10 @@
-﻿using System;
-using System.Net.Http;
-using Dynamic.Json;
+﻿using Dynamic.Json;
 
 namespace Tzkt.Api.Tests.Api
 {
     public class SettingsFixture : IDisposable
     {
-        static readonly object Crit = new();
+        static readonly Lock Crit = new();
 
         public HttpClient Client { get; }
         public string Baker { get; }

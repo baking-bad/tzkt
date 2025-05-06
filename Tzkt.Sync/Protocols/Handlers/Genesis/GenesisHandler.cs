@@ -31,6 +31,7 @@ namespace Tzkt.Sync.Protocols
             #region add protocol
             var protocol = new Protocol
             {
+                Id = 0,
                 Hash = rawBlock.RequiredString("protocol"),
                 Code = -1,
                 Version = VersionNumber,
@@ -50,7 +51,7 @@ namespace Tzkt.Sync.Protocols
                 Hash = rawBlock.RequiredString("hash"),
                 Cycle = -1,
                 Level = rawBlock.Required("header").RequiredInt32("level"),
-                Protocol = protocol,
+                ProtoCode = protocol.Code,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
                 Events = BlockEvents.ProtocolBegin | BlockEvents.ProtocolEnd
             };
@@ -59,7 +60,11 @@ namespace Tzkt.Sync.Protocols
             #endregion
 
             #region add empty stats
-            var stats = new Statistics();
+            var stats = new Statistics
+            {
+                Id = 0,
+                Level = block.Level
+            };
             Db.Statistics.Add(stats);
             Cache.Statistics.SetCurrent(stats);
             #endregion
@@ -71,7 +76,7 @@ namespace Tzkt.Sync.Protocols
             state.Cycle = -1;
             state.Level = block.Level;
             state.Timestamp = block.Timestamp;
-            state.Protocol = block.Protocol.Hash;
+            state.Protocol = protocol.Hash;
             state.NextProtocol = rawBlock.Required("metadata").RequiredString("next_protocol");
             state.Hash = block.Hash;
             state.BlocksCount++;
@@ -83,10 +88,11 @@ namespace Tzkt.Sync.Protocols
 
         public override async Task Revert()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""Statistics"";
-                DELETE FROM ""Protocols"";
-                DELETE FROM ""Blocks"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Statistics";
+                DELETE FROM "Protocols";
+                DELETE FROM "Blocks";
+                """);
 
             await Cache.Statistics.ResetAsync();
             await Cache.Protocols.ResetAsync();
@@ -94,14 +100,14 @@ namespace Tzkt.Sync.Protocols
 
             #region update state
             var state = Cache.AppState.Get();
-            state.ChainId = null;
-            state.Chain = null;
+            state.ChainId = string.Empty;
+            state.Chain = string.Empty;
             state.Cycle = -1;
             state.Level = -1;
             state.Timestamp = DateTimeOffset.MinValue.UtcDateTime;
-            state.Protocol = "";
-            state.NextProtocol = "";
-            state.Hash = "";
+            state.Protocol = string.Empty;
+            state.NextProtocol = string.Empty;
+            state.Hash = string.Empty;
             state.BlocksCount--;
             state.ProtocolsCount--;
 

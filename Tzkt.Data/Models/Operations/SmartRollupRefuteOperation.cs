@@ -63,14 +63,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupRefuteOperation>()
                 .HasIndex(x => new { x.GameId, x.Id });
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupRefuteOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupRefuteOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

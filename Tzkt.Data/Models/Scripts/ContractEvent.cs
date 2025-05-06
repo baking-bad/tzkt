@@ -4,16 +4,16 @@ namespace Tzkt.Data.Models
 {
     public class ContractEvent
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int ContractId { get; set; }
-        public int ContractCodeHash { get; set; }
-        public long TransactionId { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int ContractId { get; set; }
+        public required int ContractCodeHash { get; set; }
+        public required long TransactionId { get; set; }
 
-        public string Tag { get; set; }
-        public byte[] Type { get; set; }
-        public byte[] RawPayload { get; set; }
-        public string JsonPayload { get; set; }
+        public string? Tag { get; set; }
+        public byte[]? Type { get; set; }
+        public byte[]? RawPayload { get; set; }
+        public string? JsonPayload { get; set; }
     }
 
     public static class ContractEventModel

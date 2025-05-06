@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Netezos.Contracts;
 using Netezos.Encoding;
 
@@ -7,7 +6,7 @@ namespace Tzkt.Sync.Protocols
 {
     static class OperationErrors
     {
-        public static string Parse(JsonElement content, JsonElement errors)
+        public static string? Parse(JsonElement content, JsonElement errors)
         {
             if (errors.ValueKind == JsonValueKind.Undefined)
                 return null;
@@ -16,7 +15,7 @@ namespace Tzkt.Sync.Protocols
             
             foreach (var error in errors.EnumerateArray())
             {
-                var id = error.GetProperty("id").GetString();
+                var id = error.RequiredString("id");
                 var type = id[(id.IndexOf('.', id.IndexOf('.') + 1) + 1)..];
 
                 res.Add(type switch
@@ -24,23 +23,23 @@ namespace Tzkt.Sync.Protocols
                     "contract.balance_too_low" => new
                     {
                         type,
-                        balance = long.Parse(error.GetProperty("balance").GetString()),
-                        required = long.Parse(error.GetProperty("amount").GetString())
+                        balance = long.Parse(error.RequiredString("balance")),
+                        required = long.Parse(error.RequiredString("amount"))
                     },
                     "contract.manager.unregistered_delegate" => new
                     {
                         type,
-                        @delegate = error.GetProperty("hash").GetString()
+                        @delegate = error.RequiredString("hash")
                     },
                     "contract.non_existing_contract" => new
                     {
                         type,
-                        contract = error.GetProperty("contract").GetString()
+                        contract = error.RequiredString("contract")
                     },
                     "Expression_already_registered" => new
                     {
                         type,
-                        expression = ConstantSchema.GetGlobalAddress(Micheline.FromJson(content.Required("value")))
+                        expression = ConstantSchema.GetGlobalAddress(content.RequiredMicheline("value"))
                     },
                     _ => new { type }
                 });

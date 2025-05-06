@@ -1,6 +1,5 @@
 ﻿using System.Data;
 using System.Numerics;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Tzkt.Api.Models;
@@ -22,7 +21,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region tokens
-        async Task<IEnumerable<dynamic>> QueryTokensAsync(TokenFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTokensAsync(TokenFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = @"
                 ""Id"",
@@ -78,14 +77,14 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^metadata(\.[\w]+)+$"))
+                if (field.StartsWith("metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"""Metadata""#>'{{{field[9..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -98,6 +97,9 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", filter.contract)
                 .Filter("TokenId", filter.tokenId)
                 .Filter("Tags", filter.standard)
+                .Filter("TotalMinted", filter.totalMinted)
+                .Filter("TotalBurned", filter.totalBurned)
+                .Filter("TotalSupply", filter.totalSupply)
                 .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
@@ -129,6 +131,9 @@ namespace Tzkt.Api.Repositories
                 .Filter("ContractId", filter.contract)
                 .Filter("TokenId", filter.tokenId)
                 .Filter("Tags", filter.standard)
+                .Filter("TotalMinted", filter.totalMinted)
+                .Filter("TotalBurned", filter.totalBurned)
+                .Filter("TotalSupply", filter.totalSupply)
                 .Filter("FirstMinterId", filter.firstMinter)
                 .Filter("FirstLevel", filter.firstLevel)
                 .Filter("FirstLevel", filter.firstTime)
@@ -165,13 +170,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetTokens(TokenFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetTokens(TokenFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryTokensAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -255,12 +260,12 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "metadata":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.Metadata;
+                            result[j++][i] = (RawJson?)row.Metadata;
                         break;
                     default:
                         if (fields[i].Field == "metadata")
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string);
                         break;
                 }
             }
@@ -270,7 +275,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region token balances
-        async Task<IEnumerable<dynamic>> QueryTokenBalancesAsync(TokenBalanceFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTokenBalancesAsync(TokenBalanceFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = @"
                 tb.""Id"",
@@ -315,7 +320,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                var subField = field.SubField();
+                                var subField = field.SubField()!;
                                 switch (subField.Field)
                                 {
                                     case "id": columns.Add(@"tb.""TokenId"" as ""tId"""); break;
@@ -341,19 +346,19 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             static (string[], string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (new string[1] { col }, col);
                 }
-                return (new string[1] { @"tb.""Id""" }, @"tb.""Id""");
+                return ([@"tb.""Id"""], @"tb.""Id""");
             }
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -364,7 +369,7 @@ namespace Tzkt.Api.Repositories
                 filter.balance.Gt = null;
                 filter.balance.Ne = "0";
             }
-            if (filter.token?.contract?.Eq != null && filter.token.tokenId?.Eq != null && filter.token.id?.Eq == null)
+            if (filter.token.contract?.Eq != null && filter.token.tokenId?.Eq != null && filter.token.id?.Eq == null)
             {
                 var row = await db.QueryFirstOrDefaultAsync("""
                     SELECT "Id"
@@ -375,7 +380,7 @@ namespace Tzkt.Api.Repositories
                     """, new { contractId = filter.token.contract.Eq.Value, tokenId = filter.token.tokenId.Eq });
 
                 if (row == null)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 filter.token.contract.Eq = null;
                 filter.token.tokenId.Eq = null;
@@ -403,13 +408,13 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"t.""Metadata""", filter.token.metadata)
                 .Take(pagination, x => x switch
                 {
-                    "id" => (new string[1] { @"tb.""Id""" }, @"tb.""Id"""),
-                    "balance" => (new string[1] { @"tb.""Balance""" }, @"tb.""Balance"""),
-                    "balanceValue" => (new string[2] { @"""BalanceValue""", @"tb.""Balance""" }, @"""BalanceValue"""),
-                    "transfersCount" => (new string[1] { @"tb.""TransfersCount""" }, @"tb.""TransfersCount"""),
-                    "firstLevel" => (new string[1] { @"tb.""Id""" }, @"tb.""FirstLevel"""),
-                    "lastLevel" => (new string[1] { @"tb.""LastLevel""" }, @"tb.""LastLevel"""),
-                    "token.metadata" => (new string[1] { @"t.""Metadata""" }, @"t.""Metadata"""),
+                    "id" => ([@"tb.""Id"""], @"tb.""Id"""),
+                    "balance" => ([@"tb.""Balance"""], @"tb.""Balance"""),
+                    "balanceValue" => ([@"""BalanceValue""", @"tb.""Balance"""], @"""BalanceValue"""),
+                    "transfersCount" => ([@"tb.""TransfersCount"""], @"tb.""TransfersCount"""),
+                    "firstLevel" => ([@"tb.""Id"""], @"tb.""FirstLevel"""),
+                    "lastLevel" => ([@"tb.""LastLevel"""], @"tb.""LastLevel"""),
+                    "token.metadata" => ([@"t.""Metadata"""], @"t.""Metadata"""),
                     _ => TryMetaSort(x)
                 }, @"tb.""Id""", 100);
 
@@ -460,18 +465,18 @@ namespace Tzkt.Api.Repositories
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
                     TotalSupply = row.tTotalSupply,
-                    Metadata = (RawJson)row.tMetadata
+                    Metadata = (RawJson?)row.tMetadata
                 }
             });
         }
 
-        public async Task<object[][]> GetTokenBalances(TokenBalanceFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetTokenBalances(TokenBalanceFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryTokenBalancesAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -530,7 +535,7 @@ namespace Tzkt.Api.Repositories
                                 TokenId = row.tTokenId,
                                 Standard = TokenStandards.ToString(row.tTags),
                                 TotalSupply = row.tTotalSupply,
-                                Metadata = (RawJson)row.tMetadata
+                                Metadata = (RawJson?)row.tMetadata
                             };
                         break;
                     case "token.id":
@@ -563,12 +568,12 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.metadata":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.tMetadata;
+                            result[j++][i] = (RawJson?)row.tMetadata;
                         break;
                     default:
                         if (fields[i].Full.StartsWith("token.metadata."))
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string);
                         break;
                 }
             }
@@ -578,7 +583,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region token transfers
-        async Task<IEnumerable<dynamic>> QueryTokenTransfersAsync(TokenTransferFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryTokenTransfersAsync(TokenTransferFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = @"
                 tr.""Id"",
@@ -624,7 +629,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                var subField = field.SubField();
+                                var subField = field.SubField()!;
                                 switch (subField.Field)
                                 {
                                     case "id": columns.Add(@"tr.""TokenId"" as ""tId"""); break;
@@ -650,14 +655,14 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -744,18 +749,18 @@ namespace Tzkt.Api.Repositories
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
                     TotalSupply = row.tTotalSupply,
-                    Metadata = (RawJson)row.tMetadata
+                    Metadata = (RawJson?)row.tMetadata
                 }
             });
         }
 
-        public async Task<object[][]> GetTokenTransfers(TokenTransferFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetTokenTransfers(TokenTransferFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryTokenTransfersAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -822,7 +827,7 @@ namespace Tzkt.Api.Repositories
                                 TokenId = row.tTokenId,
                                 Standard = TokenStandards.ToString(row.tTags),
                                 TotalSupply = row.tTotalSupply,
-                                Metadata = (RawJson)row.tMetadata
+                                Metadata = (RawJson?)row.tMetadata
                             };
                         break;
                     case "token.id":
@@ -855,12 +860,12 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.metadata":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.tMetadata;
+                            result[j++][i] = (RawJson?)row.tMetadata;
                         break;
                     default:
                         if (fields[i].Full.StartsWith("token.metadata."))
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string);
                         break;
                 }
             }
@@ -870,7 +875,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region historical balances
-        async Task<IEnumerable<dynamic>> QueryHistoricalTokenBalancesAsync(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryHistoricalTokenBalancesAsync(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = @"
                 tb.""AccountId"",
@@ -901,7 +906,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                var subField = field.SubField();
+                                var subField = field.SubField()!;
                                 switch (subField.Field)
                                 {
                                     case "id": columns.Add(@"tb.""TokenId"" as ""tId"""); break;
@@ -926,14 +931,14 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             static (string, string) TryMetaSort(string field)
             {
-                if (Regex.IsMatch(field, @"^token.metadata(\.[\w]+)+$"))
+                if (field.StartsWith("token.metadata.") && Regexes.FieldPath().IsMatch(field))
                 {
                     var col = $@"t.""Metadata""#>'{{{field[15..].Replace('.', ',')}}}'";
                     return (col, col);
@@ -1000,18 +1005,18 @@ namespace Tzkt.Api.Repositories
                     Contract = Accounts.GetAlias(row.tContractId),
                     TokenId = row.tTokenId,
                     Standard = TokenStandards.ToString(row.tTags),
-                    Metadata = (RawJson)row.tMetadata
+                    Metadata = (RawJson?)row.tMetadata
                 }
             });
         }
 
-        public async Task<object[][]> GetHistoricalTokenBalances(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetHistoricalTokenBalances(int level, TokenBalanceShortFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryHistoricalTokenBalancesAsync(level, filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -1041,7 +1046,7 @@ namespace Tzkt.Api.Repositories
                                 Contract = Accounts.GetAlias(row.tContractId),
                                 TokenId = row.tTokenId,
                                 Standard = TokenStandards.ToString(row.tTags),
-                                Metadata = (RawJson)row.tMetadata
+                                Metadata = (RawJson?)row.tMetadata
                             };
                         break;
                     case "token.id":
@@ -1070,12 +1075,12 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.metadata":
                         foreach (var row in rows)
-                            result[j++][i] = (RawJson)row.tMetadata;
+                            result[j++][i] = (RawJson?)row.tMetadata;
                         break;
                     default:
                         if (fields[i].Full.StartsWith("token.metadata."))
                             foreach (var row in rows)
-                                result[j++][i] = (RawJson)((row as IDictionary<string, object>)[fields[i].Column] as string);
+                                result[j++][i] = (RawJson?)((row as IDictionary<string, object>)![fields[i].Column!] as string);
                         break;
                 }
             }

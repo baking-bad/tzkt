@@ -2,15 +2,15 @@
 {
     public class RawState
     {
-        public string Chain { get; set; }
-        public string ChainId { get; set; }
+        public required string Chain { get; set; }
+        public required string ChainId { get; set; }
         public int KnownHead { get; set; }
         public DateTime LastSync { get; set; }
         public int Cycle { get; set; }
         public int Level { get; set; }
-        public string Hash { get; set; }
-        public string Protocol { get; set; }
-        public string NextProtocol { get; set; }
+        public required string Hash { get; set; }
+        public required string Protocol { get; set; }
+        public required string NextProtocol { get; set; }
         public DateTime Timestamp { get; set; }
         public int VotingEpoch { get; set; }
         public int VotingPeriod { get; set; }
@@ -22,13 +22,13 @@
         public int RefutationGameCounter { get; set; }
         public int InboxMessageCounter { get; set; }
         public int BigMapUpdateCounter { get; set; }
+        public int ProposalCounter { get; set; }
 
         #region entities count
         public int CommitmentsCount { get; set; }
 
         public int BlocksCount { get; set; }
         public int ProtocolsCount { get; set; }
-        public int ProposalsCount { get; set; }
         public int CyclesCount { get; set; }
         public int ConstantsCount { get; set; }
 

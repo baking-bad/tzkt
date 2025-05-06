@@ -1,17 +1,18 @@
-﻿using Netezos.Contracts;
+﻿using System.Diagnostics.CodeAnalysis;
+using Netezos.Contracts;
 using Netezos.Encoding;
 
 namespace Tzkt.Sync
 {
     static class NetezosExtension
     {
-        static readonly byte[] tz1 = new byte[] { 6, 161, 159 };
-        static readonly byte[] tz2 = new byte[] { 6, 161, 161 };
-        static readonly byte[] tz3 = new byte[] { 6, 161, 164 };
-        static readonly byte[] tz4 = new byte[] { 6, 161, 166 };
-        static readonly byte[] KT1 = new byte[] { 2, 90, 121 };
-        static readonly byte[] txr1 = new byte[] { 1, 128, 120, 31 };
-        static readonly byte[] sr1 = new byte[] { 6, 124, 117 };
+        static readonly byte[] tz1 = [6, 161, 159];
+        static readonly byte[] tz2 = [6, 161, 161];
+        static readonly byte[] tz3 = [6, 161, 164];
+        static readonly byte[] tz4 = [6, 161, 166];
+        static readonly byte[] KT1 = [2, 90, 121];
+        static readonly byte[] txr1 = [1, 128, 120, 31];
+        static readonly byte[] sr1 = [6, 124, 117];
 
         public static string ParseAddress(this IMicheline micheline)
         {
@@ -26,34 +27,41 @@ namespace Tzkt.Sync
                 return s.Value[..36];
             }
 
-            var value = (micheline as MichelineBytes).Value;
-            byte[] prefix;
-            byte[] bytes;
-            if (value[0] == 0)
+            if (micheline is MichelineBytes b)
             {
-                prefix = value[1] switch
+                var value = b.Value;
+                byte[] prefix;
+                byte[] bytes;
+                if (value[0] == 0)
                 {
-                    0 => tz1,
-                    1 => tz2,
-                    2 => tz3,
-                    _ => tz4
-                };
-                bytes = value.GetBytes(2, 20);
-            }
-            else
-            {
-                prefix = value[0] switch
+                    prefix = value[1] switch
+                    {
+                        0 => tz1,
+                        1 => tz2,
+                        2 => tz3,
+                        3 => tz4,
+                        _ => throw new Exception("Invalid address prefix"),
+                    };
+                    bytes = value.GetBytes(2, 20);
+                }
+                else
                 {
-                    1 => KT1,
-                    2 => txr1,
-                    _ => sr1,
-                };
-                bytes = value.GetBytes(1, 20);
+                    prefix = value[0] switch
+                    {
+                        1 => KT1,
+                        2 => txr1,
+                        3 => sr1,
+                        _ => throw new Exception("Invalid address prefix"),
+                    };
+                    bytes = value.GetBytes(1, 20);
+                }
+                return Base58.Convert(bytes, prefix);
             }
-            return Base58.Convert(bytes, prefix);
+
+            throw new Exception("Invalid micheline type");
         }
 
-        public static bool TryParseAddress(this IMicheline micheline, out string res)
+        public static bool TryParseAddress(this IMicheline micheline, [NotNullWhen(true)] out string? res)
         {
             if (micheline is MichelineString s && s.Value.Length >= 36)
             {
@@ -67,9 +75,9 @@ namespace Tzkt.Sync
                 return true;
             }
 
-            if (micheline is MichelineBytes micheBytes && micheBytes.Value.Length >= 22)
+            if (micheline is MichelineBytes b && b.Value.Length >= 22)
             {
-                var value = micheBytes.Value;
+                var value = b.Value;
                 if (value[0] == 0)
                 {
                     if (value[1] == 0)

@@ -41,13 +41,11 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of blocks.
         /// </remarks>
-        /// <param name="baker">[DEPRECATED]</param>
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.proposer.producer=tz1...`.</param>
         /// <param name="proposer">Filters blocks by block proposer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="producer">Filters blocks by block producer. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters blocks by level.</param>
         /// <param name="timestamp">Filters blocks by timestamp.</param>
-        /// <param name="priority">[DEPRECATED]</param>
         /// <param name="blockRound">Filters blocks by block round.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `payloadRound`, `blockRound`, `validations`, `reward`, `bonus`, `fees`.</param>
@@ -57,27 +55,20 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Block>>> Get(
-            AccountParameter baker,
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "proposer,producer")]
-            AnyOfParameter anyof,
-            AccountParameter proposer,
-            AccountParameter producer,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter priority,
-            Int32Parameter blockRound,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            AnyOfParameter? anyof,
+            AccountParameter? proposer,
+            AccountParameter? producer,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            Int32Parameter? blockRound,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            #region deprecated
-            producer ??= baker;
-            blockRound ??= priority;
-            #endregion
-
             #region validate
             if (anyof != null)
             {
@@ -126,7 +117,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Blocks.Get(anyof, proposer, producer, level, timestamp, blockRound, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -151,7 +142,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Block> GetByHash(
+        public Task<Block?> GetByHash(
             [Required][BlockHash] string hash,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -172,7 +163,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{level:int}")]
-        public Task<Block> GetByLevel(
+        public Task<Block?> GetByLevel(
             [Min(0)] int level,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -207,7 +198,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("{timestamp:DateTime}")]
-        public Task<Block> GetByDate(
+        public Task<Block?> GetByDate(
             DateTimeOffset timestamp,
             bool operations = false,
             MichelineFormat micheline = MichelineFormat.Json,
@@ -229,22 +220,6 @@ namespace Tzkt.Api.Controllers
         public int GetByDate(DateTimeOffset timestamp)
         {
             return Time.FindLevel(timestamp.UtcDateTime, SearchMode.ExactOrLower);
-        }
-
-        // BCD bootstrap
-        [OpenApiIgnore]
-        [HttpGet("levels")]
-        public Task<IEnumerable<int>> GetSpecificBlocks(
-            bool? smartContracts,
-            bool? delegatorContracts,
-            OffsetParameter offset,
-            [Range(0, 10000)] int limit = 10000)
-        {
-            var events = Data.Models.BlockEvents.None;
-            if (smartContracts == true) events |= Data.Models.BlockEvents.SmartContracts;
-            if (delegatorContracts == true) events |= Data.Models.BlockEvents.DelegatorContracts;
-
-            return Blocks.GetEventLevels(events, offset, limit);
         }
     }
 }

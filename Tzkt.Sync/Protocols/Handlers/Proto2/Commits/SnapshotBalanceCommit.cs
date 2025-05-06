@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto2
             if (!block.Events.HasFlag(BlockEvents.BalanceSnapshot))
                 return;
 
-            await RemoveOutdated(block, block.Protocol);
+            await RemoveOutdated(block, Context.Protocol);
             await TakeSnapshot(block);
             await TakeDeactivatedSnapshot(block);
             await SubtractCycleRewards(rawBlock, block);

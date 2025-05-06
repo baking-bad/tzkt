@@ -1,27 +1,22 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class EndorsementsCommit : ProtocolCommit
+    class EndorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            var baker = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate"));
+            var baker = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
 
             var endorsement = new EndorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = GetEndorsedSlots(metadata),
-                Delegate = baker,
                 DelegateId = baker.Id
             };
 
@@ -29,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             baker.EndorsementsCount++;
 
             #region set baker active
-            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(block) : GracePeriod.Init(block);
+            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(block.Level, Context.Protocol) : GracePeriod.Init(block.Level, Context.Protocol);
             if (baker.DeactivationLevel < newDeactivationLevel)
             {
                 if (baker.DeactivationLevel <= block.Level)
@@ -43,16 +38,15 @@ namespace Tzkt.Sync.Protocols.Proto12
             block.Operations |= Operations.Endorsements;
             block.Validations += endorsement.Slots;
 
-            Db.EndorsementOps.Add(endorsement);
+            Cache.AppState.Get().EndorsementOpsCount++;
+
+            //Db.EndorsementOps.Add(endorsement);
+            Context.EndorsementOps.Add(endorsement);
         }
 
         public virtual async Task Revert(Block block, EndorsementOperation endorsement)
         {
-            endorsement.Block ??= block;
-            endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
-
-            var baker = endorsement.Delegate;
+            var baker = Cache.Accounts.GetDelegate(endorsement.DelegateId);
             Db.TryAttach(baker);
             baker.EndorsementsCount--;
 
@@ -66,10 +60,12 @@ namespace Tzkt.Sync.Protocols.Proto12
             }
             #endregion
 
-            Db.EndorsementOps.Remove(endorsement);
+            Cache.AppState.Get().EndorsementOpsCount--;
+
+            //Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
+        protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.OptionalInt32("endorsement_power") ?? metadata.RequiredInt32("consensus_power");
     }
 }

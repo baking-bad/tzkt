@@ -2,16 +2,14 @@
 
 namespace Tzkt.Sync.Protocols.Proto3
 {
-    class DelegatorCycleCommit : Proto1.DelegatorCycleCommit
+    class DelegatorCycleCommit(ProtocolHandler protocol) : Proto1.DelegatorCycleCommit(protocol)
     {
-        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public override async Task Apply(Block block, Cycle futureCycle)
+        public override async Task Apply(Block block, Cycle? futureCycle)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            await CreateFromSnapshots(futureCycle);
+            await CreateFromSnapshots(futureCycle!);
         }
     }
 }

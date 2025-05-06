@@ -5,7 +5,7 @@ namespace Tzkt.Api
     [JsonConverter(typeof(SelectionSingleConverter))]
     public class SelectionSingleResponse
     {
-        public string[] Cols { get; set; }
-        public object[] Vals { get; set; }
+        public required string[] Cols { get; set; }
+        public required object?[] Vals { get; set; }
     }
 }

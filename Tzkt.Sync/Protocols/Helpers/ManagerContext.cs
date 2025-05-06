@@ -3,16 +3,11 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols
 {
-    public class ManagerContext
+    public class ManagerContext(ProtocolHandler proto)
     {
-        readonly ProtocolHandler Proto;
-        Account Account = null;
+        readonly ProtocolHandler Proto = proto;
+        Account? Account = null;
         long Change = 0;
-
-        public ManagerContext(ProtocolHandler proto)
-        {
-            Proto = proto;
-        }
 
         public void Init(JsonElement operation)
         {
@@ -38,10 +33,10 @@ namespace Tzkt.Sync.Protocols
 
         public void Reset()
         {
-            if (Account is User user && (user.Balance == 0 || user.Balance - Change == 0))
+            if (Account?.Type == AccountType.User && (Account.Balance == 0 || Account.Balance - Change == 0))
             {
-                user.Counter = Proto.Cache.AppState.GetManagerCounter();
-                user.Revealed = false;
+                (Account as User)!.Counter = Proto.Cache.AppState.GetManagerCounter();
+                (Account as User)!.Revealed = false;
             }
         }
     }

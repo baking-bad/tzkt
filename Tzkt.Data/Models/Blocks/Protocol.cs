@@ -1,5 +1,4 @@
-﻿using System;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
@@ -7,14 +6,14 @@ namespace Tzkt.Data.Models
     public class Protocol
     {
         // TODO: generate ID in app state
-        public int Id { get; set; }
-        public int Code { get; set; }
-        public string Hash { get; set; }
-        public int Version { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
-        public int FirstCycle { get; set; }
-        public int FirstCycleLevel { get; set; }
+        public required int Id { get; set; }
+        public required int Code { get; set; }
+        public required string Hash { get; set; }
+        public required int Version { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
+        public required int FirstCycle { get; set; }
+        public required int FirstCycleLevel { get; set; }
 
         public int RampUpCycles { get; set; }
         public int NoRewardCycles { get; set; }
@@ -74,7 +73,7 @@ namespace Tzkt.Data.Models
         public int SmartRollupCommitmentPeriod { get; set; }
         public int SmartRollupTimeoutPeriod { get; set; }
 
-        public string Dictator { get; set; }
+        public string? Dictator { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }
         public int DoubleEndorsingSlashedPercentage { get; set; }

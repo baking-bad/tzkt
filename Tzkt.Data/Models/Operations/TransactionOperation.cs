@@ -1,5 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using NpgsqlTypes;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -13,9 +14,9 @@ namespace Tzkt.Data.Models
 
         public long Amount { get; set; }
 
-        public string Entrypoint { get; set; }
-        public byte[] RawParameters { get; set; }
-        public string JsonParameters { get; set; }
+        public string? Entrypoint { get; set; }
+        public byte[]? RawParameters { get; set; }
+        public string? JsonParameters { get; set; }
 
         public short? InternalOperations { get; set; }
         public short? InternalDelegations { get; set; }
@@ -25,12 +26,93 @@ namespace Tzkt.Data.Models
         public int? EventsCount { get; set; }
         public int? TicketTransfers { get; set; }
 
-        #region relations
-        [ForeignKey(nameof(TargetId))]
-        public Account Target { get; set; }
+        #region binary writer
+        public static void Write(NpgsqlConnection conn, IEnumerable<TransactionOperation> ops)
+        {
+            using var writer = conn.BeginBinaryImport($"""
+                COPY "{nameof(TzktContext.TransactionOps)}" (
+                    "{nameof(Id)}",
+                    "{nameof(SenderCodeHash)}",
+                    "{nameof(TargetId)}",
+                    "{nameof(TargetCodeHash)}",
+                    "{nameof(ResetDeactivation)}",
+                    "{nameof(Amount)}",
+                    "{nameof(Entrypoint)}",
+                    "{nameof(RawParameters)}",
+                    "{nameof(JsonParameters)}",
+                    "{nameof(InternalOperations)}",
+                    "{nameof(InternalDelegations)}",
+                    "{nameof(InternalOriginations)}",
+                    "{nameof(InternalTransactions)}",
+                    "{nameof(EventsCount)}",
+                    "{nameof(TicketTransfers)}",
+                    "{nameof(Level)}",
+                    "{nameof(Timestamp)}",
+                    "{nameof(OpHash)}",
+                    "{nameof(SenderId)}",
+                    "{nameof(Counter)}",
+                    "{nameof(BakerFee)}",
+                    "{nameof(StorageFee)}",
+                    "{nameof(AllocationFee)}",
+                    "{nameof(GasLimit)}",
+                    "{nameof(GasUsed)}",
+                    "{nameof(StorageLimit)}",
+                    "{nameof(StorageUsed)}",
+                    "{nameof(Status)}",
+                    "{nameof(Errors)}",
+                    "{nameof(InitiatorId)}",
+                    "{nameof(Nonce)}",
+                    "{nameof(StorageId)}",
+                    "{nameof(BigMapUpdates)}",
+                    "{nameof(TokenTransfers)}",
+                    "{nameof(SubIds)}"
+                )
+                FROM STDIN (FORMAT BINARY)
+                """);
 
-        [ForeignKey(nameof(StorageId))]
-        public Storage Storage { get; set; }
+            foreach (var op in ops)
+            {
+                writer.StartRow();
+
+                writer.Write(op.Id, NpgsqlDbType.Bigint);
+                writer.WriteNullable(op.SenderCodeHash, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.TargetId, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.TargetCodeHash, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.ResetDeactivation, NpgsqlDbType.Integer);
+                writer.Write(op.Amount, NpgsqlDbType.Bigint);
+                writer.WriteNullable(op.Entrypoint, NpgsqlDbType.Text);
+                writer.WriteNullable(op.RawParameters, NpgsqlDbType.Bytea);
+                writer.WriteNullable(op.JsonParameters, NpgsqlDbType.Jsonb);
+                writer.WriteNullable(op.InternalOperations, NpgsqlDbType.Smallint);
+                writer.WriteNullable(op.InternalDelegations, NpgsqlDbType.Smallint);
+                writer.WriteNullable(op.InternalOriginations, NpgsqlDbType.Smallint);
+                writer.WriteNullable(op.InternalTransactions, NpgsqlDbType.Smallint);
+                writer.WriteNullable(op.EventsCount, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.TicketTransfers, NpgsqlDbType.Integer);
+                writer.Write(op.Level, NpgsqlDbType.Integer);
+                writer.Write(op.Timestamp, NpgsqlDbType.TimestampTz);
+                writer.Write(op.OpHash, NpgsqlDbType.Char);
+                writer.Write(op.SenderId, NpgsqlDbType.Integer);
+                writer.Write(op.Counter, NpgsqlDbType.Integer);
+                writer.Write(op.BakerFee, NpgsqlDbType.Bigint);
+                writer.WriteNullable(op.StorageFee, NpgsqlDbType.Bigint);
+                writer.WriteNullable(op.AllocationFee, NpgsqlDbType.Bigint);
+                writer.Write(op.GasLimit, NpgsqlDbType.Integer);
+                writer.Write(op.GasUsed, NpgsqlDbType.Integer);
+                writer.Write(op.StorageLimit, NpgsqlDbType.Integer);
+                writer.Write(op.StorageUsed, NpgsqlDbType.Integer);
+                writer.Write((int)op.Status, NpgsqlDbType.Smallint);
+                writer.WriteNullable(op.Errors, NpgsqlDbType.Text);
+                writer.WriteNullable(op.InitiatorId, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.Nonce, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.StorageId, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.BigMapUpdates, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.TokenTransfers, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.SubIds, NpgsqlDbType.Integer);
+            }
+
+            writer.Complete();
+        }
         #endregion
     }
 
@@ -91,14 +173,6 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.JsonParameters)
                 .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<TransactionOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Transactions)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

@@ -9,9 +9,10 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             var snapshots = accounts
                 .Where(x => x.Type == AccountType.Delegate)
-                .Select(x => x as Data.Models.Delegate)
+                .Select(x => (x as Data.Models.Delegate)!)
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = 1,
                     Period = 0,
                     BakerId = x.Id,
@@ -21,6 +22,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = 0,
                 Epoch = 0,
                 FirstLevel = 1,
@@ -43,9 +45,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         public async Task ClearVoting()
         {
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""VotingPeriods"";
-                DELETE FROM ""VotingSnapshots"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingPeriods";
+                DELETE FROM "VotingSnapshots";
+                """);
             Cache.Periods.Reset();
         }
 

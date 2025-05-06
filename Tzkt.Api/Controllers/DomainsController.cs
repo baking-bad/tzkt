@@ -71,7 +71,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Repo.Get(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Repo.Get(filter, pagination, selection)
                 };
             }
             cached = Cache.Set(query, res);
@@ -87,7 +87,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="name">Domain name</param>
         /// <returns></returns>
         [HttpGet("{name}")]
-        public async Task<ActionResult<Domain>> GetByName(string name)
+        public async Task<ActionResult<Domain?>> GetByName(string name)
         {
             var query = ResponseCacheService.BuildKey(Request.Path.Value);
 

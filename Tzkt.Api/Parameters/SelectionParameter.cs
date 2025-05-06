@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -17,7 +17,7 @@ namespace Tzkt.Api
         /// `[ { "address": "asd", "b": 10, "meta_name": "qwe" } ]`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<SelectionField> Fields { get; set; }
+        public List<SelectionField>? Fields { get; set; }
 
         /// <summary>
         /// **Values** selection mode. \
@@ -28,29 +28,26 @@ namespace Tzkt.Api
         /// `[ [ "asd", 10, "qwe" ] ]`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<SelectionField> Values { get; set; }
+        public List<SelectionField>? Values { get; set; }
 
         public string Normalize(string name)
         {
-            return $"{name}={string.Join(",", (Fields ?? Values).Select(x => $"{x.Full} as {x.Alias}"))}";
+            return $"{name}={string.Join(",", (Fields ?? Values)!.Select(x => $"{x.Full} as {x.Alias}"))}";
         }
     }
 
     public class SelectionField
     {
-        static readonly Regex FieldRegex = new(@"^[\w]+$", RegexOptions.Compiled);
-        static readonly Regex FieldPathRegex = new(@"^[\w:]+(\.[\w:]+)+$", RegexOptions.Compiled);
+        public required string Alias { get; init; }
+        public required string Field { get; init; }
+        public required string Full { get; init; }
+        public List<string>? Path { get; init; }
 
-        public string Alias { get; init; }
-        public string Field { get; init; }
-        public string Full { get; init; }
-        public List<string> Path { get; init; }
+        public string? PathString => Path == null ? null : string.Join(",", Path);
 
-        public string PathString => string.Join(",", Path);
+        public string? Column { get; set; }
 
-        public string Column { get; set; }
-
-        public SelectionField SubField() => new()
+        public SelectionField? SubField() => Path == null ? null : new()
         {
             Field = Path[0],
             Path = Path.Count > 1 ? Path.Skip(1).ToList() : null,
@@ -58,12 +55,12 @@ namespace Tzkt.Api
             Full = Full
         };
 
-        public static bool TryParse(string value, out SelectionField field)
+        public static bool TryParse(string value, [NotNullWhen(true)] out SelectionField? field)
         {
             var ss = value.Split(" as ");
-            if (ss.Length == 1 || ss.Length == 2 && FieldRegex.IsMatch(ss[1]))
+            if (ss.Length == 1 || ss.Length == 2 && Regexes.Field().IsMatch(ss[1]))
             {
-                if (FieldRegex.IsMatch(ss[0]))
+                if (Regexes.Field().IsMatch(ss[0]))
                 {
                     field = new()
                     {
@@ -73,7 +70,7 @@ namespace Tzkt.Api
                     };
                     return true;
                 }
-                else if (FieldPathRegex.IsMatch(ss[0]))
+                else if (Regexes.FieldPath().IsMatch(ss[0]))
                 {
                     var sss = ss[0].Split('.');
                     field = new()

@@ -40,7 +40,7 @@
         /// `promotion` - delegates can cast one vote to promote or not the tested proposal using the ballot operation
         /// `adoption` - after the proposal is actually accepted, the ecosystem has some time to prepare to the upgrade
         /// </summary>
-        public string Kind { get; set; }
+        public required string Kind { get; set; }
 
         /// <summary>
         /// Status of the voting period:
@@ -51,7 +51,7 @@
         /// `no_single_winner` - means that there were multiple winning proposals with the same voting power
         /// `success` - means that the period was finished with positive voting result
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Status of the governance dictator:
@@ -60,7 +60,7 @@
         /// `reset` - means that the period was reset by the dictator
         /// `submit` - means that the dictator submitted a proposal
         /// </summary>
-        public string Dictator { get; set; }
+        public required string Dictator { get; set; }
 
         /// <summary>
         /// The number of bakers on the voters list
@@ -134,33 +134,6 @@
         /// Total voting power of the ballots with "pass" vote (only for exploration and promotion periods)
         /// </summary>
         public long? PassVotingPower { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalRolls => (int)(TotalVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? TopRolls => TopVotingPower == null ? null : (int)(TopVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? YayRolls => YayVotingPower == null ? null : (int)(YayVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? NayRolls => NayVotingPower == null ? null : (int)(NayVotingPower / 6_000_000_000);
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int? PassRolls => PassVotingPower == null ? null : (int)(PassVotingPower / 6_000_000_000);
         #endregion
     }
 }

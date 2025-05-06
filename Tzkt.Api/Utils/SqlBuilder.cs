@@ -1,6 +1,4 @@
-﻿using System.Numerics;
-using System.Text;
-using System.Text.RegularExpressions;
+﻿using System.Text;
 using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Utils;
@@ -47,7 +45,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(AnyOfParameter anyof, Func<string, string> map)
+        public SqlBuilder Filter(AnyOfParameter? anyof, Func<string, string> map)
         {
             if (anyof == null) return this;
 
@@ -74,7 +72,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(AnyOfParameter anyof, Func<string, string> map)
+        public SqlBuilder FilterA(AnyOfParameter? anyof, Func<string, string> map)
         {
             if (anyof == null) return this;
 
@@ -120,7 +118,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, AccountTypeParameter type)
+        public SqlBuilder Filter(string column, AccountTypeParameter? type)
         {
             if (type == null) return this;
 
@@ -133,7 +131,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, AccountTypeParameter type)
+        public SqlBuilder FilterA(string column, AccountTypeParameter? type)
         {
             if (type == null) return this;
 
@@ -146,7 +144,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BakingRightTypeParameter type)
+        public SqlBuilder Filter(string column, BakingRightTypeParameter? type)
         {
             if (type == null) return this;
 
@@ -159,7 +157,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BakingRightStatusParameter type)
+        public SqlBuilder Filter(string column, BakingRightStatusParameter? type)
         {
             if (type == null) return this;
 
@@ -172,7 +170,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, ContractKindParameter kind)
+        public SqlBuilder Filter(string column, ContractKindParameter? kind)
         {
             if (kind == null) return this;
 
@@ -191,7 +189,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, ContractKindParameter kind)
+        public SqlBuilder FilterA(string column, ContractKindParameter? kind)
         {
             if (kind == null) return this;
 
@@ -210,7 +208,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, EpochStatusParameter status)
+        public SqlBuilder FilterA(string column, EpochStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -229,7 +227,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, StakingActionParameter action)
+        public SqlBuilder FilterA(string column, StakingActionParameter? action)
         {
             if (action == null) return this;
 
@@ -248,7 +246,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, StakingUpdateTypeParameter value)
+        public SqlBuilder FilterA(string column, StakingUpdateTypeParameter? value)
         {
             if (value == null) return this;
 
@@ -267,7 +265,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BigMapActionParameter action)
+        public SqlBuilder Filter(string column, BigMapActionParameter? action)
         {
             if (action == null) return this;
 
@@ -286,7 +284,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, TokenStandardParameter standard)
+        public SqlBuilder Filter(string column, TokenStandardParameter? standard)
         {
             if (standard == null) return this;
 
@@ -299,7 +297,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, TokenStandardParameter standard)
+        public SqlBuilder FilterA(string column, TokenStandardParameter? standard)
         {
             if (standard == null) return this;
 
@@ -312,7 +310,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, ContractTagsParameter tags)
+        public SqlBuilder FilterA(string column, ContractTagsParameter? tags)
         {
             if (tags == null) return this;
 
@@ -328,7 +326,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BigMapTagsParameter tags)
+        public SqlBuilder Filter(string column, BigMapTagsParameter? tags)
         {
             if (tags == null) return this;
 
@@ -344,7 +342,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, MigrationKindParameter kind)
+        public SqlBuilder Filter(string column, MigrationKindParameter? kind)
         {
             if (kind == null) return this;
 
@@ -363,7 +361,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, VoteParameter vote)
+        public SqlBuilder FilterA(string column, VoteParameter? vote)
         {
             if (vote == null) return this;
 
@@ -382,7 +380,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, VoterStatusParameter status)
+        public SqlBuilder Filter(string column, VoterStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -401,7 +399,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, UnstakeRequestStatusParameter status, int unfrozenCycle)
+        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, UnstakeRequestStatusParameter? status, int unfrozenCycle)
         {
             if (status == null) return this;
 
@@ -440,7 +438,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, RefutationGameStatusParameter status)
+        public SqlBuilder FilterA(string column, RefutationGameStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -459,7 +457,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, RefutationMoveParameter move)
+        public SqlBuilder FilterA(string column, RefutationMoveParameter? move)
         {
             if (move == null) return this;
 
@@ -478,7 +476,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, SrCommitmentStatusParameter status)
+        public SqlBuilder FilterA(string column, SrCommitmentStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -497,7 +495,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, SrBondStatusParameter status)
+        public SqlBuilder FilterA(string column, SrBondStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -516,7 +514,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, SrMessageTypeParameter type)
+        public SqlBuilder FilterA(string column, SrMessageTypeParameter? type)
         {
             if (type == null) return this;
 
@@ -535,7 +533,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, OperationStatusParameter status)
+        public SqlBuilder Filter(string column, OperationStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -548,7 +546,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, OperationStatusParameter status)
+        public SqlBuilder FilterA(string column, OperationStatusParameter? status)
         {
             if (status == null) return this;
 
@@ -561,7 +559,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, ExpressionParameter expression)
+        public SqlBuilder Filter(string column, ExpressionParameter? expression)
         {
             if (expression == null) return this;
 
@@ -580,7 +578,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, OpHashParameter hash)
+        public SqlBuilder Filter(string column, OpHashParameter? hash)
         {
             if (hash == null) return this;
 
@@ -599,7 +597,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, OpHashParameter hash)
+        public SqlBuilder FilterA(string column, OpHashParameter? hash)
         {
             if (hash == null) return this;
 
@@ -618,7 +616,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Src1HashParameter hash)
+        public SqlBuilder FilterA(string column, Src1HashParameter? hash)
         {
             if (hash == null) return this;
 
@@ -637,7 +635,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, ProtocolParameter protocol)
+        public SqlBuilder Filter(string column, ProtocolParameter? protocol)
         {
             if (protocol == null) return this;
 
@@ -656,7 +654,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, ProtocolParameter protocol)
+        public SqlBuilder FilterA(string column, ProtocolParameter? protocol)
         {
             if (protocol == null) return this;
 
@@ -675,7 +673,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, AccountParameter account, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, AccountParameter? account, Func<string, string>? map = null)
         {
             if (account == null) return this;
 
@@ -721,7 +719,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, AccountParameter account, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, AccountParameter? account, Func<string, string>? map = null)
         {
             if (account == null) return this;
 
@@ -767,7 +765,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, SmartRollupParameter rollup)
+        public SqlBuilder Filter(string column, SmartRollupParameter? rollup)
         {
             if (rollup == null) return this;
 
@@ -786,7 +784,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, SmartRollupParameter rollup)
+        public SqlBuilder FilterA(string column, SmartRollupParameter? rollup)
         {
             if (rollup == null) return this;
 
@@ -805,7 +803,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, AddressParameter address)
+        public SqlBuilder Filter(string column, AddressParameter? address)
         {
             if (address == null) return this;
 
@@ -824,7 +822,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, AddressParameter address)
+        public SqlBuilder FilterA(string column, AddressParameter? address)
         {
             if (address == null) return this;
 
@@ -843,7 +841,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, AddressNullParameter address, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, AddressNullParameter? address)
         {
             if (address == null) return this;
 
@@ -883,7 +881,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, StringParameter str, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, StringParameter? str)
         {
             if (str == null) return this;
 
@@ -915,7 +913,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, JsonParameter json, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, JsonParameter? json)
         {
             if (json == null) return this;
 
@@ -946,7 +944,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $@"{fld} > {val}");
                 }
@@ -959,7 +957,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $@"{fld} >= {val}");
                 }
@@ -972,7 +970,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $@"{fld} < {val}");
                 }
@@ -985,7 +983,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $@"""{column}"" #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $@"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $@"{fld} <= {val}");
                 }
@@ -1057,7 +1055,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, JsonParameter json, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, JsonParameter? json)
         {
             if (json == null) return this;
 
@@ -1088,7 +1086,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') > lpad({val}, {len}, '0')"
                         : $"{fld} > {val}");
                 }
@@ -1101,7 +1099,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') >= lpad({val}, {len}, '0')"
                         : $"{fld} >= {val}");
                 }
@@ -1114,7 +1112,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') < lpad({val}, {len}, '0')"
                         : $"{fld} < {val}");
                 }
@@ -1127,7 +1125,7 @@ namespace Tzkt.Api
                     var val = Param(value);
                     var fld = $"{column} #>> {Param(JsonPath.Select(path))}";
                     var len = $"greatest(length({fld}), length({val}))";
-                    AppendFilter(Regex.IsMatch(value, @"^[0-9]+$")
+                    AppendFilter(Regexes.Number().IsMatch(value)
                         ? $"lpad({fld}, {len}, '0') <= lpad({val}, {len}, '0')"
                         : $"{fld} <= {val}");
                 }
@@ -1199,7 +1197,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, NatParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, NatParameter? value)
         {
             if (value == null) return this;
 
@@ -1230,7 +1228,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, NatParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, NatParameter? value)
         {
             if (value == null) return this;
 
@@ -1261,7 +1259,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterOrA(string[] columns, Int32Parameter value)
+        public SqlBuilder FilterOrA(string[] columns, Int32Parameter? value)
         {
             if (value == null) return this;
 
@@ -1292,7 +1290,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, BigIntegerNullableParameter value)
+        public SqlBuilder FilterA(string column, BigIntegerNullableParameter? value)
         {
             if (value == null) return this;
 
@@ -1330,7 +1328,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int32Parameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int32Parameter? value)
         {
             if (value == null) return this;
 
@@ -1361,7 +1359,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int32Parameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, Int32Parameter? value)
         {
             if (value == null) return this;
 
@@ -1392,7 +1390,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int32NullParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int32NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1430,7 +1428,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int32NullParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, Int32NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1468,7 +1466,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int32ExParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int32ExParameter? value, Func<string, string>? map = null)
         {
             if (value == null) return this;
 
@@ -1512,7 +1510,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int32ExParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, Int32ExParameter? value, Func<string, string>? map = null)
         {
             if (value == null) return this;
 
@@ -1556,7 +1554,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int64Parameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int64Parameter? value)
         {
             if (value == null) return this;
 
@@ -1587,7 +1585,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int64Parameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, Int64Parameter? value)
         {
             if (value == null) return this;
 
@@ -1618,7 +1616,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int64ExParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int64ExParameter? value, Func<string, string>? map = null)
         {
             if (value == null) return this;
 
@@ -1662,7 +1660,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, Int64NullParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, Int64NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1700,7 +1698,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, Int64NullParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, Int64NullParameter? value)
         {
             if (value == null) return this;
 
@@ -1738,7 +1736,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, BoolParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, BoolParameter? value)
         {
             if (value == null) return this;
 
@@ -1755,7 +1753,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, BoolParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, BoolParameter? value)
         {
             if (value == null) return this;
 
@@ -1772,7 +1770,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, MichelineParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, MichelineParameter? value)
         {
             if (value == null) return this;
 
@@ -1791,7 +1789,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, MichelineParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, MichelineParameter? value)
         {
             if (value == null) return this;
 
@@ -1810,7 +1808,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, DateTimeParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, DateTimeParameter? value)
         {
             if (value == null) return this;
 
@@ -1841,7 +1839,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, DateTimeParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, DateTimeParameter? value)
         {
             if (value == null) return this;
             if (value.Eq != null)
@@ -1871,7 +1869,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Filter(string column, TimestampParameter value, Func<string, string> map = null)
+        public SqlBuilder Filter(string column, TimestampParameter? value)
         {
             if (value == null) return this;
 
@@ -1902,7 +1900,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, TimestampParameter value, Func<string, string> map = null)
+        public SqlBuilder FilterA(string column, TimestampParameter? value)
         {
             if (value == null) return this;
 
@@ -2042,7 +2040,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map)
+        public SqlBuilder Take(SortParameter? sort, OffsetParameter? offset, int limit, Func<string, (string, string)> map)
         {
             var sortAsc = true;
             var sortColumn = "Id";
@@ -2093,7 +2091,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(SortParameter sort, OffsetParameter offset, int limit, Func<string, (string, string)> map, string prefix)
+        public SqlBuilder Take(SortParameter? sort, OffsetParameter? offset, int limit, Func<string, (string, string)> map, string prefix)
         {
             var sortAsc = true;
             var sortColumn = "Id";
@@ -2144,7 +2142,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder Take(OffsetParameter offset, int limit)
+        public SqlBuilder Take(OffsetParameter? offset, int limit)
         {
             if (offset?.Cr != null)
                 AppendFilter($@"""Id"" > {offset.Cr} ");

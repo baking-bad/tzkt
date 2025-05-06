@@ -36,6 +36,9 @@ namespace Tzkt.Api.Controllers
             if (filter.contract != null ||
                 filter.metadata != null ||
                 filter.standard != null ||
+                filter.totalMinted != null ||
+                filter.totalBurned != null ||
+                filter.totalSupply != null ||
                 filter.firstTime != null ||
                 filter.firstMinter != null ||
                 filter.firstLevel != null ||
@@ -90,7 +93,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tokens.GetTokens(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tokens.GetTokens(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -179,7 +182,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tokens.GetTokenBalances(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tokens.GetTokenBalances(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -283,7 +286,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tokens.GetTokenTransfers(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tokens.GetTokenTransfers(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -340,7 +343,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Tokens.GetHistoricalTokenBalances(level, filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Tokens.GetHistoricalTokenBalances(level, filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);

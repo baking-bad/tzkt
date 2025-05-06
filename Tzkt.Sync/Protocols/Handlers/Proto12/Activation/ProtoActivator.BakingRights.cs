@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
@@ -15,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             var bakers = accounts
                 .Where(x => x is Data.Models.Delegate d && d.Balance > 0 && d.StakingBalance >= protocol.MinimalStake)
-                .Select(x => x as Data.Models.Delegate);
+                .Select(x => (x as Data.Models.Delegate)!);
 
             var sampler = GetSampler(bakers.Select(x => 
                 (x.Id, Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1)))));

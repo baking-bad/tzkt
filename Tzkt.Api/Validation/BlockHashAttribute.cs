@@ -1,14 +1,14 @@
-﻿using System.Text.RegularExpressions;
+﻿using Tzkt.Api;
 
 namespace System.ComponentModel.DataAnnotations
 {
     public sealed class BlockHashAttribute : ValidationAttribute
     {
-        protected override ValidationResult IsValid(object value, ValidationContext validationContext)
+        protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value != null && !Regex.IsMatch((string)value, "^B[0-9A-Za-z]{50}$")
+            return value is string str && !Regexes.Block().IsMatch(str)
                 ? new ValidationResult("Invalid block hash.")
-                : ValidationResult.Success;
+                : ValidationResult.Success!;
         }
     }
 }

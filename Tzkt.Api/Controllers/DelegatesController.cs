@@ -29,11 +29,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Models.Delegate>>> Get(
-            BoolParameter active,
-            Int32Parameter lastActivity,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            BoolParameter? active,
+            Int32Parameter? lastActivity,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -54,7 +54,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Accounts.GetDelegates(active, lastActivity, sort, offset, limit, select.Fields[0]));
                 else
                 {
@@ -76,7 +76,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="active">Delegate status to filter by (true - only active, false - only deactivated, undefined - all delegates)</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(BoolParameter active)
+        public Task<int> GetCount(BoolParameter? active)
         {
             return Accounts.GetDelegatesCount(active);
         }
@@ -90,7 +90,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="address">Delegate address (starting with tz)</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public Task<Models.Delegate> GetByAddress([Required][TzAddress] string address)
+        public Task<Models.Delegate?> GetByAddress([Required][TzAddress] string address)
         {
             return Accounts.GetDelegate(address);
         }

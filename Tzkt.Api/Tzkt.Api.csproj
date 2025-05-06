@@ -4,15 +4,18 @@
 		<AssemblyVersion>1.14.9</AssemblyVersion>
 	</PropertyGroup>
 
-    <PropertyGroup>
-        <TargetFramework>net7.0</TargetFramework>
-        <ImplicitUsings>enable</ImplicitUsings>
-        <Nullable>disable</Nullable>
-    </PropertyGroup>
+	<PropertyGroup>
+		<LangVersion>latest</LangVersion>
+		<TargetFramework>net9.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
+		<NoWarn>$(NoWarn);IDE1006</NoWarn>
+		<NoWarn>$(NoWarn);IDE0130</NoWarn>
 	</PropertyGroup>
 
     <ItemGroup>
@@ -51,9 +54,9 @@
         <PackageReference Include="App.Metrics.AspNetCore.Mvc" Version="4.3.0" />
         <PackageReference Include="App.Metrics.AspNetCore.Tracking" Version="4.3.0" />
         <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="4.3.0" />
-        <PackageReference Include="Dapper" Version="2.1.35" />
-        <PackageReference Include="Npgsql" Version="7.0.7" />
-        <PackageReference Include="NSwag.AspNetCore" Version="14.0.7" />
+        <PackageReference Include="Dapper" Version="2.1.66" />
+        <PackageReference Include="Npgsql" Version="9.0.3" />
+        <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
     </ItemGroup>
 
     <ItemGroup>

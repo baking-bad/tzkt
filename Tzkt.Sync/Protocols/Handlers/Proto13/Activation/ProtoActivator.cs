@@ -6,10 +6,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    partial class ProtoActivator : Proto12.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto12.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -41,13 +39,16 @@ namespace Tzkt.Sync.Protocols.Proto13
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
             #region voting snapshots
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {state.VotingPeriod}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingSnapshots"
+                WHERE "Period" = {0}
+                """, state.VotingPeriod);
 
             var snapshots = Cache.Accounts.GetDelegates()
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = state.Level,
                     Period = state.VotingPeriod,
                     BakerId = x.Id,
@@ -80,14 +81,14 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                     var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
 
-                    var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                    var code = (rawContract.Required("script").RequiredMicheline("code") as MichelineArray)!;
                     var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                     var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                     var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                     var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                     var newSchema = new ContractScript(code);
-                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                    var newStorageValue = rawContract.Required("script").RequiredMicheline("storage");
                     var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 
                     if (oldScript.ParameterSchema.IsEqual(micheParameter) &&
@@ -105,10 +106,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                     var migration = new MigrationOperation
                     {
                         Id = Cache.AppState.NextOperationId(),
-                        Block = block,
                         Level = block.Level,
                         Timestamp = block.Timestamp,
-                        Account = contract,
+                        AccountId = contract.Id,
                         Kind = MigrationKind.CodeChange
                     };
                     var newScript = new Script
@@ -140,14 +140,14 @@ namespace Tzkt.Sync.Protocols.Proto13
                         .OrderBy(x => x, new BytesComparer())
                         .SelectMany(x => x)
                         .ToArray()
-                        ?? Array.Empty<byte>();
+                        ?? [];
                     var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                     var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                     contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                    migration.Script = newScript;
-                    migration.Storage = newStorage;
+                    migration.ScriptId = newScript.Id;
+                    migration.StorageId = newStorage.Id;
 
                     contract.MigrationsCount++;
                     contract.LastLevel = migration.Level;
@@ -157,6 +157,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     block.Operations |= Operations.Migrations;
 
                     Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
 
                     Db.Scripts.Add(newScript);
                     Cache.Schemas.Add(contract, newScript.Schema);

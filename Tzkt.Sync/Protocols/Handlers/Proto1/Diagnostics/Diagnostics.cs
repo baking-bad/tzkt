@@ -7,22 +7,16 @@ using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class Diagnostics : IDiagnostics
+    class Diagnostics(ProtocolHandler handler) : IDiagnostics
     {
-        protected readonly TzktContext Db;
-        protected readonly CacheService Cache;
-        protected readonly IRpc Rpc;
+        protected readonly TzktContext Db = handler.Db;
+        protected readonly CacheService Cache = handler.Cache;
+        protected readonly IRpc Rpc = handler.Rpc;
+        protected readonly BlockContext Context = handler.Context;
 
         int AddedOperations = 0;
-        readonly Dictionary<int, Account> ChangedAccounts = new();
-        readonly Dictionary<long, TicketBalance> ChangedTicketBalances = new();
-
-        public Diagnostics(ProtocolHandler handler)
-        {
-            Db = handler.Db;
-            Cache = handler.Cache;
-            Rpc = handler.Rpc;
-        }
+        readonly Dictionary<int, Account> ChangedAccounts = [];
+        readonly Dictionary<long, TicketBalance> ChangedTicketBalances = [];
 
         public void TrackChanges()
         {
@@ -31,12 +25,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             foreach (var account in entries.Where(x =>
                 x.Entity is Account && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as Account))
+                .Select(x => (x.Entity as Account)!))
                 ChangedAccounts[account.Id] = account;
 
             foreach (var ticket in entries.Where(x =>
                 x.Entity is TicketBalance && (x.State == EntityState.Modified || x.State == EntityState.Added))
-                .Select(x => x.Entity as TicketBalance))
+                .Select(x => (x.Entity as TicketBalance)!))
                 ChangedTicketBalances[ticket.Id] = ticket;
         }
 
@@ -77,9 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task RunDiagnostics(int level, int ops = -1)
         {
-            var entries = Db.ChangeTracker.Entries();
-
-            if (ops != -1 && ops != AddedOperations)
+            if (ops != -1 && ops != AddedOperations + Context.TransactionOps.Count + Context.EndorsementOps.Count)
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = Cache.AppState.Get();
@@ -103,7 +95,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             
             if (Cache.Blocks.Current().Events.HasFlag(BlockEvents.CycleBegin))
             {
-                foreach (var cycle in entries.Where(x => x.Entity is Cycle).Select(x => x.Entity as Cycle))
+                foreach (var cycle in Db.ChangeTracker.Entries().Where(x => x.Entity is Cycle).Select(x => (x.Entity as Cycle)!))
                     await TestCycle(state, cycle);
                 
                 await TestParticipation(state);
@@ -170,7 +162,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 : (await Cache.Blocks.GetAsync(delegat.DeactivationLevel - 1)).Cycle;
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
-
+            
             if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
@@ -199,10 +191,13 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual void TestAccountDelegate(JsonElement remote, Account local)
         {
-            var remoteDelegate = remote.Required("delegate").OptionalString("value");
+            if (local.Type != AccountType.User)
+                return;
 
-            if (local is not Data.Models.Delegate && remoteDelegate != local.Delegate?.Address &&
-                !(local is Contract c && (c.Manager == null || c.Manager.Address == remoteDelegate)))
+            var remoteDelegate = remote.Required("delegate").OptionalString("value");
+            var localDelegate = Cache.Accounts.GetDelegate(local.DelegateId);
+
+            if (remoteDelegate != localDelegate?.Address)
                 throw new Exception($"Diagnostics failed: wrong delegate {local.Address}");
         }
 

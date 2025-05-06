@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
     public class Rollup : Account
     {
         [Column("CreatorId")]
-        public int CreatorId { get; set; }
+        public required int CreatorId { get; set; }
     }
 
     public static class RollupModel

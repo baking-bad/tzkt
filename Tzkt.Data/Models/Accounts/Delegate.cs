@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Numerics;
+﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
@@ -43,15 +41,6 @@ namespace Tzkt.Data.Models
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(SoftwareId))]
-        public Software Software { get; set; }
-        #endregion
-
-        #region indirect relations
-        public List<Account> DelegatedAccounts { get; set; }
-        #endregion
     }
 
     public static class DelegateModel
@@ -66,14 +55,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Delegate>()
                 .HasIndex(x => x.DeactivationLevel, $"IX_{nameof(TzktContext.Accounts)}_{nameof(Delegate.DeactivationLevel)}_Partial")
                 .HasFilter($@"""{nameof(Account.Type)}"" = {(int)AccountType.Delegate}");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<Delegate>()
-                .HasOne(x => x.Software)
-                .WithMany()
-                .HasForeignKey(x => x.SoftwareId)
-                .HasPrincipalKey(x => x.Id);
             #endregion
         }
     }

@@ -1,27 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class SoftwareCache
+    public class SoftwareCache(TzktContext db)
     {
-        public const int MaxItems = 32; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Software> CachedById = [];
+        static Dictionary<string, Software> CachedByHash = [];
 
-        static readonly Dictionary<int, Software> CachedById = new(37);
-        static readonly Dictionary<string, Software> CachedByHash = new(37);
-
-        readonly TzktContext Db;
-
-        public SoftwareCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 64;
+            TargetCap = size?.TargetCap ?? 32;
+            CachedById = new(SoftCap + 3);
+            CachedByHash = new(SoftCap + 3);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -29,18 +29,35 @@ namespace Tzkt.Sync.Services.Cache
             CachedByHash.Clear();
         }
 
+        public void Trim()
+        {
+            if (CachedById.Count > SoftCap)
+            {
+                var toRemove = CachedById.Values
+                    .OrderBy(x => x.LastLevel)
+                    .Take(CachedById.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
+        }
+
         public void Add(Software item)
         {
-            CheckSpace();
             CachedById[item.Id] = item;
             CachedByHash[item.ShortHash] = item;
         }
 
-        public async Task<Software> GetAsync(int? id)
+        public void Remove(Software item)
         {
-            if (id == null) return null;
+            CachedById.Remove(item.Id);
+            CachedByHash.Remove(item.ShortHash);
+        }
 
-            if (!CachedById.TryGetValue((int)id, out var item))
+        public async Task<Software> GetAsync(int id)
+        {
+            if (!CachedById.TryGetValue(id, out var item))
             {
                 item = await Db.Software.FirstOrDefaultAsync(x => x.Id == id)
                     ?? throw new Exception($"Software #{id} doesn't exist");
@@ -58,32 +75,10 @@ namespace Tzkt.Sync.Services.Cache
                 item = await Db.Software.FirstOrDefaultAsync(x => x.ShortHash == hash)
                     ?? create();
 
-                // just created software has id = 0 so CachedById will contain wrong key, but it's fine
                 Add(item);
             }
 
             return item;
-        }
-
-        public void Remove(Software item)
-        {
-            CachedById.Remove(item.Id);
-            CachedByHash.Remove(item.ShortHash);
-        }
-
-        void CheckSpace()
-        {
-            if (CachedByHash.Count >= MaxItems)
-            {
-                var oldest = CachedByHash.Values
-                    .Take(MaxItems / 4);
-
-                foreach (var key in oldest.Select(x => x.Id).ToList())
-                    CachedById.Remove(key);
-
-                foreach (var key in oldest.Select(x => x.ShortHash).ToList())
-                    CachedByHash.Remove(key);
-            }
         }
     }
 }

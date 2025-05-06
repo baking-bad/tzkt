@@ -23,7 +23,7 @@
         /// Contract emitted the event.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Hash of the contract code.
@@ -33,13 +33,13 @@
         /// <summary>
         /// Event tag.
         /// </summary>
-        public string Tag { get; set; }
+        public string? Tag { get; set; }
 
         /// <summary>
         /// Event payload in human-readable JSON format.  
         /// **[sortable]**
         /// </summary>
-        public object Payload { get; set; }
+        public object? Payload { get; set; }
 
         /// <summary>
         /// Internal TzKT id of the transaction operation, caused the event.
@@ -50,12 +50,12 @@
         /// Michelson type of the payload.  
         /// **Must be explicitly selected**
         /// </summary>
-        public object Type { get; set; }
+        public object? Type { get; set; }
 
         /// <summary>
         /// Payload in raw Micheline format.  
         /// **Must be explicitly selected**
         /// </summary>
-        public object RawPayload { get; set; }
+        public object? RawPayload { get; set; }
     }
 }

@@ -1,21 +1,26 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Diagnostics.CodeAnalysis;
+using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class TicketBalancesCache
+    public class TicketBalancesCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<(int, long), TicketBalance> Cached = [];
 
-        static readonly Dictionary<(int, long), TicketBalance> Cached = new(MaxItems);
-
-        readonly TzktContext Db;
-
-        public TicketBalancesCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 16_000;
+            TargetCap = size?.TargetCap ?? 12_000;
+            Cached = new(SoftCap + 1024);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -24,11 +29,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (Cached.Count > MaxItems * 0.9)
+            if (Cached.Count > SoftCap)
             {
                 var toRemove = Cached.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(MaxItems / 2)
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
@@ -46,14 +51,6 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove((ticketBalance.AccountId, ticketBalance.TicketId));
         }
 
-        public TicketBalance GetOrAdd(TicketBalance ticketBalance)
-        {
-            if (Cached.TryGetValue((ticketBalance.AccountId, ticketBalance.TicketId), out var res))
-                return res;
-            Add(ticketBalance);
-            return ticketBalance;
-        }
-
         public TicketBalance Get(int accountId, long ticketId)
         {
             if (!Cached.TryGetValue((accountId, ticketId), out var ticketBalance))
@@ -61,7 +58,7 @@ namespace Tzkt.Sync.Services.Cache
             return ticketBalance;
         }
 
-        public bool TryGet(int accountId, long ticketId, out TicketBalance ticketBalance)
+        public bool TryGet(int accountId, long ticketId, [NotNullWhen(true)] out TicketBalance? ticketBalance)
         {
             return Cached.TryGetValue((accountId, ticketId), out ticketBalance);
         }
@@ -69,16 +66,20 @@ namespace Tzkt.Sync.Services.Cache
         public async Task Preload(IEnumerable<(int, long)> ids)
         {
             var missed = ids.Where(x => !Cached.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (missed.Count != 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
                     var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, {x.Item2})"));
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     var items = await Db.TicketBalances
-                        .FromSqlRaw($@"
-                            SELECT * FROM ""{nameof(TzktContext.TicketBalances)}""
-                            WHERE (""{nameof(TicketBalance.AccountId)}"", ""{nameof(TicketBalance.TicketId)}"") IN ({corteges})")
+                        .FromSqlRaw($"""
+                            SELECT *
+                            FROM "TicketBalances"
+                            WHERE ("AccountId", "TicketId") IN ({corteges})
+                            """)
                         .ToListAsync();
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
                     foreach (var item in items)
                         Add(item);

@@ -1,38 +1,68 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BlocksCache
+    public class BlocksCache(CacheService cache, TzktContext db)
     {
-        public const int MaxBlocks = 3 * 8192; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Block> Cached = [];
 
-        static readonly Dictionary<int, Block> CachedBlocks = new(MaxBlocks);
-
-        readonly CacheService Cache;
-        readonly TzktContext Db;
-
-        public BlocksCache(CacheService cache, TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Cache = cache;
-            Db = db;
+            SoftCap = size?.SoftCap ?? 64_000;
+            TargetCap = size?.TargetCap ?? 32_000;
+            Cached = new(SoftCap + 256);
         }
+        #endregion
+
+        readonly CacheService Cache = cache;
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
-            CachedBlocks.Clear();
+            Cached.Clear();
+        }
+
+        public void Trim()
+        {
+            if (Cached.Count > SoftCap)
+            {
+                var toRemove = Cached.Values
+                    .OrderBy(x => x.Level)
+                    .Take(Cached.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
         }
 
         public void Add(Block block)
         {
-            CheckSpace();
-            CachedBlocks[block.Level] = block;
+            Cached[block.Level] = block;
+        }
+
+        public void Remove(Block block)
+        {
+            Cached.Remove(block.Level);
+        }
+
+        public async Task Preload(IEnumerable<int> levels)
+        {
+            var missed = levels.Where(x => !Cached.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var items = await Db.Blocks
+                    .Where(x => missed.Contains(x.Level))
+                    .ToListAsync();
+
+                foreach (var item in items)
+                    Add(item);
+            }
         }
 
         public Block Current()
@@ -52,7 +82,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public Block Get(int level)
         {
-            if (!CachedBlocks.TryGetValue(level, out var block))
+            if (!Cached.TryGetValue(level, out var block))
             {
                 block = Db.Blocks.FirstOrDefault(x => x.Level == level)
                     ?? throw new Exception($"Block #{level} doesn't exist");
@@ -65,7 +95,7 @@ namespace Tzkt.Sync.Services.Cache
 
         public async Task<Block> GetAsync(int level)
         {
-            if (!CachedBlocks.TryGetValue(level, out var block))
+            if (!Cached.TryGetValue(level, out var block))
             {
                 block = await Db.Blocks.FirstOrDefaultAsync(x => x.Level == level)
                     ?? throw new Exception($"Block #{level} doesn't exist");
@@ -78,42 +108,10 @@ namespace Tzkt.Sync.Services.Cache
 
         public Block GetCached(int level)
         {
-            if (!CachedBlocks.TryGetValue(level, out var block))
+            if (!Cached.TryGetValue(level, out var block))
                 throw new Exception($"Block #{level} is not cached");
+
             return block;
-        }
-
-        public void Remove(Block block)
-        {
-            CachedBlocks.Remove(block.Level);
-        }
-
-        public async Task Preload(IEnumerable<int> levels)
-        {
-            var missed = levels.Where(x => !CachedBlocks.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
-            {
-                var items = await Db.Blocks
-                    .Where(x => missed.Contains(x.Level))
-                    .ToListAsync();
-
-                foreach (var item in items)
-                    Add(item);
-            }
-        }
-
-        void CheckSpace()
-        {
-            if (CachedBlocks.Count >= MaxBlocks)
-            {
-                var oldest = CachedBlocks.Keys
-                    .OrderBy(x => x)
-                    .TakeLast(MaxBlocks / 3)
-                    .ToList();
-
-                foreach (var level in oldest)
-                    CachedBlocks.Remove(level);
-            }
         }
     }
 }

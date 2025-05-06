@@ -7,8 +7,8 @@ namespace Tzkt.Api.Repositories
     public partial class OperationRepository
     {
         public async Task<int> GetVdfRevelationsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            DateTimeParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""VdfRevelationOps""")
                 .Filter("Level", level)
@@ -81,12 +81,12 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<VdfRevelationOperation>> GetVdfRevelations(
-            AccountParameter baker,
-            Int32Parameter level,
-            Int32Parameter cycle,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            Int32Parameter? cycle,
+            DateTimeParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
@@ -123,13 +123,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetVdfRevelations(
-            AccountParameter baker,
-            Int32Parameter level,
-            Int32Parameter cycle,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetVdfRevelations(
+            AccountParameter? baker,
+            Int32Parameter? level,
+            Int32Parameter? cycle,
+            DateTimeParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
@@ -158,20 +158,11 @@ namespace Tzkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
-                    #region deprecated
-                    case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
-                    case "reward":
-                        columns.Add(@"o.""RewardDelegated""");
-                        columns.Add(@"o.""RewardStakedOwn""");
-                        columns.Add(@"o.""RewardStakedEdge""");
-                        columns.Add(@"o.""RewardStakedShared""");
-                        break;
-                    #endregion
                 }
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VdfRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""BakerId""", baker)
@@ -187,9 +178,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -251,29 +242,19 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "rewardLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated;
-                        break;
-                    case "reward":
-                        foreach (var row in rows)
-                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                        break;
-                    #endregion
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> GetVdfRevelations(
-            AccountParameter baker,
-            Int32Parameter level,
-            Int32Parameter cycle,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetVdfRevelations(
+            AccountParameter? baker,
+            Int32Parameter? level,
+            Int32Parameter? cycle,
+            DateTimeParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
@@ -300,19 +281,10 @@ namespace Tzkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
-                #region deprecated
-                case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
-                case "reward":
-                    columns.Add(@"o.""RewardDelegated""");
-                    columns.Add(@"o.""RewardStakedOwn""");
-                    columns.Add(@"o.""RewardStakedEdge""");
-                    columns.Add(@"o.""RewardStakedShared""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VdfRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""BakerId""", baker)
@@ -329,7 +301,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -390,16 +362,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
-                #region deprecated
-                case "rewardLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated;
-                    break;
-                case "reward":
-                    foreach (var row in rows)
-                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
-                    break;
-                #endregion
             }
 
             return result;

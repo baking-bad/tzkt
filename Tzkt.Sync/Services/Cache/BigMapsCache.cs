@@ -1,53 +1,60 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BigMapsCache
+    public class BigMapsCache(TzktContext db)
     {
-        public const int MaxItems = 65713; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, BigMap> Cached = [];
 
-        static readonly Dictionary<int, BigMap> Cached = new(MaxItems);
-
-        readonly TzktContext Db;
-
-        public BigMapsCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 30_000;
+            TargetCap = size?.TargetCap ?? 20_000;
+            Cached = new(SoftCap + 1024);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
             Cached.Clear();
         }
 
+        public void Trim()
+        {
+            if (Cached.Count > SoftCap)
+            {
+                var toRemove = Cached.Values
+                    .OrderBy(x => x.LastLevel)
+                    .Take(Cached.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Remove(item);
+            }
+        }
+
+        public void Add(BigMap bigmap)
+        {
+            Cached[bigmap.Ptr] = bigmap;
+        }
+
+        public void Remove(BigMap bigmap)
+        {
+            Cached.Remove(bigmap.Ptr);
+        }
+
         public async Task Prefetch(IEnumerable<int> ptrs)
         {
             var missed = ptrs.Where(x => !Cached.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (missed.Count != 0)
             {
-                #region check space
-                if (Cached.Count + missed.Count > MaxItems)
-                {
-                    var pinned = ptrs.ToHashSet();
-                    var toRemove = Cached
-                        .Where(kv => !pinned.Contains(kv.Key))
-                        .OrderBy(x => x.Value.LastLevel)
-                        .Select(x => x.Key)
-                        .Take(Math.Max(MaxItems / 4, Cached.Count - MaxItems * 3 / 4))
-                        .ToList();
-
-                    foreach (var key in toRemove)
-                        Cached.Remove(key);
-                }
-                #endregion
-
                 var items = await Db.BigMaps
                     .Where(x => missed.Contains(x.Ptr))
                     .ToListAsync();
@@ -61,17 +68,8 @@ namespace Tzkt.Sync.Services.Cache
         {
             if (!Cached.TryGetValue(ptr, out var bigMap))
                 throw new Exception($"BigMap #{ptr} doesn't exist");
+
             return bigMap;
-        }
-
-        public void Cache(BigMap bigmap)
-        {
-            Cached[bigmap.Ptr] = bigmap;
-        }
-
-        public void Remove(BigMap bigmap)
-        {
-            Cached.Remove(bigmap.Ptr);
         }
     }
 }

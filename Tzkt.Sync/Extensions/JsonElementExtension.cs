@@ -1,5 +1,6 @@
 ﻿using System.Numerics;
 using System.Text.Json;
+using Netezos.Encoding;
 
 namespace Tzkt.Sync
 {
@@ -52,23 +53,34 @@ namespace Tzkt.Sync
 
         public static string RequiredString(this JsonElement el)
         {
-            return el.ValueKind == JsonValueKind.String ? el.GetString()
+            return el.ValueKind == JsonValueKind.String ? el.GetString()!
                 : throw new SerializationException($"Expected string but got {el.ValueKind}");
         }
 
         public static string RequiredString(this JsonElement el, string name)
         {
-            return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.String ? res.GetString()
+            return el.TryGetProperty(name, out var res) && res.ValueKind == JsonValueKind.String ? res.GetString()!
                 : throw new SerializationException($"Missed required string {name}");
         }
 
-        public static string OptionalString(this JsonElement el, string name)
+        public static string? OptionalString(this JsonElement el, string name)
         {
             if (!el.TryGetProperty(name, out var res))
                 return null;
             
             return res.ValueKind == JsonValueKind.String ? res.GetString()
                 : throw new SerializationException($"Expected string but got {res.ValueKind}");
+        }
+
+        public static IMicheline RequiredMicheline(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var res) ? Micheline.FromJson(res)!
+                : throw new SerializationException($"Missed required {name}");
+        }
+
+        public static IMicheline? OptionalMicheline(this JsonElement el, string name)
+        {
+            return el.TryGetProperty(name, out var res) ? Micheline.FromJson(res) : null;
         }
 
         public static DateTime RequiredDateTime(this JsonElement el, string name)
@@ -159,7 +171,7 @@ namespace Tzkt.Sync
         public static int ParseInt32(this JsonElement el)
         {
             return el.ValueKind == JsonValueKind.String
-                ? int.Parse(el.GetString())
+                ? int.Parse(el.GetString()!)
                 : el.GetInt32();
         }
 
@@ -173,7 +185,7 @@ namespace Tzkt.Sync
         public static long ParseInt64(this JsonElement el)
         {
             return el.ValueKind == JsonValueKind.String
-                ? long.Parse(el.GetString())
+                ? long.Parse(el.GetString()!)
                 : el.GetInt64();
         }
 

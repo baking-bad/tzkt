@@ -10,25 +10,25 @@ namespace Tzkt.Api
         /// This parameter is useful when you need to get all operations somehow related to the account in a single request.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AnyOfParameter anyof { get; set; }
+        public AnyOfParameter? anyof { get; set; }
 
         /// <summary>
         /// Filter by game info.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public SrGameInfoFilter game { get; set; }
+        public SrGameInfoFilter game { get; set; } = new();
 
         /// <summary>
         /// Filter by refutation game move (`start`, `dissection`, `proof`, or `timeout`).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public RefutationMoveParameter move { get; set; }
+        public RefutationMoveParameter? move { get; set; }
 
         /// <summary>
         /// Filter by refutation game status (`none`, `ongoing`, `loser`, or `draw`).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public RefutationGameStatusParameter gameStatus { get; set; }
+        public RefutationGameStatusParameter? gameStatus { get; set; }
 
         public override bool Empty =>
             base.Empty &&

@@ -5,7 +5,7 @@
         /// <summary>
         /// Blinded address of the account
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         /// <summary>
         /// Account balance to be activated
@@ -30,6 +30,6 @@
         /// <summary>
         /// Info about activated account. `null` if the account is not activated yet.
         /// </summary>
-        public Alias ActivatedAccount { get; set; }
+        public Alias? ActivatedAccount { get; set; }
     }
 }

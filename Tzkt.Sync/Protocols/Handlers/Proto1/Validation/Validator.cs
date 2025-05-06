@@ -1,13 +1,11 @@
 ﻿using System.Text.Json;
-using System.Threading.Tasks;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class Validator : IValidator
+    class Validator(ProtocolHandler protocol) : IValidator
     {
-        protected readonly CacheService Cache;
-        public Validator(ProtocolHandler protocol) => Cache = protocol.Cache;
+        protected readonly CacheService Cache = protocol.Cache;
 
         public Task ValidateBlock(JsonElement block)
         {

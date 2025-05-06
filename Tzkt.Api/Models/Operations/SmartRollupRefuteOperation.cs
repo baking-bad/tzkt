@@ -26,12 +26,12 @@
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the account who has sent the operation
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -64,27 +64,27 @@
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Smart rollup to which the operation was sent
         /// </summary>
-        public Alias Rollup { get; set; }
+        public Alias? Rollup { get; set; }
 
         /// <summary>
         /// Refutation game info
         /// </summary>
-        public SrGameInfo Game { get; set; }
+        public SrGameInfo? Game { get; set; }
 
         /// <summary>
         /// Player's move (`start`, `dissection`, `proof`, `timeout`)
         /// </summary>
-        public string Move { get; set; }
+        public required string Move { get; set; }
 
         /// <summary>
         /// Game status, after player's move (`ongoing`, `loser`, `draw`)
         /// </summary>
-        public string GameStatus { get; set; }
+        public required string GameStatus { get; set; }
 
         /// <summary>
         /// The first tick in the dissection range. This field is `null` if `move` is not `dissection.
@@ -104,13 +104,13 @@
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

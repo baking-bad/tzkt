@@ -36,15 +36,15 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<object> GetProposals()
         {
             // obsolete
-            return Enumerable.Empty<object>();
+            return [];
         }
 
         [OpenApiIgnore]
-        [HttpGet("proposals/{search}")]
+        [HttpGet("proposals/{_}")]
         public IEnumerable<object> GetProposals([Required] string _)
         {
             // obsolete
-            return Enumerable.Empty<object>();
+            return [];
         }
 
         [OpenApiIgnore]
@@ -52,15 +52,15 @@ namespace Tzkt.Api.Controllers
         public IEnumerable<object> GetProtocols()
         {
             // obsolete
-            return Enumerable.Empty<object>();
+            return [];
         }
 
         [OpenApiIgnore]
-        [HttpGet("protocols/{search}")]
+        [HttpGet("protocols/{_}")]
         public IEnumerable<object> GetProtocols([Required] string _)
         {
             // obsolete
-            return Enumerable.Empty<object>();
+            return [];
         }
     }
 }

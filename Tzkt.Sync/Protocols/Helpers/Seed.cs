@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using Blake2Fast;
+﻿using Blake2Fast;
 
 namespace Tzkt.Sync.Protocols
 {
@@ -19,7 +17,7 @@ namespace Tzkt.Sync.Protocols
             return list;
         }
 
-        public static byte[] GetNextSeed(byte[] seed, IEnumerable<byte[]> nonces, byte[] vdfSolution)
+        public static byte[] GetNextSeed(byte[] seed, IEnumerable<byte[]> nonces, byte[]? vdfSolution)
         {
             var res = Blake2b.ComputeHash(32, seed.Concat(new byte[32]));
             foreach (var nonce in nonces)
@@ -32,18 +30,16 @@ namespace Tzkt.Sync.Protocols
         public static int GetSnapshotIndex(byte[] seed, int snapshots, bool ithaca = false)
         {
             var state = Blake2b.ComputeHash(32, Blake2b.ComputeHash(32, seed.Concat(ithaca
-                ? new byte[46]
-                {
+                ? [
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     115, 116, 97, 107, 101, 95, 115, 110, 97, 112, 115, 104, 111, 116
-                }
-                : new byte[45]
-                {
+                ]
+                : [
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
                     114, 111, 108, 108, 95, 115, 110, 97, 112, 115, 104, 111, 116
-                })));
+                ])));
             var max = int.MaxValue - int.MaxValue % snapshots;
             var tries = 1_000_000;
             while (--tries > 0)

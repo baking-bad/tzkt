@@ -31,7 +31,7 @@ namespace Tzkt.Api.Repositories
             Software = software;
         }
 
-        public Task<RawAccount> GetRawAsync(string address)
+        public Task<RawAccount?> GetRawAsync(string address)
         {
             return Accounts.GetAsync(address);
         }
@@ -41,7 +41,7 @@ namespace Tzkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is RawUser rawUser && rawUser.StakedPseudotokens != null)
             {
-                var rawBaker = await Accounts.GetAsync(rawAccount.DelegateId.Value) as RawDelegate; // WARN: possible races
+                var rawBaker = (await Accounts.GetAsync(rawAccount.DelegateId!.Value) as RawDelegate)!; // WARN: possible races
                 if (rawBaker.IssuedPseudotokens > BigInteger.Zero)
                     return rawAccount.Balance + (long)(rawBaker.ExternalStakedBalance * rawUser.StakedPseudotokens / rawBaker.IssuedPseudotokens);
                 else
@@ -58,7 +58,7 @@ namespace Tzkt.Api.Repositories
                 : rawAccount.Counter;
         }
 
-        public async Task<Account> Get(string address, bool legacy)
+        public async Task<Account?> Get(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount == null)
@@ -78,7 +78,7 @@ namespace Tzkt.Api.Repositories
                         Alias = delegat.Alias,
                         Active = delegat.Staked,
                         Address = delegat.Address,
-                        PublicKey = delegat.PublicKey,
+                        PublicKey = delegat.PublicKey!,
                         Revealed = delegat.Revealed,
                         Balance = delegat.Balance,
                         RollupBonds = delegat.RollupBonds,
@@ -164,28 +164,26 @@ namespace Tzkt.Api.Repositories
                         StakingUpdatesCount = delegat.StakingUpdatesCount ?? 0,
                         SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
                         DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
-                        Metadata = legacy ? delegat.Profile : null,
-                        Extras = legacy ? null : delegat.Extras,
+                        Extras = delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
                     };
                     #endregion
                 case RawUser user:
                     #region build user
                     var userDelegate = user.DelegateId == null ? null
-                        : await Accounts.GetAsync((int)user.DelegateId) as RawDelegate;
+                        : await Accounts.GetAsync(user.DelegateId.Value) as RawDelegate;
 
                     long? stakedBalance = null;
                     if (user.StakedPseudotokens != null)
                     {
-                        if (userDelegate.IssuedPseudotokens > BigInteger.Zero)
+                        if (userDelegate?.IssuedPseudotokens > BigInteger.Zero)
                         {
                             stakedBalance = (long)(userDelegate.ExternalStakedBalance * user.StakedPseudotokens / userDelegate.IssuedPseudotokens);
                         }
                         else
                         {
                             var res = (User)(await Get(user.Id, null, null, null, null, null, null, null, null, null, null, 1)).First();
-                            res.Metadata = legacy ? user.Profile : null;
-                            res.Extras = legacy ? null : user.Extras;
+                            res.Extras = user.Extras;
                             return res;
                         }
                     }
@@ -227,7 +225,7 @@ namespace Tzkt.Api.Repositories
                             Active = userDelegate.Staked
                         },
                         DelegationLevel = userDelegate == null ? null : user.DelegationLevel,
-                        DelegationTime = userDelegate == null ? null : Time[(int)user.DelegationLevel],
+                        DelegationTime = userDelegate == null ? null : Time[user.DelegationLevel!.Value],
                         NumActivations = user.ActivationsCount,
                         NumContracts = user.ContractsCount,
                         ActiveTokensCount = user.ActiveTokensCount,
@@ -258,20 +256,13 @@ namespace Tzkt.Api.Repositories
                         StakingUpdatesCount = user.StakingUpdatesCount ?? 0,
                         SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                         DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
-                        Metadata = legacy ? user.Profile : null,
-                        Extras = legacy ? null : user.Extras
+                        Extras = user.Extras
                     };
                     #endregion
                 case RawContract contract:
                     #region build contract
-                    var creator = contract.CreatorId == null ? null
-                        : await Accounts.GetAsync((int)contract.CreatorId);
-
-                    var manager = contract.ManagerId == null ? null
-                        : (RawUser)await Accounts.GetAsync((int)contract.ManagerId);
-
                     var contractDelegate = contract.DelegateId == null ? null
-                        : await Accounts.GetAsync((int)contract.DelegateId);
+                        : await Accounts.GetAsync(contract.DelegateId.Value);
 
                     return new Contract
                     {
@@ -283,17 +274,7 @@ namespace Tzkt.Api.Repositories
                         Balance = contract.Balance,
                         TransferTicketCount = contract.TransferTicketCount,
                         IncreasePaidStorageCount = contract.IncreasePaidStorageCount,
-                        Creator = creator == null ? null : new CreatorInfo
-                        {
-                            Alias = creator.Alias,
-                            Address = creator.Address
-                        },
-                        Manager = manager == null ? null : new ManagerInfo
-                        {
-                            Alias = manager.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey,
-                        },
+                        Creator = await Accounts.GetAliasAsync(contract.CreatorId),
                         Delegate = contractDelegate == null ? null : new DelegateInfo
                         {
                             Alias = contractDelegate.Alias,
@@ -301,7 +282,7 @@ namespace Tzkt.Api.Repositories
                             Active = contractDelegate.Staked
                         },
                         DelegationLevel = contractDelegate == null ? null : contract.DelegationLevel,
-                        DelegationTime = contractDelegate == null ? null : Time[(int)contract.DelegationLevel],
+                        DelegationTime = contractDelegate == null ? null : Time[contract.DelegationLevel!.Value],
                         FirstActivity = contract.FirstLevel,
                         FirstActivityTime = Time[contract.FirstLevel],
                         LastActivity = contract.LastLevel,
@@ -323,8 +304,8 @@ namespace Tzkt.Api.Repositories
                         EventsCount = contract.EventsCount,
                         TypeHash = contract.TypeHash,
                         CodeHash = contract.CodeHash,
-                        Metadata = legacy ? contract.Profile : contract.Metadata,
-                        Extras = legacy ? null : contract.Extras
+                        Metadata = contract.Metadata,
+                        Extras = contract.Extras
                     };
                 #endregion
                 case RawRollup rollup:
@@ -356,8 +337,7 @@ namespace Tzkt.Api.Repositories
                         TicketBalancesCount = rollup.TicketBalancesCount,
                         TicketTransfersCount = rollup.TicketTransfersCount,
                         NumTransactions = rollup.TransactionsCount,
-                        Metadata = legacy ? rollup.Profile : null,
-                        Extras = legacy ? null : rollup.Extras
+                        Extras = rollup.Extras
                     };
                 #endregion
                 case RawSmartRollup rollup:
@@ -400,7 +380,7 @@ namespace Tzkt.Api.Repositories
                         PendingCommitments = rollup.PendingCommitments,
                         RefutedCommitments = rollup.RefutedCommitments,
                         PvmKind = PvmKinds.ToString(rollup.PvmKind),
-                        Extras = legacy ? null : rollup.Extras
+                        Extras = rollup.Extras
                     };
                 #endregion
                 case RawAccount ghost:
@@ -420,8 +400,7 @@ namespace Tzkt.Api.Repositories
                         FirstActivityTime = Time[ghost.FirstLevel],
                         LastActivity = ghost.LastLevel,
                         LastActivityTime = Time[ghost.LastLevel],
-                        Metadata = legacy ? ghost.Profile : null,
-                        Extras = legacy ? null : ghost.Extras
+                        Extras = ghost.Extras
                     };
                 #endregion
                 default:
@@ -429,7 +408,12 @@ namespace Tzkt.Api.Repositories
             }
         }
 
-        public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked, Int32Parameter firstActivity)
+        public async Task<int> GetCount(
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? firstActivity)
         {
             var joinBaker = balance?.Empty == false ? """
                 LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
@@ -451,17 +435,17 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<IEnumerable<Account>> Get(
-            Int32Parameter id,
-            AddressParameter address,
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            AccountParameter @delegate,
-            BigIntegerNullableParameter stakedPseudotokens,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? id,
+            AddressParameter? address,
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            AccountParameter? @delegate,
+            BigIntegerNullableParameter? stakedPseudotokens,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var sql = new SqlBuilder($"""
@@ -676,12 +660,6 @@ namespace Tzkt.Api.Repositories
                         break;
                     case 2:
                         #region build contract
-                        var creator = row.CreatorId == null ? null
-                            : await Accounts.GetAsync((int)row.CreatorId);
-
-                        var manager = row.ManagerId == null ? null
-                            : (RawUser)await Accounts.GetAsync((int)row.ManagerId);
-
                         var contractDelegate = row.DelegateId == null ? null
                             : await Accounts.GetAsync((int)row.DelegateId);
 
@@ -695,17 +673,7 @@ namespace Tzkt.Api.Repositories
                             Balance = row.Balance,
                             TransferTicketCount = row.TransferTicketCount,
                             IncreasePaidStorageCount = row.IncreasePaidStorageCount,
-                            Creator = creator == null ? null : new CreatorInfo
-                            {
-                                Alias = creator.Alias,
-                                Address = creator.Address
-                            },
-                            Manager = manager == null ? null : new ManagerInfo
-                            {
-                                Alias = manager.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey,
-                            },
+                            Creator = await Accounts.GetAliasAsync((int)row.CreatorId),
                             Delegate = contractDelegate == null ? null : new DelegateInfo
                             {
                                 Alias = contractDelegate.Alias,
@@ -839,18 +807,18 @@ namespace Tzkt.Api.Repositories
             return accounts;
         }
 
-        public async Task<object[][]> Get(
-            Int32Parameter id,
-            AddressParameter address,
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            AccountParameter @delegate,
-            BigIntegerNullableParameter stakedPseudotokens,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> Get(
+            Int32Parameter? id,
+            AddressParameter? address,
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            AccountParameter? @delegate,
+            BigIntegerNullableParameter? stakedPseudotokens,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields)
         {
@@ -967,7 +935,6 @@ namespace Tzkt.Api.Repositories
                     case "kind": columns.Add(@"acc.""Kind"""); break;
                     case "tzips": columns.Add(@"acc.""Tags"""); break;
                     case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                    case "manager": columns.Add(@"acc.""ManagerId"""); break;
                     case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                     case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                     case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
@@ -987,7 +954,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($"""
                 SELECT {string.Join(',', columns)}
@@ -1018,9 +985,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -1432,26 +1399,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "creator":
                         foreach (var row in rows)
-                        {
-                            var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                            result[j++][i] = creator == null ? null : new CreatorInfo
-                            {
-                                Alias = creator.Alias,
-                                Address = creator.Address
-                            };
-                        }
-                        break;
-                    case "manager":
-                        foreach (var row in rows)
-                        {
-                            var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                            result[j++][i] = manager == null ? null : new ManagerInfo
-                            {
-                                Alias = manager.Alias,
-                                Address = manager.Address,
-                                PublicKey = manager.PublicKey,
-                            };
-                        }
+                            result[j++][i] = await Accounts.GetAliasAsync((int)row.CreatorId);
                         break;
                     case "tokensCount":
                         foreach (var row in rows)
@@ -1515,18 +1463,18 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
-            Int32Parameter id,
-            AddressParameter address,
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            AccountParameter @delegate,
-            BigIntegerNullableParameter stakedPseudotokens,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter lastActivity,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> Get(
+            Int32Parameter? id,
+            AddressParameter? address,
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            AccountParameter? @delegate,
+            BigIntegerNullableParameter? stakedPseudotokens,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? lastActivity,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field)
         {
@@ -1641,7 +1589,6 @@ namespace Tzkt.Api.Repositories
                 case "kind": columns.Add(@"acc.""Kind"""); break;
                 case "tzips": columns.Add(@"acc.""Tags"""); break;
                 case "creator": columns.Add(@"acc.""CreatorId"""); break;
-                case "manager": columns.Add(@"acc.""ManagerId"""); break;
                 case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
                 case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
                 case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
@@ -1660,7 +1607,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($"""
                 SELECT {string.Join(',', columns)}
@@ -1691,7 +1638,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -2102,26 +2049,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "creator":
                     foreach (var row in rows)
-                    {
-                        var creator = row.CreatorId == null ? null : Accounts.Get((int)row.CreatorId);
-                        result[j++] = creator == null ? null : new CreatorInfo
-                        {
-                            Alias = creator.Alias,
-                            Address = creator.Address
-                        };
-                    }
-                    break;
-                case "manager":
-                    foreach (var row in rows)
-                    {
-                        var manager = row.ManagerId == null ? null : (RawUser)Accounts.Get((int)row.ManagerId);
-                        result[j++] = manager == null ? null : new ManagerInfo
-                        {
-                            Alias = manager.Alias,
-                            Address = manager.Address,
-                            PublicKey = manager.PublicKey,
-                        };
-                    }
+                        result[j++] = await Accounts.GetAliasAsync((int)row.CreatorId);
                     break;
                 case "tokensCount":
                     foreach (var row in rows)
@@ -2186,13 +2114,13 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<RelatedContract>> GetRelatedContracts(
             string address,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             var account = await Accounts.GetAsync(address);
             if (account == null || account.ContractsCount == 0)
-                return Enumerable.Empty<RelatedContract>();
+                return [];
 
             var sql = new SqlBuilder($"""
                 SELECT  acc."Id",
@@ -2205,7 +2133,7 @@ namespace Tzkt.Api.Repositories
                 FROM "Accounts" AS acc
                 """)
                 .FilterA(@"acc.""Type""", 2)
-                .Filter($@"(acc.""CreatorId"" = {account.Id} OR acc.""ManagerId"" = {account.Id})")
+                .FilterA(@"acc.""CreatorId""", account.Id)
                 .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
@@ -2227,7 +2155,7 @@ namespace Tzkt.Api.Repositories
                     Alias = row.Alias,
                     Address = row.Address,
                     Balance = row.Balance,
-                    Delegate = row.DelegateId == null ? null : new DelegateInfo
+                    Delegate = delegat == null ? null : new DelegateInfo
                     {
                         Alias = delegat.Alias,
                         Address = delegat.Address,
@@ -2241,15 +2169,15 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Delegator>> GetDelegators(
             string address,
-            AccountTypeParameter type,
-            Int64Parameter balance,
-            Int32Parameter delegationLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountTypeParameter? type,
+            Int64Parameter? balance,
+            Int32Parameter? delegationLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
-                return Enumerable.Empty<Delegator>();
+                return [];
 
             var sql = new SqlBuilder($"""
                 SELECT  acc."Id",
@@ -2293,31 +2221,30 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Operation>> GetOperations(
             string address,
             HashSet<string> types,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter prevDelegate,
-            AccountParameter newDelegate,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            AccountParameter accuser,
-            AccountParameter offender,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? prevDelegate,
+            AccountParameter? newDelegate,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            DateTimeParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat format,
             Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
-            if (account == null) return Enumerable.Empty<Operation>();
+            if (account == null) return [];
             var result = new List<Operation>(limit * 2);
 
             var pagination = new Pagination
@@ -2327,7 +2254,7 @@ namespace Tzkt.Api.Repositories
                 limit = limit
             };
 
-            TimestampParameter _timestamp = null;
+            TimestampParameter? _timestamp = null;
             if (timestamp != null)
             {
                 _timestamp = new TimestampParameter
@@ -2386,23 +2313,23 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var dalEntrapmentEvidenceOps = delegat.DalEntrapmentEvidenceOpsCount > 0 && types.Contains(OpTypes.DalEntrapmentEvidence)
-                        ? Operations.GetDalEntrapmentEvidences(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDalEntrapmentEvidences(new AnyOfParameter { Fields = ["accuser", "offender"], Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DalEntrapmentEvidenceOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = ["accuser", "offender"], Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = ["accuser", "offender"], Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
-                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = ["accuser", "offender"], Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = new[] { "baker", "sender" }, Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetNonceRevelations(new AnyOfParameter { Fields = ["baker", "sender"], Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(OpTypes.VdfRevelation)
@@ -2410,15 +2337,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = ["initiator", "sender", "prevDelegate", "newDelegate"], Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = delegat.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = delegat.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var transactions = delegat.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = delegat.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = ["initiator", "sender", "target"], Eq = delegat.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var reveals = delegat.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2454,7 +2381,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
 
                     var txRollupRejectionOps = delegat.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = ["sender", "committer"], Eq = delegat.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
 
                     var txRollupRemoveCommitmentOps = delegat.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
@@ -2478,7 +2405,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
 
                     var drainDelegateOps = delegat.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
-                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = ["delegate", "target"], Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
                     var srAddMessagesOps = delegat.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
@@ -2502,15 +2429,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
 
                     var srRecoverBondOps = delegat.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = ["sender", "staker"], Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
 
                     var srRefuteOps = delegat.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = ["sender", "initiator", "opponent"], Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "baker"], Eq = delegat.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var setDelegateParametersOps = delegat.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
@@ -2530,7 +2457,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetBakings(new AnyOfParameter { Fields = ["proposer", "producer"], Eq = delegat.Id }, null, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
@@ -2647,15 +2574,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = ["initiator", "sender", "prevDelegate", "newDelegate"], Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = user.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = user.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var userTransactions = user.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator", "sender", "target" }, Eq = user.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = ["initiator", "sender", "target"], Eq = user.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var userReveals = user.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2691,7 +2618,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<TxRollupOriginationOperation>());
 
                     var userTxRollupRejectionOps = user.TxRollupRejectionCount > 0 && types.Contains(OpTypes.TxRollupRejection)
-                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = new[] { "sender", "committer" }, Eq = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        ? Operations.GetTxRollupRejectionOps(new AnyOfParameter { Fields = ["sender", "committer"], Eq = user.Id }, null, null, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<TxRollupRejectionOperation>());
 
                     var userTxRollupRemoveCommitmentOps = user.TxRollupRemoveCommitmentCount > 0 && types.Contains(OpTypes.TxRollupRemoveCommitment)
@@ -2711,7 +2638,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
                     var userDrainDelegateOps = user.DrainDelegateCount > 0 && types.Contains(OpTypes.DrainDelegate)
-                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = new[] { "delegate", "target" }, Eq = user.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDrainDelegates(new AnyOfParameter { Fields = ["delegate", "target"], Eq = user.Id }, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DrainDelegateOperation>());
 
                     var userSrAddMessagesOps = user.SmartRollupAddMessagesCount > 0 && types.Contains(OpTypes.SmartRollupAddMessages)
@@ -2735,15 +2662,15 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SmartRollupPublishOperation>());
 
                     var userSrRecoverBondOps = user.SmartRollupRecoverBondCount > 0 && types.Contains(OpTypes.SmartRollupRecoverBond)
-                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = new[] { "sender", "staker" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetSmartRollupRecoverBondOps(new() { anyof = new() { Fields = ["sender", "staker"], Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRecoverBondOperation>());
 
                     var userSrRefuteOps = user.SmartRollupRefuteCount > 0 && types.Contains(OpTypes.SmartRollupRefute)
-                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = new[] { "sender", "initiator", "opponent" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetSmartRollupRefuteOps(new() { anyof = new() { Fields = ["sender", "initiator", "opponent"], Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var userStakingOps = user.StakingOpsCount > 0 && types.Contains(OpTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "baker"], Eq = user.Id }, level = level, timestamp = _timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var userSetDelegateParametersOps = user.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
@@ -2824,23 +2751,23 @@ namespace Tzkt.Api.Repositories
                     var _contract = new AccountParameter { Eq = contract.Id };
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = ["initiator", "sender", "prevDelegate", "newDelegate"], Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
-                        ? Operations.GetOriginations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "contractManager", "contractDelegate", "originatedContract" }, Eq = contract.Id }, initiator, sender, contractManager, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
+                        ? Operations.GetOriginations(new AnyOfParameter { Fields = ["initiator", "sender", "contractDelegate", "originatedContract"], Eq = contract.Id }, initiator, sender, contractDelegate, originatedContract, null, null, null, level, _timestamp, null, null, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<OriginationOperation>());
 
                     var contractTransactions1 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction) && contract.Kind == 0
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "initiator" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = ["initiator"], Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractTransactions2 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "sender" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = ["sender"], Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractTransactions3 = contract.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new AnyOfParameter { Fields = new[] { "target" }, Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new AnyOfParameter { Fields = ["target"], Eq = contract.Id }, initiator, sender, target, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var contractReveals = contract.RevealsCount > 0 && types.Contains(OpTypes.Reveal)
@@ -2848,7 +2775,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevealOperation>());
 
                     var contractTransferTicketOps = contract.TransferTicketCount > 0 && types.Contains(OpTypes.TransferTicket)
-                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = new[] { "target", "ticketer" }, Eq = contract.Id }, null, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransferTicketOps(new AnyOfParameter { Fields = ["target", "ticketer"], Eq = contract.Id }, null, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
 
                     var contractIncreasePaidStorageOps = contract.IncreasePaidStorageCount > 0 && types.Contains(OpTypes.IncreasePaidStorage)
@@ -2946,7 +2873,7 @@ namespace Tzkt.Api.Repositories
                     var _smartRollup = new SmartRollupParameter { Eq = smartRollup.Id };
 
                     var smartRollupTransactionOps = smartRollup.TransactionsCount > 0 && types.Contains(OpTypes.Transaction)
-                        ? Operations.GetTransactions(new() { Fields = new[] { "sender", "target" }, Eq = smartRollup.Id }, null, null, null, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        ? Operations.GetTransactions(new() { Fields = ["sender", "target"], Eq = smartRollup.Id }, null, null, null, null, null, level, _timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<TransactionOperation>());
 
                     var smartRollupSrCementOps = smartRollup.SmartRollupCementCount > 0 && types.Contains(OpTypes.SmartRollupCement)
@@ -2999,12 +2926,6 @@ namespace Tzkt.Api.Repositories
             return sort?.Desc == null
                 ? result.OrderBy(x => x.Id).Take(limit)
                 : result.OrderByDescending(x => x.Id).Take(limit);
-        }
-
-        public async Task<RawJson> GetProfileInfo(string address)
-        {
-            var account = await Accounts.GetAsync(address);
-            return account?.Profile;
         }
     }
 }

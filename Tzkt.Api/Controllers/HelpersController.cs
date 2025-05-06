@@ -64,12 +64,12 @@ namespace Tzkt.Api.Controllers
                 var view = await Accounts.GetViewMicheline(contract, name);
                 if (view == null) return new BadRequest(nameof(contract), "View not found");
 
-                var inputSchema = Schema.Create(view.Args[1] as MichelinePrim);
-                var outputSchema = Schema.Create(view.Args[2] as MichelinePrim);
+                var inputSchema = Schema.Create((view.Args![1] as MichelinePrim)!);
+                var outputSchema = Schema.Create((view.Args![2] as MichelinePrim)!);
 
                 var res = await Rpc.RunScriptView(contract, name, inputSchema.MapObject(input, true));
 
-                return Ok((RawJson)outputSchema.Humanize(res));
+                return Ok((RawJson?)outputSchema.Humanize(res));
             }
             catch (Exception ex)
             {

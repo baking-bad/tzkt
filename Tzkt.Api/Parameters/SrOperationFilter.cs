@@ -8,7 +8,7 @@ namespace Tzkt.Api
         /// Filter by rollup address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public SmartRollupParameter rollup { get; set; }
+        public SmartRollupParameter? rollup { get; set; }
 
         public override bool Empty => base.Empty && rollup == null;
 

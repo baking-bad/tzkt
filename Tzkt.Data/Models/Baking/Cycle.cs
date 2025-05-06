@@ -4,16 +4,15 @@ namespace Tzkt.Data.Models
 {
     public class Cycle
     {
-        public int Id { get; set; }
-        public int Index { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
-        public int SnapshotLevel { get; set; }
+        public required int Id { get; set; }
+        public required int Index { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
+        public required byte[] Seed { get; set; }
 
+        public int SnapshotLevel { get; set; }
         public int TotalBakers { get; set; }
         public long TotalBakingPower { get; set; }
-
-        public byte[] Seed { get; set; }
 
         public long BlockReward { get; set; }
         public long BlockBonusPerSlot { get; set; }

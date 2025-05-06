@@ -38,14 +38,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TxRollupDispatchTicketsOperation>()
                 .HasIndex(x => x.RollupId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<TxRollupDispatchTicketsOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.TxRollupDispatchTicketsOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

@@ -34,7 +34,7 @@ namespace Tzkt.Api
         /// Example: `?sender.in=bootstrap,proposal_invoice`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -43,7 +43,7 @@ namespace Tzkt.Api
         /// Example: `?sender.ni=airdrop,bootstrap`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         public string Normalize(string name)
         {

@@ -1,43 +1,73 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Diagnostics.CodeAnalysis;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class StoragesCache
+    public class StoragesCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<int, Storage> Cached = [];
 
-        static readonly Dictionary<int, Storage> CachedByContractId = new(MaxItems);
-
-        readonly TzktContext Db;
-
-        public StoragesCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 60_000;
+            TargetCap = size?.TargetCap ?? 50_000;
+            Cached = new(SoftCap + 1024);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
-            CachedByContractId.Clear();
+            Cached.Clear();
+        }
+
+        public void Trim()
+        {
+            if (Cached.Count > SoftCap)
+            {
+                var toRemove = Cached.Values
+                    .OrderBy(x => x.Level)
+                    .Take(Cached.Count - TargetCap)
+                    .ToList();
+
+                foreach (var item in toRemove)
+                    Cached.Remove(item.ContractId);
+            }
         }
 
         public void Add(Contract contract, Storage storage)
         {
-            CheckSpace();
-            CachedByContractId[contract.Id] = storage;
+            Cached[contract.Id] = storage;
+        }
+
+        public void Remove(Contract contract)
+        {
+            Cached.Remove(contract.Id);
+        }
+
+        public async Task PreloadAsync(IEnumerable<int> contracts)
+        {
+            var missed = contracts.Where(x => !Cached.ContainsKey(x)).ToHashSet();
+            if (missed.Count != 0)
+            {
+                var storages = await Db.Storages
+                    .Where(x => missed.Contains(x.ContractId) && x.Current)
+                    .ToListAsync();
+
+                foreach (var storage in storages)
+                    Cached.Add(storage.ContractId, storage);
+            }
         }
 
         public async Task<Storage> GetAsync(Contract contract)
         {
-            if (contract == null) return null;
-
-            if (!CachedByContractId.TryGetValue(contract.Id, out var item))
+            if (!Cached.TryGetValue(contract.Id, out var item))
             {
                 item = await Db.Storages.FirstOrDefaultAsync(x => x.ContractId == contract.Id && x.Current)
                     ?? throw new Exception($"Storage for contract #{contract.Id} doesn't exist");
@@ -48,24 +78,9 @@ namespace Tzkt.Sync.Services.Cache
             return item;
         }
 
-        public void Remove(Contract contract)
+        public bool TryGetCached(Contract contract, [NotNullWhen(true)] out Storage? storage)
         {
-            CachedByContractId.Remove(contract.Id);
-        }
-
-        void CheckSpace()
-        {
-            if (CachedByContractId.Count >= MaxItems)
-            {
-                var oldest = CachedByContractId.Values
-                    .OrderBy(x => x.Level)
-                    .Take(MaxItems / 4)
-                    .Select(x => x.ContractId)
-                    .ToList();
-
-                foreach (var key in oldest)
-                    CachedByContractId.Remove(key);
-            }
+            return Cached.TryGetValue(contract.Id, out storage);
         }
     }
 }

@@ -41,7 +41,7 @@ builder.Services.AddDbContext<TzktContext>(options => options.UseNpgsql(connecti
 builder.Services.AddSingleton(serviceProvider =>
 {
     var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
-    dataSourceBuilder.AddTypeResolverFactory(new CustomTypeHandlerResolverFactory());
+    dataSourceBuilder.AddTypeInfoResolverFactory(new BigIntegerNumericTypeInfoResolverFactory());
     dataSourceBuilder.UseLoggerFactory(serviceProvider.GetService<ILoggerFactory>());
     return dataSourceBuilder.Build();
 });
@@ -283,9 +283,6 @@ app.MapControllers();
 if (builder.Configuration.GetWebsocketConfig().Enabled)
 {
     app.MapHub<DefaultHub>("/v1/ws");
-    #region DEPRECATED
-    app.MapHub<DefaultHub>("/v1/events");
-    #endregion
 }
 
 if (builder.Configuration.GetHealthChecksConfig().Enabled)

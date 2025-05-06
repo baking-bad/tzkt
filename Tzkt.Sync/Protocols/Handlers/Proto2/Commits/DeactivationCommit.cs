@@ -1,7 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -14,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            List<Data.Models.Delegate> delegates = null;
+            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
                 var deactivated = rawBlock
@@ -24,23 +21,25 @@ namespace Tzkt.Sync.Protocols.Proto2
                     .Select(x => x.RequiredString())
                     .ToList();
 
-                delegates = await Db.Delegates
-                    .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.Staked && deactivated.Contains(x.Address))
-                    .ToListAsync();
+                delegates = (await Db.Delegates
+                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
+                    .Where(x => x.baker.Staked && deactivated.Contains(x.baker.Address))
+                    .ToListAsync())
+                    .Select(x => (x.baker, x.delegators));
             }
             else if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                delegates = await Db.Delegates
-                    .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.Staked && x.DeactivationLevel == block.Level)
-                    .ToListAsync();
+                delegates = (await Db.Delegates
+                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
+                    .Where(x => x.baker.Staked && x.baker.DeactivationLevel == block.Level)
+                    .ToListAsync())
+                    .Select(x => (x.baker, x.delegators));
             }
             #endregion
 
             if (delegates == null) return;
 
-            foreach (var delegat in delegates)
+            foreach (var (delegat, delegators) in delegates)
             {
                 Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
@@ -48,7 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                 delegat.DeactivationLevel = block.Level;
                 delegat.Staked = false;
 
-                foreach (var delegator in delegat.DelegatedAccounts)
+                foreach (var delegator in delegators)
                 {
                     Cache.Accounts.Add(delegator);
                     Db.TryAttach(delegator);
@@ -61,19 +60,20 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Revert(Block block)
         {
             #region init
-            List<Data.Models.Delegate> delegates = null;
+            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                delegates = await Db.Delegates
-                    .Include(x => x.DelegatedAccounts)
-                    .Where(x => x.DeactivationLevel == block.Level)
-                    .ToListAsync();
+                delegates = (await Db.Delegates
+                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
+                    .Where(x => x.baker.DeactivationLevel == block.Level)
+                    .ToListAsync())
+                    .Select(x => (x.baker, x.delegators));
             }
             #endregion
 
             if (delegates == null) return;
 
-            foreach (var delegat in delegates)
+            foreach (var (delegat, delegators) in delegates)
             {
                 Cache.Accounts.Add(delegat);
                 Db.TryAttach(delegat);
@@ -83,7 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto2
                     : block.Level;
                 delegat.Staked = true;
 
-                foreach (var delegator in delegat.DelegatedAccounts)
+                foreach (var delegator in delegators)
                 {
                     Cache.Accounts.Add(delegator);
                     Db.TryAttach(delegator);

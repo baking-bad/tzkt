@@ -52,7 +52,7 @@ namespace Tzkt.Api
 
             var param = new TimestampParameter
             {
-                Eq = (value ?? eq) == null ? null : Time.FindLevel((DateTime)(value ?? eq), SearchMode.Exact),
+                Eq = (value ?? eq) == null ? null : Time.FindLevel((DateTime)((value ?? eq)!), SearchMode.Exact),
                 Ne = ne == null ? null : Time.FindLevel((DateTime)ne, SearchMode.Exact),
                 In = @in?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),
                 Ni = ni?.Select(x => Time.FindLevel(x, SearchMode.Exact)).ToList(),

@@ -86,17 +86,17 @@
         /// <summary>
         /// Reward for baking (producing) a block (micro tez)
         /// </summary>
-        public List<long> BlockReward { get; set; }
+        public required List<long> BlockReward { get; set; }
 
         /// <summary>
         /// Security deposit for sending an endorsement operation (micro tez)
         /// </summary>
         public long EndorsementDeposit { get; set; }
-        
+
         /// <summary>
         /// Reward for sending an endorsement operation (micro tez)
         /// </summary>
-        public List<long> EndorsementReward { get; set; }
+        public required List<long> EndorsementReward { get; set; }
 
         /// <summary>
         /// Initial storage size of an originated (created) account (bytes)
@@ -196,73 +196,6 @@
         /// <summary>
         /// Governance dictator
         /// </summary>
-        public string Dictator { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int MaxSlashingPeriod => DenunciationPeriod + SlashingDelay;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int PreservedCycles => ConsensusRightsDelay;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int LBEscapeThreshold => LBToggleThreshold;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int LBSunsetLevel => 3_063_809;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int FrozenDepositsPercentage => 10;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TxRollupOriginationSize => 4_000;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TxRollupCommitmentBond => 10_000_000_000;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long DoubleBakingPunishment => 640_000_000;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int DoubleEndorsingPunishmentNumerator => 1;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int DoubleEndorsingPunishmentDenominator => 2;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RevelationReward => 125_000;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int LBSubsidy => 5_000_000 * TimeBetweenBlocks / 60;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TokensPerRoll => MinimalStake;
-        #endregion
+        public string? Dictator { get; set; }
     }
 }

@@ -20,12 +20,12 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<Statistics>> Get(
             StatisticsPeriod period,
-            Int32Parameter cycle,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            DateTimeParameter date,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            DateTimeParameter? date,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
@@ -75,14 +75,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(
+        public async Task<object?[][]> Get(
             StatisticsPeriod period,
-            Int32Parameter cycle,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            DateTimeParameter date,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            DateTimeParameter? date,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
@@ -128,7 +128,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Statistics""");
 
@@ -152,9 +152,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -236,14 +236,14 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
+        public async Task<object?[]> Get(
             StatisticsPeriod period,
-            Int32Parameter cycle,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            DateTimeParameter date,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            DateTimeParameter? date,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
@@ -286,7 +286,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Statistics""");
 
@@ -310,7 +310,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

@@ -97,7 +97,7 @@ namespace Tzkt.Api.Services.Cache
             return level >= Quotes[symbol].Count ? Quotes[symbol][^1] : Quotes[symbol][level];
         }
 
-        public QuoteShort Get(Symbols symbols, int level)
+        public QuoteShort? Get(Symbols symbols, int level)
         {
             if (symbols == Symbols.None)
                 return null;

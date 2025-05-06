@@ -11,14 +11,14 @@ namespace Tzkt.Api.Services.Sync
         #region static
         const string SyncStateChanged = "sync_state_changed";
         const string StateHashChanged = "state_hash_changed";
-        const string StateExtrasChanged = "state_extras_changed";
+        //const string StateExtrasChanged = "state_extras_changed";
         const string AccountExtrasChanged = "account_extras_changed";
         const string AccountMetadataChanged = "account_metadata_changed";
-        const string ProposalExtrasChanged = "proposal_extras_changed";
-        const string ProtocolExtrasChanged = "protocol_extras_changed";
+        //const string ProposalExtrasChanged = "proposal_extras_changed";
+        //const string ProtocolExtrasChanged = "protocol_extras_changed";
         const string SoftwareExtrasChanged = "software_extras_changed";
-        const string ConstantExtrasChanged = "constant_extras_changed";
-        const string BlockExtrasChanged = "block_extras_changed";
+        //const string ConstantExtrasChanged = "constant_extras_changed";
+        //const string BlockExtrasChanged = "block_extras_changed";
         #endregion
 
         readonly string ConnectionString;
@@ -54,7 +54,8 @@ namespace Tzkt.Api.Services.Sync
             IConfiguration config,
             ILogger<StateListener> logger)
         {
-            ConnectionString = config.GetConnectionString("DefaultConnection");
+            ConnectionString = config.GetConnectionString("DefaultConnection")
+                ?? throw new Exception("Connection string is missed"); ;
 
             State = state;
             BigMaps = bigMaps;
@@ -198,7 +199,7 @@ namespace Tzkt.Api.Services.Sync
                             continue;
                         }
 
-                        changes = StateChanges.ToList();
+                        changes = [.. StateChanges];
                         StateChanges.Clear();
                         break;
                     }

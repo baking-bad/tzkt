@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class EndorsementsCommit : ProtocolCommit
+    class EndorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public EndorsementsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -20,25 +18,22 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .EnumerateArray()
                     .FirstOrDefault(x => x.RequiredString("kind")[0] == 'f' && x.RequiredString("category")[0] == 'd');
 
+            var sender = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
+
             var endorsement = new EndorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 Slots = metadata.RequiredArray("slots").Count(),
-                Delegate = Cache.Accounts.GetDelegate(metadata.RequiredString("delegate")),
+                DelegateId = sender.Id,
                 Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
                 Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0
             };
             #endregion
 
             #region entities
-            //var block = endorsement.Block;
-            var sender = endorsement.Delegate;
-
-            //Db.TryAttach(block);
             Db.TryAttach(sender);
             #endregion
 
@@ -50,7 +45,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             block.Operations |= Operations.Endorsements;
             block.Validations += endorsement.Slots;
 
-            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(endorsement.Block) : GracePeriod.Init(endorsement.Block);
+            var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(endorsement.Level, Context.Protocol) : GracePeriod.Init(endorsement.Level, Context.Protocol);
             if (sender.DeactivationLevel < newDeactivationLevel)
             {
                 if (sender.DeactivationLevel <= endorsement.Level)
@@ -60,26 +55,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                 sender.DeactivationLevel = newDeactivationLevel;
             }
 
+            Cache.AppState.Get().EndorsementOpsCount++;
             Cache.Statistics.Current.TotalCreated += endorsement.Reward;
             Cache.Statistics.Current.TotalFrozen += endorsement.Reward + endorsement.Deposit;
             #endregion
 
-            Db.EndorsementOps.Add(endorsement);
+            //Db.EndorsementOps.Add(endorsement);
+            Context.EndorsementOps.Add(endorsement);
         }
 
         public virtual async Task Revert(Block block, EndorsementOperation endorsement)
         {
-            #region init
-            endorsement.Block ??= block;
-            endorsement.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            endorsement.Delegate ??= Cache.Accounts.GetDelegate(endorsement.DelegateId);
-            #endregion
-
             #region entities
-            //var block = endorsement.Block;
-            var sender = endorsement.Delegate;
-
-            //Db.TryAttach(block);
+            var sender = Cache.Accounts.GetDelegate(endorsement.DelegateId);
             Db.TryAttach(sender);
             #endregion
 
@@ -95,9 +83,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 sender.DeactivationLevel = (int)endorsement.ResetDeactivation;
             }
+
+            Cache.AppState.Get().EndorsementOpsCount--;
             #endregion
 
-            Db.EndorsementOps.Remove(endorsement);
+            //Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();
         }
     }

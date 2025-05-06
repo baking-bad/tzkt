@@ -17,17 +17,17 @@
         /// Domain record name.  
         /// **[sortable]**
         /// </summary>
-        public string Name { get; set; }
+        public required string Name { get; set; }
 
         /// <summary>
         /// Owner of the domain.
         /// </summary>
-        public Alias Owner { get; set; }
+        public required Alias Owner { get; set; }
 
         /// <summary>
         /// Address the domain points to.
         /// </summary>
-        public Alias Address { get; set; }
+        public Alias? Address { get; set; }
 
         /// <summary>
         /// Whether or not the domain is on the reverse records list
@@ -42,7 +42,7 @@
         /// <summary>
         /// Arbitrary data bound to the domain.
         /// </summary>
-        public RawJson Data { get; set; }
+        public RawJson? Data { get; set; }
 
         /// <summary>
         /// Level of the block where the domain was first seen.  

@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto9
 {
-    class ProtoActivator : Proto8.ProtoActivator
+    class ProtoActivator(ProtocolHandler proto) : Proto8.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         // Proposal invoice
 
         protected override async Task MigrateContext(AppState state)
@@ -14,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto9
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf");
+            var account = (await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf"))!;
             Db.TryAttach(account);
             account.Balance += 100_000_000;
             if (account is Data.Models.Delegate delegat)
@@ -23,16 +21,18 @@ namespace Tzkt.Sync.Protocols.Proto9
             account.LastLevel = block.Level;
 
             block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
+
+            var migration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                Account = account,
+                AccountId = account.Id,
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = 100_000_000
-            });
+            };
+            Db.MigrationOps.Add(migration);
+            Context.MigrationOps.Add(migration);
 
             Db.TryAttach(state);
             state.MigrationOpsCount++;
@@ -48,16 +48,15 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             var invoice = await Db.MigrationOps
                 .AsNoTracking()
-                .Include(x => x.Account)
-                .FirstOrDefaultAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
+                .FirstAsync(x => x.Level == block.Level && x.Kind == MigrationKind.ProposalInvoice);
 
-            Db.TryAttach(invoice.Account);
-            Cache.Accounts.Add(invoice.Account);
+            var account = await Cache.Accounts.GetAsync(invoice.AccountId);
+            Db.TryAttach(account);
 
-            invoice.Account.Balance -= 100_000_000;
-            if (invoice.Account is Data.Models.Delegate delegat)
+            account.Balance -= 100_000_000;
+            if (account is Data.Models.Delegate delegat)
                 delegat.StakingBalance -= 100_000_000;
-            invoice.Account.MigrationsCount--;
+            account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
             Cache.AppState.ReleaseOperationId();

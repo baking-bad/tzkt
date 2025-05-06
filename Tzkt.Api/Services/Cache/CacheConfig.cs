@@ -10,7 +10,7 @@
     {
         public static CacheConfig GetCacheConfig(this IConfiguration config)
         {
-            return config.GetSection("Cache")?.Get<CacheConfig>() ?? new CacheConfig();
+            return config.GetSection("Cache")?.Get<CacheConfig>() ?? new();
         }
     }
 }

@@ -6,12 +6,13 @@ namespace Tzkt.Data.Models
     public class SmartRollup : Account
     {
         [Column("CreatorId")]
-        public int CreatorId { get; set; }
-        public PvmKind PvmKind { get; set; }
-        public byte[] ParameterSchema { get; set; }
-        public string GenesisCommitment { get; set; }
-        public string LastCommitment { get; set; }
-        public int InboxLevel { get; set; }
+        public required int CreatorId { get; set; }
+        public required PvmKind PvmKind { get; set; }
+        public required byte[] ParameterSchema { get; set; }
+        public required string GenesisCommitment { get; set; }
+        public required string LastCommitment { get; set; }
+        public required int InboxLevel { get; set; }
+
         public int TotalStakers { get; set; }
         public int ActiveStakers { get; set; }
         public int ExecutedCommitments { get; set; }

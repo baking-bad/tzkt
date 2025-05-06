@@ -4,16 +4,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupSubmitBatchCommit : ProtocolCommit
+    class TxRollupSubmitBatchCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupSubmitBatchOperation Operation { get; private set; }
-
-        public TxRollupSubmitBatchCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetAsync(content.RequiredString("rollup"));
 
             var result = content.Required("metadata").Required("operation_result");
@@ -21,7 +17,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             var operation = new TxRollupSubmitBatchOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -29,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 RollupId = rollup?.Id,
                 Status = result.RequiredString("status") switch
                 {
@@ -45,13 +40,13 @@ namespace Tzkt.Sync.Protocols.Proto13
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null
             };
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -100,26 +95,17 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.TxRollupSubmitBatchOps.Add(operation);
-            Operation = operation;
+            Context.TxRollupSubmitBatchOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, TxRollupSubmitBatchOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.RollupId);
 
             Db.TryAttach(blockBaker);
@@ -158,7 +144,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (rollup != null) rollup.TxRollupSubmitBatchCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupSubmitBatchOpsCount--;
             #endregion

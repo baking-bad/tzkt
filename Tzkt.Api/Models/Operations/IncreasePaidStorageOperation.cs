@@ -28,17 +28,17 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the account who has sent the operation
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// An account nonce which is used to prevent operation replay
@@ -81,12 +81,12 @@ namespace Tzkt.Api.Models
         /// `backtracked` - an operation which was successful but reverted due to one of the following operations in the same operation group was failed,
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
-        public string Status { get; set; }
+        public required string Status { get; set; }
 
         /// <summary>
         /// Information about the contract for which paid storage was increased
         /// </summary>
-        public Alias Contract { get; set; }
+        public Alias? Contract { get; set; }
 
         /// <summary>
         /// Amount of storage in bytes prepaid.
@@ -97,13 +97,13 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
-        public List<OperationError> Errors { get; set; }
+        public List<OperationError>? Errors { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

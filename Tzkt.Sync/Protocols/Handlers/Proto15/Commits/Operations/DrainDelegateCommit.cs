@@ -3,15 +3,13 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    class DrainDelegateCommit : ProtocolCommit
+    class DrainDelegateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DrainDelegateCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var delegat = Cache.Accounts.GetDelegate(content.RequiredString("delegate"));
-            var target = await Cache.Accounts.GetAsync(content.RequiredString("destination"));
+            var delegat = Cache.Accounts.GetExistingDelegate(content.RequiredString("delegate"));
+            var target = (await Cache.Accounts.GetAsync(content.RequiredString("destination")))!;
 
             var balanceUpdates = content.Required("metadata").RequiredArray("balance_updates").EnumerateArray();
 
@@ -31,13 +29,13 @@ namespace Tzkt.Sync.Protocols.Proto15
             if (deposits.Count == 2)
             {
                 amount = deposits.First(x => x.RequiredString("contract") == target.Address).RequiredInt64("change");
-                fee = deposits.Last(x => x.RequiredString("contract") == block.Proposer.Address).RequiredInt64("change");
+                fee = deposits.Last(x => x.RequiredString("contract") == Context.Proposer.Address).RequiredInt64("change");
             }
             else if (deposits.Count == 1)
             {
                 if (deposits[0].RequiredString("contract") == target.Address)
                     amount = deposits[0].RequiredInt64("change");
-                else if (deposits[0].RequiredString("contract") == block.Proposer.Address)
+                else if (deposits[0].RequiredString("contract") == Context.Proposer.Address)
                     fee = deposits[0].RequiredInt64("change");
                 else
                     throw new Exception("Unexpected balance updates behavior");
@@ -51,7 +49,6 @@ namespace Tzkt.Sync.Protocols.Proto15
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 DelegateId = delegat.Id,
@@ -63,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             var targetDelegate = Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -105,12 +102,13 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             Db.DrainDelegateOps.Add(operation);
+            Context.DrainDelegateOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, DrainDelegateOperation operation)
         {
             #region entities
-            var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId);
+            var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
             Db.TryAttach(blockBaker);
             
             var delegat = Cache.Accounts.GetDelegate(operation.DelegateId);

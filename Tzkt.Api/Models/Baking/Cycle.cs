@@ -35,7 +35,7 @@
         /// <summary>
         /// Randomly generated seed used by the network for things like baking rights distribution etc.
         /// </summary>
-        public string RandomSeed { get; set; }
+        public required string RandomSeed { get; set; }
 
         /// <summary>
         /// Total number of all active in this cycle bakers
@@ -81,49 +81,7 @@
         /// <summary>
         /// Injected historical quote at the end of the cycle
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int SnapshotIndex => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LBSubsidy => 833_333;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalStaking => TotalBakingPower;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalDelegators => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalDelegated => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int SelectedBakers => TotalBakers;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long SelectedStake => TotalBakingPower;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int TotalRolls => 0;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

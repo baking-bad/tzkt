@@ -35,11 +35,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Statistics>>> Get(
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -60,7 +60,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Statistics.Get(StatisticsPeriod.None, null, level, timestamp, null, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -88,10 +88,10 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("daily")]
         public async Task<ActionResult<IEnumerable<Statistics>>> GetDaily(
-            DateTimeParameter date,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            DateTimeParameter? date,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -112,7 +112,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Statistics.Get(StatisticsPeriod.Daily, null, null, null, date, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -139,11 +139,11 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("cyclic")]
-        public async Task<ActionResult<IEnumerable<Statistics>>> GetCycles(
-            Int32Parameter cycle,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<ActionResult<IEnumerable<Statistics>>> GetCyclic(
+            Int32Parameter? cycle,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
@@ -164,7 +164,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Statistics.Get(StatisticsPeriod.Cyclic, cycle, null, null, null, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
@@ -187,7 +187,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("current")]
-        public async Task<ActionResult<Statistics>> GetCycles(SelectParameter select, Symbols quote = Symbols.None)
+        public async Task<ActionResult<Statistics?>> GetCurrent(SelectParameter? select, Symbols quote = Symbols.None)
         {
             var level = new Int32Parameter { Eq = State.Current.Level };
 
@@ -203,14 +203,14 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok((await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields[0], quote)).FirstOrDefault());
                 else
                 {
                     return Ok(new SelectionSingleResponse
                     {
                         Cols = select.Fields,
-                        Vals = (await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields, quote)).FirstOrDefault()
+                        Vals = (await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields, quote)).First()
                     });
                 }
             }

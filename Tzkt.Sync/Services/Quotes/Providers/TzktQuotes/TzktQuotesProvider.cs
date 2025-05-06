@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
@@ -24,7 +19,7 @@ namespace Tzkt.Sync.Services
 
         public void Dispose() => Client.Dispose();
 
-        public async Task<int> FillQuotes(IEnumerable<IQuote> quotes, IQuote last)
+        public async Task<int> FillQuotes(IEnumerable<IQuote> quotes, IQuote? last)
         {
             var res = await GetQuotes(
                 quotes.First().Timestamp.AddMinutes(-30),
@@ -81,12 +76,12 @@ namespace Tzkt.Sync.Services
 
         async Task<List<TzktQuote>> GetQuotes(DateTime from, DateTime to)
         {
-            var res = await Client.GetObjectAsync<List<TzktQuote>>(
-                $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
+            var res = (await Client.GetObjectAsync<List<TzktQuote>>(
+                $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"))!;
 
             while (res.Count > 0 && res.Count % 10000 == 0)
-                res.AddRange(await Client.GetObjectAsync<List<TzktQuote>>(
-                    $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"));
+                res.AddRange((await Client.GetObjectAsync<List<TzktQuote>>(
+                    $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"))!);
 
             return res;
         }

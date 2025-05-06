@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json;
-using Microsoft.Extensions.Configuration;
+﻿using System.Text.Json;
 
 namespace Tzkt.Sync.Services
 {
@@ -9,13 +7,13 @@ namespace Tzkt.Sync.Services
         public bool Enabled { get; set; } = false;       
         public int BatchSize { get; set; } = 100;
         public int PeriodSec { get; set; } = 60;
-        public List<DipDupConfig> DipDup { get; set; }
-        public List<TokenMetadataItem> OverriddenMetadata { get; set; }
+        public List<DipDupConfig> DipDup { get; set; } = [];
+        public List<TokenMetadataItem> OverriddenMetadata { get; set; } = [];
     }
 
     public class DipDupConfig
     {
-        public string Url { get; set; }
+        public string Url { get; set; } = "https://metadata.dipdup.net/v1/graphql";
         public string MetadataTable { get; set; } = "dipdup_token_metadata";
         public string HeadStatusTable { get; set; } = "dipdup_head";
         public string Network { get; set; } = "mainnet";
@@ -24,11 +22,11 @@ namespace Tzkt.Sync.Services
 
     public class TokenMetadataItem
     {
-        public string Contract { get; set; }
+        public required string Contract { get; set; }
         public string TokenId { get; set; } = "0";
         public JsonElement Metadata { get; set; }
 
-        public TokenMetadataItem() { }
+        public TokenMetadataItem() {}
         public TokenMetadataItem(string contract, string metadata)
         {
             Contract = contract;
@@ -40,7 +38,7 @@ namespace Tzkt.Sync.Services
     {
         public static TokenMetadataConfig GetTokenMetadataConfig(this IConfiguration config)
         {
-            return config.GetSection("TokenMetadata")?.Get<TokenMetadataConfig>() ?? new TokenMetadataConfig();
+            return config.GetSection("TokenMetadata")?.Get<TokenMetadataConfig>() ?? new();
         }
     }
 }

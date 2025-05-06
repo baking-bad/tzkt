@@ -62,7 +62,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?timestamp.in=2020-02-20,2020-02-21`.
         /// </summary>
-        public List<DateTime> In { get; set; }
+        public List<DateTime>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -70,7 +70,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?timestamp.ni=2020-02-20,2020-02-21`.
         /// </summary>
-        public List<DateTime> Ni { get; set; }
+        public List<DateTime>? Ni { get; set; }
 
         public string Normalize(string name)
         {

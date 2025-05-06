@@ -29,9 +29,9 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Software>>> Get(
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -51,7 +51,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     return Ok(await Software.Get(sort, offset, limit, select.Fields[0]));
                 else
                 {

@@ -2,7 +2,7 @@
 {
     public class ContractMetadataState
     {
-        public Dictionary<string, ContractMetadataDipDupState> DipDup { get; set; } = new();
+        public Dictionary<string, ContractMetadataDipDupState> DipDup { get; set; } = [];
     }
 
     public class ContractMetadataDipDupState

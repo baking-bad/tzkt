@@ -114,8 +114,8 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static readonly HashSet<string> DefaultSet = new()
-        {
+        public static readonly HashSet<string> DefaultSet =
+        [
             Ballot,
             Proposal,
             Activation,
@@ -155,6 +155,6 @@ namespace Tzkt.Api
             DalPublishCommitment,
             DalEntrapmentEvidence,
             DalAttestationReward,
-        };
+        ];
     }
 }

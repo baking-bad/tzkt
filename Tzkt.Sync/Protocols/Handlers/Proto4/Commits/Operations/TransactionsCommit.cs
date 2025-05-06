@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Tzkt.Data.Models;
+﻿using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto4
 {
@@ -7,6 +6,6 @@ namespace Tzkt.Sync.Protocols.Proto4
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override Task ResetGracePeriod(TransactionOperation transaction) => Task.CompletedTask;
+        protected override Task ResetGracePeriod(TransactionOperation transaction, Account target) => Task.CompletedTask;
     }
 }

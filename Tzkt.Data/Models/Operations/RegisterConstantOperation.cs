@@ -5,8 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class RegisterConstantOperation : ManagerOperation
     {
-        public string Address { get; set; }
-        public byte[] Value { get; set; }
+        public string? Address { get; set; }
+        public byte[]? Value { get; set; }
         public int? Refs { get; set; }
     }
 
@@ -49,14 +49,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<RegisterConstantOperation>()
                 .HasIndex(x => x.Address)
                 .HasFilter($@"""{nameof(RegisterConstantOperation.Address)}"" IS NOT NULL");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<RegisterConstantOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.RegisterConstants)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

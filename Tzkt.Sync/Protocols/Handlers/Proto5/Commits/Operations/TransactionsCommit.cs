@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
+using Netezos.Contracts;
 using Netezos.Encoding;
-
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -10,23 +10,14 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override BlockEvents GetBlockEvents(Account target)
+        protected override async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement param)
         {
-            return target is Contract c
-                ? c.Kind == ContractKind.DelegatorContract
-                    ? BlockEvents.DelegatorContracts
-                    : BlockEvents.SmartContracts
-                : BlockEvents.None;
-        }
-
-        protected override async Task ProcessParameters(TransactionOperation transaction, JsonElement param)
-        {
-            string rawEp = null;
-            IMicheline rawParam = null;
+            string? rawEp = null;
+            IMicheline? rawParam;
             try
             {
                 rawEp = param.RequiredString("entrypoint");
-                rawParam = Micheline.FromJson(param.Required("value"));
+                rawParam = Micheline.FromJson(param.Required("value"))!;
             }
             catch (Exception ex)
             {
@@ -36,7 +27,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 return;
             }
 
-            if (transaction.Target is Contract contract)
+            if (target is Contract contract)
             {
                 var schema = contract.Kind > ContractKind.DelegatorContract
                     ? (await Cache.Schemas.GetAsync(contract))
@@ -59,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
-            else if (transaction.Target is SmartRollup smartRollup)
+            else if (target is SmartRollup smartRollup)
             {
                 var schema = await Cache.Schemas.GetAsync(smartRollup);
 
@@ -80,58 +71,56 @@ namespace Tzkt.Sync.Protocols.Proto5
                         Logger.LogError(ex, "Failed to humanize tx {hash} parameters", transaction.OpHash);
                 }
             }
-            else if (transaction.Target is Rollup)
+            else if (target is Rollup)
             {
                 transaction.Entrypoint = rawEp;
                 transaction.RawParameters = rawParam.ToBytes();
                 try
                 { 
-                    var ticketValue = (rawParam as MichelineArray)[0];
-                    var ticketType = (rawParam as MichelineArray)[1] as MichelinePrim;
+                    var ticketValue = (rawParam as MichelineArray)![0];
+                    var ticketType = ((rawParam as MichelineArray)![1] as MichelinePrim)!;
 
-                    if (ticketType.Annots == null)
-                        ticketType.Annots = new List<IAnnotation>(1);
-
+                    ticketType.Annots ??= new List<IAnnotation>(1);
                     if (ticketType.Annots.Count == 0)
                         ticketType.Annots.Add(new FieldAnnotation("data"));
 
-                    var schema = Netezos.Contracts.Schema.Create(new MichelinePrim
+                    var schema = Schema.Create(new MichelinePrim
                     {
                         Prim = PrimType.pair,
-                        Args = new List<IMicheline>(2)
-                        {
+                        Args =
+                        [
                             new MichelinePrim
                             {
                                 Prim = PrimType.pair,
-                                Args = new List<IMicheline>(2)
-                                {
+                                Args =
+                                [
                                     new MichelinePrim
                                     {
                                         Prim = PrimType.address,
-                                        Annots = new List<IAnnotation>(1) { new FieldAnnotation("address") }
+                                        Annots = [new FieldAnnotation("address")]
                                     },
                                     new MichelinePrim
                                     {
                                         Prim = PrimType.pair,
-                                        Args = new List<IMicheline>(2)
-                                        {
+                                        Args =
+                                        [
                                             ticketType,
                                             new MichelinePrim
                                             {
                                                 Prim = PrimType.nat,
-                                                Annots = new List<IAnnotation>(1) { new FieldAnnotation("amount") }
+                                                Annots = [new FieldAnnotation("amount")]
                                             }
-                                        }
+                                        ]
                                     }
-                                },
-                                Annots = new List<IAnnotation> { new FieldAnnotation("ticket") }
+                                ],
+                                Annots = [new FieldAnnotation("ticket")]
                             },
                             new MichelinePrim
                             {
                                 Prim = PrimType.tx_rollup_l2_address,
-                                Annots = new List<IAnnotation> { new FieldAnnotation("address") }
+                                Annots = [new FieldAnnotation("address")]
                             }
-                        }
+                        ]
                     });
 
                     transaction.JsonParameters = schema.Humanize(ticketValue);
@@ -149,12 +138,12 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
         }
 
-        protected override IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, Netezos.Contracts.ContractScript schema)
+        protected override IMicheline NormalizeStorage(TransactionOperation transaction, IMicheline storage, ContractScript schema)
         {
             return storage;
         }
 
-        protected override IEnumerable<BigMapDiff> ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
+        protected override IEnumerable<BigMapDiff>? ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
         {
             return result.TryGetProperty("big_map_diff", out var diffs)
                 ? diffs.RequiredArray().EnumerateArray().Select(BigMapDiff.Parse)

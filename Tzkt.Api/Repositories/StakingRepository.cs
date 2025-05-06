@@ -24,7 +24,7 @@ namespace Tzkt.Api.Repositories
         }
 
         #region staking updates
-        async Task<IEnumerable<dynamic>> QueryStakingUpdatesAsync(StakingUpdateFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryStakingUpdatesAsync(StakingUpdateFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -54,7 +54,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -137,13 +137,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetStakingUpdates(StakingUpdateFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetStakingUpdates(StakingUpdateFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var rows = await QueryStakingUpdatesAsync(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -237,7 +237,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region unstake requests
-        async Task<IEnumerable<dynamic>> QueryUnstakeRequestsAsync(int unfrozenCycle, UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryUnstakeRequestsAsync(int unfrozenCycle, UnstakeRequestFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -273,7 +273,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -376,14 +376,14 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields)
+        public async Task<object?[][]> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields)
         {
             var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
             var rows = await QueryUnstakeRequestsAsync(unfrozenCycle, filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {

@@ -4,18 +4,13 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class StatisticsCache
+    public class StatisticsCache(TzktContext db)
     {
-        static Statistics _Current;
+        static Statistics? _Current;
 
-        public Statistics Current => _Current;
+        public Statistics Current => _Current!;
 
-        readonly TzktContext Db;
-
-        public StatisticsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public async Task ResetAsync()
         {

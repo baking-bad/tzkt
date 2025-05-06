@@ -1,6 +1,6 @@
 ﻿namespace Tzkt.Sync.Protocols.Proto11
 {
-    class ActivationsCommit : Proto5.ActivationsCommit
+    class ActivationsCommit : Proto1.ActivationsCommit
     {
         public ActivationsCommit(ProtocolHandler protocol) : base(protocol) { }
     }

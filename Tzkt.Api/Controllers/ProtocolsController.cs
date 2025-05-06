@@ -43,8 +43,8 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Protocol>>> Get(
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -63,7 +63,7 @@ namespace Tzkt.Api.Controllers
         /// </remarks>
         /// <returns></returns>
         [HttpGet("current")]
-        public Task<Protocol> GetCurrent()
+        public Task<Protocol?> GetCurrent()
         {
             return Protocols.Get(State.Current.Protocol);
         }
@@ -77,7 +77,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="code">Protocol code (e.g. 4 for Athens, 5 for Babylon, etc)</param>
         /// <returns></returns>
         [HttpGet("{code:int}")]
-        public Task<Protocol> GetByCode([Min(0)] int code)
+        public Task<Protocol?> GetByCode([Min(0)] int code)
         {
             return Protocols.Get(code);
         }
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="hash">Protocol hash</param>
         /// <returns></returns>
         [HttpGet("{hash}")]
-        public Task<Protocol> GetByHash([Required][ProtocolHash] string hash)
+        public Task<Protocol?> GetByHash([Required][ProtocolHash] string hash)
         {
             return Protocols.Get(hash);
         }
@@ -105,7 +105,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="cycle">Cycle index</param>
         /// <returns></returns>
         [HttpGet("cycles/{cycle}")]
-        public Task<Protocol> GetByCycle([Min(0)] int cycle)
+        public Task<Protocol?> GetByCycle([Min(0)] int cycle)
         {
             return Protocols.GetByCycle(cycle);
         }

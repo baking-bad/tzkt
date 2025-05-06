@@ -4,18 +4,18 @@ namespace Tzkt.Data.Models
 {
     public class SmartRollupCommitment
     {
-        public int Id { get; set; }
-        public int InitiatorId { get; set; }
-        public int SmartRollupId { get; set; }
+        public required int Id { get; set; }
+        public required int InitiatorId { get; set; }
+        public required int SmartRollupId { get; set; }
         public int? PredecessorId { get; set; }
 
-        public int InboxLevel { get; set; }
-        public string State { get; set; }
-        public string Hash { get; set; }
-        public long Ticks { get; set; }
+        public required int InboxLevel { get; set; }
+        public required string State { get; set; }
+        public required string Hash { get; set; }
+        public required long Ticks { get; set; }
 
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public int Stakers { get; set; }
         public int ActiveStakers { get; set; }

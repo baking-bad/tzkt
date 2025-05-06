@@ -26,7 +26,7 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Kind of the migration 
@@ -39,12 +39,12 @@
         /// `subsidy` - liquidity baking subsidy
         /// `remove_bigmap_key` - removing the key from the bigmap
         /// </summary>
-        public string Kind { get; set; }
+        public required string Kind { get; set; }
 
         /// <summary>
         /// Information about the account whose balance has updated as a result of the operation
         /// </summary>
-        public Alias Account { get; set; }
+        public required Alias Account { get; set; }
 
         /// <summary>
         /// The amount for which the operation updated the balance (micro tez)
@@ -54,12 +54,12 @@
         /// <summary>
         /// Contract storage after the migration converted to human-readable JSON. Note: you can configure storage format by setting `micheline` query parameter.
         /// </summary>
-        public object Storage { get; set; }
+        public object? Storage { get; set; }
 
         /// <summary>
         /// List of bigmap updates caused by the migration.
         /// </summary>
-        public List<BigMapDiff> Diffs { get; set; }
+        public List<BigMapDiff>? Diffs { get; set; }
 
         /// <summary>
         /// Number of token transfers produced by the operation, or `null` if there are no transfers
@@ -70,7 +70,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

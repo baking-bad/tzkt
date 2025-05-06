@@ -1,57 +1,66 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class BakingRightsCache
+    public class BakingRightsCache(TzktContext db)
     {
-        static int CachedCycle = -1;
-        static List<BakingRight>[] CachedRights = Array.Empty<List<BakingRight>>();
+        #region static
+        const int WindowLength = 512;
+        const int LevelCap = 256;
 
-        readonly TzktContext Db;
+        static int FirstLevel = -1;
+        static int LastLevel = -1;
+        static readonly List<List<BakingRight>> Cached = new(WindowLength);
+        #endregion
 
-        public BakingRightsCache(TzktContext db)
-        {
-            Db = db;
-        }
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
-            CachedCycle = -1;
-            CachedRights = Array.Empty<List<BakingRight>>();
+            FirstLevel = -1;
+            LastLevel = -1;
+            Cached.Clear();
         }
 
-        public async Task<List<BakingRight>> GetAsync(int cycle, int level)
+        public async Task<List<BakingRight>> GetAsync(int level)
         {
-            if (CachedCycle != cycle)
+            if (level > LastLevel)
             {
-                var rights = await Db.BakingRights
-                    .AsNoTracking()
-                    .Where(x => x.Cycle == cycle)
-                    .OrderBy(x => x.Level)
-                    .ToListAsync();
+                await LoadRights(level - 2, level - 2 + WindowLength);
+            }
+            else if (level < FirstLevel)
+            {
+                await LoadRights(level + 2 - WindowLength, level + 2);
+            }
+            return Cached[level - FirstLevel];
+        }
 
-                var length = rights[^1].Level - rights[0].Level + 1;
+        async Task LoadRights(int from, int to)
+        {
+            var rights = await Db.BakingRights
+                .AsNoTracking()
+                .Where(x => x.Level >= from && x.Level < to)
+                .OrderBy(x => x.Level)
+                .ToListAsync();
 
-                if (CachedRights.Length != length)
-                    CachedRights = new List<BakingRight>[length];
-
-                for (int i = 0; i < length; i++)
-                    CachedRights[i] = new List<BakingRight>(40);
-
-                foreach (var r in rights)
-                    CachedRights[r.Level - rights[0].Level].Add(r);
-
-                CachedCycle = cycle;
+            if (rights.Count == 0)
+            {
+                // should never happen
+                throw new Exception($"No rights found for {from}..{to}");
             }
 
-            return CachedRights[level - CachedRights[0][0].Level];
+            FirstLevel = rights[0].Level;
+            LastLevel = rights[^1].Level;
+
+            Cached.Clear();
+            for (int i = LastLevel - FirstLevel + 1; i != 0; i--)
+                Cached.Add(new(LevelCap));
+
+            foreach (var right in rights)
+                Cached[right.Level - FirstLevel].Add(right);
+
         }
     }
 }

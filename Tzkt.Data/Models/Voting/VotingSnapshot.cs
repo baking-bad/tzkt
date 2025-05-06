@@ -4,10 +4,10 @@ namespace Tzkt.Data.Models
 {
     public class VotingSnapshot
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int Period { get; set; }
-        public int BakerId { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int Period { get; set; }
+        public required int BakerId { get; set; }
         public long VotingPower { get; set; }
 
         public VoterStatus Status { get; set; }

@@ -7,18 +7,15 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TransferTicketCommit : ProtocolCommit
+    class TransferTicketCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TransferTicketOperation Operation { get; private set; }
-        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
-
-
-        public TransferTicketCommit(ProtocolHandler protocol) : base(protocol) { }
+        public TransferTicketOperation Operation { get; private set; } = null!;
+        public IEnumerable<TicketUpdates>? TicketUpdates { get; private set; }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var target = await Cache.Accounts.GetAsync(content.RequiredString("destination"));
             var ticketer = await Cache.Accounts.GetAsync(content.RequiredString("ticket_ticketer"));
 
@@ -27,7 +24,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             var operation = new TransferTicketOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -35,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 Status = result.RequiredString("status") switch
                 {
                     "applied" => OperationStatus.Applied,
@@ -50,7 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
                 Amount = BigInteger.Parse(content.RequiredString("ticket_amount")),
                 TicketerId = ticketer?.Id,
@@ -60,8 +56,8 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             try
             {
-                var micheType = Schema.Create(Micheline.FromJson(content.Required("ticket_ty")) as MichelinePrim);
-                var value = Micheline.FromJson(content.Required("ticket_contents"));
+                var micheType = Schema.Create((content.RequiredMicheline("ticket_ty") as MichelinePrim)!);
+                var value = content.RequiredMicheline("ticket_contents");
                 operation.RawType = micheType.ToMicheline().ToBytes();
                 operation.RawContent = micheType.Optimize(value).ToBytes();
                 operation.JsonContent = micheType.Humanize(value);
@@ -73,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -126,26 +122,18 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.TransferTicketOps.Add(operation);
+            Context.TransferTicketOps.Add(operation);
             Operation = operation;
         }
 
         public virtual async Task Revert(Block block, TransferTicketOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var target = await Cache.Accounts.GetAsync(operation.TargetId);
             var ticketer = await Cache.Accounts.GetAsync(operation.TicketerId);
 
@@ -189,7 +177,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             if (ticketer != null && ticketer != sender && ticketer != target) ticketer.TransferTicketCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TransferTicketOpsCount--;
             #endregion
@@ -199,7 +187,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(JsonElement result)
+        protected virtual IEnumerable<TicketUpdates>? ParseTicketUpdates(JsonElement result)
         {
             if (!result.TryGetProperty("ticket_updates", out var ticketUpdates))
                 return null;
@@ -224,16 +212,16 @@ namespace Tzkt.Sync.Protocols.Proto13
                 if (list.Count > 0)
                 {
                     var ticketToken = updates.Required("ticket_token");
-                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var type = ticketToken.RequiredMicheline("content_type");
+                    var value = ticketToken.RequiredMicheline("content");
                     var rawType = type.ToBytes();
 
                     byte[] rawContent;
-                    string jsonContent;
+                    string? jsonContent;
 
                     try
                     {
-                        var schema = Schema.Create(type as MichelinePrim);
+                        var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
                         jsonContent = schema.Humanize(value);
                     }

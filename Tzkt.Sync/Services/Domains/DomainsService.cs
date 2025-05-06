@@ -1,13 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Dapper;
 using Npgsql;
 using Dynamic.Json;
@@ -16,25 +8,19 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Domains
 {
-    public class DomainsService : BackgroundService
+    public class DomainsService(IConfiguration config, ILogger<DomainsService> logger) : BackgroundService
     {
-        readonly string ConnectionString;
-        readonly DomainsConfig Config;
-        readonly ILogger Logger;
+        readonly string ConnectionString = config.GetDefaultConnectionString();
+        readonly DomainsConfig Config = config.GetDomainsConfig();
+        readonly ILogger Logger = logger;
 
         #region state
         int RecordsBigMap = -1;
         int ReverseBigMap = -1;
         int ExpiryBigMap = -1;
         int Level = -1;
-        #endregion
 
-        public DomainsService(IConfiguration config, ILogger<DomainsService> logger)
-        {
-            ConnectionString = config.GetConnectionString("DefaultConnection");
-            Config = config.GetDomainsConfig();
-            Logger = logger;
-        }
+        #endregion
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
