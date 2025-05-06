@@ -1,8 +1,9 @@
 ﻿using System.Buffers.Binary;
 using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Numerics;
+using System.Runtime.InteropServices;
+using static Tzkt.Api.PgNumeric.Builder;
 
 namespace Tzkt.Api
 {
@@ -37,8 +38,8 @@ namespace Tzkt.Api
         {
             Span<uint> bits = stackalloc uint[DecimalBits];
             GetDecimalBits(value, bits, out var scale);
-            bits = bits[..(DecimalBits - 1)];
-            return Builder.GetDigitCountCore(bits, scale);
+            bits = bits.Slice(0, DecimalBits - 1);
+            return GetDigitCountCore(bits, scale);
         }
 
         public static int GetDigitCount(BigInteger value)
@@ -50,9 +51,9 @@ namespace Tzkt.Api
             var uintRoundedBits = (uintRoundedByteCount <= StackAllocByteThreshold
                     ? stackalloc byte[StackAllocByteThreshold]
                     : uintRoundedBitsFromPool = ArrayPool<byte>.Shared.Rent(uintRoundedByteCount)
-                )[..uintRoundedByteCount];
+                ).Slice(0, uintRoundedByteCount);
             // Fill the last uint worth of bytes as it may only be partially written to.
-            uintRoundedBits[^sizeof(uint)..].Clear();
+            uintRoundedBits.Slice(uintRoundedBits.Length - sizeof(uint)).Fill(0);
 
             var success = absValue.TryWriteBytes(uintRoundedBits, out _, isUnsigned: true);
             Debug.Assert(success);
@@ -62,7 +63,7 @@ namespace Tzkt.Api
                 for (var i = 0; i < uintBits.Length; i++)
                     uintBits[i] = BinaryPrimitives.ReverseEndianness(uintBits[i]);
 
-            var size = Builder.GetDigitCountCore(uintBits, scale: 0);
+            var size = GetDigitCountCore(uintBits, scale: 0);
 
             if (uintRoundedBitsFromPool is not null)
                 ArrayPool<byte>.Shared.Return(uintRoundedBitsFromPool);
@@ -90,15 +91,15 @@ namespace Tzkt.Api
             static ReadOnlySpan<uint> UIntPowers10 =>
             [
                 1,
-                10,
-                100,
-                1000,
-                10000,
-                100000,
-                1000000,
-                10000000,
-                100000000,
-                1000000000
+            10,
+            100,
+            1000,
+            10000,
+            100000,
+            1000000,
+            10000000,
+            100000000,
+            1000000000
             ];
 
             const int MaxUInt32Scale = 9;
@@ -173,10 +174,10 @@ namespace Tzkt.Api
             {
                 Span<uint> bits = stackalloc uint[DecimalBits];
                 GetDecimalBits(value, bits, out var scale);
-                bits = bits[..(DecimalBits - 1)];
+                bits = bits.Slice(0, DecimalBits - 1);
 
                 Create(ref _digitsArray, ref destination, bits, scale, out var weight, out var digitCount);
-                Digits = destination[^digitCount..];
+                Digits = destination.Slice(destination.Length - digitCount);
                 Weight = weight;
                 _sign = value < 0 ? SignNegative : SignPositive;
                 Scale = scale;
@@ -196,9 +197,9 @@ namespace Tzkt.Api
                 var uintRoundedBits = (uintRoundedByteCount <= StackAllocByteThreshold
                         ? stackalloc byte[StackAllocByteThreshold]
                         : uintRoundedBitsFromPool = ArrayPool<byte>.Shared.Rent(uintRoundedByteCount)
-                    )[..uintRoundedByteCount];
+                    ).Slice(0, uintRoundedByteCount);
                 // Fill the last uint worth of bytes as it may only be partially written to.
-                uintRoundedBits[^sizeof(uint)..].Clear();
+                uintRoundedBits.Slice(uintRoundedBits.Length - sizeof(uint)).Fill(0);
 
                 var success = absValue.TryWriteBytes(uintRoundedBits, out _, isUnsigned: true);
                 Debug.Assert(success);
@@ -212,7 +213,7 @@ namespace Tzkt.Api
                         uintBits[i] = BinaryPrimitives.ReverseEndianness(uintBits[i]);
 
                 Create(ref _digitsArray, ref destination, uintBits, scale: 0, out var weight, out var digitCount);
-                Digits = destination[^digitCount..];
+                Digits = destination.Slice(destination.Length - digitCount);
                 Weight = weight;
                 _sign = value < 0 ? SignNegative : SignPositive;
                 Scale = 0;
@@ -270,7 +271,7 @@ namespace Tzkt.Api
                 return nonZeroInput;
             }
 
-            public static int GetDigitCountCore(Span<uint> bits, int scale)
+            internal static int GetDigitCountCore(Span<uint> bits, int scale)
             {
                 AssertInvariants();
                 // When a fractional result is expected we must send two numeric digits.
@@ -310,7 +311,7 @@ namespace Tzkt.Api
                         SignNan => throw new InvalidCastException("Numeric NaN not supported by System.Decimal"),
                         SignPinf => throw new InvalidCastException("Numeric Infinity not supported by System.Decimal"),
                         SignNinf => throw new InvalidCastException("Numeric -Infinity not supported by System.Decimal"),
-                        _ => throw new ArgumentOutOfRangeException(nameof(sign))
+                        _ => throw new ArgumentOutOfRangeException()
                     };
 
                 var numericBase = new decimal(NumericBase);
@@ -372,7 +373,7 @@ namespace Tzkt.Api
                         SignNan => throw new InvalidCastException("Numeric NaN not supported by BigInteger"),
                         SignPinf => throw new InvalidCastException("Numeric Infinity not supported by BigInteger"),
                         SignNinf => throw new InvalidCastException("Numeric -Infinity not supported by BigInteger"),
-                        _ => throw new ArgumentOutOfRangeException(nameof(sign))
+                        _ => throw new ArgumentOutOfRangeException()
                     };
 
                 var digitWeight = weight + 1 - digitCount;
