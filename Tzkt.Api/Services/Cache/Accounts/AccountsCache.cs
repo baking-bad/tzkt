@@ -12,7 +12,7 @@ namespace Tzkt.Api.Services.Cache
     {
         #region static
         const string SelectQuery = """
-            SELECT *, "Extras"#>>'{profile,alias}' AS "Alias",
+            SELECT *, "Extras"#>>'{profile,alias}' AS "Alias"
             FROM "Accounts"
             """;
         #endregion

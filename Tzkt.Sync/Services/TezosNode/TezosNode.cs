@@ -64,6 +64,8 @@ namespace Tzkt.Sync.Services
                         var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
 
                         var syncTime = DateTime.UtcNow;
+                        syncTime = syncTime.AddTicks(-(syncTime.Ticks % 10_000_000));
+
                         await db.Database.ExecuteSqlRawAsync("""
                             UPDATE "AppState"
                             SET "KnownHead" = {0},

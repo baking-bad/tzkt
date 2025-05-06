@@ -36,6 +36,9 @@ namespace Tzkt.Api.Controllers
             if (filter.contract != null ||
                 filter.metadata != null ||
                 filter.standard != null ||
+                filter.totalMinted != null ||
+                filter.totalBurned != null ||
+                filter.totalSupply != null ||
                 filter.firstTime != null ||
                 filter.firstMinter != null ||
                 filter.firstLevel != null ||
