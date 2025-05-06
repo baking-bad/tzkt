@@ -8,7 +8,7 @@ namespace System.ComponentModel.DataAnnotations
 
         protected override ValidationResult IsValid(object? value, ValidationContext validationContext)
         {
-            return value is string str && !Regex.IsMatch(str, Pattern)
+            return value is string str && !Regex.IsMatch(str, Pattern, RegexOptions.None, TimeSpan.FromMilliseconds(100))
                 ? new ValidationResult("Invalid hex format or length")
                 : ValidationResult.Success!;
         }

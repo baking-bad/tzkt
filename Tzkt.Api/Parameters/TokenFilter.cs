@@ -30,6 +30,26 @@ namespace Tzkt.Api
         public TokenStandardParameter? standard { get; set; }
 
         /// <summary>
+        /// Filter by total minted.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public NatParameter? totalMinted { get; set; }
+
+        /// <summary>
+        /// Filter by total burned. Note: total burned shows only those tokens that were literally burned,
+        /// excluding tokens sent to burn addresses (because they still exist on the burn address' balance).  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public NatParameter? totalBurned { get; set; }
+
+        /// <summary>
+        /// Filter by total supply. Note: total supply shows all existing tokens,
+        /// including tokens sent to burn addresses (so that they exist on the burn address' balance).  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public NatParameter? totalSupply { get; set; }
+
+        /// <summary>
         /// Filter by address of the first minter.  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -73,7 +93,8 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("firstMinter", firstMinter), ("firstLevel", firstLevel), 
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("totalMinted", totalMinted),
+                ("totalBurned", totalBurned), ("totalSupply", totalSupply), ("firstMinter", firstMinter), ("firstLevel", firstLevel),
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata), ("indexedAt", indexedAt));
         }
     }
