@@ -11,11 +11,14 @@ namespace Tzkt.Api
 
         public override BigInteger Read(PgReader reader)
         {
+            if (reader.ShouldBuffer(sizeof(short)))
+                reader.Buffer(sizeof(short));
+
             var digitCount = reader.ReadInt16();
             short[]? digitsFromPool = null;
             var digits = (digitCount <= StackAllocByteThreshold / sizeof(short)
                 ? stackalloc short[StackAllocByteThreshold / sizeof(short)]
-                : (digitsFromPool = ArrayPool<short>.Shared.Rent(digitCount)).AsSpan())[..digitCount];
+                : (digitsFromPool = ArrayPool<short>.Shared.Rent(digitCount)).AsSpan()).Slice(0, digitCount);
 
             var value = ConvertTo(NumericConverter.Read(reader, digits));
 
@@ -35,7 +38,9 @@ namespace Tzkt.Api
 
             static async ValueTask<BigInteger> AsyncCore(PgReader reader, CancellationToken cancellationToken)
             {
-                await reader.BufferAsync(PgNumeric.GetByteCount(0), cancellationToken).ConfigureAwait(false);
+                if (reader.ShouldBuffer(sizeof(short)))
+                    await reader.BufferAsync(sizeof(short), cancellationToken).ConfigureAwait(false);
+
                 var digitCount = reader.ReadInt16();
                 var digits = new ArraySegment<short>(ArrayPool<short>.Shared.Rent(digitCount), 0, digitCount);
                 var value = ConvertTo(await NumericConverter.ReadAsync(reader, digits, cancellationToken).ConfigureAwait(false));
@@ -70,7 +75,7 @@ namespace Tzkt.Api
             static async ValueTask AsyncCore(PgWriter writer, BigInteger value, CancellationToken cancellationToken)
             {
                 await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
-                var numeric = ConvertFrom(value, []).Build();
+                var numeric = ConvertFrom(value, Array.Empty<short>()).Build();
                 await NumericConverter.WriteAsync(writer, numeric, cancellationToken).ConfigureAwait(false);
             }
         }

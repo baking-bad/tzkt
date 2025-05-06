@@ -5,7 +5,7 @@ namespace Tzkt.Api
 {
     static class NumericConverter
     {
-        public static int DecimalBasedMaxByteCount = PgNumeric.GetByteCount(PgNumeric.Builder.MaxDecimalNumericDigits);
+        public static readonly int DecimalBasedMaxByteCount = PgNumeric.GetByteCount(PgNumeric.Builder.MaxDecimalNumericDigits);
 
         public static PgNumeric.Builder Read(PgReader reader, Span<short> digits)
         {
