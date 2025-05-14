@@ -545,7 +545,10 @@ namespace Tzkt.Api.Services
             
             var maxRewardsPerBlock = futureCycle.BlockReward
                 + futureCycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold)
-                + futureCycle.EndorsementRewardPerSlot * protocol.EndorsersPerBlock;
+                + futureCycle.EndorsementRewardPerSlot * protocol.EndorsersPerBlock
+                + futureCycle.DalAttestationRewardPerShard * protocol.NumberOfShards
+                + futureCycle.NonceRevelationReward / protocol.BlocksPerCommitment
+                + futureCycle.VdfRevelationReward / protocol.BlocksPerCycle;
 
             var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
             var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
