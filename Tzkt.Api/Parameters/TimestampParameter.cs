@@ -70,7 +70,7 @@ namespace Tzkt.Api
         /// Example: `?timestamp.in=2020-02-20,2020-02-21`.
         /// </summary>
         [JsonSchemaType(typeof(List<DateTime>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -79,7 +79,7 @@ namespace Tzkt.Api
         /// Example: `?timestamp.ni=2020-02-20,2020-02-21`.
         /// </summary>
         [JsonSchemaType(typeof(List<DateTime>))]
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         public string Normalize(string name)
         {

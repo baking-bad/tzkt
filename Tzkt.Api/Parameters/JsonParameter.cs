@@ -18,7 +18,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Eq { get; set; }
+        public List<(JsonPath[], string)>? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -28,7 +28,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Ne { get; set; }
+        public List<(JsonPath[], string)>? Ne { get; set; }
 
         /// <summary>
         /// **Greater than** filter mode. \
@@ -41,7 +41,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Gt { get; set; }
+        public List<(JsonPath[], string)>? Gt { get; set; }
 
         /// <summary>
         /// **Greater or equal** filter mode. \
@@ -54,7 +54,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Ge { get; set; }
+        public List<(JsonPath[], string)>? Ge { get; set; }
 
         /// <summary>
         /// **Less than** filter mode. \
@@ -67,7 +67,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Lt { get; set; }
+        public List<(JsonPath[], string)>? Lt { get; set; }
 
         /// <summary>
         /// **Less or equal** filter mode. \
@@ -80,7 +80,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Le { get; set; }
+        public List<(JsonPath[], string)>? Le { get; set; }
 
         /// <summary>
         /// **Same as** filter mode. \
@@ -91,7 +91,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> As { get; set; }
+        public List<(JsonPath[], string)>? As { get; set; }
 
         /// <summary>
         /// **Unlike** filter mode. \
@@ -102,7 +102,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(string))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string)> Un { get; set; }
+        public List<(JsonPath[], string)>? Un { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -112,7 +112,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string[])> In { get; set; }
+        public List<(JsonPath[], string[])>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -123,7 +123,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], string[])> Ni { get; set; }
+        public List<(JsonPath[], string[])>? Ni { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \
@@ -133,7 +133,7 @@ namespace Tzkt.Api
         /// </summary>
         [JsonSchemaType(typeof(bool))]
         [JsonSchemaExtensionData("x-tzkt-extension", "json-parameter")]
-        public List<(JsonPath[], bool)> Null { get; set; }
+        public List<(JsonPath[], bool)>? Null { get; set; }
 
         public string Normalize(string name)
         {

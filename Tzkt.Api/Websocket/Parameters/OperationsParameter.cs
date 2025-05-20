@@ -1,16 +1,15 @@
-﻿using System.Text.RegularExpressions;
-using Microsoft.AspNetCore.SignalR;
+﻿using Microsoft.AspNetCore.SignalR;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Api.Websocket
 {
     public class OperationsParameter
     {
-        public string Address { get; set; }
-        public string Types { get; set; }
+        public string? Address { get; set; }
+        public string? Types { get; set; }
         public int? CodeHash { get; set; }
 
-        List<Operations> _TypesList = null;
+        List<Operations>? _TypesList = null;
         public List<Operations> TypesList
         {
             get
@@ -19,7 +18,7 @@ namespace Tzkt.Api.Websocket
                 {
                     if (Types == null)
                     {
-                        _TypesList = new(1) { Operations.Transactions };
+                        _TypesList = [Operations.Transactions];
                     }
                     else
                     {
@@ -27,7 +26,7 @@ namespace Tzkt.Api.Websocket
                         _TypesList = new(types.Length);
                         foreach (var type in types)
                         {
-                            if (!OpTypes.TryParse(type, out var res))
+                            if (!ActivityTypes.TryParseOperation(type, out var res))
                                 throw new HubException("Invalid operation type");
                             _TypesList.Add(res);
                         }
@@ -39,7 +38,7 @@ namespace Tzkt.Api.Websocket
 
         public void EnsureValid()
         {
-            if (Address != null && !Regex.IsMatch(Address, "^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$"))
+            if (Address != null && !Regexes.Address().IsMatch(Address))
                 throw new HubException("Invalid address");
 
             if (TypesList.Count == 0)

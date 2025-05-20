@@ -5,8 +5,8 @@ namespace Tzkt.Data.Models
 {
     public class DalEntrapmentEvidenceOperation : BaseOperation
     {
-        public int AccuserId { get; set; }
-        public int OffenderId { get; set; }
+        public required int AccuserId { get; set; }
+        public required int OffenderId { get; set; }
 
         public int TrapLevel { get; set; }
         public int TrapSlotIndex { get; set; }
@@ -41,14 +41,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DalEntrapmentEvidenceOperation>()
                 .HasIndex(x => x.OffenderId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<DalEntrapmentEvidenceOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DalEntrapmentEvidenceOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

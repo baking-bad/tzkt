@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Tzkt.Sync.Services
+﻿namespace Tzkt.Sync.Services
 {
     public class ObserverConfig
     {
@@ -10,7 +8,7 @@ namespace Tzkt.Sync.Services
     {
         public static ObserverConfig GetObserverConfig(this IConfiguration config)
         {
-            return config.GetSection("Observer")?.Get<ObserverConfig>() ?? new ObserverConfig();
+            return config.GetSection("Observer")?.Get<ObserverConfig>() ?? new();
         }
     }
 }

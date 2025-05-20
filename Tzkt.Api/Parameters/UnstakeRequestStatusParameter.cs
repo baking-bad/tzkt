@@ -15,7 +15,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status=pending`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -23,7 +23,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?status.ne=finalized`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         public string Normalize(string name)
         {

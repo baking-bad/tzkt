@@ -5,22 +5,18 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupAddMessagesCommit : ProtocolCommit
+    class SmartRollupAddMessagesCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupAddMessagesCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var result = content.Required("metadata").Required("operation_result");
 
             var operation = new SmartRollupAddMessagesOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -29,7 +25,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                Sender = sender,
                 MessagesCount = 0,
                 Status = result.RequiredString("status") switch
                 {
@@ -50,12 +45,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(block.Proposer);
+            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(senderDelegate);
             #endregion
 
             #region apply operation
@@ -90,25 +85,17 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SmartRollupAddMessagesOps.Add(operation);
+            Context.SmartRollupAddMessagesOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, SmartRollupAddMessagesOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender ??= await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -135,7 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             sender.SmartRollupAddMessagesCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().SmartRollupAddMessagesOpsCount--;
             #endregion

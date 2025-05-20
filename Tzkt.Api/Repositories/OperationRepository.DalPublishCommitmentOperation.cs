@@ -1,16 +1,47 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetDalPublishCommitmentOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.DalPublishCommitmentOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""SenderId""", ids));
+
+            return await GetDalPublishCommitmentOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetDalPublishCommitmentOpsCount(ManagerOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "DalPublishCommitmentOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -23,7 +54,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QueryDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "o.*";
 
@@ -53,7 +84,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -62,6 +93,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "DalPublishCommitmentOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -98,13 +130,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetDalPublishCommitmentOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QueryDalPublishCommitmentOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -112,7 +144,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.DalPublishCommitment;
+                            result[j++][i] = ActivityTypes.DalPublishCommitment;
                         break;
                     case "id":
                         foreach (var row in rows)

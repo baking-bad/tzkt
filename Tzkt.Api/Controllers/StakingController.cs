@@ -78,7 +78,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Repo.GetStakingUpdates(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Repo.GetStakingUpdates(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);
@@ -143,7 +143,7 @@ namespace Tzkt.Api.Controllers
                 res = new SelectionResponse
                 {
                     Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
-                    Rows = await Repo.GetUnstakeRequests(filter, pagination, selection.select.Fields ?? selection.select.Values)
+                    Rows = await Repo.GetUnstakeRequests(filter, pagination, selection)
                 };
             }
             cached = ResponseCache.Set(query, res);

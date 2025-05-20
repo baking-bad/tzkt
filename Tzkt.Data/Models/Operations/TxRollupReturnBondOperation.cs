@@ -39,14 +39,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<TxRollupReturnBondOperation>()
                 .HasIndex(x => x.RollupId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<TxRollupReturnBondOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.TxRollupReturnBondOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

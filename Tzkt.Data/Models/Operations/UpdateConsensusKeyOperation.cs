@@ -6,8 +6,8 @@ namespace Tzkt.Data.Models
     public class UpdateConsensusKeyOperation : ManagerOperation
     {
         public int ActivationCycle { get; set; }
-        public string PublicKey { get; set; }
-        public string PublicKeyHash { get; set; }
+        public required string PublicKey { get; set; }
+        public required string PublicKeyHash { get; set; }
     }
 
     public static class UpdateConsensusKeyOperationModel
@@ -36,14 +36,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<UpdateConsensusKeyOperation>()
                 .HasIndex(x => x.SenderId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.UpdateConsensusKeyOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

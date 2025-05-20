@@ -11,32 +11,32 @@
         /// <summary>
         /// Smart rollup, in which's scope the refutation game was started.
         /// </summary>
-        public Alias Rollup { get; set; }
+        public required Alias Rollup { get; set; }
 
         /// <summary>
         /// Initiator, who found a wrong commitment and started the refutation game.
         /// </summary>
-        public Alias Initiator { get; set; }
+        public required Alias Initiator { get; set; }
 
         /// <summary>
         /// Initiator's version of a valid commitment
         /// </summary>
-        public SrCommitmentInfo InitiatorCommitment { get; set; }
+        public required SrCommitmentInfo InitiatorCommitment { get; set; }
 
         /// <summary>
         /// Opponent, who was accused in publishing a wrong commitment.
         /// </summary>
-        public Alias Opponent { get; set; }
+        public required Alias Opponent { get; set; }
 
         /// <summary>
         /// Opponent's version of a valid commitment
         /// </summary>
-        public SrCommitmentInfo OpponentCommitment { get; set; }
+        public required SrCommitmentInfo OpponentCommitment { get; set; }
 
         /// <summary>
         /// The most recent move (`sr_refute` operation).
         /// </summary>
-        public SrGameMove LastMove { get; set; }
+        public required SrGameMove LastMove { get; set; }
 
         /// <summary>
         /// Level of the block where the refutation game was started.  

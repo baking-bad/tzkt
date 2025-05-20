@@ -6,7 +6,7 @@
         /// Type of the operation, `activation` - is used to activate accounts that were recommended allocations of
         /// tezos tokens for donations to the Tezos Foundation’s fundraiser.
         /// </summary>
-        public override string Type => OpTypes.Activation;
+        public override string Type => ActivityTypes.Activation;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -26,17 +26,17 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about activated account
         /// </summary>
-        public Alias Account { get; set; }
+        public required Alias Account { get; set; }
 
         /// <summary>
         /// Account activation balance of tezos tokens that were recommended allocations for donations to the Tezos Foundation’s fundraiser
@@ -47,7 +47,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

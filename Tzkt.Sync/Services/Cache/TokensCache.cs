@@ -1,28 +1,29 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-
 using Tzkt.Data;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class TokensCache
+    public class TokensCache(TzktContext db)
     {
-        public const int MaxItems = 4 * 4096; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<long, Token> CachedById = [];
+        static Dictionary<(int, BigInteger), Token> CachedByKey = [];
 
-        static readonly Dictionary<long, Token> CachedById = new(MaxItems);
-        static readonly Dictionary<(int, BigInteger), Token> CachedByKey = new(MaxItems);
-
-        readonly TzktContext Db;
-
-        public TokensCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 100_000;
+            TargetCap = size?.TargetCap ?? 80_000;
+            CachedById = new(SoftCap + 4096);
+            CachedByKey = new(SoftCap + 4096);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -32,11 +33,11 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Trim()
         {
-            if (CachedById.Count > MaxItems * 0.9)
+            if (CachedById.Count > SoftCap)
             {
                 var toRemove = CachedById.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(MaxItems / 2)
+                    .Take(CachedById.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
@@ -56,19 +57,6 @@ namespace Tzkt.Sync.Services.Cache
             CachedByKey.Remove((token.ContractId, token.TokenId));
         }
 
-        public bool Has(int contractId, BigInteger tokenId)
-        {
-            return CachedByKey.ContainsKey((contractId, tokenId));
-        }
-
-        public Token GetOrAdd(Token token)
-        {
-            if (CachedById.TryGetValue(token.Id, out var res))
-                return res;
-            Add(token);
-            return token;
-        }
-
         public Token Get(long id)
         {
             if (!CachedById.TryGetValue(id, out var token))
@@ -76,14 +64,7 @@ namespace Tzkt.Sync.Services.Cache
             return token;
         }
 
-        public Token Get(int contractId, BigInteger tokenId)
-        {
-            if (!CachedByKey.TryGetValue((contractId, tokenId), out var token))
-                throw new Exception($"Token ({contractId}, {tokenId}) doesn't exist");
-            return token;
-        }
-
-        public bool TryGet(int contractId, BigInteger tokenId, out Token token)
+        public bool TryGet(int contractId, BigInteger tokenId, [NotNullWhen(true)] out Token? token)
         {
             return CachedByKey.TryGetValue((contractId, tokenId), out token);
         }
@@ -91,7 +72,7 @@ namespace Tzkt.Sync.Services.Cache
         public async Task Preload(IEnumerable<long> ids)
         {
             var missed = ids.Where(x => !CachedById.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (missed.Count != 0)
             {
                 var items = await Db.Tokens
                     .Where(x => missed.Contains(x.Id))
@@ -105,16 +86,20 @@ namespace Tzkt.Sync.Services.Cache
         public async Task Preload(IEnumerable<(int, BigInteger)> ids)
         {
             var missed = ids.Where(x => !CachedByKey.ContainsKey(x)).ToHashSet();
-            if (missed.Count > 0)
+            if (missed.Count != 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
                     var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, '{x.Item2}')"));
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
                     var items = await Db.Tokens
-                        .FromSqlRaw($@"
-                            SELECT * FROM ""{nameof(TzktContext.Tokens)}""
-                            WHERE (""{nameof(Token.ContractId)}"", ""{nameof(Token.TokenId)}"") IN ({corteges})")
+                        .FromSqlRaw($"""
+                            SELECT *
+                            FROM "Tokens"
+                            WHERE ("ContractId", "TokenId") IN ({corteges})
+                            """)
                         .ToListAsync();
+#pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
                     foreach (var item in items)
                         Add(item);

@@ -11,7 +11,7 @@
         /// <summary>
         /// Bond status (`active`, `returned`, or `lost`).
         /// </summary>
-        public string BondStatus { get; set; }
+        public required string BondStatus { get; set; }
 
         /// <summary>
         /// Level of the block where the staker published his first commitment.  

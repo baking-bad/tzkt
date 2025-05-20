@@ -7,7 +7,7 @@
         /// The endorser is randomly selected to be included in the block that extends the head of the chain as specified in this operation.
         /// A block with more endorsements improves the weight of the chain and increases the likelihood of that chain being the canonical one.
         /// </summary>
-        public override string Type => OpTypes.Endorsement;
+        public override string Type => ActivityTypes.Endorsement;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -27,17 +27,17 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the baker who sent the operation
         /// </summary>
-        public Alias Delegate { get; set; }
+        public required Alias Delegate { get; set; }
 
         /// <summary>
         /// Number of assigned endorsement slots to the baker who sent the operation
@@ -58,7 +58,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

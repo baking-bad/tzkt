@@ -14,7 +14,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Contract, created the token.
         /// </summary>
-        public Alias Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Token id, unique within the contract.  
@@ -26,12 +26,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Token standard (`fa1.2` or `fa2`).
         /// </summary>
-        public string Standard { get; set; }
+        public required string Standard { get; set; }
 
         /// <summary>
         /// Account, minted the token first.
         /// </summary>
-        public Alias FirstMinter { get; set; }
+        public required Alias FirstMinter { get; set; }
 
         /// <summary>
         /// Level of the block where the token was first seen.  
@@ -96,6 +96,6 @@ namespace Tzkt.Api.Models
         /// **[sortable]**
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Metadata { get; set; }
+        public RawJson? Metadata { get; set; }
     }
 }

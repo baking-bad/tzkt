@@ -4,8 +4,9 @@ namespace Tzkt.Data.Models
 {
     public class Commitment
     {
-        public int Id { get; set; }
-        public string Address { get; set; }
+        public required int Id { get; set; }
+        public required string Address { get; set; }
+
         public long Balance { get; set; }
 
         public int? AccountId { get; set; }

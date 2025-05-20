@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols
     {
         public static BigMapTag GetTags(Contract contract, TreeView bigmap)
         {
-            var schema = bigmap.Schema as BigMapSchema;
+            var schema = (bigmap.Schema as BigMapSchema)!;
             var tags = BigMapTag.None;
 
             if (IsPersistent(bigmap))
@@ -94,87 +94,87 @@ namespace Tzkt.Sync.Protocols
             switch (bigmap.Tags & BigMapTag.LedgerMask)
             {
                 case BigMapTag.Ledger1:
-                    return new(1)
-                    {
+                    return
+                    [
                         (
                             key.JsonKey[1..37],
                             BigInteger.Zero,
                             update.Action != BigMapAction.RemoveKey
-                                ? (Micheline.FromBytes(update.RawValue) as MichelineInt).Value
+                                ? (Micheline.FromBytes(update.RawValue!) as MichelineInt)!.Value
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger2:
-                    return new(1)
-                    {
+                    return
+                    [
                         (
-                            update.JsonValue[1..37],
-                            (Micheline.FromBytes(key.RawKey) as MichelineInt).Value,
+                            update.JsonValue![1..37],
+                            (Micheline.FromBytes(key.RawKey) as MichelineInt)!.Value,
                             update.Action != BigMapAction.RemoveKey
                                 ? BigInteger.One
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger3:
-                    var pair = Micheline.FromBytes(key.RawKey) as MichelinePrim;
-                    return new(1)
-                    {
+                    var pair = (Micheline.FromBytes(key.RawKey) as MichelinePrim)!;
+                    return
+                    [
                         (
-                            pair.Args[0].ParseAddress(),
-                            (pair.Args[1] as MichelineInt).Value,
+                            pair.Args![0].ParseAddress(),
+                            (pair.Args[1] as MichelineInt)!.Value,
                             update.Action != BigMapAction.RemoveKey
-                                ? (Micheline.FromBytes(update.RawValue) as MichelineInt).Value
+                                ? (Micheline.FromBytes(update.RawValue!) as MichelineInt)!.Value
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger4:
-                    pair = Micheline.FromBytes(key.RawKey) as MichelinePrim;
-                    return new(1)
-                    {
+                    pair = (Micheline.FromBytes(key.RawKey) as MichelinePrim)!;
+                    return
+                    [
                         (
-                            pair.Args[1].ParseAddress(),
-                            (pair.Args[0] as MichelineInt).Value,
+                            pair.Args![1].ParseAddress(),
+                            (pair.Args[0] as MichelineInt)!.Value,
                             update.Action != BigMapAction.RemoveKey
-                                ? (Micheline.FromBytes(update.RawValue) as MichelineInt).Value
+                                ? (Micheline.FromBytes(update.RawValue!) as MichelineInt)!.Value
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger5:
-                    pair = Micheline.FromBytes(update.RawValue) as MichelinePrim;
-                    return new(1)
-                    {
+                    pair = (Micheline.FromBytes(update.RawValue!) as MichelinePrim)!;
+                    return
+                    [
                         (
                             key.JsonKey[1..37],
                             BigInteger.Zero,
                             update.Action != BigMapAction.RemoveKey
-                                ? (pair.Args[0] as MichelineInt).Value
+                                ? (pair.Args![0] as MichelineInt)!.Value
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger6:
-                    pair = Micheline.FromBytes(update.RawValue) as MichelinePrim;
-                    return new(1)
-                    {
+                    pair = (Micheline.FromBytes(update.RawValue!) as MichelinePrim)!;
+                    return
+                    [
                         (
                             key.JsonKey[1..37],
                             BigInteger.Zero,
                             update.Action != BigMapAction.RemoveKey
-                                ? (pair.Args[1] as MichelineInt).Value
+                                ? (pair.Args![1] as MichelineInt)!.Value
                                 : BigInteger.Zero
                         )
-                    };
+                    ];
                 case BigMapTag.Ledger7: // custom handler for tzBTC
-                    var micheKey = Micheline.Unpack((Micheline.FromBytes(key.RawKey) as MichelineBytes).Value);
+                    var micheKey = Micheline.Unpack((Micheline.FromBytes(key.RawKey) as MichelineBytes)!.Value);
                     if (micheKey is MichelinePrim keyPrim && keyPrim.Args?.Count == 2 &&
                         keyPrim.Args[0] is MichelineString keyType && keyType.Value == "ledger" &&
                         keyPrim.Args[1].TryParseAddress(out var address))
                     {
-                        var micheValue = Micheline.Unpack((Micheline.FromBytes(update.RawValue) as MichelineBytes).Value);
+                        var micheValue = Micheline.Unpack((Micheline.FromBytes(update.RawValue!) as MichelineBytes)!.Value);
                         if (micheValue is MichelinePrim valuePrim && valuePrim.Args?.Count == 2 &&
                             valuePrim.Args[0] is MichelineInt balance)
                         {
-                            return new(1)
-                            {
+                            return
+                            [
                                 (
                                     address,
                                     BigInteger.Zero,
@@ -182,87 +182,87 @@ namespace Tzkt.Sync.Protocols
                                         ? balance.Value
                                         : BigInteger.Zero
                                 )
-                            };
+                            ];
                         }
                     }
-                    return new(0);
+                    return [];
                 case BigMapTag.Ledger8:
-                    using (var doc = JsonDocument.Parse(update.JsonValue))
+                    using (var doc = JsonDocument.Parse(update.JsonValue!))
                     {
-                        return new(1)
-                        {
+                        return
+                        [
                             (
                                 key.JsonKey[1..37],
                                 BigInteger.Zero,
                                 update.Action != BigMapAction.RemoveKey
-                                    ? BigInteger.Parse(doc.RootElement.GetProperty("balance").GetString())
+                                    ? BigInteger.Parse(doc.RootElement.RequiredString("balance"))
                                     : BigInteger.Zero
                             )
-                        };
+                        ];
                     }
                 case BigMapTag.Ledger9:
-                    pair = Micheline.FromBytes(key.RawKey) as MichelinePrim;
-                    using (var doc = JsonDocument.Parse(update.JsonValue))
+                    pair = (Micheline.FromBytes(key.RawKey) as MichelinePrim)!;
+                    using (var doc = JsonDocument.Parse(update.JsonValue!))
                     {
-                        return new(1)
-                        {
+                        return
+                        [
                             (
-                                pair.Args[0].ParseAddress(),
-                                (pair.Args[1] as MichelineInt).Value,
+                                pair.Args![0].ParseAddress(),
+                                (pair.Args[1] as MichelineInt)!.Value,
                                 update.Action != BigMapAction.RemoveKey
-                                    ? BigInteger.Parse(doc.RootElement.GetProperty("balance").GetString())
+                                    ? BigInteger.Parse(doc.RootElement.RequiredString("balance"))
                                     : BigInteger.Zero
                             )
-                        };
+                        ];
                     }
                 case BigMapTag.Ledger10:
-                    pair = Micheline.FromBytes(key.RawKey) as MichelinePrim;
-                    using (var doc = JsonDocument.Parse(update.JsonValue))
+                    pair = (Micheline.FromBytes(key.RawKey) as MichelinePrim)!;
+                    using (var doc = JsonDocument.Parse(update.JsonValue!))
                     {
-                        return new(1)
-                        {
+                        return
+                        [
                             (
-                                pair.Args[1].ParseAddress(),
-                                (pair.Args[0] as MichelineInt).Value,
+                                pair.Args![1].ParseAddress(),
+                                (pair.Args[0] as MichelineInt)!.Value,
                                 update.Action != BigMapAction.RemoveKey
-                                    ? BigInteger.Parse(doc.RootElement.GetProperty("balance").GetString())
+                                    ? BigInteger.Parse(doc.RootElement.RequiredString("balance"))
                                     : BigInteger.Zero
                             )
-                        };
+                        ];
                     }
                 case BigMapTag.Ledger11:
-                    pair = Micheline.FromBytes(update.RawValue) as MichelinePrim;
-                    var balances = pair.Args[0] as MichelineArray;
+                    pair = (Micheline.FromBytes(update.RawValue!) as MichelinePrim)!;
+                    var balances = (pair.Args![0] as MichelineArray)!;
                     var res = new List<(string, BigInteger, BigInteger)>(balances.Count);
                     foreach (var balance in balances)
                     {
-                        var elt = balance as MichelinePrim;
+                        var elt = (balance as MichelinePrim)!;
                         res.Add((
                             key.JsonKey[1..37],
-                            (elt.Args[0] as MichelineInt).Value,
+                            (elt.Args![0] as MichelineInt)!.Value,
                             update.Action != BigMapAction.RemoveKey
-                                ? (elt.Args[1] as MichelineInt).Value
+                                ? (elt.Args[1] as MichelineInt)!.Value
                                 : BigInteger.Zero
                         ));
                     }
                     return res;
                 case BigMapTag.Ledger12:
-                    pair = (Micheline.FromBytes(update.RawValue) as MichelinePrim).Args[1] as MichelinePrim;
-                    var option = pair.Args[1] as MichelinePrim;
+                    pair = ((Micheline.FromBytes(update.RawValue!) as MichelinePrim)!.Args![1] as MichelinePrim)!;
+                    var option = (pair.Args![1] as MichelinePrim)!;
                     if (option.Prim == PrimType.Some)
                     {
-                        return new(1)
-                        {
+                        return
+                        [
                             (
-                                (pair.Args[0] as MichelinePrim).Args[1].ParseAddress(),
-                                (option.Args[0] as MichelineInt).Value,
+                                (pair.Args[0] as MichelinePrim)!.Args![1].ParseAddress(),
+                                (option.Args![0] as MichelineInt)!.Value,
                                 update.Action != BigMapAction.RemoveKey
                                     ? BigInteger.One
                                     : BigInteger.Zero
                             )
-                        };
+                        ];
                     }
-                    return new(0);
+                    return [];
                 default:
                     throw new NotSupportedException("Unsupported ledger type");
             }

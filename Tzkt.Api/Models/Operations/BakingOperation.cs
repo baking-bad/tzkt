@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `baking` - an operation which contains brief information about a baked (produced) block (synthetic type)
         /// </summary>
-        public override string Type => OpTypes.Baking;
+        public override string Type => ActivityTypes.Baking;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -25,17 +25,17 @@
         /// <summary>
         /// Block hash
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Baker who proposed the block payload
         /// </summary>
-        public Alias Proposer { get; set; }
+        public required Alias Proposer { get; set; }
 
         /// <summary>
         /// Baker who produced the block
         /// </summary>
-        public Alias Producer { get; set; }
+        public required Alias Producer { get; set; }
 
         /// <summary>
         /// Round at which the block payload was proposed
@@ -109,39 +109,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long BonusLiquid => BonusDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Reward => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Bonus => BonusDelegated + BonusStakedOwn + BonusStakedEdge + BonusStakedShared;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public Alias Baker => Producer;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public int Priority => BlockRound;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

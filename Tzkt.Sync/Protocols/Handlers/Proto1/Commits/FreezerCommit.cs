@@ -3,16 +3,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class FreezerCommit : ProtocolCommit
+    class FreezerCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public FreezerCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public void Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
                 return;
 
-            foreach (var update in GetFreezerUpdates(block, rawBlock))
+            foreach (var update in GetFreezerUpdates(block, Context.Protocol, rawBlock))
             {
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
@@ -20,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'd':
                         break;
                     case 'r':
-                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
                         delegat.StakingBalance -= change;
                         break;
@@ -43,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             var rawBlock = await Proto.Rpc.GetBlockAsync(block.Level);
 
-            foreach (var update in GetFreezerUpdates(block, rawBlock))
+            foreach (var update in GetFreezerUpdates(block, Context.Protocol, rawBlock))
             {
                 var change = update.RequiredInt64("change");
                 switch (update.RequiredString("category")[0])
@@ -51,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'd':
                         break;
                     case 'r':
-                        var delegat = Cache.Accounts.GetDelegate(update.RequiredString("delegate"));
+                        var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
                         delegat.StakingBalance += change;
                         break;
@@ -65,7 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual int GetFreezerCycle(JsonElement el) => el.RequiredInt32("level");
 
-        protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, JsonElement rawBlock)
+        protected virtual IEnumerable<JsonElement> GetFreezerUpdates(Block block, Protocol protocol, JsonElement rawBlock)
         {
             return rawBlock
                 .Required("metadata")
@@ -73,7 +71,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .EnumerateArray()
                 .Where(x => x.RequiredString("kind")[0] == 'f' &&
                             x.RequiredInt64("change") < 0 &&
-                            GetFreezerCycle(x) == block.Cycle - block.Protocol.ConsensusRightsDelay);
+                            GetFreezerCycle(x) == block.Cycle - protocol.ConsensusRightsDelay);
         }
     }
 }

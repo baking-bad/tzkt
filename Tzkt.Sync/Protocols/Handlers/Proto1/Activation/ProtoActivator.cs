@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    partial class ProtoActivator : ProtocolCommit
+    partial class ProtoActivator(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public ProtoActivator(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Activate(AppState state, JsonElement rawBlock)
         {
             if (state.Level == 1) // bootstrap

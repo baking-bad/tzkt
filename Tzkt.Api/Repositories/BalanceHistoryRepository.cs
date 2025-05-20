@@ -59,19 +59,19 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<HistoricalBalance>> Get(
             string address,
             int step,
-            SortParameter sort,
+            SortParameter? sort,
             int offset,
             int limit,
             Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
-            if (account == null) return Enumerable.Empty<HistoricalBalance>();
+            if (account == null) return [];
 
             #region dumb users
             if (limit == 1 && offset == 0 && sort?.Desc != null)
             {
-                return new[]
-                {
+                return
+                [
                     new HistoricalBalance
                     {
                         Level = account.LastLevel,
@@ -79,12 +79,12 @@ namespace Tzkt.Api.Repositories
                         Balance = account.Balance,
                         Quote = Quotes.Get(quote, account.LastLevel)
                     }
-                };
+                ];
             }
             #endregion
 
             var union = SelectUnion(account);
-            if (union.Length == 0) return Enumerable.Empty<HistoricalBalance>();
+            if (union.Length == 0) return [];
 
             var key = step > 1
                 ? @"(""Level"" + @step - 1) / @step * @step"
@@ -117,20 +117,20 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> Get(
+        public async Task<object?[][]> Get(
             string address,
             int step,
-            SortParameter sort,
+            SortParameter? sort,
             int offset,
             int limit,
             string[] fields,
             Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
-            if (account == null) return Array.Empty<object[]>();
+            if (account == null) return [];
 
             var union = SelectUnion(account);
-            if (union.Length == 0) return Array.Empty<object[]>();
+            if (union.Length == 0) return [];
 
             var key = step > 1
                 ? @"(""Level"" + @step - 1) / @step * @step"
@@ -154,9 +154,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { account = account.Id, step, offset, limit });
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -184,20 +184,20 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> Get(
+        public async Task<object?[]> Get(
             string address,
             int step,
-            SortParameter sort,
+            SortParameter? sort,
             int offset,
             int limit,
             string field,
             Symbols quote)
         {
             var account = await Accounts.GetAsync(address);
-            if (account == null) return Array.Empty<object>();
+            if (account == null) return [];
 
             var union = SelectUnion(account);
-            if (union.Length == 0) return Array.Empty<object>();
+            if (union.Length == 0) return [];
 
             var key = step > 1
                 ? @"(""Level"" + @step - 1) / @step * @step"
@@ -222,7 +222,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql, new { account = account.Id, step, offset, limit });
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

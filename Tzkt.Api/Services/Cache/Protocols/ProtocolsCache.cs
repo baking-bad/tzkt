@@ -21,7 +21,7 @@ namespace Tzkt.Api.Services.Cache
 
             Logger.LogDebug("Initializing protocols cache...");
             InitCache();
-            Logger.LogInformation("Loaded {cnt} of {total} protocols", Protocols.Count, state.Current.ProtocolsCount);
+            Logger.LogInformation("Loaded {cnt} of {total} protocols", Protocols!.Count, state.Current.ProtocolsCount);
         }
 
         public Task UpdateAsync()

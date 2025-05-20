@@ -226,7 +226,7 @@ namespace Tzkt.Api.Repositories
                 return vdfRevelation.Result;
             #endregion
 
-            return Enumerable.Empty<Operation>();
+            return [];
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
@@ -369,7 +369,7 @@ namespace Tzkt.Api.Repositories
             if (managerOps.Any())
                 return managerOps.OrderBy(x => x.Id);
 
-            return Enumerable.Empty<Operation>();
+            return [];
         }
 
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, int nonce, MichelineFormat format, Symbols quote)
@@ -392,7 +392,7 @@ namespace Tzkt.Api.Repositories
             if (transactions.Result.Any())
                 return transactions.Result;
 
-            return Enumerable.Empty<Operation>();
+            return [];
         }
     }
 }

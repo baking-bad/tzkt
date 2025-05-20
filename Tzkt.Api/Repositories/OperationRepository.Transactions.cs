@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -14,16 +15,16 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<int> GetTransactionsCount(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            OperationStatusParameter status)
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            OperationStatusParameter? status)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransactionOps""")
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
@@ -324,24 +325,81 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetTransactionOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? senderIds = null;
+            List<int>? targetIds = null;
+            List<int>? initiatorIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.TransactionsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    targetIds ??= new(accounts.Count);
+                    targetIds.Add(account.Id);
+                }
+
+                if (account is RawUser && (roles & ActivityRole.Initiator) != 0)
+                {
+                    initiatorIds ??= new(accounts.Count);
+                    initiatorIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && targetIds == null && initiatorIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("TargetId", targetIds),
+                ("InitiatorId", initiatorIds));
+
+            return await GetTransactions(
+                or,
+                null, null, null, null, null, null, null,
+                timestamp,
+                null, null, null, null, null, null, null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int64Parameter id,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter codeHash,
-            Int32Parameter senderCodeHash,
-            Int32Parameter targetCodeHash,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            OrParameter? or,
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? codeHash,
+            Int32Parameter? senderCodeHash,
+            Int32Parameter? targetCodeHash,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat format,
             Symbols quote,
@@ -369,6 +427,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""TransactionOps"" AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")
@@ -387,7 +446,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""TargetCodeHash"""], codeHash)
                 .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -470,24 +529,24 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetTransactions(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int64Parameter id,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter codeHash,
-            Int32Parameter senderCodeHash,
-            Int32Parameter targetCodeHash,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetTransactions(
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? codeHash,
+            Int32Parameter? senderCodeHash,
+            Int32Parameter? targetCodeHash,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat format,
@@ -554,7 +613,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             #region opts
             if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
@@ -591,7 +650,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""TargetCodeHash"""], codeHash)
                 .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -607,9 +666,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = (await db.QueryAsync(sql.Query, sql.Params)).Take(limit);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -770,24 +829,24 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetTransactions(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            Int64Parameter amount,
-            Int64Parameter id,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter codeHash,
-            Int32Parameter senderCodeHash,
-            Int32Parameter targetCodeHash,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetTransactions(
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            Int64Parameter? amount,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? codeHash,
+            Int32Parameter? senderCodeHash,
+            Int32Parameter? targetCodeHash,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat format,
@@ -851,7 +910,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             #region opts
             if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
@@ -888,7 +947,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .FilterA(@"o.""TargetCodeHash""", targetCodeHash)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""TargetCodeHash""" }, codeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""TargetCodeHash"""], codeHash)
                 .Take(sort, offset, Math.Max(limit, 100), x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -905,7 +964,7 @@ namespace Tzkt.Api.Repositories
             var rows = (await db.QueryAsync(sql.Query, sql.Params)).Take(limit);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

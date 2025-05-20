@@ -1,28 +1,19 @@
 ﻿using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using System.Text.RegularExpressions;
 using Dapper;
 using Npgsql;
 using Netezos.Encoding;
 
 namespace Tzkt.Sync.Services
 {
-    public class ContractMetadata : BackgroundService
+    public class ContractMetadata(IConfiguration config, ILogger<ContractMetadata> logger) : BackgroundService
     {
-        readonly string ConnectionString;
-        readonly ContractMetadataConfig Config;
-        readonly ILogger Logger;
-        readonly Regex Regex = new(@"(?<=(^|[^\\])(\\\\)*)\\u0000", RegexOptions.Compiled);
+        readonly string ConnectionString = config.GetDefaultConnectionString();
+        readonly ContractMetadataConfig Config = config.GetContractMetadataConfig();
+        readonly ILogger Logger = logger;
 
-        ContractMetadataState State;
-
-        public ContractMetadata(IConfiguration config, ILogger<ContractMetadata> logger)
-        {
-            ConnectionString = config.GetConnectionString("DefaultConnection");
-            Config = config.GetContractMetadataConfig();
-            Logger = logger;
-        }
+        ContractMetadataState State = null!;
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -99,7 +90,7 @@ namespace Tzkt.Sync.Services
                 LIMIT 1
                 """);
             
-            try { State = row.state is string json ? JsonSerializer.Deserialize<ContractMetadataState>(json) : new(); }
+            try { State = row.state is string json ? JsonSerializer.Deserialize<ContractMetadataState>(json) ?? new() : new(); }
             catch { State = new(); }
 
             foreach (var url in State.DipDup.Keys.Where(u => !Config.DipDup.Any(c => c.Url == u)).ToList())
@@ -152,7 +143,7 @@ namespace Tzkt.Sync.Services
                     var item = items[i + j];
                     if (j > 0) sql.Append(",\n");
                     param.Add($"@c{j}", item.Contract);
-                    param.Add($"@m{j}", Regex.Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
+                    param.Add($"@m{j}", Regexes.Metadata().Replace(JsonSerializer.Serialize(item.Metadata, options), string.Empty));
                     sql.Append($"(@c{j}::varchar(37), @m{j}::jsonb)");
                 }
                 sql.AppendLine("\n) as v(contract, metadata)");
@@ -173,7 +164,7 @@ namespace Tzkt.Sync.Services
                 Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
 
             var items = JsonSerializer.Deserialize<DipDupResponse<DipDupStatus>>(
-                await res.Content.ReadAsStringAsync()).Data.Items;
+                await res.Content.ReadAsStringAsync())!.Data.Items;
 
             // There can be actually multiple status items (per each network), but it's ok:
             // 1. If new network is added there's no need to re-index from scratch
@@ -200,37 +191,37 @@ namespace Tzkt.Sync.Services
             };
 
             return JsonSerializer.Deserialize<DipDupResponse<DipDupItem>>(
-                Utf8.Parse(await res.Content.ReadAsStringAsync()), options).Data.Items;
+                Utf8.Parse(await res.Content.ReadAsStringAsync()), options)!.Data.Items;
         }
 
         class DipDupResponse<T>
         {
             [JsonPropertyName("data")]
-            public DipDupQuery<T> Data { get; set; }
+            public required DipDupQuery<T> Data { get; set; }
         }
 
         class DipDupQuery<T>
         {
             [JsonPropertyName("items")]
-            public List<T> Items { get; set; } = new();
+            public required List<T> Items { get; set; }
         }
 
         class DipDupItem
         {
             [JsonPropertyName("update_id")]
-            public long UpdateId { get; set; }
+            public required long UpdateId { get; set; }
 
             [JsonPropertyName("contract")]
-            public string Contract { get; set; }
+            public required string Contract { get; set; }
 
             [JsonPropertyName("metadata")]
-            public JsonElement Metadata { get; set; }
+            public required JsonElement Metadata { get; set; }
         }
 
         class DipDupStatus
         {
             [JsonPropertyName("created_at")]
-            public string CreatedAt { get; set; }
+            public required string CreatedAt { get; set; }
         }
     }
 }

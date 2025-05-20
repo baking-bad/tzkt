@@ -9,37 +9,37 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter id { get; set; }
+        public Int32Parameter? id { get; set; }
 
         /// <summary>
         /// Filter by initiator (who found a wrong commitment and started the refutation game).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter initiator { get; set; }
+        public AccountParameter? initiator { get; set; }
 
         /// <summary>
         /// Filter by initiator's commitment
         /// </summary>
-        public SrCommitmentInfoFilter initiatorCommitment { get; set; }
+        public SrCommitmentInfoFilter initiatorCommitment { get; set; } = new();
 
         /// <summary>
         /// Filter by opponent (who was accused in publishing a wrong commitment).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter opponent { get; set; }
+        public AccountParameter? opponent { get; set; }
 
         /// <summary>
         /// Filter by opponent's commitment
         /// </summary>
-        public SrCommitmentInfoFilter opponentCommitment { get; set; }
+        public SrCommitmentInfoFilter opponentCommitment { get; set; } = new();
 
         [OpenApiIgnore]
         public bool Empty => 
             id == null &&
             initiator == null &&
-            (initiatorCommitment == null || initiatorCommitment.Empty) &&
+            initiatorCommitment.Empty &&
             opponent == null &&
-            (opponentCommitment == null || opponentCommitment.Empty);
+            opponentCommitment.Empty;
 
         public string Normalize(string name)
         {

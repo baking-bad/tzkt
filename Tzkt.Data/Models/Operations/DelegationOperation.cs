@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -9,19 +8,12 @@ namespace Tzkt.Data.Models
         public int? SenderCodeHash { get; set; }
         public int? DelegateId { get; set; }
         public int? PrevDelegateId { get; set; }
-        public int? ResetDeactivation { get; set; }
+        public int? PrevDelegationLevel { get; set; }
+        public int? PrevDeactivationLevel { get; set; }
 
         public long Amount { get; set; }
 
         public int? StakingUpdatesCount { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(DelegateId))]
-        public Delegate Delegate { get; set; }
-
-        [ForeignKey(nameof(PrevDelegateId))]
-        public Delegate PrevDelegate { get; set; }
-        #endregion
     }
 
     public static class DelegationOperationModel
@@ -63,14 +55,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.PrevDelegateId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<DelegationOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Delegations)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

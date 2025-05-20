@@ -15,8 +15,8 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<int> GetOriginationsCount(
-            Int32Parameter level,
-            TimestampParameter timestamp)
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""OriginationOps""")
                 .Filter("Level", level)
@@ -61,9 +61,9 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
+                    : Accounts.Get((int)row.ContractId) as RawContract;
 
-                MichelineArray code = null;
+                MichelineArray? code = null;
                 if (row.ParameterSchema != null)
                 {
                     code = new();
@@ -95,7 +95,7 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
-                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Code = (int)format % 2 == 0 ? code : code?.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
@@ -109,7 +109,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -152,9 +151,9 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
+                    : Accounts.Get((int)row.ContractId) as RawContract;
 
-                MichelineArray code = null;
+                MichelineArray? code = null;
                 if (row.ParameterSchema != null)
                 {
                     code = new();
@@ -186,7 +185,7 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
-                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Code = (int)format % 2 == 0 ? code : code?.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
@@ -200,7 +199,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -243,9 +241,9 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
+                    : Accounts.Get((int)row.ContractId) as RawContract;
 
-                MichelineArray code = null;
+                MichelineArray? code = null;
                 if (row.ParameterSchema != null)
                 {
                     code = new();
@@ -277,7 +275,7 @@ namespace Tzkt.Api.Repositories
                     AllocationFee = row.AllocationFee ?? 0,
                     ContractDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                     ContractBalance = row.Balance,
-                    Code = (int)format % 2 == 0 ? code : code.ToJson(),
+                    Code = (int)format % 2 == 0 ? code : code?.ToJson(),
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((long)row.Id),
                     Status = OpStatuses.ToString(row.Status),
@@ -291,7 +289,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -313,7 +310,7 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
+                    : Accounts.Get((int)row.ContractId) as RawContract;
 
                 return new OriginationOperation
                 {
@@ -347,7 +344,6 @@ namespace Tzkt.Api.Repositories
                             CodeHash = contract.CodeHash,
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         },
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, block.Level)
@@ -355,23 +351,88 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetOriginationOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? senderIds = null;
+            List<int>? initiatorIds = null;
+            List<int>? delegateIds = null;
+            List<int>? contractIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.OriginationsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if (account is RawUser)
+                {
+                    if ((roles & ActivityRole.Initiator) != 0)
+                    {
+                        initiatorIds ??= new(accounts.Count);
+                        initiatorIds.Add(account.Id);
+                    }
+                    if (account is RawDelegate && (roles & ActivityRole.Target) != 0)
+                    {
+                        delegateIds ??= new(accounts.Count);
+                        delegateIds.Add(account.Id);
+                    }
+                }
+                else if (account is RawContract && (roles & ActivityRole.Target) != 0)
+                {
+                    contractIds ??= new(accounts.Count);
+                    contractIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && initiatorIds == null && delegateIds == null && contractIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("InitiatorId", initiatorIds),
+                ("DelegateId", delegateIds),
+                ("ContractId", contractIds));
+
+            return await GetOriginations(
+                or,
+                null, null, null, null, null, null, null, null, null,
+                timestamp,
+                null, null, null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<OriginationOperation>> GetOriginations(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            Int64Parameter id,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter anyCodeHash,
-            Int32Parameter senderCodeHash,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            OrParameter? or,
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            Int64Parameter? id,
+            Int32Parameter? typeHash,
+            Int32Parameter? codeHash,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? anyCodeHash,
+            Int32Parameter? senderCodeHash,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat format,
             Symbols quote,
@@ -400,18 +461,17 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""
                 {(typeHash != null || codeHash != null ? @"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""" : "")}")
+                .Filter(or)
                 .Filter(anyof, x => x switch
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -420,7 +480,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -460,7 +520,7 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row =>
             {
                 var contract = row.ContractId == null ? null
-                    : (RawContract)Accounts.Get((int)row.ContractId);
+                    : Accounts.Get((int)row.ContractId) as RawContract;
 
                 return new OriginationOperation
                 {
@@ -495,7 +555,6 @@ namespace Tzkt.Api.Repositories
                     },
                     Storage = row.StorageId == null ? null : storages?[row.StorageId],
                     Diffs = diffs?.GetValueOrDefault((long)row.Id),
-                    ContractManager = row.ManagerId != null ? Accounts.GetAlias(row.ManagerId) : null,
                     Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                     TokenTransfersCount = row.TokenTransfers,
                     Quote = Quotes.Get(quote, row.Level)
@@ -503,23 +562,22 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetOriginations(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            Int64Parameter id,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter anyCodeHash,
-            Int32Parameter senderCodeHash,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetOriginations(
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            Int64Parameter? id,
+            Int32Parameter? typeHash,
+            Int32Parameter? codeHash,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? anyCodeHash,
+            Int32Parameter? senderCodeHash,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat format,
@@ -552,7 +610,6 @@ namespace Tzkt.Api.Repositories
                     case "contractBalance": columns.Add(@"o.""Balance"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "originatedContract": columns.Add(@"o.""ContractId"""); break;
-                    case "contractManager": columns.Add(@"o.""ManagerId"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -576,7 +633,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             if (typeHash != null || codeHash != null)
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
@@ -602,14 +659,12 @@ namespace Tzkt.Api.Repositories
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -618,7 +673,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -634,9 +689,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -721,7 +776,7 @@ namespace Tzkt.Api.Repositories
                     case "code":
                         foreach (var row in rows)
                         {
-                            MichelineArray code = null;
+                            MichelineArray? code = null;
                             if (row.ParameterSchema != null)
                             {
                                 code = new();
@@ -731,7 +786,7 @@ namespace Tzkt.Api.Repositories
                                     code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                                 code.Add(Micheline.FromBytes(row.CodeSchema));
                             }
-                            result[j++][i] = (int)format % 2 == 0 ? code : code.ToJson();
+                            result[j++][i] = (int)format % 2 == 0 ? code : code?.ToJson();
                         }
                         break;
                     case "storage":
@@ -762,7 +817,7 @@ namespace Tzkt.Api.Repositories
                     case "originatedContract":
                         foreach (var row in rows)
                         {
-                            var contract = row.ContractId == null ? null : (RawContract)Accounts.Get((int)row.ContractId);
+                            var contract = row.ContractId == null ? null : Accounts.Get((int)row.ContractId) as RawContract;
                             result[j++][i] = contract == null ? null : new OriginatedContract
                             {
                                 Alias = contract.Alias,
@@ -773,10 +828,6 @@ namespace Tzkt.Api.Repositories
                                 Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                             };
                         }
-                        break;
-                    case "contractManager":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ManagerId != null ? await Accounts.GetAliasAsync(row.ManagerId) : null;
                         break;
                     case "errors":
                         foreach (var row in rows)
@@ -796,23 +847,22 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetOriginations(
-            AnyOfParameter anyof,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            Int64Parameter id,
-            Int32Parameter typeHash,
-            Int32Parameter codeHash,
-            Int32Parameter level,
-            TimestampParameter timestamp,
-            Int32Parameter anyCodeHash,
-            Int32Parameter senderCodeHash,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetOriginations(
+            AnyOfParameter? anyof,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            Int64Parameter? id,
+            Int32Parameter? typeHash,
+            Int32Parameter? codeHash,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? anyCodeHash,
+            Int32Parameter? senderCodeHash,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat format,
@@ -843,7 +893,6 @@ namespace Tzkt.Api.Repositories
                 case "contractBalance": columns.Add(@"o.""Balance"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "originatedContract": columns.Add(@"o.""ContractId"""); break;
-                case "contractManager": columns.Add(@"o.""ManagerId"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -866,7 +915,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             if (typeHash != null || codeHash != null)
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
@@ -892,14 +941,12 @@ namespace Tzkt.Api.Repositories
                 {
                     "initiator" => "InitiatorId",
                     "sender" => "SenderId",
-                    "contractManager" => "ManagerId",
                     "contractDelegate" => "DelegateId",
                     _ => "ContractId"
                 })
-                .Filter("InitiatorId", initiator, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("SenderId", sender, x => x == "contractManager" ? "ManagerId" : "DelegateId")
-                .Filter("ManagerId", contractManager, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "ManagerId")
+                .Filter("InitiatorId", initiator, x => "DelegateId")
+                .Filter("SenderId", sender, x => "DelegateId")
+                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
                 .Filter("ContractId", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
@@ -908,7 +955,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
-                .FilterOrA(new[] { @"o.""SenderCodeHash""", @"o.""ContractCodeHash""" }, anyCodeHash)
+                .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -925,7 +972,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -1009,7 +1056,7 @@ namespace Tzkt.Api.Repositories
                 case "code":
                     foreach (var row in rows)
                     {
-                        MichelineArray code = null;
+                        MichelineArray? code = null;
                         if (row.ParameterSchema != null)
                         {
                             code = new();
@@ -1019,7 +1066,7 @@ namespace Tzkt.Api.Repositories
                                 code.AddRange(((byte[][])row.Views).Select(x => Micheline.FromBytes(x)));
                             code.Add(Micheline.FromBytes(row.CodeSchema));
                         }
-                        result[j++] = (int)format % 2 == 0 ? code : code.ToJson();
+                        result[j++] = (int)format % 2 == 0 ? code : code?.ToJson();
                     }
                     break;
                 case "storage":
@@ -1050,7 +1097,7 @@ namespace Tzkt.Api.Repositories
                 case "originatedContract":
                     foreach (var row in rows)
                     {
-                        var contract = row.ContractId == null ? null : (RawContract)Accounts.Get((int)row.ContractId);
+                        var contract = row.ContractId == null ? null : Accounts.Get((int)row.ContractId) as RawContract;
                         result[j++] = contract == null ? null : new OriginatedContract
                         {
                             Alias = contract.Alias,
@@ -1061,10 +1108,6 @@ namespace Tzkt.Api.Repositories
                             Tzips = ContractTags.ToList((Data.Models.ContractTags)contract.Tags)
                         };
                     }
-                    break;
-                case "contractManager":
-                    foreach (var row in rows)
-                        result[j++] = row.ManagerId != null ? await Accounts.GetAliasAsync(row.ManagerId) : null;
                     break;
                 case "errors":
                     foreach (var row in rows)

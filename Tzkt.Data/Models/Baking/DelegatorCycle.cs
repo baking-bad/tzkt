@@ -4,11 +4,11 @@ namespace Tzkt.Data.Models
 {
     public class DelegatorCycle
     {
-        public int Id { get; set; }
-        public int Cycle { get; set; }
-        public int DelegatorId { get; set; }
+        public required int Id { get; set; }
+        public required int Cycle { get; set; }
+        public required int DelegatorId { get; set; }
+        public required int BakerId { get; set; }
 
-        public int BakerId { get; set; }
         public long DelegatedBalance { get; set; }
         public long StakedBalance { get; set; }
     }

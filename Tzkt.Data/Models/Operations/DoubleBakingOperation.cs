@@ -1,5 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
@@ -9,8 +8,8 @@ namespace Tzkt.Data.Models
         public int AccusedLevel { get; set; }
         public int SlashedLevel { get; set; }
 
-        public int AccuserId { get; set; }
-        public int OffenderId { get; set; }
+        public required int AccuserId { get; set; }
+        public required int OffenderId { get; set; }
 
         public long Reward { get; set; }
         public long LostStaked { get; set; }
@@ -19,14 +18,6 @@ namespace Tzkt.Data.Models
         public long LostExternalUnstaked { get; set; }
 
         public int? StakingUpdatesCount { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(AccuserId))]
-        public Delegate Accuser { get; set; }
-
-        [ForeignKey(nameof(OffenderId))]
-        public Delegate Offender { get; set; }
-        #endregion
     }
 
     public static class DoubleBakingOperationModel
@@ -58,14 +49,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<DoubleBakingOperation>()
                 .HasIndex(x => x.OffenderId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<DoubleBakingOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.DoubleBakings)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

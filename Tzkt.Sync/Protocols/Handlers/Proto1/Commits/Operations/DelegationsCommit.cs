@@ -5,33 +5,34 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class DelegationsCommit : ProtocolCommit
+    class DelegationsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DelegationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var prevDelegate = sender.DelegateId is int senderDelegateId
+                ? await Cache.Accounts.GetAsync(senderDelegateId) as Data.Models.Delegate
+                : sender as Data.Models.Delegate;
+            var newDelegate = content.OptionalString("delegate") is string _delegateAddress
+                ? await Cache.Accounts.GetOrCreateAsync(_delegateAddress)
+                : null;
+
             var result = content.Required("metadata").Required("operation_result");
 
             var delegation = new DelegationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
-                Level = block.Level,
-                Timestamp = block.Timestamp,
+                Level = Context.Block.Level,
+                Timestamp = Context.Block.Timestamp,
                 OpHash = op.RequiredString("hash"),
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
-                Delegate = newDelegate,
-                PrevDelegate = prevDelegate,
+                SenderId = sender.Id,
+                DelegateId = newDelegate?.Id,
+                PrevDelegateId = prevDelegate?.Id,
                 Amount = sender.Balance - content.RequiredInt64("fee"),
                 Status = result.RequiredString("status") switch
                 {
@@ -48,121 +49,145 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
             #endregion
 
-            #region entities
-            //var block = delegation.Block;
-            var blockBaker = block.Proposer;
-
-            //Db.TryAttach(block);
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(prevDelegate);
-            Db.TryAttach(newDelegate);
-            #endregion
-
             #region apply operation
+            Db.TryAttach(sender);
+            sender.LastLevel = delegation.Level;
             sender.Balance -= delegation.BakerFee;
+            sender.Counter = delegation.Counter;
+            sender.DelegationsCount++;
+
             if (prevDelegate != null)
             {
+                Db.TryAttach(prevDelegate);
+                prevDelegate.LastLevel = delegation.Level;
                 prevDelegate.StakingBalance -= delegation.BakerFee;
-                if (prevDelegate.Id != sender.Id)
+                if (prevDelegate != sender)
+                {
                     prevDelegate.DelegatedBalance -= delegation.BakerFee;
+                    prevDelegate.DelegationsCount++;
+                }
             }
-            blockBaker.Balance += delegation.BakerFee;
-            blockBaker.StakingBalance += delegation.BakerFee;
 
-            sender.DelegationsCount++;
-            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;
-            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount++;
+            if (newDelegate != null)
+            {
+                Db.TryAttach(newDelegate);
+                newDelegate.LastLevel = delegation.Level;
+                if (newDelegate != sender && newDelegate != prevDelegate)
+                    newDelegate.DelegationsCount++;
+            }
 
-            block.Operations |= Operations.Delegations;
-            block.Fees += delegation.BakerFee;
+            Context.Proposer.Balance += delegation.BakerFee;
+            Context.Proposer.StakingBalance += delegation.BakerFee;
 
-            sender.Counter = delegation.Counter;
+            Context.Block.Operations |= Operations.Delegations;
+            Context.Block.Fees += delegation.BakerFee;
+
+            Cache.AppState.Get().DelegationOpsCount++;
             #endregion
 
             #region apply result
             if (delegation.Status == OperationStatus.Applied)
             {
-                if (content.RequiredString("source") == content.OptionalString("delegate"))
+                if (sender is Data.Models.Delegate baker)
                 {
-                    if (sender.Type == AccountType.User)
+                    #region reactivate baker
+                    delegation.PrevDeactivationLevel = baker.DeactivationLevel;
+
+                    baker.DeactivationLevel = GracePeriod.Init(Context.Block.Level, Context.Protocol);
+                    baker.Staked = true;
+
+                    foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
                     {
+                        Cache.Accounts.Add(delegator);
+                        delegator.LastLevel = delegation.Level;
+                        delegator.Staked = true;
+                    }
+                    #endregion
+                }
+                else
+                {
+                    if (prevDelegate != null)
+                    {
+                        #region reset current delegation
                         if (result.TryGetProperty("balance_updates", out var updates))
-                            await Unstake(delegation, updates.EnumerateArray().ToList());
-                        ResetDelegate(sender, prevDelegate);
-                        UpgradeUser(delegation);
+                            await Unstake(delegation, [.. updates.EnumerateArray()]);
 
-                        #region weird delegators
-                        var delegat = (Data.Models.Delegate)delegation.Sender;
+                        delegation.PrevDelegationLevel = sender.DelegationLevel;
 
-                        var weirds = await Db.Contracts
-                            .Join(Db.OriginationOps, x => x.Id, x => x.ContractId, (contract, origination) => new { contract, origination })
-                            .Where(x => x.contract.WeirdDelegateId != null && x.contract.WeirdDelegateId == delegat.Id)
-                            .ToListAsync();
+                        Undelegate(sender, prevDelegate);
+                        #endregion
+                    }
 
-                        foreach (var weird in weirds)
+                    if (sender == newDelegate)
+                    {
+                        #region register baker
+                        sender = newDelegate = UpgradeUser((sender as User)!);
+
+                        if (sender.OriginationsCount != 0)
                         {
-                            Db.TryAttach(weird.origination);
-                            weird.origination.Delegate = delegat;
-                            if (delegat.Id != weird.origination.SenderId && delegat.Id != weird.origination.ManagerId) delegat.OriginationsCount++;
+                            var weirdOriginations = await Db.OriginationOps
+                                .AsNoTracking()
+                                .Where(x => x.DelegateId == sender.Id && x.Status == OperationStatus.Applied)
+                                .ToListAsync();
 
-                            if (weird.contract.DelegationsCount == 0)
+                            foreach (var origination in weirdOriginations)
                             {
-                                Db.TryAttach(weird.contract);
-                                Cache.Accounts.Add(weird.contract);
+                                var weirdDelegator = await Cache.Accounts.GetAsync(origination.ContractId!.Value);
+                                var hasDelegated = await Db.DelegationOps
+                                    .AsNoTracking()
+                                    .Where(x => x.SenderId == weirdDelegator.Id && x.Status == OperationStatus.Applied)
+                                    .AnyAsync();
 
-                                SetDelegate(weird.contract, delegat, weird.origination.Level);
+                                if (!hasDelegated)
+                                {
+                                    Db.TryAttach(weirdDelegator);
+                                    weirdDelegator.LastLevel = delegation.Level;
+                                    Delegate(weirdDelegator, (sender as Data.Models.Delegate)!, origination.Level);
+                                }
                             }
                         }
                         #endregion
                     }
-                    else if (sender is Data.Models.Delegate delegat)
+                    else if (newDelegate is Data.Models.Delegate _newDelegate)
                     {
-                        delegation.ResetDeactivation = delegat.DeactivationLevel;
-                        await ReactivateDelegate(delegation);
+                        Delegate(sender, _newDelegate, delegation.Level);
                     }
-                }
-                else
-                {
-                    if (result.TryGetProperty("balance_updates", out var updates))
-                        await Unstake(delegation, updates.EnumerateArray().ToList());
-                    ResetDelegate(sender, prevDelegate);
-                    if (newDelegate != null)
-                        SetDelegate(sender, newDelegate, block.Level);
                 }
             }
             #endregion
 
-            Proto.Manager.Set(delegation.Sender);
+            Proto.Manager.Set(sender);
             Db.DelegationOps.Add(delegation);
+            Context.DelegationOps.Add(delegation);
         }
 
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract
-                    ?? throw new ValidationException("Delegation source address doesn't exist");
+            var initiator = await Cache.Accounts.GetAsync(parent.SenderId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var prevDelegate = sender.DelegateId is int senderDelegateId
+                ? await Cache.Accounts.GetAsync(senderDelegateId) as Data.Models.Delegate
+                : null;
+            var newDelegate = content.OptionalString("delegate") is string _delegateAddress
+                ? await Cache.Accounts.GetOrCreateAsync(_delegateAddress)
+                : null;
 
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-            var prevDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var newDelegate = Cache.Accounts.GetDelegateOrDefault(content.OptionalString("delegate"));
             var result = content.Required("result");
 
             var delegation = new DelegationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Initiator = parent.Sender,
-                Block = parent.Block,
-                Level = parent.Block.Level,
+                Level = parent.Level,
                 Timestamp = parent.Timestamp,
                 OpHash = parent.OpHash,
                 Counter = parent.Counter,
                 Nonce = content.RequiredInt32("nonce"),
-                Sender = sender,
+                InitiatorId = initiator.Id,
+                SenderId = sender.Id,
                 SenderCodeHash = (sender as Contract)?.CodeHash,
-                Delegate = newDelegate,
-                PrevDelegate = prevDelegate,
+                DelegateId = newDelegate?.Id,
+                PrevDelegateId = prevDelegate?.Id,
                 Amount = sender.Balance,
                 Status = result.RequiredString("status") switch
                 {
@@ -179,15 +204,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
             #endregion
 
-            #region entities
-            var parentSender = parent.Sender;
-
-            Db.TryAttach(sender);
-            Db.TryAttach(parentSender);
-            Db.TryAttach(prevDelegate);
-            Db.TryAttach(newDelegate);
-            #endregion
-
             #region apply operation
             if (parent is TransactionOperation parentTx)
             {
@@ -195,138 +211,145 @@ namespace Tzkt.Sync.Protocols.Proto1
                 parentTx.InternalDelegations = (short?)((parentTx.InternalDelegations ?? 0) + 1);
             }
 
+            Db.TryAttach(sender);
+            sender.LastLevel = delegation.Level;
             sender.DelegationsCount++;
-            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount++;
-            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount++;
-            if (parentSender != sender && parentSender != prevDelegate && parentSender != newDelegate) parentSender.DelegationsCount++;
 
-            block.Operations |= Operations.Delegations;
+            if (prevDelegate != null)
+            {
+                Db.TryAttach(prevDelegate);
+                prevDelegate.LastLevel = delegation.Level;
+                if (prevDelegate != sender)
+                    prevDelegate.DelegationsCount++;
+            }
+
+            if (newDelegate != null)
+            {
+                Db.TryAttach(newDelegate);
+                newDelegate.LastLevel = delegation.Level;
+                if (newDelegate != sender && newDelegate != prevDelegate)
+                    newDelegate.DelegationsCount++;
+            }
+
+            if (initiator != sender && initiator != prevDelegate && initiator != newDelegate)
+            {
+                initiator.DelegationsCount++;
+            }
+
+            Context.Block.Operations |= Operations.Delegations;
+
+            Cache.AppState.Get().DelegationOpsCount++;
             #endregion
 
             #region apply result
             if (delegation.Status == OperationStatus.Applied)
             {
-                ResetDelegate(sender, prevDelegate);
-                if (newDelegate != null)
-                    SetDelegate(sender, newDelegate, block.Level);
+                if (prevDelegate != null)
+                {
+                    #region reset current delegation
+                    //if (result.TryGetProperty("balance_updates", out var updates))
+                    //    await Unstake(delegation, [.. updates.EnumerateArray()]);
+
+                    delegation.PrevDelegationLevel = sender.DelegationLevel;
+
+                    Undelegate(sender, prevDelegate);
+                    #endregion
+                }
+
+                if (newDelegate is Data.Models.Delegate _newDelegate)
+                {
+                    Delegate(sender, _newDelegate, delegation.Level);
+                }
             }
             #endregion
 
             Db.DelegationOps.Add(delegation);
+            Context.DelegationOps.Add(delegation);
         }
 
         public virtual async Task Revert(Block block, DelegationOperation delegation)
         {
             #region init
-            delegation.Block ??= block;
-            delegation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            delegation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
+            var sender = await Cache.Accounts.GetAsync(delegation.SenderId);
+            var prevDelegate = delegation.PrevDelegateId is int prevDelegateId
+                ? await Cache.Accounts.GetAsync(prevDelegateId) as Data.Models.Delegate
+                : null;
+            var newDelegate = delegation.DelegateId is int delegateId
+                ? await Cache.Accounts.GetAsync(delegateId)
+                : null;
 
-            delegation.Sender ??= await Cache.Accounts.GetAsync(delegation.SenderId);
-            delegation.Sender.Delegate ??= Cache.Accounts.GetDelegate(delegation.Sender.DelegateId);
-            delegation.Delegate ??= Cache.Accounts.GetDelegate(delegation.DelegateId);
-            delegation.PrevDelegate ??= Cache.Accounts.GetDelegate(delegation.PrevDelegateId);
-            #endregion
-
-            #region entities
-            //var block = delegation.Block;
-            var blockBaker = block.Proposer;
-            var sender = delegation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var newDelegate = delegation.Delegate;
-            var prevDelegation = await GetPrevDelegationAsync(sender, delegation.Id);
-            var prevDelegationLevel = prevDelegation?.Level;
-            var prevDelegate = prevDelegation?.Delegate;
-
-            if (prevDelegation == null)
-            {
-                if (sender is Contract contract)
-                {
-                    if (contract.WeirdDelegateId != null)
-                    {
-                        prevDelegate = Cache.Accounts.GetDelegateOrDefault(contract.WeirdDelegateId);
-                        prevDelegationLevel = prevDelegate?.ActivationLevel;
-                    }
-                    else
-                    {
-                        var origination = await GetOriginationAsync(contract);
-                        prevDelegate = origination.Delegate;
-                        prevDelegationLevel = origination.Level;
-                    }
-                }
-                else if (sender is Data.Models.Delegate delegat)
-                {
-                    if (delegat.ActivationLevel < block.Level)
-                    {
-                        prevDelegate = delegat;
-                    }
-                }
-            }
-
-            //Db.TryAttach(block);
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            Db.TryAttach(newDelegate);
             Db.TryAttach(prevDelegate);
+            Db.TryAttach(newDelegate);
+            Db.TryAttach(Context.Proposer);
             #endregion
 
             #region revert result
             if (delegation.Status == OperationStatus.Applied)
             {
-                delegation.Sender = sender;
-                delegation.Delegate = newDelegate;
-
-                if (sender.Id == newDelegate?.Id)
+                if (sender is Data.Models.Delegate baker)
                 {
-                    if (delegation.ResetDeactivation == null)
+                    if (delegation.PrevDeactivationLevel is int prevDeactivationLevel)
                     {
-                        #region weird delegations
-                        var delegat = (Data.Models.Delegate)delegation.Sender;
+                        #region deactivate baker
+                        baker.DeactivationLevel = prevDeactivationLevel;
+                        baker.Staked = false;
 
-                        var weirds = await Db.Contracts
-                            .Join(Db.OriginationOps, x => x.Id, x => x.ContractId, (contract, origination) => new { contract, origination })
-                            .Where(x => x.contract.WeirdDelegateId != null && x.contract.WeirdDelegateId == delegat.Id)
-                            .ToListAsync();
-
-                        foreach (var weird in weirds)
+                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
                         {
-                            Db.TryAttach(weird.origination);
-                            weird.origination.Delegate = null;
-                            if (delegat.Id != weird.origination.SenderId && delegat.Id != weird.origination.ManagerId) delegat.OriginationsCount--;
-
-                            if (weird.contract.DelegationsCount == 0)
-                            {
-                                Db.TryAttach(weird.contract);
-                                Cache.Accounts.Add(weird.contract);
-
-                                ResetDelegate(weird.contract, delegat);
-                            }
+                            Cache.Accounts.Add(delegator);
+                            delegator.LastLevel = delegation.Level;
+                            delegator.Staked = false;
                         }
                         #endregion
-
-                        ResetDelegate(sender, senderDelegate);
-                        DowngradeDelegate(delegation);
-
-                        sender = delegation.Sender;
-
-                        if (prevDelegate != null && prevDelegate.Id != sender.Id)
-                        {
-                            SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
-                            await RevertUnstake(delegation);
-                        }
                     }
                     else
                     {
-                        await DeactivateDelegate(delegation, (int)delegation.ResetDeactivation);
+                        #region unregister baker
+                        if (baker.DelegatorsCount != 0)
+                        {
+                            var weirdOriginations = await Db.OriginationOps
+                                .AsNoTracking()
+                                .Where(x => x.DelegateId == baker.Id && x.Status == OperationStatus.Applied)
+                                .ToListAsync();
+
+                            foreach (var origination in weirdOriginations)
+                            {
+                                var weirdDelegator = await Cache.Accounts.GetAsync(origination.ContractId!.Value);
+                                var delegated = await Db.DelegationOps
+                                    .AsNoTracking()
+                                    .Where(x => x.SenderId == weirdDelegator.Id && x.Status == OperationStatus.Applied)
+                                    .AnyAsync();
+
+                                if (!delegated)
+                                {
+                                    Db.TryAttach(weirdDelegator);
+                                    weirdDelegator.LastLevel = delegation.Level;
+                                    Undelegate(weirdDelegator, baker);
+                                }
+                            }
+                        }
+
+                        sender = newDelegate = DowngradeDelegate(baker);
+
+                        if (prevDelegate != null)
+                        {
+                            Delegate(sender, prevDelegate, delegation.PrevDelegationLevel!.Value);
+                            await RevertUnstake(delegation);
+                        }
+                        #endregion
                     }
                 }
                 else
                 {
-                    ResetDelegate(sender, senderDelegate);
-                    if (prevDelegate != null && prevDelegate.Id != sender.Id)
+                    if (newDelegate is Data.Models.Delegate _newDelegate)
                     {
-                        SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                        Undelegate(sender, _newDelegate);
+                    }
+
+                    if (prevDelegate != null)
+                    {
+                        Delegate(sender, prevDelegate, delegation.PrevDelegationLevel!.Value);
                         await RevertUnstake(delegation);
                     }
                 }
@@ -334,22 +357,34 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
+            sender.LastLevel = delegation.Level;
             sender.Balance += delegation.BakerFee;
+            sender.Counter = delegation.Counter - 1;
+            if (sender is User user) user.Revealed = true;
+            sender.DelegationsCount--;
+
             if (prevDelegate != null)
             {
+                prevDelegate.LastLevel = delegation.Level;
                 prevDelegate.StakingBalance += delegation.BakerFee;
-                if (prevDelegate.Id != sender.Id)
+                if (prevDelegate != sender)
+                {
                     prevDelegate.DelegatedBalance += delegation.BakerFee;
+                    prevDelegate.DelegationsCount--;
+                }
             }
-            blockBaker.Balance -= delegation.BakerFee;
-            blockBaker.StakingBalance -= delegation.BakerFee;
 
-            sender.DelegationsCount--;
-            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
-            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
+            if (newDelegate != null)
+            {
+                newDelegate.LastLevel = delegation.Level;
+                if (newDelegate != sender && newDelegate != prevDelegate)
+                    newDelegate.DelegationsCount--;
+            }
 
-            sender.Counter = delegation.Counter - 1;
-            (sender as User).Revealed = true;
+            Context.Proposer.Balance -= delegation.BakerFee;
+            Context.Proposer.StakingBalance -= delegation.BakerFee;
+
+            Cache.AppState.Get().DelegationOpsCount--;
             #endregion
 
             Db.DelegationOps.Remove(delegation);
@@ -360,69 +395,61 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task RevertInternal(Block block, DelegationOperation delegation)
         {
             #region init
-            delegation.Block ??= block;
-            delegation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            delegation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
+            var initiator = await Cache.Accounts.GetAsync(delegation.InitiatorId!.Value);
+            var sender = await Cache.Accounts.GetAsync(delegation.SenderId);
+            var prevDelegate = delegation.PrevDelegateId is int prevDelegateId
+                ? await Cache.Accounts.GetAsync(prevDelegateId) as Data.Models.Delegate
+                : null;
+            var newDelegate = delegation.DelegateId is int delegateId
+                ? await Cache.Accounts.GetAsync(delegateId)
+                : null;
 
-            delegation.Sender ??= await Cache.Accounts.GetAsync(delegation.SenderId);
-            delegation.Sender.Delegate ??= Cache.Accounts.GetDelegate(delegation.Sender.DelegateId);
-            delegation.Delegate ??= Cache.Accounts.GetDelegate(delegation.DelegateId);
-            delegation.PrevDelegate ??= Cache.Accounts.GetDelegate(delegation.PrevDelegateId);
-
-            delegation.Initiator = await Cache.Accounts.GetAsync(delegation.InitiatorId);
-            delegation.Initiator.Delegate ??= Cache.Accounts.GetDelegate(delegation.Initiator.DelegateId);
-            #endregion
-
-            #region entities
-            var parentSender = delegation.Initiator;
-            var sender = delegation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-
-            var newDelegate = delegation.Delegate;
-
-            var prevDelegation = await GetPrevDelegationAsync(sender, delegation.Id);
-            var prevDelegationLevel = prevDelegation?.Level;
-            var prevDelegate = prevDelegation?.Delegate;
-
-            if (prevDelegation == null && sender is Contract contract)
-            {
-                if (contract.WeirdDelegateId != null)
-                {
-                    prevDelegate = await Cache.Accounts.GetAsync(contract.WeirdDelegateId) as Data.Models.Delegate;
-                    prevDelegationLevel = prevDelegate?.ActivationLevel;
-                }
-                else
-                {
-                    var origination = await GetOriginationAsync(contract);
-                    prevDelegate = origination.Delegate;
-                    prevDelegationLevel = origination.Level;
-                }
-            }
-
-            //Db.TryAttach(block);
-
-            Db.TryAttach(parentSender);
+            Db.TryAttach(initiator);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-
-            Db.TryAttach(newDelegate);
             Db.TryAttach(prevDelegate);
+            Db.TryAttach(newDelegate);
             #endregion
 
             #region revert result
             if (delegation.Status == OperationStatus.Applied)
             {
-                ResetDelegate(sender, senderDelegate);
+                if (newDelegate is Data.Models.Delegate _newDelegate)
+                {
+                    Undelegate(sender, _newDelegate);
+                }
+
                 if (prevDelegate != null)
-                    SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
+                {
+                    Delegate(sender, prevDelegate, delegation.PrevDelegationLevel!.Value);
+                    //await RevertUnstake(delegation);
+                }
             }
             #endregion
 
             #region revert operation
+            sender.LastLevel = delegation.Level;
             sender.DelegationsCount--;
-            if (prevDelegate != null && prevDelegate != sender) prevDelegate.DelegationsCount--;
-            if (newDelegate != null && newDelegate != sender && newDelegate != prevDelegate) newDelegate.DelegationsCount--;
-            if (parentSender != sender && parentSender != prevDelegate && parentSender != newDelegate) parentSender.DelegationsCount--;
+
+            if (prevDelegate != null)
+            {
+                prevDelegate.LastLevel = delegation.Level;
+                if (prevDelegate != sender)
+                    prevDelegate.DelegationsCount--;
+            }
+
+            if (newDelegate != null)
+            {
+                newDelegate.LastLevel = delegation.Level;
+                if (newDelegate != sender && newDelegate != prevDelegate)
+                    newDelegate.DelegationsCount--;
+            }
+
+            if (initiator != sender && initiator != prevDelegate && initiator != newDelegate)
+            {
+                initiator.DelegationsCount--;
+            }
+
+            Cache.AppState.Get().DelegationOpsCount--;
             #endregion
 
             Db.DelegationOps.Remove(delegation);
@@ -434,20 +461,17 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        void UpgradeUser(DelegationOperation delegation)
+        Data.Models.Delegate UpgradeUser(User user)
         {
-            var user = delegation.Sender as User;
-
             var delegat = new Data.Models.Delegate
             {
-                ActivationLevel = delegation.Level,
+                ActivationLevel = Context.Block.Level,
                 Address = user.Address,
                 FirstLevel = user.FirstLevel,
                 LastLevel = user.LastLevel,
                 Balance = user.Balance,
                 Counter = user.Counter,
-                DeactivationLevel = GracePeriod.Init(delegation.Block),
-                Delegate = null,
+                DeactivationLevel = GracePeriod.Init(Context.Block.Level, Context.Protocol),
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
@@ -468,7 +492,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 UnstakedBalance = user.UnstakedBalance,
                 UnstakedBakerId = user.UnstakedBakerId,
                 StakingOpsCount = user.StakingOpsCount,
-                DelegatedBalance = 0,
+                DelegatedBalance = 0, 
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,
@@ -502,212 +526,20 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
                 SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                 RefutationGamesCount = user.RefutationGamesCount,
-                ActiveRefutationGamesCount = user.ActiveRefutationGamesCount
+                ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
+                StakingUpdatesCount = user.StakingUpdatesCount
             };
-
-            #region update relations
-            var touched = new List<(object entry, EntityState state)>();
-            foreach (var entry in Db.ChangeTracker.Entries())
-            {
-                switch (entry.Entity)
-                {
-                    case ActivationOperation op:
-                        if (op.Account?.Id == user.Id)
-                        {
-                            op.Account = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case DelegationOperation op:
-                        if (op.Sender?.Id == user.Id || op.Initiator?.Id == user.Id)
-                        {
-                            if (op.Sender?.Id == user.Id)
-                                op.Sender = delegat;
-
-                            if (op.Initiator?.Id == user.Id)
-                                op.Initiator = delegat;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case OriginationOperation op:
-                        if (op.Sender?.Id == user.Id || op.Manager?.Id == user.Id || op.Initiator?.Id == user.Id)
-                        {
-                            if (op.Sender?.Id == user.Id)
-                                op.Sender = delegat;
-
-                            if (op.Initiator?.Id == user.Id)
-                                op.Initiator = delegat;
-
-                            if (op.Manager?.Id == user.Id)
-                                op.Manager = delegat;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case RegisterConstantOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case RevealOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case SetDepositsLimitOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TransactionOperation op:
-                        if (op.Sender?.Id == user.Id || op.Target?.Id == user.Id || op.Initiator?.Id == user.Id)
-                        {
-                            if (op.Sender?.Id == user.Id)
-                                op.Sender = delegat;
-
-                            if (op.Initiator?.Id == user.Id)
-                                op.Initiator = delegat;
-
-                            if (op.Target?.Id == user.Id)
-                                op.Target = delegat;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TransferTicketOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupCommitOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupDispatchTicketsOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupFinalizeCommitmentOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupOriginationOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupRejectionOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupRemoveCommitmentOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupReturnBondOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupSubmitBatchOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case IncreasePaidStorageOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case UpdateConsensusKeyOperation op:
-                        if (op.Sender?.Id == user.Id)
-                        {
-                            op.Sender = delegat;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case SmartRollupAddMessagesOperation:
-                    case SmartRollupCementOperation:
-                    case SmartRollupExecuteOperation:
-                    case SmartRollupOriginateOperation:
-                    case SmartRollupPublishOperation:
-                    case SmartRollupRecoverBondOperation:
-                    case SmartRollupRefuteOperation:
-                        var managerOp = entry.Entity as ManagerOperation;
-                        if (managerOp.Sender?.Id == user.Id)
-                        {
-                            managerOp.Sender = delegat;
-                            touched.Add((managerOp, entry.State));
-                        }
-                        break;
-                    case Contract contract:
-                        if (contract.WeirdDelegate?.Id == user.Id || contract.Creator?.Id == user.Id || contract.Manager?.Id == user.Id)
-                        {
-                            if (contract.WeirdDelegate?.Id == user.Id)
-                                contract.WeirdDelegate = delegat;
-
-                            if (contract.Creator?.Id == user.Id)
-                                contract.Creator = delegat;
-
-                            if (contract.Manager?.Id == user.Id)
-                                contract.Manager = delegat;
-
-                            touched.Add((contract, entry.State));
-                        }
-                        break;
-                }
-            }
-            #endregion
 
             var isAdded = Db.Entry(user).State == EntityState.Added;
             Db.Entry(user).State = EntityState.Detached;
             Db.Entry(delegat).State = isAdded ? EntityState.Added : EntityState.Modified;
             Cache.Accounts.Add(delegat);
 
-            #region update graph
-            foreach (var (entry, state) in touched)
-                Db.Entry(entry).State = state;
-            #endregion
-
-            delegation.Sender = delegation.Delegate = delegat;
+            return delegat;
         }
 
-        void DowngradeDelegate(DelegationOperation delegation)
+        User DowngradeDelegate(Data.Models.Delegate delegat)
         {
-            var delegat = delegation.Delegate;
-
             var user = new User
             {
                 Address = delegat.Address,
@@ -715,7 +547,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 LastLevel = delegat.LastLevel,
                 Balance = delegat.Balance,
                 Counter = delegat.Counter,
-                Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
                 StakedPseudotokens = delegat.StakedPseudotokens,
@@ -768,309 +599,42 @@ namespace Tzkt.Sync.Protocols.Proto1
                 SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
                 DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
                 RefutationGamesCount = delegat.RefutationGamesCount,
-                ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount
+                ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
+                StakingUpdatesCount = delegat.StakingUpdatesCount
             };
-
-            #region update relations
-            var touched = new List<(object entry, EntityState state)>();
-            foreach (var entry in Db.ChangeTracker.Entries())
-            {
-                switch (entry.Entity)
-                {
-                    case ActivationOperation op:
-                        if (op.Account?.Id == delegat.Id)
-                        {
-                            op.Account = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case DelegationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.Initiator?.Id == delegat.Id || op.PrevDelegate?.Id == delegat.Id)
-                        {
-                            if (op.Sender?.Id == delegat.Id)
-                                op.Sender = user;
-
-                            if (op.Initiator?.Id == delegat.Id)
-                                op.Initiator = user;
-
-                            if (op.Delegate?.Id == delegat.Id)
-                                op.Delegate = null;
-
-                            if (op.PrevDelegate?.Id == delegat.Id)
-                                op.PrevDelegate = null;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case OriginationOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Manager?.Id == delegat.Id || op.Delegate?.Id == delegat.Id || op.Initiator?.Id == delegat.Id)
-                        {
-                            if (op.Sender?.Id == delegat.Id)
-                                op.Sender = user;
-
-                            if (op.Initiator?.Id == delegat.Id)
-                                op.Initiator = user;
-
-                            if (op.Manager?.Id == delegat.Id)
-                                op.Manager = user;
-
-                            if (op.Delegate?.Id == delegat.Id)
-                                op.Delegate = null;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case RegisterConstantOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case RevealOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case SetDepositsLimitOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TransactionOperation op:
-                        if (op.Sender?.Id == delegat.Id || op.Target?.Id == delegat.Id || op.Initiator?.Id == delegat.Id)
-                        {
-                            if (op.Sender?.Id == delegat.Id)
-                                op.Sender = user;
-
-                            if (op.Initiator?.Id == delegat.Id)
-                                op.Initiator = user;
-
-                            if (op.Target?.Id == delegat.Id)
-                                op.Target = user;
-
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TransferTicketOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupCommitOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupDispatchTicketsOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupFinalizeCommitmentOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupOriginationOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupRejectionOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupRemoveCommitmentOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupReturnBondOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case TxRollupSubmitBatchOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case IncreasePaidStorageOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case UpdateConsensusKeyOperation op:
-                        if (op.Sender?.Id == delegat.Id)
-                        {
-                            op.Sender = user;
-                            touched.Add((op, entry.State));
-                        }
-                        break;
-                    case SmartRollupAddMessagesOperation:
-                    case SmartRollupCementOperation:
-                    case SmartRollupExecuteOperation:
-                    case SmartRollupOriginateOperation:
-                    case SmartRollupPublishOperation:
-                    case SmartRollupRecoverBondOperation:
-                    case SmartRollupRefuteOperation:
-                        var managerOp = entry.Entity as ManagerOperation;
-                        if (managerOp.Sender?.Id == delegat.Id)
-                        {
-                            managerOp.Sender = user;
-                            touched.Add((managerOp, entry.State));
-                        }
-                        break;
-                    case Contract contract:
-                        if (contract.WeirdDelegate?.Id == delegat.Id || contract.Creator?.Id == delegat.Id || contract.Manager?.Id == delegat.Id)
-                        {
-                            if (contract.WeirdDelegate?.Id == delegat.Id)
-                                contract.WeirdDelegate = user;
-
-                            if (contract.Creator?.Id == delegat.Id)
-                                contract.Creator = user;
-
-                            if (contract.Manager?.Id == delegat.Id)
-                                contract.Manager = user;
-
-                            touched.Add((contract, entry.State));
-                        }
-                        break;
-                }
-            }
-            #endregion
 
             var isAdded = Db.Entry(delegat).State == EntityState.Added;
             Db.Entry(delegat).State = EntityState.Detached;
             Db.Entry(user).State = isAdded ? EntityState.Added : EntityState.Modified;
             Cache.Accounts.Add(user);
 
-            #region update graph
-            foreach (var (entry, state) in touched)
-                Db.Entry(entry).State = state;
-            #endregion
-
-            delegation.Sender = user;
-            delegation.Delegate = null;
+            return user;
         }
 
-        async Task ReactivateDelegate(DelegationOperation delegation)
+        void Delegate(Account delegator, Data.Models.Delegate baker, int delegationLevel)
         {
-            var delegat = delegation.Sender as Data.Models.Delegate;
+            delegator.DelegateId = baker.Id;
+            delegator.DelegationLevel = delegationLevel;
+            delegator.Staked = baker.Staked;
 
-            delegat.DeactivationLevel = GracePeriod.Init(delegation.Block);
-            delegat.Staked = true;
-
-            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-            {
-                Cache.Accounts.Add(delegator);
-                delegator.Staked = true;
-            }
-
-            delegation.Delegate = delegat;
+            baker.DelegatorsCount++;
+            baker.StakingBalance += delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+            baker.DelegatedBalance += delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
         }
 
-        async Task DeactivateDelegate(DelegationOperation delegation, int deactivationLevel)
+        void Undelegate(Account delegator, Data.Models.Delegate baker)
         {
-            var delegat = delegation.Sender as Data.Models.Delegate;
+            baker.DelegatorsCount--;
+            baker.StakingBalance -= delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+            baker.DelegatedBalance -= delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
 
-            delegat.DeactivationLevel = deactivationLevel;
-            delegat.Staked = false;
-
-            foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == delegat.Id).ToListAsync())
-            {
-                Cache.Accounts.Add(delegator);
-                delegator.Staked = false;
-            }
-        }
-
-        void SetDelegate(Account sender, Data.Models.Delegate newDelegate, int level)
-        {
-            sender.Delegate = newDelegate;
-            sender.DelegateId = newDelegate.Id;
-            sender.DelegationLevel = level;
-            sender.Staked = newDelegate.Staked;
-
-            newDelegate.DelegatorsCount++;
-            newDelegate.StakingBalance += sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
-            newDelegate.DelegatedBalance += sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
-        }
-
-        void ResetDelegate(Account sender, Data.Models.Delegate prevDelegate)
-        {
-            if (prevDelegate != null)
-            {
-                if (sender.Address != prevDelegate.Address)
-                {
-                    prevDelegate.DelegatorsCount--;
-                    prevDelegate.DelegatedBalance -= sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
-                }
-
-                prevDelegate.StakingBalance -= sender.Balance - ((sender as User)?.UnstakedBalance ?? 0);
-            }
-
-            sender.Delegate = null;
-            sender.DelegateId = null;
-            sender.DelegationLevel = null;
-            sender.Staked = false;
+            delegator.DelegateId = null;
+            delegator.DelegationLevel = null;
+            delegator.Staked = false;
         }
 
         protected virtual Task Unstake(DelegationOperation op, List<JsonElement> balanceUpdates) => Task.CompletedTask;
 
         protected virtual Task RevertUnstake(DelegationOperation op) => Task.CompletedTask;
-
-        async Task<OriginationOperation> GetOriginationAsync(Contract contract)
-        {
-            var result = await Db.OriginationOps
-                .FirstAsync(x => x.Status == OperationStatus.Applied && x.ContractId == contract.Id);
-
-            result.Delegate ??= Cache.Accounts.GetDelegate(result.DelegateId);
-
-            return result;
-        }
-
-        async Task<DelegationOperation> GetPrevDelegationAsync(Account sender, long id)
-        {
-            var result = await Db.DelegationOps
-                .Where(x => x.Status == OperationStatus.Applied &&
-                    x.SenderId == sender.Id &&
-                    x.Id < id)
-                .OrderByDescending(x => x.Id)
-                .FirstOrDefaultAsync();
-
-            if (result != null)
-            {
-                result.Sender = sender;
-                result.Delegate = Cache.Accounts.GetDelegate(result.DelegateId);
-            }
-
-            return result;
-        }
     }
 }

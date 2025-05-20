@@ -4,8 +4,8 @@
     {
         public int CreatorId { get; set; }
         public int PvmKind { get; set; }
-        public string GenesisCommitment { get; set; }
-        public string LastCommitment { get; set; }
+        public required string GenesisCommitment { get; set; }
+        public required string LastCommitment { get; set; }
         public int InboxLevel { get; set; }
         public int TotalStakers { get; set; }
         public int ActiveStakers { get; set; }

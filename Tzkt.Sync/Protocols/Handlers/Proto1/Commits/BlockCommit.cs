@@ -3,11 +3,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class BlockCommit : ProtocolCommit
+    class BlockCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Block Block { get; private set; }
-
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Block Block { get; private set; } = null!;
 
         public virtual async Task Apply(JsonElement rawBlock)
         {
@@ -35,18 +33,17 @@ namespace Tzkt.Sync.Protocols.Proto1
                 events |= BlockEvents.BalanceSnapshot;
 
             var round = rawBlock.Required("header").RequiredInt32("priority");
-            var baker = Cache.Accounts.GetDelegate(rawBlock.Required("metadata").RequiredString("baker"));
+            var baker = Cache.Accounts.GetExistingDelegate(rawBlock.Required("metadata").RequiredString("baker"));
             Block = new Block
             {
                 Id = Cache.AppState.NextOperationId(),
                 Hash = rawBlock.RequiredString("hash"),
                 Cycle = protocol.GetCycle(level),
                 Level = level,
-                Protocol = protocol,
+                ProtoCode = protocol.Code,
                 Timestamp = rawBlock.Required("header").RequiredDateTime("timestamp"),
                 PayloadRound = round,
                 BlockRound = round,
-                Proposer = baker,
                 ProposerId = baker.Id,
                 ProducerId = baker.Id,
                 Events = events,
@@ -57,15 +54,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
 
             #region entities
-            var proto = Block.Protocol;
-            Db.TryAttach(proto);
+            Db.TryAttach(protocol);
             Db.TryAttach(baker);
             #endregion
 
             baker.Balance += Block.RewardDelegated;
             baker.BlocksCount++;
 
-            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block.Level, protocol) : GracePeriod.Init(Block.Level, protocol);
             if (baker.DeactivationLevel < newDeactivationLevel)
             {
                 if (baker.DeactivationLevel <= Block.Level)
@@ -76,26 +72,26 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
-                proto.LastLevel = Block.Level;
+                protocol.LastLevel = Block.Level;
 
+            Cache.AppState.Get().BlocksCount++;
             Cache.Statistics.Current.TotalCreated += Block.RewardDelegated;
             Cache.Statistics.Current.TotalFrozen += Block.RewardDelegated + Block.Deposit + Block.Fees;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
+
+            Context.Block = Block;
+            Context.Proposer = baker;
+            Context.Protocol = protocol;
         }
 
         public virtual async Task Revert(Block block)
         {
             Block = block;
-            Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
 
             #region entities
-            var proto = Block.Protocol;
-            var baker = Block.Proposer;
-
-            Db.TryAttach(proto);
+            var baker = Context.Proposer;
             Db.TryAttach(baker);
             #endregion
 
@@ -109,6 +105,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 baker.DeactivationLevel = (int)Block.ResetBakerDeactivation;
             }
+
+            Cache.AppState.Get().BlocksCount--;
 
             Db.Blocks.Remove(Block);
             Cache.AppState.ReleaseOperationId();

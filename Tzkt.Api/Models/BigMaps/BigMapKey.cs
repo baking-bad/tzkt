@@ -15,18 +15,18 @@
         /// <summary>
         /// Key hash
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Key in JSON or Micheline format, depending on the `micheline` query parameter.
         /// </summary>
-        public object Key { get; set; }
+        public required object Key { get; set; }
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
         /// Note, if the key is inactive (removed) it will contain the last non-null value.
         /// </summary>
-        public object Value { get; set; }
+        public required object Value { get; set; }
 
         /// <summary>
         /// Level of the block where the bigmap key was seen first time

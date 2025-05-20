@@ -1,16 +1,15 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Tzkt.Data.Models
 {
     public class Account
     {
-        public int Id { get; set; }
-        public string Address { get; set; }
-        public AccountType Type { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int Id { get; set; }
+        public required string Address { get; set; }
+        public required AccountType Type { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
 
         public long Balance { get; set; }
         public long RollupBonds { get; set; }
@@ -64,14 +63,6 @@ namespace Tzkt.Data.Models
 
         public int RefutationGamesCount { get; set; }
         public int ActiveRefutationGamesCount { get; set; }
-        #endregion
-
-        #region relations
-        [ForeignKey(nameof(DelegateId))]
-        public Delegate Delegate { get; set; }
-
-        [ForeignKey(nameof(FirstLevel))]
-        public Block FirstBlock { get; set; }
         #endregion
 
         public override string ToString() => Address;
@@ -141,6 +132,9 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.DelegateId);
 
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.FirstLevel);
+
             // shadow property
             modelBuilder.Entity<Account>()
                 .HasIndex("Metadata")
@@ -152,19 +146,6 @@ namespace Tzkt.Data.Models
                 .HasIndex("Extras")
                 .HasMethod("gin")
                 .HasOperators("jsonb_path_ops");
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<Account>()
-                .HasOne(x => x.FirstBlock)
-                .WithMany(x => x.CreatedAccounts)
-                .HasForeignKey(x => x.FirstLevel)
-                .HasPrincipalKey(x => x.Level);
-
-            modelBuilder.Entity<Account>()
-                .HasOne(x => x.Delegate)
-                .WithMany(x => x.DelegatedAccounts)
-                .HasForeignKey(x => x.DelegateId);
             #endregion
         }
     }

@@ -8,10 +8,13 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         public override async Task Apply(Block block)
         {
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (!block.Events.HasFlag(BlockEvents.CycleBegin))
+                return;
+
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                 {
                     Cache.AppState.Get().CyclesCount--;
                     return;
@@ -26,12 +29,10 @@ namespace Tzkt.Sync.Protocols.Proto21
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                 {
                     Cache.AppState.Get().CyclesCount++;
                     return;

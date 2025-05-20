@@ -1,23 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Text.Json;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto10
 {
-    class BakingRightsCommit : Proto3.BakingRightsCommit
+    class BakingRightsCommit(ProtocolHandler protocol) : Proto3.BakingRightsCommit(protocol)
     {
-        public BakingRightsCommit(ProtocolHandler protocol) : base(protocol) { }
-
         // Tezos node is no longer able to normally return endorsing rights for a cycle,
         // so we have to temporarily add some crutches, until we implement rights calculation
-        protected override async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, int cycle)
+        protected override async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, Protocol protocol, int cycle)
         {
             Logger.LogInformation("Load endorsing rights");
             try
@@ -34,7 +25,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 using var doc = await JsonDocument.ParseAsync(stream, default, cts.Token);
                 var rights = doc.RootElement.Clone().RequiredArray().EnumerateArray();
 
-                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != block.Protocol.BlocksPerCycle * block.Protocol.EndorsersPerBlock)
+                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                     throw new ValidationException("Rpc returned less endorsing rights (slots) than expected");
 
                 return rights;
@@ -42,7 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             }
             catch
             {
-                Logger.LogInformation("Failed to load by cycle. Loading by level for {cnt} blocks with 10 seconds timeout...", block.Protocol.BlocksPerCycle);
+                Logger.LogInformation("Failed to load by cycle. Loading by level for {cnt} blocks with 10 seconds timeout...", protocol.BlocksPerCycle);
                 #region throttle
                 using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
                 {
@@ -50,9 +41,9 @@ namespace Tzkt.Sync.Protocols.Proto10
                     Timeout = Timeout.InfiniteTimeSpan
                 };
 
-                var rights = new List<JsonElement>(block.Protocol.BlocksPerCycle * block.Protocol.EndorsersPerBlock / 2);
-                var firstLevel = block.Protocol.GetCycleStart(cycle);
-                var lastLevel = block.Protocol.GetCycleEnd(cycle);
+                var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+                var firstLevel = protocol.GetCycleStart(cycle);
+                var lastLevel = protocol.GetCycleEnd(cycle);
                 var attempts = 0;
 
                 for (int level = firstLevel; level <= lastLevel; level++)
@@ -78,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     }
                 }
 
-                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != block.Protocol.BlocksPerCycle * block.Protocol.EndorsersPerBlock)
+                if (rights.Count == 0 || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
                     throw new ValidationException("Rpc returned less endorsing rights (slots) than expected");
 
                 return rights;

@@ -1,8 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
-
 using Tzkt.Data;
-using Tzkt.Data.Models;
 using Tzkt.Sync.Services;
 
 namespace Tzkt.Sync.Protocols
@@ -12,11 +9,13 @@ namespace Tzkt.Sync.Protocols
         protected readonly TzktContext Db;
         protected readonly CacheService Cache;
         protected readonly ProtocolHandler Proto;
+        protected readonly BlockContext Context;
         protected readonly ILogger Logger;
 
         public ProtocolCommit(ProtocolHandler protocol)
         {
             Proto = protocol;
+            Context = protocol.Context;
             Db = protocol.Db;
             Cache = protocol.Cache;
             Logger = protocol.Logger;

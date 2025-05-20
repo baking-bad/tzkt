@@ -40,11 +40,11 @@ namespace Tzkt.Api
 
             int? _eq = null;
             int? _ne = null;
-            List<int> _listIn = null;
-            List<int> _listNi = null;
+            List<int>? _listIn = null;
+            List<int>? _listNi = null;
 
             if ((value ?? eq) != null)
-                _eq = (await Accounts.GetAsync(value ?? eq))?.Id ?? -1;
+                _eq = (await Accounts.GetAsync((value ?? eq)!))?.Id ?? -1;
 
             if (ne != null)
                 _ne = (await Accounts.GetAsync(ne))?.Id ?? -1;

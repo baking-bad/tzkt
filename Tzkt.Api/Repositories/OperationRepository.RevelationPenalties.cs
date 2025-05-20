@@ -1,23 +1,24 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
         public async Task<int> GetRevelationPenaltiesCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""RevelationPenaltyOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<RevelationPenaltyOperation> GetRevelationPenalty(long id, Symbols quote)
+        public async Task<RevelationPenaltyOperation?> GetRevelationPenalty(long id, Symbols quote)
         {
             var sql = $@"
                 SELECT      o.*, b.""Hash""
@@ -44,21 +45,59 @@ namespace Tzkt.Api.Repositories
             };
         }
 
+        public async Task<IEnumerable<Activity>> GetRevelationPenaltyOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.RevelationPenaltiesCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""BakerId""", ids));
+
+            return await GetRevelationPenalties(
+                or,
+                null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<RevelationPenaltyOperation>> GetRevelationPenalties(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+            OrParameter? or,
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevelationPenaltyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(or)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -77,13 +116,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetRevelationPenalties(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetRevelationPenalties(
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
@@ -110,21 +149,21 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -168,13 +207,13 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetRevelationPenalties(
-            Int64Parameter id,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetRevelationPenalties(
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
@@ -198,20 +237,20 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevelationPenaltyOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

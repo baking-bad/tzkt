@@ -10,10 +10,9 @@
         public int TicketsCount { get; set; }
         public int EventsCount { get; set; }
 
-        public int? CreatorId { get; set; }
-        public int? ManagerId { get; set; }
+        public int CreatorId { get; set; }
 
-        public string Metadata { get; set; }
+        public string? Metadata { get; set; }
 
         public string KindString => ContractKinds.ToString(Kind);
     }

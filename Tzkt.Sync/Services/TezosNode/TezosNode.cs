@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using App.Metrics;
 using Tzkt.Data;
-using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
@@ -12,19 +12,21 @@ namespace Tzkt.Sync.Services
         readonly TzktClient Rpc;
         readonly IServiceScopeFactory Services;
         readonly ILogger Logger;
+        readonly IMetrics Metrics;
 
-        Header Header;
-        Constants Constants;
-        DateTime NextBlock;
-        DateTime NextSyncStateUpdate;
+        Header? Header;
+        Constants? Constants;
+        DateTime NextBlock = DateTime.MinValue;
+        DateTime NextSyncStateUpdate = DateTime.MinValue;
 
-        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger)
+        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger, IMetrics metrics)
         {
             Config = config.GetTezosNodeConfig();
             BaseUrl = $"{Config.Endpoint.TrimEnd('/')}/";
             Rpc = new TzktClient(BaseUrl, Config.Timeout);
             Services = services;
             Logger = logger;
+            Metrics = metrics;
         }
 
         public async Task<JsonElement> GetAsync(string url)
@@ -34,7 +36,7 @@ namespace Tzkt.Sync.Services
             return doc.RootElement.Clone();
         }
 
-        public async Task<T> PostAsync<T>(string url, string content)
+        public async Task<T?> PostAsync<T>(string url, string content)
         {
             return await Rpc.PostAsync<T>(url, content);
         }
@@ -43,15 +45,15 @@ namespace Tzkt.Sync.Services
         {
             if (DateTime.UtcNow >= NextBlock)
             {
-                var header = await Rpc.GetObjectAsync<Header>(Config.Lag > 0
+                var header = (await Rpc.GetObjectAsync<Header>(Config.Lag > 0
                     ? $"chains/main/blocks/head~{Config.Lag}/header"
-                    : "chains/main/blocks/head/header");
+                    : "chains/main/blocks/head/header"))!;
 
                 if (header.Protocol != Header?.Protocol)
-                    Constants = await Rpc.GetObjectAsync<Constants>($"chains/main/blocks/{header.Level}/context/constants");
+                    Constants = (await Rpc.GetObjectAsync<Constants>($"chains/main/blocks/{header.Level}/context/constants"))!;
 
                 NextBlock = header.Level != Header?.Level
-                    ? header.Timestamp.AddSeconds((Constants.MinBlockDelay ?? Constants.BlockIntervals[0]) * (Config.Lag + 1))
+                    ? header.Timestamp.AddSeconds((Constants!.MinBlockDelay ?? Constants.BlockIntervals![0]) * (Config.Lag + 1))
                     : DateTime.UtcNow.AddSeconds(1);
 
                 #region update last sync
@@ -64,11 +66,16 @@ namespace Tzkt.Sync.Services
                         var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
 
                         var syncTime = DateTime.UtcNow;
-                        await db.Database.ExecuteSqlRawAsync($@"
-                        UPDATE  ""{nameof(TzktContext.AppState)}""
-                        SET     ""{nameof(AppState.KnownHead)}"" = {header.Level},
-                                ""{nameof(AppState.LastSync)}"" = '{syncTime:yyyy-MM-ddTHH:mm:ssZ}';");
+                        syncTime = syncTime.AddTicks(-(syncTime.Ticks % 10_000_000));
+
+                        await db.Database.ExecuteSqlRawAsync("""
+                            UPDATE "AppState"
+                            SET "KnownHead" = {0},
+                                "LastSync" = {1}
+                            """, header.Level, syncTime);
                         cache.AppState.UpdateSyncState(header.Level, syncTime);
+
+                        Metrics.Measure.Gauge.SetHealthValue(cache.AppState.Get());
 
                         NextSyncStateUpdate = syncTime.AddSeconds(5);
                     }
@@ -83,12 +90,12 @@ namespace Tzkt.Sync.Services
                 Header = header;
             }
 
-            return Header;
+            return Header!;
         }
 
-        public Task<Header> GetHeaderAsync(int level)
+        public async Task<Header> GetHeaderAsync(int level)
         {
-            return Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header");
+            return (await Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header"))!;
         }
 
         public async Task<bool> HasUpdatesAsync(int level)

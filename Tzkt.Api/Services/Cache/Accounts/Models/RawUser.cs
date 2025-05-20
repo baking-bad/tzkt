@@ -5,7 +5,7 @@ namespace Tzkt.Api.Services.Cache
     public class RawUser : RawAccount
     {
         public bool Revealed { get; set; }
-        public string PublicKey { get; set; }
+        public string? PublicKey { get; set; }
 
         public BigInteger? StakedPseudotokens { get; set; }
         public long UnstakedBalance { get; set; }

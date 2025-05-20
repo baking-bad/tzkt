@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
 {
     public class IncreasePaidStorageOperation : ManagerOperation
     {
-        public int ContractId { get; set; }
+        public int? ContractId { get; set; }
         public BigInteger Amount { get; set; }
     }
 
@@ -39,14 +39,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<IncreasePaidStorageOperation>()
                 .HasIndex(x => x.ContractId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<IncreasePaidStorageOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.IncreasePaidStorageOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

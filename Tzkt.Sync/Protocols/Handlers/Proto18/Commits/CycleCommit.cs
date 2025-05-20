@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class CycleCommit : Proto14.CycleCommit
+    class CycleCommit(ProtocolHandler protocol) : Proto14.CycleCommit(protocol)
     {
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public override async Task Apply(Block block)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
@@ -16,20 +14,20 @@ namespace Tzkt.Sync.Protocols.Proto18
             await base.Apply(block);
 
             var res = await Proto.Rpc.GetExpectedIssuance(block.Level);
-            var issuance = res.EnumerateArray().First(x => x.RequiredInt32("cycle") == FutureCycle.Index);
+            var issuance = res.EnumerateArray().First(x => x.RequiredInt32("cycle") == FutureCycle!.Index);
 
-            FutureCycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
+            FutureCycle!.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
             FutureCycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-            FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (block.Protocol.EndorsersPerBlock - block.Protocol.ConsensusThreshold);
+            FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
             FutureCycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
             FutureCycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
             FutureCycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
         }
 
-        protected override async Task<Dictionary<int, long>> GetSelectedStakes(Block block)
+        protected override async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol, List<SnapshotBalance> snapshots)
         {
-            if (block.Cycle == block.Protocol.FirstCycle)
-                return await base.GetSelectedStakes(block);
+            if (block.Cycle == protocol.FirstCycle)
+                return await base.GetSelectedStakes(block, protocol, snapshots);
 
             var slashings = new Dictionary<int, int>();
             var prevBlock = Cache.Blocks.Get(block.Level - 1);
@@ -52,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleEndorsingSlashedPercentage;
             }
 
-            return Snapshots.Select(x =>
+            return snapshots.Select(x =>
             {
                 var ownStaked = x.OwnStakedBalance;
                 var externalStaked = x.ExternalStakedBalance;
@@ -64,15 +62,15 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var totalStaked = ownStaked + externalStaked;
 
                 var stakingOverBaking = Math.Min(
-                    block.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000,
+                    protocol.MaxExternalOverOwnStakeRatio * 1_000_000,
                     Cache.Accounts.GetDelegate(x.AccountId).LimitOfStakingOverBaking ?? long.MaxValue);
 
                 var frozen = Math.Min(totalStaked, ownStaked + (long)((BigInteger)ownStaked * stakingOverBaking / 1_000_000));
-                var delegated = Math.Min(x.StakingBalance - frozen, ownStaked * block.Protocol.MaxDelegatedOverFrozenRatio);
+                var delegated = Math.Min(x.StakingBalance - frozen, ownStaked * protocol.MaxDelegatedOverFrozenRatio);
 
                 return (x.AccountId, frozen, delegated);
             })
-            .Where(x => x.frozen >= block.Protocol.MinimalFrozenStake && x.frozen + x.delegated >= block.Protocol.MinimalStake)
+            .Where(x => x.frozen >= protocol.MinimalFrozenStake && x.frozen + x.delegated >= protocol.MinimalStake)
             .ToDictionary(x => x.AccountId, x =>
             {
                 return x.frozen + x.delegated;

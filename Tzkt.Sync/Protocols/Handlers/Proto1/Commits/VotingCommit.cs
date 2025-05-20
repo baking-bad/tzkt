@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class VotingCommit : ProtocolCommit
+    class VotingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             var state = Cache.AppState.Get();
@@ -21,8 +19,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             await UpdateProposalsStatus(current);
 
             var nextPeriod = current.Status == PeriodStatus.Success
-                ? StartNextPeriod(block, current)
-                : StartProposalPeriod(block, current);
+                ? StartNextPeriod(block, Context.Protocol, current)
+                : StartProposalPeriod(block, Context.Protocol, current);
 
             state.VotingPeriod = nextPeriod.Index;
             state.VotingEpoch = nextPeriod.Epoch;
@@ -53,9 +51,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"
-                DELETE FROM ""VotingPeriods"" WHERE ""Index"" = {current.Index};
-                DELETE FROM ""VotingSnapshots"" WHERE ""Period"" = {current.Index};");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "VotingPeriods" WHERE "Index" = {0};
+                DELETE FROM "VotingSnapshots" WHERE "Period" = {0};
+                """, current.Index);
             Cache.Periods.Remove(current);
                 
             state.VotingPeriod = prev.Index;
@@ -99,7 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 var pendings = Db.ChangeTracker.Entries()
                     .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
-                    .Select(x => x.Entity as Proposal)
+                    .Select(x => (x.Entity as Proposal)!)
                     .ToList();
 
                 foreach (var pending in pendings)
@@ -139,40 +138,41 @@ namespace Tzkt.Sync.Protocols.Proto1
             return ProposalStatus.Skipped;
         }
 
-        protected virtual VotingPeriod StartNextPeriod(Block block, VotingPeriod current)
+        protected virtual VotingPeriod StartNextPeriod(Block block, Protocol protocol, VotingPeriod current)
         {
             return current.Kind switch
             {
-                PeriodKind.Proposal => StartBallotPeriod(block, current, PeriodKind.Exploration),
-                PeriodKind.Exploration => StartWaitingPeriod(block, current, PeriodKind.Testing),
-                PeriodKind.Testing => StartBallotPeriod(block, current, PeriodKind.Promotion),
-                PeriodKind.Promotion => StartProposalPeriod(block, current),
+                PeriodKind.Proposal => StartBallotPeriod(block, protocol, current, PeriodKind.Exploration),
+                PeriodKind.Exploration => StartWaitingPeriod(block, protocol, current, PeriodKind.Testing),
+                PeriodKind.Testing => StartBallotPeriod(block, protocol, current, PeriodKind.Promotion),
+                PeriodKind.Promotion => StartProposalPeriod(block, protocol, current),
                 _ => throw new Exception("Invalid voting period kind")
             };
         }
 
-        protected VotingPeriod StartProposalPeriod(Block block, VotingPeriod current)
+        protected VotingPeriod StartProposalPeriod(Block block, Protocol protocol, VotingPeriod current)
         {
-            var proto = block.Protocol;
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch + 1,
                 FirstLevel = block.Level + 1,
-                LastLevel = block.Level + proto.BlocksPerVoting,
+                LastLevel = block.Level + protocol.BlocksPerVoting,
                 Kind = PeriodKind.Proposal,
                 Status = PeriodStatus.Active
             };
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, block.Protocol))
+                .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, proto),
+                    VotingPower = GetVotingPower(x, block, protocol),
                     Status = VoterStatus.None
                 });
 
@@ -194,7 +194,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             //#endregion
 
             #region quorum
-            period.UpvotesQuorum = proto.ProposalQuorum;
+            period.UpvotesQuorum = protocol.ProposalQuorum;
             period.ProposalsCount = 0;
             period.TopUpvotes = 0;
             period.TopVotingPower = 0;
@@ -207,28 +207,29 @@ namespace Tzkt.Sync.Protocols.Proto1
             return period;
         }
 
-        protected VotingPeriod StartBallotPeriod(Block block, VotingPeriod current, PeriodKind kind)
+        protected VotingPeriod StartBallotPeriod(Block block, Protocol protocol, VotingPeriod current, PeriodKind kind)
         {
-            var proto = block.Protocol;
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch,
                 FirstLevel = block.Level + 1,
-                LastLevel = block.Level + proto.BlocksPerVoting,
+                LastLevel = block.Level + protocol.BlocksPerVoting,
                 Kind = kind,
                 Status = PeriodStatus.Active
             };
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, block.Protocol))
+                .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, proto),
+                    VotingPower = GetVotingPower(x, block, protocol),
                     Status = VoterStatus.None
                 });
 
@@ -250,8 +251,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             //#endregion
 
             #region quorum
-            period.ParticipationEma = GetParticipationEma(period, proto);
-            period.BallotsQuorum = GetBallotQuorum(period, proto);
+            period.ParticipationEma = GetParticipationEma(period, protocol);
+            period.BallotsQuorum = GetBallotQuorum(period, protocol);
             period.Supermajority = 8000;
 
             period.YayBallots = 0;
@@ -268,28 +269,29 @@ namespace Tzkt.Sync.Protocols.Proto1
             return period;
         }
 
-        protected VotingPeriod StartWaitingPeriod(Block block, VotingPeriod current, PeriodKind kind)
+        protected VotingPeriod StartWaitingPeriod(Block block, Protocol protocol, VotingPeriod current, PeriodKind kind)
         {
-            var proto = block.Protocol;
             var period = new VotingPeriod
             {
+                Id = 0,
                 Index = current.Index + 1,
                 Epoch = current.Epoch,
                 FirstLevel = block.Level + 1,
-                LastLevel = block.Level + proto.BlocksPerVoting,
+                LastLevel = block.Level + protocol.BlocksPerVoting,
                 Kind = kind,
                 Status = PeriodStatus.Active
             };
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, block.Protocol))
+                .Where(x => BakerIsListed(x, block, protocol))
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, proto),
+                    VotingPower = GetVotingPower(x, block, protocol),
                     Status = VoterStatus.None
                 });
 
@@ -325,8 +327,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
-                return ((int)prev.ParticipationEma * 8000 + (int)participation * 2000) / 10000;
+                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                return (int)((prev.ParticipationEma!.Value * 8000 + participation * 2000) / 10000);
             }
 
             return 8000;
@@ -341,8 +343,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower + prev.NayVotingPower + prev.PassVotingPower) / prev.TotalVotingPower;
-                return ((int)prev.BallotsQuorum * 8000 + (int)participation * 2000) / 10000;
+                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                return (int)((prev.BallotsQuorum!.Value * 8000 + participation * 2000) / 10000);
             }
 
             return 8000;

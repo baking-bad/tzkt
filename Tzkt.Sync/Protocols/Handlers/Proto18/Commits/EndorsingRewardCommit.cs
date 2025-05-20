@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class EndorsingRewardCommit : ProtocolCommit
+    class EndorsingRewardCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public EndorsingRewardCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             if (!block.Events.HasFlag(BlockEvents.CycleEnd))
@@ -32,7 +30,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             for (int i = 0; i < balanceUpdates.Count; i++)
             {
                 var update = balanceUpdates[i];
-                if (update.RequiredString("kind") == "minted" && update.RequiredString("category") == "endorsing rewards")
+                if (update.RequiredString("kind") == "minted" && (update.RequiredString("category") == "endorsing rewards" || update.RequiredString("category") == "attesting rewards"))
                 {
                     if (i == balanceUpdates.Count - 1)
                         throw new Exception("Unexpected endorsing rewards balance updates behavior");
@@ -44,7 +42,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         nextUpdate.RequiredString("category") == "deposits" &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.Required("staker").RequiredString("baker"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.Required("staker").RequiredString("baker"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
@@ -56,17 +54,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                     else if (nextUpdate.RequiredString("kind") == "contract" &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("contract"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("contract"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
                         op.RewardDelegated = change;
                     }
                     else if (nextUpdate.RequiredString("kind") == "burned" &&
-                        nextUpdate.RequiredString("category") == "lost endorsing rewards" &&
+                        (nextUpdate.RequiredString("category") == "lost endorsing rewards" || nextUpdate.RequiredString("category") == "lost attesting rewards") &&
                         nextUpdate.RequiredInt64("change") == change)
                     {
-                        var baker = Cache.Accounts.GetDelegate(nextUpdate.RequiredString("delegate"));
+                        var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("delegate"));
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected endorsing rewards balance update");
 
@@ -125,6 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             Cache.AppState.Get().EndorsingRewardOpsCount += ops.Count;
 
             Db.EndorsingRewardOps.AddRange(ops.Values);
+            Context.EndorsingRewardOps.AddRange(ops.Values);
         }
 
         public virtual async Task Revert(Block block)

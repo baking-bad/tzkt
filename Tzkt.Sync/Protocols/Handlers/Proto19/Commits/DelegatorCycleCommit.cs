@@ -2,16 +2,14 @@
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class DelegatorCycleCommit : Proto18.DelegatorCycleCommit
+    class DelegatorCycleCommit(ProtocolHandler protocol) : Proto18.DelegatorCycleCommit(protocol)
     {
-        public DelegatorCycleCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        public override async Task Apply(Block block, Cycle futureCycle)
+        public override async Task Apply(Block block, Cycle? futureCycle)
         {
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                     return;
             }
 
@@ -23,12 +21,10 @@ namespace Tzkt.Sync.Protocols.Proto19
             if (!block.Events.HasFlag(BlockEvents.CycleBegin))
                 return;
 
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-
-            if (block.Cycle == block.Protocol.FirstCycle)
+            if (block.Cycle == Context.Protocol.FirstCycle)
             {
-                var prevProto = await Cache.Protocols.GetAsync(block.Protocol.Code - 1);
-                if (prevProto.ConsensusRightsDelay != block.Protocol.ConsensusRightsDelay)
+                var prevProto = await Cache.Protocols.GetAsync(Context.Protocol.Code - 1);
+                if (prevProto.ConsensusRightsDelay != Context.Protocol.ConsensusRightsDelay)
                     return;
             }
 

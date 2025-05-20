@@ -5,10 +5,11 @@ namespace Tzkt.Data.Models
 {
     public class SmartRollupOriginateOperation : ManagerOperation
     {
-        public PvmKind PvmKind { get; set; }
-        public byte[] Kernel { get; set; }
-        public byte[] ParameterType { get; set; }
-        public string GenesisCommitment { get; set; }
+        public required PvmKind PvmKind { get; set; }
+        public required byte[] Kernel { get; set; }
+
+        public byte[]? ParameterType { get; set; }
+        public string? GenesisCommitment { get; set; }
         public int? SmartRollupId { get; set; }
     }
 
@@ -41,14 +42,6 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<SmartRollupOriginateOperation>()
                 .HasIndex(x => x.SmartRollupId);
-            #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupOriginateOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupOriginateOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
             #endregion
         }
     }

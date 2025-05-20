@@ -1,26 +1,25 @@
-﻿using System;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync.Services
 {
     public class Header
     {
         [JsonPropertyName("chain_id")]
-        public string ChainId { get; set; }
+        public required string ChainId { get; set; }
 
         [JsonPropertyName("protocol")]
-        public string Protocol { get; set; }
+        public required string Protocol { get; set; }
 
         [JsonPropertyName("predecessor")]
-        public string Predecessor { get; set; }
+        public required string Predecessor { get; set; }
 
         [JsonPropertyName("hash")]
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         [JsonPropertyName("level")]
-        public int Level { get; set; }
+        public required int Level { get; set; }
 
         [JsonPropertyName("timestamp")]
-        public DateTime Timestamp { get; set; }
+        public required DateTime Timestamp { get; set; }
     }
 }

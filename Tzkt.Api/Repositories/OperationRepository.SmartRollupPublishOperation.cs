@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,11 +13,49 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupPublishOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupPublishOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? smartRollupIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupPublishCount == 0)
+                    continue;
+
+                if (account is RawUser && (roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+                else if (account is RawSmartRollup && (roles & ActivityRole.Target) != 0)
+                {
+                    smartRollupIds ??= new(accounts.Count);
+                    smartRollupIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && smartRollupIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"o.""SenderId""", senderIds),
+                (@"o.""SmartRollupId""", smartRollupIds));
+
+            return await GetSmartRollupPublishOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupPublishOpsCount(SrPublishOperationFilter filter)
         {
             var sql = new SqlBuilder(@"
                 SELECT COUNT(*) FROM ""SmartRollupPublishOps"" as o
                 LEFT JOIN ""SmartRollupCommitments"" AS c ON c.""Id"" = o.""CommitmentId""")
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -25,14 +64,14 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderId""", filter.sender)
                 .FilterA(@"o.""Status""", filter.status)
                 .FilterA(@"o.""SmartRollupId""", filter.rollup)
-                .FilterA(@"o.""CommitmentId""", filter.commitment?.id)
-                .FilterA(@"c.""Hash""", filter.commitment?.hash);
+                .FilterA(@"o.""CommitmentId""", filter.commitment.id)
+                .FilterA(@"c.""Hash""", filter.commitment.hash);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QuerySmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = """
                 o."Id",
@@ -92,7 +131,7 @@ namespace Tzkt.Api.Repositories
                             }
                             else
                             {
-                                switch (field.SubField().Field)
+                                switch (field.SubField()!.Field)
                                 {
                                     case "id": columns.Add(@"o.""CommitmentId"" as ""cId"""); break;
                                     case "initiator": columns.Add(@"c.""InitiatorId"" as ""cInitiatorId"""); break;
@@ -112,7 +151,7 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -120,6 +159,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"
                 SELECT {select} FROM ""SmartRollupPublishOps"" as o
                 LEFT JOIN ""SmartRollupCommitments"" AS c ON c.""Id"" = o.""CommitmentId""")
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -128,8 +168,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderId""", filter.sender)
                 .FilterA(@"o.""Status""", filter.status)
                 .FilterA(@"o.""SmartRollupId""", filter.rollup)
-                .FilterA(@"o.""CommitmentId""", filter.commitment?.id)
-                .FilterA(@"c.""Hash""", filter.commitment?.hash)
+                .FilterA(@"o.""CommitmentId""", filter.commitment.id)
+                .FilterA(@"c.""Hash""", filter.commitment.hash)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -170,13 +210,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetSmartRollupPublishOps(SrPublishOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QuerySmartRollupPublishOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -184,7 +224,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupPublish;
+                            result[j++][i] = ActivityTypes.SmartRollupPublish;
                         break;
                     case "id":
                         foreach (var row in rows)

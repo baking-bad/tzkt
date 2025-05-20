@@ -3,16 +3,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto22
 {
-    class Diagnostics : Proto21.Diagnostics
+    class Diagnostics(ProtocolHandler handler) : Proto21.Diagnostics(handler)
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
-
         protected override async Task TestDalParticipation(AppState state)
         {
             var bakers = Cache.Accounts.GetDelegates().ToList();
             var bakerCycles = Db.ChangeTracker.Entries()
                 .Where(x => x.Entity is BakerCycle bc && bc.Cycle == state.Cycle)
-                .Select(x => x.Entity as BakerCycle)
+                .Select(x => (x.Entity as BakerCycle)!)
                 .ToDictionary(x => x.BakerId);
 
             foreach (var baker in bakers)

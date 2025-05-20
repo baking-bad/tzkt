@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api
+﻿using System.Diagnostics.CodeAnalysis;
+
+namespace Tzkt.Api
 {
     static class UnstakeRequestStatuses
     {
@@ -6,7 +8,7 @@
         public const string Finalizable = "finalizable";
         public const string Finalized = "finalized";
 
-        public static bool TryParse(string value, out string res)
+        public static bool TryParse(string value, [NotNullWhen(true)] out string? res)
         {
             res = value switch
             {

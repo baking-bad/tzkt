@@ -12,37 +12,44 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
             var bootstrapAccounts = parameters["bootstrap_accounts"]?
-                .Select(x => (x[0].Value<string>(), x[1].Value<long>(), x.Count() > 2 ? x[2].Value<string>() : null))
-                .ToList() ?? new(0);
+                .Select(x => (x[0]!.Value<string>()!, x[1]!.Value<long>(), x.Count() > 2 ? x[2]!.Value<string>()! : null))
+                .ToList() ?? [];
 
             var bootstrapContracts = parameters["bootstrap_contracts"]?
                 .Select(x =>
                 (
-                    x["amount"].Value<long>(),
-                    x["delegate"]?.Value<string>() ?? null,
-                    x["script"]["code"].ToString(),
-                    x["script"]["storage"].ToString(),
-                    x["hash"]?.Value<string>() ?? null
+                    x["amount"]!.Value<long>(),
+                    x["delegate"]?.Value<string>(),
+                    x["script"]!["code"]!.ToString(),
+                    x["script"]!["storage"]!.ToString(),
+                    x["hash"]?.Value<string>()
                 ))
-                .ToList() ?? new(0);
+                .ToList() ?? [];
 
             var bootstrapSmartRollups = parameters["bootstrap_smart_rollups"]?
                 .Select(x =>
                 (
-                    x["address"].Value<string>(),
-                    x["pvm_kind"].Value<string>(),
-                    x["parameters_ty"].ToString()
+                    x["address"]!.Value<string>()!,
+                    x["pvm_kind"]!.Value<string>()!,
+                    x["parameters_ty"]!.ToString()
                 ))
-                .ToList() ?? new(0);
+                .ToList() ?? [];
 
             var accounts = new List<Account>(bootstrapAccounts.Count + bootstrapContracts.Count + bootstrapSmartRollups.Count);
 
             #region allocate null-address
-            var nullAddress = (User)await Cache.Accounts.GetAsync(NullAddress.Address);
-            nullAddress.FirstLevel = 1;
-            nullAddress.LastLevel = 1;
+            var nullAddress = new User
+            {
+                Id = Cache.AppState.NextAccountId(),
+                Address = NullAddress.Address,
+                Type = AccountType.User,
+                FirstLevel = 1,
+                LastLevel = 1
+            };
             if (nullAddress.Id != NullAddress.Id)
                 throw new Exception("Failed to allocate null-address");
+            Cache.Accounts.Add(nullAddress);
+            Db.Accounts.Add(nullAddress);
             #endregion
 
             #region bootstrap bakers
@@ -71,7 +78,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap delegated users
             foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null))
             {
-                var delegat = Cache.Accounts.GetDelegate(delegateTo);
+                var delegat = Cache.Accounts.GetExistingDelegate(delegateTo!);
 
                 var user = new User
                 {
@@ -85,7 +92,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Revealed = true,
                     Staked = true,
                     DelegationLevel = 1,
-                    Delegate = delegat,
                     DelegateId = delegat.Id
                 };
 
@@ -121,7 +127,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 #region contract
                 var delegat = Cache.Accounts.GetDelegate(delegatePkh);
-                var manager = nullAddress;
+                var creator = nullAddress;
 
                 var contract = new Contract
                 {
@@ -130,16 +136,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
-                    Spendable = false,
                     DelegationLevel = delegat == null ? null : 1,
-                    Delegate = delegat,
-                    Manager = manager,
+                    DelegateId = delegat?.Id,
+                    CreatorId = creator.Id,
                     Staked = delegat != null,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
 
-                manager.ContractsCount++;
+                creator.ContractsCount++;
+
                 if (delegat != null)
                 {
                     delegat.DelegatorsCount++;
@@ -152,7 +158,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region script
-                var code = Micheline.FromJson(codeStr) as MichelineArray;
+                var code = (Micheline.FromJson(codeStr) as MichelineArray)!;
                 var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter);
                 var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage);
                 var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code);
@@ -175,7 +181,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .OrderBy(x => x, new BytesComparer())
                     .SelectMany(x => x)
                     .ToArray()
-                    ?? Array.Empty<byte>();
+                    ?? [];
                 var typeSchema = script.ParameterSchema.Concat(script.StorageSchema).Concat(viewsBytes);
                 var fullSchema = typeSchema.Concat(script.CodeSchema);
                 contract.TypeHash = script.TypeHash = Script.GetHash(typeSchema);
@@ -200,7 +206,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #endregion
 
                 #region storage
-                var storageValue = Micheline.FromJson(storageStr);
+                var storageValue = Micheline.FromJson(storageStr)!;
                 var storage = new Storage
                 {
                     Id = Cache.AppState.NextStorageId(),
@@ -240,7 +246,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         "wasm_2_0_0" => PvmKind.Wasm,
                         _ => throw new NotImplementedException()
                     },
-                    ParameterSchema = Micheline.FromJson(parameterType).ToBytes(),
+                    ParameterSchema = Micheline.FromJson(parameterType)!.ToBytes(),
                     GenesisCommitment = genesisInfo.RequiredString("commitment_hash"),
                     LastCommitment = genesisInfo.RequiredString("commitment_hash"),
                     InboxLevel = genesisInfo.RequiredInt32("level"),
@@ -266,36 +272,34 @@ namespace Tzkt.Sync.Protocols.Proto1
             var block = Cache.Blocks.Current();
 
             block.Operations |= Operations.Migrations;
-            if (accounts.Any(x => x.Type == AccountType.Contract))
-                block.Events |= BlockEvents.SmartContracts;
 
             foreach (var account in accounts)
             {
                 var migration = new MigrationOperation
                 {
                     Id = Cache.AppState.NextOperationId(),
-                    Block = block,
                     Level = block.Level,
                     Timestamp = block.Timestamp,
-                    Account = account,
+                    AccountId = account.Id,
                     Kind = MigrationKind.Bootstrap,
                     BalanceChange = account.Balance,
                 };
 
                 if (account is Contract contract)
                 {
-                    var script = Db.ChangeTracker.Entries()
-                        .First(x => x.Entity is Script s && s.ContractId == contract.Id).Entity as Script;
+                    var script = (Db.ChangeTracker.Entries()
+                        .First(x => x.Entity is Script s && s.ContractId == contract.Id).Entity as Script)!;
                     var storage = await Cache.Storages.GetAsync(contract);
                     
                     script.MigrationId = migration.Id;
                     storage.MigrationId = migration.Id;
 
-                    migration.Script = script;
-                    migration.Storage = storage;
+                    migration.ScriptId = script.Id;
+                    migration.StorageId = storage.Id;
                 }
 
                 Db.MigrationOps.Add(migration);
+                Context.MigrationOps.Add(migration);
                 account.MigrationsCount++;
             }
 
@@ -312,11 +316,12 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         async Task ClearAccounts()
         { 
-            await Db.Database.ExecuteSqlRawAsync(@"
-                DELETE FROM ""Accounts"";
-                DELETE FROM ""MigrationOps"";
-                DELETE FROM ""Scripts"";
-                DELETE FROM ""Storages"";");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "Accounts";
+                DELETE FROM "MigrationOps";
+                DELETE FROM "Scripts";
+                DELETE FROM "Storages";
+                """);
 
             await Cache.Accounts.ResetAsync();
             Cache.Schemas.Reset();

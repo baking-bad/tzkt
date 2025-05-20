@@ -4,19 +4,19 @@ namespace Tzkt.Data.Models
 {
     public class BigMapKey
     {
-        public int Id { get; set; }
-        public int BigMapPtr { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
+        public required int Id { get; set; }
+        public required int BigMapPtr { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
         public int Updates { get; set; }
         public bool Active { get; set; }
 
-        public string KeyHash { get; set; }
-        public byte[] RawKey { get; set; }
-        public string JsonKey { get; set; }
+        public required string KeyHash { get; set; }
+        public required byte[] RawKey { get; set; }
+        public required string JsonKey { get; set; }
 
-        public byte[] RawValue { get; set; }
-        public string JsonValue { get; set; }
+        public required byte[] RawValue { get; set; }
+        public required string JsonValue { get; set; }
     }
 
     public static class BigMapKeyModel

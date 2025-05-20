@@ -4,18 +4,22 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class UnstakeRequestsCache
+    public class UnstakeRequestsCache(TzktContext db)
     {
-        public const int SoftCap = 4096; //TODO: set limits in app settings
+        #region static
+        static int SoftCap = 0;
+        static int TargetCap = 0;
+        static Dictionary<(int, int?, int), UnstakeRequest> Cached = [];
 
-        static readonly Dictionary<(int, int?, int), UnstakeRequest> Cached = new((int)(SoftCap * 1.1));
-
-        readonly TzktContext Db;
-
-        public UnstakeRequestsCache(TzktContext db)
+        public static void Configure(CacheSize? size)
         {
-            Db = db;
+            SoftCap = size?.SoftCap ?? 4000;
+            TargetCap = size?.TargetCap ?? 3000;
+            Cached = new(SoftCap + 256);
         }
+        #endregion
+
+        readonly TzktContext Db = db;
 
         public void Reset()
         {
@@ -28,7 +32,7 @@ namespace Tzkt.Sync.Services.Cache
             {
                 var toRemove = Cached.Values
                     .OrderBy(x => x.LastLevel)
-                    .Take(SoftCap / 2)
+                    .Take(Cached.Count - TargetCap)
                     .ToList();
 
                 foreach (var item in toRemove)
@@ -46,7 +50,7 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove((item.BakerId, item.StakerId, item.Cycle));
         }
 
-        public async Task<UnstakeRequest> GetOrDefaultAsync(int bakerId, int? stakerId, int cycle)
+        public async Task<UnstakeRequest?> GetOrDefaultAsync(int bakerId, int? stakerId, int cycle)
         {
             if (!Cached.TryGetValue((bakerId, stakerId, cycle), out var item))
             {

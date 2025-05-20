@@ -12,13 +12,13 @@ namespace Tzkt.Api
         /// Note, if you select just one field, the response will be flatten into a simple array of values.  
         /// Click on the parameter to expand the details.
         /// </summary>
-        public SelectionParameter select { get; set; }
+        public SelectionParameter? select { get; set; }
 
         [OpenApiIgnore]
-        public string[] Cols => select?.Fields?.Select(x => x.Alias).ToArray();
+        public string[]? Cols => select?.Fields?.Select(x => x.Alias).ToArray();
 
         #region operators
-        public static implicit operator List<SelectionField>(Selection selection) => selection.select.Fields ?? selection.select.Values;
+        public static implicit operator List<SelectionField>(Selection selection) => (selection.select?.Fields ?? selection.select?.Values)!;
         #endregion
 
         public string Normalize(string name)

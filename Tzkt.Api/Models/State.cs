@@ -5,12 +5,12 @@
         /// <summary>
         /// Alias name of the chain (or "private" if it's not on the list of known chains)
         /// </summary>
-        public string Chain { get; set; }
+        public required string Chain { get; set; }
 
         /// <summary>
         /// Unique identifier of the chain
         /// </summary>
-        public string ChainId { get; set; }
+        public required string ChainId { get; set; }
 
         /// <summary>
         /// Current cycle
@@ -21,21 +21,21 @@
         /// The height of the last block from the genesis block
         /// </summary>
         public int Level { get; set; }
-        
+
         /// <summary>
         /// Block hash
         /// </summary>
-        public string Hash { get; set; }
-        
+        public required string Hash { get; set; }
+
         /// <summary>
         /// Current protocol hash
         /// </summary>
-        public string Protocol { get; set; }
+        public required string Protocol { get; set; }
 
         /// <summary>
         /// Next block protocol hash
         /// </summary>
-        public string NextProtocol { get; set; }
+        public required string NextProtocol { get; set; }
 
         /// <summary>
         /// The datetime at which the last block is claimed to have been created (ISO 8601, e.g. `2020-02-20T02:40:57Z`)

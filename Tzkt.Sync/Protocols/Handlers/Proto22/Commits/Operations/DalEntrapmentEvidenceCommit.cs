@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto22
 {
-    class DalEntrapmentEvidenceCommit : ProtocolCommit
+    class DalEntrapmentEvidenceCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DalEntrapmentEvidenceCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
@@ -18,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             if (content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
                 throw new Exception("Unexpected balance updates in DalEntrapmentEvidence");
 
-            var accuser = block.Proposer;
+            var accuser = Context.Proposer;
             var offender = await GetAttester(op.RequiredString("chain_id"), content.Required("attestation"));
 
             var trapLevel = content.Required("attestation").Required("operations").RequiredInt32("level");
@@ -27,7 +25,6 @@ namespace Tzkt.Sync.Protocols.Proto22
             var operation = new DalEntrapmentEvidenceOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -56,6 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             #endregion
 
             Db.DalEntrapmentEvidenceOps.Add(operation);
+            Context.DalEntrapmentEvidenceOps.Add(operation);
         }
 
         public void Revert(DalEntrapmentEvidenceOperation operation)
@@ -102,7 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 .ToArray();
 
             foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))
-                if (PubKey.FromBase58(baker.PublicKey).Verify(bytes, signature))
+                if (PubKey.FromBase58(baker.PublicKey!).Verify(bytes, signature))
                     return baker;
 
             throw new Exception("Failed to determine trapped dal slot attester");

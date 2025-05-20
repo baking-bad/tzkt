@@ -6,7 +6,7 @@ namespace Tzkt.Api.Websocket.Hubs
 {
     public abstract class BaseHub : Hub
     {
-        static readonly object Crit = new ();
+        static readonly Lock Crit = new();
         static int Connections = 0;
 
         readonly ILogger Logger;
@@ -44,7 +44,7 @@ namespace Tzkt.Api.Websocket.Hubs
             return base.OnConnectedAsync();
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
             lock (Crit)
             {

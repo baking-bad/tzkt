@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,9 +13,58 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupRecoverBondOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? stakerIds = null;
+            List<int>? smartRollupIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupRecoverBondCount == 0)
+                    continue;
+
+                if (account is RawUser)
+                {
+                    if ((roles & ActivityRole.Sender) != 0)
+                    {
+                        senderIds ??= new(accounts.Count);
+                        senderIds.Add(account.Id);
+                    }
+
+                    if ((roles & ActivityRole.Target) != 0)
+                    {
+                        stakerIds ??= new(accounts.Count);
+                        stakerIds.Add(account.Id);
+                    }
+                }
+                else if (account is RawSmartRollup && (roles & ActivityRole.Target) != 0)
+                {
+                    smartRollupIds ??= new(accounts.Count);
+                    smartRollupIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && stakerIds == null && smartRollupIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("StakerId", stakerIds),
+                ("SmartRollupId", smartRollupIds));
+
+            return await GetSmartRollupRecoverBondOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupRecoverBondOpsCount(SrRecoverBondOperationFilter filter)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupRecoverBondOps""")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -30,7 +80,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QuerySmartRollupRecoverBondOps(SrRecoverBondOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupRecoverBondOps(SrRecoverBondOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -60,12 +110,13 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupRecoverBondOps"" as o")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -106,13 +157,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollupRecoverBondOps(SrRecoverBondOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetSmartRollupRecoverBondOps(SrRecoverBondOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QuerySmartRollupRecoverBondOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -120,7 +171,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupRecoverBond;
+                            result[j++][i] = ActivityTypes.SmartRollupRecoverBond;
                         break;
                     case "id":
                         foreach (var row in rows)

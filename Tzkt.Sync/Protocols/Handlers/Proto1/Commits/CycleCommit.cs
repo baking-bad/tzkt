@@ -3,18 +3,16 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class CycleCommit : ProtocolCommit
+    class CycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Cycle FutureCycle { get; protected set; }
-        public List<SnapshotBalance> BakerSnapshots { get; protected set; }
-
-        public CycleCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Cycle? FutureCycle { get; protected set; }
+        public List<SnapshotBalance>? BakerSnapshots { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
                 
                 var lastSeed = await Db.Cycles
                     .AsNoTracking()
@@ -23,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     .FirstOrDefaultAsync()
                     ?? throw new Exception($"Seed for cycle {futureCycle - 1} is missed");
                 
-                var nonces = block.Cycle < 2 ? Enumerable.Empty<byte[]>() : await Db.NonceRevelationOps
+                var nonces = block.Cycle < 2 ? [] : await Db.NonceRevelationOps
                     .AsNoTracking()
                     .Where(x => x.RevealedCycle == block.Cycle - 2)
                     .OrderByDescending(x => x.RevealedLevel)
@@ -48,9 +46,10 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 FutureCycle = new Cycle
                 {
+                    Id = 0,
                     Index = futureCycle,
-                    FirstLevel = block.Protocol.GetCycleStart(futureCycle),
-                    LastLevel = block.Protocol.GetCycleEnd(futureCycle),
+                    FirstLevel = Context.Protocol.GetCycleStart(futureCycle),
+                    LastLevel = Context.Protocol.GetCycleEnd(futureCycle),
                     SnapshotLevel = snapshotLevel,
                     TotalBakers = BakerSnapshots.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
                     TotalBakingPower = BakerSnapshots.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
@@ -65,12 +64,12 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
+                var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE  FROM ""Cycles""
-                    WHERE   ""Index"" = {futureCycle}");
+                await Db.Database.ExecuteSqlRawAsync("""
+                    DELETE FROM "Cycles"
+                    WHERE "Index" = {0}
+                    """, futureCycle);
             }
         }
 

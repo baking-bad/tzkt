@@ -8,32 +8,24 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto1
 {
-    class TransactionsCommit : ProtocolCommit
+    class TransactionsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TransactionOperation Transaction { get; private set; }
-        public IEnumerable<BigMapDiff> BigMapDiffs { get; private set; }
-        public IEnumerable<TicketUpdates> TicketUpdates { get; private set; }
-
-        public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
+        public TransactionOperation Transaction { get; private set; } = null!;
+        public IEnumerable<BigMapDiff>? BigMapDiffs { get; private set; }
+        public IEnumerable<TicketUpdates>? TicketUpdates { get; private set; }
+        public Account? Target { get; private set; }
 
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-
-            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.OptionalString("destination"))?.Contract;
-
-            if (target != null)
-                target.Delegate ??= Cache.Accounts.GetDelegate(target.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
 
             var result = content.Required("metadata").Required("operation_result");
 
             var transaction = new TransactionOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -42,8 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
-                Target = target,
+                SenderId = sender.Id,
+                TargetId = target?.Id,
                 TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
@@ -59,29 +51,28 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
                 AllocationFee = HasAllocated(result)
-                    ? (long?)block.Protocol.OriginationSize * block.Protocol.ByteCost
+                    ? (long?)Context.Protocol.OriginationSize * Context.Protocol.ByteCost
                     : null
             };
 
 
-            if (transaction.Target is not User && content.TryGetProperty("parameters", out var parameters))
-                await ProcessParameters(transaction, parameters);
+            if (target is not User && content.TryGetProperty("parameters", out var parameters))
+                await ProcessParameters(transaction, target, parameters);
             #endregion
 
             #region entities
-            //var block = transaction.Block;
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
 
-            //var sender = transaction.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             //var target = transaction.Target;
-            var targetDelegate = target?.Delegate ?? target as Data.Models.Delegate;
+            var targetDelegate = target != null
+                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
+                : null;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
@@ -103,11 +94,12 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.TransactionsCount++;
             if (target != null && target != sender) target.TransactionsCount++;
 
-            block.Events |= GetBlockEvents(target);
             block.Operations |= Operations.Transactions;
             block.Fees += transaction.BakerFee;
 
             sender.Counter = transaction.Counter;
+
+            Cache.AppState.Get().TransactionOpsCount++;
             #endregion
 
             #region apply result
@@ -125,7 +117,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance -= spent;
                 }
 
-                target.Balance += transaction.Amount;
+                target!.Balance += transaction.Amount;
                 if (targetDelegate != null)
                 {
                     targetDelegate.StakingBalance += transaction.Amount;
@@ -133,63 +125,53 @@ namespace Tzkt.Sync.Protocols.Proto1
                         targetDelegate.DelegatedBalance += transaction.Amount;
                 }
 
-                await ResetGracePeriod(transaction);
+                await ResetGracePeriod(transaction, target);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, storage);
+                    await ProcessStorage(transaction, target, storage);
                 }
 
                 TicketUpdates = ParseTicketUpdates("ticket_updates", result);
                 
-                if (transaction.Target is SmartRollup)
+                if (target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (transaction.Target.Id == NullAddress.Id)
+                if (target.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
 
-            Proto.Manager.Set(transaction.Sender);
-            Db.TransactionOps.Add(transaction);
+            Proto.Manager.Set(sender);
+            //Db.TransactionOps.Add(transaction);
+            Context.TransactionOps.Add(transaction);
             Transaction = transaction;
+            Target = target;
         }
 
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
-            var id = Cache.AppState.NextOperationId();
-
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.RequiredString("source"))?.Contract
-                    ?? throw new ValidationException("Transaction source address doesn't exist");
-
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
-
-            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"))
-                ?? block.Originations?.FirstOrDefault(x => x.Contract.Address == content.OptionalString("destination"))?.Contract;
-
-            if (target != null)
-                target.Delegate ??= Cache.Accounts.GetDelegate(target.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
 
             var result = content.Required("result");
 
             var transaction = new TransactionOperation
             {
-                Id = id,
-                Initiator = parent.Sender,
-                Block = parent.Block,
-                Level = parent.Block.Level,
+                Id = Cache.AppState.NextOperationId(),
+                InitiatorId = parent.SenderId,
+                Level = parent.Level,
                 Timestamp = parent.Timestamp,
                 OpHash = parent.OpHash,
                 Counter = parent.Counter,
                 Amount = content.RequiredInt64("amount"),
                 Nonce = content.RequiredInt32("nonce"),
-                Sender = sender,
+                SenderId = sender.Id,
                 SenderCodeHash = (sender as Contract)?.CodeHash,
-                Target = target,
+                TargetId = target?.Id,
                 TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
@@ -205,30 +187,29 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasUsed = GetConsumedGas(result),
                 StorageUsed = result.OptionalInt32("paid_storage_size_diff") ?? 0,
                 StorageFee = result.OptionalInt32("paid_storage_size_diff") > 0
-                    ? result.OptionalInt32("paid_storage_size_diff") * block.Protocol.ByteCost
+                    ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
                 AllocationFee = HasAllocated(result)
-                    ? (long?)block.Protocol.OriginationSize * block.Protocol.ByteCost
+                    ? (long?)Context.Protocol.OriginationSize * Context.Protocol.ByteCost
                     : null
             };
 
-            if (transaction.Target is not User && content.TryGetProperty("parameters", out var parameters))
-                await ProcessParameters(transaction, parameters);
+            if (target is not User && content.TryGetProperty("parameters", out var parameters))
+                await ProcessParameters(transaction, target, parameters);
             #endregion
 
             #region entities
-            //var block = transaction.Block;
-            var parentSender = parent.Sender;
-            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
-            //var sender = transaction.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
+            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             //var target = transaction.Target;
-            var targetDelegate = target?.Delegate ?? target as Data.Models.Delegate;
+            var targetDelegate = target != null
+                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
+                : null;
 
-            //Db.TryAttach(block);
             //Db.TryAttach(parentTx);
             //Db.TryAttach(parentSender);
-            //Db.TryAttach(parentDelegate);
+            Db.TryAttach(parentDelegate);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
             Db.TryAttach(target);
@@ -246,8 +227,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (target != null && target != sender) target.TransactionsCount++;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
 
-            block.Events |= GetBlockEvents(target);
             block.Operations |= Operations.Transactions;
+
+            Cache.AppState.Get().TransactionOpsCount++;
             #endregion
 
             #region apply result
@@ -272,7 +254,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         senderDelegate.DelegatedBalance -= transaction.Amount;
                 }
 
-                target.Balance += transaction.Amount;
+                target!.Balance += transaction.Amount;
                 if (target.Id == parentSender.Id)
                     Proto.Manager.Credit(transaction.Amount);
 
@@ -283,59 +265,42 @@ namespace Tzkt.Sync.Protocols.Proto1
                         targetDelegate.DelegatedBalance += transaction.Amount;
                 }
 
-                await ResetGracePeriod(transaction);
+                await ResetGracePeriod(transaction, target);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, storage);
+                    await ProcessStorage(transaction, target, storage);
                 }
                 
                 TicketUpdates = ParseTicketUpdates("ticket_receipt", result);
 
-                if (transaction.Target is SmartRollup)
+                if (target is SmartRollup)
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (transaction.Target.Id == NullAddress.Id)
+                if (target.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
 
-            Db.TransactionOps.Add(transaction);
+            //Db.TransactionOps.Add(transaction);
+            Context.TransactionOps.Add(transaction);
             Transaction = transaction;
+            Target = target;
         }
 
         public virtual async Task Revert(Block block, TransactionOperation transaction)
         {
-            #region init
-            transaction.Block ??= block;
-            transaction.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            transaction.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            transaction.Sender = await Cache.Accounts.GetAsync(transaction.SenderId);
-            transaction.Sender.Delegate ??= Cache.Accounts.GetDelegate(transaction.Sender.DelegateId);
-            transaction.Target = await Cache.Accounts.GetAsync(transaction.TargetId);
-
-            if (transaction.Target != null)
-                transaction.Target.Delegate ??= Cache.Accounts.GetDelegate(transaction.Target.DelegateId);
-
-            if (transaction.InitiatorId != null)
-            {
-                transaction.Initiator = await Cache.Accounts.GetAsync(transaction.InitiatorId);
-                transaction.Initiator.Delegate ??= Cache.Accounts.GetDelegate(transaction.Initiator.DelegateId);
-            }
-            #endregion
-
             #region entities
-            //var block = transaction.Block;
-            var blockBaker = block.Proposer;
-            var sender = transaction.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var target = transaction.Target;
-            var targetDelegate = target?.Delegate ?? target as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(transaction.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
+            var target = await Cache.Accounts.GetAsync(transaction.TargetId);
+            var targetDelegate = target != null
+                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
+                : null;
 
-            //Db.TryAttach(block);
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
@@ -346,7 +311,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target.Balance -= transaction.Amount;
+                target!.Balance -= transaction.Amount;
 
                 if (targetDelegate != null)
                 {
@@ -377,7 +342,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 if (transaction.StorageId != null)
-                    await RevertStorage(transaction);
+                    await RevertStorage(transaction, (target as Contract)!);
             }
             #endregion
 
@@ -396,39 +361,27 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (target != null && target != sender) target.TransactionsCount--;
 
             sender.Counter = transaction.Counter - 1;
-            (sender as User).Revealed = true;
+            if (sender is User user) user.Revealed = true;
+
+            Cache.AppState.Get().TransactionOpsCount--;
             #endregion
 
-            Db.TransactionOps.Remove(transaction);
+            //Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
         }
 
         public virtual async Task RevertInternal(Block block, TransactionOperation transaction)
         {
-            #region init
-            transaction.Block ??= block;
-            transaction.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            transaction.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            transaction.Sender = await Cache.Accounts.GetAsync(transaction.SenderId);
-            transaction.Sender.Delegate ??= Cache.Accounts.GetDelegate(transaction.Sender.DelegateId);
-            transaction.Target = await Cache.Accounts.GetAsync(transaction.TargetId);
-
-            if (transaction.Target != null)
-                transaction.Target.Delegate ??= Cache.Accounts.GetDelegate(transaction.Target.DelegateId);
-
-            transaction.Initiator = await Cache.Accounts.GetAsync(transaction.InitiatorId);
-            transaction.Initiator.Delegate ??= Cache.Accounts.GetDelegate(transaction.Initiator.DelegateId);
-            #endregion
-
             #region entities
-            var parentSender = transaction.Initiator;
-            var parentDelegate = parentSender.Delegate ?? parentSender as Data.Models.Delegate;
-            var sender = transaction.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
-            var target = transaction.Target;
-            var targetDelegate = target?.Delegate ?? target as Data.Models.Delegate;
+            var parentSender = await Cache.Accounts.GetAsync(transaction.InitiatorId!.Value);
+            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
+            var sender = await Cache.Accounts.GetAsync(transaction.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
+            var target = await Cache.Accounts.GetAsync(transaction.TargetId);
+            var targetDelegate = target != null
+                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
+                : null;
 
             //Db.TryAttach(block);
             //Db.TryAttach(parentTx);
@@ -443,7 +396,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target.Balance -= transaction.Amount;
+                target!.Balance -= transaction.Amount;
 
                 if (targetDelegate != null)
                 {
@@ -483,7 +436,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 }
 
                 if (transaction.StorageId != null)
-                    await RevertStorage(transaction);
+                    await RevertStorage(transaction, (target as Contract)!);
             }
             #endregion
 
@@ -491,19 +444,21 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.TransactionsCount--;
             if (target != null && target != sender) target.TransactionsCount--;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount--;
+
+            Cache.AppState.Get().TransactionOpsCount--;
             #endregion
 
-            Db.TransactionOps.Remove(transaction);
+            //Db.TransactionOps.Remove(transaction);
             Cache.AppState.ReleaseOperationId();
         }
 
         protected virtual bool HasAllocated(JsonElement result) => false;
 
-        protected virtual async Task ResetGracePeriod(TransactionOperation transaction)
+        protected virtual async Task ResetGracePeriod(TransactionOperation transaction, Account target)
         {
-            if (transaction.Target is Data.Models.Delegate delegat)
+            if (target is Data.Models.Delegate delegat)
             {
-                var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(transaction.Block) : GracePeriod.Init(transaction.Block);
+                var newDeactivationLevel = delegat.Staked ? GracePeriod.Reset(transaction.Level, Context.Protocol) : GracePeriod.Init(transaction.Level, Context.Protocol);
                 if (delegat.DeactivationLevel < newDeactivationLevel)
                 {
                     if (delegat.DeactivationLevel <= transaction.Level)
@@ -515,18 +470,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual BlockEvents GetBlockEvents(Account target)
+        protected virtual async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement parameters)
         {
-            return target is Contract c && c.Kind == ContractKind.SmartContract
-                ? BlockEvents.SmartContracts
-                : BlockEvents.None;
-        }
+            var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters)!);
 
-        protected virtual async Task ProcessParameters(TransactionOperation transaction, JsonElement parameters)
-        {
-            var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters));
-
-            if (transaction.Target is Contract contract)
+            if (target is Contract contract)
             {
                 if (contract.Kind == ContractKind.DelegatorContract)
                 {
@@ -564,24 +512,26 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual async Task ProcessStorage(TransactionOperation transaction, JsonElement storage)
+        protected virtual async Task ProcessStorage(TransactionOperation transaction, Account target, JsonElement storage)
         {
-            if (transaction.Target is not Contract contract || contract.Kind == ContractKind.DelegatorContract)
+            if (target is not Contract contract || contract.Kind == ContractKind.DelegatorContract)
                 return;
 
             var schema = await Cache.Schemas.GetAsync(contract);
             var currentStorage = await Cache.Storages.GetAsync(contract);
 
-            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage), false);
+            var newStorageMicheline = schema.OptimizeStorage(Micheline.FromJson(storage)!, false);
             newStorageMicheline = NormalizeStorage(transaction, newStorageMicheline, schema);
             var newStorageBytes = newStorageMicheline.ToBytes();
 
             if (newStorageBytes.IsEqual(currentStorage.RawValue))
             {
-                Db.TryAttach(currentStorage);
-                transaction.Storage = currentStorage;
+                transaction.StorageId = currentStorage.Id;
                 return;
             }
+
+            Db.TryAttach(currentStorage);
+            currentStorage.Current = false;
 
             var newStorage = new Storage
             {
@@ -594,20 +544,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Current = true,
             };
 
-            Db.TryAttach(currentStorage);
-            currentStorage.Current = false;
-
             Db.Storages.Add(newStorage);
             Cache.Storages.Add(contract, newStorage);
 
-            transaction.Storage = newStorage;
+            transaction.StorageId = newStorage.Id;
         }
 
-        public async Task RevertStorage(TransactionOperation transaction)
+        public async Task RevertStorage(TransactionOperation transaction, Contract contract)
         {
-            var contract = transaction.Target as Contract;
             var storage = await Cache.Storages.GetAsync(contract);
-
             if (storage.TransactionId == transaction.Id)
             {
                 var prevStorage = await Db.Storages
@@ -628,66 +573,66 @@ namespace Tzkt.Sync.Protocols.Proto1
             var view = schema.Storage.Schema.ToTreeView(storage);
             var bigmap = view.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
             if (bigmap != null)
-                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.Target.Id));
+                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.TargetId!.Value));
             return storage;
         }
 
-        protected virtual IEnumerable<BigMapDiff> ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
+        protected virtual IEnumerable<BigMapDiff>? ParseBigMapDiffs(TransactionOperation transaction, JsonElement result)
         {
             if (transaction.Level != 5993)
                 return null;
             // It seems there were no big_map diffs at all in proto 1
             // thus there was no an adequate way to track big_map updates,
             // so the only way to handle this single big_map update is hardcoding
-            return new List<BigMapDiff>
-            {
+            return
+            [
                 new UpdateDiff
                 {
-                    Ptr = transaction.Target.Id,
+                    Ptr = transaction.TargetId!.Value,
                     KeyHash = "exprteAx9hWkXvYSQ4nN9SqjJGVR1sTneHQS1QEcSdzckYdXZVvsqY",
                     Key = new MichelineString("KT1R3uoZ6W1ZxEwzqtv75Ro7DhVY6UAcxuK2"),
                     Value = new MichelinePrim
                     {
                         Prim = PrimType.Pair,
-                        Args = new List<IMicheline>
-                        {
+                        Args =
+                        [
                             new MichelineString("Aliases Contract"),
                             new MichelinePrim
                             {
                                 Prim = PrimType.Pair,
-                                Args = new List<IMicheline>
-                                {
+                                Args =
+                                [
                                     new MichelinePrim { Prim = PrimType.None },
                                     new MichelinePrim
                                     {
                                         Prim = PrimType.Pair,
-                                        Args = new List<IMicheline>
-                                        {
+                                        Args =
+                                        [
                                             new MichelineInt(0),
                                             new MichelinePrim
                                             {
                                                 Prim = PrimType.Pair,
-                                                Args = new List<IMicheline>
-                                                {
+                                                Args =
+                                                [
                                                     new MichelinePrim
                                                     {
                                                         Prim = PrimType.Left,
-                                                        Args = new List<IMicheline>
-                                                        {
+                                                        Args =
+                                                        [
                                                             new MichelinePrim { Prim = PrimType.Unit }
-                                                        }
+                                                        ]
                                                     },
                                                     new MichelineInt(1530741267)
-                                                }
+                                                ]
                                             }
-                                        }
+                                        ]
                                     }
-                                }
+                                ]
                             }
-                        }
+                        ]
                     },
                 }
-            };
+            ];
         }
 
         protected virtual int GetConsumedGas(JsonElement result)
@@ -695,7 +640,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             return result.OptionalInt32("consumed_gas") ?? 0;
         }
 
-        protected virtual IEnumerable<TicketUpdates> ParseTicketUpdates(string property, JsonElement result)
+        protected virtual IEnumerable<TicketUpdates>? ParseTicketUpdates(string property, JsonElement result)
         {
             if (!result.TryGetProperty(property, out var ticketUpdates))
                 return null;
@@ -720,16 +665,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (list.Count > 0)
                 {
                     var ticketToken = updates.Required("ticket_token");
-                    var type = Micheline.FromJson(ticketToken.Required("content_type"));
-                    var value = Micheline.FromJson(ticketToken.Required("content"));
+                    var type = Micheline.FromJson(ticketToken.Required("content_type"))!;
+                    var value = Micheline.FromJson(ticketToken.Required("content"))!;
                     var rawType = type.ToBytes();
 
                     byte[] rawContent;
-                    string jsonContent;
+                    string? jsonContent;
 
                     try
                     {
-                        var schema = Schema.Create(type as MichelinePrim);
+                        var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
                         jsonContent = schema.Humanize(value);
                     }

@@ -45,6 +45,9 @@ namespace Tzkt.Sync.Protocols.Proto21
             await MigrateVotingPeriods(state, nextProto);
             var cycles = await MigrateCycles(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto, cycles);
+
+            Cache.BakerCycles.Reset();
+            Cache.BakingRights.Reset();
         }
 
         async Task RemoveFutureCycles(AppState state, Protocol prevProto, Protocol nextProto)
@@ -55,30 +58,34 @@ namespace Tzkt.Sync.Protocols.Proto21
             var lastCycle = state.Cycle + nextProto.ConsensusRightsDelay + 1;
             var lastCycleStart = nextProto.GetCycleStart(lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakerCycles"
-                WHERE "Cycle" > {lastCycle};
-                """);
+                WHERE "Cycle" > {0}
+                """, lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakingRights"
-                WHERE "Type" = {(int)BakingRightType.Baking}
-                AND "Cycle" > {lastCycle};
+                WHERE "Type" = {0}
+                AND "Cycle" > {1};
                 
                 DELETE FROM "BakingRights"
-                WHERE "Type" = {(int)BakingRightType.Endorsing}
-                AND "Level" > {lastCycleStart};
-                """);
+                WHERE "Type" = {2}
+                AND "Level" > {3};
+                """,
+                (int)BakingRightType.Baking,
+                lastCycle,
+                (int)BakingRightType.Endorsing,
+                lastCycleStart);
 
-            var removedCycles = await Db.Database.ExecuteSqlRawAsync($"""
+            var removedCycles = await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "Cycles"
-                WHERE "Index" > {lastCycle};
-                """);
+                WHERE "Index" > {0}
+                """, lastCycle);
 
-            await Db.Database.ExecuteSqlRawAsync($"""
+            await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "DelegatorCycles"
-                WHERE "Cycle" > {lastCycle};
-                """);
+                WHERE "Cycle" > {0}
+                """, lastCycle);
 
             Cache.BakerCycles.Reset();
             Cache.BakingRights.Reset();
@@ -161,8 +168,8 @@ namespace Tzkt.Sync.Protocols.Proto21
                 WHERE "Cycle" > {0}
                 """, state.Cycle);
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {
@@ -192,8 +199,8 @@ namespace Tzkt.Sync.Protocols.Proto21
                         writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.WriteNull();
                         writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                     }
@@ -219,8 +226,8 @@ namespace Tzkt.Sync.Protocols.Proto21
                             writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
@@ -231,8 +238,8 @@ namespace Tzkt.Sync.Protocols.Proto21
                             writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                         }

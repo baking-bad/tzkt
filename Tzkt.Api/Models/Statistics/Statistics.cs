@@ -87,14 +87,7 @@
         /// <summary>
         /// Injected historical quote at the time of the block at which the statistics has been calculated
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long TotalVested => 0;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

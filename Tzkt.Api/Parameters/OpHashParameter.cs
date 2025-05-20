@@ -14,7 +14,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?hash=opQRQbP...`.
         /// </summary>
-        public string Eq { get; set; }
+        public string? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -22,7 +22,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?hash.ne=opQRQbP...`.
         /// </summary>
-        public string Ne { get; set; }
+        public string? Ne { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -30,7 +30,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?hash.in=hash1,hash2,hash3`.
         /// </summary>
-        public List<string> In { get; set; }
+        public List<string>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -38,7 +38,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?hash.ni=hash1,hash2,hash3`.
         /// </summary>
-        public List<string> Ni { get; set; }
+        public List<string>? Ni { get; set; }
 
         #region operators
         public static implicit operator OpHashParameter(string value) => new() { Eq = value };

@@ -5,25 +5,20 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto13
 {
-    class TxRollupOriginationCommit : ProtocolCommit
+    class TxRollupOriginationCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public TxRollupOriginationOperation Origination { get; private set; }
-
-        public TxRollupOriginationCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(block.Proposer);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(senderDelegate);
 
             var result = content.Required("metadata").Required("operation_result");
 
-            Rollup rollup = null;
+            Rollup? rollup = null;
             if (result.RequiredString("status") == "applied")
             {
                 var address = result.RequiredString("originated_rollup");
@@ -73,7 +68,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             var origination = new TxRollupOriginationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -81,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
+                SenderId = sender.Id,
                 RollupId = rollup?.Id,
                 Status = result.RequiredString("status") switch
                 {
@@ -95,13 +89,12 @@ namespace Tzkt.Sync.Protocols.Proto13
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                AllocationFee = 4_000 * block.Protocol.ByteCost
+                AllocationFee = 4_000 * Context.Protocol.ByteCost
             };
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
             #endregion
 
             #region apply operation
@@ -146,26 +139,17 @@ namespace Tzkt.Sync.Protocols.Proto13
             }
             #endregion
 
-            Proto.Manager.Set(origination.Sender);
+            Proto.Manager.Set(sender);
             Db.TxRollupOriginationOps.Add(origination);
-            Origination = origination;
+            Context.TxRollupOriginationOps.Add(origination);
         }
 
         public virtual async Task Revert(Block block, TxRollupOriginationOperation origination)
         {
-            #region init
-            origination.Block ??= block;
-            origination.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            origination.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            origination.Sender ??= await Cache.Accounts.GetAsync(origination.SenderId);
-            origination.Sender.Delegate ??= Cache.Accounts.GetDelegate(origination.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = origination.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(origination.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(origination.RollupId) as Rollup;
 
             Db.TryAttach(blockBaker);
@@ -189,7 +173,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
                 sender.RollupsCount--;
 
-                if (rollup.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
+                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
                 {
                     Db.Rollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);
@@ -200,7 +184,6 @@ namespace Tzkt.Sync.Protocols.Proto13
                     {
                         Id = rollup.Id,
                         Address = rollup.Address,
-                        FirstBlock = rollup.FirstBlock,
                         FirstLevel = rollup.FirstLevel,
                         LastLevel = rollup.LastLevel,
                         ActiveTokensCount = rollup.ActiveTokensCount,
@@ -233,7 +216,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             sender.TxRollupOriginationCount--;
 
             sender.Counter = origination.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().TxRollupOriginationOpsCount--;
             #endregion

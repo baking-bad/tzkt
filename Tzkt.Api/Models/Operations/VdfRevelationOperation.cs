@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `vdf_revelation` - used by the blockchain to create randomness
         /// </summary>
-        public override string Type => OpTypes.VdfRevelation;
+        public override string Type => ActivityTypes.VdfRevelation;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -25,17 +25,17 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the delegate (baker), who produced the block with the operation
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Cycle in which the operation was included
@@ -45,12 +45,12 @@
         /// <summary>
         /// Vdf solution
         /// </summary>
-        public string Solution { get; set; }
+        public required string Solution { get; set; }
 
         /// <summary>
         /// Vdf proof
         /// </summary>
-        public string Proof { get; set; }
+        public required string Proof { get; set; }
 
         /// <summary>
         /// Reward, corresponding to delegated stake, paid to baker's liquid balance (micro tez)
@@ -80,19 +80,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Reward => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

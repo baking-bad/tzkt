@@ -1,12 +1,7 @@
-﻿using System;
-using System.IO;
-using System.Net;
-using System.Net.Http;
+﻿using System.Net;
 using System.Net.Http.Headers;
 using System.Reflection;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace Tzkt.Sync
 {
@@ -16,7 +11,7 @@ namespace Tzkt.Sync
         readonly TimeSpan RequestTimeout;
 
         DateTime _Expiration;
-        HttpClient _HttpClient;
+        HttpClient? _HttpClient;
         
         HttpClient HttpClient
         {
@@ -27,20 +22,21 @@ namespace Tzkt.Sync
                     if (DateTime.UtcNow > _Expiration)
                     {
                         _HttpClient?.Dispose();
-                        _HttpClient = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip });
-
-                        _HttpClient.BaseAddress = BaseAddress;
+                        _HttpClient = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
+                        {
+                            BaseAddress = BaseAddress,
+                            Timeout = RequestTimeout,
+                        };
                         _HttpClient.DefaultRequestHeaders.Accept.Add(
                             new MediaTypeWithQualityHeaderValue("application/json"));
                         _HttpClient.DefaultRequestHeaders.UserAgent.Add(
-                            new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version.ToString()));
-                        _HttpClient.Timeout = RequestTimeout;
+                            new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version?.ToString()));
 
                         _Expiration = DateTime.UtcNow.AddMinutes(120);
                     }
                 }
-
-                return _HttpClient;
+                // TODO: use native factory
+                return _HttpClient!;
             }
         }
 
@@ -59,13 +55,13 @@ namespace Tzkt.Sync
         public Task<Stream> GetStreamAsync(string path)
             => HttpClient.GetStreamAsync(path);
 
-        public async Task<T> GetObjectAsync<T>(string path)
+        public async Task<T?> GetObjectAsync<T>(string path)
         {
             using var stream = await HttpClient.GetStreamAsync(path);
             return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
         }
         
-        public async Task<T> PostAsync<T>(string path, string content)
+        public async Task<T?> PostAsync<T>(string path, string content)
         {
             var response = await HttpClient.PostAsync(path, new JsonContent(content));
             

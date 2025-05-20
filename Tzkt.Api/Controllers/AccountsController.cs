@@ -49,18 +49,18 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Account>>> Get(
-            Int32Parameter id,
-            AddressParameter address,
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            AccountParameter @delegate,
-            BigIntegerNullableParameter stakedPseudotokens,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter lastActivity,
-            SelectParameter select,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? id,
+            AddressParameter? address,
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            AccountParameter? @delegate,
+            BigIntegerNullableParameter? stakedPseudotokens,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? lastActivity,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -107,7 +107,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
@@ -118,6 +118,104 @@ namespace Tzkt.Api.Controllers
                     };
                 }
             }
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get accounts activity
+        /// </summary>
+        /// <param name="addresses">Comma-separated list of account addresses to get activity of.</param>
+        /// <param name="roles">Comma-separated list of activity roles (`sender`, `target`, `initiator`, `mention`) to filter activity by.</param>
+        /// <param name="types">Comma-separated list of activity types (`activation`, `autostaking`, `baking`, `ballot`, `dal_attestation_reward`,
+        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `drain_delegate`, 
+        /// `endorsement`, `endorsing_reward`, `increase_paid_storage`, `migration`, `nonce_revelation`, `origination`, `preendorsement`, `proposal`,
+        /// `register_constant`, `reveal`, `revelation_penalty`, `set_delegate_parameters`, `set_deposits_limit`, `sr_add_messages`, `sr_cement`, `sr_execute`,
+        /// `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`, `staking`, `transaction`, `transfer_ticket`, `tx_rollup_commit`, `tx_rollup_dispatch_tickets`,
+        /// `tx_rollup_finalize_commitment`, `tx_rollup_origination`, `tx_rollup_rejection`, `tx_rollup_remove_commitment`, `tx_rollup_return_bond`, `tx_rollup_submit_batch`,
+        /// `vdf_revelation`, `update_consensus_key`, `ticket_transfer`, `token_transfer`)</param>
+        /// <param name="timestamp">Filter activity by timestamp.</param>
+        /// <param name="sort">Sort mode: 0 - asc (oldest to newest), 1 - desc (newest to oldest).</param>
+        /// <param name="lastId">Id of the last activity element received, which is used for cursor pagination.</param>
+        /// <param name="limit">Number of elements to return.</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string.</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response.</param>
+        /// <returns></returns>
+        [HttpGet("activity")]
+        public async Task<ActionResult<IEnumerable<Activity>>> GetActivity(
+            [Required(AllowEmptyStrings = false)] string addresses,
+            string? roles,
+            string? types,
+            TimestampParameter? timestamp,
+            SortMode sort = SortMode.Descending,
+            long? lastId = null,
+            [Range(0, 1000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            #region parse addresses
+            var _addresses = new HashSet<string>();
+            foreach (var address in addresses.Split(","))
+            {
+                if (!Regexes.Address().IsMatch(address))
+                    return new BadRequest(nameof(addresses), $"Invalid account address '{address}'");
+                _addresses.Add(address);
+            }
+            #endregion
+
+            #region parse roles
+            var _roles = ActivityRole.None;
+            if (roles != null)
+            {
+                foreach (var role in roles.Split(","))
+                {
+                    switch (role)
+                    {
+                        case "sender":
+                            _roles |= ActivityRole.Sender;
+                            break;
+                        case "target":
+                            _roles |= ActivityRole.Target;
+                            break;
+                        case "initiator":
+                            _roles |= ActivityRole.Initiator;
+                            break;
+                        case "mention":
+                            _roles |= ActivityRole.Mention;
+                            break;
+                        default:
+                            return new BadRequest(nameof(roles), $"Invalid role '{role}'");
+                    }
+                }
+            }
+            if (_roles == ActivityRole.None)
+                _roles = ActivityRole.All;
+            #endregion
+
+            #region parse types
+            var _types = new HashSet<string>();
+            if (types != null)
+            {
+                foreach (var type in types.Split(","))
+                {
+                    if (!ActivityTypes.IsValid(type))
+                        return new BadRequest(nameof(types), $"Unsupported type '{type}'");
+                    _types.Add(type);
+                }
+            }
+            if (_types.Count == 0) 
+                _types = ActivityTypes.Default;
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("accounts", string.Join(",", _addresses.OrderBy(x => x))), ("roles", _roles),
+                ("types", string.Join(",", _types.OrderBy(x => x))), ("timestamp", timestamp),
+                ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetActivity(_addresses, _types, _roles, timestamp, sort == SortMode.Ascending, lastId, limit, quote, micheline);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -136,11 +234,11 @@ namespace Tzkt.Api.Controllers
         /// <returns></returns>
         [HttpGet("count")]
         public async Task<ActionResult<int>> GetCount(
-            AccountTypeParameter type,
-            ContractKindParameter kind,
-            Int64Parameter balance,
-            BoolParameter staked,
-            Int32Parameter firstActivity)
+            AccountTypeParameter? type,
+            ContractKindParameter? kind,
+            Int64Parameter? balance,
+            BoolParameter? staked,
+            Int32Parameter? firstActivity)
         {
             #region optimize
             if (type == null && kind == null && balance == null && staked == null && firstActivity == null)
@@ -168,19 +266,17 @@ namespace Tzkt.Api.Controllers
         /// Returns an account with the specified address.
         /// </remarks>
         /// <param name="address">Account address</param>
-        /// <param name="legacy">If `true` (by default), the `metadata` field will contain tzkt profile info, or TZIP-16 metadata otherwise. This is a part of a deprecation mechanism, allowing smooth migration.</param>
         /// <returns></returns>
         [HttpGet("{address}")]
-        public async Task<ActionResult<Account>> GetByAddress(
-            [Required][Address] string address,
-            bool legacy = true)
+        public async Task<ActionResult<Account?>> GetByAddress(
+            [Required][Address] string address)
         {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("legacy", legacy));  
+            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.Get(address, legacy);
+            var res = await Accounts.Get(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -199,8 +295,8 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/contracts")]
         public async Task<ActionResult<IEnumerable<RelatedContract>>> GetContracts(
             [Required][Address] string address,
-            SortParameter sort,
-            OffsetParameter offset,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -236,11 +332,11 @@ namespace Tzkt.Api.Controllers
         [HttpGet("{address}/delegators")]
         public async Task<ActionResult<IEnumerable<Delegator>>> GetDelegators(
             [Required][TzAddress] string address,
-            AccountTypeParameter type,
-            Int64Parameter balance,
-            Int32Parameter delegationLevel,
-            SortParameter sort,
-            OffsetParameter offset,
+            AccountTypeParameter? type,
+            Int64Parameter? balance,
+            Int32Parameter? delegationLevel,
+            SortParameter? sort,
+            OffsetParameter? offset,
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
@@ -261,7 +357,7 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get account operations
+        /// [DEPRECATED]
         /// </summary>
         /// <remarks>
         /// Returns a list of operations related to the specified account.
@@ -284,7 +380,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="contractManager">Filters origination operations by manager. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="accuser">Filters double baking and double endorsing by accuser. Allowed fields for `.eqx` mode: none.</param>
@@ -303,27 +398,27 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
+        [OpenApiIgnore]
         [HttpGet("{address}/operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
             [Required][Address] string address,
-            string type,
-            AccountParameter initiator,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter prevDelegate,
-            AccountParameter newDelegate,
-            AccountParameter contractManager,
-            AccountParameter contractDelegate,
-            AccountParameter originatedContract,
-            AccountParameter accuser,
-            AccountParameter offender,
-            AccountParameter baker,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            StringParameter entrypoint,
-            JsonParameter parameter,
-            BoolParameter hasInternals,
-            OperationStatusParameter status,
+            string? type,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? prevDelegate,
+            AccountParameter? newDelegate,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
             SortMode sort = SortMode.Descending,
             long? lastId = null,
             [Range(0, 1000)] int limit = 100,
@@ -376,15 +471,6 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(newDelegate)}.nex", "This parameter doesn't support .nex mode.");
             }
 
-            if (contractManager != null)
-            {
-                if (contractManager.Eqx != null)
-                    return new BadRequest($"{nameof(contractManager)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (contractManager.Nex != null)
-                    return new BadRequest($"{nameof(contractManager)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
             if (contractDelegate != null)
             {
                 if (contractDelegate.Eqx != null)
@@ -431,7 +517,7 @@ namespace Tzkt.Api.Controllers
             }
             #endregion
 
-            var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
+            var types = type != null ? [.. type.Split(',')] : ActivityTypes.Default;
 
             var _sort = sort == SortMode.Ascending
                 ? new SortParameter { Asc = "Id" }
@@ -444,7 +530,7 @@ namespace Tzkt.Api.Controllers
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("type", string.Join(",", types.OrderBy(x => x))),
                 ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
-                ("newDelegate", newDelegate), ("contractManager", contractManager), ("contractDelegate", contractDelegate),
+                ("newDelegate", newDelegate), ("contractDelegate", contractDelegate),
                 ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
                 ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
                 ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));  
@@ -452,21 +538,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractManager, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-
-        [OpenApiIgnore]
-        [HttpGet("{address}/metadata")]
-        public async Task<ActionResult<RawJson>> GetMetadata([Required][Address] string address)
-        {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);  
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Accounts.GetProfileInfo(address);
+            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -591,8 +663,8 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<HistoricalBalance>>> GetBalanceHistory(
             [Required][Address] string address,
             [Min(1)] int? step,
-            SelectParameter select,
-            SortParameter sort,
+            SelectParameter? select,
+            SortParameter? sort,
             [Min(0)] int offset = 0,
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
@@ -622,7 +694,7 @@ namespace Tzkt.Api.Controllers
             }
             else
             {
-                if (select.Fields.Length == 1)
+                if (select.Fields!.Length == 1)
                     res = await History.Get(address, step ?? 1, sort, offset, limit, select.Fields[0], quote);
                 else
                 {

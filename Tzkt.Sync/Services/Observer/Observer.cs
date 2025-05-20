@@ -3,22 +3,14 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
-    public class Observer : BackgroundService
+    public class Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger, IMetrics metrics) : BackgroundService
     {
-        public AppState AppState { get; private set; }
+        readonly TezosNode Node = node;
+        readonly IServiceScopeFactory Services = services;
+        readonly ILogger Logger = logger;
+        readonly IMetrics Metrics = metrics;
 
-        readonly TezosNode Node;
-        readonly IServiceScopeFactory Services;
-        readonly ILogger Logger;
-        readonly IMetrics Metrics;
-
-        public Observer(TezosNode node, IServiceScopeFactory services, ILogger<Observer> logger, IMetrics metrics)
-        {
-            Node = node;
-            Services = services;
-            Logger = logger;
-            Metrics = metrics;
-        }
+        AppState AppState = null!;
 
         protected override async Task ExecuteAsync(CancellationToken cancelToken)
         {
@@ -115,6 +107,7 @@ namespace Tzkt.Sync.Services
 
                     await cache.ResetAsync();
                     AppState = cache.AppState.Get();
+                    Metrics.Measure.Gauge.SetHealthValue(AppState);
                     break;
                 }
                 catch (Exception ex)
@@ -159,6 +152,7 @@ namespace Tzkt.Sync.Services
                     var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Level, AppState.Protocol);
                     AppState = await protoHandler.RevertLastBlock(header.Predecessor);
                 }
+                Metrics.Measure.Gauge.SetHealthValue(AppState);
                 Logger.LogInformation("Reverted to [{level}:{hash}]", AppState.Level, AppState.Hash);
             }
 
@@ -182,6 +176,7 @@ namespace Tzkt.Sync.Services
                     var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
                     AppState = await protocol.CommitBlock(header.Level);
                 }
+                Metrics.Measure.Gauge.SetHealthValue(AppState);
                 Logger.LogInformation("Applied {level} of {total}", AppState.Level, AppState.KnownHead);
             }
 

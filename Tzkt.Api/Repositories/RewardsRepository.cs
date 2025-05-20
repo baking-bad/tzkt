@@ -32,14 +32,14 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<BakerRewards>> GetBakerRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return Enumerable.Empty<BakerRewards>();
+                return [];
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
@@ -117,17 +117,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetBakerRewards(
+        public async Task<object?[][]> GetBakerRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return Array.Empty<object[]>();
+                return [];
 
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -197,79 +197,11 @@ namespace Tzkt.Api.Repositories
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"""Cycle"""); break;
-
-                    #region deprecated
-                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
-                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
-                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
-                    case "revelationRewards":
-                        columns.Add(@"""NonceRevelationRewardsDelegated""");
-                        columns.Add(@"""NonceRevelationRewardsStakedOwn""");
-                        columns.Add(@"""NonceRevelationRewardsStakedEdge""");
-                        columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                        columns.Add(@"""VdfRevelationRewardsDelegated""");
-                        columns.Add(@"""VdfRevelationRewardsStakedOwn""");
-                        columns.Add(@"""VdfRevelationRewardsStakedEdge""");
-                        columns.Add(@"""VdfRevelationRewardsStakedShared""");
-                        break;
-                    case "revelationLosses":
-                        columns.Add(@"""NonceRevelationLosses""");
-                        break;
-                    case "doublePreendorsingLosses":
-                        columns.Add(@"""DoublePreendorsingLostStaked""");
-                        columns.Add(@"""DoublePreendorsingLostExternalStaked""");
-                        columns.Add(@"""DoublePreendorsingLostUnstaked""");
-                        columns.Add(@"""DoublePreendorsingLostExternalUnstaked""");
-                        break;
-                    case "doubleEndorsingLosses":
-                        columns.Add(@"""DoubleEndorsingLostStaked""");
-                        columns.Add(@"""DoubleEndorsingLostExternalStaked""");
-                        columns.Add(@"""DoubleEndorsingLostUnstaked""");
-                        columns.Add(@"""DoubleEndorsingLostExternalUnstaked""");
-                        break;
-                    case "doubleBakingLosses":
-                        columns.Add(@"""DoubleBakingLostStaked""");
-                        columns.Add(@"""DoubleBakingLostExternalStaked""");
-                        columns.Add(@"""DoubleBakingLostUnstaked""");
-                        columns.Add(@"""DoubleBakingLostExternalUnstaked""");
-                        break;
-                    case "endorsementRewards":
-                        columns.Add(@"""EndorsementRewardsDelegated""");
-                        columns.Add(@"""EndorsementRewardsStakedOwn""");
-                        columns.Add(@"""EndorsementRewardsStakedEdge""");
-                        columns.Add(@"""EndorsementRewardsStakedShared""");
-                        break;
-                    case "blockRewards":
-                        columns.Add(@"""BlockRewardsDelegated""");
-                        columns.Add(@"""BlockRewardsStakedOwn""");
-                        columns.Add(@"""BlockRewardsStakedEdge""");
-                        columns.Add(@"""BlockRewardsStakedShared""");
-                        break;
-                    case "stakingBalance":
-                        columns.Add(@"""OwnDelegatedBalance""");
-                        columns.Add(@"""ExternalDelegatedBalance""");
-                        columns.Add(@"""OwnStakedBalance""");
-                        columns.Add(@"""ExternalStakedBalance""");
-                        break;
-                    case "activeStake":
-                        columns.Add(@"""BakingPower""");
-                        break;
-                    case "selectedStake":
-                        columns.Add(@"""BakingPower""");
-                        break;
-                    case "delegatedBalance":
-                        columns.Add(@"""ExternalDelegatedBalance""");
-                        break;
-                    case "numDelegators":
-                        columns.Add(@"""DelegatorsCount""");
-                        break;
-                    #endregion
                 }
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
@@ -279,9 +211,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -539,90 +471,23 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
-
-                    #region deprecated
-                    case "blockRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsDelegated;
-                        break;
-                    case "endorsementRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated;
-                        break;
-                    case "vdfRevelationRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.VdfRevelationRewardsDelegated;
-                        break;
-                    case "nonceRevelationRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsDelegated;
-                        break;
-                    case "revelationRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
-                        break;
-                    case "revelationLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationLosses;
-                        break;
-                    case "doublePreendorsingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostStaked + row.DoublePreendorsingLostExternalStaked + row.DoublePreendorsingLostUnstaked + row.DoublePreendorsingLostExternalUnstaked;
-                        break;
-                    case "doubleEndorsingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostStaked + row.DoubleEndorsingLostExternalStaked + row.DoubleEndorsingLostUnstaked + row.DoubleEndorsingLostExternalUnstaked;
-                        break;
-                    case "doubleBakingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoubleBakingLostStaked + row.DoubleBakingLostExternalStaked + row.DoubleBakingLostUnstaked + row.DoubleBakingLostExternalUnstaked;
-                        break;
-                    case "endorsementRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
-                        break;
-                    case "blockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
-                        break;
-                    case "stakingBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.OwnDelegatedBalance + row.ExternalDelegatedBalance + row.OwnStakedBalance + row.ExternalStakedBalance;
-                        break;
-                    case "activeStake":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BakingPower;
-                        break;
-                    case "selectedStake":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BakingPower;
-                        break;
-                    case "delegatedBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ExternalDelegatedBalance;
-                        break;
-                    case "numDelegators":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DelegatorsCount;
-                        break;
-                    #endregion
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> GetBakerRewards(
+        public async Task<object?[]> GetBakerRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
-                return Array.Empty<object>();
+                return [];
 
             var columns = new HashSet<string>(1);
             switch (field)
@@ -690,78 +555,10 @@ namespace Tzkt.Api.Repositories
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"""Cycle"""); break;
-
-                #region deprecated
-                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
-                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
-                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
-                case "revelationRewards":
-                    columns.Add(@"""NonceRevelationRewardsDelegated""");
-                    columns.Add(@"""NonceRevelationRewardsStakedOwn""");
-                    columns.Add(@"""NonceRevelationRewardsStakedEdge""");
-                    columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                    columns.Add(@"""VdfRevelationRewardsDelegated""");
-                    columns.Add(@"""VdfRevelationRewardsStakedOwn""");
-                    columns.Add(@"""VdfRevelationRewardsStakedEdge""");
-                    columns.Add(@"""VdfRevelationRewardsStakedShared""");
-                    break;
-                case "revelationLosses":
-                    columns.Add(@"""NonceRevelationLosses""");
-                    break;
-                case "doublePreendorsingLosses":
-                    columns.Add(@"""DoublePreendorsingLostStaked""");
-                    columns.Add(@"""DoublePreendorsingLostExternalStaked""");
-                    columns.Add(@"""DoublePreendorsingLostUnstaked""");
-                    columns.Add(@"""DoublePreendorsingLostExternalUnstaked""");
-                    break;
-                case "doubleEndorsingLosses":
-                    columns.Add(@"""DoubleEndorsingLostStaked""");
-                    columns.Add(@"""DoubleEndorsingLostExternalStaked""");
-                    columns.Add(@"""DoubleEndorsingLostUnstaked""");
-                    columns.Add(@"""DoubleEndorsingLostExternalUnstaked""");
-                    break;
-                case "doubleBakingLosses":
-                    columns.Add(@"""DoubleBakingLostStaked""");
-                    columns.Add(@"""DoubleBakingLostExternalStaked""");
-                    columns.Add(@"""DoubleBakingLostUnstaked""");
-                    columns.Add(@"""DoubleBakingLostExternalUnstaked""");
-                    break;
-                case "endorsementRewards":
-                    columns.Add(@"""EndorsementRewardsDelegated""");
-                    columns.Add(@"""EndorsementRewardsStakedOwn""");
-                    columns.Add(@"""EndorsementRewardsStakedEdge""");
-                    columns.Add(@"""EndorsementRewardsStakedShared""");
-                    break;
-                case "blockRewards":
-                    columns.Add(@"""BlockRewardsDelegated""");
-                    columns.Add(@"""BlockRewardsStakedOwn""");
-                    columns.Add(@"""BlockRewardsStakedEdge""");
-                    columns.Add(@"""BlockRewardsStakedShared""");
-                    break;
-                case "stakingBalance":
-                    columns.Add(@"""OwnDelegatedBalance""");
-                    columns.Add(@"""ExternalDelegatedBalance""");
-                    columns.Add(@"""OwnStakedBalance""");
-                    columns.Add(@"""ExternalStakedBalance""");
-                    break;
-                case "activeStake":
-                    columns.Add(@"""BakingPower""");
-                    break;
-                case "selectedStake":
-                    columns.Add(@"""BakingPower""");
-                    break;
-                case "delegatedBalance":
-                    columns.Add(@"""ExternalDelegatedBalance""");
-                    break;
-                case "numDelegators":
-                    columns.Add(@"""DelegatorsCount""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BakerCycles""")
                 .Filter("BakerId", baker.Id)
@@ -772,7 +569,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -1029,73 +826,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
-
-                #region deprecated
-                case "blockRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.BlockRewardsDelegated;
-                    break;
-                case "endorsementRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated;
-                    break;
-                case "vdfRevelationRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.VdfRevelationRewardsDelegated;
-                    break;
-                case "nonceRevelationRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsDelegated;
-                    break;
-                case "revelationRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
-                    break;
-                case "revelationLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationLosses;
-                    break;
-                case "doublePreendorsingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostStaked + row.DoublePreendorsingLostExternalStaked + row.DoublePreendorsingLostUnstaked + row.DoublePreendorsingLostExternalUnstaked;
-                    break;
-                case "doubleEndorsingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostStaked + row.DoubleEndorsingLostExternalStaked + row.DoubleEndorsingLostUnstaked + row.DoubleEndorsingLostExternalUnstaked;
-                    break;
-                case "doubleBakingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoubleBakingLostStaked + row.DoubleBakingLostExternalStaked + row.DoubleBakingLostUnstaked + row.DoubleBakingLostExternalUnstaked;
-                    break;
-                case "endorsementRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
-                    break;
-                case "blockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
-                    break;
-                case "stakingBalance":
-                    foreach (var row in rows)
-                        result[j++] = row.OwnDelegatedBalance + row.ExternalDelegatedBalance + row.OwnStakedBalance + row.ExternalStakedBalance;
-                    break;
-                case "activeStake":
-                    foreach (var row in rows)
-                        result[j++] = row.BakingPower;
-                    break;
-                case "selectedStake":
-                    foreach (var row in rows)
-                        result[j++] = row.BakingPower;
-                    break;
-                case "delegatedBalance":
-                    foreach (var row in rows)
-                        result[j++] = row.ExternalDelegatedBalance;
-                    break;
-                case "numDelegators":
-                    foreach (var row in rows)
-                        result[j++] = row.DelegatorsCount;
-                    break;
-                #endregion
             }
 
             return result;
@@ -1114,14 +844,14 @@ namespace Tzkt.Api.Repositories
 
         public async Task<IEnumerable<DelegatorRewards>> GetDelegatorRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return Enumerable.Empty<DelegatorRewards>();
+            if (acc == null) return [];
 
             var sql = new SqlBuilder("""
                 SELECT      bc.*, dc."DelegatedBalance", dc."StakedBalance"
@@ -1206,17 +936,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetDelegatorRewards(
+        public async Task<object?[][]> GetDelegatorRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return Array.Empty<object[]>();
+            if (acc == null) return [];
 
             var columns = new HashSet<string>(fields.Length);
             foreach (var field in fields)
@@ -1287,77 +1017,11 @@ namespace Tzkt.Api.Repositories
                     case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                     case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                     case "quote": columns.Add(@"dc.""Cycle"""); break;
-
-                    #region deprecated
-                    case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
-                    case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                    case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
-                    case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
-                    case "revelationRewards":
-                        columns.Add(@"""NonceRevelationRewardsDelegated""");
-                        columns.Add(@"""NonceRevelationRewardsStakedOwn""");
-                        columns.Add(@"""NonceRevelationRewardsStakedEdge""");
-                        columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                        columns.Add(@"""VdfRevelationRewardsDelegated""");
-                        columns.Add(@"""VdfRevelationRewardsStakedOwn""");
-                        columns.Add(@"""VdfRevelationRewardsStakedEdge""");
-                        columns.Add(@"""VdfRevelationRewardsStakedShared""");
-                        break;
-                    case "revelationLosses":
-                        columns.Add(@"""NonceRevelationLosses""");
-                        break;
-                    case "doublePreendorsingLosses":
-                        columns.Add(@"""DoublePreendorsingLostStaked""");
-                        columns.Add(@"""DoublePreendorsingLostExternalStaked""");
-                        columns.Add(@"""DoublePreendorsingLostUnstaked""");
-                        columns.Add(@"""DoublePreendorsingLostExternalUnstaked""");
-                        break;
-                    case "doubleEndorsingLosses":
-                        columns.Add(@"""DoubleEndorsingLostStaked""");
-                        columns.Add(@"""DoubleEndorsingLostExternalStaked""");
-                        columns.Add(@"""DoubleEndorsingLostUnstaked""");
-                        columns.Add(@"""DoubleEndorsingLostExternalUnstaked""");
-                        break;
-                    case "doubleBakingLosses":
-                        columns.Add(@"""DoubleBakingLostStaked""");
-                        columns.Add(@"""DoubleBakingLostExternalStaked""");
-                        columns.Add(@"""DoubleBakingLostUnstaked""");
-                        columns.Add(@"""DoubleBakingLostExternalUnstaked""");
-                        break;
-                    case "endorsementRewards":
-                        columns.Add(@"""EndorsementRewardsDelegated""");
-                        columns.Add(@"""EndorsementRewardsStakedOwn""");
-                        columns.Add(@"""EndorsementRewardsStakedEdge""");
-                        columns.Add(@"""EndorsementRewardsStakedShared""");
-                        break;
-                    case "blockRewards":
-                        columns.Add(@"""BlockRewardsDelegated""");
-                        columns.Add(@"""BlockRewardsStakedOwn""");
-                        columns.Add(@"""BlockRewardsStakedEdge""");
-                        columns.Add(@"""BlockRewardsStakedShared""");
-                        break;
-                    case "stakingBalance":
-                        columns.Add(@"""OwnDelegatedBalance""");
-                        columns.Add(@"""ExternalDelegatedBalance""");
-                        columns.Add(@"""OwnStakedBalance""");
-                        columns.Add(@"""ExternalStakedBalance""");
-                        break;
-                    case "activeStake":
-                        columns.Add(@"""BakingPower""");
-                        break;
-                    case "selectedStake":
-                        columns.Add(@"""BakingPower""");
-                        break;
-                    case "balance":
-                        columns.Add(@"dc.""DelegatedBalance""");
-                        columns.Add(@"dc.""StakedBalance""");
-                        break;
-                    #endregion
                 }
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($"""
                 SELECT      {string.Join(',', columns)}
@@ -1373,9 +1037,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -1637,86 +1301,23 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
-
-                    #region deprecated
-                    case "blockRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsDelegated;
-                        break;
-                    case "endorsementRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated;
-                        break;
-                    case "vdfRevelationRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.VdfRevelationRewardsDelegated;
-                        break;
-                    case "nonceRevelationRewardsLiquid":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsDelegated;
-                        break;
-                    case "revelationRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
-                        break;
-                    case "revelationLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.NonceRevelationLosses;
-                        break;
-                    case "doublePreendorsingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostStaked + row.DoublePreendorsingLostExternalStaked + row.DoublePreendorsingLostUnstaked + row.DoublePreendorsingLostExternalUnstaked;
-                        break;
-                    case "doubleEndorsingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostStaked + row.DoubleEndorsingLostExternalStaked + row.DoubleEndorsingLostUnstaked + row.DoubleEndorsingLostExternalUnstaked;
-                        break;
-                    case "doubleBakingLosses":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoubleBakingLostStaked + row.DoubleBakingLostExternalStaked + row.DoubleBakingLostUnstaked + row.DoubleBakingLostExternalUnstaked;
-                        break;
-                    case "endorsementRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
-                        break;
-                    case "blockRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
-                        break;
-                    case "stakingBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.OwnDelegatedBalance + row.ExternalDelegatedBalance + row.OwnStakedBalance + row.ExternalStakedBalance;
-                        break;
-                    case "activeStake":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BakingPower;
-                        break;
-                    case "selectedStake":
-                        foreach (var row in rows)
-                            result[j++][i] = row.BakingPower;
-                        break;
-                    case "balance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DelegatedBalance + row.StakedBalance;
-                        break;
-                    #endregion
                 }
             }
 
             return result;
         }
 
-        public async Task<object[]> GetDelegatorRewards(
+        public async Task<object?[]> GetDelegatorRewards(
             string address,
-            Int32Parameter cycle,
-            SortParameter sort,
-            OffsetParameter offset,
+            Int32Parameter? cycle,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
         {
             var acc = await Accounts.GetAsync(address);
-            if (acc == null) return Array.Empty<object>();
+            if (acc == null) return [];
 
             var columns = new HashSet<string>(1);
             var join = false;
@@ -1787,76 +1388,10 @@ namespace Tzkt.Api.Repositories
                 case "nonceRevelationRewardsStakedShared": columns.Add(@"""NonceRevelationRewardsStakedShared"""); break;
                 case "nonceRevelationLosses": columns.Add(@"""NonceRevelationLosses"""); break;
                 case "quote": columns.Add(@"dc.""Cycle"""); break;
-
-                #region deprecated
-                case "blockRewardsLiquid": columns.Add(@"""BlockRewardsDelegated"""); break;
-                case "endorsementRewardsLiquid": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                case "vdfRevelationRewardsLiquid": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
-                case "nonceRevelationRewardsLiquid": columns.Add(@"""NonceRevelationRewardsDelegated"""); break;
-                case "revelationRewards":
-                    columns.Add(@"""NonceRevelationRewardsDelegated""");
-                    columns.Add(@"""NonceRevelationRewardsStakedOwn""");
-                    columns.Add(@"""NonceRevelationRewardsStakedEdge""");
-                    columns.Add(@"""NonceRevelationRewardsStakedShared""");
-                    columns.Add(@"""VdfRevelationRewardsDelegated""");
-                    columns.Add(@"""VdfRevelationRewardsStakedOwn""");
-                    columns.Add(@"""VdfRevelationRewardsStakedEdge""");
-                    columns.Add(@"""VdfRevelationRewardsStakedShared""");
-                    break;
-                case "revelationLosses":
-                    columns.Add(@"""NonceRevelationLosses""");
-                    break;
-                case "doublePreendorsingLosses":
-                    columns.Add(@"""DoublePreendorsingLostStaked""");
-                    columns.Add(@"""DoublePreendorsingLostExternalStaked""");
-                    columns.Add(@"""DoublePreendorsingLostUnstaked""");
-                    columns.Add(@"""DoublePreendorsingLostExternalUnstaked""");
-                    break;
-                case "doubleEndorsingLosses":
-                    columns.Add(@"""DoubleEndorsingLostStaked""");
-                    columns.Add(@"""DoubleEndorsingLostExternalStaked""");
-                    columns.Add(@"""DoubleEndorsingLostUnstaked""");
-                    columns.Add(@"""DoubleEndorsingLostExternalUnstaked""");
-                    break;
-                case "doubleBakingLosses":
-                    columns.Add(@"""DoubleBakingLostStaked""");
-                    columns.Add(@"""DoubleBakingLostExternalStaked""");
-                    columns.Add(@"""DoubleBakingLostUnstaked""");
-                    columns.Add(@"""DoubleBakingLostExternalUnstaked""");
-                    break;
-                case "endorsementRewards":
-                    columns.Add(@"""EndorsementRewardsDelegated""");
-                    columns.Add(@"""EndorsementRewardsStakedOwn""");
-                    columns.Add(@"""EndorsementRewardsStakedEdge""");
-                    columns.Add(@"""EndorsementRewardsStakedShared""");
-                    break;
-                case "blockRewards":
-                    columns.Add(@"""BlockRewardsDelegated""");
-                    columns.Add(@"""BlockRewardsStakedOwn""");
-                    columns.Add(@"""BlockRewardsStakedEdge""");
-                    columns.Add(@"""BlockRewardsStakedShared""");
-                    break;
-                case "stakingBalance":
-                    columns.Add(@"""OwnDelegatedBalance""");
-                    columns.Add(@"""ExternalDelegatedBalance""");
-                    columns.Add(@"""OwnStakedBalance""");
-                    columns.Add(@"""ExternalStakedBalance""");
-                    break;
-                case "activeStake":
-                    columns.Add(@"""BakingPower""");
-                    break;
-                case "selectedStake":
-                    columns.Add(@"""BakingPower""");
-                    break;
-                case "balance":
-                    columns.Add(@"dc.""DelegatedBalance""");
-                    columns.Add(@"dc.""StakedBalance""");
-                    break;
-                #endregion
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var joinStr = join
                 ? @"INNER JOIN ""BakerCycles"" as bc ON  bc.""BakerId"" = dc.""BakerId"" AND  bc.""Cycle"" = dc.""Cycle"""
@@ -1871,7 +1406,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
@@ -2132,69 +1667,6 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
-
-                #region deprecated
-                case "blockRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.BlockRewardsDelegated;
-                    break;
-                case "endorsementRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated;
-                    break;
-                case "vdfRevelationRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.VdfRevelationRewardsDelegated;
-                    break;
-                case "nonceRevelationRewardsLiquid":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsDelegated;
-                    break;
-                case "revelationRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationRewardsDelegated + row.NonceRevelationRewardsStakedOwn + row.NonceRevelationRewardsStakedEdge + row.NonceRevelationRewardsStakedShared + row.VdfRevelationRewardsDelegated + row.VdfRevelationRewardsStakedOwn + row.VdfRevelationRewardsStakedEdge + row.VdfRevelationRewardsStakedShared;
-                    break;
-                case "revelationLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.NonceRevelationLosses;
-                    break;
-                case "doublePreendorsingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostStaked + row.DoublePreendorsingLostExternalStaked + row.DoublePreendorsingLostUnstaked + row.DoublePreendorsingLostExternalUnstaked;
-                    break;
-                case "doubleEndorsingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostStaked + row.DoubleEndorsingLostExternalStaked + row.DoubleEndorsingLostUnstaked + row.DoubleEndorsingLostExternalUnstaked;
-                    break;
-                case "doubleBakingLosses":
-                    foreach (var row in rows)
-                        result[j++] = row.DoubleBakingLostStaked + row.DoubleBakingLostExternalStaked + row.DoubleBakingLostUnstaked + row.DoubleBakingLostExternalUnstaked;
-                    break;
-                case "endorsementRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated + row.EndorsementRewardsStakedOwn + row.EndorsementRewardsStakedEdge + row.EndorsementRewardsStakedShared;
-                    break;
-                case "blockRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.BlockRewardsDelegated + row.BlockRewardsStakedOwn + row.BlockRewardsStakedEdge + row.BlockRewardsStakedShared;
-                    break;
-                case "stakingBalance":
-                    foreach (var row in rows)
-                        result[j++] = row.OwnDelegatedBalance + row.ExternalDelegatedBalance + row.OwnStakedBalance + row.ExternalStakedBalance;
-                    break;
-                case "activeStake":
-                    foreach (var row in rows)
-                        result[j++] = row.BakingPower;
-                    break;
-                case "selectedStake":
-                    foreach (var row in rows)
-                        result[j++] = row.BakingPower;
-                    break;
-                case "balance":
-                    foreach (var row in rows)
-                        result[j++] = row.DelegatedBalance + row.StakedBalance;
-                    break;
-                    #endregion
             }
 
             return result;
@@ -2202,7 +1674,7 @@ namespace Tzkt.Api.Repositories
         #endregion
 
         #region split
-        public async Task<RewardSplit> GetRewardSplit(string address, int cycle, int offset, int limit)
+        public async Task<RewardSplit?> GetRewardSplit(string address, int cycle, int offset, int limit)
         {
             if (await Accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
@@ -2302,7 +1774,7 @@ namespace Tzkt.Api.Repositories
                 NonceRevelationLosses = rewards.NonceRevelationLosses,
                 Delegators = delegators.Select(x => 
                 {
-                    var delegator = Accounts.Get((int)x.DelegatorId);
+                    var delegator = Accounts.Get((int)x.DelegatorId)!;
                     return new SplitDelegator
                     {
                         Address = delegator.Address,
@@ -2314,7 +1786,7 @@ namespace Tzkt.Api.Repositories
             };
         }
 
-        public async Task<SplitDelegator> GetRewardSplitDelegator(string bakerAddress, int cycle, string delegatorAddress)
+        public async Task<SplitDelegator?> GetRewardSplitDelegator(string bakerAddress, int cycle, string delegatorAddress)
         {
             if (await Accounts.GetAsync(bakerAddress) is not RawDelegate baker)
                 return null;

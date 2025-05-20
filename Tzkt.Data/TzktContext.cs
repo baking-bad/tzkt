@@ -4,7 +4,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Data
 {
-    public class TzktContext : DbContext
+    public class TzktContext(DbContextOptions options) : DbContext(options)
     {
         #region app state
         public DbSet<AppState> AppState { get; set; }
@@ -14,7 +14,7 @@ namespace Tzkt.Data
         public DbSet<Commitment> Commitments { get; set; }
         public DbSet<Account> Accounts { get; set; }
         public DbSet<Contract> Contracts { get; set; }
-        public DbSet<Delegate> Delegates { get; set; }
+        public DbSet<Models.Delegate> Delegates { get; set; }
         public DbSet<User> Users { get; set; }
         public DbSet<Rollup> Rollups { get; set; }
         public DbSet<SmartRollup> SmartRollups { get; set; }
@@ -133,8 +133,6 @@ namespace Tzkt.Data
         public DbSet<Quote> Quotes { get; set; }
         public DbSet<Domain> Domains { get; set; }
         #endregion
-
-        public TzktContext(DbContextOptions options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

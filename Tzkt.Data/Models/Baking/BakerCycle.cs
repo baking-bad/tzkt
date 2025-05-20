@@ -4,9 +4,9 @@ namespace Tzkt.Data.Models
 {
     public class BakerCycle
     {
-        public int Id { get; set; }
-        public int Cycle { get; set; }
-        public int BakerId { get; set; }
+        public required int Id { get; set; }
+        public required int Cycle { get; set; }
+        public required int BakerId { get; set; }
 
         public long OwnDelegatedBalance { get; set; }
         public long ExternalDelegatedBalance { get; set; }

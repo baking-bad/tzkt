@@ -18,7 +18,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Public key hash of the delegate (baker)
         /// </summary>
-        public override string Address { get; set; }
+        public override required string Address { get; set; }
 
         /// <summary>
         /// Delegation status (`true` - active, `false` - deactivated)
@@ -28,12 +28,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Name of the baking service
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Public key of the delegate (baker)
         /// </summary>
-        public string PublicKey { get; set; }
+        public required string PublicKey { get; set; }
 
         /// <summary>
         /// Public key revelation status. Unrevealed account can't send manager operation (transaction, origination etc.)
@@ -69,7 +69,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the baker, for which there are pending unstake requests.
         /// </summary>
-        public Alias UnstakedBaker { get; set; }
+        public Alias? UnstakedBaker { get; set; }
 
         /// <summary>
         /// Amount staked from external stakers (micro tez).
@@ -473,43 +473,11 @@ namespace Tzkt.Api.Models
         /// Off-chain extras
         /// </summary>
         [JsonSchemaType(typeof(object), IsNullable = true)]
-        public RawJson Extras { get; set; }
+        public RawJson? Extras { get; set; }
 
         /// <summary>
         /// Last seen baker's software
         /// </summary>
-        public SoftwareAlias Software { get; set; }
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostBalance => RoundingError;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenDeposit => StakedBalance;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenDeposits => FrozenDeposit;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenRewards => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long FrozenFees => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public RawJson Metadata { get; set; }
-        #endregion
+        public SoftwareAlias? Software { get; set; }
     }
 }

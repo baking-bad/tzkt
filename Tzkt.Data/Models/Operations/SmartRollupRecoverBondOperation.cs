@@ -43,14 +43,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupRecoverBondOperation>()
                 .HasIndex(x => x.StakerId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupRecoverBondOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupRecoverBondOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

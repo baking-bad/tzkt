@@ -7,31 +7,28 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class DoubleEndorsingCommit : ProtocolCommit
+    class DoubleEndorsingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public DoubleEndorsingCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
             var accusedLevel = content.Required("op1").Required("operations").RequiredInt32("level");
 
-            var accuser = block.Proposer;
+            var accuser = Context.Proposer;
             var offender = await GetEndorser(op.RequiredString("chain_id"), content.Required("op1"));
 
             var operation = new DoubleEndorsingOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = accusedLevel,
-                SlashedLevel = GetSlashingLevel(block, block.Protocol, accusedLevel),
+                SlashedLevel = GetSlashingLevel(block, Context.Protocol, accusedLevel),
 
-                Accuser = accuser,
-                Offender = offender,
+                AccuserId = accuser.Id,
+                OffenderId = offender.Id,
 
                 Reward = 0,
                 LostStaked = 0,
@@ -52,9 +49,12 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
 
             block.Operations |= Operations.DoubleEndorsings;
+
+            Cache.AppState.Get().DoubleEndorsingOpsCount++;
             #endregion
 
             Db.DoubleEndorsingOps.Add(operation);
+            Context.DoubleEndorsingOps.Add(operation);
         }
 
         public void Revert(DoubleEndorsingOperation operation)
@@ -73,6 +73,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(offender);
                 offender.DoubleEndorsingCount--;
             }
+
+            Cache.AppState.Get().DoubleEndorsingOpsCount--;
             #endregion
 
             Db.DoubleEndorsingOps.Remove(operation);
@@ -99,7 +101,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .ToArray();
 
             foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))
-                if (PubKey.FromBase58(baker.PublicKey).Verify(bytes, signature))
+                if (PubKey.FromBase58(baker.PublicKey!).Verify(bytes, signature))
                     return baker;
 
             throw new Exception("Failed to determine double endorser");

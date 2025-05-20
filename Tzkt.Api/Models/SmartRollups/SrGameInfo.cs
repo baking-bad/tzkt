@@ -10,22 +10,22 @@
         /// <summary>
         /// Initiator, who found a wrong commitment and started the refutation game.
         /// </summary>
-        public Alias Initiator { get; set; }
+        public required Alias Initiator { get; set; }
 
         /// <summary>
         /// Initiator's version of a valid commitment
         /// </summary>
-        public SrCommitmentInfo InitiatorCommitment { get; set; }
+        public required SrCommitmentInfo InitiatorCommitment { get; set; }
 
         /// <summary>
         /// Opponent, who was accused in publishing a wrong commitment.
         /// </summary>
-        public Alias Opponent { get; set; }
+        public required Alias Opponent { get; set; }
 
         /// <summary>
         /// Opponent's version of a valid commitment
         /// </summary>
-        public SrCommitmentInfo OpponentCommitment { get; set; }
+        public required SrCommitmentInfo OpponentCommitment { get; set; }
 
         /// <summary>
         /// In case the initiator won, this field will contain the reward amount (in mutez).

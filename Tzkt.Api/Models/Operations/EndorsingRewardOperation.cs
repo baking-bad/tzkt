@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `endorsing_reward`
         /// </summary>
-        public override string Type => OpTypes.EndorsingReward;
+        public override string Type => ActivityTypes.EndorsingReward;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -25,12 +25,12 @@
         /// <summary>
         /// Block hash
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Baker expected to receive endorsing reward
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Expected endorsing reward, based on baker's active stake (micro tez)
@@ -65,19 +65,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Received => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `revelation_penalty` - is operation, in which rewards were lost due to unrevealed seed nonces by the delegate (synthetic type)
         /// </summary>
-        public override string Type => OpTypes.RevelationPenalty;
+        public override string Type => ActivityTypes.RevelationPenalty;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -25,12 +25,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Information about the delegate (baker) who has lost rewards due to unrevealed seed nonces 
         /// </summary>
-        public Alias Baker { get; set; }
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Height of the block, which contains hash of the seed nonce, which was to be revealed
@@ -46,19 +46,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostReward => Loss;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long LostFees => 0;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

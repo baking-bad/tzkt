@@ -1,26 +1,17 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
     public class BallotOperation : BaseOperation
     {
-        public int Epoch { get; set; }
-        public int Period { get; set; }
-        public int ProposalId { get; set; }
-        public int SenderId { get; set; }
+        public required int Epoch { get; set; }
+        public required int Period { get; set; }
+        public required int ProposalId { get; set; }
+        public required int SenderId { get; set; }
+
         public long VotingPower { get; set; }
-
         public Vote Vote { get; set; }
-
-        #region relations
-        [ForeignKey(nameof(SenderId))]
-        public Delegate Sender { get; set; }
-
-        [ForeignKey(nameof(ProposalId))]
-        public Proposal Proposal { get; set; }
-        #endregion
     }
 
     public static class BallotOperationModel
@@ -55,14 +46,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<BallotOperation>()
                 .HasIndex(x => x.SenderId);
-            #endregion
 
-            #region relations
             modelBuilder.Entity<BallotOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.Ballots)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
+                .HasIndex(x => x.ProposalId);
             #endregion
         }
     }

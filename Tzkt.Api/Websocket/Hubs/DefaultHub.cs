@@ -51,7 +51,7 @@ namespace Tzkt.Api.Websocket.Hubs
             return Head.Subscribe(Clients.Caller, Context.ConnectionId);
         }
 
-        public Task<int> SubscribeToCycles(CyclesParameter parameters = null)
+        public Task<int> SubscribeToCycles(CyclesParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
@@ -63,63 +63,63 @@ namespace Tzkt.Api.Websocket.Hubs
             return Blocks.Subscribe(Clients.Caller, Context.ConnectionId);
         }
 
-        public Task<int> SubscribeToOperations(OperationsParameter parameters)
+        public Task<int> SubscribeToOperations(OperationsParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return Operations.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToBigMaps(BigMapsParameter parameters)
+        public Task<int> SubscribeToBigMaps(BigMapsParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return BigMaps.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToEvents(EventsParameter parameters)
+        public Task<int> SubscribeToEvents(EventsParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return Events.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToTokenBalances(TokenTransfersParameter parameters)
+        public Task<int> SubscribeToTokenBalances(TokenTransfersParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return TokenBalances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToTokenTransfers(TokenTransfersParameter parameters)
+        public Task<int> SubscribeToTokenTransfers(TokenTransfersParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return TokenTransfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToTicketBalances(TicketTransfersParameter parameters)
+        public Task<int> SubscribeToTicketBalances(TicketTransfersParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return TicketBalances.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToTicketTransfers(TicketTransfersParameter parameters)
+        public Task<int> SubscribeToTicketTransfers(TicketTransfersParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return TicketTransfers.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public Task<int> SubscribeToAccounts(AccountsParameter parameters)
+        public Task<int> SubscribeToAccounts(AccountsParameter? parameters)
         {
             parameters ??= new();
             parameters.EnsureValid();
             return Accounts.Subscribe(Clients.Caller, Context.ConnectionId, parameters);
         }
 
-        public override Task OnDisconnectedAsync(Exception exception)
+        public override Task OnDisconnectedAsync(Exception? exception)
         {
             Cycles.Unsubscribe(Context.ConnectionId);
             Operations.Unsubscribe(Context.ConnectionId);

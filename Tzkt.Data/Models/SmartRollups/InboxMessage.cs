@@ -4,14 +4,14 @@ namespace Tzkt.Data.Models
 {
     public class InboxMessage
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int Index { get; set; }
-        public InboxMessageType Type { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int Index { get; set; }
+        public required InboxMessageType Type { get; set; }
         public int? PredecessorLevel { get; set; } // only for LevelInfo
         public long? OperationId { get; set; } // only for Internal and External
-        public byte[] Payload { get; set; } // only for External
-        public string Protocol { get; set; } // only for Migration
+        public byte[]? Payload { get; set; } // only for External
+        public string? Protocol { get; set; } // only for Migration
     }
 
     public enum InboxMessageType

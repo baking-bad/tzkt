@@ -24,10 +24,8 @@ namespace Tzkt.Api.Models
         public abstract string Address { get; set; }
     }
 
-    public class AccountJsonInheritanceConverter : JsonInheritanceConverter<Account>
+    public class AccountJsonInheritanceConverter(string name) : JsonInheritanceConverter<Account>(name)
     {
-        public AccountJsonInheritanceConverter(string name) : base(name) { }
-        
         public override string GetDiscriminatorValue(Type type)
         {
             if (type == typeof(Delegate))

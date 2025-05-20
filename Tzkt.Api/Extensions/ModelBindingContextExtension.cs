@@ -1,6 +1,6 @@
-﻿using System.Numerics;
+﻿using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Netezos.Encoding;
 
@@ -32,7 +32,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetBigIntegerList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<BigInteger> result)
+        public static bool TryGetBigIntegerList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<BigInteger>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -68,7 +68,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -78,7 +78,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, @"^[0-9]+$"))
+                    if (!Regexes.Number().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid nat value.");
                         return false;
@@ -92,7 +92,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetNatList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetNatList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -115,7 +115,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, @"^[0-9]+$"))
+                        if (!Regexes.Number().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid nat value.");
                             return false;
@@ -152,7 +152,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetInt32List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetInt32List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -212,7 +212,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetInt64List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<long> result)
+        public static bool TryGetInt64List(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<long>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -248,7 +248,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMicheline(this ModelBindingContext bindingContext, string name, ref bool hasValue, out IMicheline result)
+        public static bool TryGetMicheline(this ModelBindingContext bindingContext, string name, ref bool hasValue, out IMicheline? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -274,7 +274,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMichelineList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<IMicheline> result)
+        public static bool TryGetMichelineList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<IMicheline>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -288,7 +288,7 @@ namespace Tzkt.Api
                     {
                         var json = valueObject.FirstValue.Trim();
                         if (json[0] != '[') json = $"[{json}]";
-                        var values = JsonSerializer.Deserialize<List<IMicheline>>(json);
+                        var values = JsonSerializer.Deserialize<List<IMicheline>>(json) ?? [];
 
                         if (values.Count == 0)
                         {
@@ -334,7 +334,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetDateTimeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<DateTime> result)
+        public static bool TryGetDateTimeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<DateTime>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -370,7 +370,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -380,7 +380,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^[0-9A-Za-z]{36,37}$"))
+                    if (!Regexes.Address().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid account address.");
                         return false;
@@ -394,7 +394,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetAddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -417,7 +417,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
+                        if (!Regexes.Address().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
                             return false;
@@ -433,7 +433,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetAddressNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetAddressNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string?>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -452,11 +452,11 @@ namespace Tzkt.Api
                     }
 
                     hasValue = true;
-                    result = new List<string>(rawValues.Length);
+                    result = new(rawValues.Length);
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^[0-9A-Za-z]{36,37}$"))
+                        if (!Regexes.Address().IsMatch(rawValue))
                         {
                             if (rawValue != "null")
                             {
@@ -479,7 +479,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSr1Address(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetSr1Address(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -489,7 +489,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^sr1[0-9A-Za-z]{33}$"))
+                    if (!Regexes.Sr1Address().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup address.");
                         return false;
@@ -503,7 +503,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSr1AddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetSr1AddressList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -526,7 +526,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^sr1[0-9A-Za-z]{33}$"))
+                        if (!Regexes.Sr1Address().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup address.");
                             return false;
@@ -542,7 +542,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetProtocol(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -552,7 +552,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^P[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Protocol().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid protocol hash.");
                         return false;
@@ -566,7 +566,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetProtocolList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetProtocolList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -589,7 +589,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^P[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Protocol().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid protocol hash.");
                             return false;
@@ -649,6 +649,72 @@ namespace Tzkt.Api
             return true;
         }
 
+
+        public static bool TryGetTokenGlobalId(this ModelBindingContext bindingContext, string name, ref bool hasValue, out (string, BigInteger)? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var ss = valueObject.FirstValue.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                    if (ss.Length != 2 || !Regexes.Address().IsMatch(ss[0]) || !BigInteger.TryParse(ss[1], out var tokenId))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid token global id.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = (ss[0], tokenId);
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetTokenGlobalIdList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<(string, BigInteger)>? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<(string, BigInteger)>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        var ss = rawValue.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                        if (ss.Length != 2 || !Regexes.Address().IsMatch(ss[0]) || !BigInteger.TryParse(ss[1], out var tokenId))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid token global id.");
+                            return false;
+                        }
+                        else
+                        {
+                            result.Add((ss[0], tokenId));
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetBakingRightType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
@@ -695,7 +761,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetExpression(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetExpression(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -705,7 +771,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^expr[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Expression().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid expression hash.");
                         return false;
@@ -719,7 +785,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetExpressionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetExpressionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -742,7 +808,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^expr[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Expression().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid expression hash.");
                             return false;
@@ -756,7 +822,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetOpHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetOpHash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -766,7 +832,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^o[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Operation().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid operation hash.");
                         return false;
@@ -780,7 +846,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetOpHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetOpHashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -803,7 +869,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^o[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Operation().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid operation hash.");
                             return false;
@@ -817,7 +883,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrc1Hash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetSrc1Hash(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -827,7 +893,7 @@ namespace Tzkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!Regex.IsMatch(valueObject.FirstValue, "^src1[0-9A-Za-z]{50}$"))
+                    if (!Regexes.Src1Hash().IsMatch(valueObject.FirstValue))
                     {
                         bindingContext.ModelState.TryAddModelError(name, "Invalid smart rollup commitment hash.");
                         return false;
@@ -841,7 +907,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrc1HashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetSrc1HashList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -864,7 +930,7 @@ namespace Tzkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!Regex.IsMatch(rawValue, "^src1[0-9A-Za-z]{50}$"))
+                        if (!Regexes.Src1Hash().IsMatch(rawValue))
                         {
                             bindingContext.ModelState.TryAddModelError(name, "List contains invalid smart rollup commitment hash.");
                             return false;
@@ -878,7 +944,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetEpochStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetEpochStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -901,7 +967,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetEpochStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetEpochStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -961,7 +1027,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetContractKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetContractKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1023,7 +1089,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetBigMapActionList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = (bindingContext.ValueProvider as CompositeValueProvider)?
@@ -1163,7 +1229,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetVotesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetVotesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1223,7 +1289,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetVoterStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetVoterStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1283,7 +1349,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetRefutationMoveList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetRefutationMoveList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1343,7 +1409,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetRefutationGameStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetRefutationGameStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1403,7 +1469,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetMigrationKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetMigrationKindList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1440,7 +1506,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1486,7 +1552,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrCommitmentStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrCommitmentStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1546,7 +1612,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrBondStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrBondStatusList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1606,7 +1672,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1666,7 +1732,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStakingUpdateTypesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingUpdateTypesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1726,7 +1792,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSrMessageTypeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetSrMessageTypeList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1813,7 +1879,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetString(this ModelBindingContext bindingContext, string name, out string result)
+        public static bool TryGetString(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1830,7 +1896,7 @@ namespace Tzkt.Api
             return false;
         }
 
-        public static bool TryGetJson(this ModelBindingContext bindingContext, string name, out string result)
+        public static bool TryGetJson(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1853,7 +1919,7 @@ namespace Tzkt.Api
             return false;
         }
 
-        public static bool TryGetJsonArray(this ModelBindingContext bindingContext, string name, out string[] result)
+        public static bool TryGetJsonArray(this ModelBindingContext bindingContext, string name, [NotNullWhen(true)] out string[]? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1864,7 +1930,7 @@ namespace Tzkt.Api
                 {
                     try
                     {
-                        if (Regex.IsMatch(valueObject.FirstValue, @"^[\w\s,]+$"))
+                        if (Regexes.CommaSeparatedWords().IsMatch(valueObject.FirstValue))
                         {
                             result = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(x => NormalizeJson(x)).ToArray();
                         }
@@ -1908,7 +1974,7 @@ namespace Tzkt.Api
             }
         }
 
-        public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1926,7 +1992,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[] result)
+        public static bool TryGetStringList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string[]? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1952,7 +2018,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetStringListEscaped(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string> result)
+        public static bool TryGetStringListEscaped(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<string>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1983,7 +2049,7 @@ namespace Tzkt.Api
             return true;
         }
 
-        public static bool TryGetSelectionFields(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<SelectionField> result)
+        public static bool TryGetSelectionFields(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<SelectionField>? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);

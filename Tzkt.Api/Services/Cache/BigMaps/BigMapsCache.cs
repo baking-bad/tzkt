@@ -3,24 +3,16 @@ using Npgsql;
 
 namespace Tzkt.Api.Services.Cache
 {
-    public class BigMapsCache
+    public class BigMapsCache(NpgsqlDataSource dataSource, StateCache state, ILogger<BigMapsCache> logger)
     {
         const int MaxPtrs = 4096;
         readonly Dictionary<string, RawBigMap> Cached = new(MaxPtrs);
         readonly SemaphoreSlim Sema = new(1);
-        int LastUpdate;
+        int LastUpdate = state.Current.Level;
 
-        readonly NpgsqlDataSource DataSource;
-        readonly StateCache State;
-        readonly ILogger Logger;
-
-        public BigMapsCache(NpgsqlDataSource dataSource, StateCache state, ILogger<BigMapsCache> logger)
-        {
-            DataSource = dataSource;
-            State = state;
-            Logger = logger;
-            LastUpdate = state.Current.Level;
-        }
+        readonly NpgsqlDataSource DataSource = dataSource;
+        readonly StateCache State = state;
+        readonly ILogger Logger = logger;
 
         public async Task UpdateAsync()
         {

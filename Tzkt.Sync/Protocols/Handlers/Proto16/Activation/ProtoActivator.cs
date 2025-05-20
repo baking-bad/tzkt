@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    partial class ProtoActivator : Proto15.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto15.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -122,8 +120,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 WHERE "Cycle" > {0}
                 """, state.Cycle);
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {
@@ -153,8 +151,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                         writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                        writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                        writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.WriteNull();
                         writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                     }
@@ -180,8 +178,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                             writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
@@ -192,8 +190,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                             writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                         }
@@ -253,7 +251,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             var sorted = selection.OrderByDescending(x =>
             {
                 var baker = Cache.Accounts.GetDelegate(x.id);
-                return new byte[] { (byte)baker.PublicKey[0] }.Concat(Base58.Parse(baker.Address));
+                return new byte[] { (byte)baker.PublicKey![0] }.Concat(Base58.Parse(baker.Address));
             }, new BytesComparer());
 
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());

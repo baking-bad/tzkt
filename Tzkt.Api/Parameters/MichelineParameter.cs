@@ -15,7 +15,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?type={"prim":"string"}`.
         /// </summary>
-        public IMicheline Eq { get; set; }
+        public IMicheline? Eq { get; set; }
 
         /// <summary>
         /// **Not equal** filter mode. \
@@ -23,7 +23,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?balance.ne={"prim":"string"}`.
         /// </summary>
-        public IMicheline Ne { get; set; }
+        public IMicheline? Ne { get; set; }
 
         /// <summary>
         /// **In list** (any of) filter mode. \
@@ -31,7 +31,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?type.in={"prim":"string"},{"prim":"nat"}`.
         /// </summary>
-        public List<IMicheline> In { get; set; }
+        public List<IMicheline>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -39,7 +39,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?type.ni={"prim":"string"},{"prim":"nat"}`.
         /// </summary>
-        public List<IMicheline> Ni { get; set; }
+        public List<IMicheline>? Ni { get; set; }
 
         public string Normalize(string name)
         {

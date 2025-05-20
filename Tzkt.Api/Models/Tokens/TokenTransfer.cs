@@ -26,19 +26,19 @@ namespace Tzkt.Api.Models
         /// Token info.  
         /// Click on the field to expand more details.
         /// </summary>
-        public TokenInfo Token { get; set; }
+        public required TokenInfo Token { get; set; }
 
         /// <summary>
         /// Sender account.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias From { get; set; }
+        public Alias? From { get; set; }
 
         /// <summary>
         /// Target account.  
         /// Click on the field to expand more details.
         /// </summary>
-        public Alias To { get; set; }
+        public Alias? To { get; set; }
 
         /// <summary>
         /// Amount of tokens transferred (raw value, not divided by `decimals`).  

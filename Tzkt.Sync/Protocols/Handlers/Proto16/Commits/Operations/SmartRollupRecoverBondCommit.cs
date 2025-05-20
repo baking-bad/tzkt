@@ -5,15 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto16
 {
-    class SmartRollupRecoverBondCommit : ProtocolCommit
+    class SmartRollupRecoverBondCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SmartRollupRecoverBondCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var rollup = await Cache.Accounts.GetSmartRollupOrDefaultAsync(content.RequiredString("rollup"));
             var staker = await Cache.Accounts.GetAsync(content.RequiredString("staker"));
 
@@ -24,7 +21,6 @@ namespace Tzkt.Sync.Protocols.Proto16
             var operation = new SmartRollupRecoverBondOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -33,7 +29,6 @@ namespace Tzkt.Sync.Protocols.Proto16
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                Sender = sender,
                 SmartRollupId = rollup?.Id,
                 StakerId = staker?.Id,
                 Bond = bond.ValueKind == JsonValueKind.Undefined ? 0 : bond.RequiredInt64("change"),
@@ -56,12 +51,12 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(block.Proposer);
+            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(sender.Delegate);
+            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             Db.TryAttach(staker);
             #endregion
@@ -92,11 +87,11 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                staker.SmartRollupBonds -= operation.Bond;
-                rollup.SmartRollupBonds -= operation.Bond;
+                staker!.SmartRollupBonds -= operation.Bond;
+                rollup!.SmartRollupBonds -= operation.Bond;
                 rollup.ActiveStakers--;
 
-                var bondOp = block.SmartRollupPublishOps?
+                var bondOp = Context.SmartRollupPublishOps
                     .FirstOrDefault(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId)
                     ?? await Db.SmartRollupPublishOps.FirstAsync(x => x.SmartRollupId == operation.SmartRollupId && x.BondStatus == SmartRollupBondStatus.Active && x.SenderId == operation.StakerId);
                 bondOp.BondStatus = SmartRollupBondStatus.Returned;
@@ -105,25 +100,17 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.SmartRollupRecoverBondOps.Add(operation);
+            Context.SmartRollupRecoverBondOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, SmartRollupRecoverBondOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender ??= await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
             var staker = await Cache.Accounts.GetAsync(operation.StakerId);
 
@@ -137,8 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto16
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                staker.SmartRollupBonds += operation.Bond;
-                rollup.SmartRollupBonds += operation.Bond;
+                staker!.SmartRollupBonds += operation.Bond;
+                rollup!.SmartRollupBonds += operation.Bond;
                 rollup.ActiveStakers++;
 
                 var bondOp = await Db.SmartRollupPublishOps
@@ -164,7 +151,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             if (staker != null && staker.Id != sender.Id) staker.SmartRollupRecoverBondCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().SmartRollupRecoverBondOpsCount--;
             #endregion

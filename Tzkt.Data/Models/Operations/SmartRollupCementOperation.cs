@@ -42,14 +42,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SmartRollupCementOperation>()
                 .HasIndex(x => x.CommitmentId);
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SmartRollupCementOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SmartRollupCementOps)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

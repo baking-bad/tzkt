@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,9 +13,39 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupAddMessagesOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupAddMessagesOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupAddMessagesCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("SenderId", ids));
+
+            return await GetSmartRollupAddMessagesOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupAddMessagesOpsCount(ManagerOperationFilter filter)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupAddMessagesOps""")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -27,7 +58,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QuerySmartRollupAddMessagesOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QuerySmartRollupAddMessagesOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "*";
             if (fields != null)
@@ -55,12 +86,13 @@ namespace Tzkt.Api.Repositories
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
 
             var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupAddMessagesOps"" as o")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -96,13 +128,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetSmartRollupAddMessagesOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetSmartRollupAddMessagesOps(ManagerOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QuerySmartRollupAddMessagesOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -110,7 +142,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupAddMessages;
+                            result[j++][i] = ActivityTypes.SmartRollupAddMessages;
                         break;
                     case "id":
                         foreach (var row in rows)

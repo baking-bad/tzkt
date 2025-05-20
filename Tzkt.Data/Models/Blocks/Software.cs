@@ -4,11 +4,12 @@ namespace Tzkt.Data.Models
 {
     public class Software
     {
-        public int Id { get; set; }
+        public required int Id { get; set; }
+        public required string ShortHash { get; set; }
+        public required int FirstLevel { get; set; }
+        public required int LastLevel { get; set; }
+
         public int BlocksCount { get; set; }
-        public int FirstLevel { get; set; }
-        public int LastLevel { get; set; }
-        public string ShortHash { get; set; }
     }
 
     public static class SoftwareModel

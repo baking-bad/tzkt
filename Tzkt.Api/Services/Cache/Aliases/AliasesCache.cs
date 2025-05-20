@@ -8,13 +8,14 @@ namespace Tzkt.Api.Services.Cache
     public class AliasesCache
     {
         #region static
-        const string SelectQuery = @"
-        SELECT ""Address"", ""Extras""#>>'{profile,alias}' AS ""Name""
-        FROM   ""Accounts""";
+        const string SelectQuery = """
+        SELECT "Address", "Extras"#>>'{profile,alias}' AS "Name"
+        FROM   "Accounts"
+        """;
         #endregion
 
         public List<Alias> Aliases { get; }
-        public Dictionary<string, List<Alias>> Dictionary = new();
+        public Dictionary<string, List<Alias>> Dictionary = [];
 
         public AliasesCache(NpgsqlDataSource dataSource, ILogger<AliasesCache> logger)
         {
@@ -29,9 +30,9 @@ namespace Tzkt.Api.Services.Cache
                 AddTrigrams(alias);
         }
 
-        public void OnExtrasUpdate(string address, string json)
+        public void OnExtrasUpdate(string address, string? json)
         {
-            string name = null;
+            string? name = null;
             if (json != null)
             {
                 using var doc = JsonDocument.Parse(json);
@@ -95,7 +96,7 @@ namespace Tzkt.Api.Services.Cache
                 {
                     foreach (var alias in aliases2)
                     {
-                        if (alias.Name.ToLower() == search)
+                        if (alias.Name!.ToLower() == search)
                             candidates[alias] += 1000;
                     }
                 }
@@ -115,7 +116,7 @@ namespace Tzkt.Api.Services.Cache
             {
                 foreach (var item in Aliases)
                 {
-                    var name = item.Name.ToLower();
+                    var name = item.Name!.ToLower();
 
                     if (name == search)
                         res.Add((item, 0));
@@ -134,11 +135,11 @@ namespace Tzkt.Api.Services.Cache
 
         void AddTrigrams(Alias alias)
         {
-            foreach (var trigram in GetTrigrams(alias.Name.ToLower()))
+            foreach (var trigram in GetTrigrams(alias.Name!.ToLower()))
             {
                 if (!Dictionary.TryGetValue(trigram, out var list))
                 {
-                    list = new();
+                    list = [];
                     Dictionary.Add(trigram, list);
                 }
                 list.Add(alias);
@@ -147,7 +148,7 @@ namespace Tzkt.Api.Services.Cache
 
         void RemoveTrigrams(Alias alias)
         {
-            foreach (var trigram in GetTrigrams(alias.Name.ToLower()))
+            foreach (var trigram in GetTrigrams(alias.Name!.ToLower()))
             {
                 if (Dictionary.TryGetValue(trigram, out var list))
                 {

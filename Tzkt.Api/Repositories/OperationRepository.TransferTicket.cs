@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -14,12 +15,12 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<int> GetTransferTicketOpsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TransferTicketOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -167,17 +168,74 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetTransferTicketOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? senderIds = null;
+            List<int>? targetIds = null;
+            List<int>? ticketerIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.TransferTicketCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    targetIds ??= new(accounts.Count);
+                    targetIds.Add(account.Id);
+                }
+
+                if (account is RawContract && (roles & ActivityRole.Mention) != 0)
+                {
+                    ticketerIds ??= new(accounts.Count);
+                    ticketerIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && targetIds == null && ticketerIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("TargetId", targetIds),
+                ("TicketerId", ticketerIds));
+
+            return await GetTransferTicketOps(
+                or,
+                null, null, null, null, null, null,
+                timestamp,
+                null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<TransferTicketOperation>> GetTransferTicketOps(
-            AnyOfParameter anyof,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter ticketer,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+            OrParameter? or,
+            AnyOfParameter? anyof,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? ticketer,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             MichelineFormat format,
             Symbols quote)
@@ -187,6 +245,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""TransferTicketOps"" AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter(anyof, x => x switch
                 {
                     "sender" => "SenderId",
@@ -198,7 +257,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TicketerId", ticketer)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -246,17 +305,17 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetTransferTicketOps(
-            AnyOfParameter anyof,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter ticketer,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetTransferTicketOps(
+            AnyOfParameter? anyof,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? ticketer,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             MichelineFormat format,
@@ -308,7 +367,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransferTicketOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
@@ -322,7 +381,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TicketerId", ticketer)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -335,9 +394,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -452,17 +511,17 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetTransferTicketOps(
-            AnyOfParameter anyof,
-            AccountParameter sender,
-            AccountParameter target,
-            AccountParameter ticketer,
-            Int64Parameter id,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            OperationStatusParameter status,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetTransferTicketOps(
+            AnyOfParameter? anyof,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? ticketer,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            OperationStatusParameter? status,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             MichelineFormat format,
@@ -511,7 +570,7 @@ namespace Tzkt.Api.Repositories
             }
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""TransferTicketOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x switch
@@ -525,7 +584,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("TicketerId", ticketer)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -539,7 +598,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)

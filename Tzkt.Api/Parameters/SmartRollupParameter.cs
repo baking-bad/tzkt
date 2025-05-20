@@ -33,7 +33,7 @@ namespace Tzkt.Api
         /// Example: `?rollup.in=sr1RouasmcMAsrt4SxgGGVCBT36hzYRJBUrB,sr1UsFZWCrnHH5zDfihZpSjYbc1iwLnAbEum`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -42,7 +42,7 @@ namespace Tzkt.Api
         /// Example: `?rollup.ni=sr1RouasmcMAsrt4SxgGGVCBT36hzYRJBUrB,sr1UsFZWCrnHH5zDfihZpSjYbc1iwLnAbEum`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         public string Normalize(string name)
         {

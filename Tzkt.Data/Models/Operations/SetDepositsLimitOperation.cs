@@ -36,14 +36,6 @@ namespace Tzkt.Data.Models
             modelBuilder.Entity<SetDepositsLimitOperation>()
                 .HasIndex(x => new { x.SenderId, x.Id });
             #endregion
-
-            #region relations
-            modelBuilder.Entity<SetDepositsLimitOperation>()
-                .HasOne(x => x.Block)
-                .WithMany(x => x.SetDepositsLimits)
-                .HasForeignKey(x => x.Level)
-                .HasPrincipalKey(x => x.Level);
-            #endregion
         }
     }
 }

@@ -6,7 +6,7 @@
         /// Type of the operation, `double_endorsing` - is used by bakers to provide evidence of double endorsement
         /// (endorsing two different blocks at the same block height) by a baker
         /// </summary>
-        public override string Type => OpTypes.DoubleEndorsing;
+        public override string Type => ActivityTypes.DoubleEndorsing;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -26,12 +26,12 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Height of the block from the genesis, at which double endorsing occurred 
@@ -46,7 +46,7 @@
         /// <summary>
         /// Information about the baker, produced the block, in which the accusation was included
         /// </summary>
-        public Alias Accuser { get; set; }
+        public required Alias Accuser { get; set; }
 
         /// <summary>
         /// Reward of the baker, produced the block, in which the accusation was included
@@ -56,7 +56,7 @@
         /// <summary>
         /// Information about the baker, accused for producing two different endorsements at the same level
         /// </summary>
-        public Alias Offender { get; set; }
+        public required Alias Offender { get; set; }
 
         /// <summary>
         /// Amount slashed from baker's own staked balance
@@ -87,44 +87,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RoundingLoss => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLoss => LostStaked + LostUnstaked + LostExternalStaked + LostExternalUnstaked;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long AccuserReward => Reward;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long AccuserRewards => AccuserReward;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostDeposits => OffenderLoss;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostRewards => 0;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long OffenderLostFees => 0;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

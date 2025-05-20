@@ -5,16 +5,12 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto14
 {
-    class IncreasePaidStorageCommit : ProtocolCommit
+    class IncreasePaidStorageCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public IncreasePaidStorageOperation Operation { get; private set; }
-
-        public IncreasePaidStorageCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var contract = await Cache.Accounts.GetAsync(content.RequiredString("destination")) as Contract;
 
             var result = content.Required("metadata").Required("operation_result");
@@ -27,7 +23,6 @@ namespace Tzkt.Sync.Protocols.Proto14
             var operation = new IncreasePaidStorageOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
@@ -35,8 +30,8 @@ namespace Tzkt.Sync.Protocols.Proto14
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
-                ContractId = contract.Id,
+                SenderId = sender.Id,
+                ContractId = contract?.Id,
                 Amount = BigInteger.Parse(content.RequiredString("amount")),
                 Status = result.RequiredString("status") switch
                 {
@@ -50,13 +45,13 @@ namespace Tzkt.Sync.Protocols.Proto14
                     ? OperationErrors.Parse(content, errors)
                     : null,
                 GasUsed = (int)(((result.OptionalInt64("consumed_milligas") ?? 0) + 999) / 1000),
-                StorageUsed = (int)(storageFee / block.Protocol.ByteCost),
+                StorageUsed = (int)(storageFee / Context.Protocol.ByteCost),
                 StorageFee = storageFee
             };
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
+            var blockBaker = Context.Proposer;
             var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
@@ -77,7 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             blockBaker.StakingBalance += operation.BakerFee;
 
             sender.IncreasePaidStorageCount++;
-            contract.IncreasePaidStorageCount++;
+            if (contract != null) contract.IncreasePaidStorageCount++;
 
             block.Operations |= Operations.IncreasePaidStorage;
             block.Fees += operation.BakerFee;
@@ -105,26 +100,17 @@ namespace Tzkt.Sync.Protocols.Proto14
             }
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.IncreasePaidStorageOps.Add(operation);
-            Operation = operation;
+            Context.IncreasePaidStorageOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, IncreasePaidStorageOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var contract = await Cache.Accounts.GetAsync(operation.ContractId);
 
             Db.TryAttach(blockBaker);
@@ -160,10 +146,10 @@ namespace Tzkt.Sync.Protocols.Proto14
             blockBaker.StakingBalance -= operation.BakerFee;
 
             sender.IncreasePaidStorageCount--;
-            contract.IncreasePaidStorageCount--;
+            if (contract != null) contract.IncreasePaidStorageCount--;
 
             sender.Counter = operation.Counter - 1;
-            (sender as User).Revealed = true;
+            (sender as User)!.Revealed = true;
 
             Cache.AppState.Get().IncreasePaidStorageOpsCount--;
             #endregion

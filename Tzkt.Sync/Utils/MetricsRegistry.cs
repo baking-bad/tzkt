@@ -1,4 +1,5 @@
 using App.Metrics;
+using App.Metrics.Gauge;
 using App.Metrics.Histogram;
 using App.Metrics.Timer;
 
@@ -6,6 +7,26 @@ namespace Tzkt.Sync
 {
     static class MetricsRegistry
     {
+        #region health
+        public static readonly GaugeOptions Synced = new()
+        {
+            Context = "Health",
+            Name = "Synchronized"
+        };
+
+        public static readonly GaugeOptions SyncGap = new()
+        {
+            Context = "Health",
+            Name = "Synchronization gap"
+        };
+
+        public static void SetHealthValue(this IMeasureGaugeMetrics metrics, Data.Models.AppState state)
+        {
+            metrics.SetValue(Synced, state.KnownHead == state.Level ? 1.0 : 0.0);
+            metrics.SetValue(SyncGap, state.KnownHead - state.Level);
+        }
+        #endregion
+
         #region observe
         public static readonly HistogramOptions BlockAppearanceDelay = new()
         {

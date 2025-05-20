@@ -21,7 +21,7 @@
         /// <summary>
         /// Injected historical quote at the time of balance snapshot
         /// </summary>
-        public QuoteShort Quote { get; set; }
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

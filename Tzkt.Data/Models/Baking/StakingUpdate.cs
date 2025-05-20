@@ -5,12 +5,13 @@ namespace Tzkt.Data.Models
 {
     public class StakingUpdate
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public int Cycle { get; set; }
-        public int BakerId { get; set; }
-        public int StakerId { get; set; }
-        public StakingUpdateType Type { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required int Cycle { get; set; }
+        public required int BakerId { get; set; }
+        public required int StakerId { get; set; }
+        public required StakingUpdateType Type { get; set; }
+
         public long Amount { get; set; }
         
         public BigInteger? Pseudotokens { get; set; }

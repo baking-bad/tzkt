@@ -5,17 +5,17 @@
         /// <summary>
         /// Delegator type ('contract' for KT.. address or 'user' for tz.. address)
         /// </summary>
-        public string Type { get; set; }
+        public required string Type { get; set; }
 
         /// <summary>
         /// Name of the project behind the account or account description
         /// </summary>
-        public string Alias { get; set; }
+        public string? Alias { get; set; }
 
         /// <summary>
         /// Public key hash of the account
         /// </summary>
-        public string Address { get; set; }
+        public required string Address { get; set; }
 
         /// <summary>
         /// Account balance (micro tez)

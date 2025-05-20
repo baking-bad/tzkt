@@ -25,7 +25,7 @@ namespace Tzkt.Api
         /// Example: `?anyof.sender.target.in=tz1WnfXMPaNTBWnfXMPaNTBWnfXMPaNTBNTB,tz1SiPXX4MYGNJNDSiPXX4MYGNJNDSiPXX4M,null`.
         /// </summary>
         [JsonSchemaType(typeof(List<string>))]
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \
@@ -39,7 +39,7 @@ namespace Tzkt.Api
         public bool InHasNull { get; set; }
 
         [JsonIgnore]
-        public IEnumerable<string> Fields { get; set; }
+        public required IEnumerable<string> Fields { get; set; }
 
         public string Normalize(string name)
         {

@@ -1,21 +1,16 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Netezos.Keys;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    class UpdateConsensusKeyCommit : ProtocolCommit
+    class UpdateConsensusKeyCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public UpdateConsensusKeyCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            var sender = await Cache.Accounts.GetAsync(content.RequiredString("source"));
-            sender.Delegate ??= Cache.Accounts.GetDelegate(sender.DelegateId);
+            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var pubKey = content.RequiredString("pk");
             var pubKeyHash = PubKey.FromBase58(pubKey).Address;
@@ -24,15 +19,14 @@ namespace Tzkt.Sync.Protocols.Proto15
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 BakerFee = content.RequiredInt64("fee"),
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
-                Sender = sender,
-                ActivationCycle = block.Cycle + block.Protocol.ConsensusRightsDelay + 1,
+                SenderId = sender.Id,
+                ActivationCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay + 1,
                 PublicKey = pubKey,
                 PublicKeyHash = pubKeyHash,
                 Status = result.RequiredString("status") switch
@@ -51,8 +45,8 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             #region entities
-            var blockBaker = block.Proposer;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
@@ -83,24 +77,17 @@ namespace Tzkt.Sync.Protocols.Proto15
             #region apply result
             #endregion
 
-            Proto.Manager.Set(operation.Sender);
+            Proto.Manager.Set(sender);
             Db.UpdateConsensusKeyOps.Add(operation);
+            Context.UpdateConsensusKeyOps.Add(operation);
         }
 
         public virtual async Task Revert(Block block, UpdateConsensusKeyOperation operation)
         {
-            #region init
-            operation.Block ??= block;
-            operation.Block.Proposer ??= Cache.Accounts.GetDelegate(block.ProposerId);
-
-            operation.Sender ??= await Cache.Accounts.GetAsync(operation.SenderId);
-            operation.Sender.Delegate ??= Cache.Accounts.GetDelegate(operation.Sender.DelegateId);
-            #endregion
-
             #region entities
-            var blockBaker = block.Proposer;
-            var sender = operation.Sender;
-            var senderDelegate = sender.Delegate ?? sender as Data.Models.Delegate;
+            var blockBaker = Context.Proposer;
+            var sender = await Cache.Accounts.GetAsync(operation.SenderId);
+            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
             Db.TryAttach(blockBaker);
             Db.TryAttach(sender);

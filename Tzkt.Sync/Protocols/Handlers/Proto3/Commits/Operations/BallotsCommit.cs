@@ -1,6 +1,4 @@
-﻿using System;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
@@ -15,7 +13,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             #region init
             var period = await Cache.Periods.GetAsync(content.RequiredInt32("period"));
             var proposal = await Cache.Proposals.GetAsync(period.Epoch, content.RequiredString("proposal"));
-            var sender = Cache.Accounts.GetDelegate(content.RequiredString("source"));
+            var sender = Cache.Accounts.GetExistingDelegate(content.RequiredString("source"));
 
             var snapshot = await Db.VotingSnapshots
                 .FirstOrDefaultAsync(x => x.Period == period.Index && x.BakerId == sender.Id)
@@ -24,15 +22,14 @@ namespace Tzkt.Sync.Protocols.Proto3
             var ballot = new BallotOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Sender = sender,
+                SenderId = sender.Id,
                 VotingPower = snapshot.VotingPower,
                 Epoch = period.Epoch,
                 Period = period.Index,
-                Proposal = proposal,
+                ProposalId = proposal.Id,
                 Vote = content.RequiredString("ballot") switch
                 {
                     "yay" => Vote.Yay,
@@ -79,28 +76,21 @@ namespace Tzkt.Sync.Protocols.Proto3
             #endregion
 
             Db.BallotOps.Add(ballot);
+            Context.BallotOps.Add(ballot);
         }
 
         public virtual async Task Revert(Block block, BallotOperation ballot)
         {
-            #region init
-            ballot.Block ??= block;
-            ballot.Sender ??= Cache.Accounts.GetDelegate(ballot.SenderId);
-            ballot.Proposal ??= await Cache.Proposals.GetAsync(ballot.ProposalId);
+            #region entities
+            var sender = Cache.Accounts.GetDelegate(ballot.SenderId);
 
             var snapshot = await Db.VotingSnapshots
-                .FirstAsync(x => x.Period == ballot.Period && x.BakerId == ballot.Sender.Id);
+                .FirstAsync(x => x.Period == ballot.Period && x.BakerId == ballot.SenderId);
 
             var period = await Cache.Periods.GetAsync(ballot.Period);
-            #endregion
 
-            #region entities
-            var sender = ballot.Sender;
-
-            //Db.TryAttach(block);
             Db.TryAttach(sender);
             Db.TryAttach(period);
-            //Db.TryAttach(snapshot);
             #endregion
 
             #region revert operation

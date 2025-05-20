@@ -4,11 +4,9 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class BlockCommit : ProtocolCommit
+    class BlockCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public Block Block { get; private set; }
-
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public Block Block { get; private set; } = null!;
 
         public virtual async Task Apply(JsonElement rawBlock)
         {
@@ -16,8 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             var metadata = rawBlock.Required("metadata");
 
             var level = header.RequiredInt32("level");
-            var proposer = Cache.Accounts.GetDelegate(metadata.RequiredString("proposer"));
-            var producer = Cache.Accounts.GetDelegate(metadata.RequiredString("baker"));
+            var proposer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("proposer"));
+            var producer = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("baker"));
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));
             var events = BlockEvents.None;
 
@@ -49,11 +47,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Cycle = protocol.GetCycle(level),
                 Level = level,
                 ProtoCode = protocol.Code,
-                Protocol = protocol,
                 Timestamp = header.RequiredDateTime("timestamp"),
                 PayloadRound = payloadRound,
                 BlockRound = blockRound,
-                Proposer = proposer,
                 ProposerId = proposer.Id,
                 ProducerId = producer.Id,
                 Events = events,
@@ -70,14 +66,20 @@ namespace Tzkt.Sync.Protocols.Proto18
             Db.TryAttach(proposer); // if we don't attach it, ef will recognize it as 'added'
             Db.TryAttach(producer); // if we don't attach it, ef will recognize it as 'added'
 
+            Cache.AppState.Get().BlocksCount++;
+
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
+
+            Context.Block = Block;
+            Context.Proposer = proposer;
+            Context.Protocol = protocol;
         }
         
         public async Task ApplyRewards(JsonElement rawBlock)
         {
-            var proposer = Cache.Accounts.GetDelegate(Block.ProposerId);
-            var producer = Cache.Accounts.GetDelegate(Block.ProducerId);
+            var proposer = Cache.Accounts.GetDelegate(Block.ProposerId!.Value);
+            var producer = Cache.Accounts.GetDelegate(Block.ProducerId!.Value);
 
             var balanceUpdates = rawBlock
                 .Required("metadata")
@@ -114,7 +116,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             proposer.BlocksCount++;
 
             #region set baker active
-            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+            var newDeactivationLevel = proposer.Staked ? GracePeriod.Reset(Block.Level, Context.Protocol) : GracePeriod.Init(Block.Level, Context.Protocol);
             if (proposer.DeactivationLevel < newDeactivationLevel)
             {
                 if (proposer.DeactivationLevel <= Block.Level)
@@ -135,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 producer.BlocksCount++;
 
                 #region set proposer active
-                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block) : GracePeriod.Init(Block);
+                newDeactivationLevel = producer.Staked ? GracePeriod.Reset(Block.Level, Context.Protocol) : GracePeriod.Init(Block.Level, Context.Protocol);
                 if (producer.DeactivationLevel < newDeactivationLevel)
                 {
                     if (producer.DeactivationLevel <= Block.Level)
@@ -158,13 +160,15 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         public virtual void Revert(Block block)
         {
+            Cache.AppState.Get().BlocksCount--;
+
             Db.Blocks.Remove(block);
             Cache.AppState.ReleaseOperationId();
         }
 
         public async Task RevertRewards(Block block)
         {
-            var proposer = Cache.Accounts.GetDelegate(block.ProposerId);
+            var proposer = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
             Db.TryAttach(proposer);
             proposer.Balance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge;
             proposer.StakingBalance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge + block.RewardStakedShared;
@@ -182,7 +186,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             #endregion
 
-            var producer = Cache.Accounts.GetDelegate(block.ProducerId);
+            var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
             producer.Balance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge;
             producer.StakingBalance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge + block.BonusStakedShared;

@@ -21,20 +21,20 @@
         /// <summary>
         /// Key hash.
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Key in JSON or Micheline format, depending on the `micheline` query parameter.  
         /// **[sortable]**
         /// </summary>
-        public object Key { get; set; }
+        public required object Key { get; set; }
 
         /// <summary>
         /// Value in JSON or Micheline format, depending on the `micheline` query parameter.
         /// Note, if the key is inactive (removed) this field will contain the last non-null value.  
         /// **[sortable]**
         /// </summary>
-        public object Value { get; set; }
+        public required object Value { get; set; }
 
         /// <summary>
         /// Level of the block where the key was first seen.  

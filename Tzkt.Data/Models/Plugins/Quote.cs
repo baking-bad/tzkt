@@ -1,13 +1,12 @@
-﻿using System;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
     public class Quote : IQuote
     {
-        public int Id { get; set; }
-        public int Level { get; set; }
-        public DateTime Timestamp { get; set; }
+        public required int Id { get; set; }
+        public required int Level { get; set; }
+        public required DateTime Timestamp { get; set; }
 
         public double Btc { get; set; }
         public double Eur { get; set; }

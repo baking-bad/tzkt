@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `nonce_revelation` - are used by the blockchain to create randomness
         /// </summary>
-        public override string Type => OpTypes.NonceRevelation;
+        public override string Type => ActivityTypes.NonceRevelation;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -25,22 +25,22 @@
         /// <summary>
         /// Hash of the block, in which the operation was included
         /// </summary>
-        public string Block { get; set; }
+        public required string Block { get; set; }
 
         /// <summary>
         /// Hash of the operation
         /// </summary>
-        public string Hash { get; set; }
+        public required string Hash { get; set; }
 
         /// <summary>
         /// Information about the delegate (baker), who produced the block with the operation
         /// </summary>
-        public Alias Baker { get; set; }
-        
+        public required Alias Baker { get; set; }
+
         /// <summary>
         /// Information about the delegate (baker), who revealed the nonce (sent the operation)
         /// </summary>
-        public Alias Sender { get; set; }
+        public required Alias Sender { get; set; }
 
         /// <summary>
         /// Block height of the block, where seed nonce hash is stored
@@ -55,7 +55,7 @@
         /// <summary>
         /// Seed nonce hex
         /// </summary>
-        public string Nonce { get; set; }
+        public required string Nonce { get; set; }
 
         /// <summary>
         /// Reward, corresponding to delegated stake, paid to baker's liquid balance (micro tez)
@@ -85,24 +85,7 @@
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
-        public QuoteShort Quote { get; set; }
-        #endregion
-
-        #region deprecated
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long RewardLiquid => RewardDelegated;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long Reward => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        public long BakerRewards => Reward;
+        public QuoteShort? Quote { get; set; }
         #endregion
     }
 }

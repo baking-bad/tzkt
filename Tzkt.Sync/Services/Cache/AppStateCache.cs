@@ -5,29 +5,21 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Services.Cache
 {
-    public class AppStateCache
+    public class AppStateCache(TzktContext db)
     {
-        static AppState AppState = null;
+        static AppState AppState = null!;
 
-        readonly TzktContext Db;
-
-        public AppStateCache(TzktContext db)
-        {
-            Db = db;
-        }
-
-        public void UpdateSyncState(int knownHead, DateTime lastSync)
-        {
-            if (AppState != null)
-            {
-                AppState.KnownHead = knownHead;
-                AppState.LastSync = lastSync;
-            }
-        }
+        readonly TzktContext Db = db;
 
         public async Task ResetAsync()
         {
             AppState = await Db.AppState.SingleAsync();
+        }
+
+        public void UpdateSyncState(int knownHead, DateTime lastSync)
+        {
+            AppState.KnownHead = knownHead;
+            AppState.LastSync = lastSync;
         }
 
         public AppState Get()
@@ -148,6 +140,26 @@ namespace Tzkt.Sync.Services.Cache
         public void ReleaseInboxMessageId(int count)
         {
             AppState.InboxMessageCounter -= count;
+        }
+
+        public int NextProposalId()
+        {
+            return ++AppState.ProposalCounter;
+        }
+
+        public void ReleaseProposalId()
+        {
+            AppState.ProposalCounter--;
+        }
+
+        public int NextSoftwareId()
+        {
+            return ++AppState.SoftwareCounter;
+        }
+
+        public void ReleaseSoftwareId()
+        {
+            AppState.SoftwareCounter--;
         }
 
         public int NextStorageId()

@@ -9,25 +9,25 @@ namespace Tzkt.Api
         /// Filter by internal TzKT id.
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64Parameter id { get; set; }
+        public Int64Parameter? id { get; set; }
 
         /// <summary>
         /// Filter by ticketer address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter ticketer { get; set; }
+        public AccountParameter? ticketer { get; set; }
 
         /// <summary>
         /// Filter by ticket content type in Micheline format.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public MichelineParameter rawType { get; set; }
+        public MichelineParameter? rawType { get; set; }
 
         /// <summary>
         /// Filter by ticket content in Micheline format.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public MichelineParameter rawContent { get; set; }
+        public MichelineParameter? rawContent { get; set; }
 
         /// <summary>
         /// Filter by ticket content in JSON format.  
@@ -35,19 +35,19 @@ namespace Tzkt.Api
         /// so you can specify a path to a particular field to filter by (for example, `?content.color.in=red,green`).  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public JsonParameter content { get; set; }
+        public JsonParameter? content { get; set; }
 
         /// <summary>
         /// Filter by 32-bit hash of ticket content type.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter typeHash { get; set; }
+        public Int32Parameter? typeHash { get; set; }
 
         /// <summary>
         /// Filter by 32-bit hash of ticket content.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int32Parameter contentHash { get; set; }
+        public Int32Parameter? contentHash { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>

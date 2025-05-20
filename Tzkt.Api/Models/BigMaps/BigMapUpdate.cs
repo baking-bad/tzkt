@@ -28,23 +28,23 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Smart contract in which's storage the bigmap is allocated
         /// </summary>
-        public Alias Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Path to the bigmap in the contract storage
         /// </summary>
-        public string Path { get; set; }
+        public required string Path { get; set; }
 
         /// <summary>
         /// Action with the bigmap (`allocate`, `add_key`, `update_key`, `remove_key`, `remove`)
         /// </summary>
-        public string Action { get; set; }
+        public required string Action { get; set; }
 
         /// <summary>
         /// Updated key.
         /// If the action is `allocate` or `remove` the content will be `null`.
         /// </summary>
-        public BigMapKeyShort Content { get; set; }
+        public BigMapKeyShort? Content { get; set; }
 
         [JsonIgnore]
         public BigMapTag TagFlags { get; set; }

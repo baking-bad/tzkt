@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    partial class ProtoActivator : Proto14.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto14.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -29,6 +27,9 @@ namespace Tzkt.Sync.Protocols.Proto15
             await MigrateCurrentRights(state, prevProto, nextProto);
             await MigrateFutureRights(state, nextProto);
             await PatchContracts(state);
+
+            Cache.BakingRights.Reset();
+            Cache.BakerCycles.Reset();
 
             if (state.ChainId == "NetXnHfVqm9iesp") // ghostnet: amend broken voting period
             {
@@ -62,7 +63,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
                 var pendings = Db.ChangeTracker.Entries()
                     .Where(x => x.Entity is Proposal p && p.Status == ProposalStatus.Active)
-                    .Select(x => x.Entity as Proposal)
+                    .Select(x => (x.Entity as Proposal)!)
                     .ToList();
 
                 foreach (var pending in pendings)
@@ -86,6 +87,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .ToListAsync())
                 .Select(x => new VotingSnapshot
                 {
+                    Id = 0,
                     BakerId = x.BakerId,
                     Level = x.Level,
                     Period = x.Period + 1,
@@ -102,6 +104,7 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             Db.VotingPeriods.Add(new VotingPeriod
             {
+                Id = 0,
                 Index = currentPeriod.Index + 1,
                 Epoch = currentPeriod.Epoch + 1,
                 FirstLevel = currentPeriod.LastLevel + 1,
@@ -128,7 +131,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
-            var account = await Cache.Accounts.GetAsync(address);
+            var account = (await Cache.Accounts.GetAsync(address))!;
             Db.TryAttach(account);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
@@ -136,16 +139,18 @@ namespace Tzkt.Sync.Protocols.Proto15
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;
-            Db.MigrationOps.Add(new MigrationOperation
+
+            var migration = new MigrationOperation
             {
                 Id = Cache.AppState.NextOperationId(),
-                Block = block,
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                Account = account,
+                AccountId = account.Id,
                 Kind = MigrationKind.ProposalInvoice,
                 BalanceChange = amount
-            });
+            };
+            Db.MigrationOps.Add(migration);
+            Context.MigrationOps.Add(migration);
 
             Db.TryAttach(state);
             state.MigrationOpsCount++;
@@ -182,10 +187,14 @@ namespace Tzkt.Sync.Protocols.Proto15
                 var bakerCycle = bakerCycles[er.BakerId];
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsements -= (int)er.Slots;
+                bakerCycle.FutureEndorsements -= er.Slots!.Value;
             }
 
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Level"" > {state.Level} AND ""Cycle"" = {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Level" > {0} AND "Cycle" = {1}
+                """, state.Level, state.Cycle);
+                
             #endregion
 
             #region apply new rights
@@ -222,7 +231,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 }
             }
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");
@@ -233,8 +242,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                 writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
                 writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
             }
@@ -245,8 +254,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                 writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((int)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
             }
@@ -257,7 +266,11 @@ namespace Tzkt.Sync.Protocols.Proto15
 
         async Task MigrateFutureRights(AppState state, Protocol nextProto)
         {
-            await Db.Database.ExecuteSqlRawAsync($@"DELETE FROM ""BakingRights"" WHERE ""Cycle"" > {state.Cycle}");
+            await Db.Database.ExecuteSqlRawAsync("""
+                DELETE FROM "BakingRights"
+                WHERE "Cycle" > {0}
+                """, state.Cycle);
+                
 
             var cycles = await Db.Cycles
                 .AsNoTracking()
@@ -265,8 +278,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .OrderBy(x => x.Index)
                 .ToListAsync();
 
-            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-            IEnumerable<RightsGenerator.ER> shifted = Enumerable.Empty<RightsGenerator.ER>();
+            var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
+            IEnumerable<RightsGenerator.ER> shifted = [];
 
             foreach (var cycle in cycles)
             {
@@ -295,8 +308,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                             writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
@@ -322,8 +335,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                             writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                             writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
@@ -334,8 +347,8 @@ namespace Tzkt.Sync.Protocols.Proto15
                             writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                            writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                            writer.Write((int)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
                         }
@@ -398,14 +411,14 @@ namespace Tzkt.Sync.Protocols.Proto15
 
                     var rawContract = await Proto.Rpc.GetContractAsync(state.Level, contract.Address);
 
-                    var code = Micheline.FromJson(rawContract.Required("script").Required("code")) as MichelineArray;
+                    var code = (rawContract.Required("script").RequiredMicheline("code") as MichelineArray)!;
                     var micheParameter = code.First(x => x is MichelinePrim p && p.Prim == PrimType.parameter).ToBytes();
                     var micheStorage = code.First(x => x is MichelinePrim p && p.Prim == PrimType.storage).ToBytes();
                     var micheCode = code.First(x => x is MichelinePrim p && p.Prim == PrimType.code).ToBytes();
                     var micheViews = code.Where(x => x is MichelinePrim p && p.Prim == PrimType.view);
 
                     var newSchema = new ContractScript(code);
-                    var newStorageValue = Micheline.FromJson(rawContract.Required("script").Required("storage"));
+                    var newStorageValue = rawContract.Required("script").RequiredMicheline("storage");
                     var newRawStorageValue = newSchema.OptimizeStorage(newStorageValue, false).ToBytes();
 
                     if (oldScript.ParameterSchema.IsEqual(micheParameter) &&
@@ -423,10 +436,9 @@ namespace Tzkt.Sync.Protocols.Proto15
                     var migration = new MigrationOperation
                     {
                         Id = Cache.AppState.NextOperationId(),
-                        Block = block,
                         Level = block.Level,
                         Timestamp = block.Timestamp,
-                        Account = contract,
+                        AccountId = contract.Id,
                         Kind = MigrationKind.CodeChange
                     };
                     var newScript = new Script
@@ -458,14 +470,14 @@ namespace Tzkt.Sync.Protocols.Proto15
                         .OrderBy(x => x, new BytesComparer())
                         .SelectMany(x => x)
                         .ToArray()
-                        ?? Array.Empty<byte>();
+                        ?? [];
                     var typeSchema = newScript.ParameterSchema.Concat(newScript.StorageSchema).Concat(viewsBytes);
                     var fullSchema = typeSchema.Concat(newScript.CodeSchema);
                     contract.TypeHash = newScript.TypeHash = Script.GetHash(typeSchema);
                     contract.CodeHash = newScript.CodeHash = Script.GetHash(fullSchema);
 
-                    migration.Script = newScript;
-                    migration.Storage = newStorage;
+                    migration.ScriptId = newScript.Id;
+                    migration.StorageId = newStorage.Id;
 
                     contract.MigrationsCount++;
                     contract.LastLevel = migration.Level;
@@ -473,6 +485,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                     state.MigrationOpsCount++;
 
                     Db.MigrationOps.Add(migration);
+                    Context.MigrationOps.Add(migration);
 
                     Db.Scripts.Add(newScript);
                     Cache.Schemas.Add(contract, newScript.Schema);
@@ -490,7 +503,7 @@ namespace Tzkt.Sync.Protocols.Proto15
                 .ThenByDescending(x =>
                 {
                     var baker = Cache.Accounts.GetDelegate(x.id);
-                    return new byte[] { (byte)baker.PublicKey[0] }.Concat(Base58.Parse(baker.Address));
+                    return new byte[] { (byte)baker.PublicKey![0] }.Concat(Base58.Parse(baker.Address));
                 }, new BytesComparer());
 
             return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());

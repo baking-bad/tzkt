@@ -1,16 +1,56 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetStakingOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? bakerIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.StakingOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if (account is RawDelegate && (roles & ActivityRole.Target) != 0)
+                {
+                    bakerIds ??= new(accounts.Count);
+                    bakerIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && bakerIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"o.""SenderId""", senderIds),
+                (@"o.""BakerId""", bakerIds));
+
+            return await GetStakingOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetStakingOpsCount(StakingOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "StakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -30,7 +70,7 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        async Task<IEnumerable<dynamic>> QueryStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields = null)
+        async Task<IEnumerable<dynamic>> QueryStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             var select = "o.*";
 
@@ -59,18 +99,11 @@ namespace Tzkt.Api.Repositories
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
-                        #region deprecated
-                        case "kind": columns.Add(@"o.""Action"""); break;
-                        case "pseudotokens": columns.Add("1"); break;
-                        case "limitOfStakingOverBaking": columns.Add("1"); break;
-                        case "edgeOfBakingOverStaking": columns.Add("1"); break;
-                        case "activationCycle": columns.Add("1"); break;
-                        #endregion
                     }
                 }
 
                 if (columns.Count == 0)
-                    return Enumerable.Empty<dynamic>();
+                    return [];
 
                 select = string.Join(',', columns);
             }
@@ -79,6 +112,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "StakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -125,13 +159,13 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
+        public async Task<object?[][]> GetStakingOps(StakingOperationFilter filter, Pagination pagination, List<SelectionField> fields, Symbols quote)
         {
             var rows = await QueryStakingOps(filter, pagination, fields);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Count];
+                result[i] = new object?[fields.Count];
 
             for (int i = 0, j = 0; i < fields.Count; j = 0, i++)
             {
@@ -139,7 +173,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.Staking;
+                            result[j++][i] = ActivityTypes.Staking;
                         break;
                     case "id":
                         foreach (var row in rows)
@@ -229,28 +263,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
-                    #region deprecated
-                    case "kind":
-                        foreach (var row in rows)
-                            result[j++][i] = StakingActions.ToString(row.Action);
-                        break;
-                    case "pseudotokens":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "limitOfStakingOverBaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "edgeOfBakingOverStaking":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                    case "activationCycle":
-                        foreach (var row in rows)
-                            result[j++][i] = null;
-                        break;
-                        #endregion
                 }
             }
 

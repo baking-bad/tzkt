@@ -61,7 +61,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.in=12,14,52,69`.
         /// </summary>
-        public List<int> In { get; set; }
+        public List<int>? In { get; set; }
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
@@ -69,7 +69,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
-        public List<int> Ni { get; set; }
+        public List<int>? Ni { get; set; }
 
         /// <summary>
         /// **Equal to another field** filter mode. \
@@ -77,7 +77,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `?firstActivity.eqx=lastActivity`.
         /// </summary>
-        public string Eqx { get; set; }
+        public string? Eqx { get; set; }
 
         /// <summary>
         /// **Not equal to another field** filter mode. \
@@ -85,7 +85,7 @@ namespace Tzkt.Api
         /// 
         /// Example: `??firstActivity.nex=lastActivity`.
         /// </summary>
-        public string Nex { get; set; }
+        public string? Nex { get; set; }
 
         /// <summary>
         /// **Is null** filter mode. \
@@ -97,7 +97,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            throw new System.NotImplementedException();
+            throw new NotImplementedException();
         }
     }
 }

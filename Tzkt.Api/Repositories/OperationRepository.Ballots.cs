@@ -1,17 +1,18 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
         public async Task<int> GetBallotsCount(
-            Int32Parameter level,
-            DateTimeParameter timestamp)
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""BallotOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -108,16 +109,54 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetBallotOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.BallotsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("SenderId", ids));
+
+            return await GetBallots(
+                or,
+                null, null,
+                timestamp,
+                null, null, null, null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<BallotOperation>> GetBallots(
-            AccountParameter sender,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter epoch,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            VoteParameter vote,
-            SortParameter sort,
-            OffsetParameter offset,
+            OrParameter? or,
+            AccountParameter? sender,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? epoch,
+            Int32Parameter? period,
+            ProtocolParameter? proposal,
+            VoteParameter? vote,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
@@ -131,9 +170,10 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period ON period.""Index"" = o.""Period""
                 ")
+                .Filter(or)
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
                 .FilterA(@"o.""Vote""", vote)
@@ -170,16 +210,16 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object[][]> GetBallots(
-            AccountParameter sender,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter epoch,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            VoteParameter vote,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[][]> GetBallots(
+            AccountParameter? sender,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? epoch,
+            Int32Parameter? period,
+            ProtocolParameter? proposal,
+            VoteParameter? vote,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string[] fields,
             Symbols quote)
@@ -226,12 +266,12 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Array.Empty<object[]>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
                 .FilterA(@"o.""Vote""", vote)
@@ -241,9 +281,9 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            var result = new object[rows.Count()][];
+            var result = new object?[rows.Count()][];
             for (int i = 0; i < result.Length; i++)
-                result[i] = new object[fields.Length];
+                result[i] = new object?[fields.Length];
 
             for (int i = 0, j = 0; i < fields.Length; j = 0, i++)
             {
@@ -310,16 +350,16 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object[]> GetBallots(
-            AccountParameter sender,
-            Int32Parameter level,
-            DateTimeParameter timestamp,
-            Int32Parameter epoch,
-            Int32Parameter period,
-            ProtocolParameter proposal,
-            VoteParameter vote,
-            SortParameter sort,
-            OffsetParameter offset,
+        public async Task<object?[]> GetBallots(
+            AccountParameter? sender,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            Int32Parameter? epoch,
+            Int32Parameter? period,
+            ProtocolParameter? proposal,
+            VoteParameter? vote,
+            SortParameter? sort,
+            OffsetParameter? offset,
             int limit,
             string field,
             Symbols quote)
@@ -363,12 +403,12 @@ namespace Tzkt.Api.Repositories
                 joins.Add(@"INNER JOIN ""Proposals"" as proposal ON proposal.""Id"" = o.""ProposalId""");
 
             if (columns.Count == 0)
-                return Array.Empty<object>();
+                return [];
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""BallotOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""Epoch""", epoch)
                 .FilterA(@"o.""Period""", period)
                 .FilterA(@"o.""Vote""", vote)
@@ -379,7 +419,7 @@ namespace Tzkt.Api.Repositories
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
-            var result = new object[rows.Count()];
+            var result = new object?[rows.Count()];
             var j = 0;
 
             switch (field)
