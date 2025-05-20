@@ -649,6 +649,72 @@ namespace Tzkt.Api
             return true;
         }
 
+
+        public static bool TryGetTokenGlobalId(this ModelBindingContext bindingContext, string name, ref bool hasValue, out (string, BigInteger)? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var ss = valueObject.FirstValue.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                    if (ss.Length != 2 || !Regexes.Address().IsMatch(ss[0]) || !BigInteger.TryParse(ss[1], out var tokenId))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid token global id.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = (ss[0], tokenId);
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetTokenGlobalIdList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<(string, BigInteger)>? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<(string, BigInteger)>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        var ss = rawValue.Split(':', StringSplitOptions.RemoveEmptyEntries);
+                        if (ss.Length != 2 || !Regexes.Address().IsMatch(ss[0]) || !BigInteger.TryParse(ss[1], out var tokenId))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid token global id.");
+                            return false;
+                        }
+                        else
+                        {
+                            result.Add((ss[0], tokenId));
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetBakingRightType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;

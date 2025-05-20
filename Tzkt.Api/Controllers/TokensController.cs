@@ -44,6 +44,7 @@ namespace Tzkt.Api.Controllers
                 filter.firstLevel != null ||
                 filter.lastTime != null ||
                 filter.lastLevel != null ||
+                filter.globalId != null ||
                 filter.tokenId != null ||
                 filter.id != null ||
                 filter.indexedAt != null)

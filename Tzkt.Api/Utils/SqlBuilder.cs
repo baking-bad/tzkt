@@ -1239,6 +1239,22 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string columns, TokenGlobalIdParameter? value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{columns} = ({value.Eq.Value.Item1}, '{value.Eq.Value.Item2}'::numeric)");
+
+            if (value.In != null)
+            {
+                var corteges = string.Join(',', value.In.Select(x => $"({x.Item1}, '{x.Item2}'::numeric)"));
+                AppendFilter($"{columns} IN ({corteges})");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, NatParameter? value)
         {
             if (value == null) return this;

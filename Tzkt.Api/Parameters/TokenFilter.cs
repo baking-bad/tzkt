@@ -24,6 +24,12 @@ namespace Tzkt.Api
         public NatParameter? tokenId { get; set; }
 
         /// <summary>
+        /// Filter by "global id", which is a `"{contract}:{tokenId}"` string.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public TokenGlobalIdParameter? globalId { get; set; }
+
+        /// <summary>
         /// Filter by token standard (`fa1.2` or `fa2`).  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -93,7 +99,7 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("contract", contract), ("tokenId", tokenId), ("standard", standard), ("totalMinted", totalMinted),
+                ("id", id), ("contract", contract), ("tokenId", tokenId), ("fullId", globalId), ("standard", standard), ("totalMinted", totalMinted),
                 ("totalBurned", totalBurned), ("totalSupply", totalSupply), ("firstMinter", firstMinter), ("firstLevel", firstLevel),
                 ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("metadata", metadata), ("indexedAt", indexedAt));
         }
