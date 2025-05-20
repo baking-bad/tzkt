@@ -20,28 +20,29 @@ namespace Tzkt.Api.Services.Cache
             State = state;
             Logger = logger;
 
-            var sql = @"
-                SELECT    ""Btc"", ""Eur"", ""Usd"", ""Cny"", ""Jpy"", ""Krw"", ""Eth"", ""Gbp""
-                FROM      ""Quotes""
-                ORDER BY  ""Level""";
-
             using var db = DataSource.OpenConnection();
-            var rows = db.Query(sql);
+            using var reader = db.BeginBinaryExport("""
+                COPY (
+                    SELECT "Btc", "Eur", "Usd", "Cny", "Jpy", "Krw", "Eth", "Gbp"
+                    FROM "Quotes"
+                    ORDER BY "Level"
+                )
+                TO STDOUT (FORMAT BINARY)
+                """);
 
-            var cnt = rows.Count();
             for (int i = 0; i < Quotes.Length; i++)
-                Quotes[i] = new List<double>(cnt + 130_000);
+                Quotes[i] = new List<double>(state.Current.Level + 512_000);
 
-            foreach (var row in rows)
+            while (reader.StartRow() != -1)
             {
-                Quotes[0].Add(row.Btc);
-                Quotes[1].Add(row.Eur);
-                Quotes[2].Add(row.Usd);
-                Quotes[3].Add(row.Cny);
-                Quotes[4].Add(row.Jpy);
-                Quotes[5].Add(row.Krw);
-                Quotes[6].Add(row.Eth);
-                Quotes[7].Add(row.Gbp);
+                Quotes[0].Add(reader.Read<double>());
+                Quotes[1].Add(reader.Read<double>());
+                Quotes[2].Add(reader.Read<double>());
+                Quotes[3].Add(reader.Read<double>());
+                Quotes[4].Add(reader.Read<double>());
+                Quotes[5].Add(reader.Read<double>());
+                Quotes[6].Add(reader.Read<double>());
+                Quotes[7].Add(reader.Read<double>());
             }
 
             logger.LogInformation("Loaded {cnt} quotes", Quotes[0].Count);

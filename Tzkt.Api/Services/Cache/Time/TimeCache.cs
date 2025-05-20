@@ -22,10 +22,19 @@ namespace Tzkt.Api.Services.Cache
             Logger = logger;
 
             using var db = DataSource.OpenConnection();
-            var times = db.Query<DateTime>(@"SELECT ""Timestamp"" FROM ""Blocks"" ORDER BY ""Level""");
+            using var reader = db.BeginBinaryExport("""
+                COPY (
+                    SELECT "Timestamp"
+                    FROM "Blocks"
+                    ORDER BY "Level"
+                )
+                TO STDOUT (FORMAT BINARY)
+                """);
 
-            Times = new List<DateTime>(times.Count() + 130_000);
-            Times.AddRange(times);
+            Times = new List<DateTime>(state.Current.Level + 512_000);
+
+            while (reader.StartRow() != -1)
+                Times.Add(DateTime.SpecifyKind(reader.Read<DateTime>(), DateTimeKind.Utc));
 
             logger.LogInformation("Loaded {cnt} timestamps", Times.Count);
         }
