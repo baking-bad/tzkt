@@ -82,12 +82,25 @@ namespace Tzkt.Api
         /// </summary>
         public Int32Parameter? codeHash { get; set; }
 
+        /// <summary>
+        /// Filter by number of different tokens minted within the contract.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter? tokensCount { get; set; }
+
+        /// <summary>
+        /// Filter by number of different tickets minted within the contract.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Int32Parameter? ticketsCount { get; set; }
+
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("address", address), ("kind", kind), ("tzips", tzips), ("balance", balance), ("creator", creator),
                 ("@delegate", @delegate), ("firstActivity", firstActivity), ("firstActivityTime", firstActivityTime),
-                ("lastActivity", lastActivity), ("lastActivityTime", lastActivityTime), ("typeHash", typeHash), ("codeHash", codeHash));
+                ("lastActivity", lastActivity), ("lastActivityTime", lastActivityTime), ("typeHash", typeHash), ("codeHash", codeHash),
+                ("tokensCount", tokensCount), ("ticketsCount", ticketsCount));
         }
     }
 }
