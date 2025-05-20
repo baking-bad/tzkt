@@ -6,7 +6,7 @@
         /// Type of the operation, `double_endorsing` - is used by bakers to provide evidence of double endorsement
         /// (endorsing two different blocks at the same block height) by a baker
         /// </summary>
-        public override string Type => OpTypes.DoubleEndorsing;
+        public override string Type => ActivityTypes.DoubleEndorsing;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

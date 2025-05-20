@@ -982,7 +982,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.TransactionTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Transaction,
+                        Type = ActivityTypes.Transaction,
                         Hash = row.TransactionHash,
                         Counter = row.TransactionCounter,
                         Nonce = row.TransactionNonce,
@@ -998,7 +998,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.OriginationTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Origination,
+                        Type = ActivityTypes.Origination,
                         Hash = row.OriginationHash,
                         Counter = row.OriginationCounter,
                         Nonce = row.OriginationNonce
@@ -1009,7 +1009,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.MigrationTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Migration
+                        Type = ActivityTypes.Migration
                     };
                 }
 
@@ -1071,7 +1071,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.TransactionTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Transaction,
+                        Type = ActivityTypes.Transaction,
                         Hash = row.TransactionHash,
                         Counter = row.TransactionCounter,
                         Nonce = row.TransactionNonce,
@@ -1089,7 +1089,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.OriginationTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Origination,
+                        Type = ActivityTypes.Origination,
                         Hash = row.OriginationHash,
                         Counter = row.OriginationCounter,
                         Nonce = row.OriginationNonce
@@ -1100,7 +1100,7 @@ namespace Tzkt.Api.Repositories
                     timestamp = row.MigrationTimestamp;
                     source = new SourceOperation
                     {
-                        Type = OpTypes.Migration
+                        Type = ActivityTypes.Migration
                     };
                 }
 

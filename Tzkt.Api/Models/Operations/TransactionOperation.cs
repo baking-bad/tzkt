@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `transaction` - is a standard operation used to transfer tezos tokens to an account
         /// </summary>
-        public override string Type => OpTypes.Transaction;
+        public override string Type => ActivityTypes.Transaction;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

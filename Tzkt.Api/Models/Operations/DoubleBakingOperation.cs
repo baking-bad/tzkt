@@ -6,7 +6,7 @@
         /// Type of the operation, `double_baking` - is used by bakers to provide evidence of double baking
         /// (baking two different blocks at the same height) by a baker
         /// </summary>
-        public override string Type => OpTypes.DoubleBaking;
+        public override string Type => ActivityTypes.DoubleBaking;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `origination` - deployment / contract creation operation.
         /// </summary>
-        public override string Type => OpTypes.Origination;
+        public override string Type => ActivityTypes.Origination;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

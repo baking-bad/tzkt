@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_remove_commitment`
         /// </summary>
-        public override string Type => OpTypes.TxRollupRemoveCommitment;
+        public override string Type => ActivityTypes.TxRollupRemoveCommitment;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

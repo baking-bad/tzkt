@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_recover_bond`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupRecoverBond;
+        public override string Type => ActivityTypes.SmartRollupRecoverBond;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

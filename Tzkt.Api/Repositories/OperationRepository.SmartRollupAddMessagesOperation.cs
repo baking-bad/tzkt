@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,9 +13,39 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupAddMessagesOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupAddMessagesOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupAddMessagesCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("SenderId", ids));
+
+            return await GetSmartRollupAddMessagesOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupAddMessagesOpsCount(ManagerOperationFilter filter)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupAddMessagesOps""")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -61,6 +92,7 @@ namespace Tzkt.Api.Repositories
             }
 
             var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupAddMessagesOps"" as o")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -110,7 +142,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupAddMessages;
+                            result[j++][i] = ActivityTypes.SmartRollupAddMessages;
                         break;
                     case "id":
                         foreach (var row in rows)

@@ -2,6 +2,7 @@
 using Netezos.Contracts;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -14,9 +15,48 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupOriginateOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupOriginateOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? senderIds = null;
+            List<int>? smartRollupIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupOriginateCount == 0)
+                    continue;
+
+                if (account is RawUser && (roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+                else if (account is RawSmartRollup && (roles & ActivityRole.Target) != 0)
+                {
+                    smartRollupIds ??= new(accounts.Count);
+                    smartRollupIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && smartRollupIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("SmartRollupId", smartRollupIds));
+
+            return await GetSmartRollupOriginateOps(new() { or = or, timestamp = timestamp }, pagination, quote, format);
+        }
+
         public async Task<int> GetSmartRollupOriginateOpsCount(SrOperationFilter filter)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupOriginateOps""")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -70,6 +110,7 @@ namespace Tzkt.Api.Repositories
             }
 
             var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupOriginateOps"" as o")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -132,7 +173,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupOriginate;
+                            result[j++][i] = ActivityTypes.SmartRollupOriginate;
                         break;
                     case "id":
                         foreach (var row in rows)

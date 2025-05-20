@@ -6,7 +6,7 @@
         /// Type of the operation, `register_constant` - is used to register a global
         /// constant - Micheline expression that can be reused by multiple smart contracts
         /// </summary>
-        public override string Type => OpTypes.RegisterConstant;
+        public override string Type => ActivityTypes.RegisterConstant;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

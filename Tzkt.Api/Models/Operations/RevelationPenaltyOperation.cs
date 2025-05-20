@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `revelation_penalty` - is operation, in which rewards were lost due to unrevealed seed nonces by the delegate (synthetic type)
         /// </summary>
-        public override string Type => OpTypes.RevelationPenalty;
+        public override string Type => ActivityTypes.RevelationPenalty;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

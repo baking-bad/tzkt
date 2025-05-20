@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `vdf_revelation` - used by the blockchain to create randomness
         /// </summary>
-        public override string Type => OpTypes.VdfRevelation;
+        public override string Type => ActivityTypes.VdfRevelation;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

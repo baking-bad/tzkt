@@ -170,6 +170,48 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(OrParameter? or)
+        {
+            if (or == null) return this;
+
+            var expressions = new List<string>(or.ColsAndVals.Length);
+            foreach (var (column, values) in or.ColsAndVals)
+            {
+                if (values == null || values.Count == 0)
+                    continue;
+
+                expressions.Add(values.Count == 1
+                    ? $@"""{column}"" = {Param(values[0])}"
+                    : $@"""{column}"" = ANY ({Param(values)})");
+            }
+
+            if (expressions.Count != 0)
+                AppendFilter("(" + string.Join(" OR ", expressions) + ")");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(OrParameter? or)
+        {
+            if (or == null) return this;
+
+            var expressions = new List<string>(or.ColsAndVals.Length);
+            foreach (var (column, values) in or.ColsAndVals)
+            {
+                if (values == null || values.Count == 0)
+                    continue;
+
+                expressions.Add(values.Count == 1
+                    ? $"{column} = {Param(values[0])}"
+                    : $"{column} = ANY ({Param(values)})");
+            }
+
+            if (expressions.Count != 0)
+                AppendFilter("(" + string.Join(" OR ", expressions) + ")");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, ContractKindParameter? kind)
         {
             if (kind == null) return this;

@@ -779,19 +779,19 @@ namespace Tzkt.Api.Repositories
                 : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
 
             var migrations = operations.HasFlag(Data.Models.Operations.Migrations)
-                ? Operations.GetMigrations(null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
+                ? Operations.GetMigrations(null, null, null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, format, quote)
                 : Task.FromResult(Enumerable.Empty<MigrationOperation>());
 
             var penalties = operations.HasFlag(Data.Models.Operations.RevelationPenalty)
-                ? Operations.GetRevelationPenalties(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                ? Operations.GetRevelationPenalties(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
             var endorsingRewards = operations.HasFlag(Data.Models.Operations.EndorsingRewards)
-                ? Operations.GetEndorsingRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                ? Operations.GetEndorsingRewards(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
 
             var dalAttestationRewards = operations.HasFlag(Data.Models.Operations.DalAttestationReward)
-                ? Operations.GetDalAttestationRewards(null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                ? Operations.GetDalAttestationRewards(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<DalAttestationRewardOperation>());
 
             var autostakingOps = operations.HasFlag(Data.Models.Operations.Autostaking)

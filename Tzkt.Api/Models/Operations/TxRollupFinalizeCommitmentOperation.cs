@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_finalize_commitment`
         /// </summary>
-        public override string Type => OpTypes.TxRollupFinalizeCommitment;
+        public override string Type => ActivityTypes.TxRollupFinalizeCommitment;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

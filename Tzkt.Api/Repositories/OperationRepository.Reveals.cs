@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -14,11 +15,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetRevealsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""RevealOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -118,10 +119,48 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetRevealOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.RevealsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("SenderId", ids));
+
+            return await GetReveals(
+                or,
+                null, null,
+                timestamp,
+                null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<RevealOperation>> GetReveals(
+            OrParameter? or,
             AccountParameter? sender,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -129,9 +168,10 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""RevealOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -166,7 +206,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object?[][]> GetReveals(
             AccountParameter? sender,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -207,7 +247,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -293,7 +333,7 @@ namespace Tzkt.Api.Repositories
         public async Task<object?[]> GetReveals(
             AccountParameter? sender,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -331,7 +371,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""RevealOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {

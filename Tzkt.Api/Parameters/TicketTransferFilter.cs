@@ -74,6 +74,9 @@ namespace Tzkt.Api
         public Int64NullParameter? smartRollupExecuteId { get; set; }
 
         [OpenApiIgnore]
+        public OrParameter? or { get; set; }
+
+        [OpenApiIgnore]
         public bool Empty =>
             id == null &&
             level == null &&

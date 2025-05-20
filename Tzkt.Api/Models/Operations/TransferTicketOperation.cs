@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Type of the operation, `transfer_ticket`
         /// </summary>
-        public override string Type => OpTypes.TransferTicket;
+        public override string Type => ActivityTypes.TransferTicket;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

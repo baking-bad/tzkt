@@ -1,16 +1,56 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetStakingOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? bakerIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.StakingOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if (account is RawDelegate && (roles & ActivityRole.Target) != 0)
+                {
+                    bakerIds ??= new(accounts.Count);
+                    bakerIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && bakerIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"o.""SenderId""", senderIds),
+                (@"o.""BakerId""", bakerIds));
+
+            return await GetStakingOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetStakingOpsCount(StakingOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "StakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -72,6 +112,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "StakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -132,7 +173,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.Staking;
+                            result[j++][i] = ActivityTypes.Staking;
                         break;
                     case "id":
                         foreach (var row in rows)

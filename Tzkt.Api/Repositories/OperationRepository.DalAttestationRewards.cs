@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -7,11 +8,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetDalAttestationRewardsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DalAttestationRewardOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -47,21 +48,59 @@ namespace Tzkt.Api.Repositories
             };
         }
 
+        public async Task<IEnumerable<Activity>> GetDalAttestationRewardOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.DalAttestationRewardsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""BakerId""", ids));
+
+            return await GetDalAttestationRewards(
+                or,
+                null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<DalAttestationRewardOperation>> GetDalAttestationRewards(
+            OrParameter? or,
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DalAttestationRewardOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(or)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -87,7 +126,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -125,7 +164,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -193,7 +232,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -228,7 +267,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();

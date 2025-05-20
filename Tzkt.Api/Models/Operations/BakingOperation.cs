@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `baking` - an operation which contains brief information about a baked (produced) block (synthetic type)
         /// </summary>
-        public override string Type => OpTypes.Baking;
+        public override string Type => ActivityTypes.Baking;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

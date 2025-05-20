@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `delegation` -  is used to delegate funds to a delegate (an implicit account registered as a baker)
         /// </summary>
-        public override string Type => OpTypes.Delegation;
+        public override string Type => ActivityTypes.Delegation;
         
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

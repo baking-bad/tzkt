@@ -617,6 +617,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"
                 SELECT {select} FROM ""TicketTransfers"" as tr
                 INNER JOIN ""Tickets"" AS t ON t.""Id"" = tr.""TicketId""")
+                .FilterA(filter.or)
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
@@ -645,11 +646,83 @@ namespace Tzkt.Api.Repositories
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
+        public async Task<IEnumerable<Activity>> GetTicketTransfersActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination)
+        {
+            List<int>? fromIds = null;
+            List<int>? toIds = null;
+            List<int>? ticketerIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.TicketTransfersCount != 0)
+                {
+                    if ((roles & ActivityRole.Sender) != 0)
+                    {
+                        fromIds ??= new(accounts.Count);
+                        fromIds.Add(account.Id);
+                    }
+
+                    if ((roles & ActivityRole.Target) != 0)
+                    {
+                        toIds ??= new(accounts.Count);
+                        toIds.Add(account.Id);
+                    }
+                }
+
+                if (account is RawContract contract && contract.TicketsCount != 0)
+                {
+                    if ((roles & ActivityRole.Mention) != 0)
+                    {
+                        ticketerIds ??= new(accounts.Count);
+                        ticketerIds.Add(account.Id);
+                    }
+                }
+            }
+
+            if (fromIds == null && toIds == null && ticketerIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"tr.""FromId""", fromIds),
+                (@"tr.""ToId""", toIds),
+                (@"tr.""TicketerId""", ticketerIds));
+
+            var rows = await QueryTicketTransfersAsync(new() { or = or, timestamp = timestamp }, pagination);
+            return rows.Select(row => new TicketTransferActivity
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = Times[row.Level],
+                Ticket = new TicketInfo
+                {
+                    Id = row.tId,
+                    Ticketer = Accounts.GetAlias(row.tTicketerId),
+                    RawType = Micheline.FromBytes((byte[])row.tRawType),
+                    RawContent = Micheline.FromBytes((byte[])row.tRawContent),
+                    Content = (RawJson?)row.tJsonContent,
+                    TypeHash = row.tTypeHash,
+                    ContentHash = row.tContentHash,
+                    TotalSupply = row.tTotalSupply
+                },
+                From = row.FromId == null ? null : Accounts.GetAlias(row.FromId),
+                To = row.ToId == null ? null : Accounts.GetAlias(row.ToId),
+                Amount = row.Amount,
+                TransactionId = row.TransactionId,
+                TransferTicketId = row.TransferTicketId,
+                SmartRollupExecuteId = row.SmartRollupExecuteId
+            });
+        }
+
         public async Task<int> GetTicketTransfersCount(TicketTransferFilter filter)
         {
             var sql = new SqlBuilder(@"
                 SELECT COUNT(*) FROM ""TicketTransfers"" as tr
                 INNER JOIN ""Tickets"" AS t ON t.""Id"" = tr.""TicketId""")
+                .FilterA(filter.or)
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)

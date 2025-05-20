@@ -14,11 +14,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetTxRollupSubmitBatchOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""TxRollupSubmitBatchOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -131,7 +131,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -146,7 +146,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("RollupId", rollup)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -185,7 +185,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -230,7 +230,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("RollupId", rollup)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -329,7 +329,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -371,7 +371,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("RollupId", rollup)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {

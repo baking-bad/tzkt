@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -15,11 +16,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetRegisterConstantsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""RegisterConstantOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -131,11 +132,51 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetRegisterConstantOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.RegisterConstantsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("SenderId", ids));
+
+            return await GetRegisterConstants(
+                or,
+                null, null, null,
+                timestamp,
+                null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<RegisterConstantOperation>> GetRegisterConstants(
+            OrParameter? or,
             AccountParameter? sender,
             ExpressionParameter? address,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -148,10 +189,11 @@ namespace Tzkt.Api.Repositories
                 FROM        ""RegisterConstantOps"" AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter("SenderId", sender)
                 .Filter("Address", address)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -193,7 +235,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             ExpressionParameter? address,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -240,7 +282,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("Address", address)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -345,7 +387,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             ExpressionParameter? address,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -389,7 +431,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("Address", address)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {

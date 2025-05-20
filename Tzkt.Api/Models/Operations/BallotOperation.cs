@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `ballot` - is used to vote for a proposal in a given voting cycle
         /// </summary>
-        public override string Type => OpTypes.Ballot;
+        public override string Type => ActivityTypes.Ballot;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

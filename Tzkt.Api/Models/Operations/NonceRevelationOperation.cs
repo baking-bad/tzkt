@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `nonce_revelation` - are used by the blockchain to create randomness
         /// </summary>
-        public override string Type => OpTypes.NonceRevelation;
+        public override string Type => ActivityTypes.NonceRevelation;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

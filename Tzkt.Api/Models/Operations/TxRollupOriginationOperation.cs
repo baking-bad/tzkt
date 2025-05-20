@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_origination`
         /// </summary>
-        public override string Type => OpTypes.TxRollupOrigination;
+        public override string Type => ActivityTypes.TxRollupOrigination;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

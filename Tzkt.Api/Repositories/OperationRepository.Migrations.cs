@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -7,11 +8,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetMigrationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""MigrationOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -65,13 +66,52 @@ namespace Tzkt.Api.Repositories
             }).FirstOrDefault();
         }
 
+        public async Task<IEnumerable<Activity>> GetMigrationOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.MigrationsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(("AccountId", ids));
+
+            return await GetMigrations(
+                or,
+                null, null, null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<MigrationOperation>> GetMigrations(
+            OrParameter? or,
             AccountParameter? account,
             MigrationKindParameter? kind,
             Int64Parameter? balanceChange,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -81,12 +121,13 @@ namespace Tzkt.Api.Repositories
             bool includeDiffs = false)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""MigrationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter("AccountId", account)
                 .Filter("Kind", kind)
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -135,7 +176,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter? balanceChange,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -179,7 +220,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -262,7 +303,7 @@ namespace Tzkt.Api.Repositories
             Int64Parameter? balanceChange,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -303,7 +344,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("BalanceChange", balanceChange)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
             await using var db = await DataSource.OpenConnectionAsync();

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_cement`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupCement;
+        public override string Type => ActivityTypes.SmartRollupCement;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

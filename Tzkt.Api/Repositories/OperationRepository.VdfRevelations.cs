@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -8,11 +9,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetVdfRevelationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""VdfRevelationOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -80,21 +81,59 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetVdfRevelationOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.VdfRevelationsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""BakerId""", ids));
+
+            return await GetVdfRevelations(
+                or,
+                null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<VdfRevelationOperation>> GetVdfRevelations(
+            OrParameter? or,
             AccountParameter? baker,
             Int32Parameter? level,
             Int32Parameter? cycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""VdfRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(or)
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -127,7 +166,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? baker,
             Int32Parameter? level,
             Int32Parameter? cycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -168,7 +207,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -252,7 +291,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? baker,
             Int32Parameter? level,
             Int32Parameter? cycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -290,7 +329,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""BakerId""", baker)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
