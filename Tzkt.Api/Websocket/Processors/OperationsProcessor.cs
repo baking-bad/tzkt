@@ -89,75 +89,75 @@ namespace Tzkt.Api.Websocket.Processors
                 var symbols = Symbols.None;
 
                 var endorsements = TypeSubs.TryGetValue(Operations.Endorsements, out var endorsementsSub)
-                    ? Repo.GetEndorsements(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetEndorsements(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsementOperation>());
 
                 var preendorsements = TypeSubs.TryGetValue(Operations.Preendorsements, out var preendorsementsSub)
-                    ? Repo.GetPreendorsements(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetPreendorsements(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.PreendorsementOperation>());
 
                 var proposals = TypeSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
-                    ? Repo.GetProposals(null, level, null, null, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetProposals(null, null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ProposalOperation>());
 
                 var ballots = TypeSubs.TryGetValue(Operations.Ballots, out var ballotsSub)
-                    ? Repo.GetBallots(null, level, null, null, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetBallots(null, null, level, null, null, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BallotOperation>());
 
                 var activations = TypeSubs.TryGetValue(Operations.Activations, out var activationsSub)
-                    ? Repo.GetActivations(null, level, null, null, null, limit, symbols)
+                    ? Repo.GetActivations(null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.ActivationOperation>());
 
                 var dalEntrapmentEvidences = TypeSubs.TryGetValue(Operations.DalEntrapmentEvidence, out var dalEntrapmentEvidencesSub)
-                    ? Repo.GetDalEntrapmentEvidences(null, null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDalEntrapmentEvidences(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DalEntrapmentEvidenceOperation>());
 
                 var doubleBaking = TypeSubs.TryGetValue(Operations.DoubleBakings, out var doubleBakingSub)
-                    ? Repo.GetDoubleBakings(null, null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoubleBakings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
                 var doubleEndorsing = TypeSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
-                    ? Repo.GetDoubleEndorsings(null, null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoubleEndorsings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
 
                 var doublePreendorsing = TypeSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
-                    ? Repo.GetDoublePreendorsings(null, null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDoublePreendorsings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoublePreendorsingOperation>());
 
                 var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
-                    ? Repo.GetNonceRevelations(null, null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetNonceRevelations(null, null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
                 var vdfRevelations = TypeSubs.TryGetValue(Operations.VdfRevelation, out var vdfRevelationsSub)
-                    ? Repo.GetVdfRevelations(null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetVdfRevelations(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.VdfRevelationOperation>());
 
                 var delegations = TypeSubs.TryGetValue(Operations.Delegations, out var delegationsSub)
-                    ? Repo.GetDelegations(null, null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
+                    ? Repo.GetDelegations(null, null, null, null, null, null, null, level, null, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DelegationOperation>());
 
                 var originations = TypeSubs.TryGetValue(Operations.Originations, out var originationsSub)
-                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, level, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetOriginations(null, null, null, null, null, null, null, null, null, level, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.OriginationOperation>());
 
                 var transactions = TypeSubs.TryGetValue(Operations.Transactions, out var transactionsSub)
-                    ? Repo.GetTransactions(null, null, null, null, null, null, level, null, null, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetTransactions(null, null, null, null, null, null, null, level, null, null, null, null, null, null, null, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.TransactionOperation>());
 
                 var reveals = TypeSubs.TryGetValue(Operations.Reveals, out var revealsSub)
-                    ? Repo.GetReveals(null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetReveals(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevealOperation>());
 
                 var registerConstants = TypeSubs.TryGetValue(Operations.RegisterConstant, out var registerConstantsSub)
-                    ? Repo.GetRegisterConstants(null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
+                    ? Repo.GetRegisterConstants(null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RegisterConstantOperation>());
 
                 var setDepositsLimits = TypeSubs.TryGetValue(Operations.SetDepositsLimits, out var setDepositsLimitsSub)
-                    ? Repo.GetSetDepositsLimits(null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetSetDepositsLimits(null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.SetDepositsLimitOperation>());
 
                 var transferTicketOps = TypeSubs.TryGetValue(Operations.TransferTicket, out var transferTicketSub)
-                    ? Repo.GetTransferTicketOps(null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
+                    ? Repo.GetTransferTicketOps(null, null, null, null, null, null, level, null, null, null, null, limit, MichelineFormat.Json, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.TransferTicketOperation>());
 
                 var txRollupCommitOps = TypeSubs.TryGetValue(Operations.TxRollupCommit, out var txRollupCommitSub)
@@ -193,15 +193,15 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.TxRollupSubmitBatchOperation>());
 
                 var increasePaidStorageOps = TypeSubs.TryGetValue(Operations.IncreasePaidStorage, out var increasePaidStorageSubs)
-                    ? Repo.GetIncreasePaidStorageOps(null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetIncreasePaidStorageOps(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.IncreasePaidStorageOperation>());
 
                 var updateConsensusKeyOps = TypeSubs.TryGetValue(Operations.UpdateConsensusKey, out var updateConsensusKeySubs)
-                    ? Repo.GetUpdateConsensusKeys(null, null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetUpdateConsensusKeys(null, null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.UpdateConsensusKeyOperation>());
 
                 var drainDelegateOps = TypeSubs.TryGetValue(Operations.DrainDelegate, out var drainDelegateSubs)
-                    ? Repo.GetDrainDelegates(null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDrainDelegates(null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DrainDelegateOperation>());
 
                 var srAddMessagesOps = TypeSubs.TryGetValue(Operations.SmartRollupAddMessages, out var srAddMessagesSubs)
@@ -245,23 +245,23 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DalPublishCommitmentOperation>());
 
                 var migrations = TypeSubs.TryGetValue(Operations.Migrations, out var migrationsSub)
-                    ? Repo.GetMigrations(null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
+                    ? Repo.GetMigrations(null, null, null, null, null, level, null, null, null, limit, MichelineFormat.Json, symbols, true, true)
                     : Task.FromResult(Enumerable.Empty<Models.MigrationOperation>());
 
                 var penalties = TypeSubs.TryGetValue(Operations.RevelationPenalty, out var penaltiesSub)
-                    ? Repo.GetRevelationPenalties(null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetRevelationPenalties(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.RevelationPenaltyOperation>());
 
                 var baking = TypeSubs.TryGetValue(Operations.Baking, out var bakingSub)
-                    ? Repo.GetBakings(null, null, null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetBakings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
                 var endorsingRewards = TypeSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
-                    ? Repo.GetEndorsingRewards(null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetEndorsingRewards(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
 
                 var dalAttestationRewards = TypeSubs.TryGetValue(Operations.DalAttestationReward, out var dalAttestationRewardsSub)
-                    ? Repo.GetDalAttestationRewards(null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetDalAttestationRewards(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DalAttestationRewardOperation>());
 
                 var autostakingOps = TypeSubs.TryGetValue(Operations.Autostaking, out var autostakingOpsSub)

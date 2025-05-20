@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `reveal` - is used to reveal the public key associated with an account
         /// </summary>
-        public override string Type => OpTypes.Reveal;
+        public override string Type => ActivityTypes.Reveal;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

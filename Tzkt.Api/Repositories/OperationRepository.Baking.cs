@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -7,12 +8,12 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetBakingsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Blocks""")
                 .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -54,26 +55,66 @@ namespace Tzkt.Api.Repositories
             };
         }
 
+        public async Task<IEnumerable<Activity>> GetBakingOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.BlocksCount == 0)
+                    continue;
+
+                if ((roles & (ActivityRole.Sender | ActivityRole.Target)) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter(
+                ("ProposerId", ids),
+                ("ProducerId", ids));
+
+            return await GetBakings(
+                or,
+                null, null, null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<BakingOperation>> GetBakings(
+            OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? proposer,
             AccountParameter? producer,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT * FROM ""Blocks""")
+                .Filter(or)
                 .Filter(anyof, x => x == "proposer" ? "ProposerId" : "ProducerId")
                 .Filter("ProposerId", proposer)
                 .Filter("ProducerId", producer)
                 .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Id", id)
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp)
+                .Filter("Level", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -109,7 +150,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? producer,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -153,7 +194,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Id", id)
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp)
+                .Filter("Level", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -255,7 +296,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? producer,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -296,7 +337,7 @@ namespace Tzkt.Api.Repositories
                 .Filter(@"""ProducerId"" IS NOT NULL")
                 .Filter("Id", id)
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp)
+                .Filter("Level", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"));
 
             await using var db = await DataSource.OpenConnectionAsync();

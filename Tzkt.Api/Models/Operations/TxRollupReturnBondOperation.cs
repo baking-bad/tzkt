@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_return_bond`
         /// </summary>
-        public override string Type => OpTypes.TxRollupReturnBond;
+        public override string Type => ActivityTypes.TxRollupReturnBond;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

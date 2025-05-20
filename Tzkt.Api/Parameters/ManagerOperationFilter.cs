@@ -48,6 +48,9 @@ namespace Tzkt.Api
         public AccountParameter? sender { get; set; }
 
         [OpenApiIgnore]
+        public OrParameter? or { get; set; }
+
+        [OpenApiIgnore]
         public virtual bool Empty =>
             id == null &&
             hash == null &&

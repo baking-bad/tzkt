@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Type of the operation, `set_deposits_limit`
         /// </summary>
-        public override string Type => OpTypes.SetDepositsLimit;
+        public override string Type => ActivityTypes.SetDepositsLimit;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

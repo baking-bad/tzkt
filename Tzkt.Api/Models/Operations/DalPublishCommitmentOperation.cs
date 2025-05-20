@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `dal_publish_commitment`
         /// </summary>
-        public override string Type => OpTypes.DalPublishCommitment;
+        public override string Type => ActivityTypes.DalPublishCommitment;
 
         /// <summary>
         /// Internal TzKT ID.  

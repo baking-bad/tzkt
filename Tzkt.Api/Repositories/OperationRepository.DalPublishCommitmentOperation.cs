@@ -1,16 +1,47 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetDalPublishCommitmentOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.DalPublishCommitmentOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""SenderId""", ids));
+
+            return await GetDalPublishCommitmentOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetDalPublishCommitmentOpsCount(ManagerOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "DalPublishCommitmentOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -62,6 +93,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "DalPublishCommitmentOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -112,7 +144,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.DalPublishCommitment;
+                            result[j++][i] = ActivityTypes.DalPublishCommitment;
                         break;
                     case "id":
                         foreach (var row in rows)

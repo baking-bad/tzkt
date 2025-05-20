@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -14,11 +15,11 @@ namespace Tzkt.Api.Repositories
 
         public async Task<int> GetDelegationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DelegationOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -178,7 +179,64 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetDelegationOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? initiatorIds = null;
+            List<int>? delegateIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.DelegationsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+                if (account is RawUser)
+                {
+                    if ((roles & ActivityRole.Initiator) != 0)
+                    {
+                        initiatorIds ??= new(accounts.Count);
+                        initiatorIds.Add(account.Id);
+                    }
+                    if (account is RawDelegate && (roles & ActivityRole.Target) != 0)
+                    {
+                        delegateIds ??= new(accounts.Count);
+                        delegateIds.Add(account.Id);
+                    }
+                }
+            }
+
+            if (senderIds == null && initiatorIds == null && delegateIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("InitiatorId", initiatorIds),
+                ("DelegateId", delegateIds),
+                ("PrevDelegateId", delegateIds));
+
+            return await GetDelegations(
+                or,
+                null, null, null, null, null, null, null,
+                timestamp,
+                null, null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<DelegationOperation>> GetDelegations(
+            OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
@@ -186,7 +244,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? newDelegate,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? senderCodeHash,
             OperationStatusParameter? status,
             SortParameter? sort,
@@ -195,6 +253,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""DelegationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter(anyof, x => x switch
                 {
                     "initiator" => "InitiatorId",
@@ -208,7 +267,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
@@ -256,7 +315,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? newDelegate,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? senderCodeHash,
             OperationStatusParameter? status,
             SortParameter? sort,
@@ -316,7 +375,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
@@ -436,7 +495,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? newDelegate,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? senderCodeHash,
             OperationStatusParameter? status,
             SortParameter? sort,
@@ -493,7 +552,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch

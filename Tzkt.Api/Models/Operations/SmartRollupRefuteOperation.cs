@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_refute`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupRefute;
+        public override string Type => ActivityTypes.SmartRollupRefute;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

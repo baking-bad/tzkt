@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -7,11 +8,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetDoubleBakingsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoubleBakingOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -85,13 +86,61 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetDoubleBakingOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? accuserIds = null;
+            List<int>? offenderIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.DoubleBakingCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    accuserIds ??= new(accounts.Count);
+                    accuserIds.Add(account.Id);
+
+                    offenderIds ??= new(accounts.Count);
+                    offenderIds.Add(account.Id);
+                }
+                else if ((roles & ActivityRole.Sender) != 0)
+                {
+                    accuserIds ??= new(accounts.Count);
+                    accuserIds.Add(account.Id);
+                }
+            }
+
+            if (accuserIds == null && offenderIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("AccuserId", accuserIds),
+                ("OffenderId", offenderIds));
+
+            return await GetDoubleBakings(
+                or,
+                null, null, null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<DoubleBakingOperation>> GetDoubleBakings(
+            OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? accuser,
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -103,12 +152,13 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  "Blocks" as b
                         ON  b."Level" = o."Level"
                 """)
+                .Filter(or)
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -147,7 +197,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -192,7 +242,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -288,7 +338,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -330,7 +380,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),

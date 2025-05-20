@@ -7,7 +7,7 @@
         /// The endorser is randomly selected to be included in the block that extends the head of the chain as specified in this operation.
         /// A block with more endorsements improves the weight of the chain and increases the likelihood of that chain being the canonical one.
         /// </summary>
-        public override string Type => OpTypes.Endorsement;
+        public override string Type => ActivityTypes.Endorsement;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

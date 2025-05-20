@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -8,11 +9,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetNonceRevelationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""NonceRevelationOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -81,26 +82,72 @@ namespace Tzkt.Api.Repositories
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
+        public async Task<IEnumerable<Activity>> GetNonceRevelationOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? bakerIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.NonceRevelationsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if ((roles & ActivityRole.Mention) != 0)
+                {
+                    bakerIds ??= new(accounts.Count);
+                    bakerIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && bakerIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"o.""SenderId""", senderIds),
+                (@"o.""BakerId""", bakerIds));
+
+            return await GetNonceRevelations(
+                or,
+                null, null, null, null, null,
+                timestamp,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
 
         public async Task<IEnumerable<NonceRevelationOperation>> GetNonceRevelations(
+            OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? baker,
             AccountParameter? sender,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
             Symbols quote)
         {
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""NonceRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+                .FilterA(or)
                 .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -137,7 +184,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -181,7 +228,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),
@@ -272,7 +319,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SortParameter? sort,
             OffsetParameter? offset,
             int limit,
@@ -313,7 +360,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
                 {
                     "level" => ("Level", "Level"),

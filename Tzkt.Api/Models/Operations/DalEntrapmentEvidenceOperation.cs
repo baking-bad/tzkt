@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `dal_entrapment_evidence`
         /// </summary>
-        public override string Type => OpTypes.DalEntrapmentEvidence;
+        public override string Type => ActivityTypes.DalEntrapmentEvidence;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

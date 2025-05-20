@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_add_messages`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupAddMessages;
+        public override string Type => ActivityTypes.SmartRollupAddMessages;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

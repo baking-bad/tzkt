@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_rejection`
         /// </summary>
-        public override string Type => OpTypes.TxRollupRejection;
+        public override string Type => ActivityTypes.TxRollupRejection;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

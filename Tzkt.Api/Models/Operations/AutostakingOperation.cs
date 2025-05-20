@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `autostaking`
         /// </summary>
-        public override string Type => OpTypes.Autostaking;
+        public override string Type => ActivityTypes.Autostaking;
 
         /// <summary>
         /// Internal TzKT ID.  

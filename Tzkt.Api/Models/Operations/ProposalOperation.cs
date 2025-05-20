@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `proposal` - is used by bakers (delegates) to submit and/or upvote proposals to amend the protocol
         /// </summary>
-        public override string Type => OpTypes.Proposal;
+        public override string Type => ActivityTypes.Proposal;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

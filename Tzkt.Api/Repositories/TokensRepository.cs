@@ -600,6 +600,7 @@ namespace Tzkt.Api.Repositories
                 t.""Tags"" as ""tTags"",
                 t.""TotalSupply"" as ""tTotalSupply"",
                 t.""Metadata"" as ""tMetadata""";
+
             if (fields != null)
             {
                 var counter = 0;
@@ -673,6 +674,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($@"
                 SELECT {select} FROM ""TokenTransfers"" as tr
                 INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
+                .FilterA(filter.or)
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
@@ -702,11 +704,81 @@ namespace Tzkt.Api.Repositories
             return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
+        public async Task<IEnumerable<Activity>> GetTokenTransfersActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination)
+        {
+            List<int>? fromIds = null;
+            List<int>? toIds = null;
+            List<int>? contractIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.TokenTransfersCount != 0)
+                {
+                    if ((roles & ActivityRole.Sender) != 0)
+                    {
+                        fromIds ??= new(accounts.Count);
+                        fromIds.Add(account.Id);
+                    }
+
+                    if ((roles & ActivityRole.Target) != 0)
+                    {
+                        toIds ??= new(accounts.Count);
+                        toIds.Add(account.Id);
+                    }
+                }
+
+                if (account is RawContract contract && contract.TokensCount != 0)
+                {
+                    if ((roles & ActivityRole.Mention) != 0)
+                    {
+                        contractIds ??= new(accounts.Count);
+                        contractIds.Add(account.Id);
+                    }
+                }
+            }
+
+            if (fromIds == null && toIds == null && contractIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"tr.""FromId""", fromIds),
+                (@"tr.""ToId""", toIds),
+                (@"tr.""ContractId""", contractIds));
+
+            var rows = await QueryTokenTransfersAsync(new() { or = or, timestamp = timestamp }, pagination);
+            return rows.Select(row => new TokenTransferActivity
+            {
+                Id = row.Id,
+                Level = row.Level,
+                Timestamp = Times[row.Level],
+                From = row.FromId == null ? null : Accounts.GetAlias(row.FromId),
+                To = row.ToId == null ? null : Accounts.GetAlias(row.ToId),
+                Amount = row.Amount,
+                TransactionId = row.TransactionId,
+                OriginationId = row.OriginationId,
+                MigrationId = row.MigrationId,
+                Token = new TokenInfo
+                {
+                    Id = row.tId,
+                    Contract = Accounts.GetAlias(row.tContractId),
+                    TokenId = row.tTokenId,
+                    Standard = TokenStandards.ToString(row.tTags),
+                    TotalSupply = row.tTotalSupply,
+                    Metadata = (RawJson?)row.tMetadata
+                }
+            });
+        }
+
         public async Task<int> GetTokenTransfersCount(TokenTransferFilter filter)
         {
             var sql = new SqlBuilder(@"
                 SELECT COUNT(*) FROM ""TokenTransfers"" as tr
                 INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
+                .FilterA(filter.or)
                 .FilterA(@"tr.""Id""", filter.id)
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)

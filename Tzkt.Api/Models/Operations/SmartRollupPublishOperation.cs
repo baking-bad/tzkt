@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_publish`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupPublish;
+        public override string Type => ActivityTypes.SmartRollupPublish;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

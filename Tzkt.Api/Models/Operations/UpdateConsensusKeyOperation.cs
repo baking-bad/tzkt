@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `update_consensus_key`
         /// </summary>
-        public override string Type => OpTypes.UpdateConsensusKey;
+        public override string Type => ActivityTypes.UpdateConsensusKey;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `preendorsement`
         /// </summary>
-        public override string Type => OpTypes.Preendorsement;
+        public override string Type => ActivityTypes.Preendorsement;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

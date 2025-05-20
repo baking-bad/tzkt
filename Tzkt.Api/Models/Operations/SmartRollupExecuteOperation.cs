@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_execute`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupExecute;
+        public override string Type => ActivityTypes.SmartRollupExecute;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

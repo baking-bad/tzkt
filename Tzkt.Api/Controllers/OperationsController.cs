@@ -161,7 +161,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
             AccountParameter? @delegate,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -195,7 +195,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetEndorsements(null, @delegate, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -258,7 +258,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("endorsements/count")]
         public async Task<ActionResult<int>> GetEndorsementsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.EndorsementOpsCount);
@@ -295,7 +295,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsements(
             AccountParameter? @delegate,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -329,7 +329,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetPreendorsements(null, @delegate, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -392,7 +392,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("preendorsements/count")]
         public async Task<ActionResult<int>> GetPreendorsementsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.PreendorsementOpsCount);
@@ -433,7 +433,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<BallotOperation>>> GetBallots(
             AccountParameter? @delegate,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? epoch,
             Int32Parameter? period,
             ProtocolParameter? proposal,
@@ -472,7 +472,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetBallots(@delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, quote);
+                res = await Operations.GetBallots(null, @delegate, level, timestamp, epoch, period, proposal, vote, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -535,7 +535,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("ballots/count")]
         public async Task<ActionResult<int>> GetBallotsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.BallotOpsCount);
@@ -576,7 +576,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<ProposalOperation>>> GetProposals(
             AccountParameter? @delegate,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? epoch,
             Int32Parameter? period,
             ProtocolParameter? proposal,
@@ -615,7 +615,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetProposals(@delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, quote);
+                res = await Operations.GetProposals(null, @delegate, level, timestamp, epoch, period, proposal, duplicated, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -678,7 +678,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("proposals/count")]
         public  async Task<ActionResult<int>> GetProposalsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.ProposalOpsCount);
@@ -715,7 +715,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<ActivationOperation>>> GetActivations(
             AccountParameter? account,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -749,7 +749,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetActivations(account, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetActivations(null, account, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -812,7 +812,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("activations/count")]
         public async Task<ActionResult<int>> GetActivationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.ActivationOpsCount);
@@ -857,7 +857,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -912,7 +912,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDalEntrapmentEvidences(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDalEntrapmentEvidences(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -975,7 +975,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("dal_entrapment_evidence/count")]
         public async Task<ActionResult<int>> GetDalEntrapmentEvidenceOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DalEntrapmentEvidenceOpsCount);
@@ -1020,7 +1020,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1075,7 +1075,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleBakings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleBakings(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1138,7 +1138,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("double_baking/count")]
         public async Task<ActionResult<int>> GetDoubleBakingCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoubleBakingOpsCount);
@@ -1183,7 +1183,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1238,7 +1238,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleEndorsings(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1301,7 +1301,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("double_endorsing/count")]
         public async Task<ActionResult<int>> GetDoubleEndorsingCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoubleEndorsingOpsCount);
@@ -1346,7 +1346,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? offender,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1401,7 +1401,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoublePreendorsings(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1464,7 +1464,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("double_preendorsing/count")]
         public async Task<ActionResult<int>> GetDoublePreendorsingCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DoublePreendorsingOpsCount);
@@ -1509,7 +1509,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1564,7 +1564,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetNonceRevelations(null, anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1627,7 +1627,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("nonce_revelations/count")]
         public async Task<ActionResult<int>> GetNonceRevelationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.NonceRevelationOpsCount);
@@ -1666,7 +1666,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? baker,
             Int32Parameter? level,
             Int32Parameter? cycle,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1700,7 +1700,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetVdfRevelations(null, baker, level, cycle, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1763,7 +1763,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("vdf_revelations/count")]
         public async Task<ActionResult<int>> GetVdfRevelationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.VdfRevelationOpsCount);
@@ -1806,7 +1806,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? @delegate,
             AccountParameter? target,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -1852,7 +1852,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDrainDelegates(anyof, @delegate, target, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDrainDelegates(null, anyof, @delegate, target, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -1915,7 +1915,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("drain_delegate/count")]
         public async Task<ActionResult<int>> GetDrainDelegateOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DrainDelegateOpsCount);
@@ -1966,7 +1966,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? newDelegate,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             Int32Parameter? senderCodeHash,
             OperationStatusParameter? status,
             SelectParameter? select,
@@ -2048,7 +2048,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDelegations(anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
+                res = await Operations.GetDelegations(null, anyof, initiator, sender, prevDelegate, newDelegate, id, level, timestamp, senderCodeHash, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -2130,7 +2130,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("delegations/count")]
         public async Task<ActionResult<int>> GetDelegationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DelegationOpsCount);
@@ -2272,7 +2272,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetOriginations(anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetOriginations(null, anyof, initiator, sender, contractDelegate, originatedContract, id, typeHash, codeHash, level, timestamp, anyCodeHash, senderCodeHash, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
@@ -2495,7 +2495,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetTransactions(anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetTransactions(null, anyof, initiator, sender, target, amount, id, level, timestamp, codeHash, senderCodeHash, targetCodeHash, entrypoint, parameter, hasInternals, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
@@ -2709,7 +2709,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<RevealOperation>>> GetReveals(
             AccountParameter? sender,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -2744,7 +2744,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetReveals(sender, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetReveals(null, sender, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -2828,7 +2828,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("reveals/count")]
         public async Task<ActionResult<int>> GetRevealsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RevealOpsCount);
@@ -2869,7 +2869,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             ExpressionParameter? address,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -2905,7 +2905,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetRegisterConstants(sender, address, level, timestamp, status, sort, offset, limit, micheline, quote);
+                res = await Operations.GetRegisterConstants(null, sender, address, level, timestamp, status, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
@@ -2991,7 +2991,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("register_constants/count")]
         public async Task<ActionResult<int>> GetRegisterConstantsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RegisterConstantOpsCount);
@@ -3029,7 +3029,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<IEnumerable<SetDepositsLimitOperation>>> GetSetDepositsLimits(
             AccountParameter? sender,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3064,7 +3064,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetSetDepositsLimits(sender, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetSetDepositsLimits(null, sender, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -3148,7 +3148,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("set_deposits_limits/count")]
         public async Task<ActionResult<int>> GetSetDepositsLimitsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.SetDepositsLimitOpsCount);
@@ -3197,7 +3197,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter? id,
             AccountParameter? ticketer,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3248,7 +3248,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Operations.GetTransferTicketOps(anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, micheline, quote));
+                return Ok(await Operations.GetTransferTicketOps(null, anyof, sender, target, ticketer, id, level, timestamp, status, sort, offset, limit, micheline, quote));
 
             if (select.Values != null)
             {
@@ -3324,7 +3324,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("transfer_ticket/count")]
         public Task<int> GetTransferTicketOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TransferTicketOpsCount);
@@ -3356,7 +3356,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3468,7 +3468,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_commit/count")]
         public Task<int> GetTxRollupCommitOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupCommitOpsCount);
@@ -3500,7 +3500,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3612,7 +3612,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_dispatch_tickets/count")]
         public Task<int> GetTxRollupDispatchTicketsOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupDispatchTicketsOpsCount);
@@ -3644,7 +3644,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3756,7 +3756,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_finalize_commitment/count")]
         public Task<int> GetTxRollupFinalizeCommitmentOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupFinalizeCommitmentOpsCount);
@@ -3788,7 +3788,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -3900,7 +3900,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_origination/count")]
         public Task<int> GetTxRollupOriginationOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupOriginationOpsCount);
@@ -3938,7 +3938,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? committer,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4062,7 +4062,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_rejection/count")]
         public Task<int> GetTxRollupRejectionOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupRejectionOpsCount);
@@ -4094,7 +4094,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4206,7 +4206,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_remove_commitment/count")]
         public Task<int> GetTxRollupRemoveCommitmentOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupRemoveCommitmentOpsCount);
@@ -4238,7 +4238,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4350,7 +4350,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_return_bond/count")]
         public Task<int> GetTxRollupReturnBondOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupReturnBondOpsCount);
@@ -4382,7 +4382,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? rollup,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4494,7 +4494,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("tx_rollup_submit_batch/count")]
         public Task<int> GetTxRollupSubmitBatchOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Task.FromResult(State.Current.TxRollupSubmitBatchOpsCount);
@@ -4526,7 +4526,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? sender,
             AccountParameter? contract,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4570,7 +4570,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetIncreasePaidStorageOps(sender, contract, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetIncreasePaidStorageOps(null, sender, contract, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -4632,7 +4632,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("increase_paid_storage/count")]
         public async Task<ActionResult<int>> GetIncreasePaidStorageCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.IncreasePaidStorageOpsCount);
@@ -4674,7 +4674,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter? activationCycle,
             AddressParameter? publicKeyHash,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SelectParameter? select,
             SortParameter? sort,
@@ -4710,7 +4710,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetUpdateConsensusKeys(null, sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -4772,7 +4772,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("update_consensus_key/count")]
         public async Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.UpdateConsensusKeyOpsCount);
@@ -5274,7 +5274,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter? balanceChange,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -5310,7 +5310,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetMigrations(account, kind, balanceChange, id, level, timestamp, sort, offset, limit, micheline, quote);
+                res = await Operations.GetMigrations(null, account, kind, balanceChange, id, level, timestamp, sort, offset, limit, micheline, quote);
             }
             else if (select.Values != null)
             {
@@ -5375,7 +5375,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("migrations/count")]
         public async Task<ActionResult<int>> GetMigrationsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.MigrationOpsCount);
@@ -5414,7 +5414,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -5448,7 +5448,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetRevelationPenalties(id, baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetRevelationPenalties(null, id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -5511,7 +5511,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("revelation_penalties/count")]
         public async Task<ActionResult<int>> GetRevelationPenaltiesCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.RevelationPenaltyOpsCount);
@@ -5556,7 +5556,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? producer,
             Int64Parameter? id,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -5609,7 +5609,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetBakings(anyof, proposer, producer, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetBakings(null, anyof, proposer, producer, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -5672,7 +5672,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("baking/count")]
         public async Task<ActionResult<int>> GetBakingCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.BlocksCount - 2);
@@ -5711,7 +5711,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -5745,7 +5745,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetEndorsingRewards(null, id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -5808,7 +5808,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("endorsing_rewards/count")]
         public async Task<ActionResult<int>> GetEndorsingRewardsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.EndorsingRewardOpsCount);
@@ -5847,7 +5847,7 @@ namespace Tzkt.Api.Controllers
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             SelectParameter? select,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -5881,7 +5881,7 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDalAttestationRewards(id, baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDalAttestationRewards(null, id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
@@ -5944,7 +5944,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("dal_attestation_reward/count")]
         public async Task<ActionResult<int>> GetDalAttestationRewardsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
                 return Ok(State.Current.DalAttestationRewardOpsCount);

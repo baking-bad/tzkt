@@ -4,7 +4,7 @@ using Newtonsoft.Json;
 
 namespace Tzkt.Api.Models
 {
-    [JsonConverter(typeof(OperationJsonInheritanceConverter), "type")]
+    [JsonConverter(typeof(ActivityJsonInheritanceConverter), "type")]
     [KnownType(typeof(ActivationOperation))]
     [KnownType(typeof(AutostakingOperation))]
     [KnownType(typeof(BakingOperation))]
@@ -50,20 +50,33 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TxRollupSubmitBatchOperation))]
     [KnownType(typeof(UpdateConsensusKeyOperation))]
     [KnownType(typeof(VdfRevelationOperation))]
-    public abstract class Operation : Activity
+    [KnownType(typeof(TicketTransferActivity))]
+    [KnownType(typeof(TokenTransferActivity))]
+    public abstract class Activity
     {
         /// <summary>
-        /// Type of the operation
+        /// Type of the activity element
         /// </summary>
-        public override abstract string Type { get; }
+        public abstract string Type { get; }
 
         /// <summary>
-        /// Internal ID of the operation
+        /// Internal ID of the activity element
         /// </summary>
-        public override abstract long Id { get; set; }
+        public abstract long Id { get; set; }
     }
 
-    public class OperationJsonInheritanceConverter(string name) : JsonInheritanceConverter<Operation>(name)
+    [Flags]
+    public enum ActivityRole
+    {
+        None = 0,
+        Sender = 1,
+        Target = 2,
+        Initiator = 4,
+        Mention = 8,
+        All = Sender | Target | Initiator | Mention
+    }
+
+    public class ActivityJsonInheritanceConverter(string name) : JsonInheritanceConverter<Activity>(name)
     {
         public override string GetDiscriminatorValue(Type type)
         {
@@ -112,6 +125,8 @@ namespace Tzkt.Api.Models
             if (type == typeof(TxRollupSubmitBatchOperation)) return ActivityTypes.TxRollupSubmitBatch;
             if (type == typeof(UpdateConsensusKeyOperation)) return ActivityTypes.UpdateConsensusKey;
             if (type == typeof(VdfRevelationOperation)) return ActivityTypes.VdfRevelation;
+            if (type == typeof(TicketTransferActivity)) return ActivityTypes.TicketTransfer;
+            if (type == typeof(TokenTransferActivity)) return ActivityTypes.TokenTransfer;
 
             return base.GetDiscriminatorValue(type);
         }

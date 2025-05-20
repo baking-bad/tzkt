@@ -8,6 +8,7 @@ using App.Metrics.Formatters.Prometheus;
 using Dapper;
 using Npgsql;
 using Tzkt.Api;
+using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
 using Tzkt.Api.Services;
 using Tzkt.Api.Services.Auth;
@@ -91,11 +92,12 @@ builder.Services.AddControllers()
     .AddMetrics()
     .AddJsonOptions(options =>
     {
-        options.JsonSerializerOptions.Converters.Add(new AccountConverter());
         options.JsonSerializerOptions.Converters.Add(new BigIntegerConverter());
         options.JsonSerializerOptions.Converters.Add(new BigIntegerNullableConverter());
-        options.JsonSerializerOptions.Converters.Add(new OperationConverter());
         options.JsonSerializerOptions.Converters.Add(new OperationErrorConverter());
+        options.JsonSerializerOptions.Converters.Add(new PolymorphicConverter<Account>());
+        options.JsonSerializerOptions.Converters.Add(new PolymorphicConverter<Activity>());
+        options.JsonSerializerOptions.Converters.Add(new PolymorphicConverter<Operation>());
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         options.JsonSerializerOptions.MaxDepth = 100_000;
     })
@@ -148,11 +150,12 @@ if (builder.Configuration.GetWebsocketConfig().Enabled)
     })
     .AddJsonProtocol(jsonOptions =>
     {
-        jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
         jsonOptions.PayloadSerializerOptions.Converters.Add(new BigIntegerConverter());
         jsonOptions.PayloadSerializerOptions.Converters.Add(new BigIntegerNullableConverter());
-        jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
         jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
+        jsonOptions.PayloadSerializerOptions.Converters.Add(new PolymorphicConverter<Account>());
+        jsonOptions.PayloadSerializerOptions.Converters.Add(new PolymorphicConverter<Activity>());
+        jsonOptions.PayloadSerializerOptions.Converters.Add(new PolymorphicConverter<Operation>());
         jsonOptions.PayloadSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         jsonOptions.PayloadSerializerOptions.MaxDepth = 100_000;
     });

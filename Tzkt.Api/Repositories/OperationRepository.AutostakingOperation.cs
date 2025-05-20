@@ -1,16 +1,47 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetAutostakingOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawDelegate baker || baker.AutostakingOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""BakerId""", ids));
+
+            return await GetAutostakingOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetAutostakingOpsCount(AutostakingOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "AutostakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""Level""", filter.level)
                 .FilterA(@"o.""Level""", filter.timestamp)
@@ -62,6 +93,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "AutostakingOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""Level""", filter.level)
                 .FilterA(@"o.""Level""", filter.timestamp)
@@ -105,7 +137,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.Autostaking;
+                            result[j++][i] = ActivityTypes.Autostaking;
                         break;
                     case "id":
                         foreach (var row in rows)

@@ -123,6 +123,104 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
+        /// Get accounts activity
+        /// </summary>
+        /// <param name="addresses">Comma-separated list of account addresses to get activity of.</param>
+        /// <param name="roles">Comma-separated list of activity roles (`sender`, `target`, `initiator`, `mention`) to filter activity by.</param>
+        /// <param name="types">Comma-separated list of activity types (`activation`, `autostaking`, `baking`, `ballot`, `dal_attestation_reward`,
+        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `drain_delegate`, 
+        /// `endorsement`, `endorsing_reward`, `increase_paid_storage`, `migration`, `nonce_revelation`, `origination`, `preendorsement`, `proposal`,
+        /// `register_constant`, `reveal`, `revelation_penalty`, `set_delegate_parameters`, `set_deposits_limit`, `sr_add_messages`, `sr_cement`, `sr_execute`,
+        /// `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`, `staking`, `transaction`, `transfer_ticket`, `tx_rollup_commit`, `tx_rollup_dispatch_tickets`,
+        /// `tx_rollup_finalize_commitment`, `tx_rollup_origination`, `tx_rollup_rejection`, `tx_rollup_remove_commitment`, `tx_rollup_return_bond`, `tx_rollup_submit_batch`,
+        /// `vdf_revelation`, `update_consensus_key`, `ticket_transfer`, `token_transfer`)</param>
+        /// <param name="timestamp">Filter activity by timestamp.</param>
+        /// <param name="sort">Sort mode: 0 - asc (oldest to newest), 1 - desc (newest to oldest).</param>
+        /// <param name="lastId">Id of the last activity element received, which is used for cursor pagination.</param>
+        /// <param name="limit">Number of elements to return.</param>
+        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string.</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response.</param>
+        /// <returns></returns>
+        [HttpGet("activity")]
+        public async Task<ActionResult<IEnumerable<Activity>>> GetActivity(
+            [Required(AllowEmptyStrings = false)] string addresses,
+            string? roles,
+            string? types,
+            TimestampParameter? timestamp,
+            SortMode sort = SortMode.Descending,
+            long? lastId = null,
+            [Range(0, 1000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            #region parse addresses
+            var _addresses = new HashSet<string>();
+            foreach (var address in addresses.Split(","))
+            {
+                if (!Regexes.Address().IsMatch(address))
+                    return new BadRequest(nameof(addresses), $"Invalid account address '{address}'");
+                _addresses.Add(address);
+            }
+            #endregion
+
+            #region parse roles
+            var _roles = ActivityRole.None;
+            if (roles != null)
+            {
+                foreach (var role in roles.Split(","))
+                {
+                    switch (role)
+                    {
+                        case "sender":
+                            _roles |= ActivityRole.Sender;
+                            break;
+                        case "target":
+                            _roles |= ActivityRole.Target;
+                            break;
+                        case "initiator":
+                            _roles |= ActivityRole.Initiator;
+                            break;
+                        case "mention":
+                            _roles |= ActivityRole.Mention;
+                            break;
+                        default:
+                            return new BadRequest(nameof(roles), $"Invalid role '{role}'");
+                    }
+                }
+            }
+            if (_roles == ActivityRole.None)
+                _roles = ActivityRole.All;
+            #endregion
+
+            #region parse types
+            var _types = new HashSet<string>();
+            if (types != null)
+            {
+                foreach (var type in types.Split(","))
+                {
+                    if (!ActivityTypes.IsValid(type))
+                        return new BadRequest(nameof(types), $"Unsupported type '{type}'");
+                    _types.Add(type);
+                }
+            }
+            if (_types.Count == 0) 
+                _types = ActivityTypes.Default;
+            #endregion
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("accounts", string.Join(",", _addresses.OrderBy(x => x))), ("roles", _roles),
+                ("types", string.Join(",", _types.OrderBy(x => x))), ("timestamp", timestamp),
+                ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetActivity(_addresses, _types, _roles, timestamp, sort == SortMode.Ascending, lastId, limit, quote, micheline);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
         /// Get accounts count
         /// </summary>
         /// <remarks>
@@ -259,7 +357,7 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get account operations
+        /// [DEPRECATED]
         /// </summary>
         /// <remarks>
         /// Returns a list of operations related to the specified account.
@@ -300,6 +398,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
+        [OpenApiIgnore]
         [HttpGet("{address}/operations")]
         public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
             [Required][Address] string address,
@@ -315,7 +414,7 @@ namespace Tzkt.Api.Controllers
             AccountParameter? offender,
             AccountParameter? baker,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             StringParameter? entrypoint,
             JsonParameter? parameter,
             BoolParameter? hasInternals,
@@ -418,7 +517,7 @@ namespace Tzkt.Api.Controllers
             }
             #endregion
 
-            var types = type != null ? new HashSet<string>(type.Split(',')) : OpTypes.DefaultSet;
+            var types = type != null ? [.. type.Split(',')] : ActivityTypes.Default;
 
             var _sort = sort == SortMode.Ascending
                 ? new SortParameter { Asc = "Id" }

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_dispatch_tickets`
         /// </summary>
-        public override string Type => OpTypes.TxRollupDispatchTickets;
+        public override string Type => ActivityTypes.TxRollupDispatchTickets;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

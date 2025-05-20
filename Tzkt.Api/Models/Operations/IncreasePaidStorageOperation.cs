@@ -8,7 +8,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Type of the operation, `increase_paid_storage`
         /// </summary>
-        public override string Type => OpTypes.IncreasePaidStorage;
+        public override string Type => ActivityTypes.IncreasePaidStorage;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_commit`
         /// </summary>
-        public override string Type => OpTypes.TxRollupCommit;
+        public override string Type => ActivityTypes.TxRollupCommit;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

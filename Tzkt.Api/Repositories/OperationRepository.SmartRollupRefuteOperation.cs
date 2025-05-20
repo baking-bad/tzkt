@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,6 +13,55 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupRefuteOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupRefuteOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? playerIds = null;
+            List<int>? smartRollupIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupRefuteCount == 0)
+                    continue;
+
+                if (account is RawUser)
+                {
+                    if ((roles & ActivityRole.Sender) != 0)
+                    {
+                        senderIds ??= new(accounts.Count);
+                        senderIds.Add(account.Id);
+                    }
+
+                    if ((roles & ActivityRole.Mention) != 0)
+                    {
+                        playerIds ??= new(accounts.Count);
+                        playerIds.Add(account.Id);
+                    }
+                }
+                else if (account is RawSmartRollup && (roles & ActivityRole.Target) != 0)
+                {
+                    smartRollupIds ??= new(accounts.Count);
+                    smartRollupIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && playerIds == null && smartRollupIds == null)
+                return [];
+
+            var or = new OrParameter(
+                (@"o.""SenderId""", senderIds),
+                (@"g.""InitiatorId""", playerIds),
+                (@"g.""OpponentId""", playerIds),
+                (@"o.""SmartRollupId""", smartRollupIds));
+
+            return await GetSmartRollupRefuteOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupRefuteOpsCount(SrRefuteOperationFilter filter)
         {
             var sql = new SqlBuilder(@"
@@ -19,6 +69,7 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN ""RefutationGames"" AS g ON g.""Id"" = o.""GameId""
                 LEFT JOIN ""SmartRollupCommitments"" AS ic ON ic.""Id"" = g.""InitiatorCommitmentId""
                 LEFT JOIN ""SmartRollupCommitments"" AS oc ON oc.""Id"" = g.""OpponentCommitmentId""")
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -239,6 +290,7 @@ namespace Tzkt.Api.Repositories
                 LEFT JOIN ""RefutationGames"" AS g ON g.""Id"" = o.""GameId""
                 LEFT JOIN ""SmartRollupCommitments"" AS ic ON ic.""Id"" = g.""InitiatorCommitmentId""
                 LEFT JOIN ""SmartRollupCommitments"" AS oc ON oc.""Id"" = g.""OpponentCommitmentId""")
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -341,7 +393,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupRefute;
+                            result[j++][i] = ActivityTypes.SmartRollupRefute;
                         break;
                     case "id":
                         foreach (var row in rows)

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `drain_delegate`
         /// </summary>
-        public override string Type => OpTypes.DrainDelegate;
+        public override string Type => ActivityTypes.DrainDelegate;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

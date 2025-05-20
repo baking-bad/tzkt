@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -12,9 +13,58 @@ namespace Tzkt.Api.Repositories
             return await GetStatus(db, nameof(TzktContext.SmartRollupRecoverBondOps), hash);
         }
 
+        public async Task<IEnumerable<Activity>> GetSmartRollupRecoverBondOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? stakerIds = null;
+            List<int>? smartRollupIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.SmartRollupRecoverBondCount == 0)
+                    continue;
+
+                if (account is RawUser)
+                {
+                    if ((roles & ActivityRole.Sender) != 0)
+                    {
+                        senderIds ??= new(accounts.Count);
+                        senderIds.Add(account.Id);
+                    }
+
+                    if ((roles & ActivityRole.Target) != 0)
+                    {
+                        stakerIds ??= new(accounts.Count);
+                        stakerIds.Add(account.Id);
+                    }
+                }
+                else if (account is RawSmartRollup && (roles & ActivityRole.Target) != 0)
+                {
+                    smartRollupIds ??= new(accounts.Count);
+                    smartRollupIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && stakerIds == null && smartRollupIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("StakerId", stakerIds),
+                ("SmartRollupId", smartRollupIds));
+
+            return await GetSmartRollupRecoverBondOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSmartRollupRecoverBondOpsCount(SrRecoverBondOperationFilter filter)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""SmartRollupRecoverBondOps""")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -66,6 +116,7 @@ namespace Tzkt.Api.Repositories
             }
 
             var sql = new SqlBuilder($@"SELECT {select} FROM ""SmartRollupRecoverBondOps"" as o")
+                .Filter(filter.or)
                 .Filter("Id", filter.id)
                 .Filter("OpHash", filter.hash)
                 .Filter("Counter", filter.counter)
@@ -120,7 +171,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SmartRollupRecoverBond;
+                            result[j++][i] = ActivityTypes.SmartRollupRecoverBond;
                         break;
                     case "id":
                         foreach (var row in rows)

@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `set_delegate_parameters`
         /// </summary>
-        public override string Type => OpTypes.SetDelegateParameters;
+        public override string Type => ActivityTypes.SetDelegateParameters;
 
         /// <summary>
         /// Internal TzKT ID.  

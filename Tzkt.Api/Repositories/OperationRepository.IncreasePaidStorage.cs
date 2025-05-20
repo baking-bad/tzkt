@@ -1,5 +1,6 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
@@ -7,11 +8,11 @@ namespace Tzkt.Api.Repositories
     {
         public async Task<int> GetIncreasePaidStorageOpsCount(
             Int32Parameter? level,
-            DateTimeParameter? timestamp)
+            TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""IncreasePaidStorageOps""")
                 .Filter("Level", level)
-                .Filter("Timestamp", timestamp);
+                .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -123,11 +124,57 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetIncreasePaidStorageOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? senderIds = null;
+            List<int>? contractIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.IncreasePaidStorageCount == 0)
+                    continue;
+
+                if (account is RawUser && (roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+                else if (account is RawContract && (roles & ActivityRole.Target) != 0)
+                {
+                    contractIds ??= new(accounts.Count);
+                    contractIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && contractIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("ContractId", contractIds));
+
+            return await GetIncreasePaidStorageOps(
+                or,
+                null, null, null,
+                timestamp,
+                null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                quote);
+        }
+
         public async Task<IEnumerable<IncreasePaidStorageOperation>> GetIncreasePaidStorageOps(
+            OrParameter? or,
             AccountParameter? sender,
             AccountParameter? contract,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -139,10 +186,11 @@ namespace Tzkt.Api.Repositories
                 FROM        ""IncreasePaidStorageOps"" AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter("SenderId", sender)
                 .Filter("ContractId", contract)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -184,7 +232,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             AccountParameter? contract,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -230,7 +278,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("ContractId", contract)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -335,7 +383,7 @@ namespace Tzkt.Api.Repositories
             AccountParameter? sender,
             AccountParameter? contract,
             Int32Parameter? level,
-            DateTimeParameter? timestamp,
+            TimestampParameter? timestamp,
             OperationStatusParameter? status,
             SortParameter? sort,
             OffsetParameter? offset,
@@ -378,7 +426,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("SenderId", sender)
                 .Filter("ContractId", contract)
                 .FilterA(@"o.""Level""", level)
-                .FilterA(@"o.""Timestamp""", timestamp)
+                .FilterA(@"o.""Level""", timestamp)
                 .Filter("Status", status)
                 .Take(sort, offset, limit, x => x switch
                 {

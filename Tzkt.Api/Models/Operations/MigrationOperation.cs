@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `migration` - result of the context (database) migration during a protocol update (synthetic type)
         /// </summary>
-        public override string Type => OpTypes.Migration;
+        public override string Type => ActivityTypes.Migration;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

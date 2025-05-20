@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using NSwag.Annotations;
 using Tzkt.Api.Services;
 
 namespace Tzkt.Api
@@ -72,6 +73,9 @@ namespace Tzkt.Api
         /// Click on the parameter to expand more details.
         /// </summary>
         public Int64NullParameter? migrationId { get; set; }
+
+        [OpenApiIgnore]
+        public OrParameter? or { get; set; }
 
         [JsonIgnore]
         public Int32NullParameter? indexedAt { get; set; }

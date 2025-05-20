@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `tx_rollup_submit_batch`
         /// </summary>
-        public override string Type => OpTypes.TxRollupSubmitBatch;
+        public override string Type => ActivityTypes.TxRollupSubmitBatch;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

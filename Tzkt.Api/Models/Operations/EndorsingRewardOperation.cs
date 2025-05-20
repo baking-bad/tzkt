@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `endorsing_reward`
         /// </summary>
-        public override string Type => OpTypes.EndorsingReward;
+        public override string Type => ActivityTypes.EndorsingReward;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

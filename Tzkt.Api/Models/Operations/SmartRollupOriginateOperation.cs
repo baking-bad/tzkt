@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `sr_originate`
         /// </summary>
-        public override string Type => OpTypes.SmartRollupOriginate;
+        public override string Type => ActivityTypes.SmartRollupOriginate;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database  

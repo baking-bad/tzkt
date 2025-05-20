@@ -5,7 +5,7 @@
         /// <summary>
         /// Type of the operation, `dal_attestation_reward`
         /// </summary>
-        public override string Type => OpTypes.DalAttestationReward;
+        public override string Type => ActivityTypes.DalAttestationReward;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database

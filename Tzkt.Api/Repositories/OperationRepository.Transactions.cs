@@ -1,6 +1,7 @@
 ﻿using Dapper;
 using Netezos.Encoding;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 using Tzkt.Data;
 
 namespace Tzkt.Api.Repositories
@@ -324,7 +325,64 @@ namespace Tzkt.Api.Repositories
             });
         }
 
+        public async Task<IEnumerable<Activity>> GetTransactionOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote,
+            MichelineFormat format)
+        {
+            List<int>? senderIds = null;
+            List<int>? targetIds = null;
+            List<int>? initiatorIds = null;
+
+            foreach (var account in accounts)
+            {
+                if (account.TransactionsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    senderIds ??= new(accounts.Count);
+                    senderIds.Add(account.Id);
+                }
+
+                if ((roles & ActivityRole.Target) != 0)
+                {
+                    targetIds ??= new(accounts.Count);
+                    targetIds.Add(account.Id);
+                }
+
+                if (account is RawUser && (roles & ActivityRole.Initiator) != 0)
+                {
+                    initiatorIds ??= new(accounts.Count);
+                    initiatorIds.Add(account.Id);
+                }
+            }
+
+            if (senderIds == null && targetIds == null && initiatorIds == null)
+                return [];
+
+            var or = new OrParameter(
+                ("SenderId", senderIds),
+                ("TargetId", targetIds),
+                ("InitiatorId", initiatorIds));
+
+            return await GetTransactions(
+                or,
+                null, null, null, null, null, null, null,
+                timestamp,
+                null, null, null, null, null, null, null,
+                pagination.sort,
+                pagination.offset,
+                pagination.limit,
+                format,
+                quote);
+        }
+
         public async Task<IEnumerable<TransactionOperation>> GetTransactions(
+            OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? initiator,
             AccountParameter? sender,
@@ -369,6 +427,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""TransactionOps"" AS o
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""")
+                .Filter(or)
                 .Filter(anyof, x => x == "sender" ? "SenderId" : x == "target" ? "TargetId" : "InitiatorId")
                 .Filter("InitiatorId", initiator, x => "TargetId")
                 .Filter("SenderId", sender, x => "TargetId")

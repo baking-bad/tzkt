@@ -26,7 +26,7 @@ namespace Tzkt.Api.Websocket
                         _TypesList = new(types.Length);
                         foreach (var type in types)
                         {
-                            if (!OpTypes.TryParse(type, out var res))
+                            if (!ActivityTypes.TryParseOperation(type, out var res))
                                 throw new HubException("Invalid operation type");
                             _TypesList.Add(res);
                         }

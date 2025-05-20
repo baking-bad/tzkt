@@ -1,16 +1,47 @@
 ﻿using Dapper;
 using Tzkt.Api.Models;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
+        public async Task<IEnumerable<Activity>> GetSetDelegateParametersOpsActivity(
+            List<RawAccount> accounts,
+            ActivityRole roles,
+            TimestampParameter? timestamp,
+            Pagination pagination,
+            Symbols quote)
+        {
+            List<int>? ids = null;
+
+            foreach (var account in accounts)
+            {
+                if (account is not RawUser user || user.SetDelegateParametersOpsCount == 0)
+                    continue;
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    ids ??= new(accounts.Count);
+                    ids.Add(account.Id);
+                }
+            }
+
+            if (ids == null)
+                return [];
+
+            var or = new OrParameter((@"o.""SenderId""", ids));
+
+            return await GetSetDelegateParametersOps(new() { or = or, timestamp = timestamp }, pagination, quote);
+        }
+
         public async Task<int> GetSetDelegateParametersOpsCount(ManagerOperationFilter filter)
         {
             var sql = new SqlBuilder("""
                 SELECT COUNT(*)
                 FROM "SetDelegateParametersOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -63,6 +94,7 @@ namespace Tzkt.Api.Repositories
                 SELECT {select}
                 FROM "SetDelegateParametersOps" as o
                 """)
+                .FilterA(filter.or)
                 .FilterA(@"o.""Id""", filter.id)
                 .FilterA(@"o.""OpHash""", filter.hash)
                 .FilterA(@"o.""Counter""", filter.counter)
@@ -114,7 +146,7 @@ namespace Tzkt.Api.Repositories
                 {
                     case "type":
                         foreach (var row in rows)
-                            result[j++][i] = OpTypes.SetDelegateParameters;
+                            result[j++][i] = ActivityTypes.SetDelegateParameters;
                         break;
                     case "id":
                         foreach (var row in rows)
