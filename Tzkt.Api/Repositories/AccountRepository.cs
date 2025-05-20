@@ -374,28 +374,26 @@ namespace Tzkt.Api.Repositories
                         Extras = rollup.Extras
                     };
                 #endregion
-                case RawAccount ghost:
+                default:
                     #region build ghost
                     return new Ghost
                     {
-                        Id = ghost.Id,
-                        Alias = ghost.Alias,
-                        Address = ghost.Address,
-                        ActiveTokensCount = ghost.ActiveTokensCount,
-                        TokenBalancesCount = ghost.TokenBalancesCount,
-                        TokenTransfersCount = ghost.TokenTransfersCount,
-                        ActiveTicketsCount = ghost.ActiveTicketsCount,
-                        TicketBalancesCount = ghost.TicketBalancesCount,
-                        TicketTransfersCount = ghost.TicketTransfersCount,
-                        FirstActivity = ghost.FirstLevel,
-                        FirstActivityTime = Time[ghost.FirstLevel],
-                        LastActivity = ghost.LastLevel,
-                        LastActivityTime = Time[ghost.LastLevel],
-                        Extras = ghost.Extras
+                        Id = rawAccount.Id,
+                        Alias = rawAccount.Alias,
+                        Address = rawAccount.Address,
+                        ActiveTokensCount = rawAccount.ActiveTokensCount,
+                        TokenBalancesCount = rawAccount.TokenBalancesCount,
+                        TokenTransfersCount = rawAccount.TokenTransfersCount,
+                        ActiveTicketsCount = rawAccount.ActiveTicketsCount,
+                        TicketBalancesCount = rawAccount.TicketBalancesCount,
+                        TicketTransfersCount = rawAccount.TicketTransfersCount,
+                        FirstActivity = rawAccount.FirstLevel,
+                        FirstActivityTime = Time[rawAccount.FirstLevel],
+                        LastActivity = rawAccount.LastLevel,
+                        LastActivityTime = Time[rawAccount.LastLevel],
+                        Extras = rawAccount.Extras
                     };
-                #endregion
-                default:
-                    throw new Exception($"Invalid raw account type");
+                    #endregion
             }
         }
 
@@ -2764,7 +2762,6 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(contractMigrations.Result);
 
                     break;
-
                 case RawRollup rollup:
                     var _rollup = new AccountParameter { Eq = rollup.Id };
 
@@ -2826,7 +2823,6 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(rollupTxRollupSubmitBatchOps.Result);
 
                     break;
-
                 case RawSmartRollup smartRollup:
                     var _smartRollup = new SmartRollupParameter { Eq = smartRollup.Id };
 
@@ -2876,8 +2872,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(smartRollupSrRefuteOps.Result);
 
                     break;
-
-                case RawAccount ghost:
+                default:
                     break;
             }
 

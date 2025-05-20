@@ -99,6 +99,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastActivityTime)
                 .FilterA(@"c.""TypeHash""", filter.typeHash)
                 .FilterA(@"c.""CodeHash""", filter.codeHash)
+                .FilterA(@"c.""TokensCount""", filter.tokensCount)
+                .FilterA(@"c.""TicketsCount""", filter.ticketsCount)
                 .Take(pagination, x => x switch
                 {
                     "balance" => (@"c.""Balance""", @"c.""Balance"""),
@@ -183,7 +185,9 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"c.""LastLevel""", filter.lastActivity)
                 .FilterA(@"c.""LastLevel""", filter.lastActivityTime)
                 .FilterA(@"c.""TypeHash""", filter.typeHash)
-                .FilterA(@"c.""CodeHash""", filter.codeHash);
+                .FilterA(@"c.""CodeHash""", filter.codeHash)
+                .FilterA(@"c.""TokensCount""", filter.tokensCount)
+                .FilterA(@"c.""TicketsCount""", filter.ticketsCount);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
