@@ -102,6 +102,23 @@
                         }
                     };
                     document.Produces = ["application/json"];
+
+                    // TODO: migrate to Microsoft.AspNetCore.OpenApi when .NET 10 released
+                    foreach (var (type, schema) in document.Components.Schemas)
+                    {
+                        if (schema.AllOf.Count == 2 && schema.ResponsibleDiscriminatorObject?.PropertyName == "type")
+                            schema.AllOf.Remove(schema.AllOf.First());
+
+                        if (type == nameof(Models.Activity) && schema.ActualDiscriminatorObject != null)
+                        {
+                            var opSchema = document.Components.Schemas[nameof(Models.Operation)];
+                            if (opSchema.ActualDiscriminatorObject != null)
+                            {
+                                foreach (var (k, v) in opSchema.ActualDiscriminatorObject!.Mapping)
+                                    schema.ActualDiscriminatorObject.Mapping.TryAdd(k, v);
+                            }
+                        }
+                    }
                 };
             });
         }
