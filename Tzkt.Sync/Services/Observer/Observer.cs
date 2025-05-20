@@ -107,6 +107,7 @@ namespace Tzkt.Sync.Services
 
                     await cache.ResetAsync();
                     AppState = cache.AppState.Get();
+                    Metrics.Measure.Gauge.SetHealthValue(AppState);
                     break;
                 }
                 catch (Exception ex)
@@ -151,6 +152,7 @@ namespace Tzkt.Sync.Services
                     var protoHandler = scope.ServiceProvider.GetProtocolHandler(AppState.Level, AppState.Protocol);
                     AppState = await protoHandler.RevertLastBlock(header.Predecessor);
                 }
+                Metrics.Measure.Gauge.SetHealthValue(AppState);
                 Logger.LogInformation("Reverted to [{level}:{hash}]", AppState.Level, AppState.Hash);
             }
 
@@ -174,6 +176,7 @@ namespace Tzkt.Sync.Services
                     var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
                     AppState = await protocol.CommitBlock(header.Level);
                 }
+                Metrics.Measure.Gauge.SetHealthValue(AppState);
                 Logger.LogInformation("Applied {level} of {total}", AppState.Level, AppState.KnownHead);
             }
 

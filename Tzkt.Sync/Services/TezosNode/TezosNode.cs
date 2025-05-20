@@ -1,7 +1,7 @@
 ﻿using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using App.Metrics;
 using Tzkt.Data;
-using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Services
 {
@@ -12,19 +12,21 @@ namespace Tzkt.Sync.Services
         readonly TzktClient Rpc;
         readonly IServiceScopeFactory Services;
         readonly ILogger Logger;
+        readonly IMetrics Metrics;
 
         Header? Header;
         Constants? Constants;
         DateTime NextBlock = DateTime.MinValue;
         DateTime NextSyncStateUpdate = DateTime.MinValue;
 
-        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger)
+        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger, IMetrics metrics)
         {
             Config = config.GetTezosNodeConfig();
             BaseUrl = $"{Config.Endpoint.TrimEnd('/')}/";
             Rpc = new TzktClient(BaseUrl, Config.Timeout);
             Services = services;
             Logger = logger;
+            Metrics = metrics;
         }
 
         public async Task<JsonElement> GetAsync(string url)
@@ -72,6 +74,8 @@ namespace Tzkt.Sync.Services
                                 "LastSync" = {1}
                             """, header.Level, syncTime);
                         cache.AppState.UpdateSyncState(header.Level, syncTime);
+
+                        Metrics.Measure.Gauge.SetHealthValue(cache.AppState.Get());
 
                         NextSyncStateUpdate = syncTime.AddSeconds(5);
                     }
