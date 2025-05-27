@@ -18,19 +18,34 @@ namespace Tzkt.Sync.Services
         public string HeadStatusTable { get; set; } = "dipdup_head";
         public string Network { get; set; } = "mainnet";
         public int SelectLimit { get; set; } = 10_000;
+        public DipDupFilter? Filter { get; set; }
+    }
+
+    public class DipDupFilter
+    {
+        public FilterMode Mode { get; set; } = FilterMode.Exclude;
+        public HashSet<string> Contracts { get; set; } = [];
+
+        public enum FilterMode
+        {
+            Exclude,
+            Include
+        }
     }
 
     public class TokenMetadataItem
     {
         public required string Contract { get; set; }
         public string TokenId { get; set; } = "0";
-        public JsonElement Metadata { get; set; }
+        public JsonElement? Metadata { get; set; }
 
         public TokenMetadataItem() {}
-        public TokenMetadataItem(string contract, string metadata)
+        public TokenMetadataItem(string contract, string? metadata)
         {
             Contract = contract;
-            Metadata = JsonSerializer.Deserialize<JsonElement>(metadata);
+            Metadata = metadata is string json
+                ? JsonSerializer.Deserialize<JsonElement>(json)
+                : null;
         }
     }
 
