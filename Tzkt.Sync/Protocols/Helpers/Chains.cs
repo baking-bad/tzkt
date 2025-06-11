@@ -19,8 +19,8 @@
             "NetXxWsskGahzQB" => "oxfordnet",
             "NetXXWAHLEvre9b" => "parisnet",
             "NetXuTeGinLEqxp" => "quebecnet",
-            "NetXLWih5i7AaYK" => "nextnet",
             "NetXPdgaoabtBth" => "rionet",
+            "NetXYxC4sqSqWtQ" => "nextnet",
             _ => "private"
         };
     }
