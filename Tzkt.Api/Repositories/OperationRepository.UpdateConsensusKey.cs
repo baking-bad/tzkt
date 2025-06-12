@@ -14,10 +14,12 @@ namespace Tzkt.Api.Repositories
         }
 
         public async Task<int> GetUpdateSecondaryKeysCount(
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""UpdateSecondaryKeyOps""")
+                .Filter("KeyType", keyType)
                 .Filter("Level", level)
                 .Filter("Level", timestamp);
 
