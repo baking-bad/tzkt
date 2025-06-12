@@ -4670,7 +4670,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("update_secondary_key")]
-        [HttpGet("update_consensus_key")] // [DEPRECATED]
         public async Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateSecondaryKeyOps(
             AccountParameter? sender,
             SecondaryKeyTypeParameter? keyType,
@@ -4749,7 +4748,6 @@ namespace Tzkt.Api.Controllers
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
         [HttpGet("update_secondary_key/{hash}")]
-        [HttpGet("update_consensus_key/{hash}")] // [DEPRECATED]
         public async Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateSecondaryKeyByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
@@ -4770,25 +4768,26 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns the total number of update secondary key operations.
         /// </remarks>
+        /// <param name="keyType">Filters operations key type (`consensus` or `companion`).</param>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("update_secondary_key/count")]
-        [HttpGet("update_consensus_key/count")] // [DEPRECATED]
         public async Task<ActionResult<int>> GetUpdateSecondaryKeyOpsCount(
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
-            if (level == null && timestamp == null)
+            if (keyType == null && level == null && timestamp == null)
                 return Ok(State.Current.UpdateSecondaryKeyOpsCount);
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("level", level), ("timestamp", timestamp));
+                ("keyType", keyType), ("level", level), ("timestamp", timestamp));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetUpdateSecondaryKeysCount(level, timestamp);
+            var res = await Operations.GetUpdateSecondaryKeysCount(keyType, level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -6134,6 +6133,51 @@ namespace Tzkt.Api.Controllers
                 res = ResponseCache.Set(query, await Operations.GetDalPublishCommitmentOpsCount(filter));
 
             return this.Bytes(res);
+        }
+        #endregion
+
+        #region [DEPRECATED]
+        [OpenApiIgnore]
+        [HttpGet("update_consensus_key")]
+        public Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateConsensusKeyOps(
+            AccountParameter? sender,
+            Int32Parameter? activationCycle,
+            AddressParameter? publicKeyHash,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            OperationStatusParameter? status,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetUpdateSecondaryKeyOps(sender, new() { Eq = 0 }, activationCycle, publicKeyHash, level, timestamp, status, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("update_consensus_key/{hash}")]
+        public async Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateConsensusKeyByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = (await Operations.GetUpdateSecondaryKeys(hash, quote)).Where(x => x.KeyType == "consensus");
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("update_consensus_key/count")]
+        public Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetUpdateSecondaryKeyOpsCount(new() { Eq = 0 }, level, timestamp);
         }
         #endregion
     }
