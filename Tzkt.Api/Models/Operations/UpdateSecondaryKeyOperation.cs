@@ -1,11 +1,11 @@
 ﻿namespace Tzkt.Api.Models
 {
-    public class UpdateConsensusKeyOperation : Operation
+    public class UpdateSecondaryKeyOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `update_consensus_key`
+        /// Type of the operation, `update_secondary_key`
         /// </summary>
-        public override string Type => ActivityTypes.UpdateConsensusKey;
+        public override string Type => ActivityTypes.UpdateSecondaryKey;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -69,19 +69,24 @@
         /// `skipped` - all operations after the failed one in an operation group)
         /// </summary>
         public required string Status { get; set; }
+
+        /// <summary>
+        /// Type of the key: `consensus` or `companion`
+        /// </summary>
+        public required string KeyType { get; set; }
         
         /// <summary>
-        /// Index of the cycle from which the consensus key will be active
+        /// Index of the cycle from which the secondary key will be active
         /// </summary>
         public int ActivationCycle { get; set; }
 
         /// <summary>
-        /// Consensus key
+        /// Secondary key
         /// </summary>
         public required string PublicKey { get; set; }
 
         /// <summary>
-        /// Consensus key hash
+        /// Secondary key hash
         /// </summary>
         public required string PublicKeyHash { get; set; }
 

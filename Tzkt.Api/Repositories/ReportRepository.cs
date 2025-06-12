@@ -82,7 +82,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
+                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -219,7 +219,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
+                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -390,7 +390,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(sql);
+                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
             }
 
             if (sql.Length == 0) return;
@@ -1500,7 +1500,7 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
-        void UnionUpdateConsensusKeyOps(StringBuilder sql)
+        void UnionUpdateSecondaryKeyOps(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
@@ -1519,7 +1519,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""BakerFee"" as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
-            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"FROM ""UpdateSecondaryKeyOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
             sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
             sql.Append(@"AND ""BakerFee"" > 0 ");

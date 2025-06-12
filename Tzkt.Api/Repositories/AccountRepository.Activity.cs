@@ -178,8 +178,8 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetTransferTicketOpsActivity(accounts, roles, timestamp, pagination, quote, format)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var updateConsensusKeyOps = types.Contains(ActivityTypes.UpdateConsensusKey)
-                ? Operations.GetUpdateConsensusKeyOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var updateSecondaryKeyOps = types.Contains(ActivityTypes.UpdateSecondaryKey)
+                ? Operations.GetUpdateSecondaryKeyOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var vdfRevelationOps = types.Contains(ActivityTypes.VdfRevelation)
@@ -230,7 +230,7 @@ namespace Tzkt.Api.Repositories
                 stakingOps,
                 transactionOps,
                 transferTicketOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 vdfRevelationOps,
                 ticketTransfers,
                 tokenTransfers);
@@ -270,7 +270,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(stakingOps.Result)
                 .Concat(transactionOps.Result)
                 .Concat(transferTicketOps.Result)
-                .Concat(updateConsensusKeyOps.Result)
+                .Concat(updateSecondaryKeyOps.Result)
                 .Concat(vdfRevelationOps.Result)
                 .Concat(ticketTransfers.Result)
                 .Concat(tokenTransfers.Result);

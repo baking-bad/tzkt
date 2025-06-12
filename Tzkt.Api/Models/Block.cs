@@ -286,9 +286,9 @@
         public IEnumerable<IncreasePaidStorageOperation>? IncreasePaidStorageOps { get; set; }
 
         /// <summary>
-        /// List of update consensus key operations, included in the block
+        /// List of update secondary key operations, included in the block
         /// </summary>
-        public IEnumerable<UpdateConsensusKeyOperation>? UpdateConsensusKeyOps { get; set; }
+        public IEnumerable<UpdateSecondaryKeyOperation>? UpdateSecondaryKeyOps { get; set; }
 
         /// <summary>
         /// List of drain delegate operations, included in the block
@@ -376,6 +376,10 @@
         /// Injected historical quote at the time of block
         /// </summary>
         public QuoteShort? Quote { get; set; }
+        #endregion
+
+        #region [DEPRECATED]
+        public IEnumerable<UpdateSecondaryKeyOperation>? UpdateConsensusKeyOps => UpdateSecondaryKeyOps;
         #endregion
     }
 }

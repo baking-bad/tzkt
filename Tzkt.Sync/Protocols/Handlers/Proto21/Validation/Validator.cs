@@ -171,7 +171,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
                             case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
-                            case "update_consensus_key": await ValidateUpdateConsensusKey(content); break;
+                            case "update_consensus_key": await ValidateUpdateSecondaryKey(content); break;
                             case "tx_rollup_origination": await ValidateTxRollupOrigination(content); break;
                             case "tx_rollup_submit_batch": await ValidateTxRollupSubmitBatch(content); break; 
                             case "tx_rollup_commit": await ValidateTxRollupCommit(content); break; 
@@ -535,7 +535,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 content.RequiredInt64("fee"));
         }
 
-        protected virtual async Task ValidateUpdateConsensusKey(JsonElement content)
+        protected virtual async Task ValidateUpdateSecondaryKey(JsonElement content)
         {
             var source = content.RequiredString("source");
 

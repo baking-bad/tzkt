@@ -69,7 +69,7 @@
         public int TransferTicketOpsCount { get; set; }
 
         public int IncreasePaidStorageOpsCount { get; set; }
-        public int UpdateConsensusKeyOpsCount { get; set; }
+        public int UpdateSecondaryKeyOpsCount { get; set; }
         public int DrainDelegateOpsCount { get; set; }
 
         public int SmartRollupAddMessagesOpsCount { get; set; }

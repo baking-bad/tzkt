@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols
         public List<RegisterConstantOperation> RegisterConstantOps { get; set; } = [];
         public List<SetDepositsLimitOperation> SetDepositsLimitOps { get; set; } = [];
         public List<IncreasePaidStorageOperation> IncreasePaidStorageOps { get; set; } = [];
-        public List<UpdateConsensusKeyOperation> UpdateConsensusKeyOps { get; set; } = [];
+        public List<UpdateSecondaryKeyOperation> UpdateSecondaryKeyOps { get; set; } = [];
         public List<TransferTicketOperation> TransferTicketOps { get; set; } = [];
         public List<SetDelegateParametersOperation> SetDelegateParametersOps { get; set; } = [];
         public List<DalPublishCommitmentOperation> DalPublishCommitmentOps { get; set; } = [];
@@ -93,7 +93,7 @@ namespace Tzkt.Sync.Protocols
             if (RegisterConstantOps.Count != 0) ops = ops.Concat(RegisterConstantOps);
             if (SetDepositsLimitOps.Count != 0) ops = ops.Concat(SetDepositsLimitOps);
             if (IncreasePaidStorageOps.Count != 0) ops = ops.Concat(IncreasePaidStorageOps);
-            if (UpdateConsensusKeyOps.Count != 0) ops = ops.Concat(UpdateConsensusKeyOps);
+            if (UpdateSecondaryKeyOps.Count != 0) ops = ops.Concat(UpdateSecondaryKeyOps);
             if (TransferTicketOps.Count != 0) ops = ops.Concat(TransferTicketOps);
             if (SetDelegateParametersOps.Count != 0) ops = ops.Concat(SetDelegateParametersOps);
             if (DalPublishCommitmentOps.Count != 0) ops = ops.Concat(DalPublishCommitmentOps);

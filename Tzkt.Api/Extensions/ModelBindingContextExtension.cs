@@ -971,6 +971,29 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetSecondaryKeyType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!SecondaryKeyTypes.TryParse(valueObject.FirstValue, out var kind))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid secondary key type.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = kind;
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetContractKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
