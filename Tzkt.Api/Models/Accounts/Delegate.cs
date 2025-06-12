@@ -360,9 +360,9 @@ namespace Tzkt.Api.Models
         public int IncreasePaidStorageCount { get; set; }
 
         /// <summary>
-        /// Number of `update_consensus_key` operations sent by the account
+        /// Number of `update_secondary_key` operations sent by the account
         /// </summary>
-        public int UpdateConsensusKeyCount { get; set; }
+        public int UpdateSecondaryKeyCount { get; set; }
 
         /// <summary>
         /// Number of `drain_delegate` operations related to the account
@@ -479,5 +479,9 @@ namespace Tzkt.Api.Models
         /// Last seen baker's software
         /// </summary>
         public SoftwareAlias? Software { get; set; }
+
+        #region [DEPRECATED]
+        public int UpdateConsensusKeyCount => UpdateSecondaryKeyCount;
+        #endregion
     }
 }

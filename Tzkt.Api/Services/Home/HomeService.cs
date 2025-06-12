@@ -408,7 +408,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateSecondaryKeyOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstAsync(
@@ -486,7 +486,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateSecondaryKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstAsync(

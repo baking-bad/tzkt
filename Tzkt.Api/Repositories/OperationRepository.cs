@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.RegisterConstantOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SetDepositsLimitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.IncreasePaidStorageOps), hash)
-                ?? await GetStatus(db, nameof(TzktContext.UpdateConsensusKeyOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.UpdateSecondaryKeyOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupAddMessagesOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupCementOps), hash)
@@ -79,7 +79,7 @@ namespace Tzkt.Api.Repositories
             var registerConstants = GetRegisterConstants(hash, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, quote);
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
-            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
+            var updateSecondaryKeyOps = GetUpdateSecondaryKeys(hash, quote);
             var reveals = GetReveals(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, format, quote);
 
@@ -91,7 +91,7 @@ namespace Tzkt.Api.Repositories
                 registerConstants,
                 setDepositsLimits,
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 transferTicketOps);
 
             var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
@@ -143,7 +143,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(registerConstants.Result)
                 .Concat(setDepositsLimits.Result)
                 .Concat(increasePaidStorageOps.Result)
-                .Concat(updateConsensusKeyOps.Result)
+                .Concat(updateSecondaryKeyOps.Result)
                 .Concat(transferTicketOps.Result)
                 .Concat(txRollupCommitOps.Result)
                 .Concat(txRollupDispatchTicketsOps.Result)
@@ -232,7 +232,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
-            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
+            var updateSecondaryKeyOps = GetUpdateSecondaryKeys(hash, quote);
             var srAddMessages = GetSmartRollupAddMessagesOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srCement = GetSmartRollupCementOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srOriginate = GetSmartRollupOriginateOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote, format);
@@ -245,7 +245,7 @@ namespace Tzkt.Api.Repositories
 
             await Task.WhenAll(
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 srAddMessages,
                 srCement,
                 srOriginate,
@@ -259,8 +259,8 @@ namespace Tzkt.Api.Repositories
             if (increasePaidStorageOps.Result.Any())
                 return increasePaidStorageOps.Result;
 
-            if (updateConsensusKeyOps.Result.Any())
-                return updateConsensusKeyOps.Result;
+            if (updateSecondaryKeyOps.Result.Any())
+                return updateSecondaryKeyOps.Result;
 
             if (srAddMessages.Result.Any())
                 return srAddMessages.Result;

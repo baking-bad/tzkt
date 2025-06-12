@@ -3,24 +3,31 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class UpdateConsensusKeyOperation : ManagerOperation
+    public class UpdateSecondaryKeyOperation : ManagerOperation
     {
+        public SecondaryKeyType KeyType { get; set; }
         public int ActivationCycle { get; set; }
         public required string PublicKey { get; set; }
         public required string PublicKeyHash { get; set; }
     }
 
-    public static class UpdateConsensusKeyOperationModel
+    public enum SecondaryKeyType
     {
-        public static void BuildUpdateConsensusKeyOperationModel(this ModelBuilder modelBuilder)
+        Consensus,
+        Companion
+    }
+
+    public static class UpdateSecondaryKeyOperationModel
+    {
+        public static void BuildUpdateSecondaryKeyOperationModel(this ModelBuilder modelBuilder)
         {
             #region keys
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
                 .HasKey(x => x.Id);
             #endregion
             
             #region props
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
                 .Property(x => x.OpHash)
                 .IsFixedLength(true)
                 .HasMaxLength(51)
@@ -28,13 +35,13 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region indexes
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
                 .HasIndex(x => x.Level);
 
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
                 .HasIndex(x => x.OpHash);
 
-            modelBuilder.Entity<UpdateConsensusKeyOperation>()
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
                 .HasIndex(x => x.SenderId);
             #endregion
         }

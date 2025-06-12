@@ -48,7 +48,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(TxRollupRemoveCommitmentOperation))]
     [KnownType(typeof(TxRollupReturnBondOperation))]
     [KnownType(typeof(TxRollupSubmitBatchOperation))]
-    [KnownType(typeof(UpdateConsensusKeyOperation))]
+    [KnownType(typeof(UpdateSecondaryKeyOperation))]
     [KnownType(typeof(VdfRevelationOperation))]
     public abstract class Operation : Activity
     {
@@ -110,7 +110,7 @@ namespace Tzkt.Api.Models
             if (type == typeof(TxRollupRemoveCommitmentOperation)) return ActivityTypes.TxRollupRemoveCommitment;
             if (type == typeof(TxRollupReturnBondOperation)) return ActivityTypes.TxRollupReturnBond;
             if (type == typeof(TxRollupSubmitBatchOperation)) return ActivityTypes.TxRollupSubmitBatch;
-            if (type == typeof(UpdateConsensusKeyOperation)) return ActivityTypes.UpdateConsensusKey;
+            if (type == typeof(UpdateSecondaryKeyOperation)) return ActivityTypes.UpdateSecondaryKey;
             if (type == typeof(VdfRevelationOperation)) return ActivityTypes.VdfRevelation;
 
             return base.GetDiscriminatorValue(type);

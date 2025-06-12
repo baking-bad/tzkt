@@ -5,7 +5,7 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Sync.Protocols.Proto15
 {
-    class UpdateConsensusKeyCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
+    class UpdateSecondaryKeyCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
         public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
         {
@@ -15,7 +15,7 @@ namespace Tzkt.Sync.Protocols.Proto15
             var pubKey = content.RequiredString("pk");
             var pubKeyHash = PubKey.FromBase58(pubKey).Address;
             var result = content.Required("metadata").Required("operation_result");
-            var operation = new UpdateConsensusKeyOperation
+            var operation = new UpdateSecondaryKeyOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
@@ -26,6 +26,12 @@ namespace Tzkt.Sync.Protocols.Proto15
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
+                KeyType = content.RequiredString("kind") switch
+                {
+                    "update_consensus_key" => SecondaryKeyType.Consensus,
+                    "update_companion_key" => SecondaryKeyType.Companion,
+                    _ => throw new NotImplementedException()
+                },
                 ActivationCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay + 1,
                 PublicKey = pubKey,
                 PublicKeyHash = pubKeyHash,
@@ -64,25 +70,27 @@ namespace Tzkt.Sync.Protocols.Proto15
             blockBaker.Balance += operation.BakerFee;
             blockBaker.StakingBalance += operation.BakerFee;
 
-            sender.UpdateConsensusKeyCount++;
+            sender.UpdateSecondaryKeyCount++;
 
-            block.Operations |= Operations.UpdateConsensusKey;
+            block.Operations |= Operations.UpdateSecondaryKey;
             block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
-            Cache.AppState.Get().UpdateConsensusKeyOpsCount++;
+            Cache.AppState.Get().UpdateSecondaryKeyOpsCount++;
             #endregion
 
             #region apply result
             #endregion
 
             Proto.Manager.Set(sender);
-            Db.UpdateConsensusKeyOps.Add(operation);
-            Context.UpdateConsensusKeyOps.Add(operation);
+            Db.UpdateSecondaryKeyOps.Add(operation);
+            Context.UpdateSecondaryKeyOps.Add(operation);
+
+            Proto.ForceDiagnostics();
         }
 
-        public virtual async Task Revert(Block block, UpdateConsensusKeyOperation operation)
+        public virtual async Task Revert(Block block, UpdateSecondaryKeyOperation operation)
         {
             #region entities
             var blockBaker = Context.Proposer;
@@ -108,14 +116,14 @@ namespace Tzkt.Sync.Protocols.Proto15
             blockBaker.Balance -= operation.BakerFee;
             blockBaker.StakingBalance -= operation.BakerFee;
 
-            sender.UpdateConsensusKeyCount--;
+            sender.UpdateSecondaryKeyCount--;
 
             sender.Counter = operation.Counter - 1;
 
-            Cache.AppState.Get().UpdateConsensusKeyOpsCount--;
+            Cache.AppState.Get().UpdateSecondaryKeyOpsCount--;
             #endregion
 
-            Db.UpdateConsensusKeyOps.Remove(operation);
+            Db.UpdateSecondaryKeyOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
         }

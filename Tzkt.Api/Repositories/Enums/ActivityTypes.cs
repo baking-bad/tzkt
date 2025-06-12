@@ -47,7 +47,7 @@ namespace Tzkt.Api
         public const string TxRollupRemoveCommitment = "tx_rollup_remove_commitment";
         public const string TxRollupReturnBond = "tx_rollup_return_bond";
         public const string TxRollupSubmitBatch = "tx_rollup_submit_batch";
-        public const string UpdateConsensusKey = "update_consensus_key";
+        public const string UpdateSecondaryKey = "update_secondary_key";
         public const string VdfRevelation = "vdf_revelation";
         public const string TicketTransfer = "ticket_transfer";
         public const string TokenTransfer = "token_transfer";
@@ -97,7 +97,7 @@ namespace Tzkt.Api
             TxRollupRemoveCommitment => true,
             TxRollupReturnBond => true,
             TxRollupSubmitBatch => true,
-            UpdateConsensusKey => true,
+            UpdateSecondaryKey => true,
             VdfRevelation => true,
             TicketTransfer => true,
             TokenTransfer => true,
@@ -152,7 +152,7 @@ namespace Tzkt.Api
                 case TxRollupRemoveCommitment: res = Operations.TxRollupRemoveCommitment; break;
                 case TxRollupReturnBond: res = Operations.TxRollupReturnBond; break;
                 case TxRollupSubmitBatch: res = Operations.TxRollupSubmitBatch; break;
-                case UpdateConsensusKey: res = Operations.UpdateConsensusKey; break;
+                case UpdateSecondaryKey: res = Operations.UpdateSecondaryKey; break;
                 case VdfRevelation: res = Operations.VdfRevelation; break;
                 default: return false;
             }
@@ -204,7 +204,7 @@ namespace Tzkt.Api
             //TxRollupRemoveCommitment,
             //TxRollupReturnBond,
             //TxRollupSubmitBatch,
-            UpdateConsensusKey,
+            UpdateSecondaryKey,
             VdfRevelation,
             TicketTransfer,
             TokenTransfer,

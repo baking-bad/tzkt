@@ -154,7 +154,7 @@ namespace Tzkt.Sync.Protocols
                             await new IncreasePaidStorageCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "update_consensus_key":
-                            await new UpdateConsensusKeyCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new UpdateSecondaryKeyCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "reveal":
                             await new RevealsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -441,8 +441,8 @@ namespace Tzkt.Sync.Protocols
                     case IncreasePaidStorageOperation op:
                         await new IncreasePaidStorageCommit(this).Revert(currBlock, op);
                         break;
-                    case UpdateConsensusKeyOperation op:
-                        await new UpdateConsensusKeyCommit(this).Revert(currBlock, op);
+                    case UpdateSecondaryKeyOperation op:
+                        await new UpdateSecondaryKeyCommit(this).Revert(currBlock, op);
                         break;
                     case RegisterConstantOperation op:
                         await new RegisterConstantsCommit(this).Revert(currBlock, op);

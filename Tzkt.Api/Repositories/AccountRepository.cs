@@ -94,7 +94,7 @@ namespace Tzkt.Api.Repositories
                         TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
                         IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
                         VdfRevelationsCount = delegat.VdfRevelationsCount,
-                        UpdateConsensusKeyCount = delegat.UpdateConsensusKeyCount,
+                        UpdateSecondaryKeyCount = delegat.UpdateSecondaryKeyCount,
                         DrainDelegateCount = delegat.DrainDelegateCount,
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
                         LimitOfStakingOverBaking = delegat.LimitOfStakingOverBaking,
@@ -582,7 +582,7 @@ namespace Tzkt.Api.Repositories
                             TxRollupSubmitBatchCount = row.TxRollupSubmitBatchCount,
                             IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                             VdfRevelationsCount = row.VdfRevelationsCount,
-                            UpdateConsensusKeyCount = row.UpdateConsensusKeyCount,
+                            UpdateSecondaryKeyCount = row.UpdateSecondaryKeyCount,
                             DrainDelegateCount = row.DrainDelegateCount,
                             FrozenDepositLimit = row.FrozenDepositLimit,
                             LimitOfStakingOverBaking = row.LimitOfStakingOverBaking,
@@ -898,7 +898,7 @@ namespace Tzkt.Api.Repositories
                     case "txRollupSubmitBatchCount": columns.Add(@"acc.""TxRollupSubmitBatchCount"""); break;
                     case "vdfRevelationsCount": columns.Add(@"acc.""VdfRevelationsCount"""); break;
                     case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
-                    case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateConsensusKeyCount"""); break;
+                    case "updateSecondaryKeyCount": columns.Add(@"acc.""UpdateSecondaryKeyCount"""); break;
                     case "drainDelegateCount": columns.Add(@"acc.""DrainDelegateCount"""); break;
                     case "smartRollupBonds": columns.Add(@"acc.""SmartRollupBonds"""); break;
                     case "smartRollupsCount": columns.Add(@"acc.""SmartRollupsCount"""); break;
@@ -939,6 +939,10 @@ namespace Tzkt.Api.Repositories
                     case "pendingCommitments": columns.Add(@"acc.""PendingCommitments"""); break;
                     case "refutedCommitments": columns.Add(@"acc.""RefutedCommitments"""); break;
                     case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
+
+                    #region [DEPRECATED]
+                    case "updateConsensusKeyCount": columns.Add(@"""UpdateSecondaryKeyCount"""); break;
+                    #endregion
                 }
             }
 
@@ -1286,9 +1290,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.IncreasePaidStorageCount;
                         break;
-                    case "updateConsensusKeyCount":
+                    case "updateSecondaryKeyCount":
                         foreach (var row in rows)
-                            result[j++][i] = row.UpdateConsensusKeyCount;
+                            result[j++][i] = row.UpdateSecondaryKeyCount;
                         break;
                     case "drainDelegateCount":
                         foreach (var row in rows)
@@ -1446,6 +1450,12 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.OrphanCommitments;
                         break;
+                    #region [DEPRECATED]
+                    case "updateConsensusKeyCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.UpdateSecondaryKeyCount;
+                        break;
+                    #endregion
                 }
             }
 
@@ -1552,7 +1562,7 @@ namespace Tzkt.Api.Repositories
                 case "txRollupSubmitBatchCount": columns.Add(@"acc.""TxRollupSubmitBatchCount"""); break;
                 case "vdfRevelationsCount": columns.Add(@"acc.""VdfRevelationsCount"""); break;
                 case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
-                case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateConsensusKeyCount"""); break;
+                case "updateSecondaryKeyCount": columns.Add(@"acc.""UpdateSecondaryKeyCount"""); break;
                 case "drainDelegateCount": columns.Add(@"acc.""DrainDelegateCount"""); break;
                 case "smartRollupBonds": columns.Add(@"acc.""SmartRollupBonds"""); break;
                 case "smartRollupsCount": columns.Add(@"acc.""SmartRollupsCount"""); break;
@@ -1593,6 +1603,10 @@ namespace Tzkt.Api.Repositories
                 case "pendingCommitments": columns.Add(@"acc.""PendingCommitments"""); break;
                 case "refutedCommitments": columns.Add(@"acc.""RefutedCommitments"""); break;
                 case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
+
+                #region [DEPRECATED]
+                case "updateConsensusKeyCount": columns.Add(@"""UpdateSecondaryKeyCount"""); break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -1936,9 +1950,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.IncreasePaidStorageCount;
                     break;
-                case "updateConsensusKeyCount":
+                case "updateSecondaryKeyCount":
                     foreach (var row in rows)
-                        result[j++] = row.UpdateConsensusKeyCount;
+                        result[j++] = row.UpdateSecondaryKeyCount;
                     break;
                 case "drainDelegateCount":
                     foreach (var row in rows)
@@ -2096,6 +2110,12 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.OrphanCommitments;
                     break;
+                #region [DEPRECATED]
+                case "updateConsensusKeyCount":
+                    foreach (var row in rows)
+                        result[j++] = row.UpdateSecondaryKeyCount;
+                    break;
+                #endregion
             }
 
             return result;
@@ -2356,9 +2376,9 @@ namespace Tzkt.Api.Repositories
                         ? Operations.GetIncreasePaidStorageOps(null, _delegat, null, level, timestamp, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
-                    var updateConsensusKeyOps = delegat.UpdateConsensusKeyCount > 0 && types.Contains(ActivityTypes.UpdateConsensusKey)
-                        ? Operations.GetUpdateConsensusKeys(null, _delegat, null, null, level, timestamp, status, sort, offset, limit, quote)
-                        : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+                    var updateSecondaryKeyOps = delegat.UpdateSecondaryKeyCount > 0 && types.Contains(ActivityTypes.UpdateSecondaryKey)
+                        ? Operations.GetUpdateSecondaryKeys(null, _delegat, null, null, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<UpdateSecondaryKeyOperation>());
 
                     var drainDelegateOps = delegat.DrainDelegateCount > 0 && types.Contains(ActivityTypes.DrainDelegate)
                         ? Operations.GetDrainDelegates(null, new AnyOfParameter { Fields = ["delegate", "target"], Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
@@ -2456,7 +2476,7 @@ namespace Tzkt.Api.Repositories
                         txRollupReturnBondOps,
                         txRollupSubmitBatchOps,
                         increasePaidStorageOps,
-                        updateConsensusKeyOps,
+                        updateSecondaryKeyOps,
                         drainDelegateOps,
                         srAddMessagesOps,
                         srCementOps,
@@ -2502,7 +2522,7 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(txRollupReturnBondOps.Result);
                     result.AddRange(txRollupSubmitBatchOps.Result);
                     result.AddRange(increasePaidStorageOps.Result);
-                    result.AddRange(updateConsensusKeyOps.Result);
+                    result.AddRange(updateSecondaryKeyOps.Result);
                     result.AddRange(drainDelegateOps.Result);
                     result.AddRange(srAddMessagesOps.Result);
                     result.AddRange(srCementOps.Result);

@@ -41,7 +41,7 @@ namespace Tzkt.Api.Services.Cache
         public int TransferTicketCount { get; set; }
 
         public int IncreasePaidStorageCount { get; set; }
-        public int UpdateConsensusKeyCount { get; set; }
+        public int UpdateSecondaryKeyCount { get; set; }
         public int DrainDelegateCount { get; set; }
 
         public int SmartRollupAddMessagesCount { get; set; }
