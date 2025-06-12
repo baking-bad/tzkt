@@ -5,18 +5,23 @@ namespace Tzkt.Sync.Protocols.Proto12
 {
     class EndorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public virtual async Task Apply(Block block, JsonElement op, JsonElement content)
+        public Task Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            var baker = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
+            return Apply(block, op.RequiredString("hash"), metadata.RequiredString("delegate"), GetEndorsedSlots(metadata));
+        }
+
+        public async Task Apply(Block block, string opHash, string bakerAddress, int slots)
+        {
+            var baker = Cache.Accounts.GetExistingDelegate(bakerAddress);
 
             var endorsement = new EndorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.RequiredString("hash"),
-                Slots = GetEndorsedSlots(metadata),
+                OpHash = opHash,
+                Slots = slots,
                 DelegateId = baker.Id
             };
 
@@ -44,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Context.EndorsementOps.Add(endorsement);
         }
 
-        public virtual async Task Revert(Block block, EndorsementOperation endorsement)
+        public async Task Revert(Block block, EndorsementOperation endorsement)
         {
             var baker = Cache.Accounts.GetDelegate(endorsement.DelegateId);
             Db.TryAttach(baker);
