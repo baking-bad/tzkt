@@ -7,17 +7,17 @@ namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
-        public async Task<bool?> GetUpdateConsensusKeyStatus(string hash)
+        public async Task<bool?> GetUpdateSecondaryKeyStatus(string hash)
         {
             await using var db = await DataSource.OpenConnectionAsync();
-            return await GetStatus(db, nameof(TzktContext.UpdateConsensusKeyOps), hash);
+            return await GetStatus(db, nameof(TzktContext.UpdateSecondaryKeyOps), hash);
         }
 
-        public async Task<int> GetUpdateConsensusKeysCount(
+        public async Task<int> GetUpdateSecondaryKeysCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
-            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""UpdateConsensusKeyOps""")
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""UpdateSecondaryKeyOps""")
                 .Filter("Level", level)
                 .Filter("Level", timestamp);
 
@@ -25,11 +25,11 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<UpdateConsensusKeyOperation>> GetUpdateConsensusKeys(string hash, Symbols quote)
+        public async Task<IEnumerable<UpdateSecondaryKeyOperation>> GetUpdateSecondaryKeys(string hash, Symbols quote)
         {
             var sql = @"
                 SELECT      o.*, b.""Hash""
-                FROM        ""UpdateConsensusKeyOps"" as o
+                FROM        ""UpdateSecondaryKeyOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
                 WHERE       o.""OpHash"" = @hash::character(51)
@@ -38,7 +38,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
-            return rows.Select(row => new UpdateConsensusKeyOperation
+            return rows.Select(row => new UpdateSecondaryKeyOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -53,6 +53,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                KeyType = SecondaryKeyTypes.ToString(row.KeyType),
                 ActivationCycle = row.ActivationCycle,
                 PublicKey = row.PublicKey,
                 PublicKeyHash = row.PublicKeyHash,
@@ -60,11 +61,11 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<UpdateConsensusKeyOperation>> GetUpdateConsensusKeys(string hash, int counter, Symbols quote)
+        public async Task<IEnumerable<UpdateSecondaryKeyOperation>> GetUpdateSecondaryKeys(string hash, int counter, Symbols quote)
         {
             var sql = @"
                 SELECT      o.*, b.""Hash""
-                FROM        ""UpdateConsensusKeyOps"" as o
+                FROM        ""UpdateSecondaryKeyOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
@@ -73,7 +74,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
-            return rows.Select(row => new UpdateConsensusKeyOperation
+            return rows.Select(row => new UpdateSecondaryKeyOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -88,6 +89,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                KeyType = SecondaryKeyTypes.ToString(row.KeyType),
                 ActivationCycle = row.ActivationCycle,
                 PublicKey = row.PublicKey,
                 PublicKeyHash = row.PublicKeyHash,
@@ -95,18 +97,18 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<UpdateConsensusKeyOperation>> GetUpdateConsensusKeys(Block block, Symbols quote)
+        public async Task<IEnumerable<UpdateSecondaryKeyOperation>> GetUpdateSecondaryKeys(Block block, Symbols quote)
         {
             var sql = @"
                 SELECT    *
-                FROM      ""UpdateConsensusKeyOps""
+                FROM      ""UpdateSecondaryKeyOps""
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
-            return rows.Select(row => new UpdateConsensusKeyOperation
+            return rows.Select(row => new UpdateSecondaryKeyOperation
             {
                 Id = row.Id,
                 Level = block.Level,
@@ -121,6 +123,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                KeyType = SecondaryKeyTypes.ToString(row.KeyType),
                 ActivationCycle = row.ActivationCycle,
                 PublicKey = row.PublicKey,
                 PublicKeyHash = row.PublicKeyHash,
@@ -128,7 +131,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<Activity>> GetUpdateConsensusKeyOpsActivity(
+        public async Task<IEnumerable<Activity>> GetUpdateSecondaryKeyOpsActivity(
             List<RawAccount> accounts,
             ActivityRole roles,
             TimestampParameter? timestamp,
@@ -139,7 +142,7 @@ namespace Tzkt.Api.Repositories
 
             foreach (var account in accounts)
             {
-                if (account.UpdateConsensusKeyCount == 0)
+                if (account.UpdateSecondaryKeyCount == 0)
                     continue;
 
                 if ((roles & ActivityRole.Sender) != 0)
@@ -154,9 +157,9 @@ namespace Tzkt.Api.Repositories
 
             var or = new OrParameter(("SenderId", ids));
 
-            return await GetUpdateConsensusKeys(
+            return await GetUpdateSecondaryKeys(
                 or,
-                null, null, null, null,
+                null, null, null, null, null,
                 timestamp,
                 null,
                 pagination.sort,
@@ -165,9 +168,10 @@ namespace Tzkt.Api.Repositories
                 quote);
         }
 
-        public async Task<IEnumerable<UpdateConsensusKeyOperation>> GetUpdateConsensusKeys(
+        public async Task<IEnumerable<UpdateSecondaryKeyOperation>> GetUpdateSecondaryKeys(
             OrParameter? or,
             AccountParameter? sender,
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? activationCycle,
             AddressParameter? publicKeyHash,
             Int32Parameter? level,
@@ -178,9 +182,10 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""UpdateConsensusKeyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
+            var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""UpdateSecondaryKeyOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter(or)
                 .Filter("SenderId", sender)
+                .Filter("KeyType", keyType)
                 .Filter("ActivationCycle", activationCycle)
                 .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
@@ -197,7 +202,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => new UpdateConsensusKeyOperation
+            return rows.Select(row => new UpdateSecondaryKeyOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -212,6 +217,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                KeyType = SecondaryKeyTypes.ToString(row.KeyType),
                 ActivationCycle = row.ActivationCycle,
                 PublicKey = row.PublicKey,
                 PublicKeyHash = row.PublicKeyHash,
@@ -219,8 +225,9 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object?[][]> GetUpdateConsensusKeys(
+        public async Task<object?[][]> GetUpdateSecondaryKeys(
             AccountParameter? sender,
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? activationCycle,
             AddressParameter? publicKeyHash,
             Int32Parameter? level,
@@ -251,6 +258,7 @@ namespace Tzkt.Api.Repositories
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
+                    case "keyType": columns.Add(@"o.""KeyType"""); break;
                     case "activationCycle": columns.Add(@"o.""ActivationCycle"""); break;
                     case "publicKey": columns.Add(@"o.""PublicKey"""); break;
                     case "publicKeyHash": columns.Add(@"o.""PublicKeyHash"""); break;
@@ -265,8 +273,9 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return [];
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateConsensusKeyOps"" as o {string.Join(' ', joins)}")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateSecondaryKeyOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
+                .Filter("KeyType", keyType)
                 .Filter("ActivationCycle", activationCycle)
                 .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
@@ -343,6 +352,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
                         break;
+                    case "keyType":
+                        foreach (var row in rows)
+                            result[j++][i] = SecondaryKeyTypes.ToString(row.KeyType);
+                        break;
                     case "activationCycle":
                         foreach (var row in rows)
                             result[j++][i] = row.ActivationCycle;
@@ -365,8 +378,9 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object?[]> GetUpdateConsensusKeys(
+        public async Task<object?[]> GetUpdateSecondaryKeys(
             AccountParameter? sender,
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? activationCycle,
             AddressParameter? publicKeyHash,
             Int32Parameter? level,
@@ -395,6 +409,7 @@ namespace Tzkt.Api.Repositories
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
+                case "keyType": columns.Add(@"o.""KeyType"""); break;
                 case "activationCycle": columns.Add(@"o.""ActivationCycle"""); break;
                 case "publicKey": columns.Add(@"o.""PublicKey"""); break;
                 case "publicKeyHash": columns.Add(@"o.""PublicKeyHash"""); break;
@@ -408,8 +423,9 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return [];
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateConsensusKeyOps"" as o {string.Join(' ', joins)}")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""UpdateSecondaryKeyOps"" as o {string.Join(' ', joins)}")
                 .Filter("SenderId", sender)
+                .Filter("KeyType", keyType)
                 .Filter("ActivationCycle", activationCycle)
                 .Filter("PublicKeyHash", publicKeyHash)
                 .FilterA(@"o.""Level""", level)
@@ -483,6 +499,10 @@ namespace Tzkt.Api.Repositories
                 case "errors":
                     foreach (var row in rows)
                         result[j++] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
+                    break;
+                case "keyType":
+                    foreach (var row in rows)
+                        result[j++] = SecondaryKeyTypes.ToString(row.KeyType);
                     break;
                 case "activationCycle":
                     foreach (var row in rows)

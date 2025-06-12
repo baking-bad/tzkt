@@ -730,9 +730,9 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetIncreasePaidStorageOps(block, quote)
                 : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
-            var updateConsensusKeyOps = operations.HasFlag(Data.Models.Operations.UpdateConsensusKey)
-                ? Operations.GetUpdateConsensusKeys(block, quote)
-                : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+            var updateSecondaryKeyOps = operations.HasFlag(Data.Models.Operations.UpdateSecondaryKey)
+                ? Operations.GetUpdateSecondaryKeys(block, quote)
+                : Task.FromResult(Enumerable.Empty<UpdateSecondaryKeyOperation>());
 
             var drainDelegateOps = operations.HasFlag(Data.Models.Operations.DrainDelegate)
                 ? Operations.GetDrainDelegates(block, quote)
@@ -826,7 +826,7 @@ namespace Tzkt.Api.Repositories
                 txRollupReturnBondOps,
                 txRollupSubmitBatchOps,
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 drainDelegateOps,
                 srAddMessageOps,
                 srCementOps,
@@ -871,7 +871,7 @@ namespace Tzkt.Api.Repositories
             block.TxRollupReturnBondOps = txRollupReturnBondOps.Result;
             block.TxRollupSubmitBatchOps = txRollupSubmitBatchOps.Result;
             block.IncreasePaidStorageOps = increasePaidStorageOps.Result;
-            block.UpdateConsensusKeyOps = updateConsensusKeyOps.Result;
+            block.UpdateSecondaryKeyOps = updateSecondaryKeyOps.Result;
             block.DrainDelegateOps = drainDelegateOps.Result;
             block.SrAddMessagesOps = srAddMessageOps.Result;
             block.SrCementOps = srCementOps.Result;

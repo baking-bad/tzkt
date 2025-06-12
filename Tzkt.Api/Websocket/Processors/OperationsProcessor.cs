@@ -196,9 +196,9 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetIncreasePaidStorageOps(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.IncreasePaidStorageOperation>());
 
-                var updateConsensusKeyOps = TypeSubs.TryGetValue(Operations.UpdateConsensusKey, out var updateConsensusKeySubs)
-                    ? Repo.GetUpdateConsensusKeys(null, null, null, null, level, null, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.UpdateConsensusKeyOperation>());
+                var updateSecondaryKeyOps = TypeSubs.TryGetValue(Operations.UpdateSecondaryKey, out var updateSecondaryKeySubs)
+                    ? Repo.GetUpdateSecondaryKeys(null, null, null, null, null, level, null, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.UpdateSecondaryKeyOperation>());
 
                 var drainDelegateOps = TypeSubs.TryGetValue(Operations.DrainDelegate, out var drainDelegateSubs)
                     ? Repo.GetDrainDelegates(null, null, null, null, level, null, null, null, limit, symbols)
@@ -296,7 +296,7 @@ namespace Tzkt.Api.Websocket.Processors
                     txRollupReturnBondOps,
                     txRollupSubmitBatchOps,
                     increasePaidStorageOps,
-                    updateConsensusKeyOps,
+                    updateSecondaryKeyOps,
                     drainDelegateOps,
                     srAddMessagesOps,
                     srCementOps,
@@ -846,15 +846,15 @@ namespace Tzkt.Api.Websocket.Processors
                         }
                 }
 
-                if (updateConsensusKeyOps.Result.Any())
+                if (updateSecondaryKeyOps.Result.Any())
                 {
-                    if (updateConsensusKeySubs!.Subs != null)
-                        AddRange(updateConsensusKeySubs.Subs, updateConsensusKeyOps.Result);
+                    if (updateSecondaryKeySubs!.Subs != null)
+                        AddRange(updateSecondaryKeySubs.Subs, updateSecondaryKeyOps.Result);
 
-                    if (updateConsensusKeySubs.AddressSubs != null)
-                        foreach (var op in updateConsensusKeyOps.Result)
+                    if (updateSecondaryKeySubs.AddressSubs != null)
+                        foreach (var op in updateSecondaryKeyOps.Result)
                         {
-                            if (updateConsensusKeySubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs) && senderSubs.Subs != null)
+                            if (updateSecondaryKeySubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs) && senderSubs.Subs != null)
                                 Add(senderSubs.Subs, op);
                         }
                 }

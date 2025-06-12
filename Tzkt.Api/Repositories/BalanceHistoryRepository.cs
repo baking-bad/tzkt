@@ -301,7 +301,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
                 if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
                 if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
-                if (delegat.UpdateConsensusKeyCount > 0) SumUpdateConsensusKeyOps(union, from, to);
+                if (delegat.UpdateSecondaryKeyCount > 0) SumUpdateSecondaryKeyOps(union, from, to);
             }
 
             return union.ToString();
@@ -912,12 +912,12 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
-        void SumUpdateConsensusKeyOps(StringBuilder sql, int from, int to)
+        void SumUpdateSecondaryKeyOps(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"SUM(-""BakerFee"") as ""Change"" ");
-            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"FROM ""UpdateSecondaryKeyOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             if (from > 0)
@@ -1296,7 +1296,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
-                if (delegat.UpdateConsensusKeyCount > 0) UnionUpdateConsensusKeyOps(union);
+                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(union);
             }
 
             return union.ToString();
@@ -1796,14 +1796,14 @@ namespace Tzkt.Api.Repositories
             sql.AppendLine();
         }
 
-        void UnionUpdateConsensusKeyOps(StringBuilder sql)
+        void UnionUpdateSecondaryKeyOps(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             sql.Append(@"""Level"" as ""Level"", ");
             sql.Append(@"(-""BakerFee"") as ""Change"" ");
 
-            sql.Append(@"FROM ""UpdateConsensusKeyOps"" ");
+            sql.Append(@"FROM ""UpdateSecondaryKeyOps"" ");
             sql.Append(@"WHERE ""SenderId"" = @account ");
 
             sql.AppendLine();

@@ -366,8 +366,8 @@ namespace Tzkt.Sync
             if (currBlock.Operations.HasFlag(Operations.IncreasePaidStorage))
                 Context.IncreasePaidStorageOps = await Db.IncreasePaidStorageOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.UpdateConsensusKey))
-                Context.UpdateConsensusKeyOps = await Db.UpdateConsensusKeyOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.UpdateSecondaryKey))
+                Context.UpdateSecondaryKeyOps = await Db.UpdateSecondaryKeyOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
             if (currBlock.Operations.HasFlag(Operations.TransferTicket))
                 Context.TransferTicketOps = await Db.TransferTicketOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();

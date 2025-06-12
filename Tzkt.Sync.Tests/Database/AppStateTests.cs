@@ -94,7 +94,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupRemoveCommitmentOpsCount +
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount +
+                state.UpdateSecondaryKeyOpsCount +
                 state.VdfRevelationOpsCount;
 
             if (state.OperationCounter != opsCount)
@@ -127,7 +127,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupRemoveCommitmentOpsCount +
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount;
+                state.UpdateSecondaryKeyOpsCount;
 
             if (state.ManagerCounter != managerOpsCount)
                 throw new Exception("Invalid AppState.ManagerCounter");
@@ -269,8 +269,8 @@ namespace Tzkt.Sync.Tests.Database
             if (state.IncreasePaidStorageOpsCount != await db.IncreasePaidStorageOps.CountAsync())
                 throw new Exception("Invalid AppState.IncreasePaidStorageOpsCount");
 
-            if (state.UpdateConsensusKeyOpsCount != await db.UpdateConsensusKeyOps.CountAsync())
-                throw new Exception("Invalid AppState.UpdateConsensusKeyOpsCount");
+            if (state.UpdateSecondaryKeyOpsCount != await db.UpdateSecondaryKeyOps.CountAsync())
+                throw new Exception("Invalid AppState.UpdateSecondaryKeyOpsCount");
 
             if (state.DrainDelegateOpsCount != await db.DrainDelegateOps.CountAsync())
                 throw new Exception("Invalid AppState.DrainDelegateOpsCount");

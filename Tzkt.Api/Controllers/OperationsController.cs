@@ -4649,15 +4649,16 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region update consensus key
+        #region update secondary key
         /// <summary>
-        /// Get update consensus key
+        /// Get update secondary key
         /// </summary>
         /// <remarks>
-        /// Returns a list of update consensus key operations.
+        /// Returns a list of update secondary key operations.
         /// </remarks>
         /// <param name="sender">Filters by sender. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="activationCycle">Filters by activation cycle. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="keyType">Filters by key type (`consensus` or `companion`).</param>
+        /// <param name="activationCycle">Filters by activation cycle.</param>
         /// <param name="publicKeyHash">Filters by pkh (tz address).</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
@@ -4668,9 +4669,11 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("update_consensus_key")]
-        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyOps(
+        [HttpGet("update_secondary_key")]
+        [HttpGet("update_consensus_key")] // [DEPRECATED]
+        public async Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateSecondaryKeyOps(
             AccountParameter? sender,
+            SecondaryKeyTypeParameter? keyType,
             Int32Parameter? activationCycle,
             AddressParameter? publicKeyHash,
             Int32Parameter? level,
@@ -4692,7 +4695,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(sender)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (sender.Eq == -1 || sender.In?.Count == 0 || sender.Null == true)
-                    return Ok(Enumerable.Empty<UpdateConsensusKeyOperation>());
+                    return Ok(Enumerable.Empty<UpdateSecondaryKeyOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "gasUsed", "storageUsed", "bakerFee", "storageFee"))
@@ -4700,8 +4703,8 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("sender", sender), ("activationCycle", activationCycle), ("publicKeyHash", publicKeyHash),
-                ("level", level), ("timestamp", timestamp), ("status", status),
+                ("sender", sender), ("keyType", keyType), ("activationCycle", activationCycle),
+                ("publicKeyHash", publicKeyHash), ("level", level), ("timestamp", timestamp), ("status", status),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -4710,25 +4713,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetUpdateConsensusKeys(null, sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, quote);
+                res = await Operations.GetUpdateSecondaryKeys(null, sender, keyType, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetUpdateSecondaryKeys(sender, keyType, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetUpdateSecondaryKeys(sender, keyType, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetUpdateSecondaryKeys(sender, keyType, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetUpdateConsensusKeys(sender, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetUpdateSecondaryKeys(sender, keyType, activationCycle, publicKeyHash, level, timestamp, status, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -4737,16 +4740,17 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get update consensus key by hash
+        /// Get update secondary key by hash
         /// </summary>
         /// <remarks>
-        /// Returns update consensus key operation with specified hash.
+        /// Returns update secondary key operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("update_consensus_key/{hash}")]
-        public async Task<ActionResult<IEnumerable<UpdateConsensusKeyOperation>>> GetUpdateConsensusKeyByHash(
+        [HttpGet("update_secondary_key/{hash}")]
+        [HttpGet("update_consensus_key/{hash}")] // [DEPRECATED]
+        public async Task<ActionResult<IEnumerable<UpdateSecondaryKeyOperation>>> GetUpdateSecondaryKeyByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
@@ -4755,27 +4759,28 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetUpdateConsensusKeys(hash, quote);
+            var res = await Operations.GetUpdateSecondaryKeys(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get update consensus key count
+        /// Get update secondary key count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of update consensus key operations.
+        /// Returns the total number of update secondary key operations.
         /// </remarks>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("update_consensus_key/count")]
-        public async Task<ActionResult<int>> GetUpdateConsensusKeyOpsCount(
+        [HttpGet("update_secondary_key/count")]
+        [HttpGet("update_consensus_key/count")] // [DEPRECATED]
+        public async Task<ActionResult<int>> GetUpdateSecondaryKeyOpsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.UpdateConsensusKeyOpsCount);
+                return Ok(State.Current.UpdateSecondaryKeyOpsCount);
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));
@@ -4783,7 +4788,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetUpdateConsensusKeysCount(level, timestamp);
+            var res = await Operations.GetUpdateSecondaryKeysCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
