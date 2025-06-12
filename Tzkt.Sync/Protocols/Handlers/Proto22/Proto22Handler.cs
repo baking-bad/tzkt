@@ -115,10 +115,10 @@ namespace Tzkt.Sync.Protocols
                             await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_attestation_evidence":
-                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_preattestation_evidence":
-                            await new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);

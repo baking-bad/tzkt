@@ -124,11 +124,11 @@ namespace Tzkt.Sync.Protocols
                         case "double_baking_evidence":
                             await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
-                        case "double_attestation_evidence":
-                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
-                        case "double_preattestation_evidence":
-                            await new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                        case "double_consensus_operation_evidence":
+                            if (content.Required("metadata").Required("misbehaviour").RequiredString("kind")[0] == 'a')
+                                new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            else
+                                new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
