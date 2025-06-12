@@ -5,18 +5,23 @@ namespace Tzkt.Sync.Protocols.Proto12
 {
     class PreendorsementsCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public virtual void Apply(Block block, JsonElement op, JsonElement content)
+        public void Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            var baker = Cache.Accounts.GetExistingDelegate(metadata.RequiredString("delegate"));
+            Apply(block, op.RequiredString("hash"), metadata.RequiredString("delegate"), GetPreendorsedSlots(metadata));
+        }
+
+        public void Apply(Block block, string opHash, string bakerAddress, int slots)
+        {
+            var baker = Cache.Accounts.GetExistingDelegate(bakerAddress);
 
             var preendorsement = new PreendorsementOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                OpHash = op.RequiredString("hash"),
-                Slots = GetPreendorsedSlots(metadata),
+                OpHash = opHash,
+                Slots = slots,
                 DelegateId = baker.Id
             };
 
@@ -31,7 +36,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             Context.PreendorsementOps.Add(preendorsement);
         }
 
-        public virtual Task Revert(Block block, PreendorsementOperation preendorsement)
+        public Task Revert(Block block, PreendorsementOperation preendorsement)
         {
             var baker = Cache.Accounts.GetDelegate(preendorsement.DelegateId);
             Db.TryAttach(baker);

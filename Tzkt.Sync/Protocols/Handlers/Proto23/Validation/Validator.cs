@@ -153,8 +153,10 @@ namespace Tzkt.Sync.Protocols.Proto23
                         {
                             case "attestation": ValidateAttestation(content); break;
                             case "attestation_with_dal": ValidateAttestation(content); break;
+                            case "attestations_aggregate": ValidateAttestationsAggregate(content); break;
                             case "preattestation": ValidatePreattestation(content); break;
                             case "preattestation_with_dal": ValidatePreattestation(content); break;
+                            case "preattestations_aggregate": ValidatePreattestationsAggregate(content); break;
                             case "ballot": await ValidateBallot(content); break;
                             case "proposals": ValidateProposal(content); break;
                             case "activate_account": await ValidateActivation(content); break; 
@@ -209,6 +211,24 @@ namespace Tzkt.Sync.Protocols.Proto23
                 throw new ValidationException("unknown attestation delegate");
         }
 
+        protected virtual void ValidateAttestationsAggregate(JsonElement content)
+        {
+            if (content.Required("consensus_content").RequiredInt32("level") != Cache.AppState.GetLevel())
+                throw new ValidationException("invalid attestations aggregate level");
+
+            var committee = content.RequiredArray("committee").EnumerateArray();
+            if (!committee.Any())
+                throw new ValidationException("invalid attestations aggregate committee size");
+
+            var metaCommittee = content.Required("metadata").RequiredArray("committee").EnumerateArray();
+            if (committee.Count() != metaCommittee.Count())
+                throw new ValidationException("invalid attestations aggregate committee metadata size");
+
+            foreach (var c in metaCommittee)
+                if (!Cache.Accounts.DelegateExists(c.RequiredString("delegate")))
+                    throw new ValidationException("unknown attestations aggregate delegate");
+        }
+
         protected virtual void ValidatePreattestation(JsonElement content)
         {
             if (content.RequiredInt32("level") != Cache.AppState.GetLevel() + 1)
@@ -216,6 +236,24 @@ namespace Tzkt.Sync.Protocols.Proto23
 
             if (!Cache.Accounts.DelegateExists(content.Required("metadata").RequiredString("delegate")))
                 throw new ValidationException("unknown preattestation delegate");
+        }
+
+        protected virtual void ValidatePreattestationsAggregate(JsonElement content)
+        {
+            if (content.Required("consensus_content").RequiredInt32("level") != Cache.AppState.GetLevel() + 1)
+                throw new ValidationException("invalid preattestations aggregate level");
+
+            var committee = content.RequiredArray("committee").EnumerateArray();
+            if (!committee.Any())
+                throw new ValidationException("invalid preattestations aggregate committee size");
+
+            var metaCommittee = content.Required("metadata").RequiredArray("committee").EnumerateArray();
+            if (committee.Count() != metaCommittee.Count())
+                throw new ValidationException("invalid preattestations aggregate committee metadata size");
+
+            foreach (var c in metaCommittee)
+                if (!Cache.Accounts.DelegateExists(c.RequiredString("delegate")))
+                    throw new ValidationException("unknown preattestations aggregate delegate");
         }
 
         protected virtual async Task ValidateBallot(JsonElement content)
