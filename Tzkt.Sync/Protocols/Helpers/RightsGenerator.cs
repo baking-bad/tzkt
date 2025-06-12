@@ -50,6 +50,15 @@ namespace Tzkt.Sync.Protocols
             return result;
         }
 
+        int GetAttester(int position, int slot)
+        {
+            WriteInt32(Seed, 32, position);
+            for (var i = 0; i < slot; i++)
+                WriteInt32(Seed, 36, i);
+            WriteInt32(Seed, 36, slot);
+            return Sampler.GetBaker(Seed);
+        }
+
         static void WriteInt32(byte[] bytes, int pos, int value)
         {
             bytes[pos + 3] = (byte)(value & 0xFF);
@@ -151,6 +160,12 @@ namespace Tzkt.Sync.Protocols
                 Baker = kv.Key,
                 Slots = kv.Value
             });
+        }
+
+        public static int GetAttester(Sampler sampler, Cycle cycle, int level, int slot)
+        {
+            var generator = new RightsGenerator(sampler, cycle.Seed);
+            return generator.GetAttester(level - cycle.FirstLevel, slot);
         }
 
         public class ER

@@ -1,8 +1,6 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
-using Netezos.Forging.Models;
-using Netezos.Forging;
-using Netezos.Keys;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto22
@@ -12,15 +10,11 @@ namespace Tzkt.Sync.Protocols.Proto22
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
-            // temp check
-            if (content.Required("metadata").OptionalArray("balance_updates")?.EnumerateArray().Any() == true)
-                throw new Exception("Unexpected balance updates in DalEntrapmentEvidence");
+            var trapLevel = GetTrapLevel(content);
+            var trapSlotIndex = content.RequiredInt32("slot_index");
 
             var accuser = Context.Proposer;
-            var offender = await GetAttester(op.RequiredString("chain_id"), content.Required("attestation"));
-
-            var trapLevel = content.Required("attestation").Required("operations").RequiredInt32("level");
-            var trapSlotIndex = content.RequiredInt32("slot_index");
+            var offender = Cache.Accounts.GetDelegate(await GetAttester(trapLevel, GetConsensusSlot(content)));
 
             var operation = new DalEntrapmentEvidenceOperation
             {
@@ -80,30 +74,39 @@ namespace Tzkt.Sync.Protocols.Proto22
             Cache.AppState.ReleaseOperationId();
         }
 
-        protected async Task<Data.Models.Delegate> GetAttester(string chainId, JsonElement op)
+        protected virtual int GetTrapLevel(JsonElement content)
         {
-            var branch = op.RequiredString("branch");
-            var content = op.Required("operations");
-            var attestation = new AttestationContent
+            return content.Required("attestation").Required("operations").RequiredInt32("level");
+        }
+
+        protected virtual int GetConsensusSlot(JsonElement content)
+        {
+            return content.Required("attestation").Required("operations").RequiredInt32("slot");
+        }
+
+        async Task<int> GetAttester(int level, int slot)
+        {
+            var cycleIndex = Context.Protocol.GetCycle(level);
+            var cycle = await Db.Cycles.SingleAsync(x => x.Index == cycleIndex);
+
+            var bakerCycles = await Cache.BakerCycles.GetAsync(cycle.Index);
+            var sampler = GetSampler(bakerCycles.Values
+                .Where(x => x.BakingPower > 0)
+                .Select(x => (x.BakerId, x.BakingPower))
+                .ToList());
+
+            return RightsGenerator.GetAttester(sampler, cycle, level, slot);
+        }
+
+        Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
+        {
+            var sorted = selection.OrderByDescending(x =>
             {
-                Level = content.RequiredInt32("level"),
-                Round = content.RequiredInt32("round"),
-                Slot = content.RequiredInt32("slot"),
-                PayloadHash = content.RequiredString("block_payload_hash"),
-                DalAttestation = content.OptionalBigInteger("dal_attestation")
-            };
-            var signature = Base58.Parse(op.RequiredString("signature"), 3);
+                var baker = Cache.Accounts.GetDelegate(x.id);
+                return new byte[] { (byte)baker.PublicKey![0] }.Concat(Base58.Parse(baker.Address));
+            }, new BytesComparer());
 
-            var bytes = new byte[1] { 19 }
-                .Concat(Base58.Parse(chainId, 3))
-                .Concat(await new LocalForge().ForgeOperationAsync(branch, attestation))
-                .ToArray();
-
-            foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))
-                if (PubKey.FromBase58(baker.PublicKey!).Verify(bytes, signature))
-                    return baker;
-
-            throw new Exception("Failed to determine trapped dal slot attester");
+            return new Sampler([..sorted.Select(x => x.id)], [..sorted.Select(x => x.stake)]);
         }
     }
 }
