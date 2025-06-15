@@ -978,7 +978,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!SecondaryKeyTypes.TryParse(valueObject.FirstValue, out var kind))
