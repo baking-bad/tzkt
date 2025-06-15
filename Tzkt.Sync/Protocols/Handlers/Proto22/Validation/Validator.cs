@@ -418,7 +418,7 @@ namespace Tzkt.Sync.Protocols.Proto22
             {
                 var target = content.RequiredString("destination");
                 
-                if (source == target && source.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
+                if (target.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
                 {
                     switch (entrypoint)
                     {
