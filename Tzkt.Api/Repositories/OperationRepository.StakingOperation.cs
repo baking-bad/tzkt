@@ -14,6 +14,7 @@ namespace Tzkt.Api.Repositories
             Symbols quote)
         {
             List<int>? senderIds = null;
+            List<int>? stakerIds = null;
             List<int>? bakerIds = null;
 
             foreach (var account in accounts)
@@ -21,10 +22,16 @@ namespace Tzkt.Api.Repositories
                 if (account is not RawUser user || user.StakingOpsCount == 0)
                     continue;
 
-                if ((roles & ActivityRole.Sender) != 0)
+                if ((roles & ActivityRole.Initiator) != 0)
                 {
                     senderIds ??= new(accounts.Count);
                     senderIds.Add(account.Id);
+                }
+
+                if ((roles & ActivityRole.Sender) != 0)
+                {
+                    stakerIds ??= new(accounts.Count);
+                    stakerIds.Add(account.Id);
                 }
 
                 if (account is RawDelegate && (roles & ActivityRole.Target) != 0)
@@ -34,11 +41,12 @@ namespace Tzkt.Api.Repositories
                 }
             }
 
-            if (senderIds == null && bakerIds == null)
+            if (senderIds == null && stakerIds == null && bakerIds == null)
                 return [];
 
             var or = new OrParameter(
                 (@"o.""SenderId""", senderIds),
+                (@"o.""StakerId""", stakerIds),
                 (@"o.""BakerId""", bakerIds));
 
             return await GetStakingOps(new() { or = or, timestamp = timestamp }, pagination, quote);
@@ -61,8 +69,10 @@ namespace Tzkt.Api.Repositories
                 .FilterA(filter.anyof, x => x switch
                 {
                     "sender" => @"o.""SenderId""",
+                    "staker" => @"o.""StakerId""",
                     _ => @"o.""BakerId"""
                 })
+                .FilterA(@"o.""StakerId""", filter.staker)
                 .FilterA(@"o.""BakerId""", filter.baker)
                 .FilterA(@"o.""Action""", filter.action);
 
@@ -93,6 +103,7 @@ namespace Tzkt.Api.Repositories
                         case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                         case "action": columns.Add(@"o.""Action"""); break;
                         case "requestedAmount": columns.Add(@"o.""RequestedAmount"""); break;
+                        case "staker": columns.Add(@"o.""StakerId"""); break;
                         case "baker": columns.Add(@"o.""BakerId"""); break;
                         case "amount": columns.Add(@"o.""Amount"""); break;
                         case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
@@ -123,8 +134,10 @@ namespace Tzkt.Api.Repositories
                 .FilterA(filter.anyof, x => x switch
                 {
                     "sender" => @"o.""SenderId""",
+                    "staker" => @"o.""StakerId""",
                     _ => @"o.""BakerId"""
                 })
+                .FilterA(@"o.""StakerId""", filter.staker)
                 .FilterA(@"o.""BakerId""", filter.baker)
                 .FilterA(@"o.""Action""", filter.action)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
@@ -150,6 +163,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 Action = StakingActions.ToString(row.Action),
                 RequestedAmount = row.RequestedAmount,
+                Staker = Accounts.GetAlias(row.StakerId),
                 Baker = row.BakerId == null ? null : Accounts.GetAlias(row.BakerId),
                 Amount = row.Amount,
                 StakingUpdatesCount = row.StakingUpdatesCount,
@@ -230,6 +244,18 @@ namespace Tzkt.Api.Repositories
                     case "requestedAmount":
                         foreach (var row in rows)
                             result[j++][i] = row.RequestedAmount;
+                        break;
+                    case "staker":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.StakerId);
+                        break;
+                    case "staker.alias":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.StakerId).Name;
+                        break;
+                    case "staker.address":
+                        foreach (var row in rows)
+                            result[j++][i] = Accounts.GetAlias(row.StakerId).Address;
                         break;
                     case "baker":
                         foreach (var row in rows)
