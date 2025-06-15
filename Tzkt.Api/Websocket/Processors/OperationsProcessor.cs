@@ -1004,6 +1004,9 @@ namespace Tzkt.Api.Websocket.Processors
                             if (stakingSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs) && senderSubs.Subs != null)
                                 Add(senderSubs.Subs, op);
 
+                            if (stakingSubs.AddressSubs.TryGetValue(op.Staker.Address, out var stakerSubs) && stakerSubs.Subs != null)
+                                Add(stakerSubs.Subs, op);
+
                             if (op.Baker != null && stakingSubs.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs) && bakerSubs.Subs != null)
                                 Add(bakerSubs.Subs, op);
                         }

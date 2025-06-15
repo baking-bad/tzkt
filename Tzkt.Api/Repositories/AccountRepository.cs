@@ -2413,7 +2413,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var stakingOps = delegat.StakingOpsCount > 0 && types.Contains(ActivityTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "baker"], Eq = delegat.Id }, level = level, timestamp = timestamp, status = status }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "staker", "baker"], Eq = delegat.Id }, level = level, timestamp = timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var setDelegateParametersOps = delegat.SetDelegateParametersOpsCount > 0 && types.Contains(ActivityTypes.SetDelegateParameters)
@@ -2646,7 +2646,7 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<SmartRollupRefuteOperation>());
 
                     var userStakingOps = user.StakingOpsCount > 0 && types.Contains(ActivityTypes.Staking)
-                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "baker"], Eq = user.Id }, level = level, timestamp = timestamp, status = status }, pagination, quote)
+                        ? Operations.GetStakingOps(new() { anyof = new() { Fields = ["sender", "staker", "baker"], Eq = user.Id }, level = level, timestamp = timestamp, status = status }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
                     var userSetDelegateParametersOps = user.SetDelegateParametersOpsCount > 0 && types.Contains(ActivityTypes.SetDelegateParameters)

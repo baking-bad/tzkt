@@ -172,13 +172,10 @@ namespace Tzkt.Sync.Protocols
                                 bigMapCommit.Append(orig.Origination, orig.Contract!, orig.BigMapDiffs);
                             break;
                         case "transaction":
-                            var src = content.RequiredString("source");
                             var dst = content.RequiredString("destination");
-                            if (src == dst &&
-                                src.StartsWith("tz") &&
-                                content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
+                            if (dst.StartsWith("tz") && content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
                             {
-                                if (Proto18.StakingCommit.Entrypoints.Contains(entrypoint))
+                                if (Proto18.StakingCommit.ValidateParameters(entrypoint, content.RequiredString("source"), dst))
                                 {
                                     await new StakingCommit(this).Apply(blockCommit.Block, operation, content);
                                     break;

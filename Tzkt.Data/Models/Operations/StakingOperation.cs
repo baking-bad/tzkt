@@ -5,6 +5,7 @@ namespace Tzkt.Data.Models
 {
     public class StakingOperation : ManagerOperation
     {
+        public int StakerId { get; set; }
         public StakingAction Action { get; set; }
         public long RequestedAmount { get; set; }
 
@@ -46,6 +47,9 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<StakingOperation>()
                 .HasIndex(x => x.SenderId);
+
+            modelBuilder.Entity<StakingOperation>()
+                .HasIndex(x => x.StakerId);
 
             modelBuilder.Entity<StakingOperation>()
                 .HasIndex(x => x.BakerId);
