@@ -59,6 +59,7 @@ namespace Tzkt.Api.Repositories
             var select = """
                 o."Id",
                 o."Level",
+                o."Timestamp",
                 o."BakerId",
                 o."Action",
                 o."Amount",
@@ -74,7 +75,7 @@ namespace Tzkt.Api.Repositories
                     {
                         case "id": columns.Add(@"o.""Id"""); break;
                         case "level": columns.Add(@"o.""Level"""); break;
-                        case "timestamp": columns.Add(@"o.""Level"""); break;
+                        case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                         case "baker": columns.Add(@"o.""BakerId"""); break;
                         case "action": columns.Add(@"o.""Action"""); break;
                         case "amount": columns.Add(@"o.""Amount"""); break;
@@ -114,7 +115,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
-                Timestamp = Times[row.Level],
+                Timestamp = row.Timestamp,
                 Baker = Accounts.GetAlias(row.BakerId),
                 Action = StakingActions.ToString(row.Action),
                 Amount = row.Amount,
@@ -149,7 +150,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "timestamp":
                         foreach (var row in rows)
-                            result[j++][i] = Times[row.Level];
+                            result[j++][i] = row.Timestamp;
                         break;
                     case "baker":
                         foreach (var row in rows)
