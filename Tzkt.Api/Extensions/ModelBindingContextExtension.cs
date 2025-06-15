@@ -15,7 +15,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!BigInteger.TryParse(valueObject.FirstValue, out var value))
@@ -39,7 +38,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -75,7 +73,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Number().IsMatch(valueObject.FirstValue))
@@ -99,7 +96,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -135,7 +131,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!int.TryParse(valueObject.FirstValue, out var value))
@@ -159,7 +154,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -195,7 +189,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!long.TryParse(valueObject.FirstValue, out var value))
@@ -219,7 +212,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -255,7 +247,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     try
@@ -281,7 +272,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     try
@@ -317,7 +307,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!DateTimeOffset.TryParse(valueObject.FirstValue, out var value))
@@ -341,7 +330,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -377,7 +365,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Address().IsMatch(valueObject.FirstValue))
@@ -401,7 +388,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -440,7 +426,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -486,7 +471,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Sr1Address().IsMatch(valueObject.FirstValue))
@@ -510,7 +494,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -549,7 +532,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Protocol().IsMatch(valueObject.FirstValue))
@@ -573,7 +555,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -610,7 +591,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!AccountTypes.TryParse(valueObject.FirstValue, out var type))
@@ -633,7 +613,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!TokenStandards.TryParse(valueObject.FirstValue, out var standard))
@@ -657,7 +636,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var ss = valueObject.FirstValue.Split(':', StringSplitOptions.RemoveEmptyEntries);
@@ -682,7 +660,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -722,7 +699,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!BakingRightTypes.TryParse(valueObject.FirstValue, out var type))
@@ -745,7 +721,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!BakingRightStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -768,7 +743,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Expression().IsMatch(valueObject.FirstValue))
@@ -792,7 +766,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -829,7 +802,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Operation().IsMatch(valueObject.FirstValue))
@@ -853,7 +825,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -890,7 +861,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Regexes.Src1Hash().IsMatch(valueObject.FirstValue))
@@ -914,7 +884,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -951,7 +920,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!EpochStatuses.IsValid(valueObject.FirstValue))
@@ -974,7 +942,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1011,7 +978,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!ContractKinds.TryParse(valueObject.FirstValue, out var kind))
@@ -1034,7 +1000,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1073,7 +1038,6 @@ namespace Tzkt.Api
             
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!BigMapActions.TryParse(valueObject.FirstValue, out var action))
@@ -1098,7 +1062,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1135,7 +1098,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1174,7 +1136,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1213,7 +1174,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!Votes.TryParse(valueObject.FirstValue, out var vote))
@@ -1236,7 +1196,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1273,7 +1232,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!VoterStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1296,7 +1254,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1333,7 +1290,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!RefutationMoves.TryParse(valueObject.FirstValue, out var status))
@@ -1356,7 +1312,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1393,7 +1348,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!RefutationGameStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1416,7 +1370,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1453,7 +1406,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!MigrationKinds.TryParse(valueObject.FirstValue, out var kind))
@@ -1476,7 +1428,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1513,7 +1464,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!UnstakeRequestStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1536,7 +1486,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!SrCommitmentStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1559,7 +1508,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1596,7 +1544,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!SrBondStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1619,7 +1566,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1656,7 +1602,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!StakingActions.TryParse(valueObject.FirstValue, out var value))
@@ -1679,7 +1624,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1716,7 +1660,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!StakingUpdateTypes.TryParse(valueObject.FirstValue, out var value))
@@ -1739,7 +1682,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1776,7 +1718,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!SrMessageTypes.TryParse(valueObject.FirstValue, out var status))
@@ -1799,7 +1740,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -1836,7 +1776,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     if (!OpStatuses.TryParse(valueObject.FirstValue, out var status))
@@ -1858,7 +1797,6 @@ namespace Tzkt.Api
             var valueObject = bindingContext.ValueProvider.GetValue(name);
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 result = !(valueObject.FirstValue == "false" || valueObject.FirstValue == "0");
             }
             return true;
@@ -1871,7 +1809,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 result = !(valueObject.FirstValue == "false" || valueObject.FirstValue == "0");
                 hasValue = true;
             }
@@ -1885,7 +1822,6 @@ namespace Tzkt.Api
             var valueObject = bindingContext.ValueProvider.GetValue(name);
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     result = valueObject.FirstValue;
@@ -1902,7 +1838,6 @@ namespace Tzkt.Api
             var valueObject = bindingContext.ValueProvider.GetValue(name);
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     try
@@ -1925,7 +1860,6 @@ namespace Tzkt.Api
             var valueObject = bindingContext.ValueProvider.GetValue(name);
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     try
@@ -1981,7 +1915,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     hasValue = true;
@@ -1999,7 +1932,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
@@ -2025,7 +1957,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue
@@ -2056,7 +1987,6 @@ namespace Tzkt.Api
 
             if (valueObject != ValueProviderResult.None)
             {
-                bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
