@@ -34,6 +34,7 @@ namespace Tzkt.Api.Repositories
                 SELECT ""Status"" = 1
                 FROM   ""{table}""
                 WHERE  ""OpHash"" = @hash::character(51)
+                ORDER BY ""Id"" DESC
                 LIMIT  1",
             new { hash });
         }

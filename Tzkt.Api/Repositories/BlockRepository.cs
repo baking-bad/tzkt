@@ -79,13 +79,15 @@ namespace Tzkt.Api.Repositories
             return block;
         }
 
+        // TODO: IEnumerable must be returned instead
         public async Task<Block?> Get(string hash, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = """
-                SELECT  *
-                FROM    "Blocks"
-                WHERE   "Hash" = @hash::character(51)
-                LIMIT   1
+                SELECT *
+                FROM "Blocks"
+                WHERE "Hash" = @hash::character(51)
+                ORDER BY "Id" DESC
+                LIMIT 1
                 """;
 
             await using var db = await DataSource.OpenConnectionAsync();

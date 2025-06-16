@@ -25,8 +25,7 @@ namespace Tzkt.Api.Repositories
                 FROM        ""PreendorsementOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
-                WHERE       o.""OpHash"" = @hash::character(51)
-                LIMIT       1";
+                WHERE       o.""OpHash"" = @hash::character(51)";
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
