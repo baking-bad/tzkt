@@ -38,22 +38,26 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
-            return rows.Select(row => new RevealOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Block = row.Hash,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                BakerFee = row.BakerFee,
-                Status = OpStatuses.ToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                Quote = Quotes.Get(quote, row.Level)
+            return rows.Select(row => {
+                var sender = Accounts.Get((int)row.SenderId)!;
+                return new RevealOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Block = row.Hash,
+                    Timestamp = row.Timestamp,
+                    Hash = hash,
+                    Sender = sender.Info,
+                    Counter = row.Counter,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    BakerFee = row.BakerFee,
+                    Status = OpStatuses.ToString(row.Status),
+                    PublicKey = (sender as RawUser)?.PublicKey,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quote, row.Level)
+                };
             });
         }
 
@@ -70,22 +74,26 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
-            return rows.Select(row => new RevealOperation
-            {
-                Id = row.Id,
-                Level = row.Level,
-                Block = row.Hash,
-                Timestamp = row.Timestamp,
-                Hash = hash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = counter,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                BakerFee = row.BakerFee,
-                Status = OpStatuses.ToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                Quote = Quotes.Get(quote, row.Level)
+            return rows.Select(row => {
+                var sender = Accounts.Get((int)row.SenderId)!;
+                return new RevealOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Block = row.Hash,
+                    Timestamp = row.Timestamp,
+                    Hash = hash,
+                    Sender = sender.Info,
+                    Counter = counter,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    BakerFee = row.BakerFee,
+                    Status = OpStatuses.ToString(row.Status),
+                    PublicKey = (sender as RawUser)?.PublicKey,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quote, row.Level)
+                };
             });
         }
 
@@ -100,22 +108,27 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
-            return rows.Select(row => new RevealOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = block.Level,
-                Block = block.Hash,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                BakerFee = row.BakerFee,
-                Status = OpStatuses.ToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                Quote = Quotes.Get(quote, block.Level)
+                var sender = Accounts.Get((int)row.SenderId)!;
+                return new RevealOperation
+                {
+                    Id = row.Id,
+                    Level = block.Level,
+                    Block = block.Hash,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = sender.Info,
+                    Counter = row.Counter,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    BakerFee = row.BakerFee,
+                    Status = OpStatuses.ToString(row.Status),
+                    PublicKey = (sender as RawUser)?.PublicKey,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quote, block.Level)
+                };
             });
         }
 
@@ -184,22 +197,27 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => new RevealOperation
+            return rows.Select(row =>
             {
-                Id = row.Id,
-                Level = row.Level,
-                Block = row.Hash,
-                Timestamp = row.Timestamp,
-                Hash = row.OpHash,
-                Sender = Accounts.GetAlias(row.SenderId),
-                Counter = row.Counter,
-                GasLimit = row.GasLimit,
-                GasUsed = row.GasUsed,
-                StorageLimit = row.StorageLimit,
-                BakerFee = row.BakerFee,
-                Status = OpStatuses.ToString(row.Status),
-                Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
-                Quote = Quotes.Get(quote, row.Level)
+                var sender = Accounts.Get((int)row.SenderId)!;
+                return new RevealOperation
+                {
+                    Id = row.Id,
+                    Level = row.Level,
+                    Block = row.Hash,
+                    Timestamp = row.Timestamp,
+                    Hash = row.OpHash,
+                    Sender = sender.Info,
+                    Counter = row.Counter,
+                    GasLimit = row.GasLimit,
+                    GasUsed = row.GasUsed,
+                    StorageLimit = row.StorageLimit,
+                    BakerFee = row.BakerFee,
+                    Status = OpStatuses.ToString(row.Status),
+                    PublicKey = (sender as RawUser)?.PublicKey,
+                    Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
+                    Quote = Quotes.Get(quote, row.Level)
+                };
             });
         }
 
@@ -232,6 +250,7 @@ namespace Tzkt.Api.Repositories
                     case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
+                    case "publicKey": columns.Add(@"o.""SenderId"""); break;
                     case "errors": columns.Add(@"o.""Errors"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -316,6 +335,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = OpStatuses.ToString(row.Status);
                         break;
+                    case "publicKey":
+                        foreach (var row in rows)
+                            result[j++][i] = (await Accounts.GetAsync((int)row.SenderId) as RawUser)?.PublicKey;
+                        break;
                     case "errors":
                         foreach (var row in rows)
                             result[j++][i] = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null;
@@ -357,6 +380,7 @@ namespace Tzkt.Api.Repositories
                 case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
+                case "publicKey": columns.Add(@"o.""SenderId"""); break;
                 case "errors": columns.Add(@"o.""Errors"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -437,6 +461,10 @@ namespace Tzkt.Api.Repositories
                 case "status":
                     foreach (var row in rows)
                         result[j++] = OpStatuses.ToString(row.Status);
+                    break;
+                case "publicKey":
+                    foreach (var row in rows)
+                        result[j++] = (await Accounts.GetAsync((int)row.SenderId) as RawUser)?.PublicKey;
                     break;
                 case "errors":
                     foreach (var row in rows)
