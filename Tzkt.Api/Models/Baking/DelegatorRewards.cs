@@ -61,9 +61,9 @@
         public double ExpectedBlocks { get; set; }
 
         /// <summary>
-        /// Expected value of how many slots baker should validate based on baker's active stake, selected stake and endorsing slots per cycle.
+        /// Expected value of how many slots baker should validate based on baker's active stake, selected stake and attestation slots per cycle.
         /// </summary>
-        public double ExpectedEndorsements { get; set; }
+        public double ExpectedAttestations { get; set; }
 
         /// <summary>
         /// Expected value of how many dal shards baker should attest based on baker's active stake, selected stake and total shards per cycle.
@@ -120,53 +120,53 @@
         public long MissedBlockRewards { get; set; }
 
         /// <summary>
-        /// Number of slots which baker is allowed to validate in this cycle based on future endorsing rights.
+        /// Number of slots which baker is allowed to validate in this cycle based on future attestation rights.
         /// </summary>
-        public int FutureEndorsements { get; set; }
+        public int FutureAttestations { get; set; }
 
         /// <summary>
-        /// Estimated value of future endorsing rewards.
+        /// Estimated value of future attestation rewards.
         /// </summary>
-        public long FutureEndorsementRewards { get; set; }
+        public long FutureAttestationRewards { get; set; }
 
         /// <summary>
-        /// Number of successfully endorsed slots.
+        /// Number of successfully attested slots.
         /// </summary>
-        public int Endorsements { get; set; }
+        public int Attestations { get; set; }
 
         /// <summary>
-        /// Rewards, corresponding to delegated stake, received for endorsed slots on baker's liquid balance
+        /// Rewards, corresponding to delegated stake, received for attested slots on baker's liquid balance
         /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long EndorsementRewardsDelegated { get; set; }
+        public long AttestationRewardsDelegated { get; set; }
 
         /// <summary>
-        /// Rewards, corresponding to baker's own stake, received for endorsed slots on baker's own staked balance
+        /// Rewards, corresponding to baker's own stake, received for attested slots on baker's own staked balance
         /// (it is frozen and belongs to the baker).
         /// </summary>
-        public long EndorsementRewardsStakedOwn { get; set; }
+        public long AttestationRewardsStakedOwn { get; set; }
 
         /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, received for endorsed slots on baker's own staked balance
+        /// Rewards, corresponding to baker's edge from external stake, received for attested slots on baker's own staked balance
         /// (it is frozen and belongs to the baker).
         /// </summary>
-        public long EndorsementRewardsStakedEdge { get; set; }
+        public long AttestationRewardsStakedEdge { get; set; }
 
         /// <summary>
-        /// Rewards, corresponding to baker's external stake, received for endorsed slots on baker's external staked balance
+        /// Rewards, corresponding to baker's external stake, received for attested slots on baker's external staked balance
         /// (it is frozen and belongs to baker's stakers).
         /// </summary>
-        public long EndorsementRewardsStakedShared { get; set; }
+        public long AttestationRewardsStakedShared { get; set; }
 
         /// <summary>
-        /// Number of not endorsed (missed) slots.
+        /// Number of not attested (missed) slots.
         /// </summary>
-        public int MissedEndorsements { get; set; }
+        public int MissedAttestations { get; set; }
 
         /// <summary>
-        /// Rewards which were not received due to missing endorsements.
+        /// Rewards which were not received due to missing attestations.
         /// </summary>
-        public long MissedEndorsementRewards { get; set; }
+        public long MissedAttestationRewards { get; set; }
 
         /// <summary>
         /// Estimated value of future dal attestation rewards.
@@ -238,54 +238,54 @@
         public long DoubleBakingLostExternalUnstaked { get; set; }
 
         /// <summary>
-        /// Rewards for detecting double endorsing (accusing someone of validating two different blocks at the same level).
+        /// Rewards for detecting double attestation (accusing someone of validating two different blocks at the same level).
         /// </summary>
-        public long DoubleEndorsingRewards { get; set; }
+        public long DoubleAttestationRewards { get; set; }
 
         /// <summary>
-        /// Amount of baker's own staked balance lost due to double endorsing
+        /// Amount of baker's own staked balance lost due to double attestation
         /// </summary>
-        public long DoubleEndorsingLostStaked { get; set; }
+        public long DoubleAttestationLostStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double endorsing
+        /// Amount of baker's own unstaked balance lost due to double attestation
         /// </summary>
-        public long DoubleEndorsingLostUnstaked { get; set; }
+        public long DoubleAttestationLostUnstaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external staked balance lost due to double endorsing
+        /// Amount of baker's external staked balance lost due to double attestation
         /// </summary>
-        public long DoubleEndorsingLostExternalStaked { get; set; }
+        public long DoubleAttestationLostExternalStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double endorsing
+        /// Amount of baker's external unstaked balance lost due to double attestation
         /// </summary>
-        public long DoubleEndorsingLostExternalUnstaked { get; set; }
+        public long DoubleAttestationLostExternalUnstaked { get; set; }
 
         /// <summary>
-        /// Rewards for detecting double preendorsing (accusing someone of pre-validating two different blocks at the same level).
+        /// Rewards for detecting double preattestation (accusing someone of pre-validating two different blocks at the same level).
         /// </summary>
-        public long DoublePreendorsingRewards { get; set; }
+        public long DoublePreattestationRewards { get; set; }
 
         /// <summary>
-        /// Amount of baker's own staked balance lost due to double preendorsing
+        /// Amount of baker's own staked balance lost due to double preattestation
         /// </summary>
-        public long DoublePreendorsingLostStaked { get; set; }
+        public long DoublePreattestationLostStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double preendorsing
+        /// Amount of baker's own unstaked balance lost due to double preattestation
         /// </summary>
-        public long DoublePreendorsingLostUnstaked { get; set; }
+        public long DoublePreattestationLostUnstaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external staked balance lost due to double preendorsing
+        /// Amount of baker's external staked balance lost due to double preattestation
         /// </summary>
-        public long DoublePreendorsingLostExternalStaked { get; set; }
+        public long DoublePreattestationLostExternalStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double preendorsing
+        /// Amount of baker's external unstaked balance lost due to double preattestation
         /// </summary>
-        public long DoublePreendorsingLostExternalUnstaked { get; set; }
+        public long DoublePreattestationLostExternalUnstaked { get; set; }
 
         /// <summary>
         /// Rewards, corresponding to delegated stake, for including vdf revelations, received on baker's liquid balance
@@ -345,6 +345,108 @@
         /// Injected historical quote at the end of the cycle
         /// </summary>
         public QuoteShort? Quote { get; set; }
+        #endregion
+
+        #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public double ExpectedEndorsements => ExpectedAttestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int FutureEndorsements => FutureAttestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long FutureEndorsementRewards => FutureAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int Endorsements => Attestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsDelegated => AttestationRewardsDelegated;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedOwn => AttestationRewardsStakedOwn;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedEdge => AttestationRewardsStakedEdge;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedShared => AttestationRewardsStakedShared;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int MissedEndorsements => MissedAttestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long MissedEndorsementRewards => MissedAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingRewards => DoubleAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostStaked => DoubleAttestationLostStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostUnstaked => DoubleAttestationLostUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostExternalStaked => DoubleAttestationLostExternalStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostExternalUnstaked => DoubleAttestationLostExternalUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingRewards => DoublePreattestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostStaked => DoublePreattestationLostStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostUnstaked => DoublePreattestationLostUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostExternalStaked => DoublePreattestationLostExternalStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostExternalUnstaked => DoublePreattestationLostExternalUnstaked;
         #endregion
     }
 }

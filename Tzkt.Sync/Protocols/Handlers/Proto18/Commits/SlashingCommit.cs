@@ -28,18 +28,18 @@ namespace Tzkt.Sync.Protocols.Proto18
             {
                 var opHash = slashing.Key;
                 var accusation = Context.DoubleBakingOps.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? Context.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? Context.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? Context.DoubleAttestationOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? Context.DoublePreattestationOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? Db.DoubleBakingOps.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? Db.DoubleEndorsingOps.FirstOrDefault(x => x.OpHash == opHash)
-                    ?? (BaseOperation?)Db.DoublePreendorsingOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? Db.DoubleAttestationOps.FirstOrDefault(x => x.OpHash == opHash)
+                    ?? (BaseOperation?)Db.DoublePreattestationOps.FirstOrDefault(x => x.OpHash == opHash)
                     ?? throw new Exception($"Cannot find delayed operation '{opHash}'");
 
                 var (accuserId, offenderId) = accusation switch
                 {
                     DoubleBakingOperation op => (op.AccuserId, op.OffenderId),
-                    DoubleEndorsingOperation op => (op.AccuserId, op.OffenderId),
-                    DoublePreendorsingOperation op => (op.AccuserId, op.OffenderId),
+                    DoubleAttestationOperation op => (op.AccuserId, op.OffenderId),
+                    DoublePreattestationOperation op => (op.AccuserId, op.OffenderId),
                     _ => throw new InvalidOperationException()
                 };
                 var accuser = Cache.Accounts.GetDelegate(accuserId);
@@ -98,7 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         Db.TryAttach(block);
                         block.Events |= BlockEvents.DoubleBakingSlashing;
                         break;
-                    case DoubleEndorsingOperation op:
+                    case DoubleAttestationOperation op:
                         op.SlashedLevel = block.Level;
                         op.Reward = reward;
                         op.LostStaked = lostOwnStaked;
@@ -109,20 +109,20 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (accuserCycle != null)
                         {
                             Db.TryAttach(accuserCycle);
-                            accuserCycle.DoubleEndorsingRewards += reward;
+                            accuserCycle.DoubleAttestationRewards += reward;
                         }
                         if (offenderCycle != null)
                         {
                             Db.TryAttach(offenderCycle);
-                            offenderCycle.DoubleEndorsingLostStaked += lostOwnStaked;
-                            offenderCycle.DoubleEndorsingLostUnstaked += lostOwnUnstaked;
-                            offenderCycle.DoubleEndorsingLostExternalStaked += lostExternalStaked;
-                            offenderCycle.DoubleEndorsingLostExternalUnstaked += lostExternalUnstaked;
+                            offenderCycle.DoubleAttestationLostStaked += lostOwnStaked;
+                            offenderCycle.DoubleAttestationLostUnstaked += lostOwnUnstaked;
+                            offenderCycle.DoubleAttestationLostExternalStaked += lostExternalStaked;
+                            offenderCycle.DoubleAttestationLostExternalUnstaked += lostExternalUnstaked;
                         }
                         Db.TryAttach(block);
-                        block.Events |= BlockEvents.DoubleEndorsingSlashing;
+                        block.Events |= BlockEvents.DoubleAttestationSlashing;
                         break;
-                    case DoublePreendorsingOperation op:
+                    case DoublePreattestationOperation op:
                         op.SlashedLevel = block.Level;
                         op.Reward = reward;
                         op.LostStaked = lostOwnStaked;
@@ -133,18 +133,18 @@ namespace Tzkt.Sync.Protocols.Proto18
                         if (accuserCycle != null)
                         {
                             Db.TryAttach(accuserCycle);
-                            accuserCycle.DoublePreendorsingRewards += reward;
+                            accuserCycle.DoublePreattestationRewards += reward;
                         }
                         if (offenderCycle != null)
                         {
                             Db.TryAttach(offenderCycle);
-                            offenderCycle.DoublePreendorsingLostStaked += lostOwnStaked;
-                            offenderCycle.DoublePreendorsingLostUnstaked += lostOwnUnstaked;
-                            offenderCycle.DoublePreendorsingLostExternalStaked += lostExternalStaked;
-                            offenderCycle.DoublePreendorsingLostExternalUnstaked += lostExternalUnstaked;
+                            offenderCycle.DoublePreattestationLostStaked += lostOwnStaked;
+                            offenderCycle.DoublePreattestationLostUnstaked += lostOwnUnstaked;
+                            offenderCycle.DoublePreattestationLostExternalStaked += lostExternalStaked;
+                            offenderCycle.DoublePreattestationLostExternalUnstaked += lostExternalUnstaked;
                         }
                         Db.TryAttach(block);
-                        block.Events |= BlockEvents.DoublePreendorsingSlashing;
+                        block.Events |= BlockEvents.DoublePreattestationSlashing;
                         break;
                     default:
                         throw new InvalidOperationException();
@@ -199,9 +199,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            if (block.Events.HasFlag(BlockEvents.DoubleEndorsingSlashing))
+            if (block.Events.HasFlag(BlockEvents.DoubleAttestationSlashing))
             {
-                foreach (var op in await Db.DoubleEndorsingOps.Where(x => x.SlashedLevel == block.Level).ToListAsync())
+                foreach (var op in await Db.DoubleAttestationOps.Where(x => x.SlashedLevel == block.Level).ToListAsync())
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
@@ -212,17 +212,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoubleEndorsingRewards -= op.Reward;
+                        accuserCycle.DoubleAttestationRewards -= op.Reward;
                     }
 
                     var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoubleEndorsingLostStaked -= op.LostStaked;
-                        offenderCycle.DoubleEndorsingLostUnstaked -= op.LostUnstaked;
-                        offenderCycle.DoubleEndorsingLostExternalStaked -= op.LostExternalStaked;
-                        offenderCycle.DoubleEndorsingLostExternalUnstaked -= op.LostExternalUnstaked;
+                        offenderCycle.DoubleAttestationLostStaked -= op.LostStaked;
+                        offenderCycle.DoubleAttestationLostUnstaked -= op.LostUnstaked;
+                        offenderCycle.DoubleAttestationLostExternalStaked -= op.LostExternalStaked;
+                        offenderCycle.DoubleAttestationLostExternalUnstaked -= op.LostExternalUnstaked;
                     }
 
                     op.Reward = 0;
@@ -232,7 +232,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     op.LostExternalUnstaked = 0;
 
                     var updates = await Db.StakingUpdates
-                        .Where(x => x.DoubleEndorsingOpId == op.Id)
+                        .Where(x => x.DoubleAttestationOpId == op.Id)
                         .OrderByDescending(x => x.Id)
                         .ToListAsync();
 
@@ -242,9 +242,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            if (block.Events.HasFlag(BlockEvents.DoublePreendorsingSlashing))
+            if (block.Events.HasFlag(BlockEvents.DoublePreattestationSlashing))
             {
-                foreach (var op in await Db.DoublePreendorsingOps.Where(x => x.SlashedLevel == block.Level).ToListAsync())
+                foreach (var op in await Db.DoublePreattestationOps.Where(x => x.SlashedLevel == block.Level).ToListAsync())
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
@@ -255,17 +255,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                     if (accuserCycle != null)
                     {
                         Db.TryAttach(accuserCycle);
-                        accuserCycle.DoublePreendorsingRewards -= op.Reward;
+                        accuserCycle.DoublePreattestationRewards -= op.Reward;
                     }
 
                     var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
                     if (offenderCycle != null)
                     {
                         Db.TryAttach(offenderCycle);
-                        offenderCycle.DoublePreendorsingLostStaked -= op.LostStaked;
-                        offenderCycle.DoublePreendorsingLostUnstaked -= op.LostUnstaked;
-                        offenderCycle.DoublePreendorsingLostExternalStaked -= op.LostExternalStaked;
-                        offenderCycle.DoublePreendorsingLostExternalUnstaked -= op.LostExternalUnstaked;
+                        offenderCycle.DoublePreattestationLostStaked -= op.LostStaked;
+                        offenderCycle.DoublePreattestationLostUnstaked -= op.LostUnstaked;
+                        offenderCycle.DoublePreattestationLostExternalStaked -= op.LostExternalStaked;
+                        offenderCycle.DoublePreattestationLostExternalUnstaked -= op.LostExternalUnstaked;
                     }
 
                     op.Reward = 0;
@@ -275,7 +275,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     op.LostExternalUnstaked = 0;
 
                     var updates = await Db.StakingUpdates
-                        .Where(x => x.DoublePreendorsingOpId == op.Id)
+                        .Where(x => x.DoublePreattestationOpId == op.Id)
                         .OrderByDescending(x => x.Id)
                         .ToListAsync();
 
@@ -451,8 +451,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 switch (operation)
                 {
                     case DoubleBakingOperation: stakingUpdate.DoubleBakingOpId = operation.Id; break;
-                    case DoubleEndorsingOperation: stakingUpdate.DoubleEndorsingOpId = operation.Id; break;
-                    case DoublePreendorsingOperation: stakingUpdate.DoublePreendorsingOpId = operation.Id; break;
+                    case DoubleAttestationOperation: stakingUpdate.DoubleAttestationOpId = operation.Id; break;
+                    case DoublePreattestationOperation: stakingUpdate.DoublePreattestationOpId = operation.Id; break;
                     default: throw new InvalidOperationException();
                 }
                 res.Add(stakingUpdate);
@@ -503,13 +503,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                         foreach (var update in updates)
                             update.DoubleBakingOpId = operation.Id;
                         break;
-                    case DoubleEndorsingOperation:
+                    case DoubleAttestationOperation:
                         foreach (var update in updates)
-                            update.DoubleEndorsingOpId = operation.Id;
+                            update.DoubleAttestationOpId = operation.Id;
                         break;
-                    case DoublePreendorsingOperation:
+                    case DoublePreattestationOperation:
                         foreach (var update in updates)
-                            update.DoublePreendorsingOpId = operation.Id;
+                            update.DoublePreattestationOpId = operation.Id;
                         break;
                     default: throw new InvalidOperationException();
                 }
@@ -546,13 +546,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                         foreach (var update in updates)
                             update.DoubleBakingOpId = operation.Id;
                         break;
-                    case DoubleEndorsingOperation:
+                    case DoubleAttestationOperation:
                         foreach (var update in updates)
-                            update.DoubleEndorsingOpId = operation.Id;
+                            update.DoubleAttestationOpId = operation.Id;
                         break;
-                    case DoublePreendorsingOperation:
+                    case DoublePreattestationOperation:
                         foreach (var update in updates)
-                            update.DoublePreendorsingOpId = operation.Id;
+                            update.DoublePreattestationOpId = operation.Id;
                         break;
                     default: throw new InvalidOperationException();
                 }

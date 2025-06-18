@@ -7,9 +7,9 @@ namespace Tzkt.Sync.Protocols
         #region indexer
         Task<JsonElement> GetBlockAsync(int level);
         Task<JsonElement> GetBakingRightsAsync(int block, int cycle);
-        Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle);
+        Task<JsonElement> GetAttestationRightsAsync(int block, int cycle);
         Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound);
-        Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level);
+        Task<JsonElement> GetLevelAttestationRightsAsync(int block, int level);
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);
         Task<JsonElement> GetStakeDistribution(int block, int cycle);

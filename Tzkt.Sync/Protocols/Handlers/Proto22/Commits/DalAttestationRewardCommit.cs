@@ -33,13 +33,13 @@ namespace Tzkt.Sync.Protocols.Proto22
                 if (update.RequiredString("kind") == "minted" && update.RequiredString("category") == "DAL attesting rewards")
                 {
                     if (i == balanceUpdates.Count - 1)
-                        throw new Exception("Unexpected DAL attesting rewards balance updates behavior");
+                        throw new Exception("Unexpected DAL attestation rewards balance updates behavior");
 
                     var change = -update.RequiredInt64("change");
 
                     var nextUpdate = balanceUpdates[i + 1];
                     if (nextUpdate.RequiredInt64("change") != change)
-                        throw new Exception("Unexpected DAL attesting rewards balance updates behavior");
+                        throw new Exception("Unexpected DAL attestation rewards balance updates behavior");
 
                     if (nextUpdate.RequiredString("kind") == "freezer" && nextUpdate.RequiredString("category") == "deposits")
                     {
@@ -48,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                         {
                             var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
-                                throw new Exception("Unexpected DAL attesting rewards balance update");
+                                throw new Exception("Unexpected DAL attestation rewards balance update");
 
                             op.RewardStakedOwn += change;
                         }
@@ -56,7 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                         {
                             var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
-                                throw new Exception("Unexpected DAL attesting rewards balance update");
+                                throw new Exception("Unexpected DAL attestation rewards balance update");
 
                             op.RewardStakedEdge += change;
                         }
@@ -64,20 +64,20 @@ namespace Tzkt.Sync.Protocols.Proto22
                         {
                             var baker = Cache.Accounts.GetExistingDelegate(p.RequiredString());
                             if (!ops.TryGetValue(baker.Id, out var op))
-                                throw new Exception("Unexpected DAL attesting rewards balance update");
+                                throw new Exception("Unexpected DAL attestation rewards balance update");
 
                             op.RewardStakedShared += change;
                         }
                         else
                         {
-                            throw new Exception("Unexpected DAL attesting rewards balance updates behavior");
+                            throw new Exception("Unexpected DAL attestation rewards balance updates behavior");
                         }
                     }
                     else if (nextUpdate.RequiredString("kind") == "contract")
                     {
                         var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("contract"));
                         if (!ops.TryGetValue(baker.Id, out var op))
-                            throw new Exception("Unexpected DAL attesting rewards balance update");
+                            throw new Exception("Unexpected DAL attestation rewards balance update");
 
                         op.RewardDelegated = change;
                     }
@@ -85,7 +85,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     {
                         var baker = Cache.Accounts.GetExistingDelegate(nextUpdate.RequiredString("delegate"));
                         if (!ops.TryGetValue(baker.Id, out var op))
-                            throw new Exception("Unexpected DAL attesting rewards balance update");
+                            throw new Exception("Unexpected DAL attestation rewards balance update");
 
                         if (op.Expected != change)
                             throw new Exception("FutureDalAttestationRewards != loss");
@@ -97,7 +97,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                     }
                     else
                     {
-                        throw new Exception("Unexpected DAL attesting rewards balance updates behavior");
+                        throw new Exception("Unexpected DAL attestation rewards balance updates behavior");
                     }
                 }
             }

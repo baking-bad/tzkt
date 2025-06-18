@@ -79,13 +79,15 @@ namespace Tzkt.Api.Repositories
             return block;
         }
 
+        // TODO: IEnumerable must be returned instead
         public async Task<Block?> Get(string hash, bool operations, MichelineFormat format, Symbols quote)
         {
             var sql = """
-                SELECT  *
-                FROM    "Blocks"
-                WHERE   "Hash" = @hash::character(51)
-                LIMIT   1
+                SELECT *
+                FROM "Blocks"
+                WHERE "Hash" = @hash::character(51)
+                ORDER BY "Id" DESC
+                LIMIT 1
                 """;
 
             await using var db = await DataSource.OpenConnectionAsync();
@@ -622,13 +624,13 @@ namespace Tzkt.Api.Repositories
 
         async Task LoadOperations(Block block, Data.Models.Operations operations, MichelineFormat format, Symbols quote)
         {
-            var endorsements = operations.HasFlag(Data.Models.Operations.Endorsements)
-                ? Operations.GetEndorsements(block, quote)
-                : Task.FromResult(Enumerable.Empty<EndorsementOperation>());
+            var attestations = operations.HasFlag(Data.Models.Operations.Attestations)
+                ? Operations.GetAttestations(block, quote)
+                : Task.FromResult(Enumerable.Empty<AttestationOperation>());
 
-            var preendorsements = operations.HasFlag(Data.Models.Operations.Preendorsements)
-                ? Operations.GetPreendorsements(block, quote)
-                : Task.FromResult(Enumerable.Empty<PreendorsementOperation>());
+            var preattestations = operations.HasFlag(Data.Models.Operations.Preattestations)
+                ? Operations.GetPreattestations(block, quote)
+                : Task.FromResult(Enumerable.Empty<PreattestationOperation>());
 
             var proposals = operations.HasFlag(Data.Models.Operations.Proposals)
                 ? Operations.GetProposals(block, quote)
@@ -650,13 +652,13 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetDoubleBakings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
-            var doubleEndorsing = operations.HasFlag(Data.Models.Operations.DoubleEndorsings)
-                ? Operations.GetDoubleEndorsings(block, quote)
-                : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
+            var doubleAttestation = operations.HasFlag(Data.Models.Operations.DoubleAttestations)
+                ? Operations.GetDoubleAttestations(block, quote)
+                : Task.FromResult(Enumerable.Empty<DoubleAttestationOperation>());
 
-            var doublePreendorsing = operations.HasFlag(Data.Models.Operations.DoublePreendorsings)
-                ? Operations.GetDoublePreendorsings(block, quote)
-                : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
+            var doublePreattestation = operations.HasFlag(Data.Models.Operations.DoublePreattestations)
+                ? Operations.GetDoublePreattestations(block, quote)
+                : Task.FromResult(Enumerable.Empty<DoublePreattestationOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
                 ? Operations.GetNonceRevelations(block, quote)
@@ -730,9 +732,9 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetIncreasePaidStorageOps(block, quote)
                 : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
 
-            var updateConsensusKeyOps = operations.HasFlag(Data.Models.Operations.UpdateConsensusKey)
-                ? Operations.GetUpdateConsensusKeys(block, quote)
-                : Task.FromResult(Enumerable.Empty<UpdateConsensusKeyOperation>());
+            var updateSecondaryKeyOps = operations.HasFlag(Data.Models.Operations.UpdateSecondaryKey)
+                ? Operations.GetUpdateSecondaryKeys(block, quote)
+                : Task.FromResult(Enumerable.Empty<UpdateSecondaryKeyOperation>());
 
             var drainDelegateOps = operations.HasFlag(Data.Models.Operations.DrainDelegate)
                 ? Operations.GetDrainDelegates(block, quote)
@@ -786,9 +788,9 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetRevelationPenalties(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
                 : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
-            var endorsingRewards = operations.HasFlag(Data.Models.Operations.EndorsingRewards)
-                ? Operations.GetEndorsingRewards(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
-                : Task.FromResult(Enumerable.Empty<EndorsingRewardOperation>());
+            var attestationRewards = operations.HasFlag(Data.Models.Operations.AttestationRewards)
+                ? Operations.GetAttestationRewards(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
+                : Task.FromResult(Enumerable.Empty<AttestationRewardOperation>());
 
             var dalAttestationRewards = operations.HasFlag(Data.Models.Operations.DalAttestationReward)
                 ? Operations.GetDalAttestationRewards(null, null, null, new Int32Parameter { Eq = block.Level }, null, null, null, 10_000, quote)
@@ -799,15 +801,15 @@ namespace Tzkt.Api.Repositories
                 : Task.FromResult(Enumerable.Empty<AutostakingOperation>());
 
             await Task.WhenAll(
-                endorsements,
-                preendorsements,
+                attestations,
+                preattestations,
                 proposals,
                 ballots,
                 activations,
                 dalEntrapmentEvidences,
                 doubleBaking,
-                doubleEndorsing,
-                doublePreendorsing,
+                doubleAttestation,
+                doublePreattestation,
                 nonceRevelations,
                 vdfRevelations,
                 delegations,
@@ -826,7 +828,7 @@ namespace Tzkt.Api.Repositories
                 txRollupReturnBondOps,
                 txRollupSubmitBatchOps,
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 drainDelegateOps,
                 srAddMessageOps,
                 srCementOps,
@@ -840,19 +842,19 @@ namespace Tzkt.Api.Repositories
                 dalPublishCommitment,
                 migrations,
                 penalties,
-                endorsingRewards,
+                attestationRewards,
                 dalAttestationRewards,
                 autostakingOps);
 
-            block.Endorsements = endorsements.Result;
-            block.Preendorsements = preendorsements.Result;
+            block.Attestations = attestations.Result;
+            block.Preattestations = preattestations.Result;
             block.Proposals = proposals.Result;
             block.Ballots = ballots.Result;
             block.Activations = activations.Result;
             block.DalEntrapmentEvidenceOps = dalEntrapmentEvidences.Result;
             block.DoubleBaking = doubleBaking.Result;
-            block.DoubleEndorsing = doubleEndorsing.Result;
-            block.DoublePreendorsing = doublePreendorsing.Result;
+            block.DoubleAttestation = doubleAttestation.Result;
+            block.DoublePreattestation = doublePreattestation.Result;
             block.NonceRevelations = nonceRevelations.Result;
             block.VdfRevelations = vdfRevelations.Result;
             block.Delegations = delegations.Result;
@@ -871,7 +873,7 @@ namespace Tzkt.Api.Repositories
             block.TxRollupReturnBondOps = txRollupReturnBondOps.Result;
             block.TxRollupSubmitBatchOps = txRollupSubmitBatchOps.Result;
             block.IncreasePaidStorageOps = increasePaidStorageOps.Result;
-            block.UpdateConsensusKeyOps = updateConsensusKeyOps.Result;
+            block.UpdateSecondaryKeyOps = updateSecondaryKeyOps.Result;
             block.DrainDelegateOps = drainDelegateOps.Result;
             block.SrAddMessagesOps = srAddMessageOps.Result;
             block.SrCementOps = srCementOps.Result;
@@ -885,7 +887,7 @@ namespace Tzkt.Api.Repositories
             block.DalPublishCommitmentOps = dalPublishCommitment.Result;
             block.Migrations = migrations.Result;
             block.RevelationPenalties = penalties.Result;
-            block.EndorsingRewards = endorsingRewards.Result;
+            block.AttestationRewards = attestationRewards.Result;
             block.DalAttestationRewards = dalAttestationRewards.Result;
             block.AutostakingOps = autostakingOps.Result;
         }

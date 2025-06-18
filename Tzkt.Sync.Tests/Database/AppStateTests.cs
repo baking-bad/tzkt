@@ -52,7 +52,7 @@ namespace Tzkt.Sync.Tests.Database
             var opsCount =
                 state.BlocksCount +
                 state.AutostakingOpsCount +
-                state.EndorsingRewardOpsCount +
+                state.AttestationRewardOpsCount +
                 state.DalAttestationRewardOpsCount +
                 state.MigrationOpsCount +
                 state.RevelationPenaltyOpsCount +
@@ -63,14 +63,14 @@ namespace Tzkt.Sync.Tests.Database
                 state.DelegationOpsCount +
                 state.DalEntrapmentEvidenceOpsCount +
                 state.DoubleBakingOpsCount +
-                state.DoubleEndorsingOpsCount +
-                state.DoublePreendorsingOpsCount +
+                state.DoubleAttestationOpsCount +
+                state.DoublePreattestationOpsCount +
                 state.DrainDelegateOpsCount +
-                state.EndorsementOpsCount +
+                state.AttestationOpsCount +
                 state.IncreasePaidStorageOpsCount +
                 state.NonceRevelationOpsCount +
                 state.OriginationOpsCount +
-                state.PreendorsementOpsCount +
+                state.PreattestationOpsCount +
                 state.ProposalOpsCount +
                 state.RegisterConstantOpsCount +
                 state.RevealOpsCount +
@@ -94,7 +94,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupRemoveCommitmentOpsCount +
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount +
+                state.UpdateSecondaryKeyOpsCount +
                 state.VdfRevelationOpsCount;
 
             if (state.OperationCounter != opsCount)
@@ -127,7 +127,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.TxRollupRemoveCommitmentOpsCount +
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount;
+                state.UpdateSecondaryKeyOpsCount;
 
             if (state.ManagerCounter != managerOpsCount)
                 throw new Exception("Invalid AppState.ManagerCounter");
@@ -191,17 +191,17 @@ namespace Tzkt.Sync.Tests.Database
             if (state.DoubleBakingOpsCount != await db.DoubleBakingOps.CountAsync())
                 throw new Exception("Invalid AppState.DoubleBakingOpsCount");
 
-            if (state.DoubleEndorsingOpsCount != await db.DoubleEndorsingOps.CountAsync())
-                throw new Exception("Invalid AppState.DoubleEndorsingOpsCount");
+            if (state.DoubleAttestationOpsCount != await db.DoubleAttestationOps.CountAsync())
+                throw new Exception("Invalid AppState.DoubleAttestationOpsCount");
 
-            if (state.DoublePreendorsingOpsCount != await db.DoublePreendorsingOps.CountAsync())
-                throw new Exception("Invalid AppState.DoublePreendorsingOpsCount");
+            if (state.DoublePreattestationOpsCount != await db.DoublePreattestationOps.CountAsync())
+                throw new Exception("Invalid AppState.DoublePreattestationOpsCount");
 
-            if (state.EndorsementOpsCount != await db.EndorsementOps.CountAsync())
-                throw new Exception("Invalid AppState.EndorsementOpsCount");
+            if (state.AttestationOpsCount != await db.AttestationOps.CountAsync())
+                throw new Exception("Invalid AppState.AttestationOpsCount");
 
-            if (state.PreendorsementOpsCount != await db.PreendorsementOps.CountAsync())
-                throw new Exception("Invalid AppState.PreendorsementOpsCount");
+            if (state.PreattestationOpsCount != await db.PreattestationOps.CountAsync())
+                throw new Exception("Invalid AppState.PreattestationOpsCount");
 
             if (state.NonceRevelationOpsCount != await db.NonceRevelationOps.CountAsync())
                 throw new Exception("Invalid AppState.NonceRevelationOpsCount");
@@ -230,8 +230,8 @@ namespace Tzkt.Sync.Tests.Database
             if (state.RegisterConstantOpsCount != await db.RegisterConstantOps.CountAsync())
                 throw new Exception("Invalid AppState.RegisterConstantOpsCount");
 
-            if (state.EndorsingRewardOpsCount != await db.EndorsingRewardOps.CountAsync())
-                throw new Exception("Invalid AppState.EndorsingRewardOpsCount");
+            if (state.AttestationRewardOpsCount != await db.AttestationRewardOps.CountAsync())
+                throw new Exception("Invalid AppState.AttestationRewardOpsCount");
 
             if (state.DalAttestationRewardOpsCount != await db.DalAttestationRewardOps.CountAsync())
                 throw new Exception("Invalid AppState.DalAttestationRewardOpsCount");
@@ -269,8 +269,8 @@ namespace Tzkt.Sync.Tests.Database
             if (state.IncreasePaidStorageOpsCount != await db.IncreasePaidStorageOps.CountAsync())
                 throw new Exception("Invalid AppState.IncreasePaidStorageOpsCount");
 
-            if (state.UpdateConsensusKeyOpsCount != await db.UpdateConsensusKeyOps.CountAsync())
-                throw new Exception("Invalid AppState.UpdateConsensusKeyOpsCount");
+            if (state.UpdateSecondaryKeyOpsCount != await db.UpdateSecondaryKeyOps.CountAsync())
+                throw new Exception("Invalid AppState.UpdateSecondaryKeyOpsCount");
 
             if (state.DrainDelegateOpsCount != await db.DrainDelegateOps.CountAsync())
                 throw new Exception("Invalid AppState.DrainDelegateOpsCount");

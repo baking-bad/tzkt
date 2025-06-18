@@ -57,7 +57,7 @@ namespace Tzkt.Sync.Protocols
                     switch (content.RequiredString("kind"))
                     {
                         case "endorsement_with_slot":
-                            await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new AttestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");
@@ -100,7 +100,7 @@ namespace Tzkt.Sync.Protocols
                             await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_endorsement_evidence":
-                            await new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new DoubleAttestationCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -190,7 +190,7 @@ namespace Tzkt.Sync.Protocols
                 blockCommit.Block,
                 cycleCommit.FutureCycle,
                 brCommit.FutureBakingRights,
-                brCommit.FutureEndorsingRights,
+                brCommit.FutureAttestationRights,
                 cycleCommit.BakerSnapshots,
                 brCommit.CurrentRights);
 
@@ -229,8 +229,8 @@ namespace Tzkt.Sync.Protocols
             {
                 switch (operation)
                 {
-                    case EndorsementOperation op:
-                        await new EndorsementsCommit(this).Revert(currBlock, op);
+                    case AttestationOperation op:
+                        await new AttestationsCommit(this).Revert(currBlock, op);
                         break;
                     case ProposalOperation op:
                         await new ProposalsCommit(this).Revert(currBlock, op);
@@ -244,8 +244,8 @@ namespace Tzkt.Sync.Protocols
                     case DoubleBakingOperation op:
                         await new DoubleBakingCommit(this).Revert(currBlock, op);
                         break;
-                    case DoubleEndorsingOperation op:
-                        await new DoubleEndorsingCommit(this).Revert(currBlock, op);
+                    case DoubleAttestationOperation op:
+                        await new DoubleAttestationCommit(this).Revert(currBlock, op);
                         break;
                     case NonceRevelationOperation op:
                         await new NonceRevelationsCommit(this).Revert(currBlock, op);

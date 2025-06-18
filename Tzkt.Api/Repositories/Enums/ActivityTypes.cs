@@ -13,16 +13,16 @@ namespace Tzkt.Api
         public const string DalPublishCommitment = "dal_publish_commitment";
         public const string Delegation = "delegation";
         public const string DoubleBaking = "double_baking";
-        public const string DoubleEndorsing = "double_endorsing";
-        public const string DoublePreendorsing = "double_preendorsing";
+        public const string DoubleAttestation = "double_attestation";
+        public const string DoublePreattestation = "double_preattestation";
         public const string DrainDelegate = "drain_delegate";
-        public const string Endorsement = "endorsement";
-        public const string EndorsingReward = "endorsing_reward";
+        public const string Attestation = "attestation";
+        public const string AttestationReward = "attestation_reward";
         public const string IncreasePaidStorage = "increase_paid_storage";
         public const string Migration = "migration";
         public const string NonceRevelation = "nonce_revelation";
         public const string Origination = "origination";
-        public const string Preendorsement = "preendorsement";
+        public const string Preattestation = "preattestation";
         public const string Proposal = "proposal";
         public const string RegisterConstant = "register_constant";
         public const string Reveal = "reveal";
@@ -47,7 +47,7 @@ namespace Tzkt.Api
         public const string TxRollupRemoveCommitment = "tx_rollup_remove_commitment";
         public const string TxRollupReturnBond = "tx_rollup_return_bond";
         public const string TxRollupSubmitBatch = "tx_rollup_submit_batch";
-        public const string UpdateConsensusKey = "update_consensus_key";
+        public const string UpdateSecondaryKey = "update_secondary_key";
         public const string VdfRevelation = "vdf_revelation";
         public const string TicketTransfer = "ticket_transfer";
         public const string TokenTransfer = "token_transfer";
@@ -63,16 +63,16 @@ namespace Tzkt.Api
             DalPublishCommitment => true,
             Delegation => true,
             DoubleBaking => true,
-            DoubleEndorsing => true,
-            DoublePreendorsing => true,
+            DoubleAttestation => true,
+            DoublePreattestation => true,
             DrainDelegate => true,
-            Endorsement => true,
-            EndorsingReward => true,
+            Attestation => true,
+            AttestationReward => true,
             IncreasePaidStorage => true,
             Migration => true,
             NonceRevelation => true,
             Origination => true,
-            Preendorsement => true,
+            Preattestation => true,
             Proposal => true,
             RegisterConstant => true,
             Reveal => true,
@@ -97,7 +97,7 @@ namespace Tzkt.Api
             TxRollupRemoveCommitment => true,
             TxRollupReturnBond => true,
             TxRollupSubmitBatch => true,
-            UpdateConsensusKey => true,
+            UpdateSecondaryKey => true,
             VdfRevelation => true,
             TicketTransfer => true,
             TokenTransfer => true,
@@ -118,16 +118,16 @@ namespace Tzkt.Api
                 case DalPublishCommitment: res = Operations.DalPublishCommitment; break;
                 case Delegation: res = Operations.Delegations; break;
                 case DoubleBaking: res = Operations.DoubleBakings; break;
-                case DoubleEndorsing: res = Operations.DoubleEndorsings; break;
-                case DoublePreendorsing: res = Operations.DoublePreendorsings; break;
+                case DoubleAttestation: res = Operations.DoubleAttestations; break;
+                case DoublePreattestation: res = Operations.DoublePreattestations; break;
                 case DrainDelegate: res = Operations.DrainDelegate; break;
-                case Endorsement: res = Operations.Endorsements; break;
-                case EndorsingReward: res = Operations.EndorsingRewards; break;
+                case Attestation: res = Operations.Attestations; break;
+                case AttestationReward: res = Operations.AttestationRewards; break;
                 case IncreasePaidStorage: res = Operations.IncreasePaidStorage; break;
                 case Migration: res = Operations.Migrations; break;
                 case NonceRevelation: res = Operations.Revelations; break;
                 case Origination: res = Operations.Originations; break;
-                case Preendorsement: res = Operations.Preendorsements; break;
+                case Preattestation: res = Operations.Preattestations; break;
                 case Proposal: res = Operations.Proposals; break;
                 case RegisterConstant: res = Operations.RegisterConstant; break;
                 case Reveal: res = Operations.Reveals; break;
@@ -152,7 +152,7 @@ namespace Tzkt.Api
                 case TxRollupRemoveCommitment: res = Operations.TxRollupRemoveCommitment; break;
                 case TxRollupReturnBond: res = Operations.TxRollupReturnBond; break;
                 case TxRollupSubmitBatch: res = Operations.TxRollupSubmitBatch; break;
-                case UpdateConsensusKey: res = Operations.UpdateConsensusKey; break;
+                case UpdateSecondaryKey: res = Operations.UpdateSecondaryKey; break;
                 case VdfRevelation: res = Operations.VdfRevelation; break;
                 default: return false;
             }
@@ -170,16 +170,16 @@ namespace Tzkt.Api
             DalPublishCommitment,
             Delegation,
             DoubleBaking,
-            DoubleEndorsing,
-            DoublePreendorsing,
+            DoubleAttestation,
+            DoublePreattestation,
             DrainDelegate,
-            //Endorsement,
-            EndorsingReward,
+            //Attestation,
+            AttestationReward,
             IncreasePaidStorage,
             Migration,
             NonceRevelation,
             Origination,
-            //Preendorsement,
+            //Preattestation,
             Proposal,
             RegisterConstant,
             Reveal,
@@ -204,7 +204,7 @@ namespace Tzkt.Api
             //TxRollupRemoveCommitment,
             //TxRollupReturnBond,
             //TxRollupSubmitBatch,
-            UpdateConsensusKey,
+            UpdateSecondaryKey,
             VdfRevelation,
             TicketTransfer,
             TokenTransfer,

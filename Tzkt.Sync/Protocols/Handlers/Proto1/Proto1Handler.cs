@@ -45,7 +45,7 @@ namespace Tzkt.Sync.Protocols
                     switch (content.RequiredString("kind"))
                     {
                         case "endorsement":
-                            await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new AttestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");
@@ -146,7 +146,7 @@ namespace Tzkt.Sync.Protocols
                 blockCommit.Block,
                 cycleCommit.FutureCycle,
                 brCommit.FutureBakingRights,
-                brCommit.FutureEndorsingRights,
+                brCommit.FutureAttestationRights,
                 cycleCommit.BakerSnapshots,
                 brCommit.CurrentRights);
 
@@ -184,8 +184,8 @@ namespace Tzkt.Sync.Protocols
             {
                 switch (operation)
                 {
-                    case EndorsementOperation op:
-                        await new EndorsementsCommit(this).Revert(currBlock, op);
+                    case AttestationOperation op:
+                        await new AttestationsCommit(this).Revert(currBlock, op);
                         break;
                     case ActivationOperation op:
                         await new ActivationsCommit(this).Revert(currBlock, op);

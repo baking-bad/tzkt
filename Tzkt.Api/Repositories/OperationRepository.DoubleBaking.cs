@@ -26,7 +26,6 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  "Blocks" as b 
                         ON  b."Level" = o."Level"
                 WHERE       o."OpHash" = @hash::character(51)
-                LIMIT       1
                 """;
 
             await using var db = await DataSource.OpenConnectionAsync();

@@ -24,7 +24,7 @@
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Netezos" Version="2.11.0" />
+        <PackageReference Include="Netezos" Version="2.12.1" />
         <PackageReference Include="Newtonsoft.Json.Bson" Version="1.0.3" />
         <PackageReference Include="SauceControl.Blake2Fast" Version="2.0.0" />
     </ItemGroup>

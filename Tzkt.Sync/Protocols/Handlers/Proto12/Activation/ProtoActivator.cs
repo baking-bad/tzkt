@@ -15,16 +15,16 @@ namespace Tzkt.Sync.Protocols.Proto12
         {
             base.SetParameters(protocol, parameters);
             protocol.BlocksPerSnapshot = parameters["blocks_per_stake_snapshot"]?.Value<int>() ?? 512;
-            protocol.EndorsersPerBlock = parameters["consensus_committee_size"]?.Value<int>() ?? 7000;
+            protocol.AttestersPerBlock = parameters["consensus_committee_size"]?.Value<int>() ?? 7000;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 6_000_000_000;
             protocol.BlockDeposit = 0;
-            protocol.EndorsementDeposit = 0;
+            protocol.AttestationDeposit = 0;
 
             var totalReward = 80_000_000 / (60 / protocol.TimeBetweenBlocks);
             protocol.BlockReward0 = parameters["baking_reward_fixed_portion"]?.Value<long>() ?? (totalReward / 4);
-            protocol.BlockReward1 = parameters["baking_reward_bonus_per_slot"]?.Value<long>() ?? (totalReward / 4 / (protocol.EndorsersPerBlock / 3));
-            protocol.EndorsementReward0 = parameters["endorsing_reward_per_slot"]?.Value<long>() ?? (totalReward / 2 / protocol.EndorsersPerBlock);
-            protocol.EndorsementReward1 = 0;
+            protocol.BlockReward1 = parameters["baking_reward_bonus_per_slot"]?.Value<long>() ?? (totalReward / 4 / (protocol.AttestersPerBlock / 3));
+            protocol.AttestationReward0 = parameters["endorsing_reward_per_slot"]?.Value<long>() ?? (totalReward / 2 / protocol.AttestersPerBlock);
+            protocol.AttestationReward1 = 0;
 
             protocol.LBToggleThreshold = (parameters["liquidity_baking_escape_ema_threshold"]?.Value<int>() ?? 666_667) * 1000;
 
@@ -35,22 +35,22 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.SlashingDelay = 1;
             protocol.MaxDelegatedOverFrozenRatio = 100 / (parameters["frozen_deposits_percentage"]?.Value<int>() ?? 10) - 1;
 
-            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
-            protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
+            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.AttestersPerBlock / 3 * protocol.BlockReward1;
+            protocol.MaxAttestationReward = protocol.AttestersPerBlock * protocol.AttestationReward0;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            protocol.EndorsersPerBlock = 7000;
+            protocol.AttestersPerBlock = 7000;
             protocol.MinimalStake = 6_000_000_000;
             protocol.BlockDeposit = 0;
-            protocol.EndorsementDeposit = 0;
+            protocol.AttestationDeposit = 0;
 
             var totalReward = 80_000_000 / (60 / protocol.TimeBetweenBlocks);
             protocol.BlockReward0 = totalReward / 4;
-            protocol.BlockReward1 = totalReward / 4 / (protocol.EndorsersPerBlock / 3);
-            protocol.EndorsementReward0 = totalReward / 2 / protocol.EndorsersPerBlock;
-            protocol.EndorsementReward1 = 0;
+            protocol.BlockReward1 = totalReward / 4 / (protocol.AttestersPerBlock / 3);
+            protocol.AttestationReward0 = totalReward / 2 / protocol.AttestersPerBlock;
+            protocol.AttestationReward1 = 0;
 
             protocol.LBToggleThreshold = 666_667_000;
 
@@ -61,8 +61,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             protocol.SlashingDelay = 1;
             protocol.MaxDelegatedOverFrozenRatio = 9;
 
-            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.EndorsersPerBlock / 3 * protocol.BlockReward1;
-            protocol.MaxEndorsingReward = protocol.EndorsersPerBlock * protocol.EndorsementReward0;
+            protocol.MaxBakingReward = protocol.BlockReward0 + protocol.AttestersPerBlock / 3 * protocol.BlockReward1;
+            protocol.MaxAttestationReward = protocol.AttestersPerBlock * protocol.AttestationReward0;
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -189,13 +189,13 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bakerCycle.FutureBlockRewards -= GetFutureBlockReward(prevProto, state.Cycle);
             }
 
-            foreach (var er in rights.Where(x => x.Type == BakingRightType.Endorsing))
+            foreach (var ar in rights.Where(x => x.Type == BakingRightType.Attestation))
             {
-                var bakerCycle = bakerCycles[er.BakerId];
+                var bakerCycle = bakerCycles[ar.BakerId];
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsements -= er.Slots!.Value;
-                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, er.Slots.Value);
+                bakerCycle.FutureAttestations -= ar.Slots!.Value;
+                bakerCycle.FutureAttestationRewards -= GetFutureAttestationReward(prevProto, state.Cycle, ar.Slots.Value);
             }
 
             await Db.Database.ExecuteSqlRawAsync("""
@@ -263,9 +263,9 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (baker.StakingBalance >= nextProto.MinimalStake)
                 {
                     var bakingPower = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                    var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                    var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
                     bakerCycles[baker.Id].BakingPower = bakingPower;
-                    bakerCycles[baker.Id].FutureEndorsementRewards += expectedEndorsements * nextProto.EndorsementReward0;
+                    bakerCycles[baker.Id].FutureAttestationRewards += expectedAttestations * nextProto.AttestationReward0;
                 }
             }
             #endregion
@@ -280,7 +280,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             var brs = new List<RightsGenerator.BR>();
-            var ers = new List<RightsGenerator.ER>();
+            var ars = new List<RightsGenerator.AR>();
             for (int level = state.Level + 1; level <= cycle.LastLevel; level++)
             {
                 foreach (var br in RightsGenerator.GetBakingRights(sampler, cycle, level))
@@ -294,12 +294,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                         bakerCycle.FutureBlockRewards += nextProto.MaxBakingReward;
                     }
                 }
-                foreach (var er in RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, level - 1))
+                foreach (var ar in RightsGenerator.GetAttestationRights(sampler, nextProto, cycle, level - 1))
                 {
-                    ers.Add(er);
-                    var bakerCycle = bakerCycles[er.Baker];
+                    ars.Add(ar);
+                    var bakerCycle = bakerCycles[ar.Baker];
                     Db.TryAttach(bakerCycle);
-                    bakerCycle.FutureEndorsements += er.Slots;
+                    bakerCycle.FutureAttestations += ar.Slots;
                 }
             }
 
@@ -308,16 +308,16 @@ namespace Tzkt.Sync.Protocols.Proto12
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)");
 
-            foreach (var er in ers)
+            foreach (var ar in ars)
             {
                 writer.StartRow();
                 writer.Write(cycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(ar.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(ar.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
-                writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(ar.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
             }
 
             foreach (var br in brs)
@@ -358,22 +358,22 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             #region save shifted
             var currentCycle = cycles.First();
-            var shifted = RightsGenerator.GetEndorsingRights(sampler, nextProto, currentCycle, currentCycle.LastLevel);
+            var shifted = RightsGenerator.GetAttestationRights(sampler, nextProto, currentCycle, currentCycle.LastLevel);
 
             using (var writer = conn.BeginBinaryImport(@"
                 COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                 FROM STDIN (FORMAT BINARY)"))
             {
-                foreach (var er in shifted)
+                foreach (var ar in shifted)
                 {
                     writer.StartRow();
                     writer.Write(currentCycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(ar.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(ar.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.WriteNull();
-                    writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(ar.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                 }
 
                 writer.Complete();
@@ -384,23 +384,23 @@ namespace Tzkt.Sync.Protocols.Proto12
             {
                 GC.Collect();
                 var brs = await RightsGenerator.GetBakingRightsAsync(sampler, nextProto, cycle);
-                var ers = await RightsGenerator.GetEndorsingRightsAsync(sampler, nextProto, cycle);
+                var ars = await RightsGenerator.GetAttestationRightsAsync(sampler, nextProto, cycle);
 
                 #region save rights
                 using (var writer = conn.BeginBinaryImport(@"
                     COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
                     FROM STDIN (FORMAT BINARY)"))
                 {
-                    foreach (var er in ers)
+                    foreach (var ar in ars)
                     {
                         writer.StartRow();
-                        writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(nextProto.GetCycle(ar.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.WriteNull();
-                        writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                     }
 
                     foreach (var br in brs)
@@ -460,11 +460,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
                     {
                         var bakingPower = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
                         bc.BakingPower = bakingPower;
                         bc.ExpectedBlocks = nextProto.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
-                        bc.ExpectedEndorsements = expectedEndorsements;
-                        bc.FutureEndorsementRewards = expectedEndorsements * nextProto.EndorsementReward0;
+                        bc.ExpectedAttestations = expectedAttestations;
+                        bc.FutureAttestationRewards = expectedAttestations * nextProto.AttestationReward0;
                     }
                     return bc;
                 });
@@ -482,24 +482,24 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
                 #endregion
 
-                #region apply future endorsing rights
-                foreach (var er in shifted)
+                #region apply future attestation rights
+                foreach (var ar in shifted)
                 {
-                    if (bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                    if (bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
                     {
-                        bakerCycle.FutureEndorsements += er.Slots;
+                        bakerCycle.FutureAttestations += ar.Slots;
                     }
                 }
-                foreach (var er in ers.TakeWhile(x => x.Level < cycle.LastLevel))
+                foreach (var ar in ars.TakeWhile(x => x.Level < cycle.LastLevel))
                 {
-                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                    if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
                         throw new Exception("Nonexistent baker cycle");
 
-                    bakerCycle.FutureEndorsements += er.Slots;
+                    bakerCycle.FutureAttestations += ar.Slots;
                 }
                 #endregion
 
-                shifted = ers.Where(x => x.Level == cycle.LastLevel).ToList();
+                shifted = ars.Where(x => x.Level == cycle.LastLevel).ToList();
             }
         }
 

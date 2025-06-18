@@ -1386,6 +1386,19 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, SecondaryKeyTypeParameter? value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($@"""{column}"" = {value.Eq}");
+
+            if (value.Ne != null)
+                AppendFilter($@"""{column}"" != {value.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, Int32Parameter? value)
         {
             if (value == null) return this;

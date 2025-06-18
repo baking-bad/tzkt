@@ -71,6 +71,11 @@
         public required string Status { get; set; }
 
         /// <summary>
+        /// Revealed public key
+        /// </summary>
+        public string? PublicKey { get; set; }
+
+        /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
         /// </summary>
         public List<OperationError>? Errors { get; set; }

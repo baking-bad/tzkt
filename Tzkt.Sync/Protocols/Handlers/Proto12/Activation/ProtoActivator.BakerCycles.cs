@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             List<Account> accounts,
             List<Cycle> cycles,
             List<IEnumerable<RightsGenerator.BR>> bakingRights,
-            List<IEnumerable<RightsGenerator.ER>> endorsingRights)
+            List<IEnumerable<RightsGenerator.AR>> attestationRights)
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
@@ -38,11 +38,11 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (x.StakingBalance >= protocol.MinimalStake)
                     {
                         var bakingPower = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
-                        bakerCycle.ExpectedEndorsements = expectedEndorsements;
-                        bakerCycle.FutureEndorsementRewards = expectedEndorsements * protocol.EndorsementReward0;
+                        bakerCycle.ExpectedAttestations = expectedAttestations;
+                        bakerCycle.FutureAttestationRewards = expectedAttestations * protocol.AttestationReward0;
                     }
                     return bakerCycle;
                 });
@@ -58,25 +58,25 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
                 #endregion
 
-                #region future endorsing rights
-                foreach (var er in endorsingRights[cycle.Index].TakeWhile(x => x.Level < cycle.LastLevel))
+                #region future attestation rights
+                foreach (var ar in attestationRights[cycle.Index].TakeWhile(x => x.Level < cycle.LastLevel))
                 {
-                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
-                        throw new Exception("Unknown endorsing right recipient");
+                    if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
+                        throw new Exception("Unknown attestation right recipient");
 
-                    bakerCycle.FutureEndorsements += er.Slots;
+                    bakerCycle.FutureAttestations += ar.Slots;
                 }
                 #endregion
 
                 #region shifted future endirsing rights
                 if (cycle.Index > 0)
                 {
-                    foreach (var er in endorsingRights[cycle.Index - 1].Reverse().TakeWhile(x => x.Level == cycle.FirstLevel - 1))
+                    foreach (var ar in attestationRights[cycle.Index - 1].Reverse().TakeWhile(x => x.Level == cycle.FirstLevel - 1))
                     {
-                        if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
-                            throw new Exception("Unknown endorsing right recipient");
+                        if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
+                            throw new Exception("Unknown attestation right recipient");
 
-                        bakerCycle.FutureEndorsements += er.Slots;
+                        bakerCycle.FutureAttestations += ar.Slots;
                     }
                 }
                 #endregion

@@ -32,8 +32,7 @@ namespace Tzkt.Api.Repositories
                         ON  proposal.""Id"" = o.""ProposalId""
                 INNER JOIN  ""VotingPeriods"" as period
                         ON  period.""Index"" = o.""Period""
-                WHERE       o.""OpHash"" = @hash::character(51)
-                LIMIT       1";
+                WHERE       o.""OpHash"" = @hash::character(51)";
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });

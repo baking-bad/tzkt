@@ -49,29 +49,29 @@ namespace Tzkt.Sync.Protocols.Proto12
                 
                 if (bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                 {
-                    if ((long)bakerCycle.ExpectedEndorsements != remote.RequiredInt64("expected_cycle_activity"))
-                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
+                    if ((long)bakerCycle.ExpectedAttestations != remote.RequiredInt64("expected_cycle_activity"))
+                        throw new Exception($"Invalid baker ExpectedAttestations {baker.Address}");
 
-                    if (bakerCycle.FutureEndorsementRewards != remote.RequiredInt64("expected_endorsing_rewards"))
-                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+                    if (bakerCycle.FutureAttestationRewards != remote.RequiredInt64("expected_endorsing_rewards"))
+                        throw new Exception($"Invalid baker FutureAttestationRewards {baker.Address}");
 
-                    if (bakerCycle.MissedEndorsements != remote.RequiredInt64("missed_slots"))
+                    if (bakerCycle.MissedAttestations != remote.RequiredInt64("missed_slots"))
                     {
                         var proto = await Cache.Protocols.GetAsync(state.Protocol);
                         if (bakerCycle.Cycle != proto.FirstCycle)
-                            throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                            throw new Exception($"Invalid baker MissedAttestations {baker.Address}");
                     }
                 }
                 else
                 {
                     if (remote.RequiredInt64("expected_cycle_activity") != 0)
-                        throw new Exception($"Invalid baker ExpectedEndorsements {baker.Address}");
+                        throw new Exception($"Invalid baker ExpectedAttestations {baker.Address}");
 
                     if (remote.RequiredInt64("expected_endorsing_rewards") != 0)
-                        throw new Exception($"Invalid baker FutureEndorsementRewards {baker.Address}");
+                        throw new Exception($"Invalid baker FutureAttestationRewards {baker.Address}");
 
                     if (remote.RequiredInt64("missed_slots") != 0)
-                        throw new Exception($"Invalid baker MissedEndorsements {baker.Address}");
+                        throw new Exception($"Invalid baker MissedAttestations {baker.Address}");
                 }
             }
         }

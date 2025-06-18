@@ -33,9 +33,9 @@ namespace Tzkt.Api.Tests.Api
         }
 
         [Fact]
-        public async Task TestEndorsingRights()
+        public async Task TestAttestationRights()
         {
-            var res = await Client.GetJsonAsync("/v1/rights?type=endorsing");
+            var res = await Client.GetJsonAsync("/v1/rights?type=attestation");
 
             Assert.True(res is DJsonArray);
         }

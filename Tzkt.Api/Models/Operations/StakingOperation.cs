@@ -34,6 +34,11 @@
         public required Alias Sender { get; set; }
 
         /// <summary>
+        /// Information about the account for which the action is performed
+        /// </summary>
+        public required Alias Staker { get; set; }
+
+        /// <summary>
         /// An account nonce which is used to prevent operation replay
         /// </summary>
         public int Counter { get; set; }

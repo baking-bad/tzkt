@@ -25,18 +25,18 @@ namespace Tzkt.Data.Models
         public long? EdgeOfBakingOverStaking { get; set; }
 
         public int BlocksCount { get; set; }
-        public int EndorsementsCount { get; set; }
-        public int PreendorsementsCount { get; set; }
+        public int AttestationsCount { get; set; }
+        public int PreattestationsCount { get; set; }
         public int BallotsCount { get; set; }
         public int ProposalsCount { get; set; }
         public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DoubleBakingCount { get; set; }
-        public int DoubleEndorsingCount { get; set; }
-        public int DoublePreendorsingCount { get; set; }
+        public int DoubleAttestationCount { get; set; }
+        public int DoublePreattestationCount { get; set; }
         public int NonceRevelationsCount { get; set; }
         public int VdfRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }
-        public int EndorsingRewardsCount { get; set; }
+        public int AttestationRewardsCount { get; set; }
         public int DalAttestationRewardsCount { get; set; }
         public int AutostakingOpsCount { get; set; }
 

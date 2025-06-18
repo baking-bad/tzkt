@@ -74,24 +74,24 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetDoubleBakingOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var doubleEndorsingOps = types.Contains(ActivityTypes.DoubleEndorsing)
-                ? Operations.GetDoubleEndorsingOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var doubleAttestationOps = types.Contains(ActivityTypes.DoubleAttestation)
+                ? Operations.GetDoubleAttestationOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var doublePreendorsingOps = types.Contains(ActivityTypes.DoublePreendorsing)
-                ? Operations.GetDoublePreendorsingOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var doublePreattestationOps = types.Contains(ActivityTypes.DoublePreattestation)
+                ? Operations.GetDoublePreattestationOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var drainDelegateOps = types.Contains(ActivityTypes.DrainDelegate)
                 ? Operations.GetDrainDelegateOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var endorsementOps = types.Contains(ActivityTypes.Endorsement)
-                ? Operations.GetEndorsementOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var attestationOps = types.Contains(ActivityTypes.Attestation)
+                ? Operations.GetAttestationOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var endorsingRewardOps = types.Contains(ActivityTypes.EndorsingReward)
-                ? Operations.GetEndorsingRewardOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var attestationRewardOps = types.Contains(ActivityTypes.AttestationReward)
+                ? Operations.GetAttestationRewardOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var increasePaidStorageOps = types.Contains(ActivityTypes.IncreasePaidStorage)
@@ -110,8 +110,8 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetOriginationOpsActivity(accounts, roles, timestamp, pagination, quote, format)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var preendorsementOps = types.Contains(ActivityTypes.Preendorsement)
-                ? Operations.GetPreendorsementOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var preattestationOps = types.Contains(ActivityTypes.Preattestation)
+                ? Operations.GetPreattestationOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var proposalOps = types.Contains(ActivityTypes.Proposal)
@@ -178,8 +178,8 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetTransferTicketOpsActivity(accounts, roles, timestamp, pagination, quote, format)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var updateConsensusKeyOps = types.Contains(ActivityTypes.UpdateConsensusKey)
-                ? Operations.GetUpdateConsensusKeyOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var updateSecondaryKeyOps = types.Contains(ActivityTypes.UpdateSecondaryKey)
+                ? Operations.GetUpdateSecondaryKeyOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var vdfRevelationOps = types.Contains(ActivityTypes.VdfRevelation)
@@ -204,16 +204,16 @@ namespace Tzkt.Api.Repositories
                 dalPublishCommitmentOps,
                 delegationOps,
                 doubleBakingOps,
-                doubleEndorsingOps,
-                doublePreendorsingOps,
+                doubleAttestationOps,
+                doublePreattestationOps,
                 drainDelegateOps,
-                endorsementOps,
-                endorsingRewardOps,
+                attestationOps,
+                attestationRewardOps,
                 increasePaidStorageOps,
                 migrationOps,
                 nonceRevelationOps,
                 originationOps,
-                preendorsementOps,
+                preattestationOps,
                 proposalOps,
                 registerConstantOps,
                 revealOps,
@@ -230,7 +230,7 @@ namespace Tzkt.Api.Repositories
                 stakingOps,
                 transactionOps,
                 transferTicketOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 vdfRevelationOps,
                 ticketTransfers,
                 tokenTransfers);
@@ -244,16 +244,16 @@ namespace Tzkt.Api.Repositories
                 .Concat(dalPublishCommitmentOps.Result)
                 .Concat(delegationOps.Result)
                 .Concat(doubleBakingOps.Result)
-                .Concat(doubleEndorsingOps.Result)
-                .Concat(doublePreendorsingOps.Result)
+                .Concat(doubleAttestationOps.Result)
+                .Concat(doublePreattestationOps.Result)
                 .Concat(drainDelegateOps.Result)
-                .Concat(endorsementOps.Result)
-                .Concat(endorsingRewardOps.Result)
+                .Concat(attestationOps.Result)
+                .Concat(attestationRewardOps.Result)
                 .Concat(increasePaidStorageOps.Result)
                 .Concat(migrationOps.Result)
                 .Concat(nonceRevelationOps.Result)
                 .Concat(originationOps.Result)
-                .Concat(preendorsementOps.Result)
+                .Concat(preattestationOps.Result)
                 .Concat(proposalOps.Result)
                 .Concat(registerConstantOps.Result)
                 .Concat(revealOps.Result)
@@ -270,7 +270,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(stakingOps.Result)
                 .Concat(transactionOps.Result)
                 .Concat(transferTicketOps.Result)
-                .Concat(updateConsensusKeyOps.Result)
+                .Concat(updateSecondaryKeyOps.Result)
                 .Concat(vdfRevelationOps.Result)
                 .Concat(ticketTransfers.Result)
                 .Concat(tokenTransfers.Result);

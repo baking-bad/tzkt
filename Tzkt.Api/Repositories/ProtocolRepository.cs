@@ -55,11 +55,11 @@ namespace Tzkt.Api.Repositories
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
-                    EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward1 == 0
-                        ? [row.EndorsementReward0]
-                        : [row.EndorsementReward0, row.EndorsementReward1],
-                    EndorsersPerBlock = row.EndorsersPerBlock,
+                    AttestationDeposit = row.AttestationDeposit,
+                    AttestationReward = row.AttestationReward1 == 0
+                        ? [row.AttestationReward0]
+                        : [row.AttestationReward0, row.AttestationReward1],
+                    AttestersPerBlock = row.AttestersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
@@ -126,11 +126,11 @@ namespace Tzkt.Api.Repositories
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
-                    EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward1 == 0
-                        ? [row.EndorsementReward0]
-                        : [row.EndorsementReward0, row.EndorsementReward1],
-                    EndorsersPerBlock = row.EndorsersPerBlock,
+                    AttestationDeposit = row.AttestationDeposit,
+                    AttestationReward = row.AttestationReward1 == 0
+                        ? [row.AttestationReward0]
+                        : [row.AttestationReward0, row.AttestationReward1],
+                    AttestersPerBlock = row.AttestersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
@@ -197,11 +197,11 @@ namespace Tzkt.Api.Repositories
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
-                    EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward1 == 0
-                        ? [row.EndorsementReward0]
-                        : [row.EndorsementReward0, row.EndorsementReward1],
-                    EndorsersPerBlock = row.EndorsersPerBlock,
+                    AttestationDeposit = row.AttestationDeposit,
+                    AttestationReward = row.AttestationReward1 == 0
+                        ? [row.AttestationReward0]
+                        : [row.AttestationReward0, row.AttestationReward1],
+                    AttestersPerBlock = row.AttestersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
@@ -269,11 +269,11 @@ namespace Tzkt.Api.Repositories
                     BlocksPerSnapshot = row.BlocksPerSnapshot,
                     BlocksPerVoting = row.BlocksPerVoting,
                     ByteCost = row.ByteCost,
-                    EndorsementDeposit = row.EndorsementDeposit,
-                    EndorsementReward = row.EndorsementReward1 == 0
-                        ? [row.EndorsementReward0]
-                        : [row.EndorsementReward0, row.EndorsementReward1],
-                    EndorsersPerBlock = row.EndorsersPerBlock,
+                    AttestationDeposit = row.AttestationDeposit,
+                    AttestationReward = row.AttestationReward1 == 0
+                        ? [row.AttestationReward0]
+                        : [row.AttestationReward0, row.AttestationReward1],
+                    AttestersPerBlock = row.AttestersPerBlock,
                     HardBlockGasLimit = row.HardBlockGasLimit,
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,

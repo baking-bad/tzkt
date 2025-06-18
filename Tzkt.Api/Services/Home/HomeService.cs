@@ -408,7 +408,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateSecondaryKeyOps"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstAsync(
@@ -486,7 +486,7 @@ namespace Tzkt.Api.Services
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
-                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateSecondaryKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstAsync(
@@ -544,8 +544,8 @@ namespace Tzkt.Api.Services
             var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
             
             var maxRewardsPerBlock = futureCycle.BlockReward
-                + futureCycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold)
-                + futureCycle.EndorsementRewardPerSlot * protocol.EndorsersPerBlock
+                + futureCycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold)
+                + futureCycle.AttestationRewardPerSlot * protocol.AttestersPerBlock
                 + futureCycle.DalAttestationRewardPerShard * protocol.NumberOfShards
                 + futureCycle.NonceRevelationReward / protocol.BlocksPerCommitment
                 + futureCycle.VdfRevelationReward / protocol.BlocksPerCycle;

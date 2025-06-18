@@ -215,8 +215,7 @@ namespace Tzkt.Api.Repositories
                         ON  b.""Level"" = o.""Level""
                 LEFT  JOIN  ""Scripts"" as sc
                         ON  sc.""Id"" = o.""ScriptId""
-                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
-                LIMIT       1";
+                WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce";
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });

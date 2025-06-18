@@ -13,6 +13,12 @@ namespace Tzkt.Api
         public AnyOfParameter? anyof { get; set; }
 
         /// <summary>
+        /// Filter by staker address.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public AccountParameter? staker { get; set; }
+
+        /// <summary>
         /// Filter by baker address.  
         /// Click on the parameter to expand more details.
         /// </summary>
@@ -27,6 +33,7 @@ namespace Tzkt.Api
         public override bool Empty =>
             base.Empty &&
             anyof == null &&
+            staker == null &&
             baker == null &&
             action == null;
 
@@ -35,7 +42,7 @@ namespace Tzkt.Api
             return ResponseCacheService.BuildKey("",
                 ("id", id), ("hash", hash), ("counter", counter), ("level", level),
                 ("timestamp", timestamp), ("status", status), ("sender", sender),
-                ("anyof", anyof), ("baker", baker), ("action", action));
+                ("anyof", anyof), ("staker", staker), ("baker", baker), ("action", action));
         }
     }
 }

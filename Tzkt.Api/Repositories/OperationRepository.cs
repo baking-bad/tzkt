@@ -34,6 +34,7 @@ namespace Tzkt.Api.Repositories
                 SELECT ""Status"" = 1
                 FROM   ""{table}""
                 WHERE  ""OpHash"" = @hash::character(51)
+                ORDER BY ""Id"" DESC
                 LIMIT  1",
             new { hash });
         }
@@ -48,7 +49,7 @@ namespace Tzkt.Api.Repositories
                 ?? await GetStatus(db, nameof(TzktContext.RegisterConstantOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SetDepositsLimitOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.IncreasePaidStorageOps), hash)
-                ?? await GetStatus(db, nameof(TzktContext.UpdateConsensusKeyOps), hash)
+                ?? await GetStatus(db, nameof(TzktContext.UpdateSecondaryKeyOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.TransferTicketOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupAddMessagesOps), hash)
                 ?? await GetStatus(db, nameof(TzktContext.SmartRollupCementOps), hash)
@@ -79,7 +80,7 @@ namespace Tzkt.Api.Repositories
             var registerConstants = GetRegisterConstants(hash, format, quote);
             var setDepositsLimits = GetSetDepositsLimits(hash, quote);
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
-            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
+            var updateSecondaryKeyOps = GetUpdateSecondaryKeys(hash, quote);
             var reveals = GetReveals(hash, quote);
             var transferTicketOps = GetTransferTicketOps(hash, format, quote);
 
@@ -91,7 +92,7 @@ namespace Tzkt.Api.Repositories
                 registerConstants,
                 setDepositsLimits,
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 transferTicketOps);
 
             var txRollupCommitOps = GetTxRollupCommitOps(hash, quote);
@@ -143,7 +144,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(registerConstants.Result)
                 .Concat(setDepositsLimits.Result)
                 .Concat(increasePaidStorageOps.Result)
-                .Concat(updateConsensusKeyOps.Result)
+                .Concat(updateSecondaryKeyOps.Result)
                 .Concat(transferTicketOps.Result)
                 .Concat(txRollupCommitOps.Result)
                 .Concat(txRollupDispatchTicketsOps.Result)
@@ -190,22 +191,22 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region very unlikely
-            var endorsements = GetEndorsements(hash, quote);
-            var preendorsements = GetPreendorsements(hash, quote);
+            var attestations = GetAttestations(hash, quote);
+            var preattestations = GetPreattestations(hash, quote);
             var dalEntrapmentEvidence = GetDalEntrapmentEvidences(hash, quote);
             var doubleBaking = GetDoubleBakings(hash, quote);
-            var doubleEndorsing = GetDoubleEndorsings(hash, quote);
-            var doublePreendorsing = GetDoublePreendorsings(hash, quote);
+            var doubleAttestation = GetDoubleAttestations(hash, quote);
+            var doublePreattestation = GetDoublePreattestations(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
             var vdfRevelation = GetVdfRevelations(hash, quote);
 
-            await Task.WhenAll(endorsements, preendorsements, doubleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
+            await Task.WhenAll(attestations, preattestations, doubleBaking, doubleAttestation, doublePreattestation, nonceRevelation);
 
-            if (endorsements.Result.Any())
-                return endorsements.Result;
+            if (attestations.Result.Any())
+                return attestations.Result;
 
-            if (preendorsements.Result.Any())
-                return preendorsements.Result;
+            if (preattestations.Result.Any())
+                return preattestations.Result;
 
             if (dalEntrapmentEvidence.Result.Any())
                 return dalEntrapmentEvidence.Result;
@@ -213,11 +214,11 @@ namespace Tzkt.Api.Repositories
             if (doubleBaking.Result.Any())
                 return doubleBaking.Result;
 
-            if (doubleEndorsing.Result.Any())
-                return doubleEndorsing.Result;
+            if (doubleAttestation.Result.Any())
+                return doubleAttestation.Result;
 
-            if (doublePreendorsing.Result.Any())
-                return doublePreendorsing.Result;
+            if (doublePreattestation.Result.Any())
+                return doublePreattestation.Result;
 
             if (nonceRevelation.Result.Any())
                 return nonceRevelation.Result;
@@ -232,7 +233,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<Operation>> Get(string hash, int counter, MichelineFormat format, Symbols quote)
         {
             var increasePaidStorageOps = GetIncreasePaidStorageOps(hash, quote);
-            var updateConsensusKeyOps = GetUpdateConsensusKeys(hash, quote);
+            var updateSecondaryKeyOps = GetUpdateSecondaryKeys(hash, quote);
             var srAddMessages = GetSmartRollupAddMessagesOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srCement = GetSmartRollupCementOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote);
             var srOriginate = GetSmartRollupOriginateOps(new() { hash = hash, counter = counter }, new() { limit = -1 }, quote, format);
@@ -245,7 +246,7 @@ namespace Tzkt.Api.Repositories
 
             await Task.WhenAll(
                 increasePaidStorageOps,
-                updateConsensusKeyOps,
+                updateSecondaryKeyOps,
                 srAddMessages,
                 srCement,
                 srOriginate,
@@ -259,8 +260,8 @@ namespace Tzkt.Api.Repositories
             if (increasePaidStorageOps.Result.Any())
                 return increasePaidStorageOps.Result;
 
-            if (updateConsensusKeyOps.Result.Any())
-                return updateConsensusKeyOps.Result;
+            if (updateSecondaryKeyOps.Result.Any())
+                return updateSecondaryKeyOps.Result;
 
             if (srAddMessages.Result.Any())
                 return srAddMessages.Result;

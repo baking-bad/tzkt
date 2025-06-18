@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto6
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             var br = parameters["baking_reward_per_endorsement"] as JArray;
-            var er = parameters["endorsement_reward"] as JArray;
+            var ar = parameters["endorsement_reward"] as JArray;
 
             protocol.RampUpCycles = parameters["security_deposit_ramp_up_cycles"]?.Value<int>() ?? 0;
             protocol.NoRewardCycles = parameters["no_reward_cycles"]?.Value<int>() ?? 0;
@@ -23,10 +23,10 @@ namespace Tzkt.Sync.Protocols.Proto6
             protocol.BlocksPerSnapshot = parameters["blocks_per_roll_snapshot"]?.Value<int>() ?? 256;
             protocol.BlocksPerVoting = parameters["blocks_per_voting_period"]?.Value<int>() ?? 32_768;
             protocol.ByteCost = parameters["cost_per_byte"]?.Value<int>() ?? 1000;
-            protocol.EndorsementDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 64_000_000;
-            protocol.EndorsementReward0 = er == null ? 1_250_000 : er.Count > 0 ? er[0].Value<long>() : 0;
-            protocol.EndorsementReward1 = er == null ? 833_333 : er.Count > 1 ? er[1].Value<long>() : protocol.EndorsementReward0;
-            protocol.EndorsersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 32;
+            protocol.AttestationDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 64_000_000;
+            protocol.AttestationReward0 = ar == null ? 1_250_000 : ar.Count > 0 ? ar[0].Value<long>() : 0;
+            protocol.AttestationReward1 = ar == null ? 833_333 : ar.Count > 1 ? ar[1].Value<long>() : protocol.AttestationReward0;
+            protocol.AttestersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 32;
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 10_400_000;
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 1_040_000;
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
@@ -44,17 +44,17 @@ namespace Tzkt.Sync.Protocols.Proto6
         {
             protocol.BlockReward0 = 1_250_000;
             protocol.BlockReward1 = 187_500;
-            protocol.EndorsementReward0 = 1_250_000;
-            protocol.EndorsementReward1 = 833_333;
+            protocol.AttestationReward0 = 1_250_000;
+            protocol.AttestationReward1 = 833_333;
             protocol.HardBlockGasLimit = 10_400_000;
             protocol.HardOperationGasLimit = 1_040_000;
         }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)
-            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.EndorsersPerBlock);
+            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.AttestersPerBlock);
 
-        protected override long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
+        protected override long GetFutureAttestationReward(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.AttestationReward0);
 
         // migrate baker cycles
 
@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE  "BakerCycles"
                 SET     "FutureBlockRewards" = "FutureBlocks" * 40000000 :: bigint,
-                        "FutureEndorsementRewards" = "FutureEndorsements" * 1250000 :: bigint
+                        "FutureAttestationRewards" = "FutureAttestations" * 1250000 :: bigint
                 WHERE   "Cycle" > {0};
                 """, block.Cycle);
         }
@@ -77,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto6
             await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE  "BakerCycles"
                 SET     "FutureBlockRewards" = "FutureBlocks" * 16000000 :: bigint,
-                        "FutureEndorsementRewards" = "FutureEndorsements" * 2000000 :: bigint
+                        "FutureAttestationRewards" = "FutureAttestations" * 2000000 :: bigint
                 WHERE   "Cycle" > {0};
                 """, block.Cycle);
         }

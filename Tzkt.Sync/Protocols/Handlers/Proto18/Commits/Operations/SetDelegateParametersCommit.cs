@@ -22,7 +22,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                 new MichelinePrim { Prim = PrimType.unit },
             ]
         });
-
         #endregion
 
         public async Task Apply(Block block, JsonElement op, JsonElement content)

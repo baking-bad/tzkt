@@ -24,9 +24,9 @@ namespace Tzkt.Data.Models
         public int Blocks { get; set; }
         public int MissedBlocks { get; set; }
 
-        public int FutureEndorsements { get; set; }
-        public int Endorsements { get; set; }
-        public int MissedEndorsements { get; set; }
+        public int FutureAttestations { get; set; }
+        public int Attestations { get; set; }
+        public int MissedAttestations { get; set; }
 
         // TODO: add dal rights
         #endregion
@@ -39,12 +39,12 @@ namespace Tzkt.Data.Models
         public long BlockRewardsStakedEdge { get; set; }
         public long BlockRewardsStakedShared { get; set; }
 
-        public long FutureEndorsementRewards { get; set; }
-        public long MissedEndorsementRewards { get; set; }
-        public long EndorsementRewardsDelegated { get; set; }
-        public long EndorsementRewardsStakedOwn { get; set; }
-        public long EndorsementRewardsStakedEdge { get; set; }
-        public long EndorsementRewardsStakedShared { get; set; }
+        public long FutureAttestationRewards { get; set; }
+        public long MissedAttestationRewards { get; set; }
+        public long AttestationRewardsDelegated { get; set; }
+        public long AttestationRewardsStakedOwn { get; set; }
+        public long AttestationRewardsStakedEdge { get; set; }
+        public long AttestationRewardsStakedShared { get; set; }
 
         public long FutureDalAttestationRewards { get; set; }
         public long MissedDalAttestationRewards { get; set; }
@@ -62,17 +62,17 @@ namespace Tzkt.Data.Models
         public long DoubleBakingLostExternalStaked { get; set; }
         public long DoubleBakingLostExternalUnstaked { get; set; }
 
-        public long DoubleEndorsingRewards { get; set; }
-        public long DoubleEndorsingLostStaked { get; set; }
-        public long DoubleEndorsingLostUnstaked { get; set; }
-        public long DoubleEndorsingLostExternalStaked { get; set; }
-        public long DoubleEndorsingLostExternalUnstaked { get; set; }
+        public long DoubleAttestationRewards { get; set; }
+        public long DoubleAttestationLostStaked { get; set; }
+        public long DoubleAttestationLostUnstaked { get; set; }
+        public long DoubleAttestationLostExternalStaked { get; set; }
+        public long DoubleAttestationLostExternalUnstaked { get; set; }
 
-        public long DoublePreendorsingRewards { get; set; }
-        public long DoublePreendorsingLostStaked { get; set; }
-        public long DoublePreendorsingLostUnstaked { get; set; }
-        public long DoublePreendorsingLostExternalStaked { get; set; }
-        public long DoublePreendorsingLostExternalUnstaked { get; set; }
+        public long DoublePreattestationRewards { get; set; }
+        public long DoublePreattestationLostStaked { get; set; }
+        public long DoublePreattestationLostUnstaked { get; set; }
+        public long DoublePreattestationLostExternalStaked { get; set; }
+        public long DoublePreattestationLostExternalUnstaked { get; set; }
 
         public long VdfRevelationRewardsDelegated { get; set; }
         public long VdfRevelationRewardsStakedOwn { get; set; }
@@ -88,7 +88,7 @@ namespace Tzkt.Data.Models
 
         #region expected
         public double ExpectedBlocks { get; set; }
-        public double ExpectedEndorsements { get; set; }
+        public double ExpectedAttestations { get; set; }
         public long ExpectedDalShards { get; set; }
         #endregion
     }

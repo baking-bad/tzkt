@@ -48,7 +48,7 @@ namespace Tzkt.Data.Models
         public int TransferTicketCount { get; set; }
 
         public int IncreasePaidStorageCount { get; set; }
-        public int UpdateConsensusKeyCount { get; set; }
+        public int UpdateSecondaryKeyCount { get; set; }
         public int DrainDelegateCount { get; set; }
 
         public int MigrationsCount { get; set; }

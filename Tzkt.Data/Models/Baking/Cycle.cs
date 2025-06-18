@@ -16,7 +16,7 @@ namespace Tzkt.Data.Models
 
         public long BlockReward { get; set; }
         public long BlockBonusPerSlot { get; set; }
-        public long EndorsementRewardPerSlot { get; set; }
+        public long AttestationRewardPerSlot { get; set; }
         public long NonceRevelationReward { get; set; }
         public long VdfRevelationReward { get; set; }
         public long DalAttestationRewardPerShard{ get; set; }

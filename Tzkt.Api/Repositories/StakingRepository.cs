@@ -48,8 +48,8 @@ namespace Tzkt.Api.Repositories
                         case "stakingOpId": columns.Add(@"""StakingOpId"""); break;
                         case "delegationOpId": columns.Add(@"""DelegationOpId"""); break;
                         case "doubleBakingOpId": columns.Add(@"""DoubleBakingOpId"""); break;
-                        case "doubleEndorsingOpId": columns.Add(@"""DoubleEndorsingOpId"""); break;
-                        case "doublePreendorsingOpId": columns.Add(@"""DoublePreendorsingOpId"""); break;
+                        case "doubleAttestationOpId": columns.Add(@"""DoubleAttestationOpId"""); break;
+                        case "doublePreattestationOpId": columns.Add(@"""DoublePreattestationOpId"""); break;
                     }
                 }
 
@@ -75,8 +75,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""StakingOpId""", filter.stakingOpId)
                 .FilterA(@"""DelegationOpId""", filter.delegationOpId)
                 .FilterA(@"""DoubleBakingOpId""", filter.doubleBakingOpId)
-                .FilterA(@"""DoubleEndorsingOpId""", filter.doubleEndorsingOpId)
-                .FilterA(@"""DoublePreendorsingOpId""", filter.doublePreendorsingOpId)
+                .FilterA(@"""DoubleAttestationOpId""", filter.doubleAttestationOpId)
+                .FilterA(@"""DoublePreattestationOpId""", filter.doublePreattestationOpId)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"""Id""", @"""Id"""),
@@ -106,8 +106,8 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""StakingOpId""", filter.stakingOpId)
                 .FilterA(@"""DelegationOpId""", filter.delegationOpId)
                 .FilterA(@"""DoubleBakingOpId""", filter.doubleBakingOpId)
-                .FilterA(@"""DoubleEndorsingOpId""", filter.doubleEndorsingOpId)
-                .FilterA(@"""DoublePreendorsingOpId""", filter.doublePreendorsingOpId);
+                .FilterA(@"""DoubleAttestationOpId""", filter.doubleAttestationOpId)
+                .FilterA(@"""DoublePreattestationOpId""", filter.doublePreattestationOpId);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -132,8 +132,8 @@ namespace Tzkt.Api.Repositories
                 StakingOpId = row.StakingOpId,
                 DelegationOpId = row.DelegationOpId,
                 DoubleBakingOpId = row.DoubleBakingOpId,
-                DoubleEndorsingOpId = row.DoubleEndorsingOpId,
-                DoublePreendorsingOpId = row.DoublePreendorsingOpId
+                DoubleAttestationOpId = row.DoubleAttestationOpId,
+                DoublePreattestationOpId = row.DoublePreattestationOpId
             });
         }
 
@@ -221,13 +221,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingOpId;
                         break;
-                    case "doubleEndorsingOpId":
+                    case "doubleAttestationOpId":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingOpId;
+                            result[j++][i] = row.DoubleAttestationOpId;
                         break;
-                    case "doublePreendorsingOpId":
+                    case "doublePreattestationOpId":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingOpId;
+                            result[j++][i] = row.DoublePreattestationOpId;
                         break;
                 }
             }

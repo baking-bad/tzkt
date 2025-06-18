@@ -49,14 +49,14 @@ namespace Tzkt.Sync.Protocols.Proto20
                 Seed = Hex.Parse(context.RequiredString("random_seed")),
                 BlockReward = cycleIssuance.RequiredInt64("baking_reward_fixed_portion"),
                 BlockBonusPerSlot = cycleIssuance.RequiredInt64("baking_reward_bonus_per_slot"),
-                EndorsementRewardPerSlot = cycleIssuance.RequiredInt64("attesting_reward_per_slot"),
+                AttestationRewardPerSlot = cycleIssuance.RequiredInt64("attesting_reward_per_slot"),
                 NonceRevelationReward = cycleIssuance.RequiredInt64("seed_nonce_revelation_tip"),
                 VdfRevelationReward = cycleIssuance.RequiredInt64("vdf_revelation_tip"),
                 DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(cycleIssuance)
             };
 
             FutureCycle.MaxBlockReward = FutureCycle.BlockReward
-                + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
+                + FutureCycle.BlockBonusPerSlot * (Context.Protocol.AttestersPerBlock - Context.Protocol.ConsensusThreshold);
 
             Db.Cycles.Add(FutureCycle);
         }

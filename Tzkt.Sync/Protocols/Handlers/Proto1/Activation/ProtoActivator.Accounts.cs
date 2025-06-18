@@ -55,10 +55,16 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap bakers
             foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 == null))
             {
+                var address = PubKey.FromBase58(pubKey).Address;
+                if (Cache.Accounts.TryGetCached(address, out var acc))
+                {
+                    acc.Balance += balance;
+                    continue;
+                }
                 var baker = new Data.Models.Delegate
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = PubKey.FromBase58(pubKey).Address,
+                    Address = address,
                     Balance = balance,
                     StakingBalance = balance,
                     PublicKey = pubKey,
@@ -78,12 +84,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap delegated users
             foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null))
             {
+                var address = PubKey.FromBase58(pubKey).Address;
+                if (Cache.Accounts.TryGetCached(address, out var acc))
+                {
+                    acc.Balance += balance;
+                    continue;
+                }
+
                 var delegat = Cache.Accounts.GetExistingDelegate(delegateTo!);
 
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),
-                    Address = PubKey.FromBase58(pubKey).Address,
+                    Address = address,
                     Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
@@ -107,6 +120,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap users
             foreach (var (pkh, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] == 't'))
             {
+                if (Cache.Accounts.TryGetCached(pkh, out var acc))
+                {
+                    acc.Balance += balance;
+                    continue;
+                }
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),

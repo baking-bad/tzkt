@@ -8,13 +8,22 @@ namespace Tzkt.Sync.Protocols.Proto18
 {
     class StakingCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public static readonly HashSet<string> Entrypoints = ["stake", "unstake", "finalize_unstake"];
+        #region static
+        public static bool ValidateParameters(string entrypoint, string src, string dst) => entrypoint switch
+        {
+            "stake" => src == dst,
+            "unstake" => src == dst,
+            "finalize_unstake" => true,
+            _ => false
+        };
+        #endregion
 
         public async Task Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
             var sender = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
+            var staker = (await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination")) as User)!;
 
             var result = content.Required("metadata").Required("operation_result");
             var operation = new StakingOperation
@@ -28,6 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
+                StakerId = staker.Id,
                 Action = content.Required("parameters").RequiredString("entrypoint") switch
                 {
                     "stake" => StakingAction.Stake,
@@ -60,15 +70,18 @@ namespace Tzkt.Sync.Protocols.Proto18
             sender.Counter = operation.Counter;
             sender.StakingOpsCount++;
 
+            if (staker != sender)
+            {
+                Db.TryAttach(staker);
+                staker.StakingOpsCount++;
+            }
+
             if (senderDelegate != null)
             {
                 Db.TryAttach(senderDelegate);
                 senderDelegate.StakingBalance -= operation.BakerFee;
                 if (senderDelegate != sender)
-                {
                     senderDelegate.DelegatedBalance -= operation.BakerFee;
-                    senderDelegate.StakingOpsCount++;
-                }
             }
 
             Context.Proposer.Balance += operation.BakerFee;
@@ -113,6 +126,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                         ? sender.UnstakedBakerId ?? senderDelegate?.Id
                         : senderDelegate?.Id;
                     operation.StakingUpdatesCount = 0;
+
+                }
+
+                if (Cache.Accounts.GetDelegate(operation.BakerId) is Data.Models.Delegate baker && baker != sender && baker != staker)
+                {
+                    Db.TryAttach(baker);
+                    baker.StakingOpsCount++;
                 }
             }
             #endregion
@@ -126,6 +146,7 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
             var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
+            var staker = (await Cache.Accounts.GetAsync(operation.StakerId) as User)!;
 
             Db.TryAttach(sender);
             Db.TryAttach(senderDelegate);
@@ -133,6 +154,12 @@ namespace Tzkt.Sync.Protocols.Proto18
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
+                if (Cache.Accounts.GetDelegate(operation.BakerId) is Data.Models.Delegate baker && baker != sender && baker != staker)
+                {
+                    Db.TryAttach(baker);
+                    baker.StakingOpsCount--;
+                }
+
                 if (operation.StakingUpdatesCount != null)
                 {
                     var updates = await Db.StakingUpdates
@@ -149,14 +176,17 @@ namespace Tzkt.Sync.Protocols.Proto18
             sender.Counter = operation.Counter - 1;
             sender.StakingOpsCount--;
 
+            if (staker != sender)
+            {
+                Db.TryAttach(staker);
+                staker.StakingOpsCount--;
+            }
+
             if (senderDelegate != null)
             {
                 senderDelegate.StakingBalance += operation.BakerFee;
                 if (senderDelegate != sender)
-                {
                     senderDelegate.DelegatedBalance += operation.BakerFee;
-                    senderDelegate.StakingOpsCount--;
-                }
             }
 
             Context.Proposer.Balance -= operation.BakerFee;

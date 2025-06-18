@@ -21,7 +21,7 @@ namespace Tzkt.Data.Models
     public enum BakingRightType
     {
         Baking = 0,
-        Endorsing = 1
+        Attestation = 1
     }
 
     public enum BakingRightStatus
