@@ -86,12 +86,24 @@ namespace Tzkt.Api.Models
         /// Id of the operation, caused the staking update.
         /// If all `..OpId` fields are null, then the staking update was produced by the protocol migration.
         /// </summary>
-        public long? DoubleEndorsingOpId { get; set; }
+        public long? DoubleAttestationOpId { get; set; }
 
         /// <summary>
         /// Id of the operation, caused the staking update.
         /// If all `..OpId` fields are null, then the staking update was produced by the protocol migration.
         /// </summary>
-        public long? DoublePreendorsingOpId { get; set; }
+        public long? DoublePreattestationOpId { get; set; }
+
+        #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long? DoubleEndorsingOpId => DoubleAttestationOpId;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long? DoublePreendorsingOpId => DoublePreattestationOpId;
+        #endregion
     }
 }

@@ -6,11 +6,11 @@ namespace Tzkt.Sync.Protocols.Proto10
 {
     class BakingRightsCommit(ProtocolHandler protocol) : Proto3.BakingRightsCommit(protocol)
     {
-        // Tezos node is no longer able to normally return endorsing rights for a cycle,
+        // Tezos node is no longer able to normally return attestation rights for a cycle,
         // so we have to temporarily add some crutches, until we implement rights calculation
-        protected override async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, Protocol protocol, int cycle)
+        protected override async Task<IEnumerable<JsonElement>> GetAttestationRights(Block block, Protocol protocol, int cycle)
         {
-            Logger.LogInformation("Load endorsing rights");
+            Logger.LogInformation("Load attestation rights");
             try
             {
                 Logger.LogInformation("Trying to load by cycle with 30 minutes timeout...");
@@ -25,8 +25,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                 using var doc = await JsonDocument.ParseAsync(stream, default, cts.Token);
                 var rights = doc.RootElement.Clone().RequiredArray().EnumerateArray();
 
-                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
-                    throw new ValidationException("Rpc returned less endorsing rights (slots) than expected");
+                if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.AttestersPerBlock)
+                    throw new ValidationException("Rpc returned less attestation rights (slots) than expected");
 
                 return rights;
                 #endregion
@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     Timeout = Timeout.InfiniteTimeSpan
                 };
 
-                var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+                var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.AttestersPerBlock / 2);
                 var firstLevel = protocol.GetCycleStart(cycle);
                 var lastLevel = protocol.GetCycleEnd(cycle);
                 var attempts = 0;
@@ -62,15 +62,15 @@ namespace Tzkt.Sync.Protocols.Proto10
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError(ex, "Failed to fetch endorsing rights for level {level}. Retrying...", level);
-                        if (++attempts >= 30) throw new Exception("Too many RPC errors when fetching endorsing rights");
+                        Logger.LogError(ex, "Failed to fetch attestation rights for level {level}. Retrying...", level);
+                        if (++attempts >= 30) throw new Exception("Too many RPC errors when fetching attestation rights");
                         await Task.Delay(1000);
                         level--;
                     }
                 }
 
-                if (rights.Count == 0 || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
-                    throw new ValidationException("Rpc returned less endorsing rights (slots) than expected");
+                if (rights.Count == 0 || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.AttestersPerBlock)
+                    throw new ValidationException("Rpc returned less attestation rights (slots) than expected");
 
                 return rights;
                 #endregion

@@ -4,7 +4,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 {
     partial class ProtoActivator : Proto11.ProtoActivator
     {
-        protected override async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.ER>)> GetRights(
+        protected override async Task<(IEnumerable<RightsGenerator.BR>, IEnumerable<RightsGenerator.AR>)> GetRights(
             Protocol protocol,
             List<Account> accounts,
             Cycle cycle)
@@ -21,8 +21,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             var bakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, protocol, cycle);
-            var endorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, protocol, cycle);
-            return (bakingRights, endorsingRights);
+            var attestationRights = await RightsGenerator.GetAttestationRightsAsync(sampler, protocol, cycle);
+            return (bakingRights, attestationRights);
         }
     }
 }

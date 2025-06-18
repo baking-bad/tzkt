@@ -81,10 +81,10 @@ namespace Tzkt.Sync.Protocols.Proto13
 
         protected virtual async Task<Dictionary<int, long>> GetSelectedStakes(Block block, Protocol protocol, List<SnapshotBalance> snapshots)
         {
-            var endorsingRewards = await Db.BakerCycles
+            var attestationRewards = await Db.BakerCycles
                 .AsNoTracking()
-                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsDelegated > 0)
-                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
+                .Where(x => x.Cycle == block.Cycle - 1 && x.AttestationRewardsDelegated > 0)
+                .ToDictionaryAsync(x => x.BakerId, x => x.AttestationRewardsDelegated);
 
             return snapshots
                 .Where(x => x.StakingBalance >= protocol.MinimalStake)
@@ -93,7 +93,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
 
                     var lastBalance = baker.Balance;
-                    if (endorsingRewards.TryGetValue(baker.Id, out var reward))
+                    if (attestationRewards.TryGetValue(baker.Id, out var reward))
                         lastBalance -= reward;
                     if (block.ProposerId == baker.Id)
                         lastBalance -= block.RewardDelegated;

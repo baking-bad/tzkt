@@ -52,8 +52,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
                 cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold);
-                cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
+                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
                 cycle.DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(issuance);
@@ -69,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             List<Account> accounts,
             List<Cycle> cycles,
             List<IEnumerable<RightsGenerator.BR>> bakingRights,
-            List<IEnumerable<RightsGenerator.ER>> endorsingRights)
+            List<IEnumerable<RightsGenerator.AR>> attestationRights)
         {
             var bakers = accounts
                 .Where(x => x.Type == AccountType.Delegate)
@@ -96,11 +96,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                     if (x.StakingBalance >= protocol.MinimalStake)
                     {
                         var bakingPower = Math.Min(x.StakingBalance, (x.OwnStakedBalance + x.ExternalStakedBalance) * (protocol.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
-                        bakerCycle.ExpectedEndorsements = expectedEndorsements;
-                        bakerCycle.FutureEndorsementRewards = expectedEndorsements * cycle.EndorsementRewardPerSlot;
+                        bakerCycle.ExpectedAttestations = expectedAttestations;
+                        bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
                     }
                     return bakerCycle;
                 });
@@ -116,25 +116,25 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
                 #endregion
 
-                #region future endorsing rights
-                foreach (var er in endorsingRights[cycle.Index].TakeWhile(x => x.Level < cycle.LastLevel))
+                #region future attestation rights
+                foreach (var ar in attestationRights[cycle.Index].TakeWhile(x => x.Level < cycle.LastLevel))
                 {
-                    if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
-                        throw new Exception("Unknown endorsing right recipient");
+                    if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
+                        throw new Exception("Unknown attestation right recipient");
 
-                    bakerCycle.FutureEndorsements += er.Slots;
+                    bakerCycle.FutureAttestations += ar.Slots;
                 }
                 #endregion
 
                 #region shifted future endirsing rights
                 if (cycle.Index > 0)
                 {
-                    foreach (var er in endorsingRights[cycle.Index - 1].Reverse().TakeWhile(x => x.Level == cycle.FirstLevel - 1))
+                    foreach (var ar in attestationRights[cycle.Index - 1].Reverse().TakeWhile(x => x.Level == cycle.FirstLevel - 1))
                     {
-                        if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
-                            throw new Exception("Unknown endorsing right recipient");
+                        if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
+                            throw new Exception("Unknown attestation right recipient");
 
-                        bakerCycle.FutureEndorsements += er.Slots;
+                        bakerCycle.FutureAttestations += ar.Slots;
                     }
                 }
                 #endregion
@@ -152,7 +152,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.StakePowerMultiplier = parameters["edge_of_staking_over_delegation"]?.Value<int>() ?? 2;
             
             protocol.DoubleBakingSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 5) * 100;
-            protocol.DoubleEndorsingSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50) * 100;
+            protocol.DoubleAttestationSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50) * 100;
 
             protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 
@@ -160,10 +160,10 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.BlockReward0 = 0;
             protocol.BlockReward1 = 0;
             protocol.MaxBakingReward = 0;
-            protocol.EndorsementDeposit = 0;
-            protocol.EndorsementReward0 = 0;
-            protocol.EndorsementReward1 = 0;
-            protocol.MaxEndorsingReward = 0;
+            protocol.AttestationDeposit = 0;
+            protocol.AttestationReward0 = 0;
+            protocol.AttestationReward1 = 0;
+            protocol.MaxAttestationReward = 0;
         }
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
@@ -174,7 +174,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.StakePowerMultiplier = 2;
 
             protocol.DoubleBakingSlashedPercentage = 500;
-            protocol.DoubleEndorsingSlashedPercentage = 5000;
+            protocol.DoubleAttestationSlashedPercentage = 5000;
 
             protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 
@@ -182,10 +182,10 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.BlockReward0 = 0;
             protocol.BlockReward1 = 0;
             protocol.MaxBakingReward = 0;
-            protocol.EndorsementDeposit = 0;
-            protocol.EndorsementReward0 = 0;
-            protocol.EndorsementReward1 = 0;
-            protocol.MaxEndorsingReward = 0;
+            protocol.AttestationDeposit = 0;
+            protocol.AttestationReward0 = 0;
+            protocol.AttestationReward1 = 0;
+            protocol.MaxAttestationReward = 0;
         }
 
         protected override async Task MigrateContext(AppState state)
@@ -408,8 +408,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
                 cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold);
-                cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
+                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
             }

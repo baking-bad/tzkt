@@ -7,15 +7,15 @@ namespace Tzkt.Sync.Protocols.Proto6
         public BakerCycleCommit(ProtocolHandler protocol) : base(protocol) { }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)
-            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.EndorsersPerBlock);
+            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.AttestersPerBlock);
 
         protected override long GetBlockReward(Protocol protocol, int cycle, int priority, int slots)
             => cycle < protocol.NoRewardCycles ? 0 : ((priority == 0 ? protocol.BlockReward0 : protocol.BlockReward1) * slots);
 
-        protected override long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
+        protected override long GetFutureAttestationReward(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.AttestationReward0);
 
-        protected override long GetEndorsementReward(Protocol protocol, int cycle, int slots, int priority)
-            => cycle < protocol.NoRewardCycles ? 0 : ((priority == 0 ? protocol.EndorsementReward0 : protocol.EndorsementReward1) * slots);
+        protected override long GetAttestationReward(Protocol protocol, int cycle, int slots, int priority)
+            => cycle < protocol.NoRewardCycles ? 0 : ((priority == 0 ? protocol.AttestationReward0 : protocol.AttestationReward1) * slots);
     }
 }

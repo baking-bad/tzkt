@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto23
             var opHash = op.RequiredString("hash");
             var totalSlots = 0;
             var slots = (await Cache.BakingRights.GetAsync(Context.Block.Level))
-                .Where(x => x.Type == BakingRightType.Endorsing)
+                .Where(x => x.Type == BakingRightType.Attestation)
                 .ToDictionary(x => x.BakerId, x => x.Slots!.Value);
 
             foreach (var c in content.Required("metadata").RequiredArray("committee").EnumerateArray())

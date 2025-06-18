@@ -128,8 +128,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="addresses">Comma-separated list of account addresses to get activity of.</param>
         /// <param name="roles">Comma-separated list of activity roles (`sender`, `target`, `initiator`, `mention`) to filter activity by.</param>
         /// <param name="types">Comma-separated list of activity types (`activation`, `autostaking`, `baking`, `ballot`, `dal_attestation_reward`,
-        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_endorsing`, `double_preendorsing`, `drain_delegate`, 
-        /// `endorsement`, `endorsing_reward`, `increase_paid_storage`, `migration`, `nonce_revelation`, `origination`, `preendorsement`, `proposal`,
+        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_attestation`, `double_preattestation`, `drain_delegate`, 
+        /// `attestation`, `attestation_reward`, `increase_paid_storage`, `migration`, `nonce_revelation`, `origination`, `preattestation`, `proposal`,
         /// `register_constant`, `reveal`, `revelation_penalty`, `set_delegate_parameters`, `set_deposits_limit`, `sr_add_messages`, `sr_cement`, `sr_execute`,
         /// `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`, `staking`, `transaction`, `transfer_ticket`, `tx_rollup_commit`, `tx_rollup_dispatch_tickets`,
         /// `tx_rollup_finalize_commitment`, `tx_rollup_origination`, `tx_rollup_rejection`, `tx_rollup_remove_commitment`, `tx_rollup_return_bond`, `tx_rollup_submit_batch`,
@@ -369,12 +369,12 @@ namespace Tzkt.Api.Controllers
         /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
         /// </remarks>
         /// <param name="address">Account address</param>
-        /// <param name="type">Comma separated list of operation types to return (`endorsement`, `preendorsement`, `ballot`, `proposal`, `activation`, `double_baking`,
-        /// `double_endorsing`, `double_preendorsing`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
+        /// <param name="type">Comma separated list of operation types to return (`attestation`, `preattestation`, `ballot`, `proposal`, `activation`, `double_baking`,
+        /// `double_attestation`, `double_preattestation`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
         /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
         /// `tx_rollup_finalize_commitment`, `tx_rollup_remove_commitment`, `tx_rollup_rejection`, `tx_rollup_dispatch_tickets`, `transfer_ticket`, `migration`,
         /// `update_secondary_key`, `drain_delegate`, `sr_add_messages`, `sr_cement`, `sr_execute`, `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`,
-        /// `revelation_penalty`, `baking`, `endorsing_reward`). If not specified then the default set will be returned.</param>
+        /// `revelation_penalty`, `baking`, `attestation_reward`). If not specified then the default set will be returned.</param>
         /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
@@ -382,8 +382,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="accuser">Filters double baking and double endorsing by accuser. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="offender">Filters double baking and double endorsing by offender. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="accuser">Filters double baking and double attestation by accuser. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="offender">Filters double baking and double attestation by offender. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="baker">Filters seed nonce revelation operations by baker. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters operations by level.</param>
         /// <param name="timestamp">Filters operations by timestamp.</param>

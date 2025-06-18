@@ -22,7 +22,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns the total number of stored rights.
         /// </remarks>
-        /// <param name="type">Filters rights by type (`baking`, `endorsing`)</param>
+        /// <param name="type">Filters rights by type (`baking`, `attestation`)</param>
         /// <param name="baker">Filters rights by baker</param>
         /// <param name="cycle">Filters rights by cycle</param>
         /// <param name="level">Filters rights by level</param>
@@ -49,7 +49,7 @@ namespace Tzkt.Api.Controllers
         /// <remarks>
         /// Returns a list of rights.
         /// </remarks>
-        /// <param name="type">Filters rights by type (`baking`, `endorsing`)</param>
+        /// <param name="type">Filters rights by type (`baking`, `attestation`)</param>
         /// <param name="baker">Filters rights by baker</param>
         /// <param name="cycle">Filters rights by cycle</param>
         /// <param name="level">Filters rights by level</param>

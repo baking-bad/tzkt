@@ -48,9 +48,9 @@
         public int TimeBetweenBlocks { get; set; }
 
         /// <summary>
-        /// Number of bakers that assigned to endorse a block
+        /// Number of bakers that assigned to attest a block
         /// </summary>
-        public int EndorsersPerBlock { get; set; }
+        public int AttestersPerBlock { get; set; }
         
         /// <summary>
         /// Maximum amount of gas that one operation can consume
@@ -89,14 +89,14 @@
         public required List<long> BlockReward { get; set; }
 
         /// <summary>
-        /// Security deposit for sending an endorsement operation (micro tez)
+        /// Security deposit for sending an attestation operation (micro tez)
         /// </summary>
-        public long EndorsementDeposit { get; set; }
+        public long AttestationDeposit { get; set; }
 
         /// <summary>
-        /// Reward for sending an endorsement operation (micro tez)
+        /// Reward for sending an attestation operation (micro tez)
         /// </summary>
-        public required List<long> EndorsementReward { get; set; }
+        public required List<long> AttestationReward { get; set; }
 
         /// <summary>
         /// Initial storage size of an originated (created) account (bytes)
@@ -129,27 +129,27 @@
         public int LBToggleThreshold { get; set; }
 
         /// <summary>
-        /// Endorsement quorum
+        /// Attestation quorum
         /// </summary>
         public int ConsensusThreshold { get; set; }
 
         /// <summary>
-        /// Number of endorsed slots needed to receive endorsing rewards
+        /// Number of attested slots needed to receive attestation rewards
         /// </summary>
         public int MinParticipationNumerator { get; set; }
 
         /// <summary>
-        /// Number of endorsed slots needed to receive endorsing rewards
+        /// Number of attested slots needed to receive attestation rewards
         /// </summary>
         public int MinParticipationDenominator { get; set; }
 
         /// <summary>
-        /// Number of cycles after double baking/(pre)endorsing where an accusation operation can be injected
+        /// Number of cycles after double baking/(pre)attestation where an accusation operation can be injected
         /// </summary>
         public int DenunciationPeriod { get; set; }
 
         /// <summary>
-        /// Number of cycles after double baking/(pre)endorsing evidence where slashing happens
+        /// Number of cycles after double baking/(pre)attestation evidence where slashing happens
         /// </summary>
         public int SlashingDelay { get; set; }
 
@@ -197,5 +197,22 @@
         /// Governance dictator
         /// </summary>
         public string? Dictator { get; set; }
+
+        #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int EndorsersPerBlock => AttestersPerBlock;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementDeposit => AttestationDeposit;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public List<long> EndorsementReward => AttestationReward;
+        #endregion
     }
 }

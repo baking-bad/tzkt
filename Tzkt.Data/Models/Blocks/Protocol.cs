@@ -28,7 +28,7 @@ namespace Tzkt.Data.Models
 
         public int TimeBetweenBlocks { get; set; }
 
-        public int EndorsersPerBlock { get; set; }
+        public int AttestersPerBlock { get; set; }
         public int HardOperationGasLimit { get; set; }
         public int HardOperationStorageLimit { get; set; }
         public int HardBlockGasLimit { get; set; }
@@ -41,10 +41,10 @@ namespace Tzkt.Data.Models
         public long BlockReward1 { get; set; }
         public long MaxBakingReward { get; set; }
 
-        public long EndorsementDeposit { get; set; }
-        public long EndorsementReward0 { get; set; }
-        public long EndorsementReward1 { get; set; }
-        public long MaxEndorsingReward { get; set; }
+        public long AttestationDeposit { get; set; }
+        public long AttestationReward0 { get; set; }
+        public long AttestationReward1 { get; set; }
+        public long MaxAttestationReward { get; set; }
 
         public int OriginationSize { get; set; }
         public int ByteCost { get; set; }
@@ -76,7 +76,7 @@ namespace Tzkt.Data.Models
         public string? Dictator { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }
-        public int DoubleEndorsingSlashedPercentage { get; set; }
+        public int DoubleAttestationSlashedPercentage { get; set; }
 
         public int NumberOfShards { get; set; }
         public int ToleratedInactivityPeriod { get; set; }

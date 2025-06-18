@@ -9,17 +9,17 @@ namespace Tzkt.Api.Tests.Api
         readonly HttpClient Client = settings.Client;
 
         [Fact]
-        public async Task TestEndorsements()
+        public async Task TestAttestations()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/endorsements");
+            var res = await Client.GetJsonAsync("/v1/operations/attestations");
 
             Assert.True(res is DJsonArray);
         }
 
         [Fact]
-        public async Task TestEndorsementsCount()
+        public async Task TestAttestationsCount()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/endorsements/count");
+            var res = await Client.GetJsonAsync("/v1/operations/attestations/count");
 
             Assert.True(res is DJsonValue);
         }
@@ -89,17 +89,17 @@ namespace Tzkt.Api.Tests.Api
         }
 
         [Fact]
-        public async Task TestDoubleEndorsing()
+        public async Task TestDoubleAttestation()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/double_endorsing");
+            var res = await Client.GetJsonAsync("/v1/operations/double_attestation");
 
             Assert.True(res is DJsonArray);
         }
 
         [Fact]
-        public async Task TestDoubleEndorsingCount()
+        public async Task TestDoubleAttestationCount()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/double_endorsing/count");
+            var res = await Client.GetJsonAsync("/v1/operations/double_attestation/count");
 
             Assert.True(res is DJsonValue);
         }

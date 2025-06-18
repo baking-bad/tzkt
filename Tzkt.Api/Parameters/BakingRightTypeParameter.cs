@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(BakingRightTypeBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "baking,endorsing")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "baking,attestation")]
     public class BakingRightTypeParameter : INormalizable
     {
         /// <summary>
@@ -22,7 +22,7 @@ namespace Tzkt.Api
         /// **Not equal** filter mode. \
         /// Specify baking right type to get items where the specified field is not equal to the specified value.
         /// 
-        /// Example: `?type.ne=endorsing`.
+        /// Example: `?type.ne=attestation`.
         /// </summary>
         [JsonSchemaType(typeof(string))]
         public int? Ne { get; set; }

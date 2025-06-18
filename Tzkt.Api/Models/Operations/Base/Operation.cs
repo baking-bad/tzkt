@@ -14,16 +14,16 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(DalPublishCommitmentOperation))]
     [KnownType(typeof(DelegationOperation))]
     [KnownType(typeof(DoubleBakingOperation))]
-    [KnownType(typeof(DoubleEndorsingOperation))]
-    [KnownType(typeof(DoublePreendorsingOperation))]
+    [KnownType(typeof(DoubleAttestationOperation))]
+    [KnownType(typeof(DoublePreattestationOperation))]
     [KnownType(typeof(DrainDelegateOperation))]
-    [KnownType(typeof(EndorsementOperation))]
-    [KnownType(typeof(EndorsingRewardOperation))]
+    [KnownType(typeof(AttestationOperation))]
+    [KnownType(typeof(AttestationRewardOperation))]
     [KnownType(typeof(IncreasePaidStorageOperation))]
     [KnownType(typeof(MigrationOperation))]
     [KnownType(typeof(NonceRevelationOperation))]
     [KnownType(typeof(OriginationOperation))]
-    [KnownType(typeof(PreendorsementOperation))]
+    [KnownType(typeof(PreattestationOperation))]
     [KnownType(typeof(ProposalOperation))]
     [KnownType(typeof(RegisterConstantOperation))]
     [KnownType(typeof(RevealOperation))]
@@ -76,16 +76,16 @@ namespace Tzkt.Api.Models
             if (type == typeof(DalPublishCommitmentOperation)) return ActivityTypes.DalPublishCommitment;
             if (type == typeof(DelegationOperation)) return ActivityTypes.Delegation;
             if (type == typeof(DoubleBakingOperation)) return ActivityTypes.DoubleBaking;
-            if (type == typeof(DoubleEndorsingOperation)) return ActivityTypes.DoubleEndorsing;
-            if (type == typeof(DoublePreendorsingOperation)) return ActivityTypes.DoublePreendorsing;
+            if (type == typeof(DoubleAttestationOperation)) return ActivityTypes.DoubleAttestation;
+            if (type == typeof(DoublePreattestationOperation)) return ActivityTypes.DoublePreattestation;
             if (type == typeof(DrainDelegateOperation)) return ActivityTypes.DrainDelegate;
-            if (type == typeof(EndorsementOperation)) return ActivityTypes.Endorsement;
-            if (type == typeof(EndorsingRewardOperation)) return ActivityTypes.EndorsingReward;
+            if (type == typeof(AttestationOperation)) return ActivityTypes.Attestation;
+            if (type == typeof(AttestationRewardOperation)) return ActivityTypes.AttestationReward;
             if (type == typeof(IncreasePaidStorageOperation)) return ActivityTypes.IncreasePaidStorage;
             if (type == typeof(MigrationOperation)) return ActivityTypes.Migration;
             if (type == typeof(NonceRevelationOperation)) return ActivityTypes.NonceRevelation;
             if (type == typeof(OriginationOperation)) return ActivityTypes.Origination;
-            if (type == typeof(PreendorsementOperation)) return ActivityTypes.Preendorsement;
+            if (type == typeof(PreattestationOperation)) return ActivityTypes.Preattestation;
             if (type == typeof(ProposalOperation)) return ActivityTypes.Proposal;
             if (type == typeof(RegisterConstantOperation)) return ActivityTypes.RegisterConstant;
             if (type == typeof(RevealOperation)) return ActivityTypes.Reveal;
