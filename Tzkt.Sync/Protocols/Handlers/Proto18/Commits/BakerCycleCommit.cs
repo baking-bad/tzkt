@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             Block block,
             Cycle? futureCycle,
             IEnumerable<RightsGenerator.BR>? futureBakingRights,
-            IEnumerable<RightsGenerator.ER>? futureEndorsingRights,
+            IEnumerable<RightsGenerator.AR>? futureAttestationRights,
             List<SnapshotBalance>? snapshots,
             Dictionary<int, long>? selectedStakes,
             List<BakingRight> currentRights)
@@ -18,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             await ApplyCurrentRights(block, currentRights);
 
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
-                await ApplyNewCycle(block, futureCycle!, futureBakingRights!, futureEndorsingRights!, snapshots!, selectedStakes!);
+                await ApplyNewCycle(block, futureCycle!, futureBakingRights!, futureAttestationRights!, snapshots!, selectedStakes!);
         }
 
         protected virtual async Task ApplyCurrentRights(
@@ -93,17 +93,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            foreach (var er in currentRights.Where(x => x.Type == BakingRightType.Endorsing))
+            foreach (var ar in currentRights.Where(x => x.Type == BakingRightType.Attestation))
             {
-                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, er.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, ar.BakerId);
                 if (bakerCycle == null) continue;
 
                 Db.TryAttach(bakerCycle);
-                bakerCycle.FutureEndorsements -= er.Slots!.Value;
-                if (er.Status == BakingRightStatus.Realized)
-                    bakerCycle.Endorsements += er.Slots.Value;
-                else if (er.Status == BakingRightStatus.Missed)
-                    bakerCycle.MissedEndorsements += er.Slots.Value;
+                bakerCycle.FutureAttestations -= ar.Slots!.Value;
+                if (ar.Status == BakingRightStatus.Realized)
+                    bakerCycle.Attestations += ar.Slots.Value;
+                else if (ar.Status == BakingRightStatus.Missed)
+                    bakerCycle.MissedAttestations += ar.Slots.Value;
                 else
                     throw new Exception("Unexpected future rights");
             }
@@ -137,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             Block block,
             Cycle futureCycle,
             IEnumerable<RightsGenerator.BR> futureBakingRights,
-            IEnumerable<RightsGenerator.ER> futureEndorsingRights,
+            IEnumerable<RightsGenerator.AR> futureAttestationRights,
             List<SnapshotBalance> snapshots,
             Dictionary<int, long> selectedStakes)
         {
@@ -159,12 +159,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                 };
                 if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                 {
-                    var expectedEndorsements = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.EndorsersPerBlock * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedAttestations = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.AttestersPerBlock * bakingPower / futureCycle.TotalBakingPower);
                     var expectedDalShards = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
                     bakerCycle.BakingPower = bakingPower;
                     bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
-                    bakerCycle.ExpectedEndorsements = expectedEndorsements;
-                    bakerCycle.FutureEndorsementRewards = expectedEndorsements * futureCycle.EndorsementRewardPerSlot;
+                    bakerCycle.ExpectedAttestations = expectedAttestations;
+                    bakerCycle.FutureAttestationRewards = expectedAttestations * futureCycle.AttestationRewardPerSlot;
                     bakerCycle.ExpectedDalShards = expectedDalShards;
                     bakerCycle.FutureDalAttestationRewards = expectedDalShards * futureCycle.DalAttestationRewardPerShard;
                 }
@@ -182,27 +182,27 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
             #endregion
 
-            #region future endorsing rights
-            var skipLevel = futureEndorsingRights.Last().Level;
-            foreach (var er in futureEndorsingRights.TakeWhile(x => x.Level < skipLevel))
+            #region future attestation rights
+            var skipLevel = futureAttestationRights.Last().Level;
+            foreach (var ar in futureAttestationRights.TakeWhile(x => x.Level < skipLevel))
             {
-                if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
                     throw new Exception("Nonexistent baker cycle");
 
-                bakerCycle.FutureEndorsements += er.Slots;
+                bakerCycle.FutureAttestations += ar.Slots;
             }
             #endregion
 
-            #region shifted future endorsing rights
+            #region shifted future attestation rights
             var shifted = await Db.BakingRights.AsNoTracking()
-                .Where(x => x.Level == futureCycle.FirstLevel && x.Type == BakingRightType.Endorsing)
+                .Where(x => x.Level == futureCycle.FirstLevel && x.Type == BakingRightType.Attestation)
                 .ToListAsync();
 
-            foreach (var er in shifted)
+            foreach (var ar in shifted)
             {
-                if (bakerCycles.TryGetValue(er.BakerId, out var bakerCycle))
+                if (bakerCycles.TryGetValue(ar.BakerId, out var bakerCycle))
                 {
-                    bakerCycle.FutureEndorsements += er.Slots!.Value;
+                    bakerCycle.FutureAttestations += ar.Slots!.Value;
                 }
             }
             #endregion
@@ -297,17 +297,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                 }
             }
 
-            foreach (var er in currentRights.Where(x => x.Type == BakingRightType.Endorsing))
+            foreach (var ar in currentRights.Where(x => x.Type == BakingRightType.Attestation))
             {
-                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, er.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, ar.BakerId);
                 if (bakerCycle == null) continue;
 
                 Db.TryAttach(bakerCycle);
-                bakerCycle.FutureEndorsements += er.Slots!.Value;
-                if (er.Status == BakingRightStatus.Realized)
-                    bakerCycle.Endorsements -= er.Slots.Value;
-                else if (er.Status == BakingRightStatus.Missed)
-                    bakerCycle.MissedEndorsements -= er.Slots.Value;
+                bakerCycle.FutureAttestations += ar.Slots!.Value;
+                if (ar.Status == BakingRightStatus.Realized)
+                    bakerCycle.Attestations -= ar.Slots.Value;
+                else if (ar.Status == BakingRightStatus.Missed)
+                    bakerCycle.MissedAttestations -= ar.Slots.Value;
                 else
                     throw new Exception("Unexpected future rights");
             }

@@ -32,10 +32,10 @@ namespace Tzkt.Data
         public DbSet<DelegationOperation> DelegationOps { get; set; }
         public DbSet<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
         public DbSet<DoubleBakingOperation> DoubleBakingOps { get; set; }
-        public DbSet<DoubleEndorsingOperation> DoubleEndorsingOps { get; set; }
-        public DbSet<DoublePreendorsingOperation> DoublePreendorsingOps { get; set; }
-        public DbSet<EndorsementOperation> EndorsementOps { get; set; }
-        public DbSet<PreendorsementOperation> PreendorsementOps { get; set; }
+        public DbSet<DoubleAttestationOperation> DoubleAttestationOps { get; set; }
+        public DbSet<DoublePreattestationOperation> DoublePreattestationOps { get; set; }
+        public DbSet<AttestationOperation> AttestationOps { get; set; }
+        public DbSet<PreattestationOperation> PreattestationOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
         public DbSet<VdfRevelationOperation> VdfRevelationOps { get; set; }
         public DbSet<OriginationOperation> OriginationOps { get; set; }
@@ -60,7 +60,7 @@ namespace Tzkt.Data
         public DbSet<UpdateSecondaryKeyOperation> UpdateSecondaryKeyOps { get; set; }
         public DbSet<DrainDelegateOperation> DrainDelegateOps { get; set; }
 
-        public DbSet<EndorsingRewardOperation> EndorsingRewardOps { get; set; }
+        public DbSet<AttestationRewardOperation> AttestationRewardOps { get; set; }
         public DbSet<DalAttestationRewardOperation> DalAttestationRewardOps { get; set; }
         public DbSet<MigrationOperation> MigrationOps { get; set; }
         public DbSet<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; }
@@ -162,10 +162,10 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegationOperationModel();
             modelBuilder.BuildDalEntrapmentEvidenceOperationModel();
             modelBuilder.BuildDoubleBakingOperationModel();
-            modelBuilder.BuildDoubleEndorsingOperationModel();
-            modelBuilder.BuildDoublePreendorsingOperationModel();
-            modelBuilder.BuildEndorsementOperationModel();
-            modelBuilder.BuildPreendorsementOperationModel();
+            modelBuilder.BuildDoubleAttestationOperationModel();
+            modelBuilder.BuildDoublePreattestationOperationModel();
+            modelBuilder.BuildAttestationOperationModel();
+            modelBuilder.BuildPreattestationOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();
             modelBuilder.BuildVdfRevelationOperationModel();
             modelBuilder.BuildOriginationOperationModel();
@@ -190,7 +190,7 @@ namespace Tzkt.Data
             modelBuilder.BuildUpdateSecondaryKeyOperationModel();
             modelBuilder.BuildDrainDelegateOperationModel();
 
-            modelBuilder.BuildEndorsingRewardOperationModel();
+            modelBuilder.BuildAttestationRewardOperationModel();
             modelBuilder.BuildDalAttestationRewardOperationModel();
             modelBuilder.BuildMigrationOperationModel();
             modelBuilder.BuildRevelationPenaltyOperationModel();

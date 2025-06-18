@@ -191,22 +191,22 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             #region very unlikely
-            var endorsements = GetEndorsements(hash, quote);
-            var preendorsements = GetPreendorsements(hash, quote);
+            var attestations = GetAttestations(hash, quote);
+            var preattestations = GetPreattestations(hash, quote);
             var dalEntrapmentEvidence = GetDalEntrapmentEvidences(hash, quote);
             var doubleBaking = GetDoubleBakings(hash, quote);
-            var doubleEndorsing = GetDoubleEndorsings(hash, quote);
-            var doublePreendorsing = GetDoublePreendorsings(hash, quote);
+            var doubleAttestation = GetDoubleAttestations(hash, quote);
+            var doublePreattestation = GetDoublePreattestations(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
             var vdfRevelation = GetVdfRevelations(hash, quote);
 
-            await Task.WhenAll(endorsements, preendorsements, doubleBaking, doubleEndorsing, doublePreendorsing, nonceRevelation);
+            await Task.WhenAll(attestations, preattestations, doubleBaking, doubleAttestation, doublePreattestation, nonceRevelation);
 
-            if (endorsements.Result.Any())
-                return endorsements.Result;
+            if (attestations.Result.Any())
+                return attestations.Result;
 
-            if (preendorsements.Result.Any())
-                return preendorsements.Result;
+            if (preattestations.Result.Any())
+                return preattestations.Result;
 
             if (dalEntrapmentEvidence.Result.Any())
                 return dalEntrapmentEvidence.Result;
@@ -214,11 +214,11 @@ namespace Tzkt.Api.Repositories
             if (doubleBaking.Result.Any())
                 return doubleBaking.Result;
 
-            if (doubleEndorsing.Result.Any())
-                return doubleEndorsing.Result;
+            if (doubleAttestation.Result.Any())
+                return doubleAttestation.Result;
 
-            if (doublePreendorsing.Result.Any())
-                return doublePreendorsing.Result;
+            if (doublePreattestation.Result.Any())
+                return doublePreattestation.Result;
 
             if (nonceRevelation.Result.Any())
                 return nonceRevelation.Result;

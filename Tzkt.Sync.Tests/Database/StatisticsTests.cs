@@ -22,8 +22,8 @@ namespace Tzkt.Sync.Tests.Database
                 throw new Exception("Invalid Statistics.TotalActivated");
 
             var totalCreated = await db.Blocks.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared + x.BonusDelegated + x.BonusStakedOwn + x.BonusStakedEdge + x.BonusStakedShared);
-            totalCreated += await db.EndorsementOps.SumAsync(x => x.Reward);
-            totalCreated += await db.EndorsingRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
+            totalCreated += await db.AttestationOps.SumAsync(x => x.Reward);
+            totalCreated += await db.AttestationRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.DalAttestationRewardOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.NonceRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
             totalCreated += await db.VdfRevelationOps.SumAsync(x => x.RewardDelegated + x.RewardStakedOwn + x.RewardStakedEdge + x.RewardStakedShared);
@@ -33,8 +33,8 @@ namespace Tzkt.Sync.Tests.Database
                 throw new Exception("Invalid Statistics.TotalCreated");
 
             var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoubleEndorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoublePreendorsingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoubleAttestationOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoublePreattestationOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.RevelationPenaltyOps.SumAsync(x => x.Loss);
             totalBurned += await db.DrainDelegateOps.SumAsync(x => x.AllocationFee);
             totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));

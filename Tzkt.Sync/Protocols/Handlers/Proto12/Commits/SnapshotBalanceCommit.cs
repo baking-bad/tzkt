@@ -15,12 +15,12 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE "SnapshotBalances" as sb
-                SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated"	                        
+                SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."AttestationRewardsDelegated"	                        
                 FROM (
-                    SELECT "BakerId", "EndorsementRewardsDelegated"
+                    SELECT "BakerId", "AttestationRewardsDelegated"
                     FROM "BakerCycles"
                     WHERE "Cycle" = {0}
-                    AND "EndorsementRewardsDelegated" != 0
+                    AND "AttestationRewardsDelegated" != 0
                 ) as bc
                 WHERE sb."Level" = {1}
                 AND sb."AccountId" = bc."BakerId"

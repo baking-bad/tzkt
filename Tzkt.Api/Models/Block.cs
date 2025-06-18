@@ -38,7 +38,7 @@
         public int BlockRound { get; set; }
 
         /// <summary>
-        /// Number of endorsements (slots), included into the block
+        /// Number of attestations (slots), included into the block
         /// </summary>
         public int Validations { get; set; }
 
@@ -144,15 +144,15 @@
 
         #region operations
         /// <summary>
-        /// List of endorsement (is operation, which specifies the head of the chain as seen by the endorser of a given slot)
+        /// List of attestation (is operation, which specifies the head of the chain as seen by the attester of a given slot)
         /// operations, included in the block
         /// </summary>
-        public IEnumerable<EndorsementOperation>? Endorsements { get; set; }
+        public IEnumerable<AttestationOperation>? Attestations { get; set; }
 
         /// <summary>
-        /// List of preendorsement operations, included in the block
+        /// List of preattestation operations, included in the block
         /// </summary>
-        public IEnumerable<PreendorsementOperation>? Preendorsements { get; set; }
+        public IEnumerable<PreattestationOperation>? Preattestations { get; set; }
 
         /// <summary>
         /// List of proposal (is used by bakers (delegates) to submit and/or upvote proposals to amend the protocol)
@@ -183,15 +183,15 @@
         public IEnumerable<DoubleBakingOperation>? DoubleBaking { get; set; }
         
         /// <summary>
-        /// List of double endorsement evidence (is used by bakers to provide evidence of double endorsement
-        /// (endorsing two different blocks at the same block height) by a baker) operations, included in the block
+        /// List of double attestation evidence (is used by bakers to provide evidence of double attestation
+        /// (attestation of two different blocks at the same block height) by a baker) operations, included in the block
         /// </summary>
-        public IEnumerable<DoubleEndorsingOperation>? DoubleEndorsing { get; set; }
+        public IEnumerable<DoubleAttestationOperation>? DoubleAttestation { get; set; }
 
         /// <summary>
-        /// List of double preendorsement evidence operations, included in the block
+        /// List of double preattestation evidence operations, included in the block
         /// </summary>
-        public IEnumerable<DoublePreendorsingOperation>? DoublePreendorsing { get; set; }
+        public IEnumerable<DoublePreattestationOperation>? DoublePreattestation { get; set; }
 
         /// <summary>
         /// List of nonce revelation (used by the blockchain to create randomness) operations, included in the block
@@ -356,9 +356,9 @@
         public IEnumerable<RevelationPenaltyOperation>? RevelationPenalties { get; set; }
 
         /// <summary>
-        /// List of endorsing rewards, implicitly applied at the end of the block
+        /// List of attestation rewards, implicitly applied at the end of the block
         /// </summary>
-        public IEnumerable<EndorsingRewardOperation>? EndorsingRewards { get; set; }
+        public IEnumerable<AttestationRewardOperation>? AttestationRewards { get; set; }
 
         /// <summary>
         /// List of dal attestation rewards, implicitly applied at the end of the block
@@ -379,7 +379,35 @@
         #endregion
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
         public IEnumerable<UpdateSecondaryKeyOperation>? UpdateConsensusKeyOps => UpdateSecondaryKeyOps;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public IEnumerable<AttestationOperation>? Endorsements => Attestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public IEnumerable<PreattestationOperation>? Preendorsements => Preattestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public IEnumerable<DoubleAttestationOperation>? DoubleEndorsing => DoubleAttestation;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public IEnumerable<DoublePreattestationOperation>? DoublePreendorsing => DoublePreattestation;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public IEnumerable<AttestationRewardOperation>? EndorsingRewards => AttestationRewards;
         #endregion
     }
 }

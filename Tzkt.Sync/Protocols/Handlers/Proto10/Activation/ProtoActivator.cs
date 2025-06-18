@@ -33,21 +33,21 @@ namespace Tzkt.Sync.Protocols.Proto10
             #endregion
 
             var br = parameters["baking_reward_per_endorsement"] as JArray;
-            var er = parameters["endorsement_reward"] as JArray;
+            var ar = parameters["endorsement_reward"] as JArray;
 
             protocol.BlockDeposit = parameters["block_security_deposit"]?.Value<long>() ?? 640_000_000;
-            protocol.EndorsementDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 2_500_000;
+            protocol.AttestationDeposit = parameters["endorsement_security_deposit"]?.Value<long>() ?? 2_500_000;
             protocol.BlockReward0 = br == null ? 78_125 : br.Count > 0 ? br[0].Value<long>() : 0;
             protocol.BlockReward1 = br == null ? 11_719 : br.Count > 1 ? br[1].Value<long>() : protocol.BlockReward0;
-            protocol.EndorsementReward0 = er == null ? 78_125 : er.Count > 0 ? er[0].Value<long>() : 0;
-            protocol.EndorsementReward1 = er == null ? 52_083 : er.Count > 1 ? er[1].Value<long>() : protocol.EndorsementReward0;
+            protocol.AttestationReward0 = ar == null ? 78_125 : ar.Count > 0 ? ar[0].Value<long>() : 0;
+            protocol.AttestationReward1 = ar == null ? 52_083 : ar.Count > 1 ? ar[1].Value<long>() : protocol.AttestationReward0;
 
             protocol.BlocksPerCycle = parameters["blocks_per_cycle"]?.Value<int>() ?? 8192;
             protocol.BlocksPerCommitment = parameters["blocks_per_commitment"]?.Value<int>() ?? 64;
             protocol.BlocksPerSnapshot = parameters["blocks_per_roll_snapshot"]?.Value<int>() ?? 512;
             protocol.BlocksPerVoting = parameters["blocks_per_voting_period"]?.Value<int>() ?? 40960;
 
-            protocol.EndorsersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 256;
+            protocol.AttestersPerBlock = parameters["endorsers_per_block"]?.Value<int>() ?? 256;
             protocol.HardBlockGasLimit = parameters["hard_gas_limit_per_block"]?.Value<int>() ?? 5_200_000;
             protocol.TimeBetweenBlocks = parameters["minimal_block_delay"]?.Value<int>() ?? 30;
 
@@ -57,18 +57,18 @@ namespace Tzkt.Sync.Protocols.Proto10
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
             protocol.BlockDeposit = 640_000_000;
-            protocol.EndorsementDeposit = 2_500_000;
+            protocol.AttestationDeposit = 2_500_000;
             protocol.BlockReward0 = 78_125;
             protocol.BlockReward1 = 11_719;
-            protocol.EndorsementReward0 = 78_125;
-            protocol.EndorsementReward1 = 52_083;
+            protocol.AttestationReward0 = 78_125;
+            protocol.AttestationReward1 = 52_083;
 
             protocol.BlocksPerCycle *= 2;
             protocol.BlocksPerCommitment *= 2;
             protocol.BlocksPerSnapshot *= 2;
             protocol.BlocksPerVoting *= 2;
 
-            protocol.EndorsersPerBlock = 256;
+            protocol.AttestersPerBlock = 256;
             protocol.HardBlockGasLimit = 5_200_000;
             protocol.TimeBetweenBlocks /= 2;
 
@@ -201,35 +201,35 @@ namespace Tzkt.Sync.Protocols.Proto10
                 bakerCycle.FutureBlockRewards += GetFutureBlockReward(nextProto, state.Cycle);
             }
 
-            foreach (var er in rights.Where(x => x.Type == BakingRightType.Endorsing))
+            foreach (var ar in rights.Where(x => x.Type == BakingRightType.Attestation))
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, ar.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementRewards -= GetFutureEndorsementReward(prevProto, state.Cycle, er.Slots!.Value);
-                bakerCycle.FutureEndorsements -= er.Slots.Value;
+                bakerCycle.FutureAttestationRewards -= GetFutureAttestationReward(prevProto, state.Cycle, ar.Slots!.Value);
+                bakerCycle.FutureAttestations -= ar.Slots.Value;
             }
 
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakingRights"
                 WHERE "Level" > {0}
                 AND "Type" = {1}
-                """, state.Level, (int)BakingRightType.Endorsing);
+                """, state.Level, (int)BakingRightType.Attestation);
 
-            var newErs = new List<BakingRight>();
+            var newArs = new List<BakingRight>();
             for (int level = state.Level + 1; level < nextProto.GetCycleStart(state.Cycle + 1); level++)
             {
-                foreach (var er in (await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level - 1)).EnumerateArray())
+                foreach (var ar in (await Proto.Rpc.GetLevelAttestationRightsAsync(block, level - 1)).EnumerateArray())
                 {
-                    newErs.Add(new BakingRight
+                    newArs.Add(new BakingRight
                     {
                         Id = 0,
-                        Type = BakingRightType.Endorsing,
+                        Type = BakingRightType.Attestation,
                         Status = BakingRightStatus.Future,
-                        BakerId = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id,
+                        BakerId = Cache.Accounts.GetExistingDelegate(ar.RequiredString("delegate")).Id,
                         Cycle = state.Cycle,
                         Level = level,
-                        Slots = er.RequiredArray("slots").Count()
+                        Slots = ar.RequiredArray("slots").Count()
                     });
                 }
             }
@@ -237,17 +237,17 @@ namespace Tzkt.Sync.Protocols.Proto10
 #pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
             await Db.Database.ExecuteSqlRawAsync($"""
                 INSERT INTO "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Slots") VALUES
-                {string.Join(',', newErs.Select(er => $"({er.Cycle},{er.Level},{er.BakerId},{(int)er.Type},{(int)er.Status},{er.Slots})"))}
+                {string.Join(',', newArs.Select(ar => $"({ar.Cycle},{ar.Level},{ar.BakerId},{(int)ar.Type},{(int)ar.Status},{ar.Slots})"))}
                 """);
 #pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 
-            foreach (var er in newErs)
+            foreach (var ar in newArs)
             {
-                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, er.BakerId);
+                var bakerCycle = await Cache.BakerCycles.GetAsync(state.Cycle, ar.BakerId);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(nextProto, state.Cycle, er.Slots!.Value);
-                bakerCycle.FutureEndorsements += er.Slots.Value;
+                bakerCycle.FutureAttestationRewards += GetFutureAttestationReward(nextProto, state.Cycle, ar.Slots!.Value);
+                bakerCycle.FutureAttestations += ar.Slots.Value;
             }
         }
 
@@ -255,20 +255,20 @@ namespace Tzkt.Sync.Protocols.Proto10
         {
             var nextCycle = state.Cycle + 1;
             var nextCycleStart = nextProto.GetCycleStart(nextCycle);
-            var shiftedRights = (await Proto.Rpc.GetLevelEndorsingRightsAsync(block, nextCycleStart - 1))
+            var shiftedRights = (await Proto.Rpc.GetLevelAttestationRightsAsync(block, nextCycleStart - 1))
                 .EnumerateArray()
                 .ToList();
 
 #pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
             await Db.Database.ExecuteSqlRawAsync($"""
                 INSERT INTO "BakingRights" ("Cycle", "Level", "BakerId", "Type", "Status", "Slots") VALUES
-                {string.Join(',', shiftedRights.Select(er => $@"(
+                {string.Join(',', shiftedRights.Select(ar => $@"(
                     {nextCycle},
                     {nextCycleStart},
-                    {Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id},
-                    {(int)BakingRightType.Endorsing},
+                    {Cache.Accounts.GetExistingDelegate(ar.RequiredString("delegate")).Id},
+                    {(int)BakingRightType.Attestation},
                     {(int)BakingRightStatus.Future},
-                    {er.RequiredArray("slots").Count()}
+                    {ar.RequiredArray("slots").Count()}
                 )"))}
                 """);
 #pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
@@ -282,15 +282,15 @@ namespace Tzkt.Sync.Protocols.Proto10
                 {
                     var share = (double)bc.BakingPower / cycle.TotalBakingPower;
                     bc.ExpectedBlocks = nextProto.BlocksPerCycle * share;
-                    bc.ExpectedEndorsements = nextProto.EndorsersPerBlock * nextProto.BlocksPerCycle * share;
+                    bc.ExpectedAttestations = nextProto.AttestersPerBlock * nextProto.BlocksPerCycle * share;
                     bc.FutureBlockRewards = 0;
                     bc.FutureBlocks = 0;
-                    bc.FutureEndorsementRewards = 0;
-                    bc.FutureEndorsements = 0;
+                    bc.FutureAttestationRewards = 0;
+                    bc.FutureAttestations = 0;
                 }
 
                 await FetchBakingRights(nextProto, block, cycle, bakerCycles);
-                shiftedRights = await FetchEndorsingRights(nextProto, block, cycle, bakerCycles, shiftedRights);
+                shiftedRights = await FetchAttestationRights(nextProto, block, cycle, bakerCycles, shiftedRights);
             }
         }
 
@@ -328,67 +328,67 @@ namespace Tzkt.Sync.Protocols.Proto10
             writer.Complete();
         }
 
-        async Task<List<JsonElement>> FetchEndorsingRights(Protocol protocol, int block, Cycle cycle, Dictionary<int, BakerCycle> bakerCycles, List<JsonElement> shiftedRights)
+        async Task<List<JsonElement>> FetchAttestationRights(Protocol protocol, int block, Cycle cycle, Dictionary<int, BakerCycle> bakerCycles, List<JsonElement> shiftedRights)
         {
             GC.Collect();
-            var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
-            //var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.EndorsersPerBlock / 2);
+            var rights = (await Proto.Rpc.GetAttestationRightsAsync(block, cycle.Index)).RequiredArray().EnumerateArray();
+            //var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.AttestersPerBlock / 2);
             //var attempts = 0;
 
             //for (int level = cycle.FirstLevel; level <= cycle.LastLevel; level++)
             //{
             //    try
             //    {
-            //        rights.AddRange((await Proto.Rpc.GetLevelEndorsingRightsAsync(block, level)).RequiredArray().EnumerateArray());
+            //        rights.AddRange((await Proto.Rpc.GetLevelAttestationRightsAsync(block, level)).RequiredArray().EnumerateArray());
             //        attempts = 0;
             //    }
             //    catch (Exception ex)
             //    {
-            //        Logger.LogError(ex, "Failed to fetch endorsing rights for level {level}", level);
-            //        if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching endorsing rights");
+            //        Logger.LogError(ex, "Failed to fetch attestation rights for level {level}", level);
+            //        if (++attempts >= 10) throw new Exception("Too many RPC errors when fetching attestation rights");
             //        await Task.Delay(3000);
             //        level--;
             //    }
             //}
 
-            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
-                throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
+            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.AttestersPerBlock)
+                throw new ValidationException("Rpc returned less attestation rights (slots) than it should be");
 
             #region save rights
             var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
             using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
-            foreach (var er in rights)
+            foreach (var ar in rights)
             {
                 writer.StartRow();
-                writer.Write(protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write(Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(protocol.GetCycle(ar.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(ar.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(Cache.Accounts.GetExistingDelegate(ar.RequiredString("delegate")).Id, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.WriteNull();
-                writer.Write(er.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(ar.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
             }
 
             writer.Complete();
             #endregion
 
-            foreach (var er in rights.Where(x => x.RequiredInt32("level") != cycle.LastLevel))
+            foreach (var ar in rights.Where(x => x.RequiredInt32("level") != cycle.LastLevel))
             {
-                var baker = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate"));
-                var slots = er.RequiredArray("slots").Count();
+                var baker = Cache.Accounts.GetExistingDelegate(ar.RequiredString("delegate"));
+                var slots = ar.RequiredArray("slots").Count();
 
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                     throw new Exception("Nonexistent baker cycle");
 
-                bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle.Index, slots);
-                bakerCycle.FutureEndorsements += slots;
+                bakerCycle.FutureAttestationRewards += GetFutureAttestationReward(protocol, cycle.Index, slots);
+                bakerCycle.FutureAttestations += slots;
             }
 
-            foreach (var er in shiftedRights)
+            foreach (var ar in shiftedRights)
             {
-                var baker = Cache.Accounts.GetExistingDelegate(er.RequiredString("delegate"));
-                var slots = er.RequiredArray("slots").Count();
+                var baker = Cache.Accounts.GetExistingDelegate(ar.RequiredString("delegate"));
+                var slots = ar.RequiredArray("slots").Count();
 
                 if (!bakerCycles.TryGetValue(baker.Id, out var bakerCycle))
                 {
@@ -417,7 +417,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower,
                         ExpectedBlocks = 0,
-                        ExpectedEndorsements = 0
+                        ExpectedAttestations = 0
                     };
                     bakerCycles.Add(baker.Id, bakerCycle);
                     Db.BakerCycles.Add(bakerCycle);
@@ -438,8 +438,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                     #endregion
                 }
 
-                bakerCycle.FutureEndorsementRewards += GetFutureEndorsementReward(protocol, cycle.Index, slots);
-                bakerCycle.FutureEndorsements += slots;
+                bakerCycle.FutureAttestationRewards += GetFutureAttestationReward(protocol, cycle.Index, slots);
+                bakerCycle.FutureAttestations += slots;
             }
 
             return rights.Where(x => x.RequiredInt32("level") == cycle.LastLevel).ToList();
@@ -825,9 +825,9 @@ namespace Tzkt.Sync.Protocols.Proto10
         }
 
         protected override long GetFutureBlockReward(Protocol protocol, int cycle)
-            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.EndorsersPerBlock);
+            => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * protocol.AttestersPerBlock);
 
-        protected override long GetFutureEndorsementReward(Protocol protocol, int cycle, int slots)
-            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.EndorsementReward0);
+        protected override long GetFutureAttestationReward(Protocol protocol, int cycle, int slots)
+            => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.AttestationReward0);
     }
 }

@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         public List<BakingRight> CurrentRights { get; protected set; } = null!;
         public IEnumerable<JsonElement>? FutureBakingRights { get; protected set; }
-        public IEnumerable<JsonElement>? FutureEndorsingRights { get; protected set; }
+        public IEnumerable<JsonElement>? FutureAttestationRights { get; protected set; }
 
         public virtual async Task Apply(Block block)
         {
@@ -17,7 +17,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
             var sql = string.Empty;
 
-            if (block.BlockRound == 0 && block.Validations == Context.Protocol.EndorsersPerBlock)
+            if (block.BlockRound == 0 && block.Validations == Context.Protocol.AttestersPerBlock)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
                 CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
@@ -101,11 +101,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
 
-                if (Context.EndorsementOps.Count != 0)
+                if (Context.AttestationOps.Count != 0)
                 {
-                    var endorsers = new HashSet<int>(Context.EndorsementOps.Select(x => x.DelegateId));
-                    foreach (var er in CurrentRights.Where(x => x.Type == BakingRightType.Endorsing && endorsers.Contains(x.BakerId)))
-                        er.Status = BakingRightStatus.Realized;
+                    var attesters = new HashSet<int>(Context.AttestationOps.Select(x => x.DelegateId));
+                    foreach (var ar in CurrentRights.Where(x => x.Type == BakingRightType.Attestation && attesters.Contains(x.BakerId)))
+                        ar.Status = BakingRightStatus.Realized;
                 }
 
                 var realized = CurrentRights.Where(x => x.Status == BakingRightStatus.Realized);
@@ -136,11 +136,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var futureCycle = block.Cycle + Context.Protocol.ConsensusRightsDelay;
 
                 FutureBakingRights = await GetBakingRights(block, Context.Protocol, futureCycle);
-                FutureEndorsingRights = await GetEndorsingRights(block, Context.Protocol, futureCycle);
+                FutureAttestationRights = await GetAttestationRights(block, Context.Protocol, futureCycle);
 
-                foreach (var er in FutureEndorsingRights)
-                    if (!await Cache.Accounts.ExistsAsync(er.RequiredString("delegate")))
-                        throw new Exception($"Account {er.RequiredString("delegate")} doesn't exist");
+                foreach (var ar in FutureAttestationRights)
+                    if (!await Cache.Accounts.ExistsAsync(ar.RequiredString("delegate")))
+                        throw new Exception($"Account {ar.RequiredString("delegate")} doesn't exist");
 
                 foreach (var br in FutureBakingRights)
                     if (!await Cache.Accounts.ExistsAsync(br.RequiredString("delegate")))
@@ -149,19 +149,19 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
                 using var writer = conn.BeginBinaryImport(@"COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") FROM STDIN (FORMAT BINARY)");
 
-                foreach (var er in FutureEndorsingRights)
+                foreach (var ar in FutureAttestationRights)
                 {
                     // WTF: [level:28680] - Baking rights were given to non-baker account
-                    var acc = await Cache.Accounts.GetExistingAsync(er.RequiredString("delegate"));
+                    var acc = await Cache.Accounts.GetExistingAsync(ar.RequiredString("delegate"));
                     
                     writer.StartRow();
-                    writer.Write(Context.Protocol.GetCycle(er.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
-                    writer.Write(er.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                             // level + 1 (shifted)
+                    writer.Write(Context.Protocol.GetCycle(ar.RequiredInt32("level") + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                    writer.Write(ar.RequiredInt32("level") + 1, NpgsqlTypes.NpgsqlDbType.Integer);                             // level + 1 (shifted)
                     writer.Write(acc.Id, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                     writer.WriteNull();
-                    writer.Write(er.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
+                    writer.Write(ar.RequiredArray("slots").Count(), NpgsqlTypes.NpgsqlDbType.Integer);
                 }
 
                 foreach (var br in FutureBakingRights)
@@ -223,11 +223,11 @@ namespace Tzkt.Sync.Protocols.Proto1
             return rights;
         }
 
-        protected virtual async Task<IEnumerable<JsonElement>> GetEndorsingRights(Block block, Protocol protocol, int cycle)
+        protected virtual async Task<IEnumerable<JsonElement>> GetAttestationRights(Block block, Protocol protocol, int cycle)
         {
-            var rights = (await Proto.Rpc.GetEndorsingRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
-            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.EndorsersPerBlock)
-                throw new ValidationException("Rpc returned less endorsing rights (slots) than it should be");
+            var rights = (await Proto.Rpc.GetAttestationRightsAsync(block.Level, cycle)).RequiredArray().EnumerateArray();
+            if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.AttestersPerBlock)
+                throw new ValidationException("Rpc returned less attestation rights (slots) than it should be");
 
             return rights;
         }

@@ -88,13 +88,13 @@ namespace Tzkt.Api.Websocket.Processors
                 var limit = 1_000_000; // crutch
                 var symbols = Symbols.None;
 
-                var endorsements = TypeSubs.TryGetValue(Operations.Endorsements, out var endorsementsSub)
-                    ? Repo.GetEndorsements(null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.EndorsementOperation>());
+                var attestations = TypeSubs.TryGetValue(Operations.Attestations, out var attestationsSub)
+                    ? Repo.GetAttestations(null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.AttestationOperation>());
 
-                var preendorsements = TypeSubs.TryGetValue(Operations.Preendorsements, out var preendorsementsSub)
-                    ? Repo.GetPreendorsements(null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.PreendorsementOperation>());
+                var preattestations = TypeSubs.TryGetValue(Operations.Preattestations, out var preattestationsSub)
+                    ? Repo.GetPreattestations(null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.PreattestationOperation>());
 
                 var proposals = TypeSubs.TryGetValue(Operations.Proposals, out var proposalsSub)
                     ? Repo.GetProposals(null, null, level, null, null, null, null, null, null, null, limit, symbols)
@@ -116,13 +116,13 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetDoubleBakings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
-                var doubleEndorsing = TypeSubs.TryGetValue(Operations.DoubleEndorsings, out var doubleEndorsingSub)
-                    ? Repo.GetDoubleEndorsings(null, null, null, null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.DoubleEndorsingOperation>());
+                var doubleAttestation = TypeSubs.TryGetValue(Operations.DoubleAttestations, out var doubleAttestationSub)
+                    ? Repo.GetDoubleAttestations(null, null, null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DoubleAttestationOperation>());
 
-                var doublePreendorsing = TypeSubs.TryGetValue(Operations.DoublePreendorsings, out var doublePreendorsingSub)
-                    ? Repo.GetDoublePreendorsings(null, null, null, null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.DoublePreendorsingOperation>());
+                var doublePreattestation = TypeSubs.TryGetValue(Operations.DoublePreattestations, out var doublePreattestationSub)
+                    ? Repo.GetDoublePreattestations(null, null, null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DoublePreattestationOperation>());
 
                 var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
                     ? Repo.GetNonceRevelations(null, null, null, null, level, null, null, null, null, limit, symbols)
@@ -256,9 +256,9 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetBakings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.BakingOperation>());
 
-                var endorsingRewards = TypeSubs.TryGetValue(Operations.EndorsingRewards, out var endorsingRewardsSub)
-                    ? Repo.GetEndorsingRewards(null, null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.EndorsingRewardOperation>());
+                var attestationRewards = TypeSubs.TryGetValue(Operations.AttestationRewards, out var attestationRewardsSub)
+                    ? Repo.GetAttestationRewards(null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.AttestationRewardOperation>());
 
                 var dalAttestationRewards = TypeSubs.TryGetValue(Operations.DalAttestationReward, out var dalAttestationRewardsSub)
                     ? Repo.GetDalAttestationRewards(null, null, null, level, null, null, null, limit, symbols)
@@ -269,15 +269,15 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.AutostakingOperation>());
 
                 await Task.WhenAll(
-                    endorsements,
-                    preendorsements,
+                    attestations,
+                    preattestations,
                     proposals,
                     ballots,
                     activations,
                     dalEntrapmentEvidences,
                     doubleBaking,
-                    doubleEndorsing,
-                    doublePreendorsing,
+                    doubleAttestation,
+                    doublePreattestation,
                     revelations,
                     vdfRevelations,
                     delegations,
@@ -311,7 +311,7 @@ namespace Tzkt.Api.Websocket.Processors
                     migrations,
                     penalties,
                     baking,
-                    endorsingRewards,
+                    attestationRewards,
                     dalAttestationRewards,
                     autostakingOps);
                 #endregion
@@ -345,25 +345,25 @@ namespace Tzkt.Api.Websocket.Processors
                     }
                 }
 
-                if (endorsements.Result.Any())
+                if (attestations.Result.Any())
                 {
-                    if (endorsementsSub!.Subs != null)
-                        AddRange(endorsementsSub.Subs, endorsements.Result);
+                    if (attestationsSub!.Subs != null)
+                        AddRange(attestationsSub.Subs, attestations.Result);
 
-                    if (endorsementsSub.AddressSubs != null)
-                        foreach (var op in endorsements.Result)
-                            if (endorsementsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs) && delegateSubs.Subs != null)
+                    if (attestationsSub.AddressSubs != null)
+                        foreach (var op in attestations.Result)
+                            if (attestationsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs) && delegateSubs.Subs != null)
                                 Add(delegateSubs.Subs, op);
                 }
 
-                if (preendorsements.Result.Any())
+                if (preattestations.Result.Any())
                 {
-                    if (preendorsementsSub!.Subs != null)
-                        AddRange(preendorsementsSub.Subs, preendorsements.Result);
+                    if (preattestationsSub!.Subs != null)
+                        AddRange(preattestationsSub.Subs, preattestations.Result);
 
-                    if (preendorsementsSub.AddressSubs != null)
-                        foreach (var op in preendorsements.Result)
-                            if (preendorsementsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs) && delegateSubs.Subs != null)
+                    if (preattestationsSub.AddressSubs != null)
+                        foreach (var op in preattestations.Result)
+                            if (preattestationsSub.AddressSubs.TryGetValue(op.Delegate.Address, out var delegateSubs) && delegateSubs.Subs != null)
                                 Add(delegateSubs.Subs, op);
                 }
 
@@ -432,34 +432,34 @@ namespace Tzkt.Api.Websocket.Processors
                         }
                 }
 
-                if (doubleEndorsing.Result.Any())
+                if (doubleAttestation.Result.Any())
                 {
-                    if (doubleEndorsingSub!.Subs != null)
-                        AddRange(doubleEndorsingSub.Subs, doubleEndorsing.Result);
+                    if (doubleAttestationSub!.Subs != null)
+                        AddRange(doubleAttestationSub.Subs, doubleAttestation.Result);
 
-                    if (doubleEndorsingSub.AddressSubs != null)
-                        foreach (var op in doubleEndorsing.Result)
+                    if (doubleAttestationSub.AddressSubs != null)
+                        foreach (var op in doubleAttestation.Result)
                         {
-                            if (doubleEndorsingSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
+                            if (doubleAttestationSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
                                 Add(accuserSubs.Subs, op);
 
-                            if (doubleEndorsingSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
+                            if (doubleAttestationSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
                                 Add(offenderSubs.Subs, op);
                         }
                 }
 
-                if (doublePreendorsing.Result.Any())
+                if (doublePreattestation.Result.Any())
                 {
-                    if (doublePreendorsingSub!.Subs != null)
-                        AddRange(doublePreendorsingSub.Subs, doublePreendorsing.Result);
+                    if (doublePreattestationSub!.Subs != null)
+                        AddRange(doublePreattestationSub.Subs, doublePreattestation.Result);
 
-                    if (doublePreendorsingSub.AddressSubs != null)
-                        foreach (var op in doublePreendorsing.Result)
+                    if (doublePreattestationSub.AddressSubs != null)
+                        foreach (var op in doublePreattestation.Result)
                         {
-                            if (doublePreendorsingSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
+                            if (doublePreattestationSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
                                 Add(accuserSubs.Subs, op);
 
-                            if (doublePreendorsingSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
+                            if (doublePreattestationSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
                                 Add(offenderSubs.Subs, op);
                         }
                 }
@@ -1072,14 +1072,14 @@ namespace Tzkt.Api.Websocket.Processors
                         }
                 }
 
-                if (endorsingRewards.Result.Any())
+                if (attestationRewards.Result.Any())
                 {
-                    if (endorsingRewardsSub!.Subs != null)
-                        AddRange(endorsingRewardsSub.Subs, endorsingRewards.Result);
+                    if (attestationRewardsSub!.Subs != null)
+                        AddRange(attestationRewardsSub.Subs, attestationRewards.Result);
 
-                    if (endorsingRewardsSub.AddressSubs != null)
-                        foreach (var op in endorsingRewards.Result)
-                            if (endorsingRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs) && bakerSubs.Subs != null)
+                    if (attestationRewardsSub.AddressSubs != null)
+                        foreach (var op in attestationRewards.Result)
+                            if (attestationRewardsSub.AddressSubs.TryGetValue(op.Baker.Address, out var bakerSubs) && bakerSubs.Subs != null)
                                 Add(bakerSubs.Subs, op);
                 }
 

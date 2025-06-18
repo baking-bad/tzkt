@@ -61,7 +61,7 @@ namespace Tzkt.Api.Repositories
                 ExternalStakedBalance = row.ExternalStakedBalance,
                 StakersCount = row.StakersCount,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
-                ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
+                ExpectedAttestations = Math.Round(row.ExpectedAttestations, 2),
                 ExpectedDalShards = row.ExpectedDalShards,
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
@@ -72,15 +72,15 @@ namespace Tzkt.Api.Repositories
                 BlockRewardsStakedShared = row.BlockRewardsStakedShared,
                 MissedBlocks = row.MissedBlocks,
                 MissedBlockRewards = row.MissedBlockRewards,
-                FutureEndorsements = row.FutureEndorsements,
-                FutureEndorsementRewards = row.FutureEndorsementRewards,
-                Endorsements = row.Endorsements,
-                EndorsementRewardsDelegated = row.EndorsementRewardsDelegated,
-                EndorsementRewardsStakedOwn = row.EndorsementRewardsStakedOwn,
-                EndorsementRewardsStakedEdge = row.EndorsementRewardsStakedEdge,
-                EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
-                MissedEndorsements = row.MissedEndorsements,
-                MissedEndorsementRewards = row.MissedEndorsementRewards,
+                FutureAttestations = row.FutureAttestations,
+                FutureAttestationRewards = row.FutureAttestationRewards,
+                Attestations = row.Attestations,
+                AttestationRewardsDelegated = row.AttestationRewardsDelegated,
+                AttestationRewardsStakedOwn = row.AttestationRewardsStakedOwn,
+                AttestationRewardsStakedEdge = row.AttestationRewardsStakedEdge,
+                AttestationRewardsStakedShared = row.AttestationRewardsStakedShared,
+                MissedAttestations = row.MissedAttestations,
+                MissedAttestationRewards = row.MissedAttestationRewards,
                 FutureDalAttestationRewards = row.FutureDalAttestationRewards,
                 DalAttestationRewardsDelegated = row.DalAttestationRewardsDelegated,
                 DalAttestationRewardsStakedOwn = row.DalAttestationRewardsStakedOwn,
@@ -94,16 +94,16 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLostUnstaked = row.DoubleBakingLostUnstaked,
                 DoubleBakingLostExternalStaked = row.DoubleBakingLostExternalStaked,
                 DoubleBakingLostExternalUnstaked = row.DoubleBakingLostExternalUnstaked,
-                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
-                DoubleEndorsingLostStaked = row.DoubleEndorsingLostStaked,
-                DoubleEndorsingLostUnstaked = row.DoubleEndorsingLostUnstaked,
-                DoubleEndorsingLostExternalStaked = row.DoubleEndorsingLostExternalStaked,
-                DoubleEndorsingLostExternalUnstaked = row.DoubleEndorsingLostExternalUnstaked,
-                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
-                DoublePreendorsingLostStaked = row.DoublePreendorsingLostStaked,
-                DoublePreendorsingLostUnstaked = row.DoublePreendorsingLostUnstaked,
-                DoublePreendorsingLostExternalStaked = row.DoublePreendorsingLostExternalStaked,
-                DoublePreendorsingLostExternalUnstaked = row.DoublePreendorsingLostExternalUnstaked,
+                DoubleAttestationRewards = row.DoubleAttestationRewards,
+                DoubleAttestationLostStaked = row.DoubleAttestationLostStaked,
+                DoubleAttestationLostUnstaked = row.DoubleAttestationLostUnstaked,
+                DoubleAttestationLostExternalStaked = row.DoubleAttestationLostExternalStaked,
+                DoubleAttestationLostExternalUnstaked = row.DoubleAttestationLostExternalUnstaked,
+                DoublePreattestationRewards = row.DoublePreattestationRewards,
+                DoublePreattestationLostStaked = row.DoublePreattestationLostStaked,
+                DoublePreattestationLostUnstaked = row.DoublePreattestationLostUnstaked,
+                DoublePreattestationLostExternalStaked = row.DoublePreattestationLostExternalStaked,
+                DoublePreattestationLostExternalUnstaked = row.DoublePreattestationLostExternalUnstaked,
                 VdfRevelationRewardsDelegated = row.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = row.VdfRevelationRewardsStakedOwn,
                 VdfRevelationRewardsStakedEdge = row.VdfRevelationRewardsStakedEdge,
@@ -144,7 +144,7 @@ namespace Tzkt.Api.Repositories
                     case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                     case "stakersCount": columns.Add(@"""StakersCount"""); break;
                     case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
-                    case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                    case "expectedAttestations": columns.Add(@"""ExpectedAttestations"""); break;
                     case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
@@ -155,15 +155,15 @@ namespace Tzkt.Api.Repositories
                     case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                     case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                     case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
-                    case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
-                    case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
-                    case "endorsements": columns.Add(@"""Endorsements"""); break;
-                    case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                    case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
-                    case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
-                    case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
-                    case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
-                    case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                    case "futureAttestations": columns.Add(@"""FutureAttestations"""); break;
+                    case "futureAttestationRewards": columns.Add(@"""FutureAttestationRewards"""); break;
+                    case "attestations": columns.Add(@"""Attestations"""); break;
+                    case "attestationRewardsDelegated": columns.Add(@"""AttestationRewardsDelegated"""); break;
+                    case "attestationRewardsStakedOwn": columns.Add(@"""AttestationRewardsStakedOwn"""); break;
+                    case "attestationRewardsStakedEdge": columns.Add(@"""AttestationRewardsStakedEdge"""); break;
+                    case "attestationRewardsStakedShared": columns.Add(@"""AttestationRewardsStakedShared"""); break;
+                    case "missedAttestations": columns.Add(@"""MissedAttestations"""); break;
+                    case "missedAttestationRewards": columns.Add(@"""MissedAttestationRewards"""); break;
                     case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
                     case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
                     case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
@@ -177,16 +177,16 @@ namespace Tzkt.Api.Repositories
                     case "doubleBakingLostUnstaked": columns.Add(@"""DoubleBakingLostUnstaked"""); break;
                     case "doubleBakingLostExternalStaked": columns.Add(@"""DoubleBakingLostExternalStaked"""); break;
                     case "doubleBakingLostExternalUnstaked": columns.Add(@"""DoubleBakingLostExternalUnstaked"""); break;
-                    case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                    case "doubleEndorsingLostStaked": columns.Add(@"""DoubleEndorsingLostStaked"""); break;
-                    case "doubleEndorsingLostUnstaked": columns.Add(@"""DoubleEndorsingLostUnstaked"""); break;
-                    case "doubleEndorsingLostExternalStaked": columns.Add(@"""DoubleEndorsingLostExternalStaked"""); break;
-                    case "doubleEndorsingLostExternalUnstaked": columns.Add(@"""DoubleEndorsingLostExternalUnstaked"""); break;
-                    case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
-                    case "doublePreendorsingLostStaked": columns.Add(@"""DoublePreendorsingLostStaked"""); break;
-                    case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
-                    case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
-                    case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
+                    case "doubleAttestationRewards": columns.Add(@"""DoubleAttestationRewards"""); break;
+                    case "doubleAttestationLostStaked": columns.Add(@"""DoubleAttestationLostStaked"""); break;
+                    case "doubleAttestationLostUnstaked": columns.Add(@"""DoubleAttestationLostUnstaked"""); break;
+                    case "doubleAttestationLostExternalStaked": columns.Add(@"""DoubleAttestationLostExternalStaked"""); break;
+                    case "doubleAttestationLostExternalUnstaked": columns.Add(@"""DoubleAttestationLostExternalUnstaked"""); break;
+                    case "doublePreattestationRewards": columns.Add(@"""DoublePreattestationRewards"""); break;
+                    case "doublePreattestationLostStaked": columns.Add(@"""DoublePreattestationLostStaked"""); break;
+                    case "doublePreattestationLostUnstaked": columns.Add(@"""DoublePreattestationLostUnstaked"""); break;
+                    case "doublePreattestationLostExternalStaked": columns.Add(@"""DoublePreattestationLostExternalStaked"""); break;
+                    case "doublePreattestationLostExternalUnstaked": columns.Add(@"""DoublePreattestationLostExternalUnstaked"""); break;
                     case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                     case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
                     case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
@@ -259,9 +259,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Math.Round(row.ExpectedBlocks, 2);
                         break;
-                    case "expectedEndorsements":
+                    case "expectedAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = Math.Round(row.ExpectedEndorsements, 2);
+                            result[j++][i] = Math.Round(row.ExpectedAttestations, 2);
                         break;
                     case "expectedDalShards":
                         foreach (var row in rows)
@@ -303,41 +303,41 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.MissedBlockRewards;
                         break;
-                    case "futureEndorsements":
+                    case "futureAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.FutureEndorsements;
+                            result[j++][i] = row.FutureAttestations;
                         break;
-                    case "futureEndorsementRewards":
+                    case "futureAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.FutureEndorsementRewards;
+                            result[j++][i] = row.FutureAttestationRewards;
                         break;
-                    case "endorsements":
+                    case "attestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.Endorsements;
+                            result[j++][i] = row.Attestations;
                         break;
-                    case "endorsementRewardsDelegated":
+                    case "attestationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated;
+                            result[j++][i] = row.AttestationRewardsDelegated;
                         break;
-                    case "endorsementRewardsStakedOwn":
+                    case "attestationRewardsStakedOwn":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedOwn;
+                            result[j++][i] = row.AttestationRewardsStakedOwn;
                         break;
-                    case "endorsementRewardsStakedEdge":
+                    case "attestationRewardsStakedEdge":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedEdge;
+                            result[j++][i] = row.AttestationRewardsStakedEdge;
                         break;
-                    case "endorsementRewardsStakedShared":
+                    case "attestationRewardsStakedShared":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedShared;
+                            result[j++][i] = row.AttestationRewardsStakedShared;
                         break;
-                    case "missedEndorsements":
+                    case "missedAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.MissedEndorsements;
+                            result[j++][i] = row.MissedAttestations;
                         break;
-                    case "missedEndorsementRewards":
+                    case "missedAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.MissedEndorsementRewards;
+                            result[j++][i] = row.MissedAttestationRewards;
                         break;
                     case "futureDalAttestationRewards":
                         foreach (var row in rows)
@@ -391,45 +391,45 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingLostExternalUnstaked;
                         break;
-                    case "doubleEndorsingRewards":
+                    case "doubleAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingRewards;
+                            result[j++][i] = row.DoubleAttestationRewards;
                         break;
-                    case "doubleEndorsingLostStaked":
+                    case "doubleAttestationLostStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostStaked;
+                            result[j++][i] = row.DoubleAttestationLostStaked;
                         break;
-                    case "doubleEndorsingLostUnstaked":
+                    case "doubleAttestationLostUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostUnstaked;
+                            result[j++][i] = row.DoubleAttestationLostUnstaked;
                         break;
-                    case "doubleEndorsingLostExternalStaked":
+                    case "doubleAttestationLostExternalStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostExternalStaked;
+                            result[j++][i] = row.DoubleAttestationLostExternalStaked;
                         break;
-                    case "doubleEndorsingLostExternalUnstaked":
+                    case "doubleAttestationLostExternalUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostExternalUnstaked;
+                            result[j++][i] = row.DoubleAttestationLostExternalUnstaked;
                         break;
-                    case "doublePreendorsingRewards":
+                    case "doublePreattestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingRewards;
+                            result[j++][i] = row.DoublePreattestationRewards;
                         break;
-                    case "doublePreendorsingLostStaked":
+                    case "doublePreattestationLostStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostStaked;
+                            result[j++][i] = row.DoublePreattestationLostStaked;
                         break;
-                    case "doublePreendorsingLostUnstaked":
+                    case "doublePreattestationLostUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostUnstaked;
+                            result[j++][i] = row.DoublePreattestationLostUnstaked;
                         break;
-                    case "doublePreendorsingLostExternalStaked":
+                    case "doublePreattestationLostExternalStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostExternalStaked;
+                            result[j++][i] = row.DoublePreattestationLostExternalStaked;
                         break;
-                    case "doublePreendorsingLostExternalUnstaked":
+                    case "doublePreattestationLostExternalUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostExternalUnstaked;
+                            result[j++][i] = row.DoublePreattestationLostExternalUnstaked;
                         break;
                     case "vdfRevelationRewardsDelegated":
                         foreach (var row in rows)
@@ -502,7 +502,7 @@ namespace Tzkt.Api.Repositories
                 case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                 case "stakersCount": columns.Add(@"""StakersCount"""); break;
                 case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
-                case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                case "expectedAttestations": columns.Add(@"""ExpectedAttestations"""); break;
                 case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
@@ -513,15 +513,15 @@ namespace Tzkt.Api.Repositories
                 case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                 case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                 case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
-                case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
-                case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
-                case "endorsements": columns.Add(@"""Endorsements"""); break;
-                case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
-                case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
-                case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
-                case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
-                case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                case "futureAttestations": columns.Add(@"""FutureAttestations"""); break;
+                case "futureAttestationRewards": columns.Add(@"""FutureAttestationRewards"""); break;
+                case "attestations": columns.Add(@"""Attestations"""); break;
+                case "attestationRewardsDelegated": columns.Add(@"""AttestationRewardsDelegated"""); break;
+                case "attestationRewardsStakedOwn": columns.Add(@"""AttestationRewardsStakedOwn"""); break;
+                case "attestationRewardsStakedEdge": columns.Add(@"""AttestationRewardsStakedEdge"""); break;
+                case "attestationRewardsStakedShared": columns.Add(@"""AttestationRewardsStakedShared"""); break;
+                case "missedAttestations": columns.Add(@"""MissedAttestations"""); break;
+                case "missedAttestationRewards": columns.Add(@"""MissedAttestationRewards"""); break;
                 case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
                 case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
                 case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
@@ -535,16 +535,16 @@ namespace Tzkt.Api.Repositories
                 case "doubleBakingLostUnstaked": columns.Add(@"""DoubleBakingLostUnstaked"""); break;
                 case "doubleBakingLostExternalStaked": columns.Add(@"""DoubleBakingLostExternalStaked"""); break;
                 case "doubleBakingLostExternalUnstaked": columns.Add(@"""DoubleBakingLostExternalUnstaked"""); break;
-                case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                case "doubleEndorsingLostStaked": columns.Add(@"""DoubleEndorsingLostStaked"""); break;
-                case "doubleEndorsingLostUnstaked": columns.Add(@"""DoubleEndorsingLostUnstaked"""); break;
-                case "doubleEndorsingLostExternalStaked": columns.Add(@"""DoubleEndorsingLostExternalStaked"""); break;
-                case "doubleEndorsingLostExternalUnstaked": columns.Add(@"""DoubleEndorsingLostExternalUnstaked"""); break;
-                case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
-                case "doublePreendorsingLostStaked": columns.Add(@"""DoublePreendorsingLostStaked"""); break;
-                case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
-                case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
-                case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
+                case "doubleAttestationRewards": columns.Add(@"""DoubleAttestationRewards"""); break;
+                case "doubleAttestationLostStaked": columns.Add(@"""DoubleAttestationLostStaked"""); break;
+                case "doubleAttestationLostUnstaked": columns.Add(@"""DoubleAttestationLostUnstaked"""); break;
+                case "doubleAttestationLostExternalStaked": columns.Add(@"""DoubleAttestationLostExternalStaked"""); break;
+                case "doubleAttestationLostExternalUnstaked": columns.Add(@"""DoubleAttestationLostExternalUnstaked"""); break;
+                case "doublePreattestationRewards": columns.Add(@"""DoublePreattestationRewards"""); break;
+                case "doublePreattestationLostStaked": columns.Add(@"""DoublePreattestationLostStaked"""); break;
+                case "doublePreattestationLostUnstaked": columns.Add(@"""DoublePreattestationLostUnstaked"""); break;
+                case "doublePreattestationLostExternalStaked": columns.Add(@"""DoublePreattestationLostExternalStaked"""); break;
+                case "doublePreattestationLostExternalUnstaked": columns.Add(@"""DoublePreattestationLostExternalUnstaked"""); break;
                 case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                 case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
                 case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
@@ -614,9 +614,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Math.Round(row.ExpectedBlocks, 2);
                     break;
-                case "expectedEndorsements":
+                case "expectedAttestations":
                     foreach (var row in rows)
-                        result[j++] = Math.Round(row.ExpectedEndorsements, 2);
+                        result[j++] = Math.Round(row.ExpectedAttestations, 2);
                     break;
                 case "expectedDalShards":
                     foreach (var row in rows)
@@ -658,41 +658,41 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.MissedBlockRewards;
                     break;
-                case "futureEndorsements":
+                case "futureAttestations":
                     foreach (var row in rows)
-                        result[j++] = row.FutureEndorsements;
+                        result[j++] = row.FutureAttestations;
                     break;
-                case "futureEndorsementRewards":
+                case "futureAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.FutureEndorsementRewards;
+                        result[j++] = row.FutureAttestationRewards;
                     break;
-                case "endorsements":
+                case "attestations":
                     foreach (var row in rows)
-                        result[j++] = row.Endorsements;
+                        result[j++] = row.Attestations;
                     break;
-                case "endorsementRewardsDelegated":
+                case "attestationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated;
+                        result[j++] = row.AttestationRewardsDelegated;
                     break;
-                case "endorsementRewardsStakedOwn":
+                case "attestationRewardsStakedOwn":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedOwn;
+                        result[j++] = row.AttestationRewardsStakedOwn;
                     break;
-                case "endorsementRewardsStakedEdge":
+                case "attestationRewardsStakedEdge":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedEdge;
+                        result[j++] = row.AttestationRewardsStakedEdge;
                     break;
-                case "endorsementRewardsStakedShared":
+                case "attestationRewardsStakedShared":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedShared;
+                        result[j++] = row.AttestationRewardsStakedShared;
                     break;
-                case "missedEndorsements":
+                case "missedAttestations":
                     foreach (var row in rows)
-                        result[j++] = row.MissedEndorsements;
+                        result[j++] = row.MissedAttestations;
                     break;
-                case "missedEndorsementRewards":
+                case "missedAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.MissedEndorsementRewards;
+                        result[j++] = row.MissedAttestationRewards;
                     break;
                 case "futureDalAttestationRewards":
                     foreach (var row in rows)
@@ -746,45 +746,45 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoubleBakingLostExternalUnstaked;
                     break;
-                case "doubleEndorsingRewards":
+                case "doubleAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingRewards;
+                        result[j++] = row.DoubleAttestationRewards;
                     break;
-                case "doubleEndorsingLostStaked":
+                case "doubleAttestationLostStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostStaked;
+                        result[j++] = row.DoubleAttestationLostStaked;
                     break;
-                case "doubleEndorsingLostUnstaked":
+                case "doubleAttestationLostUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostUnstaked;
+                        result[j++] = row.DoubleAttestationLostUnstaked;
                     break;
-                case "doubleEndorsingLostExternalStaked":
+                case "doubleAttestationLostExternalStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostExternalStaked;
+                        result[j++] = row.DoubleAttestationLostExternalStaked;
                     break;
-                case "doubleEndorsingLostExternalUnstaked":
+                case "doubleAttestationLostExternalUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostExternalUnstaked;
+                        result[j++] = row.DoubleAttestationLostExternalUnstaked;
                     break;
-                case "doublePreendorsingRewards":
+                case "doublePreattestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingRewards;
+                        result[j++] = row.DoublePreattestationRewards;
                     break;
-                case "doublePreendorsingLostStaked":
+                case "doublePreattestationLostStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostStaked;
+                        result[j++] = row.DoublePreattestationLostStaked;
                     break;
-                case "doublePreendorsingLostUnstaked":
+                case "doublePreattestationLostUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostUnstaked;
+                        result[j++] = row.DoublePreattestationLostUnstaked;
                     break;
-                case "doublePreendorsingLostExternalStaked":
+                case "doublePreattestationLostExternalStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostExternalStaked;
+                        result[j++] = row.DoublePreattestationLostExternalStaked;
                     break;
-                case "doublePreendorsingLostExternalUnstaked":
+                case "doublePreattestationLostExternalUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostExternalUnstaked;
+                        result[j++] = row.DoublePreattestationLostExternalUnstaked;
                     break;
                 case "vdfRevelationRewardsDelegated":
                     foreach (var row in rows)
@@ -880,7 +880,7 @@ namespace Tzkt.Api.Repositories
                 BakerStakedBalance = row.OwnStakedBalance,
                 ExternalStakedBalance = row.ExternalStakedBalance,
                 ExpectedBlocks = Math.Round(row.ExpectedBlocks, 2),
-                ExpectedEndorsements = Math.Round(row.ExpectedEndorsements, 2),
+                ExpectedAttestations = Math.Round(row.ExpectedAttestations, 2),
                 ExpectedDalShards = row.ExpectedDalShards,
                 FutureBlocks = row.FutureBlocks,
                 FutureBlockRewards = row.FutureBlockRewards,
@@ -891,15 +891,15 @@ namespace Tzkt.Api.Repositories
                 BlockRewardsStakedShared = row.BlockRewardsStakedShared,
                 MissedBlocks = row.MissedBlocks,
                 MissedBlockRewards = row.MissedBlockRewards,
-                FutureEndorsements = row.FutureEndorsements,
-                FutureEndorsementRewards = row.FutureEndorsementRewards,
-                Endorsements = row.Endorsements,
-                EndorsementRewardsDelegated = row.EndorsementRewardsDelegated,
-                EndorsementRewardsStakedOwn = row.EndorsementRewardsStakedOwn,
-                EndorsementRewardsStakedEdge = row.EndorsementRewardsStakedEdge,
-                EndorsementRewardsStakedShared = row.EndorsementRewardsStakedShared,
-                MissedEndorsements = row.MissedEndorsements,
-                MissedEndorsementRewards = row.MissedEndorsementRewards,
+                FutureAttestations = row.FutureAttestations,
+                FutureAttestationRewards = row.FutureAttestationRewards,
+                Attestations = row.Attestations,
+                AttestationRewardsDelegated = row.AttestationRewardsDelegated,
+                AttestationRewardsStakedOwn = row.AttestationRewardsStakedOwn,
+                AttestationRewardsStakedEdge = row.AttestationRewardsStakedEdge,
+                AttestationRewardsStakedShared = row.AttestationRewardsStakedShared,
+                MissedAttestations = row.MissedAttestations,
+                MissedAttestationRewards = row.MissedAttestationRewards,
                 FutureDalAttestationRewards = row.FutureDalAttestationRewards,
                 DalAttestationRewardsDelegated = row.DalAttestationRewardsDelegated,
                 DalAttestationRewardsStakedOwn = row.DalAttestationRewardsStakedOwn,
@@ -913,16 +913,16 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLostUnstaked = row.DoubleBakingLostUnstaked,
                 DoubleBakingLostExternalStaked = row.DoubleBakingLostExternalStaked,
                 DoubleBakingLostExternalUnstaked = row.DoubleBakingLostExternalUnstaked,
-                DoubleEndorsingRewards = row.DoubleEndorsingRewards,
-                DoubleEndorsingLostStaked = row.DoubleEndorsingLostStaked,
-                DoubleEndorsingLostUnstaked = row.DoubleEndorsingLostUnstaked,
-                DoubleEndorsingLostExternalStaked = row.DoubleEndorsingLostExternalStaked,
-                DoubleEndorsingLostExternalUnstaked = row.DoubleEndorsingLostExternalUnstaked,
-                DoublePreendorsingRewards = row.DoublePreendorsingRewards,
-                DoublePreendorsingLostStaked = row.DoublePreendorsingLostStaked,
-                DoublePreendorsingLostUnstaked = row.DoublePreendorsingLostUnstaked,
-                DoublePreendorsingLostExternalStaked = row.DoublePreendorsingLostExternalStaked,
-                DoublePreendorsingLostExternalUnstaked = row.DoublePreendorsingLostExternalUnstaked,
+                DoubleAttestationRewards = row.DoubleAttestationRewards,
+                DoubleAttestationLostStaked = row.DoubleAttestationLostStaked,
+                DoubleAttestationLostUnstaked = row.DoubleAttestationLostUnstaked,
+                DoubleAttestationLostExternalStaked = row.DoubleAttestationLostExternalStaked,
+                DoubleAttestationLostExternalUnstaked = row.DoubleAttestationLostExternalUnstaked,
+                DoublePreattestationRewards = row.DoublePreattestationRewards,
+                DoublePreattestationLostStaked = row.DoublePreattestationLostStaked,
+                DoublePreattestationLostUnstaked = row.DoublePreattestationLostUnstaked,
+                DoublePreattestationLostExternalStaked = row.DoublePreattestationLostExternalStaked,
+                DoublePreattestationLostExternalUnstaked = row.DoublePreattestationLostExternalUnstaked,
                 VdfRevelationRewardsDelegated = row.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = row.VdfRevelationRewardsStakedOwn,
                 VdfRevelationRewardsStakedEdge = row.VdfRevelationRewardsStakedEdge,
@@ -964,7 +964,7 @@ namespace Tzkt.Api.Repositories
                     case "bakerStakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
                     case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                     case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
-                    case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                    case "expectedAttestations": columns.Add(@"""ExpectedAttestations"""); break;
                     case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                     case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                     case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
@@ -975,15 +975,15 @@ namespace Tzkt.Api.Repositories
                     case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                     case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                     case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
-                    case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
-                    case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
-                    case "endorsements": columns.Add(@"""Endorsements"""); break;
-                    case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                    case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
-                    case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
-                    case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
-                    case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
-                    case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                    case "futureAttestations": columns.Add(@"""FutureAttestations"""); break;
+                    case "futureAttestationRewards": columns.Add(@"""FutureAttestationRewards"""); break;
+                    case "attestations": columns.Add(@"""Attestations"""); break;
+                    case "attestationRewardsDelegated": columns.Add(@"""AttestationRewardsDelegated"""); break;
+                    case "attestationRewardsStakedOwn": columns.Add(@"""AttestationRewardsStakedOwn"""); break;
+                    case "attestationRewardsStakedEdge": columns.Add(@"""AttestationRewardsStakedEdge"""); break;
+                    case "attestationRewardsStakedShared": columns.Add(@"""AttestationRewardsStakedShared"""); break;
+                    case "missedAttestations": columns.Add(@"""MissedAttestations"""); break;
+                    case "missedAttestationRewards": columns.Add(@"""MissedAttestationRewards"""); break;
                     case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
                     case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
                     case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
@@ -997,16 +997,16 @@ namespace Tzkt.Api.Repositories
                     case "doubleBakingLostUnstaked": columns.Add(@"""DoubleBakingLostUnstaked"""); break;
                     case "doubleBakingLostExternalStaked": columns.Add(@"""DoubleBakingLostExternalStaked"""); break;
                     case "doubleBakingLostExternalUnstaked": columns.Add(@"""DoubleBakingLostExternalUnstaked"""); break;
-                    case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                    case "doubleEndorsingLostStaked": columns.Add(@"""DoubleEndorsingLostStaked"""); break;
-                    case "doubleEndorsingLostUnstaked": columns.Add(@"""DoubleEndorsingLostUnstaked"""); break;
-                    case "doubleEndorsingLostExternalStaked": columns.Add(@"""DoubleEndorsingLostExternalStaked"""); break;
-                    case "doubleEndorsingLostExternalUnstaked": columns.Add(@"""DoubleEndorsingLostExternalUnstaked"""); break;
-                    case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
-                    case "doublePreendorsingLostStaked": columns.Add(@"""DoublePreendorsingLostStaked"""); break;
-                    case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
-                    case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
-                    case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
+                    case "doubleAttestationRewards": columns.Add(@"""DoubleAttestationRewards"""); break;
+                    case "doubleAttestationLostStaked": columns.Add(@"""DoubleAttestationLostStaked"""); break;
+                    case "doubleAttestationLostUnstaked": columns.Add(@"""DoubleAttestationLostUnstaked"""); break;
+                    case "doubleAttestationLostExternalStaked": columns.Add(@"""DoubleAttestationLostExternalStaked"""); break;
+                    case "doubleAttestationLostExternalUnstaked": columns.Add(@"""DoubleAttestationLostExternalUnstaked"""); break;
+                    case "doublePreattestationRewards": columns.Add(@"""DoublePreattestationRewards"""); break;
+                    case "doublePreattestationLostStaked": columns.Add(@"""DoublePreattestationLostStaked"""); break;
+                    case "doublePreattestationLostUnstaked": columns.Add(@"""DoublePreattestationLostUnstaked"""); break;
+                    case "doublePreattestationLostExternalStaked": columns.Add(@"""DoublePreattestationLostExternalStaked"""); break;
+                    case "doublePreattestationLostExternalUnstaked": columns.Add(@"""DoublePreattestationLostExternalUnstaked"""); break;
                     case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                     case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
                     case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
@@ -1089,9 +1089,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Math.Round(row.ExpectedBlocks, 2);
                         break;
-                    case "expectedEndorsements":
+                    case "expectedAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = Math.Round(row.ExpectedEndorsements, 2);
+                            result[j++][i] = Math.Round(row.ExpectedAttestations, 2);
                         break;
                     case "expectedDalShards":
                         foreach (var row in rows)
@@ -1133,41 +1133,41 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.MissedBlockRewards;
                         break;
-                    case "futureEndorsements":
+                    case "futureAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.FutureEndorsements;
+                            result[j++][i] = row.FutureAttestations;
                         break;
-                    case "futureEndorsementRewards":
+                    case "futureAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.FutureEndorsementRewards;
+                            result[j++][i] = row.FutureAttestationRewards;
                         break;
-                    case "endorsements":
+                    case "attestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.Endorsements;
+                            result[j++][i] = row.Attestations;
                         break;
-                    case "endorsementRewardsDelegated":
+                    case "attestationRewardsDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsDelegated;
+                            result[j++][i] = row.AttestationRewardsDelegated;
                         break;
-                    case "endorsementRewardsStakedOwn":
+                    case "attestationRewardsStakedOwn":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedOwn;
+                            result[j++][i] = row.AttestationRewardsStakedOwn;
                         break;
-                    case "endorsementRewardsStakedEdge":
+                    case "attestationRewardsStakedEdge":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedEdge;
+                            result[j++][i] = row.AttestationRewardsStakedEdge;
                         break;
-                    case "endorsementRewardsStakedShared":
+                    case "attestationRewardsStakedShared":
                         foreach (var row in rows)
-                            result[j++][i] = row.EndorsementRewardsStakedShared;
+                            result[j++][i] = row.AttestationRewardsStakedShared;
                         break;
-                    case "missedEndorsements":
+                    case "missedAttestations":
                         foreach (var row in rows)
-                            result[j++][i] = row.MissedEndorsements;
+                            result[j++][i] = row.MissedAttestations;
                         break;
-                    case "missedEndorsementRewards":
+                    case "missedAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.MissedEndorsementRewards;
+                            result[j++][i] = row.MissedAttestationRewards;
                         break;
                     case "futureDalAttestationRewards":
                         foreach (var row in rows)
@@ -1221,45 +1221,45 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingLostExternalUnstaked;
                         break;
-                    case "doubleEndorsingRewards":
+                    case "doubleAttestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingRewards;
+                            result[j++][i] = row.DoubleAttestationRewards;
                         break;
-                    case "doubleEndorsingLostStaked":
+                    case "doubleAttestationLostStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostStaked;
+                            result[j++][i] = row.DoubleAttestationLostStaked;
                         break;
-                    case "doubleEndorsingLostUnstaked":
+                    case "doubleAttestationLostUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostUnstaked;
+                            result[j++][i] = row.DoubleAttestationLostUnstaked;
                         break;
-                    case "doubleEndorsingLostExternalStaked":
+                    case "doubleAttestationLostExternalStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostExternalStaked;
+                            result[j++][i] = row.DoubleAttestationLostExternalStaked;
                         break;
-                    case "doubleEndorsingLostExternalUnstaked":
+                    case "doubleAttestationLostExternalUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleEndorsingLostExternalUnstaked;
+                            result[j++][i] = row.DoubleAttestationLostExternalUnstaked;
                         break;
-                    case "doublePreendorsingRewards":
+                    case "doublePreattestationRewards":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingRewards;
+                            result[j++][i] = row.DoublePreattestationRewards;
                         break;
-                    case "doublePreendorsingLostStaked":
+                    case "doublePreattestationLostStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostStaked;
+                            result[j++][i] = row.DoublePreattestationLostStaked;
                         break;
-                    case "doublePreendorsingLostUnstaked":
+                    case "doublePreattestationLostUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostUnstaked;
+                            result[j++][i] = row.DoublePreattestationLostUnstaked;
                         break;
-                    case "doublePreendorsingLostExternalStaked":
+                    case "doublePreattestationLostExternalStaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostExternalStaked;
+                            result[j++][i] = row.DoublePreattestationLostExternalStaked;
                         break;
-                    case "doublePreendorsingLostExternalUnstaked":
+                    case "doublePreattestationLostExternalUnstaked":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoublePreendorsingLostExternalUnstaked;
+                            result[j++][i] = row.DoublePreattestationLostExternalUnstaked;
                         break;
                     case "vdfRevelationRewardsDelegated":
                         foreach (var row in rows)
@@ -1335,7 +1335,7 @@ namespace Tzkt.Api.Repositories
                 case "bakerStakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
                 case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
                 case "expectedBlocks": columns.Add(@"""ExpectedBlocks"""); break;
-                case "expectedEndorsements": columns.Add(@"""ExpectedEndorsements"""); break;
+                case "expectedAttestations": columns.Add(@"""ExpectedAttestations"""); break;
                 case "expectedDalShards": columns.Add(@"""ExpectedDalShards"""); break;
                 case "futureBlocks": columns.Add(@"""FutureBlocks"""); break;
                 case "futureBlockRewards": columns.Add(@"""FutureBlockRewards"""); break;
@@ -1346,15 +1346,15 @@ namespace Tzkt.Api.Repositories
                 case "blockRewardsStakedShared": columns.Add(@"""BlockRewardsStakedShared"""); break;
                 case "missedBlocks": columns.Add(@"""MissedBlocks"""); break;
                 case "missedBlockRewards": columns.Add(@"""MissedBlockRewards"""); break;
-                case "futureEndorsements": columns.Add(@"""FutureEndorsements"""); break;
-                case "futureEndorsementRewards": columns.Add(@"""FutureEndorsementRewards"""); break;
-                case "endorsements": columns.Add(@"""Endorsements"""); break;
-                case "endorsementRewardsDelegated": columns.Add(@"""EndorsementRewardsDelegated"""); break;
-                case "endorsementRewardsStakedOwn": columns.Add(@"""EndorsementRewardsStakedOwn"""); break;
-                case "endorsementRewardsStakedEdge": columns.Add(@"""EndorsementRewardsStakedEdge"""); break;
-                case "endorsementRewardsStakedShared": columns.Add(@"""EndorsementRewardsStakedShared"""); break;
-                case "missedEndorsements": columns.Add(@"""MissedEndorsements"""); break;
-                case "missedEndorsementRewards": columns.Add(@"""MissedEndorsementRewards"""); break;
+                case "futureAttestations": columns.Add(@"""FutureAttestations"""); break;
+                case "futureAttestationRewards": columns.Add(@"""FutureAttestationRewards"""); break;
+                case "attestations": columns.Add(@"""Attestations"""); break;
+                case "attestationRewardsDelegated": columns.Add(@"""AttestationRewardsDelegated"""); break;
+                case "attestationRewardsStakedOwn": columns.Add(@"""AttestationRewardsStakedOwn"""); break;
+                case "attestationRewardsStakedEdge": columns.Add(@"""AttestationRewardsStakedEdge"""); break;
+                case "attestationRewardsStakedShared": columns.Add(@"""AttestationRewardsStakedShared"""); break;
+                case "missedAttestations": columns.Add(@"""MissedAttestations"""); break;
+                case "missedAttestationRewards": columns.Add(@"""MissedAttestationRewards"""); break;
                 case "futureDalAttestationRewards": columns.Add(@"""FutureDalAttestationRewards"""); break;
                 case "dalAttestationRewardsDelegated": columns.Add(@"""DalAttestationRewardsDelegated"""); break;
                 case "dalAttestationRewardsStakedOwn": columns.Add(@"""DalAttestationRewardsStakedOwn"""); break;
@@ -1368,16 +1368,16 @@ namespace Tzkt.Api.Repositories
                 case "doubleBakingLostUnstaked": columns.Add(@"""DoubleBakingLostUnstaked"""); break;
                 case "doubleBakingLostExternalStaked": columns.Add(@"""DoubleBakingLostExternalStaked"""); break;
                 case "doubleBakingLostExternalUnstaked": columns.Add(@"""DoubleBakingLostExternalUnstaked"""); break;
-                case "doubleEndorsingRewards": columns.Add(@"""DoubleEndorsingRewards"""); break;
-                case "doubleEndorsingLostStaked": columns.Add(@"""DoubleEndorsingLostStaked"""); break;
-                case "doubleEndorsingLostUnstaked": columns.Add(@"""DoubleEndorsingLostUnstaked"""); break;
-                case "doubleEndorsingLostExternalStaked": columns.Add(@"""DoubleEndorsingLostExternalStaked"""); break;
-                case "doubleEndorsingLostExternalUnstaked": columns.Add(@"""DoubleEndorsingLostExternalUnstaked"""); break;
-                case "doublePreendorsingRewards": columns.Add(@"""DoublePreendorsingRewards"""); break;
-                case "doublePreendorsingLostStaked": columns.Add(@"""DoublePreendorsingLostStaked"""); break;
-                case "doublePreendorsingLostUnstaked": columns.Add(@"""DoublePreendorsingLostUnstaked"""); break;
-                case "doublePreendorsingLostExternalStaked": columns.Add(@"""DoublePreendorsingLostExternalStaked"""); break;
-                case "doublePreendorsingLostExternalUnstaked": columns.Add(@"""DoublePreendorsingLostExternalUnstaked"""); break;
+                case "doubleAttestationRewards": columns.Add(@"""DoubleAttestationRewards"""); break;
+                case "doubleAttestationLostStaked": columns.Add(@"""DoubleAttestationLostStaked"""); break;
+                case "doubleAttestationLostUnstaked": columns.Add(@"""DoubleAttestationLostUnstaked"""); break;
+                case "doubleAttestationLostExternalStaked": columns.Add(@"""DoubleAttestationLostExternalStaked"""); break;
+                case "doubleAttestationLostExternalUnstaked": columns.Add(@"""DoubleAttestationLostExternalUnstaked"""); break;
+                case "doublePreattestationRewards": columns.Add(@"""DoublePreattestationRewards"""); break;
+                case "doublePreattestationLostStaked": columns.Add(@"""DoublePreattestationLostStaked"""); break;
+                case "doublePreattestationLostUnstaked": columns.Add(@"""DoublePreattestationLostUnstaked"""); break;
+                case "doublePreattestationLostExternalStaked": columns.Add(@"""DoublePreattestationLostExternalStaked"""); break;
+                case "doublePreattestationLostExternalUnstaked": columns.Add(@"""DoublePreattestationLostExternalUnstaked"""); break;
                 case "vdfRevelationRewardsDelegated": columns.Add(@"""VdfRevelationRewardsDelegated"""); break;
                 case "vdfRevelationRewardsStakedOwn": columns.Add(@"""VdfRevelationRewardsStakedOwn"""); break;
                 case "vdfRevelationRewardsStakedEdge": columns.Add(@"""VdfRevelationRewardsStakedEdge"""); break;
@@ -1455,9 +1455,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Math.Round(row.ExpectedBlocks, 2);
                     break;
-                case "expectedEndorsements":
+                case "expectedAttestations":
                     foreach (var row in rows)
-                        result[j++] = Math.Round(row.ExpectedEndorsements, 2);
+                        result[j++] = Math.Round(row.ExpectedAttestations, 2);
                     break;
                 case "expectedDalShards":
                     foreach (var row in rows)
@@ -1499,41 +1499,41 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.MissedBlockRewards;
                     break;
-                case "futureEndorsements":
+                case "futureAttestations":
                     foreach (var row in rows)
-                        result[j++] = row.FutureEndorsements;
+                        result[j++] = row.FutureAttestations;
                     break;
-                case "futureEndorsementRewards":
+                case "futureAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.FutureEndorsementRewards;
+                        result[j++] = row.FutureAttestationRewards;
                     break;
-                case "endorsements":
+                case "attestations":
                     foreach (var row in rows)
-                        result[j++] = row.Endorsements;
+                        result[j++] = row.Attestations;
                     break;
-                case "endorsementRewardsDelegated":
+                case "attestationRewardsDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsDelegated;
+                        result[j++] = row.AttestationRewardsDelegated;
                     break;
-                case "endorsementRewardsStakedOwn":
+                case "attestationRewardsStakedOwn":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedOwn;
+                        result[j++] = row.AttestationRewardsStakedOwn;
                     break;
-                case "endorsementRewardsStakedEdge":
+                case "attestationRewardsStakedEdge":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedEdge;
+                        result[j++] = row.AttestationRewardsStakedEdge;
                     break;
-                case "endorsementRewardsStakedShared":
+                case "attestationRewardsStakedShared":
                     foreach (var row in rows)
-                        result[j++] = row.EndorsementRewardsStakedShared;
+                        result[j++] = row.AttestationRewardsStakedShared;
                     break;
-                case "missedEndorsements":
+                case "missedAttestations":
                     foreach (var row in rows)
-                        result[j++] = row.MissedEndorsements;
+                        result[j++] = row.MissedAttestations;
                     break;
-                case "missedEndorsementRewards":
+                case "missedAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.MissedEndorsementRewards;
+                        result[j++] = row.MissedAttestationRewards;
                     break;
                 case "futureDalAttestationRewards":
                     foreach (var row in rows)
@@ -1587,45 +1587,45 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.DoubleBakingLostExternalUnstaked;
                     break;
-                case "doubleEndorsingRewards":
+                case "doubleAttestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingRewards;
+                        result[j++] = row.DoubleAttestationRewards;
                     break;
-                case "doubleEndorsingLostStaked":
+                case "doubleAttestationLostStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostStaked;
+                        result[j++] = row.DoubleAttestationLostStaked;
                     break;
-                case "doubleEndorsingLostUnstaked":
+                case "doubleAttestationLostUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostUnstaked;
+                        result[j++] = row.DoubleAttestationLostUnstaked;
                     break;
-                case "doubleEndorsingLostExternalStaked":
+                case "doubleAttestationLostExternalStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostExternalStaked;
+                        result[j++] = row.DoubleAttestationLostExternalStaked;
                     break;
-                case "doubleEndorsingLostExternalUnstaked":
+                case "doubleAttestationLostExternalUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoubleEndorsingLostExternalUnstaked;
+                        result[j++] = row.DoubleAttestationLostExternalUnstaked;
                     break;
-                case "doublePreendorsingRewards":
+                case "doublePreattestationRewards":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingRewards;
+                        result[j++] = row.DoublePreattestationRewards;
                     break;
-                case "doublePreendorsingLostStaked":
+                case "doublePreattestationLostStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostStaked;
+                        result[j++] = row.DoublePreattestationLostStaked;
                     break;
-                case "doublePreendorsingLostUnstaked":
+                case "doublePreattestationLostUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostUnstaked;
+                        result[j++] = row.DoublePreattestationLostUnstaked;
                     break;
-                case "doublePreendorsingLostExternalStaked":
+                case "doublePreattestationLostExternalStaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostExternalStaked;
+                        result[j++] = row.DoublePreattestationLostExternalStaked;
                     break;
-                case "doublePreendorsingLostExternalUnstaked":
+                case "doublePreattestationLostExternalUnstaked":
                     foreach (var row in rows)
-                        result[j++] = row.DoublePreendorsingLostExternalUnstaked;
+                        result[j++] = row.DoublePreattestationLostExternalUnstaked;
                     break;
                 case "vdfRevelationRewardsDelegated":
                     foreach (var row in rows)
@@ -1720,7 +1720,7 @@ namespace Tzkt.Api.Repositories
                 ExternalStakedBalance = rewards.ExternalStakedBalance,
                 StakersCount = rewards.StakersCount,
                 ExpectedBlocks = Math.Round(rewards.ExpectedBlocks, 2),
-                ExpectedEndorsements = Math.Round(rewards.ExpectedEndorsements, 2),
+                ExpectedAttestations = Math.Round(rewards.ExpectedAttestations, 2),
                 ExpectedDalShards = rewards.ExpectedDalShards,
                 FutureBlocks = rewards.FutureBlocks,
                 FutureBlockRewards = rewards.FutureBlockRewards,
@@ -1731,15 +1731,15 @@ namespace Tzkt.Api.Repositories
                 BlockRewardsStakedShared = rewards.BlockRewardsStakedShared,
                 MissedBlocks = rewards.MissedBlocks,
                 MissedBlockRewards = rewards.MissedBlockRewards,
-                FutureEndorsements = rewards.FutureEndorsements,
-                FutureEndorsementRewards = rewards.FutureEndorsementRewards,
-                Endorsements = rewards.Endorsements,
-                EndorsementRewardsDelegated = rewards.EndorsementRewardsDelegated,
-                EndorsementRewardsStakedOwn = rewards.EndorsementRewardsStakedOwn,
-                EndorsementRewardsStakedEdge = rewards.EndorsementRewardsStakedEdge,
-                EndorsementRewardsStakedShared = rewards.EndorsementRewardsStakedShared,
-                MissedEndorsements = rewards.MissedEndorsements,
-                MissedEndorsementRewards = rewards.MissedEndorsementRewards,
+                FutureAttestations = rewards.FutureAttestations,
+                FutureAttestationRewards = rewards.FutureAttestationRewards,
+                Attestations = rewards.Attestations,
+                AttestationRewardsDelegated = rewards.AttestationRewardsDelegated,
+                AttestationRewardsStakedOwn = rewards.AttestationRewardsStakedOwn,
+                AttestationRewardsStakedEdge = rewards.AttestationRewardsStakedEdge,
+                AttestationRewardsStakedShared = rewards.AttestationRewardsStakedShared,
+                MissedAttestations = rewards.MissedAttestations,
+                MissedAttestationRewards = rewards.MissedAttestationRewards,
                 FutureDalAttestationRewards = rewards.FutureDalAttestationRewards,
                 DalAttestationRewardsDelegated = rewards.DalAttestationRewardsDelegated,
                 DalAttestationRewardsStakedOwn = rewards.DalAttestationRewardsStakedOwn,
@@ -1753,16 +1753,16 @@ namespace Tzkt.Api.Repositories
                 DoubleBakingLostUnstaked = rewards.DoubleBakingLostUnstaked,
                 DoubleBakingLostExternalStaked = rewards.DoubleBakingLostExternalStaked,
                 DoubleBakingLostExternalUnstaked = rewards.DoubleBakingLostExternalUnstaked,
-                DoubleEndorsingRewards = rewards.DoubleEndorsingRewards,
-                DoubleEndorsingLostStaked = rewards.DoubleEndorsingLostStaked,
-                DoubleEndorsingLostUnstaked = rewards.DoubleEndorsingLostUnstaked,
-                DoubleEndorsingLostExternalStaked = rewards.DoubleEndorsingLostExternalStaked,
-                DoubleEndorsingLostExternalUnstaked = rewards.DoubleEndorsingLostExternalUnstaked,
-                DoublePreendorsingRewards = rewards.DoublePreendorsingRewards,
-                DoublePreendorsingLostStaked = rewards.DoublePreendorsingLostStaked,
-                DoublePreendorsingLostUnstaked = rewards.DoublePreendorsingLostUnstaked,
-                DoublePreendorsingLostExternalStaked = rewards.DoublePreendorsingLostExternalStaked,
-                DoublePreendorsingLostExternalUnstaked = rewards.DoublePreendorsingLostExternalUnstaked,
+                DoubleAttestationRewards = rewards.DoubleAttestationRewards,
+                DoubleAttestationLostStaked = rewards.DoubleAttestationLostStaked,
+                DoubleAttestationLostUnstaked = rewards.DoubleAttestationLostUnstaked,
+                DoubleAttestationLostExternalStaked = rewards.DoubleAttestationLostExternalStaked,
+                DoubleAttestationLostExternalUnstaked = rewards.DoubleAttestationLostExternalUnstaked,
+                DoublePreattestationRewards = rewards.DoublePreattestationRewards,
+                DoublePreattestationLostStaked = rewards.DoublePreattestationLostStaked,
+                DoublePreattestationLostUnstaked = rewards.DoublePreattestationLostUnstaked,
+                DoublePreattestationLostExternalStaked = rewards.DoublePreattestationLostExternalStaked,
+                DoublePreattestationLostExternalUnstaked = rewards.DoublePreattestationLostExternalUnstaked,
                 VdfRevelationRewardsDelegated = rewards.VdfRevelationRewardsDelegated,
                 VdfRevelationRewardsStakedOwn = rewards.VdfRevelationRewardsStakedOwn,
                 VdfRevelationRewardsStakedEdge = rewards.VdfRevelationRewardsStakedEdge,

@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 """,
                 (int)BakingRightType.Baking,
                 lastCycle,
-                (int)BakingRightType.Endorsing,
+                (int)BakingRightType.Attestation,
                 lastCycleStart);
 
             var removedCycles = await Db.Database.ExecuteSqlRawAsync("""
@@ -102,13 +102,13 @@ namespace Tzkt.Sync.Protocols.Proto21
                 op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
 
-            foreach (var op in await Db.DoubleEndorsingOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
+            foreach (var op in await Db.DoubleAttestationOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
                 op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
 
-            foreach (var op in await Db.DoublePreendorsingOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
+            foreach (var op in await Db.DoublePreattestationOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
                 op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
@@ -148,11 +148,11 @@ namespace Tzkt.Sync.Protocols.Proto21
 
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
                 cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
                 
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (nextProto.EndorsersPerBlock - nextProto.ConsensusThreshold);
+                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (nextProto.AttestersPerBlock - nextProto.ConsensusThreshold);
 
                 cycle.FirstLevel = nextProto.GetCycleStart(cycle.Index);
                 cycle.LastLevel = nextProto.GetCycleEnd(cycle.Index);
@@ -169,7 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 """, state.Cycle);
 
             var conn = (Db.Database.GetDbConnection() as NpgsqlConnection)!;
-            IEnumerable<RightsGenerator.ER> shifted = [];
+            IEnumerable<RightsGenerator.AR> shifted = [];
 
             foreach (var cycle in cycles)
             {
@@ -185,7 +185,7 @@ namespace Tzkt.Sync.Protocols.Proto21
 
                 if (cycle.Index == state.Cycle)
                 {
-                    shifted = RightsGenerator.GetEndorsingRights(sampler, nextProto, cycle, cycle.LastLevel);
+                    shifted = RightsGenerator.GetAttestationRights(sampler, nextProto, cycle, cycle.LastLevel);
 
                     #region save shifted
                     using var writer = conn.BeginBinaryImport("""
@@ -193,16 +193,16 @@ namespace Tzkt.Sync.Protocols.Proto21
                         FROM STDIN (FORMAT BINARY)
                         """);
 
-                    foreach (var er in shifted)
+                    foreach (var ar in shifted)
                     {
                         writer.StartRow();
                         writer.Write(cycle.Index + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                        writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                         writer.WriteNull();
-                        writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                        writer.Write(ar.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                     }
 
                     writer.Complete();
@@ -212,7 +212,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 {
                     GC.Collect();
                     var brs = await RightsGenerator.GetBakingRightsAsync(sampler, nextProto, cycle);
-                    var ers = await RightsGenerator.GetEndorsingRightsAsync(sampler, nextProto, cycle);
+                    var ars = await RightsGenerator.GetAttestationRightsAsync(sampler, nextProto, cycle);
 
                     #region save rights
                     using (var writer = conn.BeginBinaryImport("""
@@ -220,16 +220,16 @@ namespace Tzkt.Sync.Protocols.Proto21
                         FROM STDIN (FORMAT BINARY)
                         """))
                     {
-                        foreach (var er in ers)
+                        foreach (var ar in ars)
                         {
                             writer.StartRow();
-                            writer.Write(nextProto.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                            writer.Write((int)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(nextProto.GetCycle(ar.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(ar.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(ar.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write((int)BakingRightType.Attestation, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.Write((int)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Integer);
                             writer.WriteNull();
-                            writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
+                            writer.Write(ar.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
                         }
 
                         foreach (var br in brs)
@@ -255,12 +255,12 @@ namespace Tzkt.Sync.Protocols.Proto21
 
                         bakerCycle.FutureBlocks = 0;
                         bakerCycle.FutureBlockRewards = 0;
-                        bakerCycle.FutureEndorsements = 0;
+                        bakerCycle.FutureAttestations = 0;
 
-                        var expectedEndorsements = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.EndorsersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
+                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
                         bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
-                        bakerCycle.ExpectedEndorsements = expectedEndorsements;
-                        bakerCycle.FutureEndorsementRewards = expectedEndorsements * cycle.EndorsementRewardPerSlot;
+                        bakerCycle.ExpectedAttestations = expectedAttestations;
+                        bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
                     }
 
                     foreach (var br in brs.Where(x => x.Round == 0))
@@ -272,24 +272,24 @@ namespace Tzkt.Sync.Protocols.Proto21
                         bakerCycle.FutureBlockRewards += cycle.MaxBlockReward;
                     }
 
-                    foreach (var er in shifted)
+                    foreach (var ar in shifted)
                     {
-                        if (bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                        if (bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
                         {
-                            bakerCycle.FutureEndorsements += er.Slots;
+                            bakerCycle.FutureAttestations += ar.Slots;
                         }
                     }
 
-                    foreach (var er in ers.TakeWhile(x => x.Level < cycle.LastLevel))
+                    foreach (var ar in ars.TakeWhile(x => x.Level < cycle.LastLevel))
                     {
-                        if (!bakerCycles.TryGetValue(er.Baker, out var bakerCycle))
+                        if (!bakerCycles.TryGetValue(ar.Baker, out var bakerCycle))
                             throw new Exception("Nonexistent baker cycle");
 
-                        bakerCycle.FutureEndorsements += er.Slots;
+                        bakerCycle.FutureAttestations += ar.Slots;
                     }
                     #endregion
 
-                    shifted = ers.Where(x => x.Level == cycle.LastLevel).ToList();
+                    shifted = ars.Where(x => x.Level == cycle.LastLevel).ToList();
                 }
             }
         }
