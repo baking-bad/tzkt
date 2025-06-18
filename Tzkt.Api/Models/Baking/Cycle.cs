@@ -58,9 +58,9 @@
         public long BlockBonusPerSlot { get; set; }
 
         /// <summary>
-        /// Reward for endorsing in this cycle (micro tez)
+        /// Reward for attestation in this cycle (micro tez)
         /// </summary>
-        public long EndorsementRewardPerSlot { get; set; }
+        public long AttestationRewardPerSlot { get; set; }
 
         /// <summary>
         /// Reward for seed nonce revelation in this cycle (micro tez)
@@ -82,6 +82,13 @@
         /// Injected historical quote at the end of the cycle
         /// </summary>
         public QuoteShort? Quote { get; set; }
+        #endregion
+
+        #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardPerSlot => AttestationRewardPerSlot;
         #endregion
     }
 }

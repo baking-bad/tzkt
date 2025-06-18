@@ -79,7 +79,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
         protected virtual async Task RunDiagnostics(int level, int ops = -1)
         {
-            if (ops != -1 && ops != AddedOperations + Context.TransactionOps.Count + Context.EndorsementOps.Count)
+            if (ops != -1 && ops != AddedOperations + Context.TransactionOps.Count + Context.AttestationOps.Count)
                 throw new Exception($"Diagnostics failed: wrong operations count");
 
             var state = Cache.AppState.Get();

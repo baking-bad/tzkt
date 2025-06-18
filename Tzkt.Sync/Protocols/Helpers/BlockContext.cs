@@ -13,8 +13,8 @@ namespace Tzkt.Sync.Protocols
         public Protocol Protocol { get; set; } = null!;
 
         #region operations
-        public List<EndorsementOperation> EndorsementOps { get; set; } = [];
-        public List<PreendorsementOperation> PreendorsementOps { get; set; } = [];
+        public List<AttestationOperation> AttestationOps { get; set; } = [];
+        public List<PreattestationOperation> PreattestationOps { get; set; } = [];
 
         public List<ProposalOperation> ProposalOps { get; set; } = [];
         public List<BallotOperation> BallotOps { get; set; } = [];
@@ -22,8 +22,8 @@ namespace Tzkt.Sync.Protocols
         public List<ActivationOperation> ActivationOps { get; set; } = [];
         public List<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; } = [];
         public List<DoubleBakingOperation> DoubleBakingOps { get; set; } = [];
-        public List<DoubleEndorsingOperation> DoubleEndorsingOps { get; set; } = [];
-        public List<DoublePreendorsingOperation> DoublePreendorsingOps { get; set; } = [];
+        public List<DoubleAttestationOperation> DoubleAttestationOps { get; set; } = [];
+        public List<DoublePreattestationOperation> DoublePreattestationOps { get; set; } = [];
         public List<NonceRevelationOperation> NonceRevelationOps { get; set; } = [];
         public List<VdfRevelationOperation> VdfRevelationOps { get; set; } = [];
         public List<DrainDelegateOperation> DrainDelegateOps { get; set; } = [];
@@ -62,7 +62,7 @@ namespace Tzkt.Sync.Protocols
         #region fictive operations
         public List<MigrationOperation> MigrationOps { get; set; } = [];
         public List<RevelationPenaltyOperation> RevelationPenaltyOps { get; set; } = [];
-        public List<EndorsingRewardOperation> EndorsingRewardOps { get; set; } = [];
+        public List<AttestationRewardOperation> AttestationRewardOps { get; set; } = [];
         public List<DalAttestationRewardOperation> DalAttestationRewardOps { get; set; } = [];
         public List<AutostakingOperation> AutostakingOps { get; set; } = [];
         #endregion
@@ -71,8 +71,8 @@ namespace Tzkt.Sync.Protocols
         {
             var ops = Enumerable.Empty<IOperation>();
 
-            if (EndorsementOps.Count != 0) ops = ops.Concat(EndorsementOps);
-            if (PreendorsementOps.Count != 0) ops = ops.Concat(PreendorsementOps);
+            if (AttestationOps.Count != 0) ops = ops.Concat(AttestationOps);
+            if (PreattestationOps.Count != 0) ops = ops.Concat(PreattestationOps);
 
             if (BallotOps.Count != 0) ops = ops.Concat(BallotOps);
             if (ProposalOps.Count != 0) ops = ops.Concat(ProposalOps);
@@ -80,8 +80,8 @@ namespace Tzkt.Sync.Protocols
             if (ActivationOps.Count != 0) ops = ops.Concat(ActivationOps);
             if (DalEntrapmentEvidenceOps.Count != 0) ops = ops.Concat(DalEntrapmentEvidenceOps);
             if (DoubleBakingOps.Count != 0) ops = ops.Concat(DoubleBakingOps);
-            if (DoubleEndorsingOps.Count != 0) ops = ops.Concat(DoubleEndorsingOps);
-            if (DoublePreendorsingOps.Count != 0) ops = ops.Concat(DoublePreendorsingOps);
+            if (DoubleAttestationOps.Count != 0) ops = ops.Concat(DoubleAttestationOps);
+            if (DoublePreattestationOps.Count != 0) ops = ops.Concat(DoublePreattestationOps);
             if (NonceRevelationOps.Count != 0) ops = ops.Concat(NonceRevelationOps);
             if (VdfRevelationOps.Count != 0) ops = ops.Concat(VdfRevelationOps);
             if (DrainDelegateOps.Count != 0) ops = ops.Concat(DrainDelegateOps);
@@ -126,8 +126,8 @@ namespace Tzkt.Sync.Protocols
             if (TransactionOps.Count != 0)
                 TransactionOperation.Write(conn, TransactionOps);
 
-            if (EndorsementOps.Count != 0)
-                EndorsementOperation.Write(conn, EndorsementOps);
+            if (AttestationOps.Count != 0)
+                AttestationOperation.Write(conn, AttestationOps);
         }
 
         public async Task Revert(TzktContext db)
@@ -138,10 +138,10 @@ namespace Tzkt.Sync.Protocols
                     WHERE "{{nameof(TransactionOperation.Level)}}" = {0}
                     """, Block.Level);
 
-            if (EndorsementOps.Count != 0)
+            if (AttestationOps.Count != 0)
                 await db.Database.ExecuteSqlRawAsync($$"""
-                    DELETE FROM "{{nameof(TzktContext.EndorsementOps)}}"
-                    WHERE "{{nameof(EndorsementOperation.Level)}}" = {0}
+                    DELETE FROM "{{nameof(TzktContext.AttestationOps)}}"
+                    WHERE "{{nameof(AttestationOperation.Level)}}" = {0}
                     """, Block.Level);
         }
     }

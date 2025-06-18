@@ -181,14 +181,14 @@ namespace Tzkt.Sync.Protocols.Proto18
             await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE "SnapshotBalances" as sb
                 SET 
-                    "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated",
-                    "OwnStakedBalance" = "OwnStakedBalance" - bc."EndorsementRewardsStakedOwn" - bc."EndorsementRewardsStakedEdge",
-                    "ExternalStakedBalance" = "ExternalStakedBalance" - bc."EndorsementRewardsStakedShared"
+                    "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."AttestationRewardsDelegated",
+                    "OwnStakedBalance" = "OwnStakedBalance" - bc."AttestationRewardsStakedOwn" - bc."AttestationRewardsStakedEdge",
+                    "ExternalStakedBalance" = "ExternalStakedBalance" - bc."AttestationRewardsStakedShared"
                 FROM (
-                    SELECT "BakerId", "EndorsementRewardsDelegated", "EndorsementRewardsStakedOwn", "EndorsementRewardsStakedEdge", "EndorsementRewardsStakedShared"
+                    SELECT "BakerId", "AttestationRewardsDelegated", "AttestationRewardsStakedOwn", "AttestationRewardsStakedEdge", "AttestationRewardsStakedShared"
                     FROM "BakerCycles"
                     WHERE "Cycle" = {0}
-                    AND ("EndorsementRewardsDelegated" != 0 OR "EndorsementRewardsStakedOwn" != 0 OR "EndorsementRewardsStakedEdge" != 0 OR "EndorsementRewardsStakedShared" != 0)
+                    AND ("AttestationRewardsDelegated" != 0 OR "AttestationRewardsStakedOwn" != 0 OR "AttestationRewardsStakedEdge" != 0 OR "AttestationRewardsStakedShared" != 0)
                 ) as bc
                 WHERE sb."Level" = {1}
                 AND sb."AccountId" = bc."BakerId"

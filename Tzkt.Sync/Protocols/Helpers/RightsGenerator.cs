@@ -36,7 +36,7 @@ namespace Tzkt.Sync.Protocols
             return result;
         }
 
-        Dictionary<int, int> GetEndorsingRights(int position, int slots)
+        Dictionary<int, int> GetAttestationRights(int position, int slots)
         {
             WriteInt32(Seed, 32, position);
             var result = new Dictionary<int, int>();
@@ -98,9 +98,9 @@ namespace Tzkt.Sync.Protocols
             return res.OrderBy(x => x.Level).ThenBy(x => x.Round);
         }
 
-        public static async Task<IEnumerable<ER>> GetEndorsingRightsAsync(Sampler sampler, Protocol protocol, Cycle cycle)
+        public static async Task<IEnumerable<AR>> GetAttestationRightsAsync(Sampler sampler, Protocol protocol, Cycle cycle)
         {
-            var res = new List<ER>(protocol.BlocksPerCycle * sampler.Length);
+            var res = new List<AR>(protocol.BlocksPerCycle * sampler.Length);
             var step = (int)Math.Ceiling((double)protocol.BlocksPerCycle / Environment.ProcessorCount);
             var tasks = new List<Task>();
             for (int i = 0; i < protocol.BlocksPerCycle; i += step)
@@ -112,7 +112,7 @@ namespace Tzkt.Sync.Protocols
                     var generator = new RightsGenerator(sampler, cycle.Seed);
                     for (int position = from; position < to; position++)
                     {
-                        var rights = generator.GetEndorsingRights(position, protocol.EndorsersPerBlock);
+                        var rights = generator.GetAttestationRights(position, protocol.AttestersPerBlock);
                         lock (res)
                         {
                             foreach (var (baker, slots) in rights)
@@ -150,11 +150,11 @@ namespace Tzkt.Sync.Protocols
             return res;
         }
 
-        public static IEnumerable<ER> GetEndorsingRights(Sampler sampler, Protocol protocol, Cycle cycle, int level)
+        public static IEnumerable<AR> GetAttestationRights(Sampler sampler, Protocol protocol, Cycle cycle, int level)
         {
             var generator = new RightsGenerator(sampler, cycle.Seed);
-            var rights = generator.GetEndorsingRights(level - cycle.FirstLevel, protocol.EndorsersPerBlock);
-            return rights.Select(kv => new ER
+            var rights = generator.GetAttestationRights(level - cycle.FirstLevel, protocol.AttestersPerBlock);
+            return rights.Select(kv => new AR
             {
                 Level = level,
                 Baker = kv.Key,
@@ -168,7 +168,7 @@ namespace Tzkt.Sync.Protocols
             return generator.GetAttester(level - cycle.FirstLevel, slot);
         }
 
-        public class ER
+        public class AR
         {
             public int Level { get; init; }
             public int Baker { get; init; }

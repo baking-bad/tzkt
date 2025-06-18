@@ -141,24 +141,24 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region endorsements
+        #region attestations
         /// <summary>
-        /// Get endorsements
+        /// Get attestations
         /// </summary>
         /// <remarks>
-        /// Returns a list of endorsement operations.
+        /// Returns a list of attestation operations.
         /// </remarks>
-        /// <param name="delegate">Filters endorsements by delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="level">Filters endorsements by level.</param>
-        /// <param name="timestamp">Filters endorsements by timestamp.</param>
+        /// <param name="delegate">Filters attestations by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="level">Filters attestations by level.</param>
+        /// <param name="timestamp">Filters attestations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts endorsements by specified field. Supported fields: `id` (default), `level`.</param>
+        /// <param name="sort">Sorts attestations by specified field. Supported fields: `id` (default), `level`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsements")]
-        public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsements(
+        [HttpGet("attestations")]
+        public async Task<ActionResult<IEnumerable<AttestationOperation>>> GetAttestations(
             AccountParameter? @delegate,
             Int32Parameter? level,
             TimestampParameter? timestamp,
@@ -178,7 +178,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
-                    return Ok(Enumerable.Empty<EndorsementOperation>());
+                    return Ok(Enumerable.Empty<AttestationOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level"))
@@ -195,25 +195,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetEndorsements(null, @delegate, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetAttestations(null, @delegate, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -222,16 +222,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get endorsement by hash
+        /// Get attestation by hash
         /// </summary>
         /// <remarks>
-        /// Returns an endorsement operation with specified hash.
+        /// Returns an attestation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsements/{hash}")]
-        public async Task<ActionResult<IEnumerable<EndorsementOperation>>> GetEndorsementByHash(
+        [HttpGet("attestations/{hash}")]
+        public async Task<ActionResult<IEnumerable<AttestationOperation>>> GetAttestationByHash(
             [Required][OpHash] string hash, 
             Symbols quote = Symbols.None)
         {
@@ -241,27 +241,27 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetEndorsements(hash, quote);
+            var res = await Operations.GetAttestations(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get endorsements count
+        /// Get attestations count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of endorsement operations.
+        /// Returns the total number of attestation operations.
         /// </remarks>
-        /// <param name="level">Filters endorsements by level.</param>
-        /// <param name="timestamp">Filters endorsements by timestamp.</param>
+        /// <param name="level">Filters attestations by level.</param>
+        /// <param name="timestamp">Filters attestations by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("endorsements/count")]
-        public async Task<ActionResult<int>> GetEndorsementsCount(
+        [HttpGet("attestations/count")]
+        public async Task<ActionResult<int>> GetAttestationsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.EndorsementOpsCount);
+                return Ok(State.Current.AttestationOpsCount);
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));  
@@ -269,18 +269,18 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetEndorsementsCount(level, timestamp);
+            var res = await Operations.GetAttestationsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
         #endregion
 
-        #region preendorsements
+        #region preattestations
         /// <summary>
-        /// Get preendorsements
+        /// Get preattestations
         /// </summary>
         /// <remarks>
-        /// Returns a list of preendorsement operations.
+        /// Returns a list of preattestation operations.
         /// </remarks>
         /// <param name="delegate">Filters by delegate. Allowed fields for `.eqx` mode: none.</param>
         /// <param name="level">Filters by level.</param>
@@ -291,8 +291,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("preendorsements")]
-        public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsements(
+        [HttpGet("preattestations")]
+        public async Task<ActionResult<IEnumerable<PreattestationOperation>>> GetPreattestations(
             AccountParameter? @delegate,
             Int32Parameter? level,
             TimestampParameter? timestamp,
@@ -312,7 +312,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(@delegate)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (@delegate.Eq == -1 || @delegate.In?.Count == 0 || @delegate.Null == true)
-                    return Ok(Enumerable.Empty<PreendorsementOperation>());
+                    return Ok(Enumerable.Empty<PreattestationOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level"))
@@ -329,25 +329,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetPreendorsements(null, @delegate, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetPreattestations(null, @delegate, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetPreattestations(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetPreattestations(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetPreattestations(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetPreendorsements(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetPreattestations(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -356,16 +356,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get preendorsement by hash
+        /// Get preattestation by hash
         /// </summary>
         /// <remarks>
-        /// Returns an preendorsement operation with specified hash.
+        /// Returns an preattestation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("preendorsements/{hash}")]
-        public async Task<ActionResult<IEnumerable<PreendorsementOperation>>> GetPreendorsementByHash(
+        [HttpGet("preattestations/{hash}")]
+        public async Task<ActionResult<IEnumerable<PreattestationOperation>>> GetPreattestationByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
@@ -375,27 +375,27 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetPreendorsements(hash, quote);
+            var res = await Operations.GetPreattestations(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get preendorsements count
+        /// Get preattestations count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of preendorsement operations.
+        /// Returns the total number of preattestation operations.
         /// </remarks>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("preendorsements/count")]
-        public async Task<ActionResult<int>> GetPreendorsementsCount(
+        [HttpGet("preattestations/count")]
+        public async Task<ActionResult<int>> GetPreattestationsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.PreendorsementOpsCount);
+                return Ok(State.Current.PreattestationOpsCount);
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));  
@@ -403,7 +403,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetPreendorsementsCount(level, timestamp);
+            var res = await Operations.GetPreattestationsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -1155,27 +1155,27 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region double endorsing
+        #region double attestation
         /// <summary>
-        /// Get double endorsing
+        /// Get double attestation
         /// </summary>
         /// <remarks>
-        /// Returns a list of double endorsing operations.
+        /// Returns a list of double attestation operations.
         /// </remarks>
-        /// <param name="anyof">Filters double endorsing operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
-        /// <param name="accuser">Filters double endorsing operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
-        /// <param name="offender">Filters double endorsing operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="anyof">Filters double attestation operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="accuser">Filters double attestation operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filters double attestation operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
         /// <param name="id">Filters operations by internal TzKT id.</param>
-        /// <param name="level">Filters double endorsing operations by level.</param>
-        /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
+        /// <param name="level">Filters double attestation operations by level.</param>
+        /// <param name="timestamp">Filters double attestation operations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts double endorsing operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
+        /// <param name="sort">Sorts double attestation operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_endorsing")]
-        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsing(
+        [HttpGet("double_attestation")]
+        public async Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleAttestation(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter? anyof,
@@ -1197,7 +1197,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
                 if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
             }
 
             if (accuser != null)
@@ -1209,7 +1209,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
 
                 if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
             }
 
             if (offender != null)
@@ -1221,7 +1221,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
 
                 if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoubleEndorsingOperation>());
+                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -1238,25 +1238,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleEndorsings(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleAttestations(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleEndorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1265,16 +1265,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get double endorsing by hash
+        /// Get double attestation by hash
         /// </summary>
         /// <remarks>
-        /// Returns a double endorsing operation with specified hash.
+        /// Returns a double attestation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_endorsing/{hash}")]
-        public async Task<ActionResult<IEnumerable<DoubleEndorsingOperation>>> GetDoubleEndorsingByHash(
+        [HttpGet("double_attestation/{hash}")]
+        public async Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleAttestationByHash(
             [Required][OpHash] string hash, 
             Symbols quote = Symbols.None)
         {
@@ -1284,27 +1284,27 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoubleEndorsings(hash, quote);
+            var res = await Operations.GetDoubleAttestations(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get double endorsing count
+        /// Get double attestation count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of double endorsing operations.
+        /// Returns the total number of double attestation operations.
         /// </remarks>
-        /// <param name="level">Filters double endorsing operations by level.</param>
-        /// <param name="timestamp">Filters double endorsing operations by timestamp.</param>
+        /// <param name="level">Filters double attestation operations by level.</param>
+        /// <param name="timestamp">Filters double attestation operations by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("double_endorsing/count")]
-        public async Task<ActionResult<int>> GetDoubleEndorsingCount(
+        [HttpGet("double_attestation/count")]
+        public async Task<ActionResult<int>> GetDoubleAttestationCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.DoubleEndorsingOpsCount);
+                return Ok(State.Current.DoubleAttestationOpsCount);
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));  
@@ -1312,18 +1312,18 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoubleEndorsingsCount(level, timestamp);
+            var res = await Operations.GetDoubleAttestationsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
         #endregion
 
-        #region double preendorsing
+        #region double preattestation
         /// <summary>
-        /// Get double preendorsing
+        /// Get double preattestation
         /// </summary>
         /// <remarks>
-        /// Returns a list of double preendorsing operations.
+        /// Returns a list of double preattestation operations.
         /// </remarks>
         /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
@@ -1337,8 +1337,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_preendorsing")]
-        public async Task<ActionResult<IEnumerable<DoublePreendorsingOperation>>> GetDoublePreendorsing(
+        [HttpGet("double_preattestation")]
+        public async Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreattestation(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter? anyof,
@@ -1360,7 +1360,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
                 if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
             }
 
             if (accuser != null)
@@ -1372,7 +1372,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
 
                 if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
             }
 
             if (offender != null)
@@ -1384,7 +1384,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
 
                 if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreendorsingOperation>());
+                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -1401,25 +1401,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoublePreendorsings(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoublePreattestations(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoublePreendorsings(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1428,16 +1428,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get double preendorsing by hash
+        /// Get double preattestation by hash
         /// </summary>
         /// <remarks>
-        /// Returns a double preendorsing operation with specified hash.
+        /// Returns a double preattestation operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_preendorsing/{hash}")]
-        public async Task<ActionResult<IEnumerable<DoublePreendorsingOperation>>> GetDoublePreendorsingByHash(
+        [HttpGet("double_preattestation/{hash}")]
+        public async Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreattestationByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
@@ -1447,27 +1447,27 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoublePreendorsings(hash, quote);
+            var res = await Operations.GetDoublePreattestations(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get double preendorsing count
+        /// Get double preattestation count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of double preendorsing operations.
+        /// Returns the total number of double preattestation operations.
         /// </remarks>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("double_preendorsing/count")]
-        public async Task<ActionResult<int>> GetDoublePreendorsingCount(
+        [HttpGet("double_preattestation/count")]
+        public async Task<ActionResult<int>> GetDoublePreattestationCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.DoublePreendorsingOpsCount);
+                return Ok(State.Current.DoublePreattestationOpsCount);
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));  
@@ -1475,7 +1475,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoublePreendorsingsCount(level, timestamp);
+            var res = await Operations.GetDoublePreattestationsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -5693,12 +5693,12 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region endorsing rewards
+        #region attestation rewards
         /// <summary>
-        /// Get endorsing rewards
+        /// Get attestation rewards
         /// </summary>
         /// <remarks>
-        /// Returns a list of endorsing reward operations (synthetic type).
+        /// Returns a list of attestation reward operations (synthetic type).
         /// </remarks>
         /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
@@ -5710,8 +5710,8 @@ namespace Tzkt.Api.Controllers
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsing_rewards")]
-        public async Task<ActionResult<IEnumerable<EndorsingRewardOperation>>> GetEndorsingRewards(
+        [HttpGet("attestation_rewards")]
+        public async Task<ActionResult<IEnumerable<AttestationRewardOperation>>> GetAttestationRewards(
             Int64Parameter? id,
             AccountParameter? baker,
             Int32Parameter? level,
@@ -5732,7 +5732,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
 
                 if (baker.Eq == -1 || baker.In?.Count == 0 || baker.Null == true)
-                    return Ok(Enumerable.Empty<EndorsingRewardOperation>());
+                    return Ok(Enumerable.Empty<AttestationRewardOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level"))
@@ -5749,25 +5749,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetEndorsingRewards(null, id, baker, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetAttestationRewards(null, id, baker, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetEndorsingRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetAttestationRewards(id, baker, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -5776,16 +5776,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get endorsing reward by id
+        /// Get attestation reward by id
         /// </summary>
         /// <remarks>
-        /// Returns endorsing reward operation with specified id.
+        /// Returns attestation reward operation with specified id.
         /// </remarks>
         /// <param name="id">Operation id</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("endorsing_rewards/{id:long}")]
-        public async Task<ActionResult<EndorsingRewardOperation?>> GetEndorsingRewardById(
+        [HttpGet("attestation_rewards/{id:long}")]
+        public async Task<ActionResult<AttestationRewardOperation?>> GetAttestationRewardById(
             [Required][Min64(0)] long id,
             Symbols quote = Symbols.None)
         {
@@ -5795,27 +5795,27 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetEndorsingReward(id, quote);
+            var res = await Operations.GetAttestationReward(id, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get endorsing rewards count
+        /// Get attestation rewards count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of endorsing reward operations (synthetic type).
+        /// Returns the total number of attestation reward operations (synthetic type).
         /// </remarks>
         /// <param name="level">Filters by level.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("endorsing_rewards/count")]
-        public async Task<ActionResult<int>> GetEndorsingRewardsCount(
+        [HttpGet("attestation_rewards/count")]
+        public async Task<ActionResult<int>> GetAttestationRewardsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.EndorsingRewardOpsCount);
+                return Ok(State.Current.AttestationRewardOpsCount);
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("level", level), ("timestamp", timestamp));  
@@ -5823,7 +5823,7 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetEndorsingRewardsCount(level, timestamp);
+            var res = await Operations.GetAttestationRewardsCount(level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -6178,6 +6178,182 @@ namespace Tzkt.Api.Controllers
             TimestampParameter? timestamp)
         {
             return GetUpdateSecondaryKeyOpsCount(new() { Eq = 0 }, level, timestamp);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsements")]
+        public Task<ActionResult<IEnumerable<AttestationOperation>>> GetEndorsements(
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetAttestations(@delegate, level, timestamp, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsements/{hash}")]
+        public Task<ActionResult<IEnumerable<AttestationOperation>>> GetEndorsementByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return GetAttestationByHash(hash, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsements/count")]
+        public Task<ActionResult<int>> GetEndorsementsCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetAttestationsCount(level, timestamp);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("preendorsements")]
+        public Task<ActionResult<IEnumerable<PreattestationOperation>>> GetPreendorsements(
+            AccountParameter? @delegate,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetPreattestations(@delegate, level, timestamp, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("preendorsements/{hash}")]
+        public Task<ActionResult<IEnumerable<PreattestationOperation>>> GetPreendorsementByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return GetPreattestationByHash(hash, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("preendorsements/count")]
+        public Task<ActionResult<int>> GetPreendorsementsCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetPreattestationsCount(level, timestamp);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_endorsing")]
+        public Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleEndorsing(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetDoubleAttestation(anyof, accuser, offender, id, level, timestamp, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_endorsing/{hash}")]
+        public Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleEndorsingByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return GetDoubleAttestationByHash(hash, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_endorsing/count")]
+        public Task<ActionResult<int>> GetDoubleEndorsingCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetDoubleAttestationCount(level, timestamp);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_preendorsing")]
+        public Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreendorsing(
+            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
+            [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
+            AnyOfParameter? anyof,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            Int64Parameter? id,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetDoublePreattestation(anyof, accuser, offender, id, level, timestamp, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_preendorsing/{hash}")]
+        public Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreendorsingByHash(
+            [Required][OpHash] string hash,
+            Symbols quote = Symbols.None)
+        {
+            return GetDoublePreattestationByHash(hash, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("double_preendorsing/count")]
+        public Task<ActionResult<int>> GetDoublePreendorsingCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetDoublePreattestationCount(level, timestamp);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsing_rewards")]
+        public Task<ActionResult<IEnumerable<AttestationRewardOperation>>> GetEndorsingRewards(
+            Int64Parameter? id,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            SelectParameter? select,
+            SortParameter? sort,
+            OffsetParameter? offset,
+            [Range(0, 10000)] int limit = 100,
+            Symbols quote = Symbols.None)
+        {
+            return GetAttestationRewards(id, baker, level, timestamp, select, sort, offset, limit, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsing_rewards/{id:long}")]
+        public Task<ActionResult<AttestationRewardOperation?>> GetEndorsingRewardById(
+            [Required][Min64(0)] long id,
+            Symbols quote = Symbols.None)
+        {
+            return GetAttestationRewardById(id, quote);
+        }
+
+        [OpenApiIgnore]
+        [HttpGet("endorsing_rewards/count")]
+        public Task<ActionResult<int>> GetEndorsingRewardsCount(
+            Int32Parameter? level,
+            TimestampParameter? timestamp)
+        {
+            return GetAttestationRewardsCount(level, timestamp);
         }
         #endregion
     }

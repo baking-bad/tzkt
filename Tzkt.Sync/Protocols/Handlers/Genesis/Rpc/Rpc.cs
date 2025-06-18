@@ -14,13 +14,13 @@ namespace Tzkt.Sync.Protocols.Genesis
         public Task<JsonElement> GetBakingRightsAsync(int block, int cycle)
             => throw new InvalidOperationException();
 
-        public Task<JsonElement> GetEndorsingRightsAsync(int block, int cycle)
+        public Task<JsonElement> GetAttestationRightsAsync(int block, int cycle)
             => throw new InvalidOperationException();
 
         public Task<JsonElement> GetLevelBakingRightsAsync(int block, int level, int maxRound)
             => throw new InvalidOperationException();
 
-        public Task<JsonElement> GetLevelEndorsingRightsAsync(int block, int level)
+        public Task<JsonElement> GetLevelAttestationRightsAsync(int block, int level)
             => throw new InvalidOperationException();
 
         public Task<JsonElement> GetContractAsync(int level, string address)

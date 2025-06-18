@@ -309,11 +309,11 @@ namespace Tzkt.Sync
             Context.Proposer = Cache.Accounts.GetDelegate(currBlock.ProposerId!.Value);
             Context.Protocol = await Cache.Protocols.GetAsync(currBlock.ProtoCode);
 
-            if (currBlock.Operations.HasFlag(Operations.Endorsements))
-                Context.EndorsementOps = await Db.EndorsementOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.Attestations))
+                Context.AttestationOps = await Db.AttestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.Preendorsements))
-                Context.PreendorsementOps = await Db.PreendorsementOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.Preattestations))
+                Context.PreattestationOps = await Db.PreattestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
             if (currBlock.Operations.HasFlag(Operations.Proposals))
                 Context.ProposalOps = await Db.ProposalOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
@@ -330,11 +330,11 @@ namespace Tzkt.Sync
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 Context.DoubleBakingOps = await Db.DoubleBakingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.DoubleEndorsings))
-                Context.DoubleEndorsingOps = await Db.DoubleEndorsingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.DoubleAttestations))
+                Context.DoubleAttestationOps = await Db.DoubleAttestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.DoublePreendorsings))
-                Context.DoublePreendorsingOps = await Db.DoublePreendorsingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.DoublePreattestations))
+                Context.DoublePreattestationOps = await Db.DoublePreattestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 Context.NonceRevelationOps = await Db.NonceRevelationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
@@ -432,8 +432,8 @@ namespace Tzkt.Sync
             if (currBlock.Operations.HasFlag(Operations.RevelationPenalty))
                 Context.RevelationPenaltyOps = await Db.RevelationPenaltyOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.EndorsingRewards))
-                Context.EndorsingRewardOps = await Db.EndorsingRewardOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.AttestationRewards))
+                Context.AttestationRewardOps = await Db.AttestationRewardOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
             if (currBlock.Operations.HasFlag(Operations.DalAttestationReward))
                 Context.DalAttestationRewardOps = await Db.DalAttestationRewardOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();

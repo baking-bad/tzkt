@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             Block block,
             Cycle futureCycle,
             IEnumerable<RightsGenerator.BR> futureBakingRights,
-            IEnumerable<RightsGenerator.ER> futureEndorsingRights,
+            IEnumerable<RightsGenerator.AR> futureAttestationRights,
             List<SnapshotBalance> snapshots,
             Dictionary<int, long> selectedStakes)
         {
@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                     return;
             }
 
-            await base.ApplyNewCycle(block, futureCycle, futureBakingRights, futureEndorsingRights, snapshots, selectedStakes);
+            await base.ApplyNewCycle(block, futureCycle, futureBakingRights, futureAttestationRights, snapshots, selectedStakes);
         }
 
         protected override async Task RevertNewCycle(Block block)

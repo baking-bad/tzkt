@@ -18,8 +18,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             FutureCycle!.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
             FutureCycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-            FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (Context.Protocol.EndorsersPerBlock - Context.Protocol.ConsensusThreshold);
-            FutureCycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+            FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (Context.Protocol.AttestersPerBlock - Context.Protocol.ConsensusThreshold);
+            FutureCycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
             FutureCycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
             FutureCycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
         }
@@ -37,17 +37,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                 foreach (var op in await Db.DoubleBakingOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
                     slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleBakingSlashedPercentage;
             }
-            if (prevBlock.Events.HasFlag(BlockEvents.DoubleEndorsingSlashing))
+            if (prevBlock.Events.HasFlag(BlockEvents.DoubleAttestationSlashing))
             {
                 var prevBlockProto = await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
-                foreach (var op in await Db.DoubleEndorsingOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
-                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleEndorsingSlashedPercentage;
+                foreach (var op in await Db.DoubleAttestationOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
+                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleAttestationSlashedPercentage;
             }
-            if (prevBlock.Events.HasFlag(BlockEvents.DoublePreendorsingSlashing))
+            if (prevBlock.Events.HasFlag(BlockEvents.DoublePreattestationSlashing))
             {
                 var prevBlockProto = await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
-                foreach (var op in await Db.DoublePreendorsingOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
-                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleEndorsingSlashedPercentage;
+                foreach (var op in await Db.DoublePreattestationOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
+                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleAttestationSlashedPercentage;
             }
 
             return snapshots.Select(x =>

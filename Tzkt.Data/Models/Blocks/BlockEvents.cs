@@ -16,7 +16,7 @@
         Events                      = 0b_0000_0010_0000_0000,
         Tickets                     = 0b_0000_0100_0000_0000,
         DoubleBakingSlashing        = 0b_0000_1000_0000_0000,
-        DoubleEndorsingSlashing     = 0b_0001_0000_0000_0000,
-        DoublePreendorsingSlashing  = 0b_0010_0000_0000_0000
+        DoubleAttestationSlashing     = 0b_0001_0000_0000_0000,
+        DoublePreattestationSlashing  = 0b_0010_0000_0000_0000
     }
 }

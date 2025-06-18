@@ -61,21 +61,21 @@ namespace Tzkt.Sync.Protocols
                     {
                         case "attestation":
                         case "attestation_with_dal":
-                            await new EndorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            await new AttestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "attestations_aggregate":
                             var attestations = await new AttestationAggregateCommit(this).ExtractAttestations(operation, content);
                             foreach (var (opHash, baker, slots) in attestations)
-                                await new EndorsementsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
+                                await new AttestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
                             break;
                         case "preattestation":
                         case "preattestation_with_dal":
-                            new PreendorsementsCommit(this).Apply(blockCommit.Block, operation, content);
+                            new PreattestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "preattestations_aggregate":
                             var preattestations = await new PreattestationAggregateCommit(this).ExtractPreattestations(operation, content);
                             foreach (var (opHash, baker, slots) in preattestations)
-                                new PreendorsementsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
+                                new PreattestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");
@@ -126,9 +126,9 @@ namespace Tzkt.Sync.Protocols
                             break;
                         case "double_consensus_operation_evidence":
                             if (content.Required("metadata").Required("misbehaviour").RequiredString("kind")[0] == 'a')
-                                new DoubleEndorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                                new DoubleAttestationCommit(this).Apply(blockCommit.Block, operation, content);
                             else
-                                new DoublePreendorsingCommit(this).Apply(blockCommit.Block, operation, content);
+                                new DoublePreattestationCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -351,12 +351,12 @@ namespace Tzkt.Sync.Protocols
                 blockCommit.Block,
                 cycleCommit.FutureCycle,
                 brCommit.FutureBakingRights,
-                brCommit.FutureEndorsingRights,
+                brCommit.FutureAttestationRights,
                 cycleCommit.Snapshots,
                 cycleCommit.SelectedStakes,
                 brCommit.CurrentRights);
 
-            await new EndorsingRewardCommit(this).Apply(blockCommit.Block, block);
+            await new AttestationRewardCommit(this).Apply(blockCommit.Block, block);
             await new DalAttestationRewardCommit(this).Apply(blockCommit.Block, block);
             await new StateCommit(this).Apply(blockCommit.Block, block);
         }
@@ -391,7 +391,7 @@ namespace Tzkt.Sync.Protocols
             await new StatisticsCommit(this).Revert(currBlock);
 
             await new DalAttestationRewardCommit(this).Revert(currBlock);
-            await new EndorsingRewardCommit(this).Revert(currBlock);
+            await new AttestationRewardCommit(this).Revert(currBlock);
 
             await new BakerCycleCommit(this).Revert(currBlock);
             await new DelegatorCycleCommit(this).Revert(currBlock);
@@ -407,11 +407,11 @@ namespace Tzkt.Sync.Protocols
             {
                 switch (operation)
                 {
-                    case EndorsementOperation op:
-                        await new EndorsementsCommit(this).Revert(currBlock, op);
+                    case AttestationOperation op:
+                        await new AttestationsCommit(this).Revert(currBlock, op);
                         break;
-                    case PreendorsementOperation op:
-                        await new PreendorsementsCommit(this).Revert(currBlock, op);
+                    case PreattestationOperation op:
+                        await new PreattestationsCommit(this).Revert(currBlock, op);
                         break;
                     case ProposalOperation op:
                         await new ProposalsCommit(this).Revert(currBlock, op);
@@ -428,11 +428,11 @@ namespace Tzkt.Sync.Protocols
                     case DoubleBakingOperation op:
                         new DoubleBakingCommit(this).Revert(op);
                         break;
-                    case DoubleEndorsingOperation op:
-                        new DoubleEndorsingCommit(this).Revert(op);
+                    case DoubleAttestationOperation op:
+                        new DoubleAttestationCommit(this).Revert(op);
                         break;
-                    case DoublePreendorsingOperation op:
-                        new DoublePreendorsingCommit(this).Revert(op);
+                    case DoublePreattestationOperation op:
+                        new DoublePreattestationCommit(this).Revert(op);
                         break;
                     case NonceRevelationOperation op:
                         await new NonceRevelationsCommit(this).Revert(currBlock, op);

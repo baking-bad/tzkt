@@ -209,14 +209,14 @@ namespace Tzkt.Api.Models
         public int NumBlocks { get; set; }
 
         /// <summary>
-        /// Number of given endorsements (approvals) by the delegate (baker)
+        /// Number of given attestations (approvals) by the delegate (baker)
         /// </summary>
-        public int NumEndorsements { get; set; }
+        public int NumAttestations { get; set; }
 
         /// <summary>
-        /// Number of given preendorsements (approvals) by the delegate (baker)
+        /// Number of given preattestations (approvals) by the delegate (baker)
         /// </summary>
-        public int NumPreendorsements { get; set; }
+        public int NumPreattestations { get; set; }
 
         /// <summary>
         /// Number of submitted by the delegate ballots during a voting period
@@ -241,16 +241,16 @@ namespace Tzkt.Api.Models
         public int NumDoubleBaking { get; set; }
 
         /// <summary>
-        /// Number of double endorsement (endorsing two different blocks at the same block height) evidence operations,
+        /// Number of double attestation (attestation of two different blocks at the same block height) evidence operations,
         /// included in blocks, baked (validated) by the delegate
         /// </summary>
-        public int NumDoubleEndorsing { get; set; }
+        public int NumDoubleAttestation { get; set; }
 
         /// <summary>
-        /// Number of double preendorsement (preendorsing two different blocks at the same block height) evidence operations,
+        /// Number of double preattestation (preattestation of two different blocks at the same block height) evidence operations,
         /// included in blocks, baked (validated) by the delegate
         /// </summary>
-        public int NumDoublePreendorsing { get; set; }
+        public int NumDoublePreattestation { get; set; }
 
         /// <summary>
         /// Number of seed nonce revelation (are used by the blockchain to create randomness) operations provided by the delegate
@@ -268,9 +268,9 @@ namespace Tzkt.Api.Models
         public int NumRevelationPenalties { get; set; }
 
         /// <summary>
-        /// Number of endorsing rewards received at the end of cycles (synthetic type)
+        /// Number of attestation rewards received at the end of cycles (synthetic type)
         /// </summary>
-        public int NumEndorsingRewards { get; set; }
+        public int NumAttestationRewards { get; set; }
 
         /// <summary>
         /// Number of all delegation related operations (new delegator, left delegator, registration as a baker),
@@ -481,7 +481,35 @@ namespace Tzkt.Api.Models
         public SoftwareAlias? Software { get; set; }
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
         public int UpdateConsensusKeyCount => UpdateSecondaryKeyCount;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int NumEndorsements => NumAttestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int NumPreendorsements => NumPreattestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int NumDoubleEndorsing => NumDoublePreattestation;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int NumDoublePreendorsing => NumDoublePreattestation;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int NumEndorsingRewards => NumAttestationRewards;
         #endregion
     }
 }

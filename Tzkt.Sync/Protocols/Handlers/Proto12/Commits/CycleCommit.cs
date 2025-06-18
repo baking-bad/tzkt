@@ -61,10 +61,10 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
                 .ToListAsync();
 
-            var endorsingRewards = activation ? [] : await Db.BakerCycles
+            var attestationRewards = activation ? [] : await Db.BakerCycles
                 .AsNoTracking()
-                .Where(x => x.Cycle == block.Cycle - 1 && x.EndorsementRewardsDelegated > 0)
-                .ToDictionaryAsync(x => x.BakerId, x => x.EndorsementRewardsDelegated);
+                .Where(x => x.Cycle == block.Cycle - 1 && x.AttestationRewardsDelegated > 0)
+                .ToDictionaryAsync(x => x.BakerId, x => x.AttestationRewardsDelegated);
 
             SelectedStakes = Snapshots
                 .Where(x => x.StakingBalance >= Context.Protocol.MinimalStake)
@@ -73,7 +73,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     var baker = Cache.Accounts.GetDelegate(x.AccountId);
 
                     var lastBalance = baker.Balance;
-                    if (endorsingRewards.TryGetValue(baker.Id, out var reward))
+                    if (attestationRewards.TryGetValue(baker.Id, out var reward))
                         lastBalance -= reward;
                     if (block.ProposerId == baker.Id)
                         lastBalance -= block.RewardDelegated;

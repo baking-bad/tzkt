@@ -162,8 +162,7 @@ namespace Tzkt.Sync.Protocols.Proto23
                             case "activate_account": await ValidateActivation(content); break; 
                             case "dal_entrapment_evidence": ValidateDalEntrapmentEvidence(content); break;
                             case "double_baking_evidence": ValidateDoubleBaking(content); break;
-                            case "double_attestation_evidence": ValidateDoubleBaking(content); break;
-                            case "double_preattestation_evidence": ValidateDoubleBaking(content); break;
+                            case "double_consensus_operation_evidence": ValidateDoubleConsensus(content); break;
                             case "seed_nonce_revelation": await ValidateSeedNonceRevelation(content); break;
                             case "vdf_revelation": ValidateVdfRevelation(content); break;
                             case "drain_delegate": ValidateDrainDelegate(content); break;
@@ -300,6 +299,10 @@ namespace Tzkt.Sync.Protocols.Proto23
         }
 
         protected virtual void ValidateDoubleBaking(JsonElement content)
+        {
+        }
+
+        protected virtual void ValidateDoubleConsensus(JsonElement content)
         {
         }
 

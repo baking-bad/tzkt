@@ -37,10 +37,10 @@
         public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DelegationOpsCount { get; set; }
         public int DoubleBakingOpsCount { get; set; }
-        public int DoubleEndorsingOpsCount { get; set; }
-        public int DoublePreendorsingOpsCount { get; set; }
-        public int EndorsementOpsCount { get; set; }
-        public int PreendorsementOpsCount { get; set; }
+        public int DoubleAttestationOpsCount { get; set; }
+        public int DoublePreattestationOpsCount { get; set; }
+        public int AttestationOpsCount { get; set; }
+        public int PreattestationOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }
         public int VdfRevelationOpsCount { get; set; }
         public int OriginationOpsCount { get; set; }
@@ -54,7 +54,7 @@
         public int TransactionOpsCount { get; set; }
         public int MigrationOpsCount { get; set; }
         public int RevelationPenaltyOpsCount { get; set; }
-        public int EndorsingRewardOpsCount { get; set; }
+        public int AttestationRewardOpsCount { get; set; }
         public int DalAttestationRewardOpsCount { get; set; }
         public int AutostakingOpsCount { get; set; }
 
