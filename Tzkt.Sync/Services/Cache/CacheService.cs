@@ -20,6 +20,7 @@ namespace Tzkt.Sync.Services
         public SmartRollupCommitmentCache SmartRollupCommitments { get; }
         public SmartRollupStakesCache SmartRollupStakes { get; }
         public SoftwareCache Software { get; }
+        public StakerCyclesCache StakerCycles { get; }
         public StatisticsCache Statistics { get; }
         public StoragesCache Storages { get; }
         public TicketBalancesCache TicketBalances { get; }
@@ -45,6 +46,7 @@ namespace Tzkt.Sync.Services
             SmartRollupCommitments = new(db);
             SmartRollupStakes = new(db);
             Software = new(db);
+            StakerCycles = new(db);
             Statistics = new(db);
             Storages = new(db);
             TicketBalances = new(db);
@@ -71,6 +73,7 @@ namespace Tzkt.Sync.Services
             SmartRollupCommitments.Reset();
             SmartRollupStakes.Reset();
             Software.Reset();
+            StakerCycles.Reset();
             await Statistics.ResetAsync();
             Storages.Reset();
             TicketBalances.Reset();
@@ -93,6 +96,7 @@ namespace Tzkt.Sync.Services
             SmartRollupCommitments.Trim();
             SmartRollupStakes.Trim();
             Software.Trim();
+            StakerCycles.Trim();
             Storages.Trim();
             TicketBalances.Trim();
             Tickets.Trim();
@@ -118,6 +122,7 @@ namespace Tzkt.Sync.Services
             SmartRollupCommitmentCache.Configure(cacheConfig.SmartRollupCommitments);
             SmartRollupStakesCache.Configure(cacheConfig.SmartRollupStakes);
             SoftwareCache.Configure(cacheConfig.Software);
+            StakerCyclesCache.Configure(cacheConfig.StakerCycles);
             StoragesCache.Configure(cacheConfig.Storages);
             TicketBalancesCache.Configure(cacheConfig.TicketBalances);
             TicketsCache.Configure(cacheConfig.Tickets);

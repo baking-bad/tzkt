@@ -5,28 +5,16 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class RewardsRepository
+    public partial class RewardsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes)
     {
-        readonly NpgsqlDataSource DataSource;
-        readonly AccountsCache Accounts;
-        readonly ProtocolsCache Protocols;
-        readonly QuotesCache Quotes;
-
-        public RewardsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, QuotesCache quotes)
-        {
-            DataSource = dataSource;
-            Accounts = accounts;
-            Protocols = protocols;
-            Quotes = quotes;
-        }
 
         #region baker
         public async Task<int> GetBakerRewardsCount(string address)
         {
-            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+            if (await accounts.GetAsync(address) is not RawDelegate baker)
                 return 0;
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""BakerCycles"" WHERE ""BakerId"" = {baker.Id}");
         }
 
@@ -38,7 +26,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+            if (await accounts.GetAsync(address) is not RawDelegate baker)
                 return [];
 
             var sql = new SqlBuilder(@"SELECT * FROM ""BakerCycles""")
@@ -46,7 +34,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new BakerRewards
@@ -113,7 +101,7 @@ namespace Tzkt.Api.Repositories
                 NonceRevelationRewardsStakedEdge = row.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = row.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = row.NonceRevelationLosses,
-                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
+                Quote = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
 
@@ -126,7 +114,7 @@ namespace Tzkt.Api.Repositories
             string[] fields,
             Symbols quote)
         {
-            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+            if (await accounts.GetAsync(address) is not RawDelegate baker)
                 return [];
 
             var columns = new HashSet<string>(fields.Length);
@@ -208,7 +196,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object?[rows.Count()][];
@@ -469,7 +457,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "quote":
                         foreach (var row in rows)
-                            result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
+                            result[j++][i] = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
                 }
             }
@@ -486,7 +474,7 @@ namespace Tzkt.Api.Repositories
             string field,
             Symbols quote)
         {
-            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+            if (await accounts.GetAsync(address) is not RawDelegate baker)
                 return [];
 
             var columns = new HashSet<string>(1);
@@ -565,7 +553,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Cycle", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"));
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -824,7 +812,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "quote":
                     foreach (var row in rows)
-                        result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
+                        result[j++] = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
             }
 
@@ -835,10 +823,10 @@ namespace Tzkt.Api.Repositories
         #region delegator
         public async Task<int> GetDelegatorRewardsCount(string address)
         {
-            var acc = await Accounts.GetAsync(address);
+            var acc = await accounts.GetAsync(address);
             if (acc == null) return 0;
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>($@"SELECT COUNT(*) FROM ""DelegatorCycles"" WHERE ""DelegatorId"" = {acc.Id}");
         }
 
@@ -850,7 +838,7 @@ namespace Tzkt.Api.Repositories
             int limit,
             Symbols quote)
         {
-            var acc = await Accounts.GetAsync(address);
+            var acc = await accounts.GetAsync(address);
             if (acc == null) return [];
 
             var sql = new SqlBuilder("""
@@ -864,7 +852,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DelegatorRewards
@@ -872,7 +860,7 @@ namespace Tzkt.Api.Repositories
                 Cycle = row.Cycle,
                 DelegatedBalance = row.DelegatedBalance,
                 StakedBalance = row.StakedBalance,
-                Baker = Accounts.GetAlias(row.BakerId),
+                Baker = accounts.GetAlias(row.BakerId),
                 BakingPower = row.BakingPower,
                 TotalBakingPower = row.TotalBakingPower,
                 BakerDelegatedBalance = row.OwnDelegatedBalance,
@@ -932,7 +920,7 @@ namespace Tzkt.Api.Repositories
                 NonceRevelationRewardsStakedEdge = row.NonceRevelationRewardsStakedEdge,
                 NonceRevelationRewardsStakedShared = row.NonceRevelationRewardsStakedShared,
                 NonceRevelationLosses = row.NonceRevelationLosses,
-                Quote = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
+                Quote = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle))
             });
         }
 
@@ -945,7 +933,7 @@ namespace Tzkt.Api.Repositories
             string[] fields,
             Symbols quote)
         {
-            var acc = await Accounts.GetAsync(address);
+            var acc = await accounts.GetAsync(address);
             if (acc == null) return [];
 
             var columns = new HashSet<string>(fields.Length);
@@ -1034,7 +1022,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object?[rows.Count()][];
@@ -1059,7 +1047,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "baker":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.BakerId);
+                            result[j++][i] = accounts.GetAlias(row.BakerId);
                         break;
                     case "bakingPower":
                         foreach (var row in rows)
@@ -1299,7 +1287,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "quote":
                         foreach (var row in rows)
-                            result[j++][i] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
+                            result[j++][i] = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                         break;
                 }
             }
@@ -1316,7 +1304,7 @@ namespace Tzkt.Api.Repositories
             string field,
             Symbols quote)
         {
-            var acc = await Accounts.GetAsync(address);
+            var acc = await accounts.GetAsync(address);
             if (acc == null) return [];
 
             var columns = new HashSet<string>(1);
@@ -1402,7 +1390,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"dc.""Cycle""", cycle)
                 .Take(sort ?? new SortParameter { Desc = "cycle" }, offset, limit, x => ("Cycle", "Cycle"), "dc");
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -1425,7 +1413,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "baker":
                     foreach (var row in rows)
-                        result[j++] = Accounts.GetAlias(row.BakerId);
+                        result[j++] = accounts.GetAlias(row.BakerId);
                     break;
                 case "bakingPower":
                     foreach (var row in rows)
@@ -1665,7 +1653,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "quote":
                     foreach (var row in rows)
-                        result[j++] = Quotes.Get(quote, Protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
+                        result[j++] = quotes.Get(quote, protocols.FindByCycle((int)row.Cycle).GetCycleEnd((int)row.Cycle));
                     break;
             }
 
@@ -1676,7 +1664,7 @@ namespace Tzkt.Api.Repositories
         #region split
         public async Task<RewardSplit?> GetRewardSplit(string address, int cycle, int offset, int limit)
         {
-            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+            if (await accounts.GetAsync(address) is not RawDelegate baker)
                 return null;
 
             var sqlRewards = $"""
@@ -1697,7 +1685,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT       {limit}
                 """;
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             using var result = await db.QueryMultipleAsync($"""
                 {sqlRewards};
                 {sqlDelegators};
@@ -1774,7 +1762,7 @@ namespace Tzkt.Api.Repositories
                 NonceRevelationLosses = rewards.NonceRevelationLosses,
                 Delegators = delegators.Select(x => 
                 {
-                    var delegator = Accounts.Get((int)x.DelegatorId)!;
+                    var delegator = accounts.Get((int)x.DelegatorId)!;
                     return new SplitDelegator
                     {
                         Address = delegator.Address,
@@ -1788,10 +1776,10 @@ namespace Tzkt.Api.Repositories
 
         public async Task<SplitDelegator?> GetRewardSplitDelegator(string bakerAddress, int cycle, string delegatorAddress)
         {
-            if (await Accounts.GetAsync(bakerAddress) is not RawDelegate baker)
+            if (await accounts.GetAsync(bakerAddress) is not RawDelegate baker)
                 return null;
 
-            if (await Accounts.GetAsync(delegatorAddress) is not RawAccount delegator)
+            if (await accounts.GetAsync(delegatorAddress) is not RawAccount delegator)
                 return null;
 
             var sql = $"""
@@ -1803,7 +1791,7 @@ namespace Tzkt.Api.Repositories
                 LIMIT   1
                 """;
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 

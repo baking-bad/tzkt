@@ -9,6 +9,28 @@ namespace Tzkt.Sync.Protocols.Proto19
 {
     partial class ProtoActivator(ProtocolHandler proto) : Proto18.ProtoActivator(proto)
     {
+        protected override void BootstrapStakerCycles(Protocol protocol, List<Account> accounts)
+        {
+            Db.StakerCycles.AddRange(accounts
+                .Where(x => x is User user && user.StakedPseudotokens != null)
+                .Select(x =>
+                {
+                    var user = (x as User)!;
+                    var baker = Cache.Accounts.GetDelegate(x.DelegateId!.Value);
+                    var stakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens!.Value / baker.IssuedPseudotokens!.Value);
+                    return new StakerCycle
+                    {
+                        Id = 0,
+                        Cycle = 0,
+                        StakerId = x.Id,
+                        BakerId = x.DelegateId!.Value,
+                        EdgeOfBakingOverStaking = baker.EdgeOfBakingOverStaking ?? 1_000_000_000,
+                        InitialStake = stakedBalance,
+                        AvgStake = stakedBalance,
+                    };
+                }));
+        }
+
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);

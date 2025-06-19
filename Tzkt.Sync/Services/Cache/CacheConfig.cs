@@ -13,6 +13,7 @@
         public CacheSize? SmartRollupCommitments { get; set; }
         public CacheSize? SmartRollupStakes { get; set; }
         public CacheSize? Software { get; set; }
+        public CacheSize? StakerCycles { get; set; }
         public CacheSize? Storages { get; set; }
         public CacheSize? TicketBalances { get; set; }
         public CacheSize? Tickets { get; set; }
