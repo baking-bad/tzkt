@@ -37,6 +37,7 @@ namespace Tzkt.Sync.Protocols
             await cycleCommit.Apply(blockCommit.Block);
 
             await new SetDelegateParametersCommit(this).ActivateStakingParameters(blockCommit.Block);
+            await new StakerCycleCommit(this).Apply();
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
@@ -507,6 +508,7 @@ namespace Tzkt.Sync.Protocols
 
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
+            await new StakerCycleCommit(this).Revert();
             await new SetDelegateParametersCommit(this).DeactivateStakingParameters(currBlock);
             await new CycleCommit(this).Revert(currBlock);
             new BlockCommit(this).Revert(currBlock);

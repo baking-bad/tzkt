@@ -89,6 +89,7 @@ namespace Tzkt.Data
         #region baking
         public DbSet<Cycle> Cycles { get; set; }
         public DbSet<BakerCycle> BakerCycles { get; set; }
+        public DbSet<StakerCycle> StakerCycles { get; set; }
         public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
@@ -219,6 +220,7 @@ namespace Tzkt.Data
             #region baking
             modelBuilder.BuildCycleModel();
             modelBuilder.BuildBakerCycleModel();
+            modelBuilder.BuildStakerCycleModel();
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
