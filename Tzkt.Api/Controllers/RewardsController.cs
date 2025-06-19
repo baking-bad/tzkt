@@ -1,21 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-using NSwag.Annotations;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api.Controllers
 {
     [ApiController]
     [Route("v1/rewards")]
-    public class RewardsController : ControllerBase
+    public class RewardsController(RewardsRepository rewards, ResponseCacheService responseCache) : ControllerBase
     {
-        private readonly RewardsRepository Rewards;
-
-        public RewardsController(RewardsRepository rewards)
-        {
-            Rewards = rewards;
-        }
 
         /// <summary>
         /// Get baker cycle rewards count
@@ -28,7 +22,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("bakers/{address}/count")]
         public Task<int> GetBakerRewardsCount([Required][TzAddress] string address)
         {
-            return Rewards.GetBakerRewardsCount(address);
+            return rewards.GetBakerRewardsCount(address);
         }
 
         /// <summary>
@@ -61,25 +55,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, quote));
+                return Ok(await rewards.GetBakerRewards(address, cycle, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values, quote));
+                    return Ok(await rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    return Ok(await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields, quote)
+                        Rows = await rewards.GetBakerRewards(address, cycle, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -96,7 +90,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("delegators/{address}/count")]
         public Task<int> GetDelegatorRewardsCount([Required][Address] string address)
         {
-            return Rewards.GetDelegatorRewardsCount(address);
+            return rewards.GetDelegatorRewardsCount(address);
         }
 
         /// <summary>
@@ -129,25 +123,25 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, quote));
+                return Ok(await rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values, quote));
+                    return Ok(await rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    return Ok(await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields, quote)
+                        Rows = await rewards.GetDelegatorRewards(address, cycle, sort, offset, limit, select.Fields, quote)
                     });
                 }
             }
@@ -167,7 +161,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("split/{baker}/{cycle:int}")]
         public Task<RewardSplit?> GetRewardSplit([Required][TzAddress] string baker, [Min(0)] int cycle, int offset = 0, [Range(0, 10000)] int limit = 100)
         {
-            return Rewards.GetRewardSplit(baker, cycle, offset, limit);
+            return rewards.GetRewardSplit(baker, cycle, offset, limit);
         }
 
         /// <summary>
@@ -183,7 +177,69 @@ namespace Tzkt.Api.Controllers
         [HttpGet("split/{baker}/{cycle:int}/{delegator}")]
         public Task<SplitDelegator?> GetRewardSplitDelegator([Required][TzAddress] string baker, [Min(0)] int cycle, [Required][Address] string delegator)
         {
-            return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
+            return rewards.GetRewardSplitDelegator(baker, cycle, delegator);
+        }
+
+        /// <summary>
+        /// Get staker rewards
+        /// </summary>
+        /// <remarks>
+        /// Returns a list of staker rewards.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <param name="pagination">Pagination</param>
+        /// <param name="selection">Selection</param>
+        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
+        /// <returns></returns>
+        [HttpGet("stakers")]
+        public async Task<ActionResult<IEnumerable<DelegatorRewards>>> GetStakerRewards(
+            [FromQuery] StakerRewardsFilter filter,
+            [FromQuery] Pagination pagination,
+            [FromQuery] Selection selection,
+            Symbols quote = Symbols.None)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
+
+            if (responseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            object res;
+            if (selection.select == null)
+            {
+                res = await rewards.GetStakerRewards(filter, pagination, quote);
+            }
+            else
+            {
+                res = new SelectionResponse
+                {
+                    Cols = selection.select.Fields?.Select(x => x.Alias).ToArray(),
+                    Rows = await rewards.GetStakerRewards(filter, pagination, selection, quote)
+                };
+            }
+            cached = responseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+
+        /// <summary>
+        /// Get staker rewards count
+        /// </summary>
+        /// <remarks>
+        /// Returns total number of staker rewards.
+        /// </remarks>
+        /// <param name="filter">Filter</param>
+        /// <returns></returns>
+        [HttpGet("stakers/count")]
+        public async Task<ActionResult<int>> GetStakerRewardsCount([FromQuery] StakerRewardsFilter filter)
+        {
+            var query = ResponseCacheService.BuildKey(Request.Path.Value, ("filter", filter));
+
+            if (responseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await rewards.GetStakerRewardsCount(filter);
+            cached = responseCache.Set(query, res);
+            return this.Bytes(cached);
         }
     }
 }
