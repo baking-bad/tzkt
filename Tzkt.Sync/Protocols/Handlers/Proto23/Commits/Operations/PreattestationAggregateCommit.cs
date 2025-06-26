@@ -1,5 +1,4 @@
 ﻿using System.Text.Json;
-using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto23
 {
@@ -10,21 +9,12 @@ namespace Tzkt.Sync.Protocols.Proto23
             var res = new List<(string, string, int)>();
 
             var opHash = op.RequiredString("hash");
-            var totalSlots = 0;
-            var slots = (await Cache.BakingRights.GetAsync(content.Required("consensus_content").RequiredInt32("level") + 1))
-                .Where(x => x.Type == BakingRightType.Attestation)
-                .ToDictionary(x => x.BakerId, x => x.Slots!.Value);
-
             foreach (var c in content.Required("metadata").RequiredArray("committee").EnumerateArray())
             {
                 var baker = Cache.Accounts.GetExistingDelegate(c.RequiredString("delegate"));
-                var bakerSlots = slots[baker.Id];
-                res.Add((opHash, baker.Address, bakerSlots));
-                totalSlots += bakerSlots;
+                var slots = c.RequiredInt32("consensus_power");
+                res.Add((opHash, baker.Address, slots));
             }
-
-            if (totalSlots != content.Required("metadata").RequiredInt32("consensus_power"))
-                throw new Exception("Wrong preattestations_aggregate slots number");
 
             return res;
         }
