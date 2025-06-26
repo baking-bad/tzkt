@@ -97,10 +97,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                     {
                         var bakingPower = Math.Min(x.StakingBalance, (x.OwnStakedBalance + x.ExternalStakedBalance) * (protocol.MaxDelegatedOverFrozenRatio + 1));
                         var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
+                        var expectedDalShards = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.NumberOfShards * bakingPower / cycle.TotalBakingPower);
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
+                        bakerCycle.ExpectedDalShards = expectedDalShards;
+                        bakerCycle.FutureDalAttestationRewards = expectedDalShards * cycle.DalAttestationRewardPerShard;
                     }
                     return bakerCycle;
                 });
