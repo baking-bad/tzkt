@@ -98,7 +98,7 @@ namespace Tzkt.Sync
                 "PsParisCZo7KAh1Z1smVd9ZMZ1HHn5gkzbM94V3PLCpknFWhUAi" => services.GetRequiredService<Proto20Handler>(),
                 "PsQuebecnLByd3JwTiGadoG4nGWi3HYiLXUjkibeFV8dCFeVMUg" => services.GetRequiredService<Proto21Handler>(),
                 "PsRiotumaAMotcRoDWW1bysEhQy2n1M5fy8JgRp8jjRfHGmfeA7" => services.GetRequiredService<Proto22Handler>(),
-                "PtSEouLov7Fp6XoqXUBqd7XzggUpUarSMcSUsR5MarqspqiuQBY" => services.GetRequiredService<Proto23Handler>(),
+                "PtSeouLouXkxhg39oWzjxDWaCydNfR3RxCUrNe4Q9Ro8BTehcbh" => services.GetRequiredService<Proto23Handler>(),
                 _ => null,
             };
         }
