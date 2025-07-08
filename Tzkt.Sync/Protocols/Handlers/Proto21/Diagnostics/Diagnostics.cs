@@ -6,6 +6,13 @@ namespace Tzkt.Sync.Protocols.Proto21
     {
         public Diagnostics(ProtocolHandler handler) : base(handler) { }
 
+        protected override bool CheckMinDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            var minDelegated = remote.Required("min_delegated_in_current_cycle");
+            return minDelegated.RequiredInt64("amount") == delegat.MinTotalDelegated &&
+                minDelegated.Required("level").RequiredInt32("level") == delegat.MinTotalDelegatedLevel;
+        }
+
         protected override bool CheckFullBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
             return remote.RequiredInt64("own_full_balance") == delegat.Balance;

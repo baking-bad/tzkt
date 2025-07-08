@@ -22,9 +22,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                     {
                         Id = 0,
                         Cycle = 0,
-                        StakerId = x.Id,
                         BakerId = x.DelegateId!.Value,
-                        EdgeOfBakingOverStaking = baker.EdgeOfBakingOverStaking ?? 1_000_000_000,
+                        StakerId = x.Id,
                         InitialStake = stakedBalance,
                         AvgStake = stakedBalance,
                     };
@@ -129,10 +128,14 @@ namespace Tzkt.Sync.Protocols.Proto19
 
         void MigrateBakers(AppState state, Protocol prevProto, Protocol nextProto)
         {
-            foreach (var baker in Cache.Accounts.GetDelegates().Where(x => x.DeactivationLevel > state.Level))
+            foreach (var baker in Cache.Accounts.GetDelegates())
             {
                 Db.TryAttach(baker);
-                baker.DeactivationLevel = nextProto.GetCycleStart(prevProto.GetCycle(baker.DeactivationLevel));
+                baker.MinTotalDelegated = baker.TotalDelegated;
+                baker.MinTotalDelegatedLevel = state.Level;
+
+                if (baker.DeactivationLevel > state.Level)
+                    baker.DeactivationLevel = nextProto.GetCycleStart(prevProto.GetCycle(baker.DeactivationLevel));
             }
         }
 

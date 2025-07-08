@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Numerics;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -16,6 +17,8 @@ namespace Tzkt.Data.Models
         public long ExternalStakedBalance { get; set; }
         public int StakersCount { get; set; }
 
+        public BigInteger? IssuedPseudotokens { get; set; }
+
         public long BakingPower { get; set; }
         public long TotalBakingPower { get; set; }
 
@@ -29,6 +32,9 @@ namespace Tzkt.Data.Models
         public int MissedAttestations { get; set; }
 
         // TODO: add dal rights
+        //public int FutureDalAttestations { get; set; }
+        //public int DalAttestations { get; set; }
+        //public int MissedDalAttestations { get; set; }
         #endregion
 
         #region rewards
@@ -89,7 +95,7 @@ namespace Tzkt.Data.Models
         #region expected
         public double ExpectedBlocks { get; set; }
         public double ExpectedAttestations { get; set; }
-        public long ExpectedDalShards { get; set; }
+        public long ExpectedDalAttestations { get; set; }
         #endregion
     }
 

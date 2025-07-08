@@ -149,6 +149,8 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Staked = true,
                 StakingBalance = user.Balance - user.UnstakedBalance,
                 DelegatedBalance = 0,
+                MinTotalDelegated = long.MaxValue,
+                MinTotalDelegatedLevel = 0,
                 Type = AccountType.Delegate,
                 StakedPseudotokens = user.StakedPseudotokens,
                 UnstakedBalance = user.UnstakedBalance,

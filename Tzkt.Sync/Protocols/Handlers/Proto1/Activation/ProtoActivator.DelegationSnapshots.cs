@@ -5,11 +5,11 @@ namespace Tzkt.Sync.Protocols.Proto1
 {
     partial class ProtoActivator : ProtocolCommit
     {
-        public void BootstrapSnapshotBalances(List<Account> accounts)
+        public void BootstrapDelegationSnapshots(List<Account> accounts)
         {
-            Db.SnapshotBalances.AddRange(accounts
+            Db.DelegationSnapshots.AddRange(accounts
                 .Where(x => x.Staked)
-                .Select(x => new SnapshotBalance
+                .Select(x => new DelegationSnapshot
                 {
                     Level = 1,
                     BakerId = x.DelegateId ?? x.Id,
@@ -19,18 +19,15 @@ namespace Tzkt.Sync.Protocols.Proto1
                     ExternalDelegatedBalance = (x as Data.Models.Delegate)?.DelegatedBalance,
                     DelegatorsCount = (x as Data.Models.Delegate)?.DelegatorsCount,
 
-                    OwnStakedBalance = (x as Data.Models.Delegate)?.OwnStakedBalance,
-                    ExternalStakedBalance = (x as Data.Models.Delegate)?.ExternalStakedBalance,
-                    StakersCount = (x as Data.Models.Delegate)?.StakersCount,
-
-                    Pseudotokens = (x as Data.Models.Delegate)?.IssuedPseudotokens ?? (x as User)?.StakedPseudotokens
+                    PrevMinTotalDelegatedLevel = (x as Data.Models.Delegate)?.MinTotalDelegatedLevel,
+                    PrevMinTotalDelegated = (x as Data.Models.Delegate)?.MinTotalDelegated
                 }));
         }
 
-        public async Task ClearSnapshotBalances()
+        public async Task ClearDelegationSnapshots()
         {
             await Db.Database.ExecuteSqlRawAsync("""
-                DELETE FROM "SnapshotBalances"
+                DELETE FROM "DelegationSnapshots"
                 """);
         }
     }

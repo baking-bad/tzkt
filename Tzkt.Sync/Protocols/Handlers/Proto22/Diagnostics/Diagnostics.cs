@@ -22,8 +22,8 @@ namespace Tzkt.Sync.Protocols.Proto22
 
                 if (bakerCycle != null)
                 {
-                    if (remote.RequiredInt64("expected_assigned_shards_per_slot") != bakerCycle.ExpectedDalShards)
-                        throw new Exception($"Invalid baker ExpectedDalShards {baker.Address}");
+                    if (remote.RequiredInt64("expected_assigned_shards_per_slot") != bakerCycle.ExpectedDalAttestations)
+                        throw new Exception($"Invalid baker ExpectedDalAttestations {baker.Address}");
 
                     if (remote.RequiredInt64("expected_dal_rewards") != bakerCycle.FutureDalAttestationRewards)
                     {
@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto22
                 else
                 {
                     if (remote.RequiredInt64("expected_assigned_shards_per_slot") != 0)
-                        throw new Exception($"Invalid baker ExpectedDalShards {baker.Address}");
+                        throw new Exception($"Invalid baker ExpectedDalAttestations {baker.Address}");
 
                     if (remote.RequiredInt64("expected_dal_rewards") != 0)
                         throw new Exception($"Invalid baker FutureDalAttestationRewards {baker.Address}");

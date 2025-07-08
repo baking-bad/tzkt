@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var accounts = await BootstrapAccounts(protocol, parameters);
                 var cycles = BootstrapCycles(protocol, accounts, parameters);
                 var (bakingRights, attestationRights) = await BootstrapBakingRights(protocol, accounts, cycles);
+                BootstrapDelegationSnapshots(accounts);
                 BootstrapSnapshotBalances(accounts);
                 BootstrapBakerCycles(protocol, accounts, cycles, bakingRights, attestationRights);
                 BootstrapStakerCycles(protocol, accounts);
@@ -37,6 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ClearCommitments();
                 await ClearVoting();
                 await ClearSnapshotBalances();
+                await ClearDelegationSnapshots();
                 await ClearBakerCycles();
                 await ClearStakerCycles();
                 await ClearDelegatorCycles();

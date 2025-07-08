@@ -130,7 +130,8 @@ namespace Tzkt.Data.Models
                 .HasFilter(@$"""{nameof(Account.Staked)}"" = true");
 
             modelBuilder.Entity<Account>()
-                .HasIndex(x => x.DelegateId);
+                .HasIndex(x => x.DelegateId)
+                .HasFilter(@$"""{nameof(Account.DelegateId)}"" IS NOT NULL");
 
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.FirstLevel);

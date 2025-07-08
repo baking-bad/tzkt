@@ -93,6 +93,7 @@ namespace Tzkt.Data
         public DbSet<DelegatorCycle> DelegatorCycles { get; set; }
         public DbSet<BakingRight> BakingRights { get; set; }
         public DbSet<SnapshotBalance> SnapshotBalances { get; set; }
+        public DbSet<DelegationSnapshot> DelegationSnapshots { get; set; }
         public DbSet<StakingUpdate> StakingUpdates { get; set; }
         public DbSet<UnstakeRequest> UnstakeRequests { get; set; }
         #endregion
@@ -224,6 +225,7 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegatorCycleModel();
             modelBuilder.BuildBakingRightModel();
             modelBuilder.BuildSnapshotBalanceModel();
+            modelBuilder.BuildDelegationSnapshotModel();
             modelBuilder.BuildStakingUpdateModel();
             modelBuilder.BuildUnstakeRequestModel();
             #endregion

@@ -361,13 +361,15 @@ namespace Tzkt.Sync.Protocols
             Diagnostics.TrackChanges();
             await Db.SaveChangesAsync();
 
-            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
+            await new DelegationSnapshotCommit(this).Apply();
+            await new SnapshotBalanceCommit(this).Apply();
         }
 
         public override async Task BeforeRevert()
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Revert(block);
+            await new SnapshotBalanceCommit(this).Revert();
+            await new DelegationSnapshotCommit(this).Revert();
             await new AutostakingCommit(this).Revert(block);
             await new VotingCommit(this).Revert(block);
             await new SlashingCommit(this).Revert(block);
