@@ -241,12 +241,12 @@ namespace Tzkt.Sync.Protocols.Proto22
                         bakerCycle.FutureAttestations = 0;
 
                         var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
-                        var expectedDalShards = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.NumberOfShards * bakerCycle.BakingPower / cycle.TotalBakingPower);
+                        var expectedDalAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.NumberOfShards * bakerCycle.BakingPower / cycle.TotalBakingPower);
                         bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
-                        bakerCycle.ExpectedDalShards = expectedDalShards;
-                        bakerCycle.FutureDalAttestationRewards = expectedDalShards * cycle.DalAttestationRewardPerShard;
+                        bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
+                        bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * cycle.DalAttestationRewardPerShard;
                     }
 
                     foreach (var br in brs.Where(x => x.Round == 0))

@@ -11,14 +11,15 @@ namespace Tzkt.Sync.Protocols.Proto18
             return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "SnapshotBalances" (
                     "Level",
-                    "AccountId",
                     "BakerId",
+                    "AccountId",
                     "OwnDelegatedBalance",
                     "ExternalDelegatedBalance",
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
-                    "StakersCount"
+                    "StakersCount",
+                    "Pseudotokens"
                 )
                 
                 SELECT
@@ -35,7 +36,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
-                    "StakersCount"
+                    "StakersCount",
+                    "IssuedPseudotokens"
                 FROM "Accounts"
                 WHERE "Staked" = true
                 AND "Type" = {1}
@@ -44,39 +46,37 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 SELECT
                     {0},
-                    staker."Id",
-                    staker."DelegateId",
-                    staker."Balance" - (CASE
-                                        WHEN staker."UnstakedBakerId" IS NOT NULL
-                                        AND  staker."UnstakedBakerId" != staker."DelegateId"
-                                        THEN staker."UnstakedBalance"
-                                        ELSE 0
-                                        END),
-                    0,
-                    0,
-                    FLOOR(baker."ExternalStakedBalance"
-                        * COALESCE(staker."StakedPseudotokens", 0::numeric)
-                        / COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint,
-                    0,
-                    0
-                FROM "Accounts" AS staker
-                INNER JOIN "Accounts" AS baker
-                ON baker."Id" = staker."DelegateId"
-                WHERE staker."Staked" = true
-                AND staker."Type" != {1}
+                    "DelegateId",
+                    "Id",
+                    "Balance" - (CASE
+                                 WHEN "UnstakedBakerId" IS NOT NULL
+                                 AND  "UnstakedBakerId" != "DelegateId"
+                                 THEN "UnstakedBalance"
+                                 ELSE 0
+                                 END),
+                    NULL::bigint,
+                    NULL::integer,
+                    NULL::bigint,
+                    NULL::bigint,
+                    NULL::integer,
+                    "StakedPseudotokens"
+                FROM "Accounts"
+                WHERE "Staked" = true
+                AND "Type" != {1}
 
                 UNION ALL
                 
                 SELECT
                     {0},
-                    account."Id",
                     account."UnstakedBakerId",
+                    account."Id",
                     account."UnstakedBalance",
-                    0,
-                    0,
-                    0,
-                    0,
-                    0
+                    NULL::bigint,
+                    NULL::integer,
+                    NULL::bigint,
+                    NULL::bigint,
+                    NULL::integer,
+                    NULL::numeric
                 FROM "Accounts" as account
                 INNER JOIN "Accounts" as unstakedBaker
                 ON unstakedBaker."Id" = account."UnstakedBakerId"
@@ -118,36 +118,37 @@ namespace Tzkt.Sync.Protocols.Proto18
                         baker.DelegatorsCount,
                         baker.OwnStakedBalance,
                         baker.ExternalStakedBalance,
-                        baker.StakersCount) + ")");
+                        baker.StakersCount,
+                        baker.IssuedPseudotokens ?? (object)"NULL::numeric") + ")");
 
                     foreach (var delegator in delegators)
                     {
                         values.Add("(" + string.Join(',',
                             block.Level,
-                            delegator.Id,
                             delegator.DelegateId,
+                            delegator.Id,
                             delegator.Balance - (delegator is User user && user.UnstakedBakerId != null && user.UnstakedBakerId != user.DelegateId ? user.UnstakedBalance : 0),
-                            0,
-                            0,
-                            delegator is User u && u.StakedPseudotokens != null
-                                ? (long)(baker.ExternalStakedBalance * u.StakedPseudotokens.Value / baker.IssuedPseudotokens!.Value)
-                                : 0L,
-                            0,
-                            0) + ")");
+                            "NULL::bigint",
+                            "NULL::integer",
+                            "NULL::bigint",
+                            "NULL::bigint",
+                            "NULL::integer",
+                            (delegator as User)?.StakedPseudotokens ?? (object)"NULL::numeric") + ")");
                     }
 
                     foreach (var unstaker in unstakers)
                     {
                         values.Add("(" + string.Join(',',
                             block.Level,
-                            unstaker.Id,
                             unstaker.UnstakedBakerId,
+                            unstaker.Id,
                             unstaker.UnstakedBalance,
-                            0,
-                            0,
-                            0,
-                            0,
-                            0) + ")");
+                            "NULL::bigint",
+                            "NULL::integer",
+                            "NULL::bigint",
+                            "NULL::bigint",
+                            "NULL::integer",
+                            "NULL::numeric") + ")");
                     }
                 }
                 if (values.Count > 0)
@@ -156,14 +157,15 @@ namespace Tzkt.Sync.Protocols.Proto18
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
-                            "AccountId",
                             "BakerId",
+                            "AccountId",
                             "OwnDelegatedBalance",
                             "ExternalDelegatedBalance",
                             "DelegatorsCount",
                             "OwnStakedBalance",
                             "ExternalStakedBalance",
-                            "StakersCount"
+                            "StakersCount",
+                            "Pseudotokens"
                         )
                         VALUES
                         {string.Join(",\n", values)}
@@ -191,8 +193,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                     AND ("AttestationRewardsDelegated" != 0 OR "AttestationRewardsStakedOwn" != 0 OR "AttestationRewardsStakedEdge" != 0 OR "AttestationRewardsStakedShared" != 0)
                 ) as bc
                 WHERE sb."Level" = {1}
-                AND sb."AccountId" = bc."BakerId"
                 AND sb."BakerId" = bc."BakerId"
+                AND sb."AccountId" = bc."BakerId"
                 """, block.Cycle, block.Level);
         }
     }

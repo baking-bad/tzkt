@@ -6,9 +6,9 @@ namespace Tzkt.Data.Models
     {
         public required int Id { get; set; }
         public required int Cycle { get; set; }
-        public required int StakerId { get; set; }
         public required int BakerId { get; set; }
-        public long EdgeOfBakingOverStaking { get; set; }
+        public required int StakerId { get; set; }
+
         public long InitialStake { get; set; }
         public long AvgStake { get; set; }
         public long AddedStake { get; set; }

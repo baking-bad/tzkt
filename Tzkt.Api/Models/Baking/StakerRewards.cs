@@ -3,31 +3,15 @@
     public class StakerRewards
     {
         /// <summary>
-        /// Internal TzKT ID.  
-        /// **[sortable]**
-        /// </summary>
-        public int Id { get; set; }
-
-        /// <summary>
         /// Cycle in which the rewards were earned.  
         /// **[sortable]**
         /// </summary>
         public int Cycle { get; set; }
 
         /// <summary>
-        /// Staker.
-        /// </summary>
-        public required Alias Staker { get; set; }
-
-        /// <summary>
         /// Staker's baker.
         /// </summary>
         public required Alias Baker { get; set; }
-
-        /// <summary>
-        /// Edge of baking over staking parameter the baker had in this cycle.
-        /// </summary>
-        public long EdgeOfBakingOverStaking { get; set; }
 
         /// <summary>
         /// Staked balance at the beginning of the cycle (micro tez).
@@ -55,9 +39,14 @@
         public long AvgStake { get; set; }
 
         /// <summary>
-        /// Staking rewards earned during the cycle (micro tez).
+        /// Staking rewards (or losses if negative) earned during the cycle (micro tez).
         /// </summary>
         public long Rewards { get; set; }
+
+        /// <summary>
+        /// Rewards of the staker's baker, from which the staker can understand the source of the rewards/losses.
+        /// </summary>
+        public required BakerRewards BakerRewards { get; set; }
 
         #region injecting
         /// <summary>

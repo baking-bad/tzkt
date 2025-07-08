@@ -23,8 +23,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     AND "AttestationRewardsDelegated" != 0
                 ) as bc
                 WHERE sb."Level" = {1}
-                AND sb."AccountId" = bc."BakerId"
                 AND sb."BakerId" = bc."BakerId"
+                AND sb."AccountId" = bc."BakerId"
                 """, block.Cycle, block.Level);
         }
     }

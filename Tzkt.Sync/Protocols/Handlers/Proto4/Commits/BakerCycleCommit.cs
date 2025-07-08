@@ -225,11 +225,12 @@ namespace Tzkt.Sync.Protocols.Proto4
                             Cycle = futureCycle.Index,
                             BakerId = snapshot.AccountId,
                             OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
-                            ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
-                            DelegatorsCount = snapshot.DelegatorsCount,
-                            OwnStakedBalance = snapshot.OwnStakedBalance,
-                            ExternalStakedBalance = snapshot.ExternalStakedBalance,
-                            StakersCount = snapshot.StakersCount,
+                            ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance!.Value,
+                            DelegatorsCount = snapshot.DelegatorsCount!.Value,
+                            OwnStakedBalance = snapshot.OwnStakedBalance ?? 0,
+                            ExternalStakedBalance = snapshot.ExternalStakedBalance ?? 0,
+                            StakersCount = snapshot.StakersCount ?? 0,
+                            IssuedPseudotokens = snapshot.Pseudotokens,
                             BakingPower = bakingPower,
                             TotalBakingPower = futureCycle.TotalBakingPower,
                             ExpectedBlocks = Context.Protocol.BlocksPerCycle * share,
@@ -305,6 +306,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                             OwnStakedBalance = 0,
                             ExternalStakedBalance = 0,
                             StakersCount = 0,
+                            IssuedPseudotokens = null,
                             BakingPower = 0,
                             TotalBakingPower = futureCycle.TotalBakingPower,
                             ExpectedBlocks = 0,
@@ -322,7 +324,7 @@ namespace Tzkt.Sync.Protocols.Proto4
                                 DelegatorId = (await Cache.Accounts.GetExistingAsync(delegatorAddress)).Id,
                                 BakerId = baker.Id,
                                 DelegatedBalance = snapshottedDelegator.RequiredInt64("balance"),
-                                StakedBalance = 0
+                                StakedPseudotokens = null
                             });
                         }
                         #endregion

@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.Numerics;
 using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
@@ -10,6 +11,8 @@ namespace Tzkt.Data.Models
 
         public long StakingBalance { get; set; }
         public long DelegatedBalance { get; set; }
+        public long MinTotalDelegated { get; set; }
+        public int MinTotalDelegatedLevel { get; set; }
         public int DelegatorsCount { get; set; }
 
         public long OwnStakedBalance { get; set; }
@@ -41,6 +44,11 @@ namespace Tzkt.Data.Models
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }
+
+        #region helpers
+        [NotMapped]
+        public long TotalDelegated => StakingBalance - OwnStakedBalance - ExternalStakedBalance;
+        #endregion
     }
 
     public static class DelegateModel

@@ -414,6 +414,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         OwnStakedBalance = 0,
                         ExternalStakedBalance = 0,
                         StakersCount = 0,
+                        IssuedPseudotokens = null,
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower,
                         ExpectedBlocks = 0,
@@ -432,7 +433,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                             DelegatorId = (await Cache.Accounts.GetExistingAsync(delegatorAddress)).Id,
                             BakerId = baker.Id,
                             DelegatedBalance = snapshottedDelegator.RequiredInt64("balance"),
-                            StakedBalance = 0
+                            StakedPseudotokens = null
                         });
                     }
                     #endregion

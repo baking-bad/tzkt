@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Services.Cache
         #region static
         static int SoftCap = 0;
         static int TargetCap = 0;
-        static Dictionary<(int, int), StakerCycle> Cached = [];
+        static Dictionary<(int, int, int), StakerCycle> Cached = [];
 
         public static void Configure(CacheSize? size)
         {
@@ -42,21 +42,22 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Add(StakerCycle sc)
         {
-            Cached[(sc.StakerId, sc.Cycle)] = sc;
+            Cached[(sc.Cycle, sc.BakerId, sc.StakerId)] = sc;
         }
 
         public void Remove(StakerCycle sc)
         {
-            Cached.Remove((sc.StakerId, sc.Cycle));
+            Cached.Remove((sc.Cycle, sc.BakerId, sc.StakerId));
         }
 
-        public async Task<StakerCycle> GetOrCreateAsync(int stakerId, int cycle, Data.Models.Delegate baker)
+        public async Task<StakerCycle> GetOrCreateAsync(int cycle, int bakerId, int stakerId)
         {
-            if (!Cached.TryGetValue((stakerId, cycle), out var sc))
+            if (!Cached.TryGetValue((cycle, bakerId, stakerId), out var sc))
             {
                 sc = await Db.StakerCycles.SingleOrDefaultAsync(x =>
-                    x.StakerId == stakerId &&
-                    x.Cycle == cycle);
+                    x.Cycle == cycle &&
+                    x.BakerId == bakerId &&
+                    x.StakerId == stakerId);
 
                 if (sc == null)
                 {
@@ -64,20 +65,14 @@ namespace Tzkt.Sync.Services.Cache
                     {
                         Id = 0,
                         Cycle = cycle,
+                        BakerId = bakerId,
                         StakerId = stakerId,
-                        BakerId = baker.Id,
-                        EdgeOfBakingOverStaking = baker.EdgeOfBakingOverStaking ?? 1_000_000_000
                     };
                     Db.StakerCycles.Add(sc);
                 }
 
                 Add(sc);
             }
-
-            #region temp check
-            if (sc.BakerId != baker.Id)
-                throw new InvalidOperationException("StakerCycle's baker doesn't match");
-            #endregion
 
             return sc;
         }

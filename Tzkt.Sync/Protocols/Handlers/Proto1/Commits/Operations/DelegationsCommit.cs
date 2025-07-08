@@ -493,6 +493,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 UnstakedBakerId = user.UnstakedBakerId,
                 StakingOpsCount = user.StakingOpsCount,
                 DelegatedBalance = 0, 
+                MinTotalDelegated = long.MaxValue,
+                MinTotalDelegatedLevel = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
                 TokenBalancesCount = user.TokenBalancesCount,

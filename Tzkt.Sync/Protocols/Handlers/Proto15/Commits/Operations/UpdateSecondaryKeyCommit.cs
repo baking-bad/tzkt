@@ -86,8 +86,6 @@ namespace Tzkt.Sync.Protocols.Proto15
             Proto.Manager.Set(sender);
             Db.UpdateSecondaryKeyOps.Add(operation);
             Context.UpdateSecondaryKeyOps.Add(operation);
-
-            Proto.ForceDiagnostics();
         }
 
         public virtual async Task Revert(Block block, UpdateSecondaryKeyOperation operation)

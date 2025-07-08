@@ -149,24 +149,25 @@ namespace Tzkt.Sync.Protocols.Proto18
                     Cycle = futureCycle.Index,
                     BakerId = snapshot.AccountId,
                     OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
-                    ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
-                    DelegatorsCount = snapshot.DelegatorsCount,
-                    OwnStakedBalance = snapshot.OwnStakedBalance,
-                    ExternalStakedBalance = snapshot.ExternalStakedBalance,
-                    StakersCount = snapshot.StakersCount,
+                    ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance!.Value,
+                    DelegatorsCount = snapshot.DelegatorsCount!.Value,
+                    OwnStakedBalance = snapshot.OwnStakedBalance ?? 0,
+                    ExternalStakedBalance = snapshot.ExternalStakedBalance ?? 0,
+                    StakersCount = snapshot.StakersCount ?? 0,
+                    IssuedPseudotokens = snapshot.Pseudotokens,
                     BakingPower = 0,
                     TotalBakingPower = futureCycle.TotalBakingPower
                 };
                 if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                 {
                     var expectedAttestations = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.AttestersPerBlock * bakingPower / futureCycle.TotalBakingPower);
-                    var expectedDalShards = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedDalAttestations = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
                     bakerCycle.BakingPower = bakingPower;
                     bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                     bakerCycle.ExpectedAttestations = expectedAttestations;
                     bakerCycle.FutureAttestationRewards = expectedAttestations * futureCycle.AttestationRewardPerSlot;
-                    bakerCycle.ExpectedDalShards = expectedDalShards;
-                    bakerCycle.FutureDalAttestationRewards = expectedDalShards * futureCycle.DalAttestationRewardPerShard;
+                    bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
+                    bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * futureCycle.DalAttestationRewardPerShard;
                 }
                 return bakerCycle;
             });

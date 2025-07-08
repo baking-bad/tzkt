@@ -140,25 +140,19 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                 INSERT INTO "SnapshotBalances" (
                     "Level",
-                    "AccountId",
                     "BakerId",
+                    "AccountId",
                     "OwnDelegatedBalance",
                     "ExternalDelegatedBalance",
-                    "DelegatorsCount",
-                    "OwnStakedBalance",
-                    "ExternalStakedBalance",
-                    "StakersCount"
+                    "DelegatorsCount"
                 )
                 SELECT
                     {0},
-                    "Id",
                     COALESCE("DelegateId", "Id"),
+                    "Id",
                     COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
-                    COALESCE("DelegatedBalance", 0),
-                    COALESCE("DelegatorsCount", 0),
-                    0,
-                    0,
-                    0
+                    "DelegatedBalance",
+                    "DelegatorsCount"
                 FROM "Accounts"
                 WHERE "Staked" = true;
                 """, state.Level);
@@ -227,18 +221,18 @@ namespace Tzkt.Sync.Protocols.Proto12
                                 "DelegatorId",
                                 "BakerId",
                                 "DelegatedBalance",
-                                "StakedBalance"
+                                "StakedPseudotokens"
                             )
                             SELECT
                                 {0},
                                 "AccountId",
                                 "BakerId",
                                 "OwnDelegatedBalance",
-                                "OwnStakedBalance"
+                                "Pseudotokens"
                             FROM "SnapshotBalances"
                             WHERE "Level" = {1}
-                            AND "AccountId" != "BakerId"
                             AND "BakerId" = {2}
+                            AND "BakerId" != "AccountId"
                             """, state.Cycle, state.Level, baker.Id);
                     }
                 }
@@ -256,6 +250,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 bc.DelegatorsCount = baker.DelegatorsCount;
                 bc.OwnStakedBalance = baker.OwnStakedBalance;
                 bc.ExternalStakedBalance = baker.ExternalStakedBalance;
+                bc.IssuedPseudotokens = baker.IssuedPseudotokens;
                 bc.StakersCount = baker.StakersCount;
                 bc.BakingPower = 0;
                 bc.TotalBakingPower = cycle.TotalBakingPower;
@@ -426,17 +421,17 @@ namespace Tzkt.Sync.Protocols.Proto12
                         "DelegatorId",
                         "BakerId",
                         "DelegatedBalance",
-                        "StakedBalance"
+                        "StakedPseudotokens"
                     )
                     SELECT
                         {0},
                         "AccountId",
                         "BakerId",
                         "OwnDelegatedBalance",
-                        "OwnStakedBalance"
+                        "Pseudotokens"
                     FROM "SnapshotBalances"
                     WHERE "Level" = {1}
-                    AND "AccountId" != "BakerId"
+                    AND "BakerId" != "AccountId"
                     """, cycle.Index, cycle.SnapshotLevel);
                 #endregion
 
@@ -454,6 +449,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
+                        IssuedPseudotokens = x.IssuedPseudotokens,
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower
                     };

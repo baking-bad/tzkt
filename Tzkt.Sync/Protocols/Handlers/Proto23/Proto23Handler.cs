@@ -65,7 +65,7 @@ namespace Tzkt.Sync.Protocols
                             await new AttestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "attestations_aggregate":
-                            var attestations = await new AttestationAggregateCommit(this).ExtractAttestations(operation, content);
+                            var attestations = new AttestationAggregateCommit(this).ExtractAttestations(operation, content);
                             foreach (var (opHash, baker, slots) in attestations)
                                 await new AttestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
                             break;
@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols
                             new PreattestationsCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "preattestations_aggregate":
-                            var preattestations = await new PreattestationAggregateCommit(this).ExtractPreattestations(operation, content);
+                            var preattestations = new PreattestationAggregateCommit(this).ExtractPreattestations(operation, content);
                             foreach (var (opHash, baker, slots) in preattestations)
                                 new PreattestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
                             break;
@@ -372,13 +372,15 @@ namespace Tzkt.Sync.Protocols
             Diagnostics.TrackChanges();
             await Db.SaveChangesAsync();
 
-            await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
+            await new DelegationSnapshotCommit(this).Apply();
+            await new SnapshotBalanceCommit(this).Apply();
         }
 
         public override async Task BeforeRevert()
         {
             var block = await Cache.Blocks.CurrentAsync();
-            await new SnapshotBalanceCommit(this).Revert(block);
+            await new SnapshotBalanceCommit(this).Revert();
+            await new DelegationSnapshotCommit(this).Revert();
             await new AutostakingCommit(this).Revert(block);
             await new VotingCommit(this).Revert(block);
             await new SlashingCommit(this).Revert(block);

@@ -21,8 +21,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                             * COALESCE(staker."StakedPseudotokens", 0::numeric)
                             / COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint AS stake
                     FROM "StakerCycles" AS sc
-                    INNER JOIN "Accounts" AS staker ON staker."Id" = sc."StakerId"
                     INNER JOIN "Accounts" AS baker ON baker."Id" = sc."BakerId"
+                    INNER JOIN "Accounts" AS staker ON staker."Id" = sc."StakerId"
                     WHERE sc."Cycle" = {0}
                 ) AS snapshot
                 WHERE "Id" = snapshot.id
@@ -33,9 +33,8 @@ namespace Tzkt.Sync.Protocols.Proto19
             await Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "StakerCycles" (
                     "Cycle",
-                    "StakerId",
                     "BakerId",
-                    "EdgeOfBakingOverStaking",
+                    "StakerId",
                     "InitialStake",
                     "AvgStake",
                     "AddedStake",
@@ -44,9 +43,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                 )
                 SELECT
                     {0},
-                    sc."StakerId",
                     sc."BakerId",
-                    COALESCE(baker."EdgeOfBakingOverStaking", 1000000000::bigint),
+                    sc."StakerId",
                     sc."FinalStake",
                     sc."FinalStake",
                     0,
@@ -54,9 +52,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                     NULL
                 FROM "StakerCycles" AS sc
                 INNER JOIN "Accounts" AS staker ON staker."Id" = sc."StakerId"
-                INNER JOIN "Accounts" AS baker ON baker."Id" = sc."BakerId"
                 WHERE sc."Cycle" = {1} AND staker."StakedPseudotokens" IS NOT NULL
-                ORDER BY sc."Id"
                 """, Context.Block.Cycle, Context.Block.Cycle - 1);
             #endregion
         }

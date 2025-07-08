@@ -32,6 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
+                        IssuedPseudotokens = x.IssuedPseudotokens,
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower
                     };

@@ -14,21 +14,29 @@ namespace Tzkt.Sync.Protocols.Proto18
             var accounts = await base.BootstrapAccounts(protocol, parameters);
 
             var bakers = accounts
-                .Where(x => x is Data.Models.Delegate d && d.StakingBalance >= protocol.MinimalStake)
+                .Where(x => x is Data.Models.Delegate)
                 .Select(x => (x as Data.Models.Delegate)!);
 
             Cache.Statistics.Current.TotalFrozen = 0;
 
-            await new StakingUpdateCommit(Proto).Apply(bakers.Select(x => new StakingUpdate
+            await new StakingUpdateCommit(Proto).Apply([..bakers
+                .Where(x => x.StakingBalance >= protocol.MinimalStake)
+                .Select(x => new StakingUpdate
+                {
+                    Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                    Level = 1,
+                    Cycle = 0,
+                    BakerId = x.Id,
+                    StakerId = x.Id,
+                    Type = StakingUpdateType.Stake,
+                    Amount = x.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1)
+                })]);
+
+            foreach (var baker in bakers)
             {
-                Id = ++Cache.AppState.Get().StakingUpdatesCount,
-                Level = 1,
-                Cycle = 0,
-                BakerId = x.Id,
-                StakerId = x.Id,
-                Type = StakingUpdateType.Stake,
-                Amount = x.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1)
-            }).ToList());
+                baker.MinTotalDelegated = baker.TotalDelegated;
+                baker.MinTotalDelegatedLevel = 1;
+            }
 
             return accounts;
         }
@@ -90,6 +98,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
+                        IssuedPseudotokens = x.IssuedPseudotokens,
                         BakingPower = 0,
                         TotalBakingPower = cycle.TotalBakingPower
                     };
@@ -97,13 +106,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                     {
                         var bakingPower = Math.Min(x.StakingBalance, (x.OwnStakedBalance + x.ExternalStakedBalance) * (protocol.MaxDelegatedOverFrozenRatio + 1));
                         var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
-                        var expectedDalShards = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.NumberOfShards * bakingPower / cycle.TotalBakingPower);
+                        var expectedDalAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.NumberOfShards * bakingPower / cycle.TotalBakingPower);
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
-                        bakerCycle.ExpectedDalShards = expectedDalShards;
-                        bakerCycle.FutureDalAttestationRewards = expectedDalShards * cycle.DalAttestationRewardPerShard;
+                        bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
+                        bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * cycle.DalAttestationRewardPerShard;
                     }
                     return bakerCycle;
                 });

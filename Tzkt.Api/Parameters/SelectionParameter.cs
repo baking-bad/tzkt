@@ -32,7 +32,7 @@ namespace Tzkt.Api
 
         public string Normalize(string name)
         {
-            return $"{name}={string.Join(",", (Fields ?? Values)!.Select(x => $"{x.Full} as {x.Alias}"))}";
+            return $"{name}.{(Fields != null ? "fields" : "values")}={string.Join(",", (Fields ?? Values)!.Select(x => $"{x.Full} as {x.Alias}"))}";
         }
     }
 
@@ -47,13 +47,23 @@ namespace Tzkt.Api
 
         public string? Column { get; set; }
 
-        public SelectionField? SubField() => Path == null ? null : new()
+        public SelectionField? SubField()
         {
-            Field = Path[0],
-            Path = Path.Count > 1 ? Path.Skip(1).ToList() : null,
-            Alias = Alias,
-            Full = Full
-        };
+            if (Path == null) return null;
+
+            var subField = Path[0];
+            var (subPath, subFull) = Path.Count > 1
+                ? ([..Path.Skip(1)], string.Join(".", Path))
+                : ((List<string>?)null, subField);
+
+            return new()
+            {
+                Field = subField,
+                Path = subPath,
+                Alias = subFull,
+                Full = subFull
+            };
+        }
 
         public static bool TryParse(string value, [NotNullWhen(true)] out SelectionField? field)
         {
@@ -76,7 +86,7 @@ namespace Tzkt.Api
                     field = new()
                     {
                         Field = sss[0],
-                        Path = sss.Skip(1).ToList(),
+                        Path = [..sss.Skip(1)],
                         Alias = ss[^1],
                         Full = ss[0]
                     };

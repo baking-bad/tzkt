@@ -41,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 BakerSnapshots = await Db.SnapshotBalances
                     .AsNoTracking()
-                    .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
+                    .Where(x => x.Level == snapshotLevel && x.BakerId == x.AccountId)
                     .ToListAsync();
 
                 FutureCycle = new Cycle
