@@ -4,7 +4,7 @@ namespace Tzkt.Sync.Protocols.Proto23
 {
     class PreattestationAggregateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public async Task<IEnumerable<(string, string, int)>> ExtractPreattestations(JsonElement op, JsonElement content)
+        public IEnumerable<(string, string, int)> ExtractPreattestations(JsonElement op, JsonElement content)
         {
             var res = new List<(string, string, int)>();
 

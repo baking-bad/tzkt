@@ -32,25 +32,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             return Db.Database.ExecuteSqlRawAsync("""
                 INSERT INTO "SnapshotBalances" (
                     "Level",
-                    "AccountId",
                     "BakerId",
+                    "AccountId",
                     "OwnDelegatedBalance",
                     "ExternalDelegatedBalance",
-                    "DelegatorsCount",
-                    "OwnStakedBalance",
-                    "ExternalStakedBalance",
-                    "StakersCount"
+                    "DelegatorsCount"
                 )
                 SELECT
                     {0},
-                    "Id",
                     COALESCE("DelegateId", "Id"),
+                    "Id",
                     COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
-                    COALESCE("DelegatedBalance", 0),
-                    COALESCE("DelegatorsCount", 0),
-                    0,
-                    0,
-                    0
+                    "DelegatedBalance",
+                    "DelegatorsCount"
                 FROM "Accounts"
                 WHERE "Staked" = true
                 """, block.Level);
@@ -80,8 +74,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var values = string.Join(",\n", deactivated
                     .SelectMany(row =>
-                        new[] { $"({block.Level}, {row.baker.Id}, {row.baker.Id}, {row.baker.StakingBalance - row.baker.DelegatedBalance}, {row.baker.DelegatedBalance}, {row.baker.DelegatorsCount}, 0, 0, 0)" }
-                        .Concat(row.delegators.Select(delegator => $"({block.Level}, {delegator.Id}, {delegator.DelegateId}, {delegator.Balance}, 0, 0, 0, 0, 0)"))));
+                        new[] { $"({block.Level}, {row.baker.Id}, {row.baker.Id}, {row.baker.StakingBalance - row.baker.DelegatedBalance}, {row.baker.DelegatedBalance}, {row.baker.DelegatorsCount})" }
+                        .Concat(row.delegators.Select(delegator => $"({block.Level}, {delegator.DelegateId}, {delegator.Id}, {delegator.Balance}, NULL::bigint, NULL::integer)"))));
 
                 if (values.Length > 0)
                 {
@@ -89,14 +83,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
-                            "AccountId",
                             "BakerId",
+                            "AccountId",
                             "OwnDelegatedBalance",
                             "ExternalDelegatedBalance",
-                            "DelegatorsCount",
-                            "OwnStakedBalance",
-                            "ExternalStakedBalance",
-                            "StakersCount"
+                            "DelegatorsCount"
                         )
                         VALUES
                         {values}
@@ -131,8 +122,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                         {rewards}
                     ) as reward(baker, value)
                     WHERE sb."Level" = {block.Level}
-                    AND sb."AccountId" = reward.baker
                     AND sb."BakerId" = reward.baker
+                    AND sb."AccountId" = reward.baker
                     """);
 #pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
             }
@@ -170,8 +161,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var values = string.Join(",\n", weirdOriginations
                     .Where(weirds => weirds.Sum(x => x.contract.Balance) >= protocol.MinimalStake)
                     .SelectMany(weirds =>
-                        new[] { $"({block.Level}, {weirds.Key}, {weirds.Key}, 0, {weirds.Sum(x => x.contract.Balance)}, {weirds.Count()}, 0, 0, 0)" }
-                        .Concat(weirds.Select(x => $"({block.Level}, {x.contract.Id}, {weirds.Key}, {x.contract.Balance}, 0, 0, 0, 0, 0)"))));
+                        new[] { $"({block.Level}, {weirds.Key}, {weirds.Key}, 0, {weirds.Sum(x => x.contract.Balance)}, {weirds.Count()})" }
+                        .Concat(weirds.Select(x => $"({block.Level}, {weirds.Key}, {x.contract.Id}, {x.contract.Balance}, NULL::bigint, NULL::integer)"))));
 
                 if (values.Length > 0)
                 {
@@ -179,14 +170,11 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await Db.Database.ExecuteSqlRawAsync($"""
                         INSERT INTO "SnapshotBalances" (
                             "Level",
-                            "AccountId",
                             "BakerId",
+                            "AccountId",
                             "OwnDelegatedBalance",
                             "ExternalDelegatedBalance",
-                            "DelegatorsCount",
-                            "OwnStakedBalance",
-                            "ExternalStakedBalance",
-                            "StakersCount"
+                            "DelegatorsCount"
                         )
                         VALUES
                         {values}

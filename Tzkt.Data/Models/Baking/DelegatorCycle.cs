@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Numerics;
+using Microsoft.EntityFrameworkCore;
 
 namespace Tzkt.Data.Models
 {
@@ -10,7 +11,7 @@ namespace Tzkt.Data.Models
         public required int BakerId { get; set; }
 
         public long DelegatedBalance { get; set; }
-        public long StakedBalance { get; set; }
+        public BigInteger? StakedPseudotokens { get; set; }
     }
 
     public static class DelegatorCycleModel

@@ -52,8 +52,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             return snapshots.Select(x =>
             {
-                var ownStaked = x.OwnStakedBalance;
-                var externalStaked = x.ExternalStakedBalance;
+                var ownStaked = x.OwnStakedBalance!.Value;
+                var externalStaked = x.ExternalStakedBalance!.Value;
                 if (slashings.TryGetValue(x.AccountId, out var percentage))
                 {
                     ownStaked = ownStaked * Math.Max(0, 10_000 - percentage) / 10_000;

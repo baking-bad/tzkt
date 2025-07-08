@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 baker.IssuedPseudotokens = (baker.IssuedPseudotokens ?? BigInteger.Zero) + pseudotokens;
                             }
 
-                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(staker.Id, Context.Block.Cycle, baker);
+                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(Context.Block.Cycle, baker.Id, staker.Id);
                             Db.TryAttach(stakerCycle);
                             stakerCycle.AddedStake += update.Amount;
                             stakerCycle.AvgStake += (long)(update.Amount * GetCycleProgressLeft());
@@ -88,7 +88,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 }
                             }
 
-                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(staker.Id, Context.Block.Cycle, baker);
+                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(Context.Block.Cycle, baker.Id, staker.Id);
                             Db.TryAttach(stakerCycle);
                             stakerCycle.RemovedStake += update.Amount;
                             stakerCycle.AvgStake -= (long)(update.Amount * GetCycleProgressLeft());
@@ -263,7 +263,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 }
                             }
 
-                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(staker.Id, Context.Block.Cycle, baker);
+                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(Context.Block.Cycle, baker.Id, staker.Id);
                             Db.TryAttach(stakerCycle);
                             stakerCycle.AddedStake -= update.Amount;
                             stakerCycle.AvgStake -= (long)(update.Amount * GetCycleProgressLeft());
@@ -301,7 +301,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 baker.IssuedPseudotokens = (baker.IssuedPseudotokens ?? BigInteger.Zero) + pseudotokens;
                             }
 
-                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(staker.Id, Context.Block.Cycle, baker);
+                            var stakerCycle = await Cache.StakerCycles.GetOrCreateAsync(Context.Block.Cycle, baker.Id, staker.Id);
                             Db.TryAttach(stakerCycle);
                             stakerCycle.RemovedStake -= update.Amount;
                             stakerCycle.AvgStake += (long)(update.Amount * GetCycleProgressLeft());
@@ -559,7 +559,11 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         double GetCycleProgressLeft()
         {
-            return (Context.Protocol.GetCycleEnd(Context.Block.Cycle) - Context.Block.Level) / (double)Context.Protocol.BlocksPerCycle;
+            var protocol = Context.Block.Cycle < Context.Protocol.FirstCycle
+                ? Cache.Protocols.FindByCycle(Context.Block.Cycle)
+                : Context.Protocol;
+
+            return (protocol.GetCycleEnd(Context.Block.Cycle) - Context.Block.Level) / (double)protocol.BlocksPerCycle;
         }
     }
 }

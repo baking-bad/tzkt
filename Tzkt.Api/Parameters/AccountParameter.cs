@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using NJsonSchema.Annotations;
+using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api
 {
@@ -75,6 +76,9 @@ namespace Tzkt.Api
         [JsonIgnore]
         public bool NiHasNull { get; set; }
 
+        #region operators
+        public static implicit operator AccountParameter(RawAccount account) => new() { Eq = account.Id };
+        #endregion
 
         public string Normalize(string name)
         {

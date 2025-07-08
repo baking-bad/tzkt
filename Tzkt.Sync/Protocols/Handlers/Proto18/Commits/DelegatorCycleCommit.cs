@@ -15,17 +15,17 @@ namespace Tzkt.Sync.Protocols.Proto18
                     "DelegatorId",
                     "BakerId",
                     "DelegatedBalance",
-                    "StakedBalance"
+                    "StakedPseudotokens"
                 )
                 SELECT
                     {0},
                     "AccountId",
                     "BakerId",
                     "OwnDelegatedBalance",
-                    "OwnStakedBalance"
+                    "Pseudotokens"
                 FROM "SnapshotBalances"
                 WHERE "Level" = {1}
-                AND "AccountId" != "BakerId"
+                AND "BakerId" != "AccountId"
                 """, futureCycle.Index, futureCycle.SnapshotLevel);
         }
     }

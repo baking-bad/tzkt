@@ -3,19 +3,19 @@ using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
-    public class StakerRewardsFilter : CycleRewardsFilter
+    public class DelegatorRewardsFilter : CycleRewardsFilter
     {
         /// <summary>
-        /// Filter by staker.  
+        /// Filter by delegator.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter? staker { get; set; }
+        public AccountParameter? delegator { get; set; }
 
         [OpenApiIgnore]
         public override bool Empty =>
-            base.Empty && staker == null;
+            base.Empty && delegator == null;
 
         public override string Normalize(string name) =>
-            ResponseCacheService.BuildKey(base.Normalize(name), ("staker", staker));
+            ResponseCacheService.BuildKey(base.Normalize(name), ("delegator", delegator));
     }
 }

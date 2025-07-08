@@ -1,11 +1,20 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
+
+namespace Tzkt.Api.Models
 {
     public class DelegatorRewards
     {
         /// <summary>
-        /// Cycle in which rewards were or will be earned.
+        /// Cycle in which rewards were or will be earned.  
+        /// **[sortable]**
         /// </summary>
         public int Cycle { get; set; }
+
+        /// <summary>
+        /// Baker at the snapshot time.
+        /// </summary>
+        public required Alias Baker { get; set; }
 
         /// <summary>
         /// Amount delegated to the baker at the snapshot time (micro tez).
@@ -14,331 +23,22 @@
         public long DelegatedBalance { get; set; }
 
         /// <summary>
-        /// Amount staked to the baker at the snapshot time (micro tez).
+        /// Amount of staked pseudotokens, representing staker's share within the baker's `externalStakedBalance` at the snapshot time.
         /// </summary>
-        public long StakedBalance { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = true)]
+        public BigInteger? StakedPseudotokens { get; set; }
 
         /// <summary>
-        /// Baker at the snapshot time.
+        /// Estimated amount staked to the baker at the snapshot time (micro tez).
+        /// It's computed on-the-fly as `externalStakedBalance * stakedPseudotokens / issuedPseudotokens`.
         /// </summary>
-        public required Alias Baker { get; set; }
+        public long? StakedBalance { get; set; }
+
 
         /// <summary>
-        /// Baker's baking power
+        /// Rewards of the delegator's baker, from which the delegator can estimate his share, given his `delegatedBalance`.
         /// </summary>
-        public long BakingPower { get; set; }
-
-        /// <summary>
-        /// Sum of baking power of all active bakers
-        /// </summary>
-        public long TotalBakingPower { get; set; }
-
-        /// <summary>
-        /// Amount delegated from the baker's own balance (micro tez).
-        /// This amount doesn't include staked amount.
-        /// </summary>
-        public long BakerDelegatedBalance { get; set; }
-
-        /// <summary>
-        /// Amount delegated from external delegators (micro tez).
-        /// This amount doesn't include external staked amount.
-        /// </summary>
-        public long ExternalDelegatedBalance { get; set; }
-
-        /// <summary>
-        /// Amount staked from the baker's own balance (micro tez).
-        /// </summary>
-        public long BakerStakedBalance { get; set; }
-
-        /// <summary>
-        /// Amount staked from external stakers (micro tez).
-        /// </summary>
-        public long ExternalStakedBalance { get; set; }
-
-        /// <summary>
-        /// Expected value of how many blocks baker should produce based on baker's active stake, selected stake and blocks per cycle.
-        /// </summary>
-        public double ExpectedBlocks { get; set; }
-
-        /// <summary>
-        /// Expected value of how many slots baker should validate based on baker's active stake, selected stake and attestation slots per cycle.
-        /// </summary>
-        public double ExpectedAttestations { get; set; }
-
-        /// <summary>
-        /// Expected value of how many dal shards baker should attest based on baker's active stake, selected stake and total shards per cycle.
-        /// </summary>
-        public long ExpectedDalShards { get; set; }
-
-        /// <summary>
-        /// Number of blocks which baker is allowed to produce in this cycle based on future baking rights.
-        /// </summary>
-        public int FutureBlocks { get; set; }
-
-        /// <summary>
-        /// Estimated value of future block rewards.
-        /// </summary>
-        public long FutureBlockRewards { get; set; }
-
-        /// <summary>
-        /// Number of successfully baked blocks (both proposed and re-proposed blocks).
-        /// </summary>
-        public int Blocks { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to delegated stake, received for baked blocks (both proposed and re-proposed blocks) on baker's liquid balance
-        /// (it is not frozen and can be spent immediately).
-        /// </summary>
-        public long BlockRewardsDelegated { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's own stake, received for baked blocks (both proposed and re-proposed blocks) on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long BlockRewardsStakedOwn { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, received for baked blocks (both proposed and re-proposed blocks) on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long BlockRewardsStakedEdge { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's external stake, received for baked blocks (both proposed and re-proposed blocks) on baker's external staked balance
-        /// (it is frozen and belongs to baker's stakers).
-        /// </summary>
-        public long BlockRewardsStakedShared { get; set; }
-
-        /// <summary>
-        /// Number of missed opportunities to bake block.
-        /// </summary>
-        public int MissedBlocks { get; set; }
-
-        /// <summary>
-        /// Rewards which were not received due to missing blocks.
-        /// </summary>
-        public long MissedBlockRewards { get; set; }
-
-        /// <summary>
-        /// Number of slots which baker is allowed to validate in this cycle based on future attestation rights.
-        /// </summary>
-        public int FutureAttestations { get; set; }
-
-        /// <summary>
-        /// Estimated value of future attestation rewards.
-        /// </summary>
-        public long FutureAttestationRewards { get; set; }
-
-        /// <summary>
-        /// Number of successfully attested slots.
-        /// </summary>
-        public int Attestations { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to delegated stake, received for attested slots on baker's liquid balance
-        /// (it is not frozen and can be spent immediately).
-        /// </summary>
-        public long AttestationRewardsDelegated { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's own stake, received for attested slots on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long AttestationRewardsStakedOwn { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, received for attested slots on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long AttestationRewardsStakedEdge { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's external stake, received for attested slots on baker's external staked balance
-        /// (it is frozen and belongs to baker's stakers).
-        /// </summary>
-        public long AttestationRewardsStakedShared { get; set; }
-
-        /// <summary>
-        /// Number of not attested (missed) slots.
-        /// </summary>
-        public int MissedAttestations { get; set; }
-
-        /// <summary>
-        /// Rewards which were not received due to missing attestations.
-        /// </summary>
-        public long MissedAttestationRewards { get; set; }
-
-        /// <summary>
-        /// Estimated value of future dal attestation rewards.
-        /// </summary>
-        public long FutureDalAttestationRewards { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to delegated stake, received for attested dal shards on baker's liquid balance
-        /// (it is not frozen and can be spent immediately).
-        /// </summary>
-        public long DalAttestationRewardsDelegated { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's own stake, received for attested dal shards on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long DalAttestationRewardsStakedOwn { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, received for attested dal shards on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long DalAttestationRewardsStakedEdge { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's external stake, received for attested dal shards on baker's external staked balance
-        /// (it is frozen and belongs to baker's stakers).
-        /// </summary>
-        public long DalAttestationRewardsStakedShared { get; set; }
-
-        /// <summary>
-        /// Rewards which were not received due to denunciation or not enough participation.
-        /// </summary>
-        public long MissedDalAttestationRewards { get; set; }
-
-        /// <summary>
-        /// Operation fees which were harvested from successfully baked blocks.
-        /// </summary>
-        public long BlockFees { get; set; }
-
-        /// <summary>
-        /// Operation fees which were not received due to missing blocks.
-        /// </summary>
-        public long MissedBlockFees { get; set; }
-
-        /// <summary>
-        /// Rewards for detecting double baking (accusing someone of producing two different blocks at the same level).
-        /// </summary>
-        public long DoubleBakingRewards { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own staked balance lost due to double baking
-        /// </summary>
-        public long DoubleBakingLostStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double baking
-        /// </summary>
-        public long DoubleBakingLostUnstaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external staked balance lost due to double baking
-        /// </summary>
-        public long DoubleBakingLostExternalStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double baking
-        /// </summary>
-        public long DoubleBakingLostExternalUnstaked { get; set; }
-
-        /// <summary>
-        /// Rewards for detecting double attestation (accusing someone of validating two different blocks at the same level).
-        /// </summary>
-        public long DoubleAttestationRewards { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own staked balance lost due to double attestation
-        /// </summary>
-        public long DoubleAttestationLostStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double attestation
-        /// </summary>
-        public long DoubleAttestationLostUnstaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external staked balance lost due to double attestation
-        /// </summary>
-        public long DoubleAttestationLostExternalStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double attestation
-        /// </summary>
-        public long DoubleAttestationLostExternalUnstaked { get; set; }
-
-        /// <summary>
-        /// Rewards for detecting double preattestation (accusing someone of pre-validating two different blocks at the same level).
-        /// </summary>
-        public long DoublePreattestationRewards { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own staked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostUnstaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external staked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostExternalStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostExternalUnstaked { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to delegated stake, for including vdf revelations, received on baker's liquid balance
-        /// (it is not frozen and can be spent immediately).
-        /// </summary>
-        public long VdfRevelationRewardsDelegated { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's own stake, for including vdf revelations, received on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long VdfRevelationRewardsStakedOwn { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, for including vdf revelations, received on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long VdfRevelationRewardsStakedEdge { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's external stake, for including vdf revelations, received on baker's external staked balance
-        /// (it is frozen and belongs to baker's stakers).
-        /// </summary>
-        public long VdfRevelationRewardsStakedShared { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to delegated stake, for including seed nonce revelations, received on baker's liquid balance
-        /// (it is not frozen and can be spent immediately).
-        /// </summary>
-        public long NonceRevelationRewardsDelegated { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's own stake, for including seed nonce revelations, received on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long NonceRevelationRewardsStakedOwn { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's edge from external stake, for including seed nonce revelations, received on baker's own staked balance
-        /// (it is frozen and belongs to the baker).
-        /// </summary>
-        public long NonceRevelationRewardsStakedEdge { get; set; }
-
-        /// <summary>
-        /// Rewards, corresponding to baker's external stake, for including seed nonce revelations, received on baker's external staked balance
-        /// (it is frozen and belongs to baker's stakers).
-        /// </summary>
-        public long NonceRevelationRewardsStakedShared { get; set; }
-
-        /// <summary>
-        /// Amount of frozen deposits lost due to missing seed nonce revelation (always zero after Ithaca).
-        /// </summary>
-        public long NonceRevelationLosses { get; set; }
+        public required BakerRewards BakerRewards { get; set; }
 
         #region injecting
         /// <summary>
@@ -351,102 +51,297 @@
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public double ExpectedEndorsements => ExpectedAttestations;
+        public long BakingPower => BakerRewards.BakingPower;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public int FutureEndorsements => FutureAttestations;
+        public long TotalBakingPower => BakerRewards.TotalBakingPower;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long FutureEndorsementRewards => FutureAttestationRewards;
+        public long BakerDelegatedBalance => BakerRewards.OwnDelegatedBalance;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public int Endorsements => Attestations;
+        public long ExternalDelegatedBalance => BakerRewards.ExternalDelegatedBalance;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long EndorsementRewardsDelegated => AttestationRewardsDelegated;
+        public long BakerStakedBalance => BakerRewards.OwnStakedBalance;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long EndorsementRewardsStakedOwn => AttestationRewardsStakedOwn;
+        public long ExternalStakedBalance => BakerRewards.ExternalStakedBalance;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long EndorsementRewardsStakedEdge => AttestationRewardsStakedEdge;
+        public double ExpectedBlocks => BakerRewards.ExpectedBlocks;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long EndorsementRewardsStakedShared => AttestationRewardsStakedShared;
+        public double ExpectedEndorsements => BakerRewards.ExpectedAttestations;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public int MissedEndorsements => MissedAttestations;
+        public long ExpectedDalShards => BakerRewards.ExpectedDalAttestations;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long MissedEndorsementRewards => MissedAttestationRewards;
+        public int FutureBlocks => BakerRewards.FutureBlocks;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingRewards => DoubleAttestationRewards;
+        public long FutureBlockRewards => BakerRewards.FutureBlockRewards;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostStaked => DoubleAttestationLostStaked;
+        public int Blocks => BakerRewards.Blocks;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostUnstaked => DoubleAttestationLostUnstaked;
+        public long BlockRewardsDelegated => BakerRewards.BlockRewardsDelegated;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalStaked => DoubleAttestationLostExternalStaked;
+        public long BlockRewardsStakedOwn => BakerRewards.BlockRewardsStakedOwn;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalUnstaked => DoubleAttestationLostExternalUnstaked;
+        public long BlockRewardsStakedEdge => BakerRewards.BlockRewardsStakedEdge;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingRewards => DoublePreattestationRewards;
+        public long BlockRewardsStakedShared => BakerRewards.BlockRewardsStakedShared;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostStaked => DoublePreattestationLostStaked;
+        public int MissedBlocks => BakerRewards.MissedBlocks;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostUnstaked => DoublePreattestationLostUnstaked;
+        public long MissedBlockRewards => BakerRewards.MissedBlockRewards;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalStaked => DoublePreattestationLostExternalStaked;
+        public int FutureEndorsements => BakerRewards.FutureAttestations;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalUnstaked => DoublePreattestationLostExternalUnstaked;
+        public long FutureEndorsementRewards => BakerRewards.FutureAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int Endorsements => BakerRewards.Attestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsDelegated => BakerRewards.AttestationRewardsDelegated;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedOwn => BakerRewards.AttestationRewardsStakedOwn;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedEdge => BakerRewards.AttestationRewardsStakedEdge;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long EndorsementRewardsStakedShared => BakerRewards.AttestationRewardsStakedShared;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int MissedEndorsements => BakerRewards.MissedAttestations;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long MissedEndorsementRewards => BakerRewards.MissedAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long FutureDalAttestationRewards => BakerRewards.FutureDalAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DalAttestationRewardsDelegated => BakerRewards.DalAttestationRewardsDelegated;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DalAttestationRewardsStakedOwn => BakerRewards.DalAttestationRewardsStakedOwn;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DalAttestationRewardsStakedEdge => BakerRewards.DalAttestationRewardsStakedEdge;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DalAttestationRewardsStakedShared => BakerRewards.DalAttestationRewardsStakedShared;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long MissedDalAttestationRewards => BakerRewards.MissedDalAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long BlockFees => BakerRewards.BlockFees;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long MissedBlockFees => BakerRewards.MissedBlockFees;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleBakingRewards => BakerRewards.DoubleBakingRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleBakingLostStaked => BakerRewards.DoubleBakingLostStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleBakingLostUnstaked => BakerRewards.DoubleBakingLostUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleBakingLostExternalStaked => BakerRewards.DoubleBakingLostExternalStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleBakingLostExternalUnstaked => BakerRewards.DoubleBakingLostExternalUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingRewards => BakerRewards.DoubleAttestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostStaked => BakerRewards.DoubleAttestationLostStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostUnstaked => BakerRewards.DoubleAttestationLostUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostExternalStaked => BakerRewards.DoubleAttestationLostExternalStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoubleEndorsingLostExternalUnstaked => BakerRewards.DoubleAttestationLostExternalUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingRewards => BakerRewards.DoublePreattestationRewards;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostStaked => BakerRewards.DoublePreattestationLostStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostUnstaked => BakerRewards.DoublePreattestationLostUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostExternalStaked => BakerRewards.DoublePreattestationLostExternalStaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DoublePreendorsingLostExternalUnstaked => BakerRewards.DoublePreattestationLostExternalUnstaked;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long VdfRevelationRewardsDelegated => BakerRewards.VdfRevelationRewardsDelegated;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long VdfRevelationRewardsStakedOwn => BakerRewards.VdfRevelationRewardsStakedOwn;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long VdfRevelationRewardsStakedEdge => BakerRewards.VdfRevelationRewardsStakedEdge;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long VdfRevelationRewardsStakedShared => BakerRewards.VdfRevelationRewardsStakedShared;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long NonceRevelationRewardsDelegated => BakerRewards.NonceRevelationRewardsDelegated;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long NonceRevelationRewardsStakedOwn => BakerRewards.NonceRevelationRewardsStakedOwn;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long NonceRevelationRewardsStakedEdge => BakerRewards.NonceRevelationRewardsStakedEdge;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long NonceRevelationRewardsStakedShared => BakerRewards.NonceRevelationRewardsStakedShared;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long NonceRevelationLosses => BakerRewards.NonceRevelationLosses;
         #endregion
     }
 }

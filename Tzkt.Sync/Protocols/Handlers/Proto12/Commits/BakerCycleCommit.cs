@@ -171,11 +171,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                         BakerId = snapshot.AccountId,
                         Cycle = futureCycle!.Index,
                         OwnDelegatedBalance = snapshot.OwnDelegatedBalance,
-                        ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance,
-                        DelegatorsCount = snapshot.DelegatorsCount,
-                        OwnStakedBalance = snapshot.OwnStakedBalance,
-                        ExternalStakedBalance = snapshot.ExternalStakedBalance,
-                        StakersCount = snapshot.StakersCount,
+                        ExternalDelegatedBalance = snapshot.ExternalDelegatedBalance!.Value,
+                        DelegatorsCount = snapshot.DelegatorsCount!.Value,
+                        OwnStakedBalance = snapshot.OwnStakedBalance ?? 0,
+                        ExternalStakedBalance = snapshot.ExternalStakedBalance ?? 0,
+                        StakersCount = snapshot.StakersCount ?? 0,
+                        IssuedPseudotokens = snapshot.Pseudotokens,
                         BakingPower = 0,
                         TotalBakingPower = futureCycle.TotalBakingPower
                     };

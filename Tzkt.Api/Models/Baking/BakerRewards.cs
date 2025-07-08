@@ -1,21 +1,15 @@
-﻿namespace Tzkt.Api.Models
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
+
+namespace Tzkt.Api.Models
 {
     public class BakerRewards
     {
         /// <summary>
-        /// Cycle in which rewards were or will be earned.
+        /// Cycle in which rewards were or will be earned.  
+        /// **[sortable]**
         /// </summary>
         public int Cycle { get; set; }
-
-        /// <summary>
-        /// Baker's baking power
-        /// </summary>
-        public long BakingPower { get; set; }
-
-        /// <summary>
-        /// Sum of baking power of all active bakers
-        /// </summary>
-        public long TotalBakingPower { get; set; }
 
         /// <summary>
         /// Amount delegated from the baker's own balance (micro tez).
@@ -24,13 +18,14 @@
         public long OwnDelegatedBalance { get; set; }
 
         /// <summary>
-        /// Amount delegated from external delegators (micro tez).
+        /// Amount delegated from external delegators and "unstakers" (delegators who left the baker, but still had locked unstaked balance delegated to the baker) (micro tez).
         /// This amount doesn't include external staked amount.
         /// </summary>
         public long ExternalDelegatedBalance { get; set; }
 
         /// <summary>
-        /// Number of delegators (those who delegated to the baker).
+        /// Number of delegators (those who were delegated to the baker).
+        /// This doesn't include "unstakers" (delegators who left the baker, but still had locked unstaked balance delegated to the baker).
         /// </summary>
         public int DelegatorsCount { get; set; }
 
@@ -50,19 +45,25 @@
         public int StakersCount { get; set; }
 
         /// <summary>
+        /// Amount of staking pseudotokens issued by/for external stakers.
+        /// </summary>
+        [JsonSchemaType(typeof(string), IsNullable = true)]
+        public BigInteger? IssuedPseudotokens { get; set; }
+
+        /// <summary>
+        /// Baker's baking power
+        /// </summary>
+        public long BakingPower { get; set; }
+
+        /// <summary>
+        /// Sum of baking power of all active bakers
+        /// </summary>
+        public long TotalBakingPower { get; set; }
+
+        /// <summary>
         /// Expected value of how many blocks baker should produce based on baker's active stake, selected stake and blocks per cycle.
         /// </summary>
         public double ExpectedBlocks { get; set; }
-
-        /// <summary>
-        /// Expected value of how many slots baker should validate based on baker's active stake, selected stake and attestation slots per cycle.
-        /// </summary>
-        public double ExpectedAttestations { get; set; }
-
-        /// <summary>
-        /// Expected value of how many dal shards baker should attest based on baker's active stake, selected stake and total shards per cycle.
-        /// </summary>
-        public long ExpectedDalShards { get; set; }
 
         /// <summary>
         /// Number of blocks which baker is allowed to produce in this cycle based on future baking rights.
@@ -114,6 +115,11 @@
         public long MissedBlockRewards { get; set; }
 
         /// <summary>
+        /// Expected value of how many slots baker should validate based on baker's active stake, selected stake and attestation slots per cycle.
+        /// </summary>
+        public double ExpectedAttestations { get; set; }
+
+        /// <summary>
         /// Number of slots which baker is allowed to validate in this cycle based on future attestation rights.
         /// </summary>
         public int FutureAttestations { get; set; }
@@ -161,6 +167,11 @@
         /// Rewards which were not received due to missing attestations.
         /// </summary>
         public long MissedAttestationRewards { get; set; }
+
+        /// <summary>
+        /// Expected value of how many dal shards baker should attest based on baker's active stake, selected stake and total shards per cycle.
+        /// </summary>
+        public long ExpectedDalAttestations { get; set; }
 
         /// <summary>
         /// Estimated value of future dal attestation rewards.
@@ -342,6 +353,11 @@
         #endregion
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long ExpectedDalShards => ExpectedDalAttestations;
+
         /// <summary>
         /// **DEPRECATED**
         /// </summary>

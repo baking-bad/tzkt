@@ -44,7 +44,7 @@ namespace Tzkt.Sync.Protocols.Proto13
 
             Snapshots = await Db.SnapshotBalances
                 .AsNoTracking()
-                .Where(x => x.Level == snapshotLevel && x.AccountId == x.BakerId)
+                .Where(x => x.Level == snapshotLevel && x.BakerId == x.AccountId)
                 .ToListAsync();
 
             SelectedStakes = await GetSelectedStakes(block, Context.Protocol, Snapshots);
