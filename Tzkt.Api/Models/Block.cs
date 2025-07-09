@@ -181,17 +181,12 @@
         /// blocks at the same height) by a baker) operations, included in the block
         /// </summary>
         public IEnumerable<DoubleBakingOperation>? DoubleBaking { get; set; }
-        
-        /// <summary>
-        /// List of double attestation evidence (is used by bakers to provide evidence of double attestation
-        /// (attestation of two different blocks at the same block height) by a baker) operations, included in the block
-        /// </summary>
-        public IEnumerable<DoubleAttestationOperation>? DoubleAttestation { get; set; }
 
         /// <summary>
-        /// List of double preattestation evidence operations, included in the block
+        /// List of double consensus evidence (is used by bakers to provide evidence of double (pre)attestation
+        /// ((pre)attestation of two different blocks at the same block height) by a baker) operations, included in the block
         /// </summary>
-        public IEnumerable<DoublePreattestationOperation>? DoublePreattestation { get; set; }
+        public IEnumerable<DoubleConsensusOperation>? DoubleConsensus { get; set; }
 
         /// <summary>
         /// List of nonce revelation (used by the blockchain to create randomness) operations, included in the block
@@ -397,12 +392,12 @@
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public IEnumerable<DoubleAttestationOperation>? DoubleEndorsing => DoubleAttestation;
+        public IEnumerable<DoubleConsensusOperation>? DoubleEndorsing => DoubleConsensus;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public IEnumerable<DoublePreattestationOperation>? DoublePreendorsing => DoublePreattestation;
+        public IEnumerable<DoubleConsensusOperation>? DoublePreendorsing => [];
 
         /// <summary>
         /// **DEPRECATED**

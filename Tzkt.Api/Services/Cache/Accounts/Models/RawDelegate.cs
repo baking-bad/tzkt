@@ -30,8 +30,7 @@ namespace Tzkt.Api.Services.Cache
         public int ProposalsCount { get; set; }
         public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DoubleBakingCount { get; set; }
-        public int DoubleAttestationCount { get; set; }
-        public int DoublePreattestationCount { get; set; }
+        public int DoubleConsensusCount { get; set; }
         public int NonceRevelationsCount { get; set; }
         public int VdfRevelationsCount { get; set; }
         public int RevelationPenaltiesCount { get; set; }

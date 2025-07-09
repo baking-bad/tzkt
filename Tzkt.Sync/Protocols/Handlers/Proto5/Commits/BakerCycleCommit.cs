@@ -160,18 +160,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                 accuserCycle.DoubleBakingRewards += op.Reward;
             }
 
-            foreach (var op in Context.DoubleAttestationOps)
+            foreach (var op in Context.DoubleConsensusOps)
             {
                 var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
                 var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
                 Db.TryAttach(offenderCycle);
 
-                offenderCycle.DoubleAttestationLostStaked += op.LostStaked;
+                offenderCycle.DoubleConsensusLostStaked += op.LostStaked;
 
                 var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
                 Db.TryAttach(accuserCycle);
 
-                accuserCycle.DoubleAttestationRewards += op.Reward;
+                accuserCycle.DoubleConsensusRewards += op.Reward;
             }
 
             foreach (var op in Context.NonceRevelationOps)
@@ -481,18 +481,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                 accuserCycle.DoubleBakingRewards -= op.Reward;
             }
 
-            foreach (var op in Context.DoubleAttestationOps)
+            foreach (var op in Context.DoubleConsensusOps)
             {
                 var accusedBlock = await Cache.Blocks.GetAsync(op.AccusedLevel);
                 var offenderCycle = await Cache.BakerCycles.GetAsync(accusedBlock.Cycle, op.OffenderId);
                 Db.TryAttach(offenderCycle);
 
-                offenderCycle.DoubleAttestationLostStaked -= op.LostStaked;
+                offenderCycle.DoubleConsensusLostStaked -= op.LostStaked;
 
                 var accuserCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.AccuserId);
                 Db.TryAttach(accuserCycle);
 
-                accuserCycle.DoubleAttestationRewards -= op.Reward;
+                accuserCycle.DoubleConsensusRewards -= op.Reward;
             }
 
             foreach (var op in Context.NonceRevelationOps)

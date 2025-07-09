@@ -195,12 +195,11 @@ namespace Tzkt.Api.Repositories
             var preattestations = GetPreattestations(hash, quote);
             var dalEntrapmentEvidence = GetDalEntrapmentEvidences(hash, quote);
             var doubleBaking = GetDoubleBakings(hash, quote);
-            var doubleAttestation = GetDoubleAttestations(hash, quote);
-            var doublePreattestation = GetDoublePreattestations(hash, quote);
+            var doubleConsensus = GetDoubleConsensus(hash, quote);
             var nonceRevelation = GetNonceRevelations(hash, quote);
             var vdfRevelation = GetVdfRevelations(hash, quote);
 
-            await Task.WhenAll(attestations, preattestations, doubleBaking, doubleAttestation, doublePreattestation, nonceRevelation);
+            await Task.WhenAll(attestations, preattestations, doubleBaking, doubleConsensus, nonceRevelation);
 
             if (attestations.Result.Any())
                 return attestations.Result;
@@ -214,11 +213,8 @@ namespace Tzkt.Api.Repositories
             if (doubleBaking.Result.Any())
                 return doubleBaking.Result;
 
-            if (doubleAttestation.Result.Any())
-                return doubleAttestation.Result;
-
-            if (doublePreattestation.Result.Any())
-                return doublePreattestation.Result;
+            if (doubleConsensus.Result.Any())
+                return doubleConsensus.Result;
 
             if (nonceRevelation.Result.Any())
                 return nonceRevelation.Result;

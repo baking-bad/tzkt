@@ -32,8 +32,7 @@ namespace Tzkt.Data
         public DbSet<DelegationOperation> DelegationOps { get; set; }
         public DbSet<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; }
         public DbSet<DoubleBakingOperation> DoubleBakingOps { get; set; }
-        public DbSet<DoubleAttestationOperation> DoubleAttestationOps { get; set; }
-        public DbSet<DoublePreattestationOperation> DoublePreattestationOps { get; set; }
+        public DbSet<DoubleConsensusOperation> DoubleConsensusOps { get; set; }
         public DbSet<AttestationOperation> AttestationOps { get; set; }
         public DbSet<PreattestationOperation> PreattestationOps { get; set; }
         public DbSet<NonceRevelationOperation> NonceRevelationOps { get; set; }
@@ -164,8 +163,7 @@ namespace Tzkt.Data
             modelBuilder.BuildDelegationOperationModel();
             modelBuilder.BuildDalEntrapmentEvidenceOperationModel();
             modelBuilder.BuildDoubleBakingOperationModel();
-            modelBuilder.BuildDoubleAttestationOperationModel();
-            modelBuilder.BuildDoublePreattestationOperationModel();
+            modelBuilder.BuildDoubleConsensusOperationModel();
             modelBuilder.BuildAttestationOperationModel();
             modelBuilder.BuildPreattestationOperationModel();
             modelBuilder.BuildNonceRevelationOperationModel();

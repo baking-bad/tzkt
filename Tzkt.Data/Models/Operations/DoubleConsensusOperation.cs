@@ -3,8 +3,10 @@ using Tzkt.Data.Models.Base;
 
 namespace Tzkt.Data.Models
 {
-    public class DoubleAttestationOperation : BaseOperation
+    public class DoubleConsensusOperation : BaseOperation
     {
+        public DoubleConsensusKind Kind { get; set; }
+
         public int AccusedLevel { get; set; }
         public int SlashedLevel { get; set; }
 
@@ -20,17 +22,23 @@ namespace Tzkt.Data.Models
         public int? StakingUpdatesCount { get; set; }
     }
 
-    public static class DoubleAttestationOperationModel
+    public enum DoubleConsensusKind
     {
-        public static void BuildDoubleAttestationOperationModel(this ModelBuilder modelBuilder)
+        DoubleAttestation,
+        DoublePreattestation
+    }
+
+    public static class DoubleConsensusOperationModel
+    {
+        public static void BuildDoubleConsensusOperationModel(this ModelBuilder modelBuilder)
         {
             #region keys
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .HasKey(x => x.Id);
             #endregion
             
             #region props
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .Property(x => x.OpHash)
                 .IsFixedLength(true)
                 .HasMaxLength(51)
@@ -38,16 +46,16 @@ namespace Tzkt.Data.Models
             #endregion
 
             #region indexes
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .HasIndex(x => x.Level);
 
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .HasIndex(x => x.OpHash);
 
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .HasIndex(x => x.AccuserId);
 
-            modelBuilder.Entity<DoubleAttestationOperation>()
+            modelBuilder.Entity<DoubleConsensusOperation>()
                 .HasIndex(x => x.OffenderId);
             #endregion
         }

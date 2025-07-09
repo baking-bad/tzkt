@@ -14,8 +14,7 @@ namespace Tzkt.Api.Models
     [KnownType(typeof(DalPublishCommitmentOperation))]
     [KnownType(typeof(DelegationOperation))]
     [KnownType(typeof(DoubleBakingOperation))]
-    [KnownType(typeof(DoubleAttestationOperation))]
-    [KnownType(typeof(DoublePreattestationOperation))]
+    [KnownType(typeof(DoubleConsensusOperation))]
     [KnownType(typeof(DrainDelegateOperation))]
     [KnownType(typeof(AttestationOperation))]
     [KnownType(typeof(AttestationRewardOperation))]
@@ -89,8 +88,7 @@ namespace Tzkt.Api.Models
             if (type == typeof(DalPublishCommitmentOperation)) return ActivityTypes.DalPublishCommitment;
             if (type == typeof(DelegationOperation)) return ActivityTypes.Delegation;
             if (type == typeof(DoubleBakingOperation)) return ActivityTypes.DoubleBaking;
-            if (type == typeof(DoubleAttestationOperation)) return ActivityTypes.DoubleAttestation;
-            if (type == typeof(DoublePreattestationOperation)) return ActivityTypes.DoublePreattestation;
+            if (type == typeof(DoubleConsensusOperation)) return ActivityTypes.DoubleConsensus;
             if (type == typeof(DrainDelegateOperation)) return ActivityTypes.DrainDelegate;
             if (type == typeof(AttestationOperation)) return ActivityTypes.Attestation;
             if (type == typeof(AttestationRewardOperation)) return ActivityTypes.AttestationReward;

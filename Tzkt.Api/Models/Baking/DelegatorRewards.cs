@@ -251,52 +251,52 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingRewards => BakerRewards.DoubleAttestationRewards;
+        public long DoubleEndorsingRewards => BakerRewards.DoubleEndorsingRewards;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostStaked => BakerRewards.DoubleAttestationLostStaked;
+        public long DoubleEndorsingLostStaked => BakerRewards.DoubleEndorsingLostStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostUnstaked => BakerRewards.DoubleAttestationLostUnstaked;
+        public long DoubleEndorsingLostUnstaked => BakerRewards.DoubleEndorsingLostUnstaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalStaked => BakerRewards.DoubleAttestationLostExternalStaked;
+        public long DoubleEndorsingLostExternalStaked => BakerRewards.DoubleEndorsingLostExternalStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalUnstaked => BakerRewards.DoubleAttestationLostExternalUnstaked;
+        public long DoubleEndorsingLostExternalUnstaked => BakerRewards.DoubleEndorsingLostExternalUnstaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingRewards => BakerRewards.DoublePreattestationRewards;
+        public long DoublePreendorsingRewards => BakerRewards.DoublePreendorsingRewards;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostStaked => BakerRewards.DoublePreattestationLostStaked;
+        public long DoublePreendorsingLostStaked => BakerRewards.DoublePreendorsingLostStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostUnstaked => BakerRewards.DoublePreattestationLostUnstaked;
+        public long DoublePreendorsingLostUnstaked => BakerRewards.DoublePreendorsingLostUnstaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalStaked => BakerRewards.DoublePreattestationLostExternalStaked;
+        public long DoublePreendorsingLostExternalStaked => BakerRewards.DoublePreendorsingLostExternalStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalUnstaked => BakerRewards.DoublePreattestationLostExternalUnstaked;
+        public long DoublePreendorsingLostExternalUnstaked => BakerRewards.DoublePreendorsingLostExternalUnstaked;
 
         /// <summary>
         /// **DEPRECATED**

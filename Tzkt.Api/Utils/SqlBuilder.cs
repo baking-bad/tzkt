@@ -144,6 +144,32 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder Filter(string column, DoubleConsensusKindParameter? kind)
+        {
+            if (kind == null) return this;
+
+            if (kind.Eq != null)
+                AppendFilter($@"""{column}"" = {kind.Eq}");
+
+            if (kind.Ne != null)
+                AppendFilter($@"""{column}"" != {kind.Ne}");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, DoubleConsensusKindParameter? kind)
+        {
+            if (kind == null) return this;
+
+            if (kind.Eq != null)
+                AppendFilter($@"{column} = {kind.Eq}");
+
+            if (kind.Ne != null)
+                AppendFilter($@"{column} != {kind.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BakingRightTypeParameter? type)
         {
             if (type == null) return this;

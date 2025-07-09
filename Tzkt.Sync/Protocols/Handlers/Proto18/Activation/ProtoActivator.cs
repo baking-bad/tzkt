@@ -164,7 +164,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.StakePowerMultiplier = parameters["edge_of_staking_over_delegation"]?.Value<int>() ?? 2;
             
             protocol.DoubleBakingSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 5) * 100;
-            protocol.DoubleAttestationSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50) * 100;
+            protocol.DoubleConsensusSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50) * 100;
 
             protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 
@@ -186,7 +186,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             protocol.StakePowerMultiplier = 2;
 
             protocol.DoubleBakingSlashedPercentage = 500;
-            protocol.DoubleAttestationSlashedPercentage = 5000;
+            protocol.DoubleConsensusSlashedPercentage = 5000;
 
             protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 

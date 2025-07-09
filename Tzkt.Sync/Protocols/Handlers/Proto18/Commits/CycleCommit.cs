@@ -37,17 +37,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                 foreach (var op in await Db.DoubleBakingOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
                     slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleBakingSlashedPercentage;
             }
-            if (prevBlock.Events.HasFlag(BlockEvents.DoubleAttestationSlashing))
+            if (prevBlock.Events.HasFlag(BlockEvents.DoubleConsensusSlashing))
             {
                 var prevBlockProto = await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
-                foreach (var op in await Db.DoubleAttestationOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
-                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleAttestationSlashedPercentage;
-            }
-            if (prevBlock.Events.HasFlag(BlockEvents.DoublePreattestationSlashing))
-            {
-                var prevBlockProto = await Cache.Protocols.GetAsync(prevBlock.ProtoCode);
-                foreach (var op in await Db.DoublePreattestationOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
-                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleAttestationSlashedPercentage;
+                foreach (var op in await Db.DoubleConsensusOps.AsNoTracking().Where(x => x.SlashedLevel == block.Level - 1).ToListAsync())
+                    slashings[op.OffenderId] = slashings.GetValueOrDefault(op.OffenderId) + prevBlockProto.DoubleConsensusSlashedPercentage;
             }
 
             return snapshots.Select(x =>

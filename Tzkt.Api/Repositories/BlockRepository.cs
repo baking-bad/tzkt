@@ -652,13 +652,9 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetDoubleBakings(block, quote)
                 : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
-            var doubleAttestation = operations.HasFlag(Data.Models.Operations.DoubleAttestations)
-                ? Operations.GetDoubleAttestations(block, quote)
-                : Task.FromResult(Enumerable.Empty<DoubleAttestationOperation>());
-
-            var doublePreattestation = operations.HasFlag(Data.Models.Operations.DoublePreattestations)
-                ? Operations.GetDoublePreattestations(block, quote)
-                : Task.FromResult(Enumerable.Empty<DoublePreattestationOperation>());
+            var doubleConsensus = operations.HasFlag(Data.Models.Operations.DoubleConsensus)
+                ? Operations.GetDoubleConsensus(block, quote)
+                : Task.FromResult(Enumerable.Empty<DoubleConsensusOperation>());
 
             var nonceRevelations = operations.HasFlag(Data.Models.Operations.Revelations)
                 ? Operations.GetNonceRevelations(block, quote)
@@ -808,8 +804,7 @@ namespace Tzkt.Api.Repositories
                 activations,
                 dalEntrapmentEvidences,
                 doubleBaking,
-                doubleAttestation,
-                doublePreattestation,
+                doubleConsensus,
                 nonceRevelations,
                 vdfRevelations,
                 delegations,
@@ -853,8 +848,7 @@ namespace Tzkt.Api.Repositories
             block.Activations = activations.Result;
             block.DalEntrapmentEvidenceOps = dalEntrapmentEvidences.Result;
             block.DoubleBaking = doubleBaking.Result;
-            block.DoubleAttestation = doubleAttestation.Result;
-            block.DoublePreattestation = doublePreattestation.Result;
+            block.DoubleConsensus = doubleConsensus.Result;
             block.NonceRevelations = nonceRevelations.Result;
             block.VdfRevelations = vdfRevelations.Result;
             block.Delegations = delegations.Result;

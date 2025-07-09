@@ -102,13 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto21
                 op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
             }
 
-            foreach (var op in await Db.DoubleAttestationOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
-            {
-                var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
-                op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);
-            }
-
-            foreach (var op in await Db.DoublePreattestationOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
+            foreach (var op in await Db.DoubleConsensusOps.Where(x => x.SlashedLevel > state.Level).ToListAsync())
             {
                 var proto = await Cache.Protocols.FindByLevelAsync(op.AccusedLevel);
                 op.SlashedLevel = nextProto.GetCycleEnd(proto.GetCycle(op.AccusedLevel) + proto.SlashingDelay);

@@ -74,12 +74,8 @@ namespace Tzkt.Api.Repositories
                 ? Operations.GetDoubleBakingOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
-            var doubleAttestationOps = types.Contains(ActivityTypes.DoubleAttestation)
-                ? Operations.GetDoubleAttestationOpsActivity(accounts, roles, timestamp, pagination, quote)
-                : Task.FromResult(Enumerable.Empty<Activity>());
-
-            var doublePreattestationOps = types.Contains(ActivityTypes.DoublePreattestation)
-                ? Operations.GetDoublePreattestationOpsActivity(accounts, roles, timestamp, pagination, quote)
+            var doubleConsensusOps = types.Contains(ActivityTypes.DoubleConsensus)
+                ? Operations.GetDoubleConsensusOpsActivity(accounts, roles, timestamp, pagination, quote)
                 : Task.FromResult(Enumerable.Empty<Activity>());
 
             var drainDelegateOps = types.Contains(ActivityTypes.DrainDelegate)
@@ -204,8 +200,7 @@ namespace Tzkt.Api.Repositories
                 dalPublishCommitmentOps,
                 delegationOps,
                 doubleBakingOps,
-                doubleAttestationOps,
-                doublePreattestationOps,
+                doubleConsensusOps,
                 drainDelegateOps,
                 attestationOps,
                 attestationRewardOps,
@@ -244,8 +239,7 @@ namespace Tzkt.Api.Repositories
                 .Concat(dalPublishCommitmentOps.Result)
                 .Concat(delegationOps.Result)
                 .Concat(doubleBakingOps.Result)
-                .Concat(doubleAttestationOps.Result)
-                .Concat(doublePreattestationOps.Result)
+                .Concat(doubleConsensusOps.Result)
                 .Concat(drainDelegateOps.Result)
                 .Concat(attestationOps.Result)
                 .Concat(attestationRewardOps.Result)

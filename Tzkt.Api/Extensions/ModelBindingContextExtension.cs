@@ -583,6 +583,28 @@ namespace Tzkt.Api
 
             return true;
         }
+        
+        public static bool TryGetDoubleConsensusKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!DoubleConsensusKinds.TryParse(valueObject.FirstValue, out var type))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid double consensus kind.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = type;
+                }
+            }
+
+            return true;
+        }
 
         public static bool TryGetAccountType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
