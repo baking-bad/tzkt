@@ -1,4 +1,5 @@
-﻿using System.Numerics;
+﻿using System;
+using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -53,7 +54,7 @@ namespace Tzkt.Data.Migrations
                     TxRollupDispatchTicketsCount = table.Column<int>(type: "integer", nullable: false),
                     TransferTicketCount = table.Column<int>(type: "integer", nullable: false),
                     IncreasePaidStorageCount = table.Column<int>(type: "integer", nullable: false),
-                    UpdateConsensusKeyCount = table.Column<int>(type: "integer", nullable: false),
+                    UpdateSecondaryKeyCount = table.Column<int>(type: "integer", nullable: false),
                     DrainDelegateCount = table.Column<int>(type: "integer", nullable: false),
                     MigrationsCount = table.Column<int>(type: "integer", nullable: false),
                     SmartRollupAddMessagesCount = table.Column<int>(type: "integer", nullable: false),
@@ -103,6 +104,8 @@ namespace Tzkt.Data.Migrations
                     DeactivationLevel = table.Column<int>(type: "integer", nullable: true),
                     StakingBalance = table.Column<long>(type: "bigint", nullable: true),
                     DelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    MinTotalDelegated = table.Column<long>(type: "bigint", nullable: true),
+                    MinTotalDelegatedLevel = table.Column<int>(type: "integer", nullable: true),
                     DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
                     OwnStakedBalance = table.Column<long>(type: "bigint", nullable: true),
                     ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: true),
@@ -114,18 +117,17 @@ namespace Tzkt.Data.Migrations
                     LimitOfStakingOverBaking = table.Column<long>(type: "bigint", nullable: true),
                     EdgeOfBakingOverStaking = table.Column<long>(type: "bigint", nullable: true),
                     BlocksCount = table.Column<int>(type: "integer", nullable: true),
-                    EndorsementsCount = table.Column<int>(type: "integer", nullable: true),
-                    PreendorsementsCount = table.Column<int>(type: "integer", nullable: true),
+                    AttestationsCount = table.Column<int>(type: "integer", nullable: true),
+                    PreattestationsCount = table.Column<int>(type: "integer", nullable: true),
                     BallotsCount = table.Column<int>(type: "integer", nullable: true),
                     ProposalsCount = table.Column<int>(type: "integer", nullable: true),
                     DalEntrapmentEvidenceOpsCount = table.Column<int>(type: "integer", nullable: true),
                     DoubleBakingCount = table.Column<int>(type: "integer", nullable: true),
-                    DoubleEndorsingCount = table.Column<int>(type: "integer", nullable: true),
-                    DoublePreendorsingCount = table.Column<int>(type: "integer", nullable: true),
+                    DoubleConsensusCount = table.Column<int>(type: "integer", nullable: true),
                     NonceRevelationsCount = table.Column<int>(type: "integer", nullable: true),
                     VdfRevelationsCount = table.Column<int>(type: "integer", nullable: true),
                     RevelationPenaltiesCount = table.Column<int>(type: "integer", nullable: true),
-                    EndorsingRewardsCount = table.Column<int>(type: "integer", nullable: true),
+                    AttestationRewardsCount = table.Column<int>(type: "integer", nullable: true),
                     DalAttestationRewardsCount = table.Column<int>(type: "integer", nullable: true),
                     AutostakingOpsCount = table.Column<int>(type: "integer", nullable: true),
                     SoftwareId = table.Column<int>(type: "integer", nullable: true)
@@ -193,10 +195,9 @@ namespace Tzkt.Data.Migrations
                     DelegationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DalEntrapmentEvidenceOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DoubleBakingOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    DoubleEndorsingOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    DoublePreendorsingOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    EndorsementOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    PreendorsementOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    DoubleConsensusOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    AttestationOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    PreattestationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     NonceRevelationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     VdfRevelationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     OriginationOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -206,7 +207,7 @@ namespace Tzkt.Data.Migrations
                     SetDelegateParametersOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TransactionOpsCount = table.Column<int>(type: "integer", nullable: false),
                     RegisterConstantOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    EndorsingRewardOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    AttestationRewardOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DalAttestationRewardOpsCount = table.Column<int>(type: "integer", nullable: false),
                     SetDepositsLimitOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TxRollupOriginationOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -219,7 +220,7 @@ namespace Tzkt.Data.Migrations
                     TxRollupDispatchTicketsOpsCount = table.Column<int>(type: "integer", nullable: false),
                     TransferTicketOpsCount = table.Column<int>(type: "integer", nullable: false),
                     IncreasePaidStorageOpsCount = table.Column<int>(type: "integer", nullable: false),
-                    UpdateConsensusKeyOpsCount = table.Column<int>(type: "integer", nullable: false),
+                    UpdateSecondaryKeyOpsCount = table.Column<int>(type: "integer", nullable: false),
                     DrainDelegateOpsCount = table.Column<int>(type: "integer", nullable: false),
                     MigrationOpsCount = table.Column<int>(type: "integer", nullable: false),
                     RevelationPenaltyOpsCount = table.Column<int>(type: "integer", nullable: false),
@@ -262,6 +263,46 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "AttestationOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    DelegateId = table.Column<int>(type: "integer", nullable: false),
+                    Slots = table.Column<int>(type: "integer", nullable: false),
+                    Reward = table.Column<long>(type: "bigint", nullable: false),
+                    Deposit = table.Column<long>(type: "bigint", nullable: false),
+                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AttestationOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "AttestationRewardOps",
+                columns: table => new
+                {
+                    Id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    Expected = table.Column<long>(type: "bigint", nullable: false),
+                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_AttestationRewardOps", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AutostakingOps",
                 columns: table => new
                 {
@@ -293,26 +334,27 @@ namespace Tzkt.Data.Migrations
                     OwnStakedBalance = table.Column<long>(type: "bigint", nullable: false),
                     ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: false),
                     StakersCount = table.Column<int>(type: "integer", nullable: false),
+                    IssuedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true),
                     BakingPower = table.Column<long>(type: "bigint", nullable: false),
                     TotalBakingPower = table.Column<long>(type: "bigint", nullable: false),
                     FutureBlocks = table.Column<int>(type: "integer", nullable: false),
                     Blocks = table.Column<int>(type: "integer", nullable: false),
                     MissedBlocks = table.Column<int>(type: "integer", nullable: false),
-                    FutureEndorsements = table.Column<int>(type: "integer", nullable: false),
-                    Endorsements = table.Column<int>(type: "integer", nullable: false),
-                    MissedEndorsements = table.Column<int>(type: "integer", nullable: false),
+                    FutureAttestations = table.Column<int>(type: "integer", nullable: false),
+                    Attestations = table.Column<int>(type: "integer", nullable: false),
+                    MissedAttestations = table.Column<int>(type: "integer", nullable: false),
                     FutureBlockRewards = table.Column<long>(type: "bigint", nullable: false),
                     MissedBlockRewards = table.Column<long>(type: "bigint", nullable: false),
                     BlockRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
                     BlockRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
                     BlockRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
                     BlockRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
-                    FutureEndorsementRewards = table.Column<long>(type: "bigint", nullable: false),
-                    MissedEndorsementRewards = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
+                    FutureAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
+                    MissedAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
                     FutureDalAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
                     MissedDalAttestationRewards = table.Column<long>(type: "bigint", nullable: false),
                     DalAttestationRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
@@ -326,16 +368,11 @@ namespace Tzkt.Data.Migrations
                     DoubleBakingLostUnstaked = table.Column<long>(type: "bigint", nullable: false),
                     DoubleBakingLostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
                     DoubleBakingLostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoubleEndorsingRewards = table.Column<long>(type: "bigint", nullable: false),
-                    DoubleEndorsingLostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoubleEndorsingLostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoubleEndorsingLostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoubleEndorsingLostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoublePreendorsingRewards = table.Column<long>(type: "bigint", nullable: false),
-                    DoublePreendorsingLostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoublePreendorsingLostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoublePreendorsingLostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    DoublePreendorsingLostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    DoubleConsensusRewards = table.Column<long>(type: "bigint", nullable: false),
+                    DoubleConsensusLostStaked = table.Column<long>(type: "bigint", nullable: false),
+                    DoubleConsensusLostUnstaked = table.Column<long>(type: "bigint", nullable: false),
+                    DoubleConsensusLostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
+                    DoubleConsensusLostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationRewardsDelegated = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationRewardsStakedOwn = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationRewardsStakedEdge = table.Column<long>(type: "bigint", nullable: false),
@@ -346,8 +383,8 @@ namespace Tzkt.Data.Migrations
                     NonceRevelationRewardsStakedShared = table.Column<long>(type: "bigint", nullable: false),
                     NonceRevelationLosses = table.Column<long>(type: "bigint", nullable: false),
                     ExpectedBlocks = table.Column<double>(type: "double precision", nullable: false),
-                    ExpectedEndorsements = table.Column<double>(type: "double precision", nullable: false),
-                    ExpectedDalShards = table.Column<long>(type: "bigint", nullable: false)
+                    ExpectedAttestations = table.Column<double>(type: "double precision", nullable: false),
+                    ExpectedDalAttestations = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -535,7 +572,7 @@ namespace Tzkt.Data.Migrations
                     TotalBakingPower = table.Column<long>(type: "bigint", nullable: false),
                     BlockReward = table.Column<long>(type: "bigint", nullable: false),
                     BlockBonusPerSlot = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementRewardPerSlot = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardPerSlot = table.Column<long>(type: "bigint", nullable: false),
                     NonceRevelationReward = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationReward = table.Column<long>(type: "bigint", nullable: false),
                     DalAttestationRewardPerShard = table.Column<long>(type: "bigint", nullable: false),
@@ -649,6 +686,24 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "DelegationSnapshots",
+                columns: table => new
+                {
+                    Level = table.Column<int>(type: "integer", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    OwnDelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
+                    ExternalDelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
+                    PrevMinTotalDelegatedLevel = table.Column<int>(type: "integer", nullable: true),
+                    PrevMinTotalDelegated = table.Column<long>(type: "bigint", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_DelegationSnapshots", x => new { x.Level, x.BakerId, x.AccountId });
+                });
+
+            migrationBuilder.CreateTable(
                 name: "DelegatorCycles",
                 columns: table => new
                 {
@@ -658,7 +713,7 @@ namespace Tzkt.Data.Migrations
                     DelegatorId = table.Column<int>(type: "integer", nullable: false),
                     BakerId = table.Column<int>(type: "integer", nullable: false),
                     DelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    StakedBalance = table.Column<long>(type: "bigint", nullable: false)
+                    StakedPseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -712,11 +767,12 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "DoubleEndorsingOps",
+                name: "DoubleConsensusOps",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Kind = table.Column<int>(type: "integer", nullable: false),
                     AccusedLevel = table.Column<int>(type: "integer", nullable: false),
                     SlashedLevel = table.Column<int>(type: "integer", nullable: false),
                     AccuserId = table.Column<int>(type: "integer", nullable: false),
@@ -733,32 +789,7 @@ namespace Tzkt.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_DoubleEndorsingOps", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "DoublePreendorsingOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    AccusedLevel = table.Column<int>(type: "integer", nullable: false),
-                    SlashedLevel = table.Column<int>(type: "integer", nullable: false),
-                    AccuserId = table.Column<int>(type: "integer", nullable: false),
-                    OffenderId = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    LostStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalStaked = table.Column<long>(type: "bigint", nullable: false),
-                    LostExternalUnstaked = table.Column<long>(type: "bigint", nullable: false),
-                    StakingUpdatesCount = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_DoublePreendorsingOps", x => x.Id);
+                    table.PrimaryKey("PK_DoubleConsensusOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -779,46 +810,6 @@ namespace Tzkt.Data.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_DrainDelegateOps", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EndorsementOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    Slots = table.Column<int>(type: "integer", nullable: false),
-                    Reward = table.Column<long>(type: "bigint", nullable: false),
-                    Deposit = table.Column<long>(type: "bigint", nullable: false),
-                    ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EndorsementOps", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "EndorsingRewardOps",
-                columns: table => new
-                {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Level = table.Column<int>(type: "integer", nullable: false),
-                    Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    BakerId = table.Column<int>(type: "integer", nullable: false),
-                    Expected = table.Column<long>(type: "bigint", nullable: false),
-                    RewardDelegated = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedOwn = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedEdge = table.Column<long>(type: "bigint", nullable: false),
-                    RewardStakedShared = table.Column<long>(type: "bigint", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_EndorsingRewardOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -973,7 +964,7 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PreendorsementOps",
+                name: "PreattestationOps",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
@@ -986,7 +977,7 @@ namespace Tzkt.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PreendorsementOps", x => x.Id);
+                    table.PrimaryKey("PK_PreattestationOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -1053,7 +1044,7 @@ namespace Tzkt.Data.Migrations
                     BlocksPerSnapshot = table.Column<int>(type: "integer", nullable: false),
                     BlocksPerVoting = table.Column<int>(type: "integer", nullable: false),
                     TimeBetweenBlocks = table.Column<int>(type: "integer", nullable: false),
-                    EndorsersPerBlock = table.Column<int>(type: "integer", nullable: false),
+                    AttestersPerBlock = table.Column<int>(type: "integer", nullable: false),
                     HardOperationGasLimit = table.Column<int>(type: "integer", nullable: false),
                     HardOperationStorageLimit = table.Column<int>(type: "integer", nullable: false),
                     HardBlockGasLimit = table.Column<int>(type: "integer", nullable: false),
@@ -1063,10 +1054,10 @@ namespace Tzkt.Data.Migrations
                     BlockReward0 = table.Column<long>(type: "bigint", nullable: false),
                     BlockReward1 = table.Column<long>(type: "bigint", nullable: false),
                     MaxBakingReward = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementDeposit = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementReward0 = table.Column<long>(type: "bigint", nullable: false),
-                    EndorsementReward1 = table.Column<long>(type: "bigint", nullable: false),
-                    MaxEndorsingReward = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationDeposit = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationReward0 = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationReward1 = table.Column<long>(type: "bigint", nullable: false),
+                    MaxAttestationReward = table.Column<long>(type: "bigint", nullable: false),
                     OriginationSize = table.Column<int>(type: "integer", nullable: false),
                     ByteCost = table.Column<int>(type: "integer", nullable: false),
                     ProposalQuorum = table.Column<int>(type: "integer", nullable: false),
@@ -1088,7 +1079,7 @@ namespace Tzkt.Data.Migrations
                     SmartRollupTimeoutPeriod = table.Column<int>(type: "integer", nullable: false),
                     Dictator = table.Column<string>(type: "text", nullable: true),
                     DoubleBakingSlashedPercentage = table.Column<int>(type: "integer", nullable: false),
-                    DoubleEndorsingSlashedPercentage = table.Column<int>(type: "integer", nullable: false),
+                    DoubleConsensusSlashedPercentage = table.Column<int>(type: "integer", nullable: false),
                     NumberOfShards = table.Column<int>(type: "integer", nullable: false),
                     ToleratedInactivityPeriod = table.Column<int>(type: "integer", nullable: false),
                     Extras = table.Column<string>(type: "jsonb", nullable: true)
@@ -1534,21 +1525,20 @@ namespace Tzkt.Data.Migrations
                 name: "SnapshotBalances",
                 columns: table => new
                 {
-                    Id = table.Column<long>(type: "bigint", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Level = table.Column<int>(type: "integer", nullable: false),
-                    AccountId = table.Column<int>(type: "integer", nullable: false),
                     BakerId = table.Column<int>(type: "integer", nullable: false),
-                    DelegatorsCount = table.Column<int>(type: "integer", nullable: false),
+                    AccountId = table.Column<int>(type: "integer", nullable: false),
+                    DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
                     OwnDelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    ExternalDelegatedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    OwnStakedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: false),
-                    StakersCount = table.Column<int>(type: "integer", nullable: false)
+                    ExternalDelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    OwnStakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    ExternalStakedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    StakersCount = table.Column<int>(type: "integer", nullable: true),
+                    Pseudotokens = table.Column<BigInteger>(type: "numeric", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_SnapshotBalances", x => x.Id);
+                    table.PrimaryKey("PK_SnapshotBalances", x => new { x.Level, x.BakerId, x.AccountId });
                 });
 
             migrationBuilder.CreateTable(
@@ -1569,11 +1559,32 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "StakerCycles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Cycle = table.Column<int>(type: "integer", nullable: false),
+                    BakerId = table.Column<int>(type: "integer", nullable: false),
+                    StakerId = table.Column<int>(type: "integer", nullable: false),
+                    InitialStake = table.Column<long>(type: "bigint", nullable: false),
+                    AvgStake = table.Column<long>(type: "bigint", nullable: false),
+                    AddedStake = table.Column<long>(type: "bigint", nullable: false),
+                    RemovedStake = table.Column<long>(type: "bigint", nullable: false),
+                    FinalStake = table.Column<long>(type: "bigint", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_StakerCycles", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "StakingOps",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    StakerId = table.Column<int>(type: "integer", nullable: false),
                     Action = table.Column<int>(type: "integer", nullable: false),
                     RequestedAmount = table.Column<long>(type: "bigint", nullable: false),
                     Amount = table.Column<long>(type: "bigint", nullable: true),
@@ -1617,8 +1628,7 @@ namespace Tzkt.Data.Migrations
                     StakingOpId = table.Column<long>(type: "bigint", nullable: true),
                     DelegationOpId = table.Column<long>(type: "bigint", nullable: true),
                     DoubleBakingOpId = table.Column<long>(type: "bigint", nullable: true),
-                    DoubleEndorsingOpId = table.Column<long>(type: "bigint", nullable: true),
-                    DoublePreendorsingOpId = table.Column<long>(type: "bigint", nullable: true)
+                    DoubleConsensusOpId = table.Column<long>(type: "bigint", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -2133,11 +2143,12 @@ namespace Tzkt.Data.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "UpdateConsensusKeyOps",
+                name: "UpdateSecondaryKeyOps",
                 columns: table => new
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    KeyType = table.Column<int>(type: "integer", nullable: false),
                     ActivationCycle = table.Column<int>(type: "integer", nullable: false),
                     PublicKey = table.Column<string>(type: "text", nullable: false),
                     PublicKeyHash = table.Column<string>(type: "text", nullable: false),
@@ -2158,7 +2169,7 @@ namespace Tzkt.Data.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_UpdateConsensusKeyOps", x => x.Id);
+                    table.PrimaryKey("PK_UpdateSecondaryKeyOps", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -2238,8 +2249,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "AccountCounter", "ActivationOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalAttestationRewardOpsCount", "DalEntrapmentEvidenceOpsCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleEndorsingOpsCount", "DoublePreendorsingOpsCount", "DrainDelegateOpsCount", "EndorsementOpsCount", "EndorsingRewardOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PreendorsementOpsCount", "ProposalCounter", "ProposalOpsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "SoftwareCounter", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateConsensusKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
-                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, "", "", 0, 0, -1, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
+                columns: new[] { "Id", "AccountCounter", "ActivationOpsCount", "AttestationOpsCount", "AttestationRewardOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalAttestationRewardOpsCount", "DalEntrapmentEvidenceOpsCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleConsensusOpsCount", "DrainDelegateOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PreattestationOpsCount", "ProposalCounter", "ProposalOpsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "SoftwareCounter", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateSecondaryKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
+                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "", 0, 0, -1, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
@@ -2266,7 +2277,8 @@ namespace Tzkt.Data.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_DelegateId",
                 table: "Accounts",
-                column: "DelegateId");
+                column: "DelegateId",
+                filter: "\"DelegateId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Extras",
@@ -2336,6 +2348,31 @@ namespace Tzkt.Data.Migrations
                 name: "IX_ActivationOps_OpHash",
                 table: "ActivationOps",
                 column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttestationOps_DelegateId",
+                table: "AttestationOps",
+                column: "DelegateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttestationOps_Level",
+                table: "AttestationOps",
+                column: "Level");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttestationOps_OpHash",
+                table: "AttestationOps",
+                column: "OpHash");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttestationRewardOps_BakerId",
+                table: "AttestationRewardOps",
+                column: "BakerId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_AttestationRewardOps_Level",
+                table: "AttestationRewardOps",
+                column: "Level");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AutostakingOps_BakerId",
@@ -2593,6 +2630,12 @@ namespace Tzkt.Data.Migrations
                 columns: new[] { "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_DelegationSnapshots_Level_Partial",
+                table: "DelegationSnapshots",
+                column: "Level",
+                filter: "\"BakerId\" = \"AccountId\"");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_DelegatorCycles_Cycle_BakerId",
                 table: "DelegatorCycles",
                 columns: new[] { "Cycle", "BakerId" });
@@ -2658,43 +2701,23 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleEndorsingOps_AccuserId",
-                table: "DoubleEndorsingOps",
+                name: "IX_DoubleConsensusOps_AccuserId",
+                table: "DoubleConsensusOps",
                 column: "AccuserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleEndorsingOps_Level",
-                table: "DoubleEndorsingOps",
+                name: "IX_DoubleConsensusOps_Level",
+                table: "DoubleConsensusOps",
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleEndorsingOps_OffenderId",
-                table: "DoubleEndorsingOps",
+                name: "IX_DoubleConsensusOps_OffenderId",
+                table: "DoubleConsensusOps",
                 column: "OffenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_DoubleEndorsingOps_OpHash",
-                table: "DoubleEndorsingOps",
-                column: "OpHash");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DoublePreendorsingOps_AccuserId",
-                table: "DoublePreendorsingOps",
-                column: "AccuserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DoublePreendorsingOps_Level",
-                table: "DoublePreendorsingOps",
-                column: "Level");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DoublePreendorsingOps_OffenderId",
-                table: "DoublePreendorsingOps",
-                column: "OffenderId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_DoublePreendorsingOps_OpHash",
-                table: "DoublePreendorsingOps",
+                name: "IX_DoubleConsensusOps_OpHash",
+                table: "DoubleConsensusOps",
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
@@ -2716,31 +2739,6 @@ namespace Tzkt.Data.Migrations
                 name: "IX_DrainDelegateOps_TargetId",
                 table: "DrainDelegateOps",
                 column: "TargetId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EndorsementOps_DelegateId",
-                table: "EndorsementOps",
-                column: "DelegateId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EndorsementOps_Level",
-                table: "EndorsementOps",
-                column: "Level");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EndorsementOps_OpHash",
-                table: "EndorsementOps",
-                column: "OpHash");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EndorsingRewardOps_BakerId",
-                table: "EndorsingRewardOps",
-                column: "BakerId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_EndorsingRewardOps_Level",
-                table: "EndorsingRewardOps",
-                column: "Level");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Events_ContractCodeHash_Tag",
@@ -2887,18 +2885,18 @@ namespace Tzkt.Data.Migrations
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PreendorsementOps_DelegateId",
-                table: "PreendorsementOps",
+                name: "IX_PreattestationOps_DelegateId",
+                table: "PreattestationOps",
                 column: "DelegateId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PreendorsementOps_Level",
-                table: "PreendorsementOps",
+                name: "IX_PreattestationOps_Level",
+                table: "PreattestationOps",
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PreendorsementOps_OpHash",
-                table: "PreendorsementOps",
+                name: "IX_PreattestationOps_OpHash",
+                table: "PreattestationOps",
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
@@ -3289,15 +3287,20 @@ namespace Tzkt.Data.Migrations
                 column: "SmartRollupId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_SnapshotBalances_Level_AccountId_BakerId",
-                table: "SnapshotBalances",
-                columns: new[] { "Level", "AccountId", "BakerId" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_SnapshotBalances_Level_Partial",
                 table: "SnapshotBalances",
                 column: "Level",
-                filter: "\"AccountId\" = \"BakerId\"");
+                filter: "\"BakerId\" = \"AccountId\"");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StakerCycles_Cycle_BakerId",
+                table: "StakerCycles",
+                columns: new[] { "Cycle", "BakerId" });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StakerCycles_StakerId_Cycle",
+                table: "StakerCycles",
+                columns: new[] { "StakerId", "Cycle" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingOps_BakerId",
@@ -3318,6 +3321,11 @@ namespace Tzkt.Data.Migrations
                 name: "IX_StakingOps_SenderId",
                 table: "StakingOps",
                 column: "SenderId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_StakingOps_StakerId",
+                table: "StakingOps",
+                column: "StakerId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_AutostakingOpId",
@@ -3343,16 +3351,10 @@ namespace Tzkt.Data.Migrations
                 filter: "\"DoubleBakingOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_StakingUpdates_DoubleEndorsingOpId",
+                name: "IX_StakingUpdates_DoubleConsensusOpId",
                 table: "StakingUpdates",
-                column: "DoubleEndorsingOpId",
-                filter: "\"DoubleEndorsingOpId\" IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_StakingUpdates_DoublePreendorsingOpId",
-                table: "StakingUpdates",
-                column: "DoublePreendorsingOpId",
-                filter: "\"DoublePreendorsingOpId\" IS NOT NULL");
+                column: "DoubleConsensusOpId",
+                filter: "\"DoubleConsensusOpId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_StakingUpdates_Level_Id",
@@ -3898,18 +3900,18 @@ namespace Tzkt.Data.Migrations
                 columns: new[] { "StakerId", "Cycle" });
 
             migrationBuilder.CreateIndex(
-                name: "IX_UpdateConsensusKeyOps_Level",
-                table: "UpdateConsensusKeyOps",
+                name: "IX_UpdateSecondaryKeyOps_Level",
+                table: "UpdateSecondaryKeyOps",
                 column: "Level");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UpdateConsensusKeyOps_OpHash",
-                table: "UpdateConsensusKeyOps",
+                name: "IX_UpdateSecondaryKeyOps_OpHash",
+                table: "UpdateSecondaryKeyOps",
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UpdateConsensusKeyOps_SenderId",
-                table: "UpdateConsensusKeyOps",
+                name: "IX_UpdateSecondaryKeyOps_SenderId",
+                table: "UpdateSecondaryKeyOps",
                 column: "SenderId");
 
             migrationBuilder.CreateIndex(
@@ -3963,6 +3965,12 @@ namespace Tzkt.Data.Migrations
                 name: "AppState");
 
             migrationBuilder.DropTable(
+                name: "AttestationOps");
+
+            migrationBuilder.DropTable(
+                name: "AttestationRewardOps");
+
+            migrationBuilder.DropTable(
                 name: "AutostakingOps");
 
             migrationBuilder.DropTable(
@@ -4005,6 +4013,9 @@ namespace Tzkt.Data.Migrations
                 name: "DelegationOps");
 
             migrationBuilder.DropTable(
+                name: "DelegationSnapshots");
+
+            migrationBuilder.DropTable(
                 name: "DelegatorCycles");
 
             migrationBuilder.DropTable(
@@ -4014,19 +4025,10 @@ namespace Tzkt.Data.Migrations
                 name: "DoubleBakingOps");
 
             migrationBuilder.DropTable(
-                name: "DoubleEndorsingOps");
-
-            migrationBuilder.DropTable(
-                name: "DoublePreendorsingOps");
+                name: "DoubleConsensusOps");
 
             migrationBuilder.DropTable(
                 name: "DrainDelegateOps");
-
-            migrationBuilder.DropTable(
-                name: "EndorsementOps");
-
-            migrationBuilder.DropTable(
-                name: "EndorsingRewardOps");
 
             migrationBuilder.DropTable(
                 name: "Events");
@@ -4047,7 +4049,7 @@ namespace Tzkt.Data.Migrations
                 name: "OriginationOps");
 
             migrationBuilder.DropTable(
-                name: "PreendorsementOps");
+                name: "PreattestationOps");
 
             migrationBuilder.DropTable(
                 name: "ProposalOps");
@@ -4113,6 +4115,9 @@ namespace Tzkt.Data.Migrations
                 name: "Software");
 
             migrationBuilder.DropTable(
+                name: "StakerCycles");
+
+            migrationBuilder.DropTable(
                 name: "StakingOps");
 
             migrationBuilder.DropTable(
@@ -4176,7 +4181,7 @@ namespace Tzkt.Data.Migrations
                 name: "UnstakeRequests");
 
             migrationBuilder.DropTable(
-                name: "UpdateConsensusKeyOps");
+                name: "UpdateSecondaryKeyOps");
 
             migrationBuilder.DropTable(
                 name: "VdfRevelationOps");
