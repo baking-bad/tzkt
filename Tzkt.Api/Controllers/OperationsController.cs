@@ -1155,33 +1155,35 @@ namespace Tzkt.Api.Controllers
         }
         #endregion
 
-        #region double attestation
+        #region double consensus
         /// <summary>
-        /// Get double attestation
+        /// Get double consensus
         /// </summary>
         /// <remarks>
-        /// Returns a list of double attestation operations.
+        /// Returns a list of double consensus operations.
         /// </remarks>
-        /// <param name="anyof">Filters double attestation operations by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
-        /// <param name="accuser">Filters double attestation operations by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
-        /// <param name="offender">Filters double attestation operations by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
-        /// <param name="level">Filters double attestation operations by level.</param>
-        /// <param name="timestamp">Filters double attestation operations by timestamp.</param>
+        /// <param name="anyof">Filter by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
+        /// <param name="accuser">Filter by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
+        /// <param name="offender">Filter by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
+        /// <param name="id">Filter by internal TzKT id.</param>
+        /// <param name="kind">Filter by misbehaviour kind (`double_attestation` or `double_preattestation`).</param>
+        /// <param name="level">Filter by level.</param>
+        /// <param name="timestamp">Filter by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts double attestation operations by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
+        /// <param name="sort">Sort by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_attestation")]
-        public async Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleAttestation(
+        [HttpGet("double_consensus")]
+        public async Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoubleConsensus(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter? anyof,
             AccountParameter? accuser,
             AccountParameter? offender,
             Int64Parameter? id,
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SelectParameter? select,
@@ -1197,7 +1199,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
 
                 if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
-                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
+                    return Ok(Enumerable.Empty<DoubleConsensusOperation>());
             }
 
             if (accuser != null)
@@ -1209,7 +1211,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
 
                 if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
+                    return Ok(Enumerable.Empty<DoubleConsensusOperation>());
             }
 
             if (offender != null)
@@ -1221,7 +1223,7 @@ namespace Tzkt.Api.Controllers
                     return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
 
                 if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoubleAttestationOperation>());
+                    return Ok(Enumerable.Empty<DoubleConsensusOperation>());
             }
 
             if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
@@ -1229,8 +1231,8 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
+                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("kind", kind), ("level", level),
+                ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -1238,25 +1240,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetDoubleAttestations(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetDoubleConsensus(null, anyof, accuser, offender, id, kind, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetDoubleConsensus(anyof, accuser, offender, id, kind, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetDoubleConsensus(anyof, accuser, offender, id, kind, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetDoubleConsensus(anyof, accuser, offender, id, kind, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetDoubleAttestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetDoubleConsensus(anyof, accuser, offender, id, kind, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1265,16 +1267,16 @@ namespace Tzkt.Api.Controllers
         }
 
         /// <summary>
-        /// Get double attestation by hash
+        /// Get double consensus by hash
         /// </summary>
         /// <remarks>
-        /// Returns a double attestation operation with specified hash.
+        /// Returns a double consensus operation with specified hash.
         /// </remarks>
         /// <param name="hash">Operation hash</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
         /// <returns></returns>
-        [HttpGet("double_attestation/{hash}")]
-        public async Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleAttestationByHash(
+        [HttpGet("double_consensus/{hash}")]
+        public async Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoubleConsensusByHash(
             [Required][OpHash] string hash, 
             Symbols quote = Symbols.None)
         {
@@ -1284,198 +1286,37 @@ namespace Tzkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoubleAttestations(hash, quote);
+            var res = await Operations.GetDoubleConsensus(hash, quote);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
 
         /// <summary>
-        /// Get double attestation count
+        /// Get double consensus count
         /// </summary>
         /// <remarks>
-        /// Returns the total number of double attestation operations.
+        /// Returns the total number of double consensus operations.
         /// </remarks>
-        /// <param name="level">Filters double attestation operations by level.</param>
-        /// <param name="timestamp">Filters double attestation operations by timestamp.</param>
+        /// <param name="kind">Filter by misbehaviour kind (`double_attestation` or `double_preattestation`).</param>
+        /// <param name="level">Filter by level.</param>
+        /// <param name="timestamp">Filter by timestamp.</param>
         /// <returns></returns>
-        [HttpGet("double_attestation/count")]
-        public async Task<ActionResult<int>> GetDoubleAttestationCount(
+        [HttpGet("double_consensus/count")]
+        public async Task<ActionResult<int>> GetDoubleConsensusCount(
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
             if (level == null && timestamp == null)
-                return Ok(State.Current.DoubleAttestationOpsCount);
+                return Ok(State.Current.DoubleConsensusOpsCount);
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("level", level), ("timestamp", timestamp));  
+                ("kind", kind), ("level", level), ("timestamp", timestamp));  
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = await Operations.GetDoubleAttestationsCount(level, timestamp);
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-        #endregion
-
-        #region double preattestation
-        /// <summary>
-        /// Get double preattestation
-        /// </summary>
-        /// <remarks>
-        /// Returns a list of double preattestation operations.
-        /// </remarks>
-        /// <param name="anyof">Filters by any of the specified fields. Example: `anyof.accuser.offender=tz1...` will return operations where `accuser` OR `offender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
-        /// <param name="accuser">Filters by accuser. Allowed fields for `.eqx` mode: `offender`.</param>
-        /// <param name="offender">Filters by offender. Allowed fields for `.eqx` mode: `accuser`.</param>
-        /// <param name="id">Filters operations by internal TzKT id.</param>
-        /// <param name="level">Filters by level.</param>
-        /// <param name="timestamp">Filters by timestamp.</param>
-        /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts by specified field. Supported fields: `id` (default), `level`, `accusedLevel`, `accuserRewards`, `offenderLostDeposits`, `offenderLostRewards`, `offenderLostFees`.</param>
-        /// <param name="offset">Specifies which or how many items should be skipped</param>
-        /// <param name="limit">Maximum number of items to return</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <returns></returns>
-        [HttpGet("double_preattestation")]
-        public async Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreattestation(
-            [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
-            [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
-            AnyOfParameter? anyof,
-            AccountParameter? accuser,
-            AccountParameter? offender,
-            Int64Parameter? id,
-            Int32Parameter? level,
-            TimestampParameter? timestamp,
-            SelectParameter? select,
-            SortParameter? sort,
-            OffsetParameter? offset,
-            [Range(0, 10000)] int limit = 100,
-            Symbols quote = Symbols.None)
-        {
-            #region validate
-            if (anyof != null)
-            {
-                if (anyof.Fields.Any(x => x != "accuser" && x != "offender"))
-                    return new BadRequest($"{nameof(anyof)}", "This parameter can be used with `accuser`, `offender` fields only.");
-
-                if (anyof.Eq == -1 || anyof.In?.Count == 0 || anyof.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
-            }
-
-            if (accuser != null)
-            {
-                if (accuser.Eqx != null && accuser.Eqx != "offender")
-                    return new BadRequest($"{nameof(accuser)}.eqx", "The 'accuser' field can be compared with the 'offender' field only.");
-
-                if (accuser.Nex != null && accuser.Nex != "offender")
-                    return new BadRequest($"{nameof(accuser)}.nex", "The 'accuser' field can be compared with the 'offender' field only.");
-
-                if (accuser.Eq == -1 || accuser.In?.Count == 0 || accuser.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
-            }
-
-            if (offender != null)
-            {
-                if (offender.Eqx != null && offender.Eqx != "accuser")
-                    return new BadRequest($"{nameof(offender)}.eqx", "The 'offender' field can be compared with the 'accuser' field only.");
-
-                if (offender.Nex != null && offender.Nex != "accuser")
-                    return new BadRequest($"{nameof(offender)}.nex", "The 'offender' field can be compared with the 'accuser' field only.");
-
-                if (offender.Eq == -1 || offender.In?.Count == 0 || offender.Null == true)
-                    return Ok(Enumerable.Empty<DoublePreattestationOperation>());
-            }
-
-            if (sort != null && !sort.Validate("id", "level", "accusedLevel", "accuserRewards", "offenderLostDeposits", "offenderLostRewards", "offenderLostFees"))
-                return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
-            #endregion
-
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("accuser", accuser), ("offender", offender), ("id", id), ("level", level), ("timestamp", timestamp),
-                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            object res;
-            if (select == null)
-            {
-                res = await Operations.GetDoublePreattestations(null, anyof, accuser, offender, id, level, timestamp, sort, offset, limit, quote);
-            }
-            else if (select.Values != null)
-            {
-                if (select.Values.Length == 1)
-                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
-                else
-                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Values, quote);
-            }
-            else
-            {
-                if (select.Fields!.Length == 1)
-                    res = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
-                else
-                {
-                    res = new SelectionResponse
-                    {
-                        Cols = select.Fields,
-                        Rows = await Operations.GetDoublePreattestations(anyof, accuser, offender, id, level, timestamp, sort, offset, limit, select.Fields, quote)
-                    };
-                }
-            }
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-
-        /// <summary>
-        /// Get double preattestation by hash
-        /// </summary>
-        /// <remarks>
-        /// Returns a double preattestation operation with specified hash.
-        /// </remarks>
-        /// <param name="hash">Operation hash</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <returns></returns>
-        [HttpGet("double_preattestation/{hash}")]
-        public async Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreattestationByHash(
-            [Required][OpHash] string hash,
-            Symbols quote = Symbols.None)
-        {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("quote", quote));  
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Operations.GetDoublePreattestations(hash, quote);
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-
-        /// <summary>
-        /// Get double preattestation count
-        /// </summary>
-        /// <remarks>
-        /// Returns the total number of double preattestation operations.
-        /// </remarks>
-        /// <param name="level">Filters by level.</param>
-        /// <param name="timestamp">Filters by timestamp.</param>
-        /// <returns></returns>
-        [HttpGet("double_preattestation/count")]
-        public async Task<ActionResult<int>> GetDoublePreattestationCount(
-            Int32Parameter? level,
-            TimestampParameter? timestamp)
-        {
-            if (level == null && timestamp == null)
-                return Ok(State.Current.DoublePreattestationOpsCount);
-            
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("level", level), ("timestamp", timestamp));  
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Operations.GetDoublePreattestationsCount(level, timestamp);
+            var res = await Operations.GetDoubleConsensusCount(kind, level, timestamp);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -6248,7 +6089,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("double_endorsing")]
-        public Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleEndorsing(
+        public Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoubleEndorsing(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter? anyof,
@@ -6263,16 +6104,16 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            return GetDoubleAttestation(anyof, accuser, offender, id, level, timestamp, select, sort, offset, limit, quote);
+            return GetDoubleConsensus(anyof, accuser, offender, id, new() { Eq = 0 }, level, timestamp, select, sort, offset, limit, quote);
         }
 
         [OpenApiIgnore]
         [HttpGet("double_endorsing/{hash}")]
-        public Task<ActionResult<IEnumerable<DoubleAttestationOperation>>> GetDoubleEndorsingByHash(
+        public Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoubleEndorsingByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
-            return GetDoubleAttestationByHash(hash, quote);
+            return GetDoubleConsensusByHash(hash, quote);
         }
 
         [OpenApiIgnore]
@@ -6281,12 +6122,12 @@ namespace Tzkt.Api.Controllers
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
-            return GetDoubleAttestationCount(level, timestamp);
+            return GetDoubleConsensusCount(new() { Eq = 0 }, level, timestamp);
         }
 
         [OpenApiIgnore]
         [HttpGet("double_preendorsing")]
-        public Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreendorsing(
+        public Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoublePreendorsing(
             [OpenApiExtensionData("x-tzkt-extension", "anyof-parameter")]
             [OpenApiExtensionData("x-tzkt-anyof-parameter", "accuser,offender")]
             AnyOfParameter? anyof,
@@ -6301,16 +6142,16 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            return GetDoublePreattestation(anyof, accuser, offender, id, level, timestamp, select, sort, offset, limit, quote);
+            return GetDoubleConsensus(anyof, accuser, offender, id, new() { Eq = 1 }, level, timestamp, select, sort, offset, limit, quote);
         }
 
         [OpenApiIgnore]
         [HttpGet("double_preendorsing/{hash}")]
-        public Task<ActionResult<IEnumerable<DoublePreattestationOperation>>> GetDoublePreendorsingByHash(
+        public Task<ActionResult<IEnumerable<DoubleConsensusOperation>>> GetDoublePreendorsingByHash(
             [Required][OpHash] string hash,
             Symbols quote = Symbols.None)
         {
-            return GetDoublePreattestationByHash(hash, quote);
+            return GetDoubleConsensusByHash(hash, quote);
         }
 
         [OpenApiIgnore]
@@ -6319,7 +6160,7 @@ namespace Tzkt.Api.Controllers
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
-            return GetDoublePreattestationCount(level, timestamp);
+            return GetDoubleConsensusCount(new() { Eq = 1 }, level, timestamp);
         }
 
         [OpenApiIgnore]

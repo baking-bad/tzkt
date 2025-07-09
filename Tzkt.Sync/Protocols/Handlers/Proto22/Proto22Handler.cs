@@ -116,10 +116,8 @@ namespace Tzkt.Sync.Protocols
                             await new DoubleBakingCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "double_attestation_evidence":
-                            new DoubleAttestationCommit(this).Apply(blockCommit.Block, operation, content);
-                            break;
                         case "double_preattestation_evidence":
-                            new DoublePreattestationCommit(this).Apply(blockCommit.Block, operation, content);
+                            new DoubleConsensusCommit(this).Apply(blockCommit.Block, operation, content);
                             break;
                         case "seed_nonce_revelation":
                             await new NonceRevelationsCommit(this).Apply(blockCommit.Block, operation, content);
@@ -420,11 +418,8 @@ namespace Tzkt.Sync.Protocols
                     case DoubleBakingOperation op:
                         new DoubleBakingCommit(this).Revert(op);
                         break;
-                    case DoubleAttestationOperation op:
-                        new DoubleAttestationCommit(this).Revert(op);
-                        break;
-                    case DoublePreattestationOperation op:
-                        new DoublePreattestationCommit(this).Revert(op);
+                    case DoubleConsensusOperation op:
+                        new DoubleConsensusCommit(this).Revert(op);
                         break;
                     case NonceRevelationOperation op:
                         await new NonceRevelationsCommit(this).Revert(currBlock, op);

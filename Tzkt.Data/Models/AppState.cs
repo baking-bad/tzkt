@@ -55,8 +55,7 @@ namespace Tzkt.Data.Models
         public int DelegationOpsCount { get; set; }
         public int DalEntrapmentEvidenceOpsCount { get; set; }
         public int DoubleBakingOpsCount { get; set; }
-        public int DoubleAttestationOpsCount { get; set; }
-        public int DoublePreattestationOpsCount { get; set; }
+        public int DoubleConsensusOpsCount { get; set; }
         public int AttestationOpsCount { get; set; }
         public int PreattestationOpsCount { get; set; }
         public int NonceRevelationOpsCount { get; set; }

@@ -1,12 +1,12 @@
 ﻿namespace Tzkt.Api.Models
 {
-    public class DoubleAttestationOperation : Operation
+    public class DoubleConsensusOperation : Operation
     {
         /// <summary>
-        /// Type of the operation, `double_attestation` - is used by bakers to provide evidence of double attestation
-        /// (attestation of two different blocks at the same block height) by a baker
+        /// Type of the operation, `double_consensus` - is used by bakers to provide evidence of double (pre)attestation
+        /// ((pre)attestation of two different blocks at the same block height) by a baker
         /// </summary>
-        public override string Type => ActivityTypes.DoubleAttestation;
+        public override string Type => ActivityTypes.DoubleConsensus;
 
         /// <summary>
         /// Unique ID of the operation, stored in the TzKT indexer database
@@ -34,7 +34,7 @@
         public required string Hash { get; set; }
 
         /// <summary>
-        /// Height of the block from the genesis, at which double attestation occurred 
+        /// Height of the block from the genesis, at which double (pre)attestation occurred 
         /// </summary>
         public int AccusedLevel { get; set; }
 
@@ -42,6 +42,11 @@
         /// Height of the block from the genesis, at which the offender was slashed
         /// </summary>
         public int SlashedLevel { get; set; }
+
+        /// <summary>
+        /// Kind of misbehaviour (`double_attestation` or `double_preattestation`)
+        /// </summary>
+        public required string Kind { get; set; }
 
         /// <summary>
         /// Information about the baker, produced the block, in which the accusation was included

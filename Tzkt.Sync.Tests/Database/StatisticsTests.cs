@@ -33,8 +33,7 @@ namespace Tzkt.Sync.Tests.Database
                 throw new Exception("Invalid Statistics.TotalCreated");
 
             var totalBurned = await db.DoubleBakingOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoubleAttestationOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
-            totalBurned += await db.DoublePreattestationOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
+            totalBurned += await db.DoubleConsensusOps.SumAsync(x => x.LostStaked + x.LostExternalStaked + x.LostUnstaked + x.LostExternalUnstaked - x.Reward);
             totalBurned += await db.RevelationPenaltyOps.SumAsync(x => x.Loss);
             totalBurned += await db.DrainDelegateOps.SumAsync(x => x.AllocationFee);
             totalBurned += await db.RefutationGames.Where(x => x.InitiatorLoss != null || x.OpponentLoss != null).SumAsync(x => (x.InitiatorLoss ?? 0) + (x.OpponentLoss ?? 0) - (x.InitiatorReward ?? 0) - (x.OpponentReward ?? 0));

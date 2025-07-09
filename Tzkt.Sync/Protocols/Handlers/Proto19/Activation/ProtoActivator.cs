@@ -37,7 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             protocol.ToleratedInactivityPeriod = protocol.ConsensusRightsDelay + 1;
             protocol.DelegateParametersActivationDelay = parameters["delegate_parameters_activation_delay"]?.Value<int>() ?? 5;
             protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 500;
-            protocol.DoubleAttestationSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 5000;
+            protocol.DoubleConsensusSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 5000;
             protocol.NumberOfShards = parameters["dal_parametric"]?["number_of_shards"]?.Value<int>() ?? 512;
             protocol.BlocksPerSnapshot = protocol.BlocksPerCycle;
         }

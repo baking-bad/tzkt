@@ -77,8 +77,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.AttestationsCount > 0) UnionAttestations(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleAttestationCount > 0) UnionDoubleAttestation(sql);
-                if (delegat.DoublePreattestationCount > 0) UnionDoublePreattestation(sql);
+                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
@@ -214,8 +213,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.AttestationsCount > 0) UnionAttestations(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleAttestationCount > 0) UnionDoubleAttestation(sql);
-                if (delegat.DoublePreattestationCount > 0) UnionDoublePreattestation(sql);
+                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
@@ -385,8 +383,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.BlocksCount > 0) UnionBaking(sql);
                 if (delegat.AttestationsCount > 0) UnionAttestations(sql);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleAttestationCount > 0) UnionDoubleAttestation(sql);
-                if (delegat.DoublePreattestationCount > 0) UnionDoublePreattestation(sql);
+                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
@@ -532,7 +529,7 @@ namespace Tzkt.Api.Repositories
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
-            sql.Append(@"19 as ""Type"", ");
+            sql.Append(@"20 as ""Type"", ");
             sql.Append(@"""Id"" as ""Id"", ");
             sql.Append(@"""Level"" as ""Level"", ");
             sql.Append(@"null::character(51) as ""OpHash"", ");
@@ -717,7 +714,7 @@ namespace Tzkt.Api.Repositories
             #endregion
         }
 
-        void UnionDoubleAttestation(StringBuilder sql)
+        void UnionDoubleConsensus(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
@@ -737,7 +734,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
             sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
@@ -762,60 +759,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"null::integer as ""Fee"", ");
             sql.Append(@"null::integer as ""To"" ");
 
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
-            sql.Append(@"WHERE ""OffenderId"" = @account ");
-            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
-
-            sql.AppendLine();
-            #endregion
-        }
-
-        void UnionDoublePreattestation(StringBuilder sql)
-        {
-            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
-
-            #region accuser
-            sql.Append(@"20 as ""Type"", ");
-            sql.Append(@"""Id"" as ""Id"", ");
-            sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"""OpHash"" as ""OpHash"", ");
-            sql.Append(@"null::integer as ""Counter"", ");
-            sql.Append(@"null::integer as ""Nonce"", ");
-            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"""Reward"" as ""Reward"", ");
-            sql.Append(@"null::integer as ""Loss"", ");
-            sql.Append(@"null::integer as ""Received"", ");
-            sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"null::integer as ""Sent"", ");
-            sql.Append(@"null::integer as ""Fee"", ");
-            sql.Append(@"null::integer as ""To"" ");
-
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
-            sql.Append(@"WHERE ""AccuserId"" = @account ");
-            sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
-
-            sql.AppendLine();
-            #endregion
-
-            sql.Append("UNION ALL SELECT ");
-
-            #region offender
-            sql.Append(@"20 as ""Type"", ");
-            sql.Append(@"""Id"" as ""Id"", ");
-            sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"""OpHash"" as ""OpHash"", ");
-            sql.Append(@"null::integer as ""Counter"", ");
-            sql.Append(@"null::integer as ""Nonce"", ");
-            sql.Append(@"""Timestamp"" as ""Timestamp"", ");
-            sql.Append(@"null::integer as ""Reward"", ");
-            sql.Append(@"(""LostStaked"" + ""LostUnstaked"") as ""Loss"", ");
-            sql.Append(@"null::integer as ""Received"", ");
-            sql.Append(@"null::integer as ""From"", ");
-            sql.Append(@"null::integer as ""Sent"", ");
-            sql.Append(@"null::integer as ""Fee"", ");
-            sql.Append(@"null::integer as ""To"" ");
-
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
             sql.Append(@"AND ""Level"" >= @fromLevel AND ""Level"" <= @toLevel ");
 
@@ -1915,7 +1859,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"46 as ""Type"", ");
             sql.Append(@"b.""Id"" as ""Id"", ");
             sql.Append(@"u.""Level"" as ""Level"", ");
-            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", dc.""OpHash"")::character(51) as ""OpHash"", ");
             sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
@@ -1932,8 +1876,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
             sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
             sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoubleAttestationOps"" as de ON s.""Id"" = u.""DoubleAttestationOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoublePreattestationOps"" as dp ON s.""Id"" = u.""DoublePreattestationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleConsensusOps"" as dc ON s.""Id"" = u.""DoubleConsensusOpId"" ");
             sql.Append(@"WHERE u.""StakerId"" = @account ");
             sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
             sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.Stake} ");
@@ -1948,7 +1891,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"47 as ""Type"", ");
             sql.Append(@"b.""Id"" as ""Id"", ");
             sql.Append(@"u.""Level"" as ""Level"", ");
-            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", dc.""OpHash"")::character(51) as ""OpHash"", ");
             sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
@@ -1965,8 +1908,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
             sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
             sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoubleAttestationOps"" as de ON s.""Id"" = u.""DoubleAttestationOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoublePreattestationOps"" as dp ON s.""Id"" = u.""DoublePreattestationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleConsensusOps"" as dc ON s.""Id"" = u.""DoubleConsensusOpId"" ");
             sql.Append(@"WHERE u.""StakerId"" = @account ");
             sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
             sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.Unstake} ");
@@ -1981,7 +1923,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"48 as ""Type"", ");
             sql.Append(@"b.""Id"" as ""Id"", ");
             sql.Append(@"u.""Level"" as ""Level"", ");
-            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", de.""OpHash"", dp.""OpHash"")::character(51) as ""OpHash"", ");
+            sql.Append(@"COALESCE(s.""OpHash"", d.""OpHash"", db.""OpHash"", dc.""OpHash"")::character(51) as ""OpHash"", ");
             sql.Append(@"COALESCE(s.""Counter"", d.""Counter"")::integer as ""Counter"", ");
             sql.Append(@"null::integer as ""Nonce"", ");
             sql.Append(@"b.""Timestamp"" as ""Timestamp"", ");
@@ -1998,8 +1940,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"LEFT JOIN ""StakingOps"" as s ON s.""Id"" = u.""StakingOpId"" ");
             sql.Append(@"LEFT JOIN ""DelegationOps"" as d ON s.""Id"" = u.""DelegationOpId"" ");
             sql.Append(@"LEFT JOIN ""DoubleBakingOps"" as db ON s.""Id"" = u.""DoubleBakingOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoubleAttestationOps"" as de ON s.""Id"" = u.""DoubleAttestationOpId"" ");
-            sql.Append(@"LEFT JOIN ""DoublePreattestationOps"" as dp ON s.""Id"" = u.""DoublePreattestationOpId"" ");
+            sql.Append(@"LEFT JOIN ""DoubleConsensusOps"" as dc ON s.""Id"" = u.""DoubleConsensusOpId"" ");
             sql.Append(@"WHERE u.""StakerId"" = @account ");
             sql.Append(@"AND u.""StakerId"" != u.""BakerId"" ");
             sql.Append($@"AND u.""Type"" = {(int)Data.Models.StakingUpdateType.SlashUnstaked} ");
@@ -2069,7 +2010,7 @@ namespace Tzkt.Api.Repositories
 
             "activation",           // 2
             "double baking",        // 3
-            "double attestation",     // 4
+            "double consensus",     // 4
             "nonce revelation",     // 5
             
             "delegation",           // 6
@@ -2087,9 +2028,9 @@ namespace Tzkt.Api.Repositories
             "subsidy",              // 17
             "register constant",    // 18
             
-            "attestation reward",     // 19
-            "double preattestation",  // 20
-            "set deposits limit",   // 21
+            "attestation reward",       // 19
+            "dal attestation reward",   // 20
+            "set deposits limit",       // 21
             
             "tx rollup origination",            // 22
             "tx rollup submit batch",           // 23

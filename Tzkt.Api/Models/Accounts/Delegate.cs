@@ -241,16 +241,10 @@ namespace Tzkt.Api.Models
         public int NumDoubleBaking { get; set; }
 
         /// <summary>
-        /// Number of double attestation (attestation of two different blocks at the same block height) evidence operations,
+        /// Number of double consensus (attestation or preattestation of two different blocks at the same block height) evidence operations,
         /// included in blocks, baked (validated) by the delegate
         /// </summary>
-        public int NumDoubleAttestation { get; set; }
-
-        /// <summary>
-        /// Number of double preattestation (preattestation of two different blocks at the same block height) evidence operations,
-        /// included in blocks, baked (validated) by the delegate
-        /// </summary>
-        public int NumDoublePreattestation { get; set; }
+        public int NumDoubleConsensus { get; set; }
 
         /// <summary>
         /// Number of seed nonce revelation (are used by the blockchain to create randomness) operations provided by the delegate
@@ -499,12 +493,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public int NumDoubleEndorsing => NumDoublePreattestation;
+        public int NumDoubleEndorsing => NumDoubleConsensus;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public int NumDoublePreendorsing => NumDoublePreattestation;
+        public int NumDoublePreendorsing => 0;
 
         /// <summary>
         /// **DEPRECATED**

@@ -93,13 +93,7 @@ namespace Tzkt.Api
         /// Filter by the ID of the related operation.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public Int64NullParameter? doubleAttestationOpId { get; set; }
-
-        /// <summary>
-        /// Filter by the ID of the related operation.  
-        /// Click on the parameter to expand more details.
-        /// </summary>
-        public Int64NullParameter? doublePreattestationOpId { get; set; }
+        public Int64NullParameter? doubleConsensusOpId { get; set; }
 
         [OpenApiIgnore]
         public bool Empty =>
@@ -117,8 +111,7 @@ namespace Tzkt.Api
             stakingOpId == null &&
             delegationOpId == null &&
             doubleBakingOpId == null &&
-            doubleAttestationOpId == null &&
-            doublePreattestationOpId == null;
+            doubleConsensusOpId == null;
 
         public string Normalize(string name)
         {
@@ -126,8 +119,7 @@ namespace Tzkt.Api
                 ("id", id), ("level", level), ("timestamp", timestamp), ("cycle", cycle), ("baker", baker),
                 ("staker", staker), ("type", type), ("amount", amount), ("pseudotokens", pseudotokens),
                 ("roundingError", roundingError), ("autostakingOpId", autostakingOpId), ("stakingOpId", stakingOpId),
-                ("delegationOpId", delegationOpId), ("doubleBakingOpId", doubleBakingOpId),
-                ("doubleAttestationOpId", doubleAttestationOpId), ("doublePreattestationOpId", doublePreattestationOpId));
+                ("delegationOpId", delegationOpId), ("doubleBakingOpId", doubleBakingOpId), ("doubleConsensusOpId", doubleConsensusOpId));
         }
     }
 }

@@ -119,7 +119,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 MaxDelegatedOverFrozenRatio = prev.MaxDelegatedOverFrozenRatio,
                 MaxExternalOverOwnStakeRatio = prev.MaxExternalOverOwnStakeRatio,
                 DoubleBakingSlashedPercentage = prev.DoubleBakingSlashedPercentage,
-                DoubleAttestationSlashedPercentage = prev.DoubleAttestationSlashedPercentage,
+                DoubleConsensusSlashedPercentage = prev.DoubleConsensusSlashedPercentage,
                 MinimalFrozenStake = prev.MinimalFrozenStake,
                 StakePowerMultiplier = prev.StakePowerMultiplier,
                 MaxBakingReward = prev.MaxBakingReward,

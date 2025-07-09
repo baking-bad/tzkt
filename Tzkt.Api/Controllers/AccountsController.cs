@@ -128,7 +128,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="addresses">Comma-separated list of account addresses to get activity of.</param>
         /// <param name="roles">Comma-separated list of activity roles (`sender`, `target`, `initiator`, `mention`) to filter activity by.</param>
         /// <param name="types">Comma-separated list of activity types (`activation`, `autostaking`, `baking`, `ballot`, `dal_attestation_reward`,
-        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_attestation`, `double_preattestation`, `drain_delegate`, 
+        /// `dal_entrapment_evidence`, `dal_publish_commitment`, `delegation`, `double_baking`, `double_consensus`, `drain_delegate`, 
         /// `attestation`, `attestation_reward`, `increase_paid_storage`, `migration`, `nonce_revelation`, `origination`, `preattestation`, `proposal`,
         /// `register_constant`, `reveal`, `revelation_penalty`, `set_delegate_parameters`, `set_deposits_limit`, `sr_add_messages`, `sr_cement`, `sr_execute`,
         /// `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`, `staking`, `transaction`, `transfer_ticket`, `tx_rollup_commit`, `tx_rollup_dispatch_tickets`,
@@ -354,194 +354,7 @@ namespace Tzkt.Api.Controllers
             var res = await Accounts.GetDelegators(address, type, balance, delegationLevel, sort, offset, limit);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
-        }
-
-        /// <summary>
-        /// [DEPRECATED]
-        /// </summary>
-        /// <remarks>
-        /// Returns a list of operations related to the specified account.
-        /// Note: for better flexibility this endpoint accumulates query parameters (filters) of each `/operations/{type}` endpoint,
-        /// so a particular filter may affect several operation types containing this filter.
-        /// For example, if you specify an `initiator` it will affect all transactions, delegations and originations,
-        /// because all these types have an `initiator` field.  
-        /// **NOTE: if you know in advance what operation type you want to get (e.g. transactions), prefer using `/v1/operations/{type}`
-        /// (e.g. [/v1/operations/transactions](#operation/Operations_GetTransactions)) instead, because it's much more efficient and way more flexible.**
-        /// </remarks>
-        /// <param name="address">Account address</param>
-        /// <param name="type">Comma separated list of operation types to return (`attestation`, `preattestation`, `ballot`, `proposal`, `activation`, `double_baking`,
-        /// `double_attestation`, `double_preattestation`, `nonce_revelation`, `vdf_revelation`, `delegation`, `origination`, `transaction`, `reveal`, `register_constant`,
-        /// `set_deposits_limit`, `increase_paid_storage`, `tx_rollup_origination`, `tx_rollup_submit_batch`, `tx_rollup_commit`, `tx_rollup_return_bond`,
-        /// `tx_rollup_finalize_commitment`, `tx_rollup_remove_commitment`, `tx_rollup_rejection`, `tx_rollup_dispatch_tickets`, `transfer_ticket`, `migration`,
-        /// `update_secondary_key`, `drain_delegate`, `sr_add_messages`, `sr_cement`, `sr_execute`, `sr_originate`, `sr_publish`, `sr_recover_bond`, `sr_refute`,
-        /// `revelation_penalty`, `baking`, `attestation_reward`). If not specified then the default set will be returned.</param>
-        /// <param name="initiator">Filters transactions, delegations and originations by initiator. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="sender">Filters transactions, delegations, originations, reveals and seed nonce revelations by sender. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="target">Filters transactions by target. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="prevDelegate">Filters delegations by prev delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="newDelegate">Filters delegations by new delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="contractDelegate">Filters origination operations by delegate. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="originatedContract">Filters origination operations by originated contract. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="accuser">Filters double baking and double attestation by accuser. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="offender">Filters double baking and double attestation by offender. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="baker">Filters seed nonce revelation operations by baker. Allowed fields for `.eqx` mode: none.</param>
-        /// <param name="level">Filters operations by level.</param>
-        /// <param name="timestamp">Filters operations by timestamp.</param>
-        /// <param name="entrypoint">Filters transactions by entrypoint called on the target contract.</param>
-        /// <param name="parameter">Filters transactions by parameter value. Note, this query parameter supports the following format: `?parameter{.path?}{.mode?}=...`,
-        /// so you can specify a path to a particular field to filter by, for example: `?parameter.token_id=...` or `?parameter.sigs.0.ne=...`.</param>
-        /// <param name="hasInternals">Filters transactions by presence of internal operations.</param>
-        /// <param name="status">Filters transactions, delegations, originations and reveals by operation status (`applied`, `failed`, `backtracked`, `skipped`).</param>
-        /// <param name="sort">Sort mode (0 - ascending, 1 - descending), operations of different types can only be sorted by ID.</param>
-        /// <param name="lastId">Id of the last operation received, which is used as an offset for pagination</param>
-        /// <param name="limit">Number of items to return</param>
-        /// <param name="micheline">Format of the parameters, storage and diffs: `0` - JSON, `1` - JSON string, `2` - raw micheline, `3` - raw micheline string</param>
-        /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
-        /// <returns></returns>
-        [OpenApiIgnore]
-        [HttpGet("{address}/operations")]
-        public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
-            [Required][Address] string address,
-            string? type,
-            AccountParameter? initiator,
-            AccountParameter? sender,
-            AccountParameter? target,
-            AccountParameter? prevDelegate,
-            AccountParameter? newDelegate,
-            AccountParameter? contractDelegate,
-            AccountParameter? originatedContract,
-            AccountParameter? accuser,
-            AccountParameter? offender,
-            AccountParameter? baker,
-            Int32Parameter? level,
-            TimestampParameter? timestamp,
-            StringParameter? entrypoint,
-            JsonParameter? parameter,
-            BoolParameter? hasInternals,
-            OperationStatusParameter? status,
-            SortMode sort = SortMode.Descending,
-            long? lastId = null,
-            [Range(0, 1000)] int limit = 100,
-            MichelineFormat micheline = MichelineFormat.Json,
-            Symbols quote = Symbols.None)
-        {
-            #region validate
-            if (initiator != null)
-            {
-                if (initiator.Eqx != null)
-                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (initiator.Nex != null)
-                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
-            }
-
-            if (sender != null)
-            {
-                if (sender.Eqx != null)
-                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (sender.Nex != null)
-                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
-            }
-
-            if (target != null)
-            {
-                if (target.Eqx != null)
-                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (target.Nex != null)
-                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
-            }
-
-            if (prevDelegate != null)
-            {
-                if (prevDelegate.Eqx != null)
-                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (prevDelegate.Nex != null)
-                    return new BadRequest($"{nameof(prevDelegate)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (newDelegate != null)
-            {
-                if (newDelegate.Eqx != null)
-                    return new BadRequest($"{nameof(newDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (newDelegate.Nex != null)
-                    return new BadRequest($"{nameof(newDelegate)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (contractDelegate != null)
-            {
-                if (contractDelegate.Eqx != null)
-                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (contractDelegate.Nex != null)
-                    return new BadRequest($"{nameof(contractDelegate)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (originatedContract != null)
-            {
-                if (originatedContract.Eqx != null)
-                    return new BadRequest($"{nameof(originatedContract)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (originatedContract.Nex != null)
-                    return new BadRequest($"{nameof(originatedContract)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (accuser != null)
-            {
-                if (accuser.Eqx != null)
-                    return new BadRequest($"{nameof(accuser)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (accuser.Nex != null)
-                    return new BadRequest($"{nameof(accuser)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (offender != null)
-            {
-                if (offender.Eqx != null)
-                    return new BadRequest($"{nameof(offender)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (offender.Nex != null)
-                    return new BadRequest($"{nameof(offender)}.nex", "This parameter doesn't support .nex mode.");
-            }
-
-            if (baker != null)
-            {
-                if (baker.Eqx != null)
-                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
-
-                if (baker.Nex != null)
-                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
-            }
-            #endregion
-
-            var types = type != null ? [.. type.Split(',')] : ActivityTypes.Default;
-
-            var _sort = sort == SortMode.Ascending
-                ? new SortParameter { Asc = "Id" }
-                : new SortParameter { Desc = "Id" };
-
-            var _offset = lastId != null
-                ? new OffsetParameter { Cr = lastId }
-                : null;
-            
-            var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("type", string.Join(",", types.OrderBy(x => x))),
-                ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
-                ("newDelegate", newDelegate), ("contractDelegate", contractDelegate),
-                ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
-                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
-                ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));  
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
+        }        
 
         /// <summary>
         /// Get counter
@@ -803,5 +616,152 @@ namespace Tzkt.Api.Controllers
                 FileDownloadName = $"{address[..9]}..{address[^6..]}_{_from.ToShortDateString()}-{_to.ToShortDateString()}.csv"
             };
         }
+
+        #region [DEPRECATED]
+        [OpenApiIgnore]
+        [HttpGet("{address}/operations")]
+        public async Task<ActionResult<IEnumerable<Operation>>> GetOperations(
+            [Required][Address] string address,
+            string? type,
+            AccountParameter? initiator,
+            AccountParameter? sender,
+            AccountParameter? target,
+            AccountParameter? prevDelegate,
+            AccountParameter? newDelegate,
+            AccountParameter? contractDelegate,
+            AccountParameter? originatedContract,
+            AccountParameter? accuser,
+            AccountParameter? offender,
+            AccountParameter? baker,
+            Int32Parameter? level,
+            TimestampParameter? timestamp,
+            StringParameter? entrypoint,
+            JsonParameter? parameter,
+            BoolParameter? hasInternals,
+            OperationStatusParameter? status,
+            SortMode sort = SortMode.Descending,
+            long? lastId = null,
+            [Range(0, 1000)] int limit = 100,
+            MichelineFormat micheline = MichelineFormat.Json,
+            Symbols quote = Symbols.None)
+        {
+            #region validate
+            if (initiator != null)
+            {
+                if (initiator.Eqx != null)
+                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (initiator.Nex != null)
+                    return new BadRequest($"{nameof(initiator)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (sender != null)
+            {
+                if (sender.Eqx != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (sender.Nex != null)
+                    return new BadRequest($"{nameof(sender)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (target != null)
+            {
+                if (target.Eqx != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (target.Nex != null)
+                    return new BadRequest($"{nameof(target)}.eqx", "This parameter doesn't support .eqx mode.");
+            }
+
+            if (prevDelegate != null)
+            {
+                if (prevDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(prevDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (prevDelegate.Nex != null)
+                    return new BadRequest($"{nameof(prevDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (newDelegate != null)
+            {
+                if (newDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(newDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (newDelegate.Nex != null)
+                    return new BadRequest($"{nameof(newDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (contractDelegate != null)
+            {
+                if (contractDelegate.Eqx != null)
+                    return new BadRequest($"{nameof(contractDelegate)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (contractDelegate.Nex != null)
+                    return new BadRequest($"{nameof(contractDelegate)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (originatedContract != null)
+            {
+                if (originatedContract.Eqx != null)
+                    return new BadRequest($"{nameof(originatedContract)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (originatedContract.Nex != null)
+                    return new BadRequest($"{nameof(originatedContract)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (accuser != null)
+            {
+                if (accuser.Eqx != null)
+                    return new BadRequest($"{nameof(accuser)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (accuser.Nex != null)
+                    return new BadRequest($"{nameof(accuser)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (offender != null)
+            {
+                if (offender.Eqx != null)
+                    return new BadRequest($"{nameof(offender)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (offender.Nex != null)
+                    return new BadRequest($"{nameof(offender)}.nex", "This parameter doesn't support .nex mode.");
+            }
+
+            if (baker != null)
+            {
+                if (baker.Eqx != null)
+                    return new BadRequest($"{nameof(baker)}.eqx", "This parameter doesn't support .eqx mode.");
+
+                if (baker.Nex != null)
+                    return new BadRequest($"{nameof(baker)}.nex", "This parameter doesn't support .nex mode.");
+            }
+            #endregion
+
+            var types = type != null ? [.. type.Split(',')] : ActivityTypes.Default;
+
+            var _sort = sort == SortMode.Ascending
+                ? new SortParameter { Asc = "Id" }
+                : new SortParameter { Desc = "Id" };
+
+            var _offset = lastId != null
+                ? new OffsetParameter { Cr = lastId }
+                : null;
+
+            var query = ResponseCacheService.BuildKey(Request.Path.Value,
+                ("type", string.Join(",", types.OrderBy(x => x))),
+                ("initiator", initiator), ("sender", sender), ("target", target), ("prevDelegate", prevDelegate),
+                ("newDelegate", newDelegate), ("contractDelegate", contractDelegate),
+                ("originatedContract", originatedContract), ("accuser", accuser), ("offender", offender), ("baker", baker),
+                ("level", level), ("timestamp", timestamp), ("entrypoint", entrypoint), ("parameter", parameter), ("hasInternals", hasInternals),
+                ("status", status), ("sort", sort), ("lastId", lastId), ("limit", limit), ("micheline", micheline), ("quote", quote));
+
+            if (ResponseCache.TryGet(query, out var cached))
+                return this.Bytes(cached);
+
+            var res = await Accounts.GetOperations(address, types, initiator, sender, target, prevDelegate, newDelegate, contractDelegate, originatedContract, accuser, offender, baker, level, timestamp, entrypoint, parameter, hasInternals, status, _sort, _offset, limit, micheline, quote);
+            cached = ResponseCache.Set(query, res);
+            return this.Bytes(cached);
+        }
+        #endregion
     }
 }

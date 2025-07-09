@@ -21,8 +21,7 @@ namespace Tzkt.Data.Models
         public long? StakingOpId { get; set; }
         public long? DelegationOpId { get; set; }
         public long? DoubleBakingOpId { get; set; }
-        public long? DoubleAttestationOpId { get; set; }
-        public long? DoublePreattestationOpId { get; set; }
+        public long? DoubleConsensusOpId { get; set; }
     }
 
     public enum StakingUpdateType
@@ -71,12 +70,8 @@ namespace Tzkt.Data.Models
                 .HasFilter($@"""{nameof(StakingUpdate.DoubleBakingOpId)}"" IS NOT NULL");
 
             modelBuilder.Entity<StakingUpdate>()
-                .HasIndex(x => x.DoubleAttestationOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DoubleAttestationOpId)}"" IS NOT NULL");
-
-            modelBuilder.Entity<StakingUpdate>()
-                .HasIndex(x => x.DoublePreattestationOpId)
-                .HasFilter($@"""{nameof(StakingUpdate.DoublePreattestationOpId)}"" IS NOT NULL");
+                .HasIndex(x => x.DoubleConsensusOpId)
+                .HasFilter($@"""{nameof(StakingUpdate.DoubleConsensusOpId)}"" IS NOT NULL");
             #endregion
         }
     }

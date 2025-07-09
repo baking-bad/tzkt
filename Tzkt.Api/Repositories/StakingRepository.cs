@@ -48,8 +48,7 @@ namespace Tzkt.Api.Repositories
                         case "stakingOpId": columns.Add(@"""StakingOpId"""); break;
                         case "delegationOpId": columns.Add(@"""DelegationOpId"""); break;
                         case "doubleBakingOpId": columns.Add(@"""DoubleBakingOpId"""); break;
-                        case "doubleAttestationOpId": columns.Add(@"""DoubleAttestationOpId"""); break;
-                        case "doublePreattestationOpId": columns.Add(@"""DoublePreattestationOpId"""); break;
+                        case "doubleConsensusOpId": columns.Add(@"""DoubleConsensusOpId"""); break;
                     }
                 }
 
@@ -75,8 +74,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""StakingOpId""", filter.stakingOpId)
                 .FilterA(@"""DelegationOpId""", filter.delegationOpId)
                 .FilterA(@"""DoubleBakingOpId""", filter.doubleBakingOpId)
-                .FilterA(@"""DoubleAttestationOpId""", filter.doubleAttestationOpId)
-                .FilterA(@"""DoublePreattestationOpId""", filter.doublePreattestationOpId)
+                .FilterA(@"""DoubleConsensusOpId""", filter.doubleConsensusOpId)
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"""Id""", @"""Id"""),
@@ -106,8 +104,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""StakingOpId""", filter.stakingOpId)
                 .FilterA(@"""DelegationOpId""", filter.delegationOpId)
                 .FilterA(@"""DoubleBakingOpId""", filter.doubleBakingOpId)
-                .FilterA(@"""DoubleAttestationOpId""", filter.doubleAttestationOpId)
-                .FilterA(@"""DoublePreattestationOpId""", filter.doublePreattestationOpId);
+                .FilterA(@"""DoubleConsensusOpId""", filter.doubleConsensusOpId);
 
             await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
@@ -132,8 +129,7 @@ namespace Tzkt.Api.Repositories
                 StakingOpId = row.StakingOpId,
                 DelegationOpId = row.DelegationOpId,
                 DoubleBakingOpId = row.DoubleBakingOpId,
-                DoubleAttestationOpId = row.DoubleAttestationOpId,
-                DoublePreattestationOpId = row.DoublePreattestationOpId
+                DoubleConsensusOpId = row.DoubleConsensusOpId
             });
         }
 
@@ -221,13 +217,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.DoubleBakingOpId;
                         break;
-                    case "doubleAttestationOpId":
+                    case "doubleConsensusOpId":
                         foreach (var row in rows)
-                            result[j++][i] = row.DoubleAttestationOpId;
-                        break;
-                    case "doublePreattestationOpId":
-                        foreach (var row in rows)
-                            result[j++][i] = row.DoublePreattestationOpId;
+                            result[j++][i] = row.DoubleConsensusOpId;
                         break;
                 }
             }

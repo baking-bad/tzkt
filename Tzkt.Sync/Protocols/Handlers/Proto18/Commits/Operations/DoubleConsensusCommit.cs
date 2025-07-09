@@ -3,22 +3,23 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class DoublePreattestationCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
+    class DoubleConsensusCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
         public void Apply(Block block, JsonElement op, JsonElement content)
         {
             #region init
             var accusedLevel = GetAccusedLevel(content);
-
             var accuser = Context.Proposer;
             var offender = Cache.Accounts.GetExistingDelegate(GetOffender(content));
 
-            var operation = new DoublePreattestationOperation
+            var operation = new DoubleConsensusOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
+
+                Kind = GetKind(content),
 
                 AccusedLevel = accusedLevel,
                 SlashedLevel = GetSlashingLevel(block, Context.Protocol, accusedLevel),
@@ -36,24 +37,24 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             #region apply operation
             Db.TryAttach(accuser);
-            accuser.DoublePreattestationCount++;
+            accuser.DoubleConsensusCount++;
 
             if (offender != accuser)
             {
                 Db.TryAttach(offender);
-                offender.DoublePreattestationCount++;
+                offender.DoubleConsensusCount++;
             }
 
-            block.Operations |= Operations.DoublePreattestations;
+            block.Operations |= Operations.DoubleConsensus;
 
-            Cache.AppState.Get().DoublePreattestationOpsCount++;
+            Cache.AppState.Get().DoubleConsensusOpsCount++;
             #endregion
 
-            Db.DoublePreattestationOps.Add(operation);
-            Context.DoublePreattestationOps.Add(operation);
+            Db.DoubleConsensusOps.Add(operation);
+            Context.DoubleConsensusOps.Add(operation);
         }
 
-        public void Revert(DoublePreattestationOperation operation)
+        public void Revert(DoubleConsensusOperation operation)
         {
             #region init
             var accuser = Cache.Accounts.GetDelegate(operation.AccuserId);
@@ -62,18 +63,18 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             #region revert operation
             Db.TryAttach(accuser);
-            accuser.DoublePreattestationCount--;
+            accuser.DoubleConsensusCount--;
 
             if (offender != accuser)
             {
                 Db.TryAttach(offender);
-                offender.DoublePreattestationCount--;
+                offender.DoubleConsensusCount--;
             }
 
-            Cache.AppState.Get().DoublePreattestationOpsCount--;
+            Cache.AppState.Get().DoubleConsensusOpsCount--;
             #endregion
 
-            Db.DoublePreattestationOps.Remove(operation);
+            Db.DoubleConsensusOps.Remove(operation);
             Cache.AppState.ReleaseOperationId();
         }
 
@@ -90,6 +91,13 @@ namespace Tzkt.Sync.Protocols.Proto18
         protected virtual int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
         {
             return Cache.Protocols.GetCycleEnd(block.Cycle);
+        }
+
+        protected virtual DoubleConsensusKind GetKind(JsonElement content)
+        {
+            return content.RequiredString("kind") == "double_endorsement_evidence"
+                ? DoubleConsensusKind.DoubleAttestation
+                : DoubleConsensusKind.DoublePreattestation;
         }
     }
 }

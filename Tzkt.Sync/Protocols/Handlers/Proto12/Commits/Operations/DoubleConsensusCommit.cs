@@ -3,7 +3,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    class DoubleAttestationCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
+    class DoubleConsensusCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
         public virtual void Apply(Block block, JsonElement op, JsonElement content)
         {
@@ -27,15 +27,23 @@ namespace Tzkt.Sync.Protocols.Proto12
             var accuser = Context.Proposer;
             var offender = Cache.Accounts.GetExistingDelegate(offenderAddr);
 
-            var doubleAttestation = new DoubleAttestationOperation
+            var kind = content.RequiredString("kind") == "double_endorsement_evidence"
+                ? DoubleConsensusKind.DoubleAttestation
+                : DoubleConsensusKind.DoublePreattestation;
+
+            var doubleConsensus = new DoubleConsensusOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
 
+                Kind = kind,
+
                 SlashedLevel = block.Level,
-                AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level") + 1,
+                AccusedLevel = content.Required("op1").Required("operations").RequiredInt32("level")
+                    + (kind == DoubleConsensusKind.DoubleAttestation ? 1 : 0),
+
                 AccuserId = accuser.Id,
                 OffenderId = offender.Id,
 
@@ -53,49 +61,49 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleAttestation.Reward;
-            accuser.StakingBalance += doubleAttestation.Reward;
+            accuser.Balance += doubleConsensus.Reward;
+            accuser.StakingBalance += doubleConsensus.Reward;
 
-            offender.Balance -= doubleAttestation.LostStaked;
-            offender.StakingBalance -= doubleAttestation.LostStaked;
+            offender.Balance -= doubleConsensus.LostStaked;
+            offender.StakingBalance -= doubleConsensus.LostStaked;
 
-            accuser.DoubleAttestationCount++;
-            if (offender != accuser) offender.DoubleAttestationCount++;
+            accuser.DoubleConsensusCount++;
+            if (offender != accuser) offender.DoubleConsensusCount++;
 
-            block.Operations |= Operations.DoubleAttestations;
+            block.Operations |= Operations.DoubleConsensus;
 
-            Cache.AppState.Get().DoubleAttestationOpsCount++;
-            Cache.Statistics.Current.TotalBurned += doubleAttestation.LostStaked - doubleAttestation.Reward;
-            Cache.Statistics.Current.TotalFrozen -= doubleAttestation.LostStaked;
+            Cache.AppState.Get().DoubleConsensusOpsCount++;
+            Cache.Statistics.Current.TotalBurned += doubleConsensus.LostStaked - doubleConsensus.Reward;
+            Cache.Statistics.Current.TotalFrozen -= doubleConsensus.LostStaked;
             #endregion
 
-            Db.DoubleAttestationOps.Add(doubleAttestation);
-            Context.DoubleAttestationOps.Add(doubleAttestation);
+            Db.DoubleConsensusOps.Add(doubleConsensus);
+            Context.DoubleConsensusOps.Add(doubleConsensus);
         }
 
-        public virtual void Revert(Block block, DoubleAttestationOperation doubleAttestation)
+        public virtual void Revert(Block block, DoubleConsensusOperation doubleConsensus)
         {
             #region entities
-            var accuser = Cache.Accounts.GetDelegate(doubleAttestation.AccuserId);
-            var offender = Cache.Accounts.GetDelegate(doubleAttestation.OffenderId);
+            var accuser = Cache.Accounts.GetDelegate(doubleConsensus.AccuserId);
+            var offender = Cache.Accounts.GetDelegate(doubleConsensus.OffenderId);
             Db.TryAttach(accuser);
             Db.TryAttach(offender);
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleAttestation.Reward;
-            accuser.StakingBalance -= doubleAttestation.Reward;
+            accuser.Balance -= doubleConsensus.Reward;
+            accuser.StakingBalance -= doubleConsensus.Reward;
 
-            offender.Balance += doubleAttestation.LostStaked;
-            offender.StakingBalance += doubleAttestation.LostStaked;
+            offender.Balance += doubleConsensus.LostStaked;
+            offender.StakingBalance += doubleConsensus.LostStaked;
 
-            accuser.DoubleAttestationCount--;
-            if (offender != accuser) offender.DoubleAttestationCount--;
+            accuser.DoubleConsensusCount--;
+            if (offender != accuser) offender.DoubleConsensusCount--;
 
-            Cache.AppState.Get().DoubleAttestationOpsCount--;
+            Cache.AppState.Get().DoubleConsensusOpsCount--;
             #endregion
 
-            Db.DoubleAttestationOps.Remove(doubleAttestation);
+            Db.DoubleConsensusOps.Remove(doubleConsensus);
             Cache.AppState.ReleaseOperationId();
         }
     }

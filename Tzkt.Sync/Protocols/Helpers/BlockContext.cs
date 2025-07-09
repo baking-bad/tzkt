@@ -22,8 +22,7 @@ namespace Tzkt.Sync.Protocols
         public List<ActivationOperation> ActivationOps { get; set; } = [];
         public List<DalEntrapmentEvidenceOperation> DalEntrapmentEvidenceOps { get; set; } = [];
         public List<DoubleBakingOperation> DoubleBakingOps { get; set; } = [];
-        public List<DoubleAttestationOperation> DoubleAttestationOps { get; set; } = [];
-        public List<DoublePreattestationOperation> DoublePreattestationOps { get; set; } = [];
+        public List<DoubleConsensusOperation> DoubleConsensusOps { get; set; } = [];
         public List<NonceRevelationOperation> NonceRevelationOps { get; set; } = [];
         public List<VdfRevelationOperation> VdfRevelationOps { get; set; } = [];
         public List<DrainDelegateOperation> DrainDelegateOps { get; set; } = [];
@@ -80,8 +79,7 @@ namespace Tzkt.Sync.Protocols
             if (ActivationOps.Count != 0) ops = ops.Concat(ActivationOps);
             if (DalEntrapmentEvidenceOps.Count != 0) ops = ops.Concat(DalEntrapmentEvidenceOps);
             if (DoubleBakingOps.Count != 0) ops = ops.Concat(DoubleBakingOps);
-            if (DoubleAttestationOps.Count != 0) ops = ops.Concat(DoubleAttestationOps);
-            if (DoublePreattestationOps.Count != 0) ops = ops.Concat(DoublePreattestationOps);
+            if (DoubleConsensusOps.Count != 0) ops = ops.Concat(DoubleConsensusOps);
             if (NonceRevelationOps.Count != 0) ops = ops.Concat(NonceRevelationOps);
             if (VdfRevelationOps.Count != 0) ops = ops.Concat(VdfRevelationOps);
             if (DrainDelegateOps.Count != 0) ops = ops.Concat(DrainDelegateOps);

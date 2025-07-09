@@ -330,11 +330,8 @@ namespace Tzkt.Sync
             if (currBlock.Operations.HasFlag(Operations.DoubleBakings))
                 Context.DoubleBakingOps = await Db.DoubleBakingOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
-            if (currBlock.Operations.HasFlag(Operations.DoubleAttestations))
-                Context.DoubleAttestationOps = await Db.DoubleAttestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
-
-            if (currBlock.Operations.HasFlag(Operations.DoublePreattestations))
-                Context.DoublePreattestationOps = await Db.DoublePreattestationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
+            if (currBlock.Operations.HasFlag(Operations.DoubleConsensus))
+                Context.DoubleConsensusOps = await Db.DoubleConsensusOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();
 
             if (currBlock.Operations.HasFlag(Operations.Revelations))
                 Context.NonceRevelationOps = await Db.NonceRevelationOps.AsNoTracking().Where(x => x.Level == currBlock.Level).ToListAsync();

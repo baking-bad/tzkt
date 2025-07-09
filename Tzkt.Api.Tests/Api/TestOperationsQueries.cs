@@ -89,17 +89,17 @@ namespace Tzkt.Api.Tests.Api
         }
 
         [Fact]
-        public async Task TestDoubleAttestation()
+        public async Task TestDoubleConsensus()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/double_attestation");
+            var res = await Client.GetJsonAsync("/v1/operations/double_consensus");
 
             Assert.True(res is DJsonArray);
         }
 
         [Fact]
-        public async Task TestDoubleAttestationCount()
+        public async Task TestDoubleConsensusCount()
         {
-            var res = await Client.GetJsonAsync("/v1/operations/double_attestation/count");
+            var res = await Client.GetJsonAsync("/v1/operations/double_consensus/count");
 
             Assert.True(res is DJsonValue);
         }
