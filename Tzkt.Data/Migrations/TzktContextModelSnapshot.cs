@@ -183,7 +183,8 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("Address")
                         .IsUnique();
 
-                    b.HasIndex("DelegateId");
+                    b.HasIndex("DelegateId")
+                        .HasFilter("\"DelegateId\" IS NOT NULL");
 
                     b.HasIndex("Extras");
 
@@ -324,13 +325,10 @@ namespace Tzkt.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int>("DoubleAttestationOpsCount")
-                        .HasColumnType("integer");
-
                     b.Property<int>("DoubleBakingOpsCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DoublePreattestationOpsCount")
+                    b.Property<int>("DoubleConsensusOpsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("DrainDelegateOpsCount")
@@ -582,9 +580,8 @@ namespace Tzkt.Data.Migrations
                             DelegationOpsCount = 0,
                             DomainsLevel = 0,
                             DomainsNameRegistry = "",
-                            DoubleAttestationOpsCount = 0,
                             DoubleBakingOpsCount = 0,
-                            DoublePreattestationOpsCount = 0,
+                            DoubleConsensusOpsCount = 0,
                             DrainDelegateOpsCount = 0,
                             EventCounter = 0,
                             EventsCount = 0,
@@ -846,21 +843,6 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
 
-                    b.Property<long>("DoubleAttestationLostExternalStaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("DoubleAttestationLostExternalUnstaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("DoubleAttestationLostStaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("DoubleAttestationLostUnstaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("DoubleAttestationRewards")
-                        .HasColumnType("bigint");
-
                     b.Property<long>("DoubleBakingLostExternalStaked")
                         .HasColumnType("bigint");
 
@@ -876,19 +858,19 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("DoubleBakingRewards")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreattestationLostExternalStaked")
+                    b.Property<long>("DoubleConsensusLostExternalStaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreattestationLostExternalUnstaked")
+                    b.Property<long>("DoubleConsensusLostExternalUnstaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreattestationLostStaked")
+                    b.Property<long>("DoubleConsensusLostStaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreattestationLostUnstaked")
+                    b.Property<long>("DoubleConsensusLostUnstaked")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("DoublePreattestationRewards")
+                    b.Property<long>("DoubleConsensusRewards")
                         .HasColumnType("bigint");
 
                     b.Property<double>("ExpectedAttestations")
@@ -897,7 +879,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<double>("ExpectedBlocks")
                         .HasColumnType("double precision");
 
-                    b.Property<long>("ExpectedDalShards")
+                    b.Property<long>("ExpectedDalAttestations")
                         .HasColumnType("bigint");
 
                     b.Property<long>("ExternalDelegatedBalance")
@@ -920,6 +902,9 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long>("FutureDalAttestationRewards")
                         .HasColumnType("bigint");
+
+                    b.Property<BigInteger?>("IssuedPseudotokens")
+                        .HasColumnType("numeric");
 
                     b.Property<long>("MissedAttestationRewards")
                         .HasColumnType("bigint");
@@ -1782,6 +1767,40 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("DelegationOps");
                 });
 
+            modelBuilder.Entity("Tzkt.Data.Models.DelegationSnapshot", b =>
+                {
+                    b.Property<int>("Level")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("AccountId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("DelegatorsCount")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("ExternalDelegatedBalance")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OwnDelegatedBalance")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("PrevMinTotalDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<int?>("PrevMinTotalDelegatedLevel")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Level", "BakerId", "AccountId");
+
+                    b.HasIndex(new[] { "Level" }, "IX_DelegationSnapshots_Level_Partial")
+                        .HasFilter("\"BakerId\" = \"AccountId\"");
+
+                    b.ToTable("DelegationSnapshots");
+                });
+
             modelBuilder.Entity("Tzkt.Data.Models.DelegatorCycle", b =>
                 {
                     b.Property<int>("Id")
@@ -1802,8 +1821,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegatorId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("StakedBalance")
-                        .HasColumnType("bigint");
+                    b.Property<BigInteger?>("StakedPseudotokens")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
@@ -1870,69 +1889,6 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("Domains");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DoubleAttestationOperation", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("AccusedLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("AccuserId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("Level")
-                        .HasColumnType("integer");
-
-                    b.Property<long>("LostExternalStaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LostExternalUnstaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LostStaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("LostUnstaked")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("OffenderId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("OpHash")
-                        .IsRequired()
-                        .HasMaxLength(51)
-                        .HasColumnType("character(51)")
-                        .IsFixedLength();
-
-                    b.Property<long>("Reward")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("SlashedLevel")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("StakingUpdatesCount")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("AccuserId");
-
-                    b.HasIndex("Level");
-
-                    b.HasIndex("OffenderId");
-
-                    b.HasIndex("OpHash");
-
-                    b.ToTable("DoubleAttestationOps");
-                });
-
             modelBuilder.Entity("Tzkt.Data.Models.DoubleBakingOperation", b =>
                 {
                     b.Property<long>("Id")
@@ -1996,7 +1952,7 @@ namespace Tzkt.Data.Migrations
                     b.ToTable("DoubleBakingOps");
                 });
 
-            modelBuilder.Entity("Tzkt.Data.Models.DoublePreattestationOperation", b =>
+            modelBuilder.Entity("Tzkt.Data.Models.DoubleConsensusOperation", b =>
                 {
                     b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
@@ -2008,6 +1964,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("AccuserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Kind")
                         .HasColumnType("integer");
 
                     b.Property<int>("Level")
@@ -2056,7 +2015,7 @@ namespace Tzkt.Data.Migrations
 
                     b.HasIndex("OpHash");
 
-                    b.ToTable("DoublePreattestationOps");
+                    b.ToTable("DoubleConsensusOps");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.DrainDelegateOperation", b =>
@@ -2657,10 +2616,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<string>("Dictator")
                         .HasColumnType("text");
 
-                    b.Property<int>("DoubleAttestationSlashedPercentage")
+                    b.Property<int>("DoubleBakingSlashedPercentage")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DoubleBakingSlashedPercentage")
+                    b.Property<int>("DoubleConsensusSlashedPercentage")
                         .HasColumnType("integer");
 
                     b.Property<string>("Extras")
@@ -3876,45 +3835,40 @@ namespace Tzkt.Data.Migrations
 
             modelBuilder.Entity("Tzkt.Data.Models.SnapshotBalance", b =>
                 {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
-
-                    b.Property<int>("AccountId")
+                    b.Property<int>("Level")
                         .HasColumnType("integer");
 
                     b.Property<int>("BakerId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DelegatorsCount")
+                    b.Property<int>("AccountId")
                         .HasColumnType("integer");
 
-                    b.Property<long>("ExternalDelegatedBalance")
-                        .HasColumnType("bigint");
-
-                    b.Property<long>("ExternalStakedBalance")
-                        .HasColumnType("bigint");
-
-                    b.Property<int>("Level")
+                    b.Property<int?>("DelegatorsCount")
                         .HasColumnType("integer");
+
+                    b.Property<long?>("ExternalDelegatedBalance")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ExternalStakedBalance")
+                        .HasColumnType("bigint");
 
                     b.Property<long>("OwnDelegatedBalance")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("OwnStakedBalance")
+                    b.Property<long?>("OwnStakedBalance")
                         .HasColumnType("bigint");
 
-                    b.Property<int>("StakersCount")
+                    b.Property<BigInteger?>("Pseudotokens")
+                        .HasColumnType("numeric");
+
+                    b.Property<int?>("StakersCount")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("Level", "AccountId", "BakerId");
+                    b.HasKey("Level", "BakerId", "AccountId");
 
                     b.HasIndex(new[] { "Level" }, "IX_SnapshotBalances_Level_Partial")
-                        .HasFilter("\"AccountId\" = \"BakerId\"");
+                        .HasFilter("\"BakerId\" = \"AccountId\"");
 
                     b.ToTable("SnapshotBalances");
                 });
@@ -3948,6 +3902,47 @@ namespace Tzkt.Data.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Software");
+                });
+
+            modelBuilder.Entity("Tzkt.Data.Models.StakerCycle", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<long>("AddedStake")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AvgStake")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("BakerId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Cycle")
+                        .HasColumnType("integer");
+
+                    b.Property<long?>("FinalStake")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("InitialStake")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("RemovedStake")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("StakerId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Cycle", "BakerId");
+
+                    b.HasIndex("StakerId", "Cycle");
+
+                    b.ToTable("StakerCycles");
                 });
 
             modelBuilder.Entity("Tzkt.Data.Models.StakingOperation", b =>
@@ -4059,13 +4054,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<long?>("DelegationOpId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("DoubleAttestationOpId")
-                        .HasColumnType("bigint");
-
                     b.Property<long?>("DoubleBakingOpId")
                         .HasColumnType("bigint");
 
-                    b.Property<long?>("DoublePreattestationOpId")
+                    b.Property<long?>("DoubleConsensusOpId")
                         .HasColumnType("bigint");
 
                     b.Property<int>("Level")
@@ -4094,14 +4086,11 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("DelegationOpId")
                         .HasFilter("\"DelegationOpId\" IS NOT NULL");
 
-                    b.HasIndex("DoubleAttestationOpId")
-                        .HasFilter("\"DoubleAttestationOpId\" IS NOT NULL");
-
                     b.HasIndex("DoubleBakingOpId")
                         .HasFilter("\"DoubleBakingOpId\" IS NOT NULL");
 
-                    b.HasIndex("DoublePreattestationOpId")
-                        .HasFilter("\"DoublePreattestationOpId\" IS NOT NULL");
+                    b.HasIndex("DoubleConsensusOpId")
+                        .HasFilter("\"DoubleConsensusOpId\" IS NOT NULL");
 
                     b.HasIndex("StakingOpId")
                         .HasFilter("\"StakingOpId\" IS NOT NULL");
@@ -5884,10 +5873,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("ActivationLevel")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AttestationsCount")
+                    b.Property<int>("AttestationRewardsCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("AttestationRewardsCount")
+                    b.Property<int>("AttestationsCount")
                         .HasColumnType("integer");
 
                     b.Property<int>("AutostakingOpsCount")
@@ -5914,13 +5903,10 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("DelegatorsCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DoubleAttestationCount")
-                        .HasColumnType("integer");
-
                     b.Property<int>("DoubleBakingCount")
                         .HasColumnType("integer");
 
-                    b.Property<int>("DoublePreattestationCount")
+                    b.Property<int>("DoubleConsensusCount")
                         .HasColumnType("integer");
 
                     b.Property<long?>("EdgeOfBakingOverStaking")
@@ -5940,6 +5926,12 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<long?>("LimitOfStakingOverBaking")
                         .HasColumnType("bigint");
+
+                    b.Property<long>("MinTotalDelegated")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("MinTotalDelegatedLevel")
+                        .HasColumnType("integer");
 
                     b.Property<int>("NonceRevelationsCount")
                         .HasColumnType("integer");
