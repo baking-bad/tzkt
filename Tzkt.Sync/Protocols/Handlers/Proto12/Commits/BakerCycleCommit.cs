@@ -107,37 +107,20 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
             }
 
-            foreach (var op in Context.DoubleAttestationOps)
+            foreach (var op in Context.DoubleConsensusOps)
             {
                 var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
                 if (offenderCycle != null)
                 {
                     Db.TryAttach(offenderCycle);
-                    offenderCycle.DoubleAttestationLostStaked += op.LostStaked;
+                    offenderCycle.DoubleConsensusLostStaked += op.LostStaked;
                 }
 
                 var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                 if (accuserCycle != null)
                 {
                     Db.TryAttach(accuserCycle);
-                    accuserCycle.DoubleAttestationRewards += op.Reward;
-                }
-            }
-
-            foreach (var op in Context.DoublePreattestationOps)
-            {
-                var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
-                if (offenderCycle != null)
-                {
-                    Db.TryAttach(offenderCycle);
-                    offenderCycle.DoublePreattestationLostStaked += op.LostStaked;
-                }
-
-                var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
-                if (accuserCycle != null)
-                {
-                    Db.TryAttach(accuserCycle);
-                    accuserCycle.DoublePreattestationRewards += op.Reward;
+                    accuserCycle.DoubleConsensusRewards += op.Reward;
                 }
             }
 
@@ -334,37 +317,20 @@ namespace Tzkt.Sync.Protocols.Proto12
                 }
             }
 
-            foreach (var op in Context.DoubleAttestationOps)
+            foreach (var op in Context.DoubleConsensusOps)
             {
                 var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
                 if (offenderCycle != null)
                 {
                     Db.TryAttach(offenderCycle);
-                    offenderCycle.DoubleAttestationLostStaked -= op.LostStaked;
+                    offenderCycle.DoubleConsensusLostStaked -= op.LostStaked;
                 }
 
                 var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
                 if (accuserCycle != null)
                 {
                     Db.TryAttach(accuserCycle);
-                    accuserCycle.DoubleAttestationRewards -= op.Reward;
-                }
-            }
-
-            foreach (var op in Context.DoublePreattestationOps)
-            {
-                var offenderCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.OffenderId);
-                if (offenderCycle != null)
-                {
-                    Db.TryAttach(offenderCycle);
-                    offenderCycle.DoublePreattestationLostStaked -= op.LostStaked;
-                }
-
-                var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, op.AccuserId);
-                if (accuserCycle != null)
-                {
-                    Db.TryAttach(accuserCycle);
-                    accuserCycle.DoublePreattestationRewards -= op.Reward;
+                    accuserCycle.DoubleConsensusRewards -= op.Reward;
                 }
             }
 

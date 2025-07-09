@@ -116,16 +116,11 @@ namespace Tzkt.Api.Repositories
                 case "doubleBakingLostUnstaked": columns.Add(@"bc.""DoubleBakingLostUnstaked"""); break;
                 case "doubleBakingLostExternalStaked": columns.Add(@"bc.""DoubleBakingLostExternalStaked"""); break;
                 case "doubleBakingLostExternalUnstaked": columns.Add(@"bc.""DoubleBakingLostExternalUnstaked"""); break;
-                case "doubleAttestationRewards": columns.Add(@"bc.""DoubleAttestationRewards"""); break;
-                case "doubleAttestationLostStaked": columns.Add(@"bc.""DoubleAttestationLostStaked"""); break;
-                case "doubleAttestationLostUnstaked": columns.Add(@"bc.""DoubleAttestationLostUnstaked"""); break;
-                case "doubleAttestationLostExternalStaked": columns.Add(@"bc.""DoubleAttestationLostExternalStaked"""); break;
-                case "doubleAttestationLostExternalUnstaked": columns.Add(@"bc.""DoubleAttestationLostExternalUnstaked"""); break;
-                case "doublePreattestationRewards": columns.Add(@"bc.""DoublePreattestationRewards"""); break;
-                case "doublePreattestationLostStaked": columns.Add(@"bc.""DoublePreattestationLostStaked"""); break;
-                case "doublePreattestationLostUnstaked": columns.Add(@"bc.""DoublePreattestationLostUnstaked"""); break;
-                case "doublePreattestationLostExternalStaked": columns.Add(@"bc.""DoublePreattestationLostExternalStaked"""); break;
-                case "doublePreattestationLostExternalUnstaked": columns.Add(@"bc.""DoublePreattestationLostExternalUnstaked"""); break;
+                case "doubleConsensusRewards": columns.Add(@"bc.""DoubleConsensusRewards"""); break;
+                case "doubleConsensusLostStaked": columns.Add(@"bc.""DoubleConsensusLostStaked"""); break;
+                case "doubleConsensusLostUnstaked": columns.Add(@"bc.""DoubleConsensusLostUnstaked"""); break;
+                case "doubleConsensusLostExternalStaked": columns.Add(@"bc.""DoubleConsensusLostExternalStaked"""); break;
+                case "doubleConsensusLostExternalUnstaked": columns.Add(@"bc.""DoubleConsensusLostExternalUnstaked"""); break;
                 case "vdfRevelationRewardsDelegated": columns.Add(@"bc.""VdfRevelationRewardsDelegated"""); break;
                 case "vdfRevelationRewardsStakedOwn": columns.Add(@"bc.""VdfRevelationRewardsStakedOwn"""); break;
                 case "vdfRevelationRewardsStakedEdge": columns.Add(@"bc.""VdfRevelationRewardsStakedEdge"""); break;
@@ -320,45 +315,25 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++][i] = row.DoubleBakingLostExternalUnstaked;
                     break;
-                case "doubleAttestationRewards":
+                case "doubleConsensusRewards":
                     foreach (var row in rows)
-                        result[j++][i] = row.DoubleAttestationRewards;
+                        result[j++][i] = row.DoubleConsensusRewards;
                     break;
-                case "doubleAttestationLostStaked":
+                case "doubleConsensusLostStaked":
                     foreach (var row in rows)
-                        result[j++][i] = row.DoubleAttestationLostStaked;
+                        result[j++][i] = row.DoubleConsensusLostStaked;
                     break;
-                case "doubleAttestationLostUnstaked":
+                case "doubleConsensusLostUnstaked":
                     foreach (var row in rows)
-                        result[j++][i] = row.DoubleAttestationLostUnstaked;
+                        result[j++][i] = row.DoubleConsensusLostUnstaked;
                     break;
-                case "doubleAttestationLostExternalStaked":
+                case "doubleConsensusLostExternalStaked":
                     foreach (var row in rows)
-                        result[j++][i] = row.DoubleAttestationLostExternalStaked;
+                        result[j++][i] = row.DoubleConsensusLostExternalStaked;
                     break;
-                case "doubleAttestationLostExternalUnstaked":
+                case "doubleConsensusLostExternalUnstaked":
                     foreach (var row in rows)
-                        result[j++][i] = row.DoubleAttestationLostExternalUnstaked;
-                    break;
-                case "doublePreattestationRewards":
-                    foreach (var row in rows)
-                        result[j++][i] = row.DoublePreattestationRewards;
-                    break;
-                case "doublePreattestationLostStaked":
-                    foreach (var row in rows)
-                        result[j++][i] = row.DoublePreattestationLostStaked;
-                    break;
-                case "doublePreattestationLostUnstaked":
-                    foreach (var row in rows)
-                        result[j++][i] = row.DoublePreattestationLostUnstaked;
-                    break;
-                case "doublePreattestationLostExternalStaked":
-                    foreach (var row in rows)
-                        result[j++][i] = row.DoublePreattestationLostExternalStaked;
-                    break;
-                case "doublePreattestationLostExternalUnstaked":
-                    foreach (var row in rows)
-                        result[j++][i] = row.DoublePreattestationLostExternalUnstaked;
+                        result[j++][i] = row.DoubleConsensusLostExternalUnstaked;
                     break;
                 case "vdfRevelationRewardsDelegated":
                     foreach (var row in rows)
@@ -449,16 +424,11 @@ namespace Tzkt.Api.Repositories
             DoubleBakingLostUnstaked = row.DoubleBakingLostUnstaked,
             DoubleBakingLostExternalStaked = row.DoubleBakingLostExternalStaked,
             DoubleBakingLostExternalUnstaked = row.DoubleBakingLostExternalUnstaked,
-            DoubleAttestationRewards = row.DoubleAttestationRewards,
-            DoubleAttestationLostStaked = row.DoubleAttestationLostStaked,
-            DoubleAttestationLostUnstaked = row.DoubleAttestationLostUnstaked,
-            DoubleAttestationLostExternalStaked = row.DoubleAttestationLostExternalStaked,
-            DoubleAttestationLostExternalUnstaked = row.DoubleAttestationLostExternalUnstaked,
-            DoublePreattestationRewards = row.DoublePreattestationRewards,
-            DoublePreattestationLostStaked = row.DoublePreattestationLostStaked,
-            DoublePreattestationLostUnstaked = row.DoublePreattestationLostUnstaked,
-            DoublePreattestationLostExternalStaked = row.DoublePreattestationLostExternalStaked,
-            DoublePreattestationLostExternalUnstaked = row.DoublePreattestationLostExternalUnstaked,
+            DoubleConsensusRewards = row.DoubleConsensusRewards,
+            DoubleConsensusLostStaked = row.DoubleConsensusLostStaked,
+            DoubleConsensusLostUnstaked = row.DoubleConsensusLostUnstaked,
+            DoubleConsensusLostExternalStaked = row.DoubleConsensusLostExternalStaked,
+            DoubleConsensusLostExternalUnstaked = row.DoubleConsensusLostExternalUnstaked,
             VdfRevelationRewardsDelegated = row.VdfRevelationRewardsDelegated,
             VdfRevelationRewardsStakedOwn = row.VdfRevelationRewardsStakedOwn,
             VdfRevelationRewardsStakedEdge = row.VdfRevelationRewardsStakedEdge,

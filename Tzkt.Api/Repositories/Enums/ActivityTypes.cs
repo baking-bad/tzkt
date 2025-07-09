@@ -13,8 +13,7 @@ namespace Tzkt.Api
         public const string DalPublishCommitment = "dal_publish_commitment";
         public const string Delegation = "delegation";
         public const string DoubleBaking = "double_baking";
-        public const string DoubleAttestation = "double_attestation";
-        public const string DoublePreattestation = "double_preattestation";
+        public const string DoubleConsensus = "double_consensus";
         public const string DrainDelegate = "drain_delegate";
         public const string Attestation = "attestation";
         public const string AttestationReward = "attestation_reward";
@@ -63,8 +62,7 @@ namespace Tzkt.Api
             DalPublishCommitment => true,
             Delegation => true,
             DoubleBaking => true,
-            DoubleAttestation => true,
-            DoublePreattestation => true,
+            DoubleConsensus => true,
             DrainDelegate => true,
             Attestation => true,
             AttestationReward => true,
@@ -118,8 +116,7 @@ namespace Tzkt.Api
                 case DalPublishCommitment: res = Operations.DalPublishCommitment; break;
                 case Delegation: res = Operations.Delegations; break;
                 case DoubleBaking: res = Operations.DoubleBakings; break;
-                case DoubleAttestation: res = Operations.DoubleAttestations; break;
-                case DoublePreattestation: res = Operations.DoublePreattestations; break;
+                case DoubleConsensus: res = Operations.DoubleConsensus; break;
                 case DrainDelegate: res = Operations.DrainDelegate; break;
                 case Attestation: res = Operations.Attestations; break;
                 case AttestationReward: res = Operations.AttestationRewards; break;
@@ -170,8 +167,7 @@ namespace Tzkt.Api
             DalPublishCommitment,
             Delegation,
             DoubleBaking,
-            DoubleAttestation,
-            DoublePreattestation,
+            DoubleConsensus,
             DrainDelegate,
             //Attestation,
             AttestationReward,

@@ -68,17 +68,11 @@ namespace Tzkt.Data.Models
         public long DoubleBakingLostExternalStaked { get; set; }
         public long DoubleBakingLostExternalUnstaked { get; set; }
 
-        public long DoubleAttestationRewards { get; set; }
-        public long DoubleAttestationLostStaked { get; set; }
-        public long DoubleAttestationLostUnstaked { get; set; }
-        public long DoubleAttestationLostExternalStaked { get; set; }
-        public long DoubleAttestationLostExternalUnstaked { get; set; }
-
-        public long DoublePreattestationRewards { get; set; }
-        public long DoublePreattestationLostStaked { get; set; }
-        public long DoublePreattestationLostUnstaked { get; set; }
-        public long DoublePreattestationLostExternalStaked { get; set; }
-        public long DoublePreattestationLostExternalUnstaked { get; set; }
+        public long DoubleConsensusRewards { get; set; }
+        public long DoubleConsensusLostStaked { get; set; }
+        public long DoubleConsensusLostUnstaked { get; set; }
+        public long DoubleConsensusLostExternalStaked { get; set; }
+        public long DoubleConsensusLostExternalUnstaked { get; set; }
 
         public long VdfRevelationRewardsDelegated { get; set; }
         public long VdfRevelationRewardsStakedOwn { get; set; }

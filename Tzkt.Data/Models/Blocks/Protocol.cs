@@ -76,7 +76,7 @@ namespace Tzkt.Data.Models
         public string? Dictator { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }
-        public int DoubleAttestationSlashedPercentage { get; set; }
+        public int DoubleConsensusSlashedPercentage { get; set; }
 
         public int NumberOfShards { get; set; }
         public int ToleratedInactivityPeriod { get; set; }

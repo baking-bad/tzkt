@@ -6,11 +6,13 @@ namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
-        public async Task<int> GetDoublePreattestationsCount(
+        public async Task<int> GetDoubleConsensusCount(
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
-            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoublePreattestationOps""")
+            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""DoubleConsensusOps""")
+                .Filter("Kind", kind)
                 .Filter("Level", level)
                 .Filter("Level", timestamp);
 
@@ -18,11 +20,11 @@ namespace Tzkt.Api.Repositories
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
-        public async Task<IEnumerable<DoublePreattestationOperation>> GetDoublePreattestations(string hash, Symbols quote)
+        public async Task<IEnumerable<DoubleConsensusOperation>> GetDoubleConsensus(string hash, Symbols quote)
         {
             var sql = """
                 SELECT      o.*, b."Hash"
-                FROM        "DoublePreattestationOps" as o
+                FROM        "DoubleConsensusOps" as o
                 INNER JOIN  "Blocks" as b 
                         ON  b."Level" = o."Level"
                 WHERE       o."OpHash" = @hash::character(51)
@@ -31,7 +33,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
-            return rows.Select(row => new DoublePreattestationOperation
+            return rows.Select(row => new DoubleConsensusOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -40,6 +42,7 @@ namespace Tzkt.Api.Repositories
                 Hash = hash,
                 AccusedLevel = row.AccusedLevel,
                 SlashedLevel = row.SlashedLevel,
+                Kind = DoubleConsensusKinds.ToString(row.Kind),
                 Accuser = Accounts.GetAlias(row.AccuserId),
                 Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
@@ -52,11 +55,11 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<DoublePreattestationOperation>> GetDoublePreattestations(Block block, Symbols quote)
+        public async Task<IEnumerable<DoubleConsensusOperation>> GetDoubleConsensus(Block block, Symbols quote)
         {
             var sql = """
                 SELECT      *
-                FROM        "DoublePreattestationOps"
+                FROM        "DoubleConsensusOps"
                 WHERE       "Level" = @level
                 ORDER BY    "Id"
                 """;
@@ -64,7 +67,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
-            return rows.Select(row => new DoublePreattestationOperation
+            return rows.Select(row => new DoubleConsensusOperation
             {
                 Id = row.Id,
                 Level = block.Level,
@@ -73,6 +76,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
                 SlashedLevel = row.SlashedLevel,
+                Kind = DoubleConsensusKinds.ToString(row.Kind),
                 Accuser = Accounts.GetAlias(row.AccuserId),
                 Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
@@ -85,7 +89,7 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<IEnumerable<Activity>> GetDoublePreattestationOpsActivity(
+        public async Task<IEnumerable<Activity>> GetDoubleConsensusOpsActivity(
             List<RawAccount> accounts,
             ActivityRole roles,
             TimestampParameter? timestamp,
@@ -97,7 +101,7 @@ namespace Tzkt.Api.Repositories
 
             foreach (var account in accounts)
             {
-                if (account is not RawDelegate baker || baker.DoublePreattestationCount == 0)
+                if (account is not RawDelegate baker || baker.DoubleConsensusCount == 0)
                     continue;
 
                 if ((roles & ActivityRole.Target) != 0)
@@ -122,9 +126,9 @@ namespace Tzkt.Api.Repositories
                 ("AccuserId", accuserIds),
                 ("OffenderId", offenderIds));
 
-            return await GetDoublePreattestations(
+            return await GetDoubleConsensus(
                 or,
-                null, null, null, null, null,
+                null, null, null, null, null, null,
                 timestamp,
                 pagination.sort,
                 pagination.offset,
@@ -132,12 +136,13 @@ namespace Tzkt.Api.Repositories
                 quote);
         }
 
-        public async Task<IEnumerable<DoublePreattestationOperation>> GetDoublePreattestations(
+        public async Task<IEnumerable<DoubleConsensusOperation>> GetDoubleConsensus(
             OrParameter? or,
             AnyOfParameter? anyof,
             AccountParameter? accuser,
             AccountParameter? offender,
             Int64Parameter? id,
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -147,7 +152,7 @@ namespace Tzkt.Api.Repositories
         {
             var sql = new SqlBuilder("""
                 SELECT      o.*, b."Hash"
-                FROM        "DoublePreattestationOps" AS o
+                FROM        "DoubleConsensusOps" AS o
                 INNER JOIN  "Blocks" as b
                         ON  b."Level" = o."Level"
                 """)
@@ -156,6 +161,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
+                .FilterA(@"o.""Kind""", kind)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -169,7 +175,7 @@ namespace Tzkt.Api.Repositories
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
-            return rows.Select(row => new DoublePreattestationOperation
+            return rows.Select(row => new DoubleConsensusOperation
             {
                 Id = row.Id,
                 Level = row.Level,
@@ -178,6 +184,7 @@ namespace Tzkt.Api.Repositories
                 Hash = row.OpHash,
                 AccusedLevel = row.AccusedLevel,
                 SlashedLevel = row.SlashedLevel,
+                Kind = DoubleConsensusKinds.ToString(row.Kind),
                 Accuser = Accounts.GetAlias(row.AccuserId),
                 Reward = row.Reward,
                 Offender = Accounts.GetAlias(row.OffenderId),
@@ -190,11 +197,12 @@ namespace Tzkt.Api.Repositories
             });
         }
 
-        public async Task<object?[][]> GetDoublePreattestations(
+        public async Task<object?[][]> GetDoubleConsensus(
             AnyOfParameter? anyof,
             AccountParameter? accuser,
             AccountParameter? offender,
             Int64Parameter? id,
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -216,6 +224,7 @@ namespace Tzkt.Api.Repositories
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
                     case "slashedLevel": columns.Add(@"o.""SlashedLevel"""); break;
+                    case "kind": columns.Add(@"o.""Kind"""); break;
                     case "accuser": columns.Add(@"o.""AccuserId"""); break;
                     case "reward": columns.Add(@"o.""Reward"""); break;
                     case "offender": columns.Add(@"o.""OffenderId"""); break;
@@ -235,11 +244,12 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return [];
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoublePreattestationOps"" as o {string.Join(' ', joins)}")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleConsensusOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
+                .FilterA(@"o.""Kind""", kind)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -289,6 +299,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SlashedLevel;
                         break;
+                    case "kind":
+                        foreach (var row in rows)
+                            result[j++][i] = DoubleConsensusKinds.ToString(row.Kind);
+                        break;
                     case "accuser":
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.AccuserId);
@@ -331,11 +345,12 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<object?[]> GetDoublePreattestations(
+        public async Task<object?[]> GetDoubleConsensus(
             AnyOfParameter? anyof,
             AccountParameter? accuser,
             AccountParameter? offender,
             Int64Parameter? id,
+            DoubleConsensusKindParameter? kind,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -355,6 +370,7 @@ namespace Tzkt.Api.Repositories
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "accusedLevel": columns.Add(@"o.""AccusedLevel"""); break;
                 case "slashedLevel": columns.Add(@"o.""SlashedLevel"""); break;
+                case "kind": columns.Add(@"o.""Kind"""); break;
                 case "accuser": columns.Add(@"o.""AccuserId"""); break;
                 case "reward": columns.Add(@"o.""Reward"""); break;
                 case "offender": columns.Add(@"o.""OffenderId"""); break;
@@ -373,11 +389,12 @@ namespace Tzkt.Api.Repositories
             if (columns.Count == 0)
                 return [];
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoublePreattestationOps"" as o {string.Join(' ', joins)}")
+            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""DoubleConsensusOps"" as o {string.Join(' ', joins)}")
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
                 .FilterA(@"o.""Id""", id)
+                .FilterA(@"o.""Kind""", kind)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -424,6 +441,10 @@ namespace Tzkt.Api.Repositories
                 case "slashedLevel":
                     foreach (var row in rows)
                         result[j++] = row.SlashedLevel;
+                    break;
+                case "kind":
+                    foreach (var row in rows)
+                        result[j++] = DoubleConsensusKinds.ToString(row.Kind);
                     break;
                 case "accuser":
                     foreach (var row in rows)

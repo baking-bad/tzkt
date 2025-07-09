@@ -116,13 +116,9 @@ namespace Tzkt.Api.Websocket.Processors
                     ? Repo.GetDoubleBakings(null, null, null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.DoubleBakingOperation>());
 
-                var doubleAttestation = TypeSubs.TryGetValue(Operations.DoubleAttestations, out var doubleAttestationSub)
-                    ? Repo.GetDoubleAttestations(null, null, null, null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.DoubleAttestationOperation>());
-
-                var doublePreattestation = TypeSubs.TryGetValue(Operations.DoublePreattestations, out var doublePreattestationSub)
-                    ? Repo.GetDoublePreattestations(null, null, null, null, null, level, null, null, null, limit, symbols)
-                    : Task.FromResult(Enumerable.Empty<Models.DoublePreattestationOperation>());
+                var doubleConsensus = TypeSubs.TryGetValue(Operations.DoubleConsensus, out var doubleConsensusSub)
+                    ? Repo.GetDoubleConsensus(null, null, null, null, null, null, level, null, null, null, limit, symbols)
+                    : Task.FromResult(Enumerable.Empty<Models.DoubleConsensusOperation>());
 
                 var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
                     ? Repo.GetNonceRevelations(null, null, null, null, level, null, null, null, null, limit, symbols)
@@ -276,8 +272,7 @@ namespace Tzkt.Api.Websocket.Processors
                     activations,
                     dalEntrapmentEvidences,
                     doubleBaking,
-                    doubleAttestation,
-                    doublePreattestation,
+                    doubleConsensus,
                     revelations,
                     vdfRevelations,
                     delegations,
@@ -432,34 +427,18 @@ namespace Tzkt.Api.Websocket.Processors
                         }
                 }
 
-                if (doubleAttestation.Result.Any())
+                if (doubleConsensus.Result.Any())
                 {
-                    if (doubleAttestationSub!.Subs != null)
-                        AddRange(doubleAttestationSub.Subs, doubleAttestation.Result);
+                    if (doubleConsensusSub!.Subs != null)
+                        AddRange(doubleConsensusSub.Subs, doubleConsensus.Result);
 
-                    if (doubleAttestationSub.AddressSubs != null)
-                        foreach (var op in doubleAttestation.Result)
+                    if (doubleConsensusSub.AddressSubs != null)
+                        foreach (var op in doubleConsensus.Result)
                         {
-                            if (doubleAttestationSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
+                            if (doubleConsensusSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
                                 Add(accuserSubs.Subs, op);
 
-                            if (doubleAttestationSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
-                                Add(offenderSubs.Subs, op);
-                        }
-                }
-
-                if (doublePreattestation.Result.Any())
-                {
-                    if (doublePreattestationSub!.Subs != null)
-                        AddRange(doublePreattestationSub.Subs, doublePreattestation.Result);
-
-                    if (doublePreattestationSub.AddressSubs != null)
-                        foreach (var op in doublePreattestation.Result)
-                        {
-                            if (doublePreattestationSub.AddressSubs.TryGetValue(op.Accuser.Address, out var accuserSubs) && accuserSubs.Subs != null)
-                                Add(accuserSubs.Subs, op);
-
-                            if (doublePreattestationSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
+                            if (doubleConsensusSub.AddressSubs.TryGetValue(op.Offender.Address, out var offenderSubs) && offenderSubs.Subs != null)
                                 Add(offenderSubs.Subs, op);
                         }
                 }

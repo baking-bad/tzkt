@@ -296,8 +296,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.BlocksCount > 0) SumBaking(union, from, to);
                 if (delegat.AttestationsCount > 0) SumAttestations(union, from, to);
                 if (delegat.DoubleBakingCount > 0) SumDoubleBaking(union, from, to);
-                if (delegat.DoubleAttestationCount > 0) SumDoubleAttestation(union, from, to);
-                if (delegat.DoublePreattestationCount > 0) SumDoublePreattestation(union, from, to);
+                if (delegat.DoubleConsensusCount > 0) SumDoubleConsensus(union, from, to);
                 if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
                 if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
                 if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
@@ -440,13 +439,13 @@ namespace Tzkt.Api.Repositories
             #endregion
         }
 
-        void SumDoubleAttestation(StringBuilder sql, int from, int to)
+        void SumDoubleConsensus(StringBuilder sql, int from, int to)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
             #region accuser
             sql.Append(@"SUM(""Reward"") as ""Change"" ");
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
 
             if (from > 0)
@@ -461,40 +460,7 @@ namespace Tzkt.Api.Repositories
 
             #region offender
             sql.Append(@"SUM(-""LostStaked"" - ""LostUnstaked"") as ""Change"" ");
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
-            sql.Append(@"WHERE ""OffenderId"" = @account ");
-
-            if (from > 0)
-                sql.Append($@"AND ""Level"" > {from} ");
-            else if (to > 0)
-                sql.Append($@"AND ""Level"" <= {to} ");
-
-            sql.AppendLine();
-            #endregion
-        }
-
-        void SumDoublePreattestation(StringBuilder sql, int from, int to)
-        {
-            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
-
-            #region accuser
-            sql.Append(@"SUM(""Reward"") as ""Change"" ");
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
-            sql.Append(@"WHERE ""AccuserId"" = @account ");
-
-            if (from > 0)
-                sql.Append($@"AND ""Level"" > {from} ");
-            else if (to > 0)
-                sql.Append($@"AND ""Level"" <= {to} ");
-
-            sql.AppendLine();
-            #endregion
-
-            sql.Append("UNION ALL SELECT ");
-
-            #region offender
-            sql.Append(@"SUM(-""LostStaked"" - ""LostUnstaked"") as ""Change"" ");
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
             if (from > 0)
@@ -1291,8 +1257,7 @@ namespace Tzkt.Api.Repositories
                 if (delegat.BlocksCount > 0) UnionBaking(union);
                 if (delegat.AttestationsCount > 0) UnionAttestations(union);
                 if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(union);
-                if (delegat.DoubleAttestationCount > 0) UnionDoubleAttestation(union);
-                if (delegat.DoublePreattestationCount > 0) UnionDoublePreattestation(union);
+                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(union);
                 if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
                 if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
                 if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
@@ -1411,7 +1376,7 @@ namespace Tzkt.Api.Repositories
             #endregion
         }
 
-        void UnionDoubleAttestation(StringBuilder sql)
+        void UnionDoubleConsensus(StringBuilder sql)
         {
             sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
 
@@ -1419,7 +1384,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Level"" as ""Level"", ");
             sql.Append(@"""Reward"" as ""Change"" ");
 
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""AccuserId"" = @account ");
 
             sql.AppendLine();
@@ -1431,34 +1396,7 @@ namespace Tzkt.Api.Repositories
             sql.Append(@"""Level"" as ""Level"", ");
             sql.Append(@"(-""LostStaked"" - ""LostUnstaked"") as ""Change"" ");
 
-            sql.Append(@"FROM ""DoubleAttestationOps"" ");
-            sql.Append(@"WHERE ""OffenderId"" = @account ");
-
-            sql.AppendLine();
-            #endregion
-        }
-
-        void UnionDoublePreattestation(StringBuilder sql)
-        {
-            sql.Append(sql.Length == 0 ? "SELECT " : "UNION ALL SELECT ");
-
-            #region accuser
-            sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"""Reward"" as ""Change"" ");
-
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
-            sql.Append(@"WHERE ""AccuserId"" = @account ");
-
-            sql.AppendLine();
-            #endregion
-
-            sql.Append("UNION ALL SELECT ");
-
-            #region offender
-            sql.Append(@"""Level"" as ""Level"", ");
-            sql.Append(@"(-""LostStaked"" - ""LostUnstaked"") as ""Change"" ");
-
-            sql.Append(@"FROM ""DoublePreattestationOps"" ");
+            sql.Append(@"FROM ""DoubleConsensusOps"" ");
             sql.Append(@"WHERE ""OffenderId"" = @account ");
 
             sql.AppendLine();

@@ -63,8 +63,7 @@ namespace Tzkt.Sync.Tests.Database
                 state.DelegationOpsCount +
                 state.DalEntrapmentEvidenceOpsCount +
                 state.DoubleBakingOpsCount +
-                state.DoubleAttestationOpsCount +
-                state.DoublePreattestationOpsCount +
+                state.DoubleConsensusOpsCount +
                 state.DrainDelegateOpsCount +
                 state.AttestationOpsCount +
                 state.IncreasePaidStorageOpsCount +
@@ -191,11 +190,8 @@ namespace Tzkt.Sync.Tests.Database
             if (state.DoubleBakingOpsCount != await db.DoubleBakingOps.CountAsync())
                 throw new Exception("Invalid AppState.DoubleBakingOpsCount");
 
-            if (state.DoubleAttestationOpsCount != await db.DoubleAttestationOps.CountAsync())
-                throw new Exception("Invalid AppState.DoubleAttestationOpsCount");
-
-            if (state.DoublePreattestationOpsCount != await db.DoublePreattestationOps.CountAsync())
-                throw new Exception("Invalid AppState.DoublePreattestationOpsCount");
+            if (state.DoubleConsensusOpsCount != await db.DoubleConsensusOps.CountAsync())
+                throw new Exception("Invalid AppState.DoubleConsensusOpsCount");
 
             if (state.AttestationOpsCount != await db.AttestationOps.CountAsync())
                 throw new Exception("Invalid AppState.AttestationOpsCount");

@@ -243,54 +243,29 @@ namespace Tzkt.Api.Models
         public long DoubleBakingLostExternalUnstaked { get; set; }
 
         /// <summary>
-        /// Rewards for detecting double attestation (accusing someone of validating two different blocks at the same level).
+        /// Rewards for detecting double (pre)attestation (accusing someone of validating two different blocks at the same level).
         /// </summary>
-        public long DoubleAttestationRewards { get; set; }
+        public long DoubleConsensusRewards { get; set; }
 
         /// <summary>
-        /// Amount of baker's own staked balance lost due to double attestation
+        /// Amount of baker's own staked balance lost due to double (pre)attestation
         /// </summary>
-        public long DoubleAttestationLostStaked { get; set; }
+        public long DoubleConsensusLostStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double attestation
+        /// Amount of baker's own unstaked balance lost due to double (pre)attestation
         /// </summary>
-        public long DoubleAttestationLostUnstaked { get; set; }
+        public long DoubleConsensusLostUnstaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external staked balance lost due to double attestation
+        /// Amount of baker's external staked balance lost due to double (pre)attestation
         /// </summary>
-        public long DoubleAttestationLostExternalStaked { get; set; }
+        public long DoubleConsensusLostExternalStaked { get; set; }
 
         /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double attestation
+        /// Amount of baker's external unstaked balance lost due to double (pre)attestation
         /// </summary>
-        public long DoubleAttestationLostExternalUnstaked { get; set; }
-
-        /// <summary>
-        /// Rewards for detecting double preattestation (accusing someone of pre-validating two different blocks at the same level).
-        /// </summary>
-        public long DoublePreattestationRewards { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own staked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's own unstaked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostUnstaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external staked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostExternalStaked { get; set; }
-
-        /// <summary>
-        /// Amount of baker's external unstaked balance lost due to double preattestation
-        /// </summary>
-        public long DoublePreattestationLostExternalUnstaked { get; set; }
+        public long DoubleConsensusLostExternalUnstaked { get; set; }
 
         /// <summary>
         /// Rewards, corresponding to delegated stake, for including vdf revelations, received on baker's liquid balance
@@ -411,52 +386,52 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingRewards => DoubleAttestationRewards;
+        public long DoubleEndorsingRewards => DoubleConsensusRewards;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostStaked => DoubleAttestationLostStaked;
+        public long DoubleEndorsingLostStaked => DoubleConsensusLostStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostUnstaked => DoubleAttestationLostUnstaked;
+        public long DoubleEndorsingLostUnstaked => DoubleConsensusLostUnstaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalStaked => DoubleAttestationLostExternalStaked;
+        public long DoubleEndorsingLostExternalStaked => DoubleConsensusLostExternalStaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoubleEndorsingLostExternalUnstaked => DoubleAttestationLostExternalUnstaked;
+        public long DoubleEndorsingLostExternalUnstaked => DoubleConsensusLostExternalUnstaked;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingRewards => DoublePreattestationRewards;
+        public long DoublePreendorsingRewards => 0;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostStaked => DoublePreattestationLostStaked;
+        public long DoublePreendorsingLostStaked => 0;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostUnstaked => DoublePreattestationLostUnstaked;
+        public long DoublePreendorsingLostUnstaked => 0;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalStaked => DoublePreattestationLostExternalStaked;
+        public long DoublePreendorsingLostExternalStaked => 0;
 
         /// <summary>
         /// **DEPRECATED**
         /// </summary>
-        public long DoublePreendorsingLostExternalUnstaked => DoublePreattestationLostExternalUnstaked;
+        public long DoublePreendorsingLostExternalUnstaked => 0;
         #endregion
     }
 }
