@@ -20,6 +20,7 @@
             "NetXXWAHLEvre9b" => "parisnet",
             "NetXuTeGinLEqxp" => "quebecnet",
             "NetXPdgaoabtBth" => "rionet",
+            "NetXd56aBs1aeW3" => "seoulnet",
             "NetXQxxuRar4toQ" => "nextnet",
             _ => "private"
         };
