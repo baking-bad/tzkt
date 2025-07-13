@@ -52,6 +52,7 @@ namespace Tzkt.Api.Controllers
                 return Ok(Enumerable.Empty<BakerRewards>());
 
             var filter = new CycleRewardsFilter { baker = baker, cycle = cycle };
+            pagination.sort ??= new SortParameter { Desc = "cycle" };
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
@@ -117,6 +118,7 @@ namespace Tzkt.Api.Controllers
                 return Ok(Enumerable.Empty<DelegatorRewards>());
 
             var filter = new DelegatorRewardsFilter { delegator = delegator, cycle = cycle };
+            pagination.sort ??= new SortParameter { Desc = "cycle" };
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
@@ -182,6 +184,7 @@ namespace Tzkt.Api.Controllers
                 return Ok(Enumerable.Empty<StakerRewards>());
 
             var filter = new StakerRewardsFilter { staker = staker, cycle = cycle };
+            pagination.sort ??= new SortParameter { Desc = "cycle" };
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
                 ("filter", filter), ("pagination", pagination), ("selection", selection), ("quote", quote));
