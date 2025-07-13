@@ -85,7 +85,13 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual string GetOffender(JsonElement content)
         {
-            return content.Required("metadata").RequiredString("forbidden_delegate");
+            var offender = content.Required("metadata").OptionalString("forbidden_delegate");
+            
+            // one-time workaround to avoid signature brute forcing
+            if (offender == null && Cache.AppState.GetChainId() == "NetXdQprcVkpaWU" && Context.Block.Level == 5689908)
+                offender = "tz1bZ8vsMAXmaWEV7FRnyhcuUs2fYMaQ6Hkk";
+
+            return offender ?? throw new Exception("Failed to determine offender");
         }
 
         protected virtual int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
