@@ -173,7 +173,8 @@ namespace Tzkt.Api.Repositories
                 TotalMinted = row.TotalMinted,
                 TotalSupply = row.TotalSupply,
                 TransfersCount = row.TransfersCount,
-                Metadata = row.Metadata
+                Metadata = row.Metadata,
+                Extras = row.Extras
             });
         }
 
@@ -268,6 +269,10 @@ namespace Tzkt.Api.Repositories
                     case "metadata":
                         foreach (var row in rows)
                             result[j++][i] = (RawJson)row.Metadata;
+                        break;
+                    case "extras":
+                        foreach (var row in rows)
+                            result[j++][i] = (RawJson)row.Extras;
                         break;
                     default:
                         if (fields[i].Field == "metadata")
