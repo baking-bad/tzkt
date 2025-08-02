@@ -212,7 +212,7 @@ namespace Tzkt.Api.Services
                 null,
                 new SortParameter { Desc = "level" },
                 null, 5, [
-                    "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "fees", "hash",
+                    "timestamp", "level", "baker", "baker", "round", "round", "validations", "fees", "hash",
                     "rewardDelegated", "rewardStakedOwn", "rewardStakedShared", "rewardStakedEdge",
                     "bonusDelegated", "bonusStakedOwn", "bonusStakedShared", "bonusStakedEdge"
                 ]);
