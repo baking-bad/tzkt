@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<AssemblyVersion>1.15.1</AssemblyVersion>
+		<AssemblyVersion>1.16.0</AssemblyVersion>
 	</PropertyGroup>
 
     <PropertyGroup>
