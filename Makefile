@@ -45,49 +45,46 @@ api-image:
 sync-image:
 	docker build -t bakingbad/tzkt-sync:latest -f ./Tzkt.Sync/Dockerfile .
 
-ghost-init:
-	docker-compose -f docker-compose.ghost.yml up   -d ghost-db
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.16_ghostnet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
+ghostnet-init:
+	docker-compose -f docker-compose.ghostnet.yml up   -d ghostnet-db
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db apt update
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db apt install -y wget
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db wget "https://snapshots.tzkt.io/tzkt_v1.16_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db rm tzkt_db.backup
+	docker-compose -f docker-compose.ghostnet.yml exec -T ghostnet-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-ghost-start:
-	docker-compose -f docker-compose.ghost.yml up -d
+ghostnet-start:
+	docker-compose -f docker-compose.ghostnet.yml up -d
 
-ghost-stop:
-	docker-compose -f docker-compose.ghost.yml down
+ghostnet-stop:
+	docker-compose -f docker-compose.ghostnet.yml down
 
-ghost-db-start:
-	docker-compose -f docker-compose.ghost.yml up -d ghost-db
+ghostnet-db-start:
+	docker-compose -f docker-compose.ghostnet.yml up -d ghostnet-db
 
-rio-init:
-	docker-compose -f docker-compose.rio.yml up   -d rio-db
-	docker-compose -f docker-compose.rio.yml exec -T rio-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.rio.yml exec -T rio-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.rio.yml exec -T rio-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.rio.yml exec -T rio-db apt update
-	docker-compose -f docker-compose.rio.yml exec -T rio-db apt install -y wget
-	docker-compose -f docker-compose.rio.yml exec -T rio-db wget "https://snapshots.tzkt.io/tzkt_v1.16_rionet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.rio.yml exec -T rio-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.rio.yml exec -T rio-db rm tzkt_db.backup
-	docker-compose -f docker-compose.rio.yml exec -T rio-db apt autoremove --purge -y wget
+seoulnet-init:
+	docker-compose -f docker-compose.seoulnet.yml up   -d seoulnet-db
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db apt update
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db apt install -y wget
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db wget "https://snapshots.tzkt.io/tzkt_v1.16_seoulnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db rm tzkt_db.backup
+	docker-compose -f docker-compose.seoulnet.yml exec -T seoulnet-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-rio-start:
-	docker-compose -f docker-compose.rio.yml up -d
+seoulnet-start:
+	docker-compose -f docker-compose.seoulnet.yml up -d
 
-rio-stop:
-	docker-compose -f docker-compose.rio.yml down
+seoulnet-stop:
+	docker-compose -f docker-compose.seoulnet.yml down
 
-rio-db-start:
-	docker-compose -f docker-compose.rio.yml up -d rio-db
-reset:
-	docker-compose -f docker-compose.rio.yml down --volumes
-	docker-compose -f docker-compose.rio.yml up -d rio-db
+seoulnet-db-start:
+	docker-compose -f docker-compose.seoulnet.yml up -d seoulnet-db

@@ -257,9 +257,9 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Ghostnet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.16_ghostnet.backup
    - RPC node: https://rpc.tzkt.io/ghostnet/
- - Rionet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.16_rionet.backup
-   - RPC node: https://rpc.tzkt.io/rionet/
+ - Seoulnet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.16_seoulnet.backup
+   - RPC node: https://rpc.tzkt.io/seoulnet/
 
 ### Testnets & docker
 
