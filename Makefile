@@ -5,7 +5,7 @@ init:
 	docker-compose exec -T db createdb -U tzkt -T template0 tzkt_db
 	docker-compose exec -T db apt update
 	docker-compose exec -T db apt install -y wget
-	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.15_mainnet.backup" -O tzkt_db.backup
+	docker-compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.16_mainnet.backup" -O tzkt_db.backup
 	docker-compose exec -T db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose exec -T db rm tzkt_db.backup
 	docker-compose exec -T db apt autoremove --purge -y wget
@@ -52,7 +52,7 @@ ghost-init:
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt update
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.15_ghostnet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.16_ghostnet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db rm tzkt_db.backup
 	docker-compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
@@ -74,7 +74,7 @@ rio-init:
 	docker-compose -f docker-compose.rio.yml exec -T rio-db createdb -U tzkt -T template0 tzkt_db
 	docker-compose -f docker-compose.rio.yml exec -T rio-db apt update
 	docker-compose -f docker-compose.rio.yml exec -T rio-db apt install -y wget
-	docker-compose -f docker-compose.rio.yml exec -T rio-db wget "https://snapshots.tzkt.io/tzkt_v1.15_rionet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.rio.yml exec -T rio-db wget "https://snapshots.tzkt.io/tzkt_v1.16_rionet.backup" -O tzkt_db.backup
 	docker-compose -f docker-compose.rio.yml exec -T rio-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
 	docker-compose -f docker-compose.rio.yml exec -T rio-db rm tzkt_db.backup
 	docker-compose -f docker-compose.rio.yml exec -T rio-db apt autoremove --purge -y wget
