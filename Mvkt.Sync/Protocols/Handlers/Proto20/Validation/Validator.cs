@@ -103,10 +103,10 @@ namespace Mvkt.Sync.Protocols.Proto20
             }
             else
             {
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") > 2)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking rewards") > 4)
                     throw new ValidationException("invalid block reward");
                 
-                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 2)
+                if (balanceUpdates.Count(x => x.RequiredString("kind") == "minted" && x.RequiredString("category") == "baking bonuses") > 4)
                     throw new ValidationException("invalid block bonus");
             }
             #endregion
