@@ -4,7 +4,7 @@
     {
         public static string GetName(string chainId) => chainId switch
         {
-            "NetXdQprcVkpaWU" => "mainnet",
+            "NetXXAAR1wWQhhe" => "mainnet",
             "NetXnHfVqm9iesp" => "basenet",
             "NetXUrNc8uioxP8" => "atlasnet",
             "NetXi75cGgZdsGN" => "dailynet",
