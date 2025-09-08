@@ -1,5 +1,4 @@
-﻿using System.Reflection;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -61,8 +60,7 @@ namespace Tzkt.Sync.Tests
             var config = builder.Configuration.GetSection("Tests").Get<TestsConfig>() ?? new();
             var logger = app.Services.GetRequiredService<ILogger<Program>>();
 
-            logger.LogInformation("Version {version}",
-                Assembly.GetExecutingAssembly().GetName().Version?.ToString());
+            logger.LogInformation("Version {version}", AssemblyInfo.Version);
 
             try
             {
@@ -75,7 +73,7 @@ namespace Tzkt.Sync.Tests
                 }
 
                 using var scope = app.Services.CreateScope();
-                var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+                using var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
                 var rpcEndpoint = builder.Configuration.GetSection("TezosNode").GetValue<string>("Endpoint")
                     ?? throw new Exception("TezosNode.Endpoint is not specified in the configuration");
                 var rpc = new TezosRpc(rpcEndpoint, 60);
@@ -99,8 +97,8 @@ namespace Tzkt.Sync.Tests
         static void InitDb(IHost app, int attempt = 0)
         {
             using var scope = app.Services.CreateScope();
+            using var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
 
             try
             {

@@ -14,6 +14,7 @@ namespace Tzkt.Sync.Services
     public class DipDupConfig
     {
         public string Url { get; set; } = "https://metadata.dipdup.net/v1/graphql";
+        public int Timeout { get; set; } = 60;
         public string MetadataTable { get; set; } = "dipdup_token_metadata";
         public string HeadStatusTable { get; set; } = "dipdup_head";
         public string Network { get; set; } = "mainnet";

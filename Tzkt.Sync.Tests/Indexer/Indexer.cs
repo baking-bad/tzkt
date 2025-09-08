@@ -16,15 +16,15 @@ namespace Tzkt.Sync.Tests
             logger.LogInformation("Indexer head: {level}", state.Level);
 
             var head = await GetNodeHeadAsync(app);
-            logger.LogInformation("Node head: {level}", head.Level);
+            logger.LogInformation("Node head: {level}", head);
 
-            while (state.Level < head.Level && !ct.IsCancellationRequested)
+            while (state.Level < head && !ct.IsCancellationRequested)
             {
-                logger.LogInformation("Applying {level} of {total}", state.Level + 1, head.Level);
+                logger.LogInformation("Applying {level} of {total}", state.Level + 1, head);
 
                 using var scope = app.Services.CreateScope();
                 var protocol = scope.ServiceProvider.GetProtocolHandler(state.Level + 1, state.NextProtocol);
-                state = await protocol.CommitBlock(head.Level);
+                state = await protocol.CommitNextBlock();
             }
 
             logger.LogInformation("Indexer is synced");
@@ -38,11 +38,12 @@ namespace Tzkt.Sync.Tests
             return cache.AppState.Get();
         }
 
-        static async Task<Header> GetNodeHeadAsync(IHost host)
+        static async Task<int> GetNodeHeadAsync(IHost host)
         {
             using var scope = host.Services.CreateScope();
             var node = scope.ServiceProvider.GetRequiredService<TezosNode>();
-            return await node.GetHeaderAsync();
+            var header = await node.GetAsync("chains/main/blocks/head/header");
+            return header.GetProperty("level").GetInt32();
         }
     }
 }

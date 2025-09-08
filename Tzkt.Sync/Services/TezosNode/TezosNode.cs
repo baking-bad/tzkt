@@ -1,110 +1,85 @@
 ﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using App.Metrics;
-using Tzkt.Data;
 
 namespace Tzkt.Sync.Services
 {
     public sealed class TezosNode : IDisposable
     {
-        public string BaseUrl { get; }
-        readonly TezosNodeConfig Config;
-        readonly TzktClient Rpc;
-        readonly IServiceScopeFactory Services;
-        readonly ILogger Logger;
-        readonly IMetrics Metrics;
+        readonly TzktClient _client;
+        readonly ILogger _logger;
 
-        Header? Header;
-        Constants? Constants;
-        DateTime NextBlock = DateTime.MinValue;
-        DateTime NextSyncStateUpdate = DateTime.MinValue;
-
-        public TezosNode(IServiceScopeFactory services, IConfiguration config, ILogger<TezosNode> logger, IMetrics metrics)
+        public TezosNode(IConfiguration config, ILogger<TezosNode> logger)
         {
-            Config = config.GetTezosNodeConfig();
-            BaseUrl = $"{Config.Endpoint.TrimEnd('/')}/";
-            Rpc = new TzktClient(BaseUrl, Config.Timeout);
-            Services = services;
-            Logger = logger;
-            Metrics = metrics;
+            var nodeConfig = config.GetTezosNodeConfig();
+            _client = new TzktClient(nodeConfig.Endpoint, nodeConfig.Timeout);
+            _logger = logger;
         }
 
         public async Task<JsonElement> GetAsync(string url)
         {
-            using var stream = await Rpc.GetStreamAsync(url);
-            using var doc = await JsonDocument.ParseAsync(stream, new JsonDocumentOptions { MaxDepth = 100_000 });
-            return doc.RootElement.Clone();
-        }
-
-        public async Task<T?> PostAsync<T>(string url, string content)
-        {
-            return await Rpc.PostAsync<T>(url, content);
-        }
-
-        public async Task<Header> GetHeaderAsync()
-        {
-            if (DateTime.UtcNow >= NextBlock)
+            try
             {
-                var header = (await Rpc.GetObjectAsync<Header>(Config.Lag > 0
-                    ? $"chains/main/blocks/head~{Config.Lag}/header"
-                    : "chains/main/blocks/head/header"))!;
-
-                if (header.Protocol != Header?.Protocol)
-                    Constants = (await Rpc.GetObjectAsync<Constants>($"chains/main/blocks/{header.Level}/context/constants"))!;
-
-                NextBlock = header.Level != Header?.Level
-                    ? header.Timestamp.AddSeconds((Constants!.MinBlockDelay ?? Constants.BlockIntervals![0]) * (Config.Lag + 1))
-                    : DateTime.UtcNow.AddSeconds(1);
-
-                #region update last sync
-                if (header.Level != Header?.Level || DateTime.UtcNow >= NextSyncStateUpdate)
-                {
-                    try
-                    {
-                        using var scope = Services.CreateScope();
-                        var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
-                        var cache = scope.ServiceProvider.GetRequiredService<CacheService>();
-
-                        var syncTime = DateTime.UtcNow;
-                        syncTime = syncTime.AddTicks(-(syncTime.Ticks % 10_000_000));
-
-                        await db.Database.ExecuteSqlRawAsync("""
-                            UPDATE "AppState"
-                            SET "KnownHead" = {0},
-                                "LastSync" = {1}
-                            """, header.Level, syncTime);
-                        cache.AppState.UpdateSyncState(header.Level, syncTime);
-
-                        Metrics.Measure.Gauge.SetHealthValue(cache.AppState.Get());
-
-                        NextSyncStateUpdate = syncTime.AddSeconds(5);
-                    }
-                    catch (Exception ex)
-                    {
-                        // no big deal...
-                        Logger.LogWarning(ex, "Failed to update AppState");
-                    }
-                }
-                #endregion
-
-                Header = header;
+                return await _client.GetAsync(url);
             }
-
-            return Header!;
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RPC request ({url}) failed", url);
+                throw;
+            }
         }
 
-        public async Task<Header> GetHeaderAsync(int level)
+        public async Task<JsonElement> GetAsync(string url, TimeSpan timeout)
         {
-            return (await Rpc.GetObjectAsync<Header>($"chains/main/blocks/{level}/header"))!;
+            try
+            {
+                return await _client.GetAsync(url, timeout);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RPC request ({url}) failed", url);
+                throw;
+            }
         }
 
-        public async Task<bool> HasUpdatesAsync(int level)
+        public async Task<T> GetAsync<T>(string url)
         {
-            var header = await GetHeaderAsync();
-            return header.Level != level;
+            try
+            {
+                return await _client.GetAsync<T>(url);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RPC request ({url}) failed", url);
+                throw;
+            }
         }
 
-        public void Dispose() => Rpc.Dispose();
+        public Task<JsonElement> PostAsync(string url, string content)
+        {
+            try
+            {
+                return _client.PostAsync(url, content);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RPC request ({url}) failed", url);
+                throw;
+            }
+        }
+
+        public IAsyncEnumerable<T> MonitorAsync<T>(string url, CancellationToken cancellationToken)
+        {
+            try
+            {
+                return _client.GetStreamAsync<T>(url, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RPC request ({url}) failed", url);
+                throw;
+            }
+        }
+
+        public void Dispose() => _client.Dispose();
     }
 
     public static class TezosNodeExt

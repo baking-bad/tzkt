@@ -76,11 +76,11 @@ namespace Tzkt.Sync.Services
 
         async Task<List<TzktQuote>> GetQuotes(DateTime from, DateTime to)
         {
-            var res = (await Client.GetObjectAsync<List<TzktQuote>>(
+            var res = (await Client.GetAsync<List<TzktQuote>>(
                 $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"))!;
 
             while (res.Count > 0 && res.Count % 10000 == 0)
-                res.AddRange((await Client.GetObjectAsync<List<TzktQuote>>(
+                res.AddRange((await Client.GetAsync<List<TzktQuote>>(
                     $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"))!);
 
             return res;

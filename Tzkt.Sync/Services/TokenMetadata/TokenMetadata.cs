@@ -3,34 +3,22 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Dapper;
 using Npgsql;
-using Netezos.Encoding;
 
 namespace Tzkt.Sync.Services
 {
-    public class TokenMetadata : BackgroundService
+    public class TokenMetadata(IConfiguration config, ILogger<TokenMetadata> logger) : BackgroundService
     {
-        readonly string ConnectionString;
-        readonly TokenMetadataConfig Config;
-        readonly ILogger Logger;
-        readonly JsonSerializerOptions OuterSerializerOptions;
-        readonly JsonSerializerOptions InnerSerializerOptions;
-
-        public TokenMetadata(IConfiguration config, ILogger<TokenMetadata> logger)
+        #region static
+        static readonly JsonSerializerOptions MetadataSerializerOptions = new()
         {
-            ConnectionString = config.GetDefaultConnectionString();
-            Config = config.GetTokenMetadataConfig();
-            Logger = logger;
-            OuterSerializerOptions = new()
-            {
-                NumberHandling = JsonNumberHandling.AllowReadingFromString,
-                MaxDepth = 10240
-            };
-            InnerSerializerOptions = new()
-            {
-                MaxDepth = 1024
-            };
-            InnerSerializerOptions.Converters.Add(new TokenMetadataConverter());
-        }
+            MaxDepth = 1024,
+            Converters = { new TokenMetadataConverter() }
+        };
+        #endregion
+
+        readonly string ConnectionString = config.GetDefaultConnectionString();
+        readonly TokenMetadataConfig Config = config.GetTokenMetadataConfig();
+        readonly ILogger Logger = logger;
 
         TokenMetadataState State = null!;
 
@@ -38,13 +26,13 @@ namespace Tzkt.Sync.Services
         {
             if (Config.OverriddenMetadata?.Count > 0)
             {
-                await SaveTokenMetadata(Config.OverriddenMetadata.Select(x => new DipDupItem
+                await SaveTokenMetadata([..Config.OverriddenMetadata.Select(x => new DipDupItem
                 {
                     UpdateId = 0,
                     Contract = x.Contract,
                     TokenId = x.TokenId,
                     Metadata = x.Metadata
-                }).ToList());
+                })]);
 
                 Logger.LogDebug("{cnt} overridden metadata initialized", Config.OverriddenMetadata.Count);
             }
@@ -300,48 +288,42 @@ namespace Tzkt.Sync.Services
                 .ToDictionary(x => ((string)x.Address, (string)x.TokenId), x => (long)x.Id);
         }
 
-        async Task<string> GetDipDupSentinel(DipDupConfig dipDupConfig)
+        static async Task<string> GetDipDupSentinel(DipDupConfig dipdup)
         {
-            using var client = new HttpClient();
-            using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                $"{{\"query\":\"query{{items:{dipDupConfig.HeadStatusTable}(order_by:{{created_at:asc}},limit:1)"
-                + $"{{created_at}}}}\",\"variables\":null}}",
-                Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
-
-            var items = JsonSerializer.Deserialize<DipDupResponse<DipDupStatus>>(
-                await res.Content.ReadAsStringAsync())!.Data.Items;
+            using var client = new TzktClient(dipdup.Timeout);
+            var res = await client.PostAsync<DipDupResponse<DipDupStatus>>(dipdup.Url,
+                $"{{\"query\":\"query{{items:{dipdup.HeadStatusTable}(order_by:{{created_at:asc}},limit:1)"
+                + $"{{created_at}}}}\",\"variables\":null}}");
 
             // There can be actually multiple status items (per each network), but it's ok:
             // 1. If new network is added there's no need to re-index from scratch
             // 2. If the oldest network is reset it means we need to re-fetch all the data (e.g. parsing issues fixed)
             // 3. Eventually we will reach the state when a single dipdup instance will be responsible for a single network
-            return items[0].CreatedAt;
+            return res.Data.Items[0].CreatedAt;
         }
 
-        async Task<List<DipDupItem>> GetDipDupMetadata(long lastUpdateId, DipDupConfig dipDupConfig)
+        static async Task<List<DipDupItem>> GetDipDupMetadata(long lastUpdateId, DipDupConfig dipdup)
         {
-            var filterByContract = dipDupConfig.Filter is not DipDupFilter filter
+            var filterByContract = dipdup.Filter is not DipDupFilter filter
                 ? string.Empty
                 : filter.Mode == DipDupFilter.FilterMode.Exclude
                     ? $",contract:{{_nin:[{string.Join(',', filter.Contracts.Select(x => $"\\\"{x}\\\""))}]}}"
                     : $",contract:{{_in:[{string.Join(',', filter.Contracts.Select(x => $"\\\"{x}\\\""))}]}}";
 
-            using var client = new HttpClient();
-            using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                $"{{\"query\":\"query{{items:{dipDupConfig.MetadataTable}("
-                + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},update_id:{{_gt:\\\"{lastUpdateId}\\\"}}"
+            using var client = new TzktClient(dipdup.Timeout);
+            var res = await client.PostAsync<DipDupResponse<DipDupItem>>(dipdup.Url,
+                $"{{\"query\":\"query{{items:{dipdup.MetadataTable}("
+                + $"where:{{network:{{_eq:\\\"{dipdup.Network}\\\"}},update_id:{{_gt:\\\"{lastUpdateId}\\\"}}"
                 + $"{filterByContract}}},"
-                + $"order_by:{{update_id:asc}},limit:{dipDupConfig.SelectLimit})"
-                + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
-                Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
+                + $"order_by:{{update_id:asc}},limit:{dipdup.SelectLimit})"
+                + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}");
 
-            return JsonSerializer.Deserialize<DipDupResponse<DipDupItem>>(
-                Utf8.Parse(await res.Content.ReadAsStringAsync()), OuterSerializerOptions)!.Data.Items;
+            return res.Data.Items;
         }
 
-        async Task<List<DipDupItem>> GetDipDupMetadata<T>(Dictionary<(string, string), T> tokens, DipDupConfig dipDupConfig)
+        static async Task<List<DipDupItem>> GetDipDupMetadata<T>(Dictionary<(string, string), T> tokens, DipDupConfig dipdup)
         {
-            var keys = dipDupConfig.Filter is not DipDupFilter filter
+            var keys = dipdup.Filter is not DipDupFilter filter
                 ? tokens.Keys
                 : filter.Mode == DipDupFilter.FilterMode.Exclude
                     ? tokens.Keys.Where(k => !filter.Contracts.Contains(k.Item1))
@@ -354,24 +336,20 @@ namespace Tzkt.Sync.Services
             var tokenIds = string.Join(',', keys.Select(x => $"\\\"{x.Item2}\\\"").Distinct());
             var items = new List<DipDupItem>(tokens.Count);
 
-            using var client = new HttpClient();
+            using var client = new TzktClient(dipdup.Timeout);
             var lastUpdateId = -1L;
             while (true)
             {
-                using var res = (await client.PostAsync(dipDupConfig.Url, new StringContent(
-                    $"{{\"query\":\"query{{items:{dipDupConfig.MetadataTable}("
-                    + $"where:{{network:{{_eq:\\\"{dipDupConfig.Network}\\\"}},update_id:{{_gt:\\\"{lastUpdateId}\\\"}},"
+                var res = await client.PostAsync<DipDupResponse<DipDupItem>>(dipdup.Url,
+                    $"{{\"query\":\"query{{items:{dipdup.MetadataTable}("
+                    + $"where:{{network:{{_eq:\\\"{dipdup.Network}\\\"}},update_id:{{_gt:\\\"{lastUpdateId}\\\"}},"
                     + $"contract:{{_in:[{contracts}]}},token_id:{{_in:[{tokenIds}]}}}},"
-                    + $"order_by:{{update_id:asc}},limit:{dipDupConfig.SelectLimit})"
-                    + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}",
-                    Encoding.UTF8, "application/json"))).EnsureSuccessStatusCode();
+                    + $"order_by:{{update_id:asc}},limit:{dipdup.SelectLimit})"
+                    + $"{{update_id contract token_id metadata}}}}\",\"variables\":null}}");
 
-                var _items = JsonSerializer.Deserialize<DipDupResponse<DipDupItem>>(
-                    Utf8.Parse(await res.Content.ReadAsStringAsync()), OuterSerializerOptions)!.Data.Items;
-
-                items.AddRange(_items.Where(x => tokens.ContainsKey((x.Contract, x.TokenId))));
-                if (_items.Count < dipDupConfig.SelectLimit) break;
-                lastUpdateId = _items[^1].UpdateId;
+                items.AddRange(res.Data.Items.Where(x => tokens.ContainsKey((x.Contract, x.TokenId))));
+                if (res.Data.Items.Count < dipdup.SelectLimit) break;
+                lastUpdateId = res.Data.Items[^1].UpdateId;
             }
             return items;
         }
@@ -379,7 +357,7 @@ namespace Tzkt.Sync.Services
         async Task<int> SaveTokenMetadata(List<DipDupItem> items)
         {
             using var conn = new NpgsqlConnection(ConnectionString);
-            var contracts = await GetContractIds(conn, items.Select(x => x.Contract).ToHashSet().ToList());
+            var contracts = await GetContractIds(conn, [..items.Select(x => x.Contract).ToHashSet()]);
             if (contracts.Count == 0) return 0;
             var saved = 0;
             for (int i = 0; i < items.Count; i += 1000)
@@ -399,7 +377,7 @@ namespace Tzkt.Sync.Services
                         else any = true;
                         var metadata = item.Metadata is JsonElement json
                             ? Regexes.Metadata().Replace(
-                                JsonSerializer.Serialize(json, InnerSerializerOptions),
+                                JsonSerializer.Serialize(json, MetadataSerializerOptions),
                                 string.Empty)
                             : null;
                         param.Add($"@p{j}", metadata);
