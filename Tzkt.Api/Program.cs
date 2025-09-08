@@ -199,7 +199,7 @@ logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetNa
 while (true)
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+    using var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
     try
     {
         logger.LogInformation("Initialize database...");

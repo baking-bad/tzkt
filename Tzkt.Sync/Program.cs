@@ -1,4 +1,3 @@
-using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using App.Metrics;
@@ -33,7 +32,7 @@ builder.Services.AddCache(builder.Configuration);
 builder.Services.AddTezosNode();
 builder.Services.AddTezosProtocols();
 builder.Services.AddQuotes(builder.Configuration);
-builder.Services.AddHostedService<Observer>();
+builder.Services.AddHostedService<ObserverService>();
 
 if (builder.Configuration.GetDomainsConfig().Enabled)
     builder.Services.AddHostedService<DomainsService>();
@@ -76,12 +75,12 @@ var app = builder.Build();
 
 #region init
 var logger = app.Services.GetRequiredService<ILogger<Program>>();
-logger.LogInformation("Version {version}", Assembly.GetExecutingAssembly().GetName().Version);
+logger.LogInformation("Version {version}", AssemblyInfo.Version);
 
 while (true)
 {
     using var scope = app.Services.CreateScope();
-    var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
+    using var db = scope.ServiceProvider.GetRequiredService<TzktContext>();
     try
     {
         logger.LogInformation("Initialize database...");
@@ -126,7 +125,7 @@ while (true)
 #region middleware
 app.UseMetricsEndpoint();
 app.UseMetricsTextEndpoint();
-app.MapGet("/version", () => Assembly.GetExecutingAssembly().GetName().Version);
+app.MapGet("/version", () => AssemblyInfo.Version);
 #endregion
 
 app.Run();

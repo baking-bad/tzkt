@@ -1,5 +1,4 @@
-﻿using System.Net;
-using System.Text.Json;
+﻿using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto10
@@ -15,16 +14,9 @@ namespace Tzkt.Sync.Protocols.Proto10
             {
                 Logger.LogInformation("Trying to load by cycle with 30 minutes timeout...");
                 #region try aggressive
-                using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
-                {
-                    BaseAddress = new Uri(Proto.Node.BaseUrl),
-                    Timeout = Timeout.InfiniteTimeSpan
-                };
-                using var cts = new CancellationTokenSource(1800_000);
-                using var stream = await client.GetStreamAsync($"chains/main/blocks/{block.Level}/helpers/endorsing_rights?cycle={cycle}", cts.Token);
-                using var doc = await JsonDocument.ParseAsync(stream, default, cts.Token);
-                var rights = doc.RootElement.Clone().RequiredArray().EnumerateArray();
-
+                var res = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/helpers/endorsing_rights?cycle={cycle}", TimeSpan.FromMinutes(30));
+                
+                var rights = res.RequiredArray().EnumerateArray();
                 if (!rights.Any() || rights.Sum(x => x.RequiredArray("slots").Count()) != protocol.BlocksPerCycle * protocol.AttestersPerBlock)
                     throw new ValidationException("Rpc returned less attestation rights (slots) than expected");
 
@@ -35,12 +27,6 @@ namespace Tzkt.Sync.Protocols.Proto10
             {
                 Logger.LogInformation("Failed to load by cycle. Loading by level for {cnt} blocks with 10 seconds timeout...", protocol.BlocksPerCycle);
                 #region throttle
-                using var client = new HttpClient(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
-                {
-                    BaseAddress = new Uri(Proto.Node.BaseUrl),
-                    Timeout = Timeout.InfiniteTimeSpan
-                };
-
                 var rights = new List<JsonElement>(protocol.BlocksPerCycle * protocol.AttestersPerBlock / 2);
                 var firstLevel = protocol.GetCycleStart(cycle);
                 var lastLevel = protocol.GetCycleEnd(cycle);
@@ -50,11 +36,9 @@ namespace Tzkt.Sync.Protocols.Proto10
                 {
                     try
                     {
-                        using var cts = new CancellationTokenSource(10_000);
-                        using var stream = await client.GetStreamAsync($"chains/main/blocks/{block.Level}/helpers/endorsing_rights?level={level}", cts.Token);
-                        using var doc = await JsonDocument.ParseAsync(stream, default, cts.Token);
+                        var res = await Proto.Node.GetAsync($"chains/main/blocks/{block.Level}/helpers/endorsing_rights?level={level}", TimeSpan.FromSeconds(10));
 
-                        rights.AddRange(doc.RootElement.Clone().RequiredArray().EnumerateArray());
+                        rights.AddRange(res.RequiredArray().EnumerateArray());
                         attempts = 0;
 
                         if (level % 128 == 0)

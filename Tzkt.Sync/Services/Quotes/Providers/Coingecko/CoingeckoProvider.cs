@@ -47,7 +47,7 @@ namespace Tzkt.Sync.Services
             var _from = (long)(from - DateTime.UnixEpoch).TotalSeconds;
             var _to = (long)(to - DateTime.UnixEpoch).TotalSeconds;
 
-            return (await Client.GetObjectAsync<CoingeckoQuotes>(
+            return (await Client.GetAsync<CoingeckoQuotes>(
                 $"coins/tezos/market_chart/range?vs_currency={currency}&from={_from}&to={_to}"))!.Prices;
         }
     }

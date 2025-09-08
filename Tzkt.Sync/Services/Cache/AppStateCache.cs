@@ -16,12 +16,6 @@ namespace Tzkt.Sync.Services.Cache
             AppState = await Db.AppState.SingleAsync();
         }
 
-        public void UpdateSyncState(int knownHead, DateTime lastSync)
-        {
-            AppState.KnownHead = knownHead;
-            AppState.LastSync = lastSync;
-        }
-
         public AppState Get()
         {
             return AppState;

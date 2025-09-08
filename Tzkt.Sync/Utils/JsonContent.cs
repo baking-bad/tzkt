@@ -1,12 +1,6 @@
-using System.Net.Http.Headers;
+using System.Text;
 
 namespace Tzkt.Sync
 {
-    class JsonContent : StringContent
-    {
-        public JsonContent(string content) : base(content)
-        {
-            Headers.ContentType = new MediaTypeHeaderValue("application/json");
-        }
-    }
+    class JsonContent(string content) : StringContent(content, Encoding.UTF8, "application/json") { }
 }

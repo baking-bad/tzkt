@@ -1,72 +1,208 @@
 ﻿using System.Net;
 using System.Net.Http.Headers;
-using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Tzkt.Sync
 {
-    public sealed class TzktClient : IDisposable
+    sealed class TzktClient : IDisposable
     {
-        readonly Uri BaseAddress;
-        readonly TimeSpan RequestTimeout;
+        #region static
+        const int HttpClientTtl = 1800;
 
-        DateTime _Expiration;
-        HttpClient? _HttpClient;
-        
+        readonly static JsonSerializerOptions DefaultSerializerOptions = new()
+        {
+            MaxDepth = 100_000,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString
+        };
+
+        readonly static JsonDocumentOptions DefaultDocumentOptions = new()
+        {
+            MaxDepth = 100_000
+        };
+        #endregion
+
+        readonly Uri? BaseAddress;
+        readonly TimeSpan DefaultTimeout;
+        readonly Lock Crit = new();
+
+        DateTime _Expiration = DateTime.MinValue;
+        HttpClient? _HttpClient = null;
+
         HttpClient HttpClient
         {
             get
             {
-                lock (BaseAddress)
+                lock (Crit)
                 {
                     if (DateTime.UtcNow > _Expiration)
                     {
                         _HttpClient?.Dispose();
-                        _HttpClient = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.GZip })
+                        _HttpClient = new(new HttpClientHandler { AutomaticDecompression = DecompressionMethods.All })
                         {
                             BaseAddress = BaseAddress,
-                            Timeout = RequestTimeout,
+                            Timeout = Timeout.InfiniteTimeSpan,
+                            DefaultRequestHeaders =
+                            {
+                                Accept = { new MediaTypeWithQualityHeaderValue("application/json") },
+                                UserAgent = { new ProductInfoHeaderValue(AssemblyInfo.Name, AssemblyInfo.Version) }
+                            }
                         };
-                        _HttpClient.DefaultRequestHeaders.Accept.Add(
-                            new MediaTypeWithQualityHeaderValue("application/json"));
-                        _HttpClient.DefaultRequestHeaders.UserAgent.Add(
-                            new ProductInfoHeaderValue("TzKT-Indexer", Assembly.GetExecutingAssembly().GetName().Version?.ToString()));
-
-                        _Expiration = DateTime.UtcNow.AddMinutes(120);
+                        _Expiration = DateTime.UtcNow.AddSeconds(HttpClientTtl);
                     }
                 }
-                // TODO: use native factory
                 return _HttpClient!;
             }
         }
 
-        public TzktClient(string baseUri, int timeoutSec = 10)
+        public TzktClient(int defaultTimeout)
         {
-            if (string.IsNullOrEmpty(baseUri))
-                throw new ArgumentNullException(nameof(baseUri));
+            DefaultTimeout = TimeSpan.FromSeconds(defaultTimeout);
+        }
 
+        public TzktClient(string baseUri, int defaultTimeout)
+        {
             if (!Uri.IsWellFormedUriString(baseUri, UriKind.Absolute))
-                throw new ArgumentException("Invalid URI");
+                throw new ArgumentException("Invalid URI", nameof(baseUri));
 
             BaseAddress = new Uri($"{baseUri.TrimEnd('/')}/");
-            RequestTimeout = TimeSpan.FromSeconds(timeoutSec);
+            DefaultTimeout = TimeSpan.FromSeconds(defaultTimeout);
         }
 
-        public Task<Stream> GetStreamAsync(string path)
-            => HttpClient.GetStreamAsync(path);
-
-        public async Task<T?> GetObjectAsync<T>(string path)
+        public async IAsyncEnumerable<JsonElement> GetStreamAsync(string path, [EnumeratorCancellation] CancellationToken ct = default)
         {
-            using var stream = await HttpClient.GetStreamAsync(path);
-            return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
+            using var stream = await GetStreamAsync(path);
+            using var reader = new StreamReader(stream);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            while (!ct.IsCancellationRequested)
+            {
+                JsonElement result;
+                try
+                {
+                    cts.CancelAfter(DefaultTimeout);
+                    var json = await reader.ReadLineAsync(cts.Token);
+                    if (json == null) break;
+                    using var doc = JsonDocument.Parse(json, DefaultDocumentOptions);
+                    result = doc.RootElement.Clone();
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
+                {
+                    throw new TimeoutException();
+                }
+                yield return result;
+            }
         }
-        
-        public async Task<T?> PostAsync<T>(string path, string content)
+
+        public async IAsyncEnumerable<T> GetStreamAsync<T>(string path, [EnumeratorCancellation] CancellationToken ct = default)
         {
-            var response = await HttpClient.PostAsync(path, new JsonContent(content));
-            
-            using var stream = await response.Content.ReadAsStreamAsync();
-            return await JsonSerializer.DeserializeAsync<T>(stream, SerializerOptions.Default);
+            using var stream = await GetStreamAsync(path);
+            using var reader = new StreamReader(stream);
+            using var cts = CancellationTokenSource.CreateLinkedTokenSource(ct);
+            while (!ct.IsCancellationRequested)
+            {
+                T result;
+                try
+                {
+                    cts.CancelAfter(DefaultTimeout);
+                    var json = await reader.ReadLineAsync(cts.Token);
+                    if (json == null) break;
+                    result = JsonSerializer.Deserialize<T>(json, DefaultSerializerOptions)!;
+                }
+                catch (OperationCanceledException) when (cts.IsCancellationRequested && !ct.IsCancellationRequested)
+                {
+                    throw new TimeoutException();
+                }
+                yield return result;
+            }
+        }
+
+        public async Task<JsonElement> GetAsync(string path)
+        {
+            using var cts = new CancellationTokenSource(DefaultTimeout);
+            try
+            {
+                using var stream = await HttpClient.GetStreamAsync(path, cts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, DefaultDocumentOptions, cts.Token);
+                return doc.RootElement.Clone();
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+        }
+
+        public async Task<JsonElement> GetAsync(string path, TimeSpan timeout)
+        {
+            using var cts = new CancellationTokenSource(timeout);
+            try
+            {
+                using var stream = await HttpClient.GetStreamAsync(path, cts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, DefaultDocumentOptions, cts.Token);
+                return doc.RootElement.Clone();
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+        }
+
+        public async Task<T> GetAsync<T>(string path)
+        {
+            using var cts = new CancellationTokenSource(DefaultTimeout);
+            try
+            {
+                using var stream = await HttpClient.GetStreamAsync(path, cts.Token);
+                return (await JsonSerializer.DeserializeAsync<T>(stream, DefaultSerializerOptions, cts.Token))!;
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+        }
+
+        public async Task<JsonElement> PostAsync(string path, string content)
+        {
+            using var cts = new CancellationTokenSource(DefaultTimeout);
+            try
+            {
+                using var response = (await HttpClient.PostAsync(path, new JsonContent(content), cts.Token)).EnsureSuccessStatusCode();
+                using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+                using var doc = await JsonDocument.ParseAsync(stream, DefaultDocumentOptions, cts.Token);
+                return doc.RootElement.Clone();
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+        }
+
+        public async Task<T> PostAsync<T>(string path, string content)
+        {
+            using var cts = new CancellationTokenSource(DefaultTimeout);
+            try
+            {
+                using var response = (await HttpClient.PostAsync(path, new JsonContent(content), cts.Token)).EnsureSuccessStatusCode();
+                using var stream = await response.Content.ReadAsStreamAsync(cts.Token);
+                return (await JsonSerializer.DeserializeAsync<T>(stream, DefaultSerializerOptions, cts.Token))!;
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
+        }
+
+        async Task<Stream> GetStreamAsync(string path)
+        {
+            using var cts = new CancellationTokenSource(DefaultTimeout);
+            try
+            {
+                return await HttpClient.GetStreamAsync(path, cts.Token);
+            }
+            catch (OperationCanceledException) when (cts.IsCancellationRequested)
+            {
+                throw new TimeoutException();
+            }
         }
 
         public void Dispose() => _HttpClient?.Dispose();

@@ -45,7 +45,7 @@ namespace Tzkt.Sync
             Context = new();
         }
 
-        public virtual async Task<AppState> CommitBlock(int head)
+        public virtual async Task<AppState> CommitNextBlock()
         {
             var state = Cache.AppState.Get();
             Db.TryAttach(state);

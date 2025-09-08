@@ -4,7 +4,6 @@
     {
         public string Endpoint { get; set; } = "https://rpc.tzkt.io/mainnet";
         public int Timeout { get; set; } = 60;
-        public int Lag { get; set; } = 0;
     }
 
     public static class TezosNodeConfigExt
