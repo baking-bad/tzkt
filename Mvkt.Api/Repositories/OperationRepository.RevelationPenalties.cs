@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetRevelationPenaltiesCount(
             Int32Parameter level,
@@ -17,7 +13,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -31,7 +27,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""Id"" = @id
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { id });
             if (row == null) return null;
 
@@ -65,7 +61,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new RevelationPenaltyOperation
@@ -123,7 +119,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -211,7 +207,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation

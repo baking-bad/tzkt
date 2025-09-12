@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -91,7 +91,8 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Amount of storage in bytes prepaid.
         /// </summary>
-        public string Amount { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors

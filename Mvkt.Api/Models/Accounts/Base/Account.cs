@@ -24,7 +24,7 @@ namespace Mvkt.Api.Models
         public abstract string Address { get; set; }
     }
 
-    public class AccountJsonInheritanceConverter : JsonInheritanceConverter
+    public class AccountJsonInheritanceConverter : JsonInheritanceConverter<Account>
     {
         public AccountJsonInheritanceConverter(string name) : base(name) { }
         

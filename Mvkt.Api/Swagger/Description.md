@@ -4,7 +4,7 @@ MvKT is the most widely used tool in Mavryk that provides you with convenient an
 You can fetch all historical data via REST API, or subscribe for real-time data via WebSocket API. MvKT was built by the joint efforts of the entire Mavryk community 
 to help developers build more services and dapps on top of Mavryk.
 
-MvKT Indexer and API are [open-source](https://github.com/baking-bad/tzkt), so don't be afraid to depend on the third-party service,
+MvKT Indexer and API are [open-source](https://github.com/mavryk-network/mvkt), so don't be afraid to depend on the third-party service,
 because you can always clone, build and run it yourself to have full control over all the components.
 
 Feel free to contact us if you have any questions or feature requests.
@@ -20,8 +20,8 @@ And don't forget to star MvKT project [on GitHub](https://github.com/mavryk-netw
 # Get Started
 
 There are two API services provided for public use:
-- **Free TzKT API** with free anonymous access;
-- **TzKT Pro** with paid subscriptions with increased rate limits, off-chain data, extended support and business-level SLA.
+- **Free MvKT API** with free anonymous access;
+- **MvKT Pro** with paid subscriptions with increased rate limits, off-chain data, extended support and business-level SLA.
 
 You can find more details about differences between available tiers [here](https://tzkt.io/api).
 
@@ -36,18 +36,18 @@ If you use free-tier MvKT API, you **must** mention it on your website or applic
 
 It's available for the following Mavryk networks with the following base URLs:
 
-- Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
-- Oxfordnet: `https://api.oxfordnet.tzkt.io/` ([view docs](https://api.oxfordnet.tzkt.io))
+- Mainnet: `https://api.mavryk.network/` or `https://api.mainnet.mavryk.network` ([view docs](https://api.mavryk.network))
+- Basenet: `https://api.basenet.mavryk.network/` ([view docs](hhttps://api.basenet.mavryk.network))
+- Atlasnet: `https://api.atlasnet.mavryk.network/` ([view docs](https://api.atlasnet.mavryk.network))
 
-### Sending requests
+### Sending Requests
 
 To send a request to Free MvKT API you need literally nothing. Just take the base URL of the particular network
-(for example, Mavryk mainnet: `https://api.tzkt.io`) and append the path of the particular endpoint
+(for example, Mavryk mainnet: `https://api.mavryk.network`) and append the path of the particular endpoint
 (for example, chain's head: `/v1/head`), that's pretty much it: 
 
 ```bash
-curl https://api.tzkt.io/v1/head
+curl https://api.mavryk.network/v1/head
 ```
 
 Read through this documentation to explore available endpoints, query parameters
@@ -67,7 +67,7 @@ MvKT Pro service is provided via paid subscriptions. Please, refer to [Pricing P
 
 It's available for the following Mavryk networks with the following base URLs:
 
-- Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.tzkt.io))
+- Mainnet: `https://pro.tzkt.io/` ([view docs](https://api.mavryk.network))
 - Testnets: *let us know if you need MvKT Pro for testnets*
 
 ### Authorization
@@ -83,7 +83,7 @@ If your key was compromised, just let us know and we will issue a new one.
 Also note that passing the API key via HTTP headers is more secure, because in HTTPS headers are encrypted,
 but query string is not, so the key can be unintentionally exposed to third parties.
 
-### Sending requests
+### Sending Requests
 
 Sending a request with the API key passed as a query string parameter:
 

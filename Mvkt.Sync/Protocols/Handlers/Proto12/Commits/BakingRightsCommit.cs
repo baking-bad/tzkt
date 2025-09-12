@@ -15,7 +15,14 @@ namespace Mvkt.Sync.Protocols.Proto12
 
         public virtual async Task Apply(Block block, Cycle futureCycle, Dictionary<int, long> selectedStakes)
         {
-            #region current rights
+            await ApplyCurrentRights(block);
+
+            if (futureCycle != null)
+                await ApplyNewCycle(block, futureCycle, selectedStakes);
+        }
+
+        protected virtual async Task ApplyCurrentRights(Block block)
+        {
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
             var sql = string.Empty;
 
@@ -48,7 +55,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                     var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
                     var sampler = GetSampler(
                         bakerCycles.Values.Where(x => x.BakingPower > 0).Select(x => (x.BakerId, x.BakingPower)),
-                        block.ProtoCode > 1 && block.Cycle <= block.Protocol.FirstCycle + block.Protocol.PreservedCycles); //TODO: remove this crutch after ithaca is gone
+                        block.ProtoCode > 1 && block.Cycle <= block.Protocol.FirstCycle + block.Protocol.ConsensusRightsDelay); //TODO: remove this crutch after ithaca is gone
                     #region temporary diagnostics
                     await sampler.Validate(Proto, block.Level, block.Cycle);
                     #endregion
@@ -117,59 +124,63 @@ namespace Mvkt.Sync.Protocols.Proto12
             }
 
             await Db.Database.ExecuteSqlRawAsync(sql);
+        }
+
+        protected virtual async Task ApplyNewCycle(Block block, Cycle futureCycle, Dictionary<int, long> selectedStakes)
+        {
+            var sampler = GetSampler(
+                selectedStakes.Where(x => x.Value > 0).Select(x => (x.Key, x.Value)),
+                block.Level == block.Protocol.FirstCycleLevel);
+
+            #region temporary diagnostics
+            await sampler.Validate(Proto, block.Level, futureCycle.Index);
             #endregion
 
-            #region new cycle
-            if (futureCycle != null)
+            FutureBakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, block.Protocol, futureCycle);
+            FutureEndorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, block.Protocol, futureCycle);
+
+            var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
+            using var writer = conn.BeginBinaryImport(@"
+                COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
+                FROM STDIN (FORMAT BINARY)");
+
+            foreach (var er in FutureEndorsingRights)
             {
-                var sampler = GetSampler(
-                    selectedStakes.Where(x => x.Value > 0).Select(x => (x.Key, x.Value)),
-                    block.Level == block.Protocol.FirstCycleLevel);
-                #region temporary diagnostics
-                await sampler.Validate(Proto, block.Level, futureCycle.Index);
-                #endregion
-                FutureBakingRights = await RightsGenerator.GetBakingRightsAsync(sampler, block.Protocol, futureCycle);
-                FutureEndorsingRights = await RightsGenerator.GetEndorsingRightsAsync(sampler, block.Protocol, futureCycle);
-
-                var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
-                using var writer = conn.BeginBinaryImport(@"
-                    COPY ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"")
-                    FROM STDIN (FORMAT BINARY)");
-
-                foreach (var er in FutureEndorsingRights)
-                {
-                    writer.StartRow();
-                    writer.Write(block.Protocol.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
-                    writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);                          // level + 1 (shifted)
-                    writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.WriteNull();
-                    writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
-                }
-
-                foreach (var br in FutureBakingRights)
-                {
-                    writer.StartRow();
-                    writer.Write(futureCycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
-                    writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
-                    writer.WriteNull();
-                }
-
-                writer.Complete();
+                writer.StartRow();
+                writer.Write(block.Protocol.GetCycle(er.Level + 1), NpgsqlTypes.NpgsqlDbType.Integer); // level + 1 (shifted)
+                writer.Write(er.Level + 1, NpgsqlTypes.NpgsqlDbType.Integer);                          // level + 1 (shifted)
+                writer.Write(er.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((byte)BakingRightType.Endorsing, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.WriteNull();
+                writer.Write(er.Slots, NpgsqlTypes.NpgsqlDbType.Integer);
             }
-            #endregion
+
+            foreach (var br in FutureBakingRights)
+            {
+                writer.StartRow();
+                writer.Write(futureCycle.Index, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(br.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(br.Baker, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write((byte)BakingRightType.Baking, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write((byte)BakingRightStatus.Future, NpgsqlTypes.NpgsqlDbType.Smallint);
+                writer.Write(br.Round, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.WriteNull();
+            }
+
+            writer.Complete();
         }
 
         public virtual async Task Revert(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            await RevertCurrentRights(block);
 
-            #region current rights
+            if (block.Events.HasFlag(BlockEvents.CycleBegin))
+                await RevertNewCycle(block);
+        }
+
+        public virtual async Task RevertCurrentRights(Block block)
+        {
             CurrentRights = await Cache.BakingRights.GetAsync(block.Cycle, block.Level);
 
             foreach (var cr in CurrentRights)
@@ -179,17 +190,15 @@ namespace Mvkt.Sync.Protocols.Proto12
                 UPDATE  ""BakingRights""
                 SET     ""Status"" = {(int)BakingRightStatus.Future}
                 WHERE   ""Level"" = {block.Level}");
-            #endregion
+        }
 
-            #region new cycle
-            if (block.Events.HasFlag(BlockEvents.CycleBegin))
-            {
-                await Db.Database.ExecuteSqlRawAsync($@"
-                    DELETE FROM ""BakingRights""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles} AND ""Type"" = 0
-                    OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.PreservedCycles)}");
-            }
-            #endregion
+        public virtual async Task RevertNewCycle(Block block)
+        {
+            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
+            await Db.Database.ExecuteSqlRawAsync($@"
+                DELETE FROM ""BakingRights""
+                WHERE   ""Cycle"" = {block.Cycle + block.Protocol.ConsensusRightsDelay} AND ""Type"" = 0
+                OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.ConsensusRightsDelay)}");
         }
 
         protected virtual Sampler GetSampler(IEnumerable<(int id, long stake)> selection, bool forceBase)

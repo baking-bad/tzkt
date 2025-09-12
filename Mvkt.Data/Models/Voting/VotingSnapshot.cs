@@ -24,9 +24,6 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<VotingSnapshot>()
-                .HasIndex(x => x.Period);
-
-            modelBuilder.Entity<VotingSnapshot>()
                 .HasIndex(x => new { x.Period, x.BakerId })
                 .IsUnique();
             #endregion

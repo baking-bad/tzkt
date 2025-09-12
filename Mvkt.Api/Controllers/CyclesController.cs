@@ -1,10 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
-
 using Mvkt.Api.Models;
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services.Cache;
@@ -43,7 +38,6 @@ namespace Mvkt.Api.Controllers
         /// <remarks>
         /// Returns a list of cycles, including future cycles.
         /// </remarks>
-        /// <param name="snapshotIndex">Filters cycles by snapshot index (0..15)</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
         /// <param name="sort">Sorts cycles by specified field. Supported fields: `index` (default, desc).</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
@@ -52,7 +46,6 @@ namespace Mvkt.Api.Controllers
         /// <returns></returns>
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Cycle>>> Get(
-            Int32Parameter snapshotIndex,
             SelectParameter select,
             SortParameter sort,
             OffsetParameter offset,
@@ -65,25 +58,25 @@ namespace Mvkt.Api.Controllers
             #endregion
 
             if (select == null)
-                return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, quote));
+                return Ok(await Cycles.Get(sort, offset, limit, quote));
 
             if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values[0], quote));
+                    return Ok(await Cycles.Get(sort, offset, limit, select.Values[0], quote));
                 else
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Values, quote));
+                    return Ok(await Cycles.Get(sort, offset, limit, select.Values, quote));
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    return Ok(await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields[0], quote));
+                    return Ok(await Cycles.Get(sort, offset, limit, select.Fields[0], quote));
                 else
                 {
                     return Ok(new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Cycles.Get(snapshotIndex, sort, offset, limit, select.Fields, quote)
+                        Rows = await Cycles.Get(sort, offset, limit, select.Fields, quote)
                     });
                 }
             }

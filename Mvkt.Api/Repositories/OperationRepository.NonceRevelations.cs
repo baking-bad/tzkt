@@ -4,7 +4,7 @@ using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetNonceRevelationsCount(
             Int32Parameter level,
@@ -14,7 +14,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -28,7 +28,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51)
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new NonceRevelationOperation
@@ -43,8 +43,9 @@ namespace Mvkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -58,7 +59,7 @@ namespace Mvkt.Api.Repositories
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new NonceRevelationOperation
@@ -73,8 +74,9 @@ namespace Mvkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, block.Level)
             });
@@ -106,7 +108,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new NonceRevelationOperation
@@ -121,8 +123,9 @@ namespace Mvkt.Api.Repositories
                 RevealedLevel = row.RevealedLevel,
                 RevealedCycle = row.RevealedCycle,
                 Nonce = Hex.Convert(row.Nonce),
-                RewardLiquid = row.RewardLiquid,
+                RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
+                RewardStakedEdge = row.RewardStakedEdge,
                 RewardStakedShared = row.RewardStakedShared,
                 Quote = Quotes.Get(quote, row.Level)
             });
@@ -157,8 +160,9 @@ namespace Mvkt.Api.Repositories
                     case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
                     case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
                     case "nonce": columns.Add(@"o.""Nonce"""); break;
-                    case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                    case "rewardDelegated": columns.Add(@"o.""RewardDelegated"""); break;
                     case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                    case "rewardStakedEdge": columns.Add(@"o.""RewardStakedEdge"""); break;
                     case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
@@ -166,9 +170,11 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                     #region deprecated
+                    case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
                     case "reward":
-                        columns.Add(@"o.""RewardLiquid""");
+                        columns.Add(@"o.""RewardDelegated""");
                         columns.Add(@"o.""RewardStakedOwn""");
+                        columns.Add(@"o.""RewardStakedEdge""");
                         columns.Add(@"o.""RewardStakedShared""");
                         break;
                     #endregion
@@ -192,7 +198,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -243,13 +249,17 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Hex.Convert(row.Nonce);
                         break;
-                    case "rewardLiquid":
+                    case "rewardDelegated":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid;
+                            result[j++][i] = row.RewardDelegated;
                         break;
                     case "rewardStakedOwn":
                         foreach (var row in rows)
                             result[j++][i] = row.RewardStakedOwn;
+                        break;
+                    case "rewardStakedEdge":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardStakedEdge;
                         break;
                     case "rewardStakedShared":
                         foreach (var row in rows)
@@ -260,9 +270,13 @@ namespace Mvkt.Api.Repositories
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
                     #region deprecated
+                    case "rewardLiquid":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RewardDelegated;
+                        break;
                     case "reward":
                         foreach (var row in rows)
-                            result[j++][i] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                            result[j++][i] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                         break;
                     #endregion
                 }
@@ -298,8 +312,9 @@ namespace Mvkt.Api.Repositories
                 case "revealedLevel": columns.Add(@"o.""RevealedLevel"""); break;
                 case "revealedCycle": columns.Add(@"o.""RevealedCycle"""); break;
                 case "nonce": columns.Add(@"o.""Nonce"""); break;
-                case "rewardLiquid": columns.Add(@"o.""RewardLiquid"""); break;
+                case "rewardDelegated": columns.Add(@"o.""RewardDelegated"""); break;
                 case "rewardStakedOwn": columns.Add(@"o.""RewardStakedOwn"""); break;
+                case "rewardStakedEdge": columns.Add(@"o.""RewardStakedEdge"""); break;
                 case "rewardStakedShared": columns.Add(@"o.""RewardStakedShared"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
@@ -307,9 +322,11 @@ namespace Mvkt.Api.Repositories
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
                 #region deprecated
+                case "rewardLiquid": columns.Add(@"o.""RewardDelegated"""); break;
                 case "reward":
-                    columns.Add(@"o.""RewardLiquid""");
+                    columns.Add(@"o.""RewardDelegated""");
                     columns.Add(@"o.""RewardStakedOwn""");
+                    columns.Add(@"o.""RewardStakedEdge""");
                     columns.Add(@"o.""RewardStakedShared""");
                     break;
                 #endregion
@@ -332,7 +349,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -381,13 +398,17 @@ namespace Mvkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Hex.Convert(row.Nonce);
                     break;
-                case "rewardLiquid":
+                case "rewardDelegated":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid;
+                        result[j++] = row.RewardDelegated;
                     break;
                 case "rewardStakedOwn":
                     foreach (var row in rows)
                         result[j++] = row.RewardStakedOwn;
+                    break;
+                case "rewardStakedEdge":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardStakedEdge;
                     break;
                 case "rewardStakedShared":
                     foreach (var row in rows)
@@ -398,9 +419,13 @@ namespace Mvkt.Api.Repositories
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
                 #region deprecated
+                case "rewardLiquid":
+                    foreach (var row in rows)
+                        result[j++] = row.RewardDelegated;
+                    break;
                 case "reward":
                     foreach (var row in rows)
-                        result[j++] = row.RewardLiquid + row.RewardStakedOwn + row.RewardStakedShared;
+                        result[j++] = row.RewardDelegated + row.RewardStakedOwn + row.RewardStakedEdge + row.RewardStakedShared;
                     break;
                 #endregion
             }

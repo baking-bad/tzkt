@@ -34,7 +34,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
 
                 await Db.Database.ExecuteSqlRawAsync($"""
                     DELETE FROM "DelegatorCycles"

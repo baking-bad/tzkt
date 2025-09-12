@@ -35,7 +35,7 @@ namespace Mvkt.Sync.Protocols.Proto1
 
             #region apply operation
             sender.Balance += activation.Balance;
-            sender.Activated = true;
+            sender.ActivationsCount++;
 
             block.Operations |= Operations.Activations;
 
@@ -65,7 +65,7 @@ namespace Mvkt.Sync.Protocols.Proto1
 
             #region revert operation
             sender.Balance -= activation.Balance;
-            sender.Activated = null;
+            sender.ActivationsCount--;
 
             commitment.AccountId = null;
             commitment.Level = null;

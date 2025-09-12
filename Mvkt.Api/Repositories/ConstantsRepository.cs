@@ -1,30 +1,27 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 using Netmavryk.Encoding;
-
 using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class ConstantsRepository : DbConnection
+    public class ConstantsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Time;
 
-        public ConstantsRepository(AccountsCache accounts, TimeCache time, IConfiguration config) : base(config)
+        public ConstantsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache time)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Time = time;
         }
 
         public async Task<int> GetCount()
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(@"SELECT COUNT(*) FROM ""RegisterConstantOps"" WHERE ""Address"" IS NOT NULL");
         }
 
@@ -56,7 +53,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Constant
@@ -120,7 +117,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -214,7 +211,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()];

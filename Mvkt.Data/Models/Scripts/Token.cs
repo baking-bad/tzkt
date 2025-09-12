@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Mvkt.Data.Models
 {
@@ -57,37 +56,9 @@ namespace Mvkt.Data.Models
             //modelBuilder.Entity<Token>()
             //    .Property<string>("Value")
             //    .HasColumnType("numeric");
-
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<Token>()
-                .Property(x => x.TokenId)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Token>()
-                .Property(x => x.TotalMinted)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Token>()
-                .Property(x => x.TotalBurned)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Token>()
-                .Property(x => x.TotalSupply)
-                .HasConversion(converter);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<Token>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Token>()
-                .HasIndex(x => x.ContractId);
-
             modelBuilder.Entity<Token>()
                 .HasIndex(x => new { x.ContractId, x.TokenId })
                 .IsUnique();
@@ -100,7 +71,7 @@ namespace Mvkt.Data.Models
 
             modelBuilder.Entity<Token>()
                 .HasIndex(x => x.IndexedAt)
-                .HasFilter($@"""{nameof(Token.IndexedAt)}"" is not null");
+                .HasFilter($@"""{nameof(Token.IndexedAt)}"" IS NOT NULL");
 
             // shadow property
             modelBuilder.Entity<Token>()

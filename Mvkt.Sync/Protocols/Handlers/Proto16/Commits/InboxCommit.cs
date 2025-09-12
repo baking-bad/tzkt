@@ -12,13 +12,16 @@ namespace Mvkt.Sync.Protocols.Proto16
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport("""
-                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
+                COPY "InboxMessages" ("Id", "Level", "Index", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)
                 """);
+
+            var index = 0;
 
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelStart, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
@@ -28,17 +31,19 @@ namespace Mvkt.Sync.Protocols.Proto16
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelInfo, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level - 1, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
             writer.WriteNull();
 
-            WriteMigrationMessage(writer, block);
+            WriteMigrationMessage(writer, block, ref index);
 
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelEnd, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
@@ -52,13 +57,16 @@ namespace Mvkt.Sync.Protocols.Proto16
         {
             var conn = Db.Database.GetDbConnection() as NpgsqlConnection;
             using var writer = conn.BeginBinaryImport("""
-                COPY "InboxMessages" ("Id", "Level", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
+                COPY "InboxMessages" ("Id", "Level", "Index", "Type", "PredecessorLevel", "OperationId", "Payload", "Protocol")
                 FROM STDIN (FORMAT BINARY)
                 """);
-            
+
+            var index = 0;
+
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelStart, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
@@ -68,6 +76,7 @@ namespace Mvkt.Sync.Protocols.Proto16
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelInfo, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level - 1, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
@@ -75,13 +84,14 @@ namespace Mvkt.Sync.Protocols.Proto16
             writer.WriteNull();
 
             if (block.Events.HasFlag(BlockEvents.ProtocolBegin))
-                WriteMigrationMessage(writer, block);
+                WriteMigrationMessage(writer, block, ref index);
 
             foreach (var (operationId, payload) in Proto.Inbox.Messages)
             {
                 writer.StartRow();
                 writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
                 writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+                writer.Write(index++, NpgsqlTypes.NpgsqlDbType.Integer);
                 if (payload == null)
                 {
                     writer.Write((int)InboxMessageType.Transfer, NpgsqlTypes.NpgsqlDbType.Integer);
@@ -102,6 +112,7 @@ namespace Mvkt.Sync.Protocols.Proto16
             writer.StartRow();
             writer.Write(Cache.AppState.NextInboxMessageId(), NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write(block.Level, NpgsqlTypes.NpgsqlDbType.Integer);
+            writer.Write(index, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.Write((int)InboxMessageType.LevelEnd, NpgsqlTypes.NpgsqlDbType.Integer);
             writer.WriteNull();
             writer.WriteNull();
@@ -121,7 +132,7 @@ namespace Mvkt.Sync.Protocols.Proto16
             Cache.AppState.ReleaseInboxMessageId(cnt);
         }
 
-        protected virtual void WriteMigrationMessage(NpgsqlBinaryImporter writer, Block block)
+        protected virtual void WriteMigrationMessage(NpgsqlBinaryImporter writer, Block block, ref int index)
         {
             // migration messages were added in Proto17
         }

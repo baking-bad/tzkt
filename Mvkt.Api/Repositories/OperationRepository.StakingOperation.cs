@@ -3,7 +3,7 @@ using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetStakingOpsCount(StakingOperationFilter filter)
         {
@@ -24,9 +24,9 @@ namespace Mvkt.Api.Repositories
                     _ => @"o.""BakerId"""
                 })
                 .FilterA(@"o.""BakerId""", filter.baker)
-                .FilterA(@"o.""Kind""", filter.kind);
+                .FilterA(@"o.""Action""", filter.action);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -51,16 +51,21 @@ namespace Mvkt.Api.Repositories
                         case "gasUsed": columns.Add(@"o.""GasUsed"""); break;
                         case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                         case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
-                        case "kind": columns.Add(@"o.""Kind"""); break;
+                        case "action": columns.Add(@"o.""Action"""); break;
+                        case "requestedAmount": columns.Add(@"o.""RequestedAmount"""); break;
                         case "baker": columns.Add(@"o.""BakerId"""); break;
                         case "amount": columns.Add(@"o.""Amount"""); break;
-                        case "pseudotokens": columns.Add(@"o.""Pseudotokens"""); break;
-                        case "limitOfStakingOverBaking": columns.Add(@"o.""LimitOfStakingOverBaking"""); break;
-                        case "edgeOfBakingOverStaking": columns.Add(@"o.""EdgeOfBakingOverStaking"""); break;
-                        case "activationCycle": columns.Add(@"o.""ActivationCycle"""); break;
+                        case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                         case "status": columns.Add(@"o.""Status"""); break;
                         case "errors": columns.Add(@"o.""Errors"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
+                        #region deprecated
+                        case "kind": columns.Add(@"o.""Action"""); break;
+                        case "pseudotokens": columns.Add("1"); break;
+                        case "limitOfStakingOverBaking": columns.Add("1"); break;
+                        case "edgeOfBakingOverStaking": columns.Add("1"); break;
+                        case "activationCycle": columns.Add("1"); break;
+                        #endregion
                     }
                 }
 
@@ -87,10 +92,10 @@ namespace Mvkt.Api.Repositories
                     _ => @"o.""BakerId"""
                 })
                 .FilterA(@"o.""BakerId""", filter.baker)
-                .FilterA(@"o.""Kind""", filter.kind)
+                .FilterA(@"o.""Action""", filter.action)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -109,13 +114,11 @@ namespace Mvkt.Api.Repositories
                 GasUsed = row.GasUsed,
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
-                Kind = StakingOperationKinds.ToString(row.Kind),
+                Action = StakingActions.ToString(row.Action),
+                RequestedAmount = row.RequestedAmount,
                 Baker = row.BakerId == null ? null : Accounts.GetAlias(row.BakerId),
                 Amount = row.Amount,
-                Pseudotokens = row.Pseudotokens,
-                LimitOfStakingOverBaking = row.LimitOfStakingOverBaking,
-                EdgeOfBakingOverStaking = row.EdgeOfBakingOverStaking,
-                ActivationCycle = row.ActivationCycle,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Status = OpStatuses.ToString(row.Status),
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -186,9 +189,13 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BakerFee;
                         break;
-                    case "kind":
+                    case "action":
                         foreach (var row in rows)
-                            result[j++][i] = StakingOperationKinds.ToString(row.Kind);
+                            result[j++][i] = StakingActions.ToString(row.Action);
+                        break;
+                    case "requestedAmount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.RequestedAmount;
                         break;
                     case "baker":
                         foreach (var row in rows)
@@ -206,21 +213,9 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Amount;
                         break;
-                    case "pseudotokens":
+                    case "stakingUpdatesCount":
                         foreach (var row in rows)
-                            result[j++][i] = row.Pseudotokens;
-                        break;
-                    case "limitOfStakingOverBaking":
-                        foreach (var row in rows)
-                            result[j++][i] = row.LimitOfStakingOverBaking;
-                        break;
-                    case "edgeOfBakingOverStaking":
-                        foreach (var row in rows)
-                            result[j++][i] = row.EdgeOfBakingOverStaking;
-                        break;
-                    case "activationCycle":
-                        foreach (var row in rows)
-                            result[j++][i] = row.ActivationCycle;
+                            result[j++][i] = row.StakingUpdatesCount;
                         break;
                     case "status":
                         foreach (var row in rows)
@@ -234,6 +229,28 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+                    #region deprecated
+                    case "kind":
+                        foreach (var row in rows)
+                            result[j++][i] = StakingActions.ToString(row.Action);
+                        break;
+                    case "pseudotokens":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    case "limitOfStakingOverBaking":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    case "edgeOfBakingOverStaking":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    case "activationCycle":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                        #endregion
                 }
             }
 

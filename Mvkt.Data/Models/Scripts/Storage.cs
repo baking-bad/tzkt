@@ -33,17 +33,13 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Storage>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Storage>()
                 .HasIndex(x => x.Level);
 
             modelBuilder.Entity<Storage>()
-                .HasIndex(x => x.ContractId);
+                .HasIndex(x => new { x.ContractId, x.Id });
 
             modelBuilder.Entity<Storage>()
-                .HasIndex(x => new { x.ContractId, x.Current })
+                .HasIndex(x => x.ContractId, $"IX_{nameof(MvktContext.Storages)}_{nameof(Storage.ContractId)}_Partial")
                 .HasFilter($@"""{nameof(Storage.Current)}"" = true");
             #endregion
         }

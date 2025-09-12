@@ -15,12 +15,12 @@ namespace Mvkt.Sync.Protocols.Proto12
 
             await Db.Database.ExecuteSqlRawAsync($"""
                 UPDATE "SnapshotBalances" as sb
-                SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsLiquid"	                        
+                SET "OwnDelegatedBalance" = "OwnDelegatedBalance" - bc."EndorsementRewardsDelegated"	                        
                 FROM (
-                    SELECT "BakerId", "EndorsementRewardsLiquid"
+                    SELECT "BakerId", "EndorsementRewardsDelegated"
                     FROM "BakerCycles"
                     WHERE "Cycle" = {block.Cycle}
-                    AND "EndorsementRewardsLiquid" != 0
+                    AND "EndorsementRewardsDelegated" != 0
                 ) as bc
                 WHERE sb."Level" = {block.Level}
                 AND sb."AccountId" = bc."BakerId"

@@ -42,12 +42,12 @@ namespace Mvkt.Data.Models
 
             modelBuilder.Entity<Statistics>()
                 .HasIndex(x => x.Cycle)
-                .HasFilter(@"""Cycle"" IS NOT NULL")
+                .HasFilter($@"""{nameof(Statistics.Cycle)}"" IS NOT NULL")
                 .IsUnique();
 
             modelBuilder.Entity<Statistics>()
                 .HasIndex(x => x.Date)
-                .HasFilter(@"""Date"" IS NOT NULL")
+                .HasFilter($@"""{nameof(Statistics.Date)}"" IS NOT NULL")
                 .IsUnique();
             #endregion
         }

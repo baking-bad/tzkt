@@ -83,7 +83,7 @@ namespace Mvkt.Sync.Protocols.Proto5
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
-                        bakerCycle.EndorsementRewardsLiquid += successReward;
+                        bakerCycle.EndorsementRewardsDelegated += successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards += successReward;
                     else
@@ -114,7 +114,7 @@ namespace Mvkt.Sync.Protocols.Proto5
 
                     if (actualReward > 0)
                     {
-                        bakerCycle.BlockRewardsLiquid += actualReward;
+                        bakerCycle.BlockRewardsDelegated += actualReward;
                     }
 
                     if (successReward != actualReward)
@@ -189,7 +189,7 @@ namespace Mvkt.Sync.Protocols.Proto5
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.Baker.Id);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.NonceRevelationRewardsLiquid += op.RewardLiquid;
+                    bakerCycle.NonceRevelationRewardsDelegated += op.RewardDelegated;
                 }
             }
 
@@ -415,7 +415,7 @@ namespace Mvkt.Sync.Protocols.Proto5
                         : successReward;
 
                     if (endorsingRight.Status == BakingRightStatus.Realized)
-                        bakerCycle.EndorsementRewardsLiquid -= successReward;
+                        bakerCycle.EndorsementRewardsDelegated -= successReward;
                     else if (endorsingRight.Status == BakingRightStatus.Missed)
                         bakerCycle.MissedEndorsementRewards -= successReward;
                     else
@@ -446,7 +446,7 @@ namespace Mvkt.Sync.Protocols.Proto5
 
                     if (actualReward > 0)
                     {
-                        bakerCycle.BlockRewardsLiquid -= actualReward;
+                        bakerCycle.BlockRewardsDelegated -= actualReward;
                     }
 
                     if (successReward != actualReward)
@@ -521,7 +521,7 @@ namespace Mvkt.Sync.Protocols.Proto5
                     var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, op.BakerId);
                     Db.TryAttach(bakerCycle);
 
-                    bakerCycle.NonceRevelationRewardsLiquid -= op.RewardLiquid;
+                    bakerCycle.NonceRevelationRewardsDelegated -= op.RewardDelegated;
                 }
             }
 
@@ -543,7 +543,7 @@ namespace Mvkt.Sync.Protocols.Proto5
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""BakerCycles""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles}");
+                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.ConsensusRightsDelay}");
             }
             #endregion
         }

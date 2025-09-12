@@ -14,8 +14,8 @@ namespace Mvkt.Data.Models
         public PeriodStatus Status { get; set; }
         public DictatorStatus Dictator { get; set; }
 
-        public int? TotalBakers { get; set; }
-        public long? TotalVotingPower { get; set; }
+        public int TotalBakers { get; set; }
+        public long TotalVotingPower { get; set; }
 
         #region proposal
         public int? UpvotesQuorum { get; set; }
@@ -48,16 +48,9 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<VotingPeriod>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<VotingPeriod>()
-                .HasAlternateKey(x => x.Index);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<VotingPeriod>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
             modelBuilder.Entity<VotingPeriod>()
                 .HasIndex(x => x.Index)
                 .IsUnique();

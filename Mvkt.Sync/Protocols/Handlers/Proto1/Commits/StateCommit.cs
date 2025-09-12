@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using System.Text.Json;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Protocols.Proto1
@@ -85,8 +81,7 @@ namespace Mvkt.Sync.Protocols.Proto1
 
         public virtual async Task Revert(Block block)
         {
-            block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-            var nextProtocol = block.Protocol.Hash;
+            var nextProtocol = (await Cache.Protocols.GetAsync(block.ProtoCode)).Hash;
             var appState = Cache.AppState.Get();
 
             #region entities

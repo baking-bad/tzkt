@@ -87,30 +87,31 @@ namespace Mvkt.Sync.Protocols.Proto1
                 {
                     if (sender.Type == AccountType.User)
                     {
-                        Unstake(sender, prevDelegate, delegation);
+                        if (result.TryGetProperty("balance_updates", out var updates))
+                            await Unstake(delegation, updates.EnumerateArray().ToList());
                         ResetDelegate(sender, prevDelegate);
                         UpgradeUser(delegation);
 
                         #region weird delegators
                         var delegat = (Data.Models.Delegate)delegation.Sender;
 
-                        var weirdOriginations = await Db.OriginationOps
-                            .Include(x => x.Contract)
-                            .Where(x => x.Contract != null && x.Contract.WeirdDelegateId == delegat.Id)
+                        var weirds = await Db.Contracts
+                            .Join(Db.OriginationOps, x => x.Id, x => x.ContractId, (contract, origination) => new { contract, origination })
+                            .Where(x => x.contract.WeirdDelegateId != null && x.contract.WeirdDelegateId == delegat.Id)
                             .ToListAsync();
 
-                        foreach (var origination in weirdOriginations)
+                        foreach (var weird in weirds)
                         {
-                            Db.TryAttach(origination);
-                            origination.Delegate = delegat;
-                            if (delegat.Id != origination.SenderId && delegat.Id != origination.ManagerId) delegat.OriginationsCount++;
+                            Db.TryAttach(weird.origination);
+                            weird.origination.Delegate = delegat;
+                            if (delegat.Id != weird.origination.SenderId && delegat.Id != weird.origination.ManagerId) delegat.OriginationsCount++;
 
-                            if (origination.Contract.DelegationsCount == 0)
+                            if (weird.contract.DelegationsCount == 0)
                             {
-                                Db.TryAttach(origination.Contract);
-                                Cache.Accounts.Add(origination.Contract);
+                                Db.TryAttach(weird.contract);
+                                Cache.Accounts.Add(weird.contract);
 
-                                SetDelegate(origination.Contract, delegat, origination.Level);
+                                SetDelegate(weird.contract, delegat, weird.origination.Level);
                             }
                         }
                         #endregion
@@ -123,7 +124,8 @@ namespace Mvkt.Sync.Protocols.Proto1
                 }
                 else
                 {
-                    Unstake(sender, prevDelegate, delegation);
+                    if (result.TryGetProperty("balance_updates", out var updates))
+                        await Unstake(delegation, updates.EnumerateArray().ToList());
                     ResetDelegate(sender, prevDelegate);
                     if (newDelegate != null)
                         SetDelegate(sender, newDelegate, block.Level);
@@ -282,23 +284,23 @@ namespace Mvkt.Sync.Protocols.Proto1
                         #region weird delegations
                         var delegat = (Data.Models.Delegate)delegation.Sender;
 
-                        var weirdOriginations = await Db.OriginationOps
-                            .Include(x => x.Contract)
-                            .Where(x => x.Contract != null && x.Contract.WeirdDelegateId == delegat.Id)
+                        var weirds = await Db.Contracts
+                            .Join(Db.OriginationOps, x => x.Id, x => x.ContractId, (contract, origination) => new { contract, origination })
+                            .Where(x => x.contract.WeirdDelegateId != null && x.contract.WeirdDelegateId == delegat.Id)
                             .ToListAsync();
 
-                        foreach (var origination in weirdOriginations)
+                        foreach (var weird in weirds)
                         {
-                            Db.TryAttach(origination);
-                            origination.Delegate = null;
-                            if (delegat.Id != origination.SenderId && delegat.Id != origination.ManagerId) delegat.OriginationsCount--;
+                            Db.TryAttach(weird.origination);
+                            weird.origination.Delegate = null;
+                            if (delegat.Id != weird.origination.SenderId && delegat.Id != weird.origination.ManagerId) delegat.OriginationsCount--;
 
-                            if (origination.Contract.DelegationsCount == 0)
+                            if (weird.contract.DelegationsCount == 0)
                             {
-                                Db.TryAttach(origination.Contract);
-                                Cache.Accounts.Add(origination.Contract);
+                                Db.TryAttach(weird.contract);
+                                Cache.Accounts.Add(weird.contract);
 
-                                ResetDelegate(origination.Contract, delegat);
+                                ResetDelegate(weird.contract, delegat);
                             }
                         }
                         #endregion
@@ -311,7 +313,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                         if (prevDelegate != null && prevDelegate.Id != sender.Id)
                         {
                             SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
-                            RevertUnstake(sender, prevDelegate, delegation);
+                            await RevertUnstake(delegation);
                         }
                     }
                     else
@@ -325,7 +327,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                     if (prevDelegate != null && prevDelegate.Id != sender.Id)
                     {
                         SetDelegate(sender, prevDelegate, (int)prevDelegationLevel);
-                        RevertUnstake(sender, prevDelegate, delegation);
+                        await RevertUnstake(delegation);
                     }
                 }
             }
@@ -443,14 +445,13 @@ namespace Mvkt.Sync.Protocols.Proto1
                 FirstLevel = user.FirstLevel,
                 LastLevel = user.LastLevel,
                 Balance = user.Balance,
-                LostBalance = user.LostBalance,
                 Counter = user.Counter,
                 DeactivationLevel = GracePeriod.Init(delegation.Block),
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
                 Id = user.Id,
-                Activated = user.Activated,
+                ActivationsCount = user.ActivationsCount,
                 DelegationsCount = user.DelegationsCount,
                 OriginationsCount = user.OriginationsCount,
                 TransactionsCount = user.TransactionsCount,
@@ -463,12 +464,10 @@ namespace Mvkt.Sync.Protocols.Proto1
                 Revealed = user.Revealed,
                 Staked = true,
                 StakingBalance = user.Balance - user.UnstakedBalance,
-                StakedBalance = user.StakedBalance,
                 StakedPseudotokens = user.StakedPseudotokens,
                 UnstakedBalance = user.UnstakedBalance,
                 UnstakedBakerId = user.UnstakedBakerId,
                 StakingOpsCount = user.StakingOpsCount,
-                TotalStakedBalance = user.StakedBalance,
                 DelegatedBalance = 0,
                 Type = AccountType.Delegate,
                 ActiveTokensCount = user.ActiveTokensCount,
@@ -500,6 +499,8 @@ namespace Mvkt.Sync.Protocols.Proto1
                 SmartRollupPublishCount = user.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = user.SmartRollupRefuteCount,
+                DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
+                SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
                 RefutationGamesCount = user.RefutationGamesCount,
                 ActiveRefutationGamesCount = user.ActiveRefutationGamesCount
             };
@@ -713,18 +714,16 @@ namespace Mvkt.Sync.Protocols.Proto1
                 FirstLevel = delegat.FirstLevel,
                 LastLevel = delegat.LastLevel,
                 Balance = delegat.Balance,
-                LostBalance = delegat.LostBalance,
                 Counter = delegat.Counter,
                 Delegate = null,
                 DelegateId = null,
                 DelegationLevel = null,
-                StakedBalance = delegat.StakedBalance,
                 StakedPseudotokens = delegat.StakedPseudotokens,
                 UnstakedBalance = delegat.UnstakedBalance,
                 UnstakedBakerId = delegat.UnstakedBakerId,
                 StakingOpsCount = delegat.StakingOpsCount,
                 Id = delegat.Id,
-                Activated = delegat.Activated,
+                ActivationsCount = delegat.ActivationsCount,
                 DelegationsCount = delegat.DelegationsCount,
                 OriginationsCount = delegat.OriginationsCount,
                 TransactionsCount = delegat.TransactionsCount,
@@ -766,6 +765,8 @@ namespace Mvkt.Sync.Protocols.Proto1
                 SmartRollupPublishCount = delegat.SmartRollupPublishCount,
                 SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
                 SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
+                SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
+                DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
                 RefutationGamesCount = delegat.RefutationGamesCount,
                 ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount
             };
@@ -1040,9 +1041,9 @@ namespace Mvkt.Sync.Protocols.Proto1
             sender.Staked = false;
         }
 
-        protected virtual void Unstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
+        protected virtual Task Unstake(DelegationOperation op, List<JsonElement> balanceUpdates) => Task.CompletedTask;
 
-        protected virtual void RevertUnstake(Account sender, Data.Models.Delegate baker, DelegationOperation op) { }
+        protected virtual Task RevertUnstake(DelegationOperation op) => Task.CompletedTask;
 
         async Task<OriginationOperation> GetOriginationAsync(Contract contract)
         {

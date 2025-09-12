@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "alpha_002";
+        public override string VersionName => "alpha_002";
+        public override int VersionNumber => 2;
 
         public Proto2Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto2Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

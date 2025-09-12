@@ -43,7 +43,7 @@ You may override base URL used by the package in the following manner. This may 
 ```ts
 import * as api from "@tzkt/sdk-api";
 
-api.defaults.baseUrl = "https://api.ithacanet.tzkt.io/";
+api.defaults.baseUrl = "https://api.atlasnet.mavryk.network/";
 ```
 
 In case you need to override request headers, this is also possible.

@@ -1,23 +1,29 @@
 ﻿using Dapper;
+using Npgsql;
+using System.Numerics;
 using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class AccountRepository : DbConnection
+    public partial class AccountRepository
     {
         #region static
-        const string AliasQuery = @"""Extras""#>>'{profile,alias}' as ""Alias""";
+        const string AliasQuery = @"""Extras""#>>'{profile,alias}'";
+        const string StakedBalanceQuery = @"FLOOR(baker.""ExternalStakedBalance""::numeric * acc.""StakedPseudotokens"" / baker.""IssuedPseudotokens"")::bigint";
+        const string FullBalanceQuery = $@"(acc.""Balance"" + COALESCE({StakedBalanceQuery}, 0::bigint))";
         #endregion
 
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly StateCache State;
         readonly TimeCache Time;
         readonly OperationRepository Operations;
         readonly SoftwareCache Software;
 
-        public AccountRepository(AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, SoftwareCache software, IConfiguration config) : base(config)
+        public AccountRepository(NpgsqlDataSource dataSource, AccountsCache accounts, StateCache state, TimeCache time, OperationRepository operations, SoftwareCache software)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             State = state;
             Time = time;
@@ -28,6 +34,28 @@ namespace Mvkt.Api.Repositories
         public Task<RawAccount> GetRawAsync(string address)
         {
             return Accounts.GetAsync(address);
+        }
+
+        public async Task<long> GetBalanceAsync(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is RawUser rawUser && rawUser.StakedPseudotokens != null)
+            {
+                var rawBaker = await Accounts.GetAsync(rawAccount.DelegateId.Value) as RawDelegate; // WARN: possible races
+                if (rawBaker.IssuedPseudotokens > BigInteger.Zero)
+                    return rawAccount.Balance + (long)(rawBaker.ExternalStakedBalance * rawUser.StakedPseudotokens / rawBaker.IssuedPseudotokens);
+                else
+                    return ((await Get(rawUser.Id, null, null, null, null, null, null, null, null, null, null, 1)).FirstOrDefault() as User)?.Balance ?? 0L;
+            }
+            return rawAccount?.Balance ?? 0L;
+        }
+
+        public async Task<int> GetCounterAsync(string address)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            return rawAccount == null || rawAccount is RawUser { Balance: 0, StakedPseudotokens: null }
+                ? State.Current.ManagerCounter
+                : rawAccount.Counter;
         }
 
         public async Task<Account> Get(string address, bool legacy)
@@ -55,16 +83,15 @@ namespace Mvkt.Api.Repositories
                         Balance = delegat.Balance,
                         RollupBonds = delegat.RollupBonds,
                         RollupsCount = delegat.RollupsCount,
-                        StakedBalance = delegat.StakedBalance,
-                        StakedPseudotokens = delegat.StakedPseudotokens,
+                        StakedBalance = delegat.OwnStakedBalance,
                         UnstakedBalance = delegat.UnstakedBalance,
                         UnstakedBaker = delegat.UnstakedBakerId == null ? null : Accounts.GetAlias(delegat.UnstakedBakerId.Value),
-                        TotalStakedBalance = delegat.TotalStakedBalance,
+                        TotalStakedBalance = delegat.OwnStakedBalance + delegat.ExternalStakedBalance,
                         ExternalStakedBalance = delegat.ExternalStakedBalance,
                         ExternalUnstakedBalance = delegat.ExternalUnstakedBalance,
                         IssuedPseudotokens = delegat.IssuedPseudotokens,
                         StakersCount = delegat.StakersCount,
-                        LostBalance = delegat.LostBalance,
+                        RoundingError = delegat.RoundingError,
                         TransferTicketCount = delegat.TransferTicketCount,
                         TxRollupCommitCount = delegat.TxRollupCommitCount,
                         TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
@@ -92,7 +119,7 @@ namespace Mvkt.Api.Repositories
                         FirstActivityTime = Time[delegat.FirstLevel],
                         LastActivity = delegat.LastLevel,
                         LastActivityTime = Time[delegat.LastLevel],
-                        NumActivations = delegat.Activated == true ? 1 : 0,
+                        NumActivations = delegat.ActivationsCount,
                         NumBallots = delegat.BallotsCount,
                         NumContracts = delegat.ContractsCount,
                         ActiveTokensCount = delegat.ActiveTokensCount,
@@ -132,6 +159,9 @@ namespace Mvkt.Api.Repositories
                         ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
                         StakingOpsCount = delegat.StakingOpsCount,
                         AutostakingOpsCount = delegat.AutostakingOpsCount,
+                        StakingUpdatesCount = delegat.StakingUpdatesCount ?? 0,
+                        SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
+                        DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
                         Metadata = legacy ? delegat.Profile : null,
                         Extras = legacy ? null : delegat.Extras,
                         Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
@@ -140,21 +170,36 @@ namespace Mvkt.Api.Repositories
                 case RawUser user:
                     #region build user
                     var userDelegate = user.DelegateId == null ? null
-                        : await Accounts.GetAsync((int)user.DelegateId);
+                        : await Accounts.GetAsync((int)user.DelegateId) as RawDelegate;
+
+                    long? stakedBalance = null;
+                    if (user.StakedPseudotokens != null)
+                    {
+                        if (userDelegate.IssuedPseudotokens > BigInteger.Zero)
+                        {
+                            stakedBalance = (long)(userDelegate.ExternalStakedBalance * user.StakedPseudotokens / userDelegate.IssuedPseudotokens);
+                        }
+                        else
+                        {
+                            var res = (User)(await Get(user.Id, null, null, null, null, null, null, null, null, null, null, 1)).First();
+                            res.Metadata = legacy ? user.Profile : null;
+                            res.Extras = legacy ? null : user.Extras;
+                            return res;
+                        }
+                    }
 
                     return new User
                     {
                         Id = user.Id,
                         Alias = user.Alias,
                         Address = user.Address,
-                        Balance = user.Balance,
+                        Balance = user.Balance + (stakedBalance ?? 0L),
                         RollupBonds = user.RollupBonds,
                         RollupsCount = user.RollupsCount,
-                        StakedBalance = user.StakedBalance,
+                        StakedBalance = stakedBalance ?? 0L,
                         StakedPseudotokens = user.StakedPseudotokens,
                         UnstakedBalance = user.UnstakedBalance,
                         UnstakedBaker = user.UnstakedBakerId == null ? null : Accounts.GetAlias(user.UnstakedBakerId.Value),
-                        LostBalance = user.LostBalance,
                         TransferTicketCount = user.TransferTicketCount,
                         TxRollupCommitCount = user.TxRollupCommitCount,
                         TxRollupDispatchTicketsCount = user.TxRollupDispatchTicketsCount,
@@ -181,7 +226,7 @@ namespace Mvkt.Api.Repositories
                         },
                         DelegationLevel = userDelegate == null ? null : user.DelegationLevel,
                         DelegationTime = userDelegate == null ? null : Time[(int)user.DelegationLevel],
-                        NumActivations = user.Activated == true ? 1 : 0,
+                        NumActivations = user.ActivationsCount,
                         NumContracts = user.ContractsCount,
                         ActiveTokensCount = user.ActiveTokensCount,
                         TokenBalancesCount = user.TokenBalancesCount,
@@ -208,6 +253,9 @@ namespace Mvkt.Api.Repositories
                         RefutationGamesCount = user.RefutationGamesCount,
                         ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
                         StakingOpsCount = user.StakingOpsCount,
+                        StakingUpdatesCount = user.StakingUpdatesCount ?? 0,
+                        SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
+                        DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
                         Metadata = legacy ? user.Profile : null,
                         Extras = legacy ? null : user.Extras
                     };
@@ -381,14 +429,22 @@ namespace Mvkt.Api.Repositories
 
         public async Task<int> GetCount(AccountTypeParameter type, ContractKindParameter kind, Int64Parameter balance, BoolParameter staked, Int32Parameter firstActivity)
         {
-            var sql = new SqlBuilder(@"SELECT COUNT(*) FROM ""Accounts""")
-                .Filter("Type", type)
-                .Filter("Kind", kind)
-                .Filter("Balance", balance)
-                .Filter("Staked", staked)
-                .Filter("FirstLevel", firstActivity);
+            var joinBaker = balance?.Empty == false ? """
+                LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
+                """ : string.Empty;
 
-            using var db = GetConnection();
+            var sql = new SqlBuilder($"""
+                SELECT COUNT(*)
+                FROM "Accounts" AS acc
+                {joinBaker}
+                """)
+                .FilterA(@"acc.""Type""", type)
+                .FilterA(@"acc.""Kind""", kind)
+                .FilterA(FullBalanceQuery, balance)
+                .FilterA(@"acc.""Staked""", staked)
+                .FilterA(@"acc.""FirstLevel""", firstActivity);
+
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -398,6 +454,7 @@ namespace Mvkt.Api.Repositories
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
+            BigIntegerNullableParameter stakedPseudotokens,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -405,27 +462,35 @@ namespace Mvkt.Api.Repositories
             OffsetParameter offset,
             int limit)
         {
-            var sql = new SqlBuilder($@"SELECT *, {AliasQuery} FROM ""Accounts""")
-                .Filter("Id", id)
-                .Filter("Address", address)
-                .Filter("Type", type)
-                .Filter("Kind", kind)
-                .Filter("DelegateId", @delegate)
-                .Filter("Balance", balance)
-                .Filter("Staked", staked)
-                .Filter("LastLevel", lastActivity)
-                .Take(sort, offset, limit, x => x switch
+            var sql = new SqlBuilder($"""
+                SELECT acc.*,
+                       acc.{AliasQuery} AS "Alias",
+                       {StakedBalanceQuery} AS "StakedBalance"
+                FROM "Accounts" AS acc
+                LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
+                """)
+                .FilterA(@"acc.""Id""", id)
+                .FilterA(@"acc.""Address""", address)
+                .FilterA(@"acc.""Type""", type)
+                .FilterA(@"acc.""Kind""", kind)
+                .FilterA(@"acc.""DelegateId""", @delegate)
+                .FilterA(@"acc.""StakedPseudotokens""", stakedPseudotokens)
+                .FilterA(FullBalanceQuery, balance)
+                .FilterA(@"acc.""Staked""", staked)
+                .FilterA(@"acc.""LastLevel""", lastActivity)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "balance" => ("Balance", "Balance"),
-                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    "numContracts" => ("ContractsCount", "ContractsCount"),
-                    _ => ("Id", "Id")
-                });
+                    "balance" => (FullBalanceQuery, FullBalanceQuery),
+                    "rollupBonds" => (@"acc.""RollupBonds""", @"acc.""RollupBonds"""),
+                    "firstActivity" => (@"acc.""FirstLevel""", @"acc.""FirstLevel"""),
+                    "lastActivity" => (@"acc.""LastLevel""", @"acc.""LastLevel"""),
+                    "numTransactions" => (@"acc.""TransactionsCount""", @"acc.""TransactionsCount"""),
+                    "numContracts" => (@"acc.""ContractsCount""", @"acc.""ContractsCount"""),
+                    "stakedPseudotokens" => (@"acc.""StakedPseudotokens""", @"acc.""StakedPseudotokens"""),
+                    _ => (@"acc.""Id""", @"acc.""Id""")
+                }, @"acc.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var accounts = new List<Account>(rows.Count());
@@ -443,14 +508,13 @@ namespace Mvkt.Api.Repositories
                             Id = row.Id,
                             Alias = row.Alias,
                             Address = row.Address,
-                            Balance = row.Balance,
+                            Balance = row.Balance + (row.StakedBalance ?? 0L),
                             RollupBonds = row.RollupBonds,
                             RollupsCount = row.RollupsCount,
-                            StakedBalance = row.StakedBalance,
+                            StakedBalance = row.StakedBalance ?? 0L,
                             StakedPseudotokens = row.StakedPseudotokens,
                             UnstakedBalance = row.UnstakedBalance,
                             UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
-                            LostBalance = row.LostBalance,
                             TransferTicketCount = row.TransferTicketCount,
                             TxRollupCommitCount = row.TxRollupCommitCount,
                             TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
@@ -477,7 +541,7 @@ namespace Mvkt.Api.Repositories
                             },
                             DelegationLevel = userDelegate == null ? null : row.DelegationLevel,
                             DelegationTime = userDelegate == null ? null : (DateTime?)Time[row.DelegationLevel],
-                            NumActivations = row.Activated == true ? 1 : 0,
+                            NumActivations = row.ActivationsCount,
                             NumContracts = row.ContractsCount,
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
@@ -503,7 +567,10 @@ namespace Mvkt.Api.Repositories
                             SmartRollupRefuteCount = row.SmartRollupRefuteCount,
                             RefutationGamesCount = row.RefutationGamesCount,
                             ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
-                            StakingOpsCount = row.StakingOpsCount
+                            StakingOpsCount = row.StakingOpsCount,
+                            StakingUpdatesCount = row.StakingUpdatesCount ?? 0,
+                            SetDelegateParametersOpsCount = row.SetDelegateParametersOpsCount,
+                            DalPublishCommitmentOpsCount = row.DalPublishCommitmentOpsCount,
                         });
                         #endregion
                         break;
@@ -520,16 +587,15 @@ namespace Mvkt.Api.Repositories
                             Balance = row.Balance,
                             RollupBonds = row.RollupBonds,
                             RollupsCount = row.RollupsCount,
-                            StakedBalance = row.StakedBalance,
-                            StakedPseudotokens = row.StakedPseudotokens,
+                            StakedBalance = row.OwnStakedBalance,
                             UnstakedBalance = row.UnstakedBalance,
                             UnstakedBaker = row.UnstakedBakerId == null ? null : Accounts.GetAlias(row.UnstakedBakerId),
-                            TotalStakedBalance = row.TotalStakedBalance,
+                            TotalStakedBalance = row.OwnStakedBalance + row.ExternalStakedBalance,
                             ExternalStakedBalance = row.ExternalStakedBalance,
                             ExternalUnstakedBalance = row.ExternalUnstakedBalance,
                             IssuedPseudotokens = row.IssuedPseudotokens,
                             StakersCount = row.StakersCount,
-                            LostBalance = row.LostBalance,
+                            RoundingError = row.RoundingError,
                             TransferTicketCount = row.TransferTicketCount,
                             TxRollupCommitCount = row.TxRollupCommitCount,
                             TxRollupDispatchTicketsCount = row.TxRollupDispatchTicketsCount,
@@ -557,7 +623,7 @@ namespace Mvkt.Api.Repositories
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
                             LastActivityTime = Time[row.LastLevel],
-                            NumActivations = row.Activated == true ? 1 : 0,
+                            NumActivations = row.ActivationsCount,
                             NumBallots = row.BallotsCount,
                             NumContracts = row.ContractsCount,
                             ActiveTokensCount = row.ActiveTokensCount,
@@ -597,6 +663,9 @@ namespace Mvkt.Api.Repositories
                             ActiveRefutationGamesCount = row.ActiveRefutationGamesCount,
                             StakingOpsCount = row.StakingOpsCount,
                             AutostakingOpsCount = row.AutostakingOpsCount,
+                            StakingUpdatesCount = row.StakingUpdatesCount ?? 0,
+                            SetDelegateParametersOpsCount = row.SetDelegateParametersOpsCount,
+                            DalPublishCommitmentOpsCount = row.DalPublishCommitmentOpsCount,
                             Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
                         });
                         #endregion
@@ -772,6 +841,7 @@ namespace Mvkt.Api.Repositories
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
+            BigIntegerNullableParameter stakedPseudotokens,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -785,146 +855,161 @@ namespace Mvkt.Api.Repositories
             {
                 switch (field)
                 {
-                    case "id": columns.Add(@"""Id"""); break;
-                    case "alias": columns.Add(AliasQuery); break;
-                    case "type": columns.Add(@"""Type"""); break;
-                    case "active": columns.Add(@"""Staked"""); break;
-                    case "address": columns.Add(@"""Address"""); break;
-                    case "publicKey": columns.Add(@"""PublicKey"""); break;
-                    case "revealed": columns.Add(@"""Revealed"""); break;
-                    case "balance": columns.Add(@"""Balance"""); break;
-                    case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
-                    case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
-                    case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
-                    case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
-                    case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
-                    case "counter": columns.Add(@"""Counter"""); break;
-                    case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
-                    case "activationTime": columns.Add(@"""ActivationLevel"""); break;
-                    case "deactivationLevel": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
-                    case "deactivationTime": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
-                    case "stakingBalance": columns.Add(@"""StakingBalance"""); break;
-                    case "firstActivity": columns.Add(@"""FirstLevel"""); break;
-                    case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
-                    case "lastActivity": columns.Add(@"""LastLevel"""); break;
-                    case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
-                    case "numActivations": columns.Add(@"""Activated"""); break;
-                    case "numBallots": columns.Add(@"""BallotsCount"""); break;
-                    case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                    case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
-                    case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
-                    case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
-                    case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
-                    case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
-                    case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
-                    case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
-                    case "numBlocks": columns.Add(@"""BlocksCount"""); break;
-                    case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
-                    case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
-                    case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
-                    case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
-                    case "numEndorsements": columns.Add(@"""EndorsementsCount"""); break;
-                    case "numPreendorsements": columns.Add(@"""PreendorsementsCount"""); break;
-                    case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
-                    case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
-                    case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
-                    case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
-                    case "numProposals": columns.Add(@"""ProposalsCount"""); break;
-                    case "numReveals": columns.Add(@"""RevealsCount"""); break;
-                    case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
-                    case "numSetDepositsLimits": columns.Add(@"""SetDepositsLimitsCount"""); break;                        
-                    case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
-                    case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
-                    case "software": columns.Add(@"""SoftwareId"""); break;
-                    case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
-                    case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
-                    case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
-                    case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
-                    case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
-                    case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
-                    case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
-                    case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
-                    case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
-                    case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
-                    case "stakersCount": columns.Add(@"""StakersCount"""); break;
-                    case "lostBalance": columns.Add(@"""LostBalance"""); break;
-                    case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
-                    case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
-                    case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
-                    case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
-                    case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
-                    case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
-                    case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
-                    case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
-                    case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
-                    case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
-                    case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
-                    case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
-                    case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
-                    case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
-                    case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
-                    case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
-                    case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
-                    case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
-                    case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
-                    case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
-                    case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
-                    case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
-                    case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
-                    case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
-                    case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
-                    case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
+                    case "id": columns.Add(@"acc.""Id"""); break;
+                    case "alias": columns.Add($@"acc.{AliasQuery} AS ""Alias"""); break;
+                    case "type": columns.Add(@"acc.""Type"""); break;
+                    case "active": columns.Add(@"acc.""Staked"""); break;
+                    case "address": columns.Add(@"acc.""Address"""); break;
+                    case "publicKey": columns.Add(@"acc.""PublicKey"""); break;
+                    case "revealed": columns.Add(@"acc.""Revealed"""); break;
+                    case "balance":
+                        columns.Add(@"acc.""Balance""");
+                        columns.Add($@"{StakedBalanceQuery} AS ""StakedBalance""");
+                        break;
+                    case "frozenDeposit": columns.Add(@"acc.""OwnStakedBalance"""); columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                    case "frozenDepositLimit": columns.Add(@"acc.""FrozenDepositLimit"""); break;
+                    case "limitOfStakingOverBaking": columns.Add(@"acc.""LimitOfStakingOverBaking"""); break;
+                    case "edgeOfBakingOverStaking": columns.Add(@"acc.""EdgeOfBakingOverStaking"""); break;
+                    case "delegatedBalance": columns.Add(@"acc.""DelegatedBalance"""); break;
+                    case "counter": columns.Add(@"acc.""Counter"""); break;
+                    case "activationLevel": columns.Add(@"acc.""ActivationLevel"""); break;
+                    case "activationTime": columns.Add(@"acc.""ActivationLevel"""); break;
+                    case "deactivationLevel": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
+                    case "deactivationTime": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
+                    case "stakingBalance": columns.Add(@"acc.""StakingBalance"""); break;
+                    case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
+                    case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
+                    case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
+                    case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                    case "numActivations": columns.Add(@"acc.""ActivationsCount"""); break;
+                    case "numBallots": columns.Add(@"acc.""BallotsCount"""); break;
+                    case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                    case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                    case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                    case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
+                    case "activeTicketsCount": columns.Add(@"acc.""ActiveTicketsCount"""); break;
+                    case "ticketBalancesCount": columns.Add(@"acc.""TicketBalancesCount"""); break;
+                    case "ticketTransfersCount": columns.Add(@"acc.""TicketTransfersCount"""); break;
+                    case "numDelegators": columns.Add(@"acc.""DelegatorsCount"""); break;
+                    case "numBlocks": columns.Add(@"acc.""BlocksCount"""); break;
+                    case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
+                    case "numDoubleBaking": columns.Add(@"acc.""DoubleBakingCount"""); break;
+                    case "numDoubleEndorsing": columns.Add(@"acc.""DoubleEndorsingCount"""); break;
+                    case "numDoublePreendorsing": columns.Add(@"acc.""DoublePreendorsingCount"""); break;
+                    case "numEndorsements": columns.Add(@"acc.""EndorsementsCount"""); break;
+                    case "numPreendorsements": columns.Add(@"acc.""PreendorsementsCount"""); break;
+                    case "numNonceRevelations": columns.Add(@"acc.""NonceRevelationsCount"""); break;
+                    case "numRevelationPenalties": columns.Add(@"acc.""RevelationPenaltiesCount"""); break;
+                    case "numEndorsingRewards": columns.Add(@"acc.""EndorsingRewardsCount"""); break;
+                    case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
+                    case "numProposals": columns.Add(@"acc.""ProposalsCount"""); break;
+                    case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
+                    case "numRegisterConstants": columns.Add(@"acc.""RegisterConstantsCount"""); break;
+                    case "numSetDepositsLimits": columns.Add(@"acc.""SetDepositsLimitsCount"""); break;                        
+                    case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
+                    case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
+                    case "software": columns.Add(@"acc.""SoftwareId"""); break;
+                    case "rollupBonds": columns.Add(@"acc.""RollupBonds"""); break;
+                    case "rollupsCount": columns.Add(@"acc.""RollupsCount"""); break;
+                    case "stakedBalance":
+                        columns.Add(@"acc.""OwnStakedBalance""");
+                        columns.Add($@"{StakedBalanceQuery} AS ""StakedBalance""");
+                        break;
+                    case "stakedPseudotokens": columns.Add(@"acc.""StakedPseudotokens"""); break;
+                    case "unstakedBalance": columns.Add(@"acc.""UnstakedBalance"""); break;
+                    case "unstakedBaker": columns.Add(@"acc.""UnstakedBakerId"""); break;
+                    case "totalStakedBalance": columns.Add(@"acc.""OwnStakedBalance"""); columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                    case "externalStakedBalance": columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                    case "externalUnstakedBalance": columns.Add(@"acc.""ExternalUnstakedBalance"""); break;
+                    case "roundingError": columns.Add(@"acc.""RoundingError"""); break;
+                    case "issuedPseudotokens": columns.Add(@"acc.""IssuedPseudotokens"""); break;
+                    case "stakersCount": columns.Add(@"acc.""StakersCount"""); break;
+                    case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                    case "txRollupCommitCount": columns.Add(@"acc.""TxRollupCommitCount"""); break;
+                    case "txRollupDispatchTicketsCount": columns.Add(@"acc.""TxRollupDispatchTicketsCount"""); break;
+                    case "txRollupFinalizeCommitmentCount": columns.Add(@"acc.""TxRollupFinalizeCommitmentCount"""); break;
+                    case "txRollupOriginationCount": columns.Add(@"acc.""TxRollupOriginationCount"""); break;
+                    case "txRollupRejectionCount": columns.Add(@"acc.""TxRollupRejectionCount"""); break;
+                    case "txRollupRemoveCommitmentCount": columns.Add(@"acc.""TxRollupRemoveCommitmentCount"""); break;
+                    case "txRollupReturnBondCount": columns.Add(@"acc.""TxRollupReturnBondCount"""); break;
+                    case "txRollupSubmitBatchCount": columns.Add(@"acc.""TxRollupSubmitBatchCount"""); break;
+                    case "vdfRevelationsCount": columns.Add(@"acc.""VdfRevelationsCount"""); break;
+                    case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
+                    case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateConsensusKeyCount"""); break;
+                    case "drainDelegateCount": columns.Add(@"acc.""DrainDelegateCount"""); break;
+                    case "smartRollupBonds": columns.Add(@"acc.""SmartRollupBonds"""); break;
+                    case "smartRollupsCount": columns.Add(@"acc.""SmartRollupsCount"""); break;
+                    case "smartRollupAddMessagesCount": columns.Add(@"acc.""SmartRollupAddMessagesCount"""); break;
+                    case "smartRollupCementCount": columns.Add(@"acc.""SmartRollupCementCount"""); break;
+                    case "smartRollupExecuteCount": columns.Add(@"acc.""SmartRollupExecuteCount"""); break;
+                    case "smartRollupOriginateCount": columns.Add(@"acc.""SmartRollupOriginateCount"""); break;
+                    case "smartRollupPublishCount": columns.Add(@"acc.""SmartRollupPublishCount"""); break;
+                    case "smartRollupRecoverBondCount": columns.Add(@"acc.""SmartRollupRecoverBondCount"""); break;
+                    case "smartRollupRefuteCount": columns.Add(@"acc.""SmartRollupRefuteCount"""); break;
+                    case "refutationGamesCount": columns.Add(@"acc.""RefutationGamesCount"""); break;
+                    case "activeRefutationGamesCount": columns.Add(@"acc.""ActiveRefutationGamesCount"""); break;
+                    case "stakingOpsCount": columns.Add(@"acc.""StakingOpsCount"""); break;
+                    case "autostakingOpsCount": columns.Add(@"acc.""AutostakingOpsCount"""); break;
+                    case "stakingUpdatesCount": columns.Add(@"acc.""StakingUpdatesCount"""); break;
+                    case "setDelegateParametersOpsCount": columns.Add(@"acc.""SetDelegateParametersOpsCount"""); break;
+                    case "dalPublishCommitmentOpsCount": columns.Add(@"acc.""DalPublishCommitmentOpsCount"""); break;
 
-                    case "delegate": columns.Add(@"""DelegateId"""); break;
-                    case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                    case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                    case "delegate": columns.Add(@"acc.""DelegateId"""); break;
+                    case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                    case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
 
-                    case "kind": columns.Add(@"""Kind"""); break;
-                    case "tzips": columns.Add(@"""Tags"""); break;
-                    case "creator": columns.Add(@"""CreatorId"""); break;
-                    case "manager": columns.Add(@"""ManagerId"""); break;
-                    case "tokensCount": columns.Add(@"""TokensCount"""); break;
-                    case "eventsCount": columns.Add(@"""EventsCount"""); break;
-                    case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
+                    case "kind": columns.Add(@"acc.""Kind"""); break;
+                    case "tzips": columns.Add(@"acc.""Tags"""); break;
+                    case "creator": columns.Add(@"acc.""CreatorId"""); break;
+                    case "manager": columns.Add(@"acc.""ManagerId"""); break;
+                    case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                    case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
+                    case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
 
-                    case "pvmKind": columns.Add(@"""PvmKind"""); break;
-                    case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
-                    case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
-                    case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
-                    case "totalStakers": columns.Add(@"""TotalStakers"""); break;
-                    case "activeStakers": columns.Add(@"""ActiveStakers"""); break;
-                    case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
-                    case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
-                    case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
-                    case "refutedCommitments": columns.Add(@"""RefutedCommitments"""); break;
-                    case "orphanCommitments": columns.Add(@"""OrphanCommitments"""); break;
+                    case "pvmKind": columns.Add(@"acc.""PvmKind"""); break;
+                    case "genesisCommitment": columns.Add(@"acc.""GenesisCommitment"""); break;
+                    case "lastCommitment": columns.Add(@"acc.""LastCommitment"""); break;
+                    case "inboxLevel": columns.Add(@"acc.""InboxLevel"""); break;
+                    case "totalStakers": columns.Add(@"acc.""TotalStakers"""); break;
+                    case "activeStakers": columns.Add(@"acc.""ActiveStakers"""); break;
+                    case "executedCommitments": columns.Add(@"acc.""ExecutedCommitments"""); break;
+                    case "cementedCommitments": columns.Add(@"acc.""CementedCommitments"""); break;
+                    case "pendingCommitments": columns.Add(@"acc.""PendingCommitments"""); break;
+                    case "refutedCommitments": columns.Add(@"acc.""RefutedCommitments"""); break;
+                    case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
                 }
             }
 
             if (columns.Count == 0)
                 return Array.Empty<object[]>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
-                .Filter("Id", id)
-                .Filter("Address", address)
-                .Filter("Type", type)
-                .Filter("Kind", kind)
-                .Filter("DelegateId", @delegate)
-                .Filter("Balance", balance)
-                .Filter("Staked", staked)
-                .Filter("LastLevel", lastActivity)
-                .Take(sort, offset, limit, x => x switch
+            var sql = new SqlBuilder($"""
+                SELECT {string.Join(',', columns)}
+                FROM "Accounts" as acc
+                LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
+                """)
+                .FilterA(@"acc.""Id""", id)
+                .FilterA(@"acc.""Address""", address)
+                .FilterA(@"acc.""Type""", type)
+                .FilterA(@"acc.""Kind""", kind)
+                .FilterA(@"acc.""DelegateId""", @delegate)
+                .FilterA(@"acc.""StakedPseudotokens""", stakedPseudotokens)
+                .FilterA(FullBalanceQuery, balance)
+                .FilterA(@"acc.""Staked""", staked)
+                .FilterA(@"acc.""LastLevel""", lastActivity)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "balance" => ("Balance", "Balance"),
-                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    "numContracts" => ("ContractsCount", "ContractsCount"),
-                    _ => ("Id", "Id")
-                });
+                    "balance" => (FullBalanceQuery, FullBalanceQuery),
+                    "rollupBonds" => (@"acc.""RollupBonds""", @"acc.""RollupBonds"""),
+                    "firstActivity" => (@"acc.""FirstLevel""", @"acc.""FirstLevel"""),
+                    "lastActivity" => (@"acc.""LastLevel""", @"acc.""LastLevel"""),
+                    "numTransactions" => (@"acc.""TransactionsCount""", @"acc.""TransactionsCount"""),
+                    "numContracts" => (@"acc.""ContractsCount""", @"acc.""ContractsCount"""),
+                    "stakedPseudotokens" => (@"acc.""StakedPseudotokens""", @"acc.""StakedPseudotokens"""),
+                    _ => (@"acc.""Id""", @"acc.""Id""")
+                }, @"acc.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -965,11 +1050,11 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "balance":
                         foreach (var row in rows)
-                            result[j++][i] = row.Balance; 
+                            result[j++][i] = row.Balance + (row.StakedBalance ?? 0L); 
                         break;
                     case "frozenDeposit":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
                         break;
                     case "frozenDepositLimit":
                         foreach (var row in rows)
@@ -1029,7 +1114,7 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "numActivations":
                         foreach (var row in rows)
-                            result[j++][i] = row.Activated == true ? 1 : 0;
+                            result[j++][i] = row.ActivationsCount;
                         break;
                     case "numBallots":
                         foreach (var row in rows)
@@ -1149,7 +1234,7 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "stakedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.StakedBalance;
+                            result[j++][i] = row.OwnStakedBalance ?? row.StakedBalance ?? 0L;
                         break;
                     case "stakedPseudotokens":
                         foreach (var row in rows)
@@ -1165,7 +1250,7 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "totalStakedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.TotalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
                         break;
                     case "externalStakedBalance":
                         foreach (var row in rows)
@@ -1183,9 +1268,9 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.StakersCount;
                         break;
-                    case "lostBalance":
+                    case "roundingError":
                         foreach (var row in rows)
-                            result[j++][i] = row.LostBalance;
+                            result[j++][i] = row.RoundingError;
                         break;
                     case "transferTicketCount":
                         foreach (var row in rows)
@@ -1290,6 +1375,18 @@ namespace Mvkt.Api.Repositories
                     case "autostakingOpsCount":
                         foreach (var row in rows)
                             result[j++][i] = row.AutostakingOpsCount;
+                        break;
+                    case "stakingUpdatesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakingUpdatesCount ?? 0;
+                        break;
+                    case "setDelegateParametersOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SetDelegateParametersOpsCount;
+                        break;
+                    case "dalPublishCommitmentOpsCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.DalPublishCommitmentOpsCount;
                         break;
                     case "delegate":
                         foreach (var row in rows)
@@ -1410,6 +1507,7 @@ namespace Mvkt.Api.Repositories
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
+            BigIntegerNullableParameter stakedPseudotokens,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -1421,145 +1519,160 @@ namespace Mvkt.Api.Repositories
             var columns = new HashSet<string>(3);
             switch (field)
             {
-                case "id": columns.Add(@"""Id"""); break;
-                case "alias": columns.Add(AliasQuery); break;
-                case "type": columns.Add(@"""Type"""); break;
-                case "active": columns.Add(@"""Staked"""); break;
-                case "address": columns.Add(@"""Address"""); break;
-                case "publicKey": columns.Add(@"""PublicKey"""); break;
-                case "revealed": columns.Add(@"""Revealed"""); break;
-                case "balance": columns.Add(@"""Balance"""); break;
-                case "frozenDeposit": columns.Add(@"""TotalStakedBalance"""); break;
-                case "frozenDepositLimit": columns.Add(@"""FrozenDepositLimit"""); break;
-                case "limitOfStakingOverBaking": columns.Add(@"""LimitOfStakingOverBaking"""); break;
-                case "edgeOfBakingOverStaking": columns.Add(@"""EdgeOfBakingOverStaking"""); break;
-                case "delegatedBalance": columns.Add(@"""DelegatedBalance"""); break;
-                case "counter": columns.Add(@"""Counter"""); break;
-                case "activationLevel": columns.Add(@"""ActivationLevel"""); break;
-                case "activationTime": columns.Add(@"""ActivationLevel"""); break;
-                case "deactivationLevel": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
-                case "deactivationTime": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
-                case "stakingBalance": columns.Add(@"""StakingBalance"""); break;
-                case "firstActivity": columns.Add(@"""FirstLevel"""); break;
-                case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
-                case "lastActivity": columns.Add(@"""LastLevel"""); break;
-                case "lastActivityTime": columns.Add(@"""LastLevel"""); break;
-                case "numActivations": columns.Add(@"""Activated"""); break;
-                case "numBallots": columns.Add(@"""BallotsCount"""); break;
-                case "numContracts": columns.Add(@"""ContractsCount"""); break;
-                case "activeTokensCount": columns.Add(@"""ActiveTokensCount"""); break;
-                case "tokenBalancesCount": columns.Add(@"""TokenBalancesCount"""); break;
-                case "tokenTransfersCount": columns.Add(@"""TokenTransfersCount"""); break;
-                case "activeTicketsCount": columns.Add(@"""ActiveTicketsCount"""); break;
-                case "ticketBalancesCount": columns.Add(@"""TicketBalancesCount"""); break;
-                case "ticketTransfersCount": columns.Add(@"""TicketTransfersCount"""); break;
-                case "numDelegators": columns.Add(@"""DelegatorsCount"""); break;
-                case "numBlocks": columns.Add(@"""BlocksCount"""); break;
-                case "numDelegations": columns.Add(@"""DelegationsCount"""); break;
-                case "numDoubleBaking": columns.Add(@"""DoubleBakingCount"""); break;
-                case "numDoubleEndorsing": columns.Add(@"""DoubleEndorsingCount"""); break;
-                case "numDoublePreendorsing": columns.Add(@"""DoublePreendorsingCount"""); break;
-                case "numEndorsements": columns.Add(@"""EndorsementsCount"""); break;
-                case "numPreendorsements": columns.Add(@"""PreendorsementsCount"""); break;
-                case "numNonceRevelations": columns.Add(@"""NonceRevelationsCount"""); break;
-                case "numRevelationPenalties": columns.Add(@"""RevelationPenaltiesCount"""); break;
-                case "numEndorsingRewards": columns.Add(@"""EndorsingRewardsCount"""); break;
-                case "numOriginations": columns.Add(@"""OriginationsCount"""); break;
-                case "numProposals": columns.Add(@"""ProposalsCount"""); break;
-                case "numReveals": columns.Add(@"""RevealsCount"""); break;
-                case "numRegisterConstants": columns.Add(@"""RegisterConstantsCount"""); break;
-                case "numSetDepositsLimits": columns.Add(@"""SetDepositsLimitsCount"""); break;
-                case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
-                case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
-                case "software": columns.Add(@"""SoftwareId"""); break;
-                case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
-                case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
-                case "stakedBalance": columns.Add(@"""StakedBalance"""); break;
-                case "stakedPseudotokens": columns.Add(@"""StakedPseudotokens"""); break;
-                case "unstakedBalance": columns.Add(@"""UnstakedBalance"""); break;
-                case "unstakedBaker": columns.Add(@"""UnstakedBakerId"""); break;
-                case "totalStakedBalance": columns.Add(@"""TotalStakedBalance"""); break;
-                case "externalStakedBalance": columns.Add(@"""ExternalStakedBalance"""); break;
-                case "externalUnstakedBalance": columns.Add(@"""ExternalUnstakedBalance"""); break;
-                case "issuedPseudotokens": columns.Add(@"""IssuedPseudotokens"""); break;
-                case "stakersCount": columns.Add(@"""StakersCount"""); break;
-                case "lostBalance": columns.Add(@"""LostBalance"""); break;
-                case "transferTicketCount": columns.Add(@"""TransferTicketCount"""); break;
-                case "txRollupCommitCount": columns.Add(@"""TxRollupCommitCount"""); break;
-                case "txRollupDispatchTicketsCount": columns.Add(@"""TxRollupDispatchTicketsCount"""); break;
-                case "txRollupFinalizeCommitmentCount": columns.Add(@"""TxRollupFinalizeCommitmentCount"""); break;
-                case "txRollupOriginationCount": columns.Add(@"""TxRollupOriginationCount"""); break;
-                case "txRollupRejectionCount": columns.Add(@"""TxRollupRejectionCount"""); break;
-                case "txRollupRemoveCommitmentCount": columns.Add(@"""TxRollupRemoveCommitmentCount"""); break;
-                case "txRollupReturnBondCount": columns.Add(@"""TxRollupReturnBondCount"""); break;
-                case "txRollupSubmitBatchCount": columns.Add(@"""TxRollupSubmitBatchCount"""); break;
-                case "vdfRevelationsCount": columns.Add(@"""VdfRevelationsCount"""); break;
-                case "increasePaidStorageCount": columns.Add(@"""IncreasePaidStorageCount"""); break;
-                case "updateConsensusKeyCount": columns.Add(@"""UpdateConsensusKeyCount"""); break;
-                case "drainDelegateCount": columns.Add(@"""DrainDelegateCount"""); break;
-                case "smartRollupBonds": columns.Add(@"""SmartRollupBonds"""); break;
-                case "smartRollupsCount": columns.Add(@"""SmartRollupsCount"""); break;
-                case "smartRollupAddMessagesCount": columns.Add(@"""SmartRollupAddMessagesCount"""); break;
-                case "smartRollupCementCount": columns.Add(@"""SmartRollupCementCount"""); break;
-                case "smartRollupExecuteCount": columns.Add(@"""SmartRollupExecuteCount"""); break;
-                case "smartRollupOriginateCount": columns.Add(@"""SmartRollupOriginateCount"""); break;
-                case "smartRollupPublishCount": columns.Add(@"""SmartRollupPublishCount"""); break;
-                case "smartRollupRecoverBondCount": columns.Add(@"""SmartRollupRecoverBondCount"""); break;
-                case "smartRollupRefuteCount": columns.Add(@"""SmartRollupRefuteCount"""); break;
-                case "refutationGamesCount": columns.Add(@"""RefutationGamesCount"""); break;
-                case "activeRefutationGamesCount": columns.Add(@"""ActiveRefutationGamesCount"""); break;
-                case "stakingOpsCount": columns.Add(@"""StakingOpsCount"""); break;
-                case "autostakingOpsCount": columns.Add(@"""AutostakingOpsCount"""); break;
+                case "id": columns.Add(@"acc.""Id"""); break;
+                case "alias": columns.Add($@"acc.{AliasQuery} AS ""Alias"""); break;
+                case "type": columns.Add(@"acc.""Type"""); break;
+                case "active": columns.Add(@"acc.""Staked"""); break;
+                case "address": columns.Add(@"acc.""Address"""); break;
+                case "publicKey": columns.Add(@"acc.""PublicKey"""); break;
+                case "revealed": columns.Add(@"acc.""Revealed"""); break;
+                case "balance":
+                    columns.Add(@"acc.""Balance""");
+                    columns.Add($@"{StakedBalanceQuery} AS ""StakedBalance""");
+                    break;
+                case "frozenDeposit": columns.Add(@"acc.""OwnStakedBalance"""); columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                case "frozenDepositLimit": columns.Add(@"acc.""FrozenDepositLimit"""); break;
+                case "limitOfStakingOverBaking": columns.Add(@"acc.""LimitOfStakingOverBaking"""); break;
+                case "edgeOfBakingOverStaking": columns.Add(@"acc.""EdgeOfBakingOverStaking"""); break;
+                case "delegatedBalance": columns.Add(@"acc.""DelegatedBalance"""); break;
+                case "counter": columns.Add(@"acc.""Counter"""); break;
+                case "activationLevel": columns.Add(@"acc.""ActivationLevel"""); break;
+                case "activationTime": columns.Add(@"acc.""ActivationLevel"""); break;
+                case "deactivationLevel": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
+                case "deactivationTime": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
+                case "stakingBalance": columns.Add(@"acc.""StakingBalance"""); break;
+                case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
+                case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
+                case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
+                case "lastActivityTime": columns.Add(@"acc.""LastLevel"""); break;
+                case "numActivations": columns.Add(@"acc.""ActivationsCount"""); break;
+                case "numBallots": columns.Add(@"acc.""BallotsCount"""); break;
+                case "numContracts": columns.Add(@"acc.""ContractsCount"""); break;
+                case "activeTokensCount": columns.Add(@"acc.""ActiveTokensCount"""); break;
+                case "tokenBalancesCount": columns.Add(@"acc.""TokenBalancesCount"""); break;
+                case "tokenTransfersCount": columns.Add(@"acc.""TokenTransfersCount"""); break;
+                case "activeTicketsCount": columns.Add(@"acc.""ActiveTicketsCount"""); break;
+                case "ticketBalancesCount": columns.Add(@"acc.""TicketBalancesCount"""); break;
+                case "ticketTransfersCount": columns.Add(@"acc.""TicketTransfersCount"""); break;
+                case "numDelegators": columns.Add(@"acc.""DelegatorsCount"""); break;
+                case "numBlocks": columns.Add(@"acc.""BlocksCount"""); break;
+                case "numDelegations": columns.Add(@"acc.""DelegationsCount"""); break;
+                case "numDoubleBaking": columns.Add(@"acc.""DoubleBakingCount"""); break;
+                case "numDoubleEndorsing": columns.Add(@"acc.""DoubleEndorsingCount"""); break;
+                case "numDoublePreendorsing": columns.Add(@"acc.""DoublePreendorsingCount"""); break;
+                case "numEndorsements": columns.Add(@"acc.""EndorsementsCount"""); break;
+                case "numPreendorsements": columns.Add(@"acc.""PreendorsementsCount"""); break;
+                case "numNonceRevelations": columns.Add(@"acc.""NonceRevelationsCount"""); break;
+                case "numRevelationPenalties": columns.Add(@"acc.""RevelationPenaltiesCount"""); break;
+                case "numEndorsingRewards": columns.Add(@"acc.""EndorsingRewardsCount"""); break;
+                case "numOriginations": columns.Add(@"acc.""OriginationsCount"""); break;
+                case "numProposals": columns.Add(@"acc.""ProposalsCount"""); break;
+                case "numReveals": columns.Add(@"acc.""RevealsCount"""); break;
+                case "numRegisterConstants": columns.Add(@"acc.""RegisterConstantsCount"""); break;
+                case "numSetDepositsLimits": columns.Add(@"acc.""SetDepositsLimitsCount"""); break;
+                case "numMigrations": columns.Add(@"acc.""MigrationsCount"""); break;
+                case "numTransactions": columns.Add(@"acc.""TransactionsCount"""); break;
+                case "software": columns.Add(@"acc.""SoftwareId"""); break;
+                case "rollupBonds": columns.Add(@"acc.""RollupBonds"""); break;
+                case "rollupsCount": columns.Add(@"acc.""RollupsCount"""); break;
+                case "stakedBalance":
+                    columns.Add(@"acc.""OwnStakedBalance""");
+                    columns.Add($@"{StakedBalanceQuery} AS ""StakedBalance""");
+                    break;
+                case "stakedPseudotokens": columns.Add(@"acc.""StakedPseudotokens"""); break;
+                case "unstakedBalance": columns.Add(@"acc.""UnstakedBalance"""); break;
+                case "unstakedBaker": columns.Add(@"acc.""UnstakedBakerId"""); break;
+                case "totalStakedBalance": columns.Add(@"acc.""OwnStakedBalance"""); columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                case "externalStakedBalance": columns.Add(@"acc.""ExternalStakedBalance"""); break;
+                case "externalUnstakedBalance": columns.Add(@"acc.""ExternalUnstakedBalance"""); break;
+                case "roundingError": columns.Add(@"acc.""RoundingError"""); break;
+                case "issuedPseudotokens": columns.Add(@"acc.""IssuedPseudotokens"""); break;
+                case "stakersCount": columns.Add(@"acc.""StakersCount"""); break;
+                case "transferTicketCount": columns.Add(@"acc.""TransferTicketCount"""); break;
+                case "txRollupCommitCount": columns.Add(@"acc.""TxRollupCommitCount"""); break;
+                case "txRollupDispatchTicketsCount": columns.Add(@"acc.""TxRollupDispatchTicketsCount"""); break;
+                case "txRollupFinalizeCommitmentCount": columns.Add(@"acc.""TxRollupFinalizeCommitmentCount"""); break;
+                case "txRollupOriginationCount": columns.Add(@"acc.""TxRollupOriginationCount"""); break;
+                case "txRollupRejectionCount": columns.Add(@"acc.""TxRollupRejectionCount"""); break;
+                case "txRollupRemoveCommitmentCount": columns.Add(@"acc.""TxRollupRemoveCommitmentCount"""); break;
+                case "txRollupReturnBondCount": columns.Add(@"acc.""TxRollupReturnBondCount"""); break;
+                case "txRollupSubmitBatchCount": columns.Add(@"acc.""TxRollupSubmitBatchCount"""); break;
+                case "vdfRevelationsCount": columns.Add(@"acc.""VdfRevelationsCount"""); break;
+                case "increasePaidStorageCount": columns.Add(@"acc.""IncreasePaidStorageCount"""); break;
+                case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateConsensusKeyCount"""); break;
+                case "drainDelegateCount": columns.Add(@"acc.""DrainDelegateCount"""); break;
+                case "smartRollupBonds": columns.Add(@"acc.""SmartRollupBonds"""); break;
+                case "smartRollupsCount": columns.Add(@"acc.""SmartRollupsCount"""); break;
+                case "smartRollupAddMessagesCount": columns.Add(@"acc.""SmartRollupAddMessagesCount"""); break;
+                case "smartRollupCementCount": columns.Add(@"acc.""SmartRollupCementCount"""); break;
+                case "smartRollupExecuteCount": columns.Add(@"acc.""SmartRollupExecuteCount"""); break;
+                case "smartRollupOriginateCount": columns.Add(@"acc.""SmartRollupOriginateCount"""); break;
+                case "smartRollupPublishCount": columns.Add(@"acc.""SmartRollupPublishCount"""); break;
+                case "smartRollupRecoverBondCount": columns.Add(@"acc.""SmartRollupRecoverBondCount"""); break;
+                case "smartRollupRefuteCount": columns.Add(@"acc.""SmartRollupRefuteCount"""); break;
+                case "refutationGamesCount": columns.Add(@"acc.""RefutationGamesCount"""); break;
+                case "activeRefutationGamesCount": columns.Add(@"acc.""ActiveRefutationGamesCount"""); break;
+                case "stakingOpsCount": columns.Add(@"acc.""StakingOpsCount"""); break;
+                case "autostakingOpsCount": columns.Add(@"acc.""AutostakingOpsCount"""); break;
+                case "stakingUpdatesCount": columns.Add(@"acc.""StakingUpdatesCount"""); break;
+                case "setDelegateParametersOpsCount": columns.Add(@"acc.""SetDelegateParametersOpsCount"""); break;
+                case "dalPublishCommitmentOpsCount": columns.Add(@"acc.""DalPublishCommitmentOpsCount"""); break;
 
-                case "delegate": columns.Add(@"""DelegateId"""); break;
-                case "delegationLevel": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
-                case "delegationTime": columns.Add(@"""DelegationLevel"""); columns.Add(@"""DelegateId"""); break;
+                case "delegate": columns.Add(@"acc.""DelegateId"""); break;
+                case "delegationLevel": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
+                case "delegationTime": columns.Add(@"acc.""DelegationLevel"""); columns.Add(@"acc.""DelegateId"""); break;
 
-                case "kind": columns.Add(@"""Kind"""); break;
-                case "tzips": columns.Add(@"""Tags"""); break;
-                case "creator": columns.Add(@"""CreatorId"""); break;
-                case "manager": columns.Add(@"""ManagerId"""); break;
-                case "tokensCount": columns.Add(@"""TokensCount"""); break;
-                case "eventsCount": columns.Add(@"""EventsCount"""); break;
-                case "ticketsCount": columns.Add(@"""TicketsCount"""); break;
+                case "kind": columns.Add(@"acc.""Kind"""); break;
+                case "tzips": columns.Add(@"acc.""Tags"""); break;
+                case "creator": columns.Add(@"acc.""CreatorId"""); break;
+                case "manager": columns.Add(@"acc.""ManagerId"""); break;
+                case "tokensCount": columns.Add(@"acc.""TokensCount"""); break;
+                case "eventsCount": columns.Add(@"acc.""EventsCount"""); break;
+                case "ticketsCount": columns.Add(@"acc.""TicketsCount"""); break;
 
-                case "pvmKind": columns.Add(@"""PvmKind"""); break;
-                case "genesisCommitment": columns.Add(@"""GenesisCommitment"""); break;
-                case "lastCommitment": columns.Add(@"""LastCommitment"""); break;
-                case "inboxLevel": columns.Add(@"""InboxLevel"""); break;
-                case "totalStakers": columns.Add(@"""TotalStakers"""); break;
-                case "activeStakers": columns.Add(@"""ActiveStakers"""); break;
-                case "executedCommitments": columns.Add(@"""ExecutedCommitments"""); break;
-                case "cementedCommitments": columns.Add(@"""CementedCommitments"""); break;
-                case "pendingCommitments": columns.Add(@"""PendingCommitments"""); break;
-                case "refutedCommitments": columns.Add(@"""RefutedCommitments"""); break;
-                case "orphanCommitments": columns.Add(@"""OrphanCommitments"""); break;
+                case "pvmKind": columns.Add(@"acc.""PvmKind"""); break;
+                case "genesisCommitment": columns.Add(@"acc.""GenesisCommitment"""); break;
+                case "lastCommitment": columns.Add(@"acc.""LastCommitment"""); break;
+                case "inboxLevel": columns.Add(@"acc.""InboxLevel"""); break;
+                case "totalStakers": columns.Add(@"acc.""TotalStakers"""); break;
+                case "activeStakers": columns.Add(@"acc.""ActiveStakers"""); break;
+                case "executedCommitments": columns.Add(@"acc.""ExecutedCommitments"""); break;
+                case "cementedCommitments": columns.Add(@"acc.""CementedCommitments"""); break;
+                case "pendingCommitments": columns.Add(@"acc.""PendingCommitments"""); break;
+                case "refutedCommitments": columns.Add(@"acc.""RefutedCommitments"""); break;
+                case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
             }
 
             if (columns.Count == 0)
                 return Array.Empty<object>();
 
-            var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""Accounts""")
-                .Filter("Id", id)
-                .Filter("Address", address)
-                .Filter("Type", type)
-                .Filter("Kind", kind)
-                .Filter("DelegateId", @delegate)
-                .Filter("Balance", balance)
-                .Filter("Staked", staked)
-                .Filter("LastLevel", lastActivity)
-                .Take(sort, offset, limit, x => x switch
+            var sql = new SqlBuilder($"""
+                SELECT {string.Join(',', columns)}
+                FROM "Accounts" as acc
+                LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
+                """)
+                .FilterA(@"acc.""Id""", id)
+                .FilterA(@"acc.""Address""", address)
+                .FilterA(@"acc.""Type""", type)
+                .FilterA(@"acc.""Kind""", kind)
+                .FilterA(@"acc.""DelegateId""", @delegate)
+                .FilterA(@"acc.""StakedPseudotokens""", stakedPseudotokens)
+                .FilterA(FullBalanceQuery, balance)
+                .FilterA(@"acc.""Staked""", staked)
+                .FilterA(@"acc.""LastLevel""", lastActivity)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
                 {
-                    "balance" => ("Balance", "Balance"),
-                    "rollupBonds" => ("RollupBonds", "RollupBonds"),
-                    "firstActivity" => ("FirstLevel", "FirstLevel"),
-                    "lastActivity" => ("LastLevel", "LastLevel"),
-                    "numTransactions" => ("TransactionsCount", "TransactionsCount"),
-                    "numContracts" => ("ContractsCount", "ContractsCount"),
-                    _ => ("Id", "Id")
-                });
+                    "balance" => (FullBalanceQuery, FullBalanceQuery),
+                    "rollupBonds" => (@"acc.""RollupBonds""", @"acc.""RollupBonds"""),
+                    "firstActivity" => (@"acc.""FirstLevel""", @"acc.""FirstLevel"""),
+                    "lastActivity" => (@"acc.""LastLevel""", @"acc.""LastLevel"""),
+                    "numTransactions" => (@"acc.""TransactionsCount""", @"acc.""TransactionsCount"""),
+                    "numContracts" => (@"acc.""ContractsCount""", @"acc.""ContractsCount"""),
+                    "stakedPseudotokens" => (@"acc.""StakedPseudotokens""", @"acc.""StakedPseudotokens"""),
+                    _ => (@"acc.""Id""", @"acc.""Id""")
+                }, @"acc.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()];
@@ -1597,11 +1710,11 @@ namespace Mvkt.Api.Repositories
                     break;
                 case "balance":
                     foreach (var row in rows)
-                        result[j++] = row.Balance; 
+                        result[j++] = row.Balance + (row.StakedBalance ?? 0L); 
                     break;
                 case "frozenDeposit":
                     foreach (var row in rows)
-                        result[j++] = row.TotalStakedBalance;
+                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
                     break;
                 case "frozenDepositLimit":
                     foreach (var row in rows)
@@ -1661,7 +1774,7 @@ namespace Mvkt.Api.Repositories
                     break;
                 case "numActivations":
                     foreach (var row in rows)
-                        result[j++] = row.Activated == true ? 1 : 0;
+                        result[j++] = row.ActivationsCount;
                     break;
                 case "numBallots":
                     foreach (var row in rows)
@@ -1781,7 +1894,7 @@ namespace Mvkt.Api.Repositories
                     break;
                 case "stakedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.StakedBalance;
+                        result[j++] = row.OwnStakedBalance ?? row.StakedBalance ?? 0L;
                     break;
                 case "stakedPseudotokens":
                     foreach (var row in rows)
@@ -1797,7 +1910,7 @@ namespace Mvkt.Api.Repositories
                     break;
                 case "totalStakedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.TotalStakedBalance;
+                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
                     break;
                 case "externalStakedBalance":
                     foreach (var row in rows)
@@ -1815,9 +1928,9 @@ namespace Mvkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.StakersCount;
                     break;
-                case "lostBalance":
+                case "roundingError":
                     foreach (var row in rows)
-                        result[j++] = row.LostBalance;
+                        result[j++] = row.RoundingError;
                     break;
                 case "transferTicketCount":
                     foreach (var row in rows)
@@ -1922,6 +2035,18 @@ namespace Mvkt.Api.Repositories
                 case "autostakingOpsCount":
                     foreach (var row in rows)
                         result[j++] = row.AutostakingOpsCount;
+                    break;
+                case "stakingUpdatesCount":
+                    foreach (var row in rows)
+                        result[j++] = row.StakingUpdatesCount ?? 0;
+                    break;
+                case "setDelegateParametersOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.SetDelegateParametersOpsCount;
+                    break;
+                case "dalPublishCommitmentOpsCount":
+                    foreach (var row in rows)
+                        result[j++] = row.DalPublishCommitmentOpsCount;
                     break;
                 case "delegate":
                     foreach (var row in rows)
@@ -2045,19 +2170,26 @@ namespace Mvkt.Api.Repositories
             if (account == null || account.ContractsCount == 0)
                 return Enumerable.Empty<RelatedContract>();
 
-            var sql = new SqlBuilder($@"
-                SELECT  ""Id"", ""Kind"", ""Address"", ""Balance"", ""DelegateId"", ""FirstLevel"", {AliasQuery}
-                FROM ""Accounts""")
-                .Filter("Type", 2)
-                .Filter($@"(""CreatorId"" = {account.Id} OR ""ManagerId"" = {account.Id})")
+            var sql = new SqlBuilder($"""
+                SELECT  acc."Id",
+                        acc."Kind",
+                        acc."Address",
+                        acc."Balance",
+                        acc."DelegateId",
+                        acc."FirstLevel",
+                        acc.{AliasQuery} AS "Alias"
+                FROM "Accounts" AS acc
+                """)
+                .FilterA(@"acc.""Type""", 2)
+                .Filter($@"(acc.""CreatorId"" = {account.Id} OR acc.""ManagerId"" = {account.Id})")
                 .Take(sort ?? new SortParameter { Desc = "id" }, offset, limit, x => x switch
                 {
                     "balance" => ("Balance", "Balance"),
                     "creationLevel" => ("Id", "FirstLevel"),
                     _ => ("Id", "Id")
-                });
+                }, "acc");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row =>
@@ -2095,16 +2227,29 @@ namespace Mvkt.Api.Repositories
             if (await Accounts.GetAsync(address) is not RawDelegate delegat || delegat.DelegatorsCount == 0)
                 return Enumerable.Empty<Delegator>();
 
-            var sql = new SqlBuilder($@"
-                SELECT ""Id"", ""Address"", ""Type"", ""Balance"", ""DelegationLevel"", {AliasQuery}
-                FROM ""Accounts""")
-                .Filter("DelegateId", delegat.Id)
-                .Filter("Type", type)
-                .Filter("Balance", balance)
-                .Filter("DelegationLevel", delegationLevel)
-                .Take(sort ?? new SortParameter { Desc = "delegationLevel" }, offset, limit, x => x == "balance" ? ("Balance", "Balance") : ("DelegationLevel", "DelegationLevel"));
+            var sql = new SqlBuilder($"""
+                SELECT  acc."Id",
+                        acc."Address",
+                        acc."Type",
+                        acc."Balance",
+                        acc."DelegationLevel",
+                        acc.{AliasQuery} AS "Alias",
+                        {StakedBalanceQuery} AS "StakedBalance"
+                FROM "Accounts" AS acc
+                LEFT JOIN "Accounts" AS baker ON baker."Id" = acc."DelegateId"
+                """)
+                .FilterA(@"acc.""DelegateId""", delegat.Id)
+                .FilterA(@"acc.""Type""", type)
+                .FilterA(FullBalanceQuery, balance)
+                .FilterA(@"acc.""DelegationLevel""", delegationLevel)
+                .Take(new Pagination { sort = sort, offset = offset, limit = limit }, x => x switch
+                {
+                    "balance" => (FullBalanceQuery, FullBalanceQuery),
+                    "delegationLevel" => (@"acc.""DelegationLevel""", @"acc.""DelegationLevel"""),
+                    _ => (@"acc.""Id""", @"acc.""Id""")
+                }, @"acc.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row =>
@@ -2114,7 +2259,7 @@ namespace Mvkt.Api.Repositories
                     Type = AccountTypes.ToString(row.Type),
                     Alias = row.Alias,
                     Address = row.Address,
-                    Balance = row.Balance,
+                    Balance = row.Balance + (row.StakedBalance ?? 0L),
                     DelegationLevel = row.DelegationLevel,
                     DelegationTime = Time[row.DelegationLevel]
                 };
@@ -2212,20 +2357,20 @@ namespace Mvkt.Api.Repositories
                         ? Operations.GetProposals(_delegat, level, timestamp, null, null, null, null, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<ProposalOperation>());
 
-                    var activations = delegat.Activated == true && types.Contains(OpTypes.Activation)
+                    var activations = delegat.ActivationsCount > 0 && types.Contains(OpTypes.Activation)
                         ? Operations.GetActivations(_delegat, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var doubleBaking = delegat.DoubleBakingCount > 0 && types.Contains(OpTypes.DoubleBaking)
-                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleBakings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleBakingOperation>());
 
                     var doubleEndorsing = delegat.DoubleEndorsingCount > 0 && types.Contains(OpTypes.DoubleEndorsing)
-                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoubleEndorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoubleEndorsingOperation>());
 
                     var doublePreendorsing = delegat.DoublePreendorsingCount > 0 && types.Contains(OpTypes.DoublePreendorsing)
-                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetDoublePreendorsings(new AnyOfParameter { Fields = new[] { "accuser", "offender" }, Eq = delegat.Id }, accuser, offender, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DoublePreendorsingOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(OpTypes.NonceRevelation)
@@ -2237,7 +2382,7 @@ namespace Mvkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = delegat.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var originations = delegat.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
@@ -2340,6 +2485,14 @@ namespace Mvkt.Api.Repositories
                         ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = delegat.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
+                    var setDelegateParametersOps = delegat.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
+                        ? Operations.GetSetDelegateParametersOps(new() { sender = _delegat }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
+
+                    var dalPublishCommitmentOps = delegat.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
+                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _delegat }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
+
                     var migrations = delegat.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_delegat, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2349,7 +2502,7 @@ namespace Mvkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<RevelationPenaltyOperation>());
 
                     var bakingOps = delegat.BlocksCount > 0 && types.Contains(OpTypes.Baking)
-                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetBakings(new AnyOfParameter { Fields = new[] { "proposer", "producer" }, Eq = delegat.Id }, null, null, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<BakingOperation>());
 
                     var endorsingRewards = delegat.EndorsingRewardsCount > 0 && types.Contains(OpTypes.EndorsingReward)
@@ -2397,6 +2550,8 @@ namespace Mvkt.Api.Repositories
                         srRecoverBondOps,
                         srRefuteOps,
                         stakingOps,
+                        setDelegateParametersOps,
+                        dalPublishCommitmentOps,
                         migrations,
                         revelationPenalties,
                         bakingOps,
@@ -2439,6 +2594,8 @@ namespace Mvkt.Api.Repositories
                     result.AddRange(srRecoverBondOps.Result);
                     result.AddRange(srRefuteOps.Result);
                     result.AddRange(stakingOps.Result);
+                    result.AddRange(setDelegateParametersOps.Result);
+                    result.AddRange(dalPublishCommitmentOps.Result);
                     result.AddRange(migrations.Result);
                     result.AddRange(revelationPenalties.Result);
                     result.AddRange(bakingOps.Result);
@@ -2449,12 +2606,12 @@ namespace Mvkt.Api.Repositories
                 case RawUser user:
                     var _user = new AccountParameter { Eq = user.Id };
 
-                    var userActivations = user.Activated == true && types.Contains(OpTypes.Activation)
+                    var userActivations = user.ActivationsCount > 0 && types.Contains(OpTypes.Activation)
                         ? Operations.GetActivations(_user, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<ActivationOperation>());
 
                     var userDelegations = user.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = user.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var userOriginations = user.OriginationsCount > 0 && types.Contains(OpTypes.Origination)
@@ -2553,6 +2710,14 @@ namespace Mvkt.Api.Repositories
                         ? Operations.GetStakingOps(new() { anyof = new() { Fields = new[] { "sender", "baker" }, Eq = user.Id } }, pagination, quote)
                         : Task.FromResult(Enumerable.Empty<StakingOperation>());
 
+                    var userSetDelegateParametersOps = user.SetDelegateParametersOpsCount > 0 && types.Contains(OpTypes.SetDelegateParameters)
+                        ? Operations.GetSetDelegateParametersOps(new() { sender = _user }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<SetDelegateParametersOperation>());
+
+                    var userDalPublishCommitmentOps = user.DalPublishCommitmentOpsCount > 0 && types.Contains(OpTypes.DalPublishCommitment)
+                        ? Operations.GetDalPublishCommitmentOps(new() { sender = _user }, pagination, quote)
+                        : Task.FromResult(Enumerable.Empty<DalPublishCommitmentOperation>());
+
                     var userMigrations = user.MigrationsCount > 0 && types.Contains(OpTypes.Migration)
                         ? Operations.GetMigrations(_user, null, null, null, level, timestamp, sort, offset, limit, format, quote)
                         : Task.FromResult(Enumerable.Empty<MigrationOperation>());
@@ -2584,6 +2749,8 @@ namespace Mvkt.Api.Repositories
                         userSrRecoverBondOps,
                         userSrRefuteOps,
                         userStakingOps,
+                        userSetDelegateParametersOps,
+                        userDalPublishCommitmentOps,
                         userMigrations);
 
                     result.AddRange(userActivations.Result);
@@ -2612,6 +2779,8 @@ namespace Mvkt.Api.Repositories
                     result.AddRange(userSrRecoverBondOps.Result);
                     result.AddRange(userSrRefuteOps.Result);
                     result.AddRange(userStakingOps.Result);
+                    result.AddRange(userSetDelegateParametersOps.Result);
+                    result.AddRange(userDalPublishCommitmentOps.Result);
                     result.AddRange(userMigrations.Result);
 
                     break;
@@ -2619,7 +2788,7 @@ namespace Mvkt.Api.Repositories
                     var _contract = new AccountParameter { Eq = contract.Id };
 
                     var contractDelegations = contract.DelegationsCount > 0 && types.Contains(OpTypes.Delegation)
-                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, level, timestamp, null, status, sort, offset, limit, quote)
+                        ? Operations.GetDelegations(new AnyOfParameter { Fields = new[] { "initiator", "sender", "prevDelegate", "newDelegate" }, Eq = contract.Id }, initiator, sender, prevDelegate, newDelegate, null, level, timestamp, null, status, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<DelegationOperation>());
 
                     var contractOriginations = contract.OriginationsCount > 0 && types.Contains(OpTypes.Origination)

@@ -16,7 +16,7 @@ namespace Mvkt.Sync.Protocols.Proto6
                 .EnumerateArray()
                 .Any(x => x.RequiredString("kind")[0] == 'f' &&
                           x.RequiredInt64("change") < 0 &&
-                          GetFreezerCycle(x) != block.Cycle - block.Protocol.PreservedCycles);
+                          GetFreezerCycle(x) != block.Cycle - block.Protocol.ConsensusRightsDelay);
         }
     }
 }

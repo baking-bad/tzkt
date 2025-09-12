@@ -18,5 +18,11 @@ namespace Mvkt.Sync.Protocols.Proto18
 
         public override Task<JsonElement> GetStakingParameters(int level, string address)
             => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index/{address}/staking_parameters");
+
+        public override Task<JsonElement> GetUnstakeRequests(int level, string address)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/contracts/{address}/unstake_requests");
+
+        public override Task<JsonElement> GetContractRawAsync(int level, string address)
+            => Node.GetAsync($"chains/main/blocks/{level}/context/raw/json/contracts/index/{address}");
     }
 }

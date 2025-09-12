@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using Dapper;
+using Npgsql;
 using Netmavryk.Encoding;
 using Netmavryk.Contracts;
 using Mvkt.Api.Models;
@@ -7,13 +8,15 @@ using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class SmartRollupsRepository : DbConnection
+    public class SmartRollupsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public SmartRollupsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public SmartRollupsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -137,7 +140,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"r.""Id""", @"r.""Id""")
                 }, @"r.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -154,7 +157,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"r.""LastLevel""", filter.lastActivity)
                 .FilterA(@"r.""LastLevel""", filter.lastActivityTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -206,13 +209,49 @@ namespace Mvkt.Api.Repositories
             };
         }
 
+        public async Task<IEnumerable<Entrypoint>> GetSmartRollupEntrypoints(string address, bool all, bool json, bool micheline, bool michelson)
+        {
+            var rawAccount = await Accounts.GetAsync(address);
+            if (rawAccount is not RawSmartRollup rollup)
+                return Enumerable.Empty<Entrypoint>();
+
+            await using var db = await DataSource.OpenConnectionAsync();
+            var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Accounts"" WHERE ""Id"" = {rollup.Id}");
+            if (row == null)
+                return Enumerable.Empty<Entrypoint>();
+
+            var param = new ContractParameter(new MichelinePrim
+            {
+                Prim = PrimType.parameter,
+                Args = new List<IMicheline>
+                {
+                    Micheline.FromBytes(row.ParameterSchema)
+                }
+            });
+
+            return param.Entrypoints
+                .Where(x => all || param.IsEntrypointUseful(x.Key))
+                .Select(x =>
+                {
+                    var mich = micheline ? x.Value.ToMicheline() : null;
+                    return new Entrypoint
+                    {
+                        Name = x.Key,
+                        JsonParameters = json ? (RawJson)x.Value.Humanize() : null,
+                        MichelineParameters = mich,
+                        MichelsonParameters = michelson ? (mich ?? x.Value.ToMicheline()).ToMichelson() : null,
+                        Unused = all && !param.IsEntrypointUseful(x.Key)
+                    };
+                });
+        }
+
         public async Task<RawJson> GetSmartRollupInterface(string address)
         {
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawSmartRollup rollup)
                 return null;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
 
             var origination = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""ParameterType""
@@ -500,7 +539,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"s.""SenderId""", @"s.""SenderId""")
                 }, @"s.""SenderId""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -679,7 +718,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"c.""Id""", @"c.""Id""")
                 }, @"c.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -701,7 +740,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"c.""PredecessorId""", filter.predecessor?.id)
                 .FilterA(@"p.""Hash""", filter.predecessor?.hash);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1055,7 +1094,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"g.""Id""", @"g.""Id""")
                 }, @"g.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -1078,7 +1117,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"g.""LastLevel""", filter.lastLevel)
                 .FilterA(@"g.""LastLevel""", filter.lastTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1382,6 +1421,7 @@ namespace Mvkt.Api.Repositories
             var select = """
                 m."Id",
                 m."Level",
+                m."Index",
                 m."Type",
                 m."Payload",
                 m."Protocol",
@@ -1406,6 +1446,7 @@ namespace Mvkt.Api.Repositories
                     {
                         case "id": columns.Add(@"m.""Id"""); break;
                         case "level": columns.Add(@"m.""Level"""); break;
+                        case "index": columns.Add(@"m.""Index"""); break;
                         case "timestamp": columns.Add(@"m.""Level"""); break;
                         case "type": columns.Add(@"m.""Type"""); break;
                         case "payload": columns.Add(@"m.""Payload"""); break;
@@ -1447,7 +1488,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"m.""Id""", @"m.""Id""")
                 }, @"m.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -1460,7 +1501,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"m.""Level""", filter.timestamp)
                 .FilterA(@"m.""Type""", filter.type);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -1471,6 +1512,7 @@ namespace Mvkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
+                Index = row.Index,
                 Timestamp = Times[(int)row.Level],
                 Type = SrMessageTypes.ToString((int)row.Type),
                 PredecessorHash = row.pHash,
@@ -1511,6 +1553,10 @@ namespace Mvkt.Api.Repositories
                     case "level":
                         foreach (var row in rows)
                             result[j++][i] = row.Level;
+                        break;
+                    case "index":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Index;
                         break;
                     case "timestamp":
                         foreach (var row in rows)

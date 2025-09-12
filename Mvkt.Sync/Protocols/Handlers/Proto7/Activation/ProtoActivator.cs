@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Protocols.Proto7

@@ -1,25 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Services.Cache
 {
-    public class QuotesCache : DbConnection
+    public class QuotesCache
     {
         readonly List<double>[] Quotes;
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly ILogger Logger;
 
-        public QuotesCache(StateCache state, IConfiguration config, ILogger<QuotesCache> logger) : base(config)
+        public QuotesCache(NpgsqlDataSource dataSource, StateCache state, ILogger<QuotesCache> logger)
         {
             logger.LogDebug("Initializing quotes cache...");
 
             Quotes = new List<double>[8];
+            DataSource = dataSource;
             State = state;
             Logger = logger;
 
@@ -28,7 +25,7 @@ namespace Mvkt.Api.Services.Cache
                 FROM      ""Quotes""
                 ORDER BY  ""Level""";
 
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             var rows = db.Query(sql);
 
             var cnt = rows.Count();
@@ -59,7 +56,7 @@ namespace Mvkt.Api.Services.Cache
                 WHERE     ""Level"" > @fromLevel
                 ORDER BY  ""Level""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { fromLevel = Math.Min(Quotes[0].Count - 1, State.ValidLevel) });
 
             foreach (var row in rows)

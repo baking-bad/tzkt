@@ -1,14 +1,11 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
+﻿using System.Text.Json;
 using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Services.Cache
 {
-    public class AliasesCache : DbConnection
+    public class AliasesCache
     {
         #region static
         const string SelectQuery = @"
@@ -19,9 +16,9 @@ namespace Mvkt.Api.Services.Cache
         public List<Alias> Aliases { get; }
         public Dictionary<string, List<Alias>> Dictionary = new();
 
-        public AliasesCache(IConfiguration config, ILogger<AliasesCache> logger) : base(config)
+        public AliasesCache(NpgsqlDataSource dataSource, ILogger<AliasesCache> logger)
         {
-            using var db = GetConnection();
+            using var db = dataSource.OpenConnection();
             Aliases = db.Query<Alias>(
                 $@"{SelectQuery} WHERE ""Extras""@>'{{""profile"":{{}}}}' AND ""Extras""#>>'{{profile,alias}}' IS NOT NULL")
                 .ToList();

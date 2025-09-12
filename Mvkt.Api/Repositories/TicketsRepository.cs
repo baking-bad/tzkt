@@ -1,17 +1,20 @@
 ﻿using Dapper;
 using Netmavryk.Encoding;
+using Npgsql;
 using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class TicketsRepository : DbConnection
+    public class TicketsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public TicketsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public TicketsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -88,7 +91,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"""Id""", @"""Id""")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -108,7 +111,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -346,14 +349,14 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash)
                 .Take(pagination, x => x switch
                 {
-                    "balance" => (@"tb.""Balance""::numeric", @"tb.""Balance""::numeric"),
+                    "balance" => (@"tb.""Balance""", @"tb.""Balance"""),
                     "transfersCount" => (@"tb.""TransfersCount""", @"tb.""TransfersCount"""),
                     "firstLevel" => (@"tb.""FirstLevel""", @"tb.""FirstLevel"""),
                     "lastLevel" => (@"tb.""LastLevel""", @"tb.""LastLevel"""),
                     _ => (@"tb.""Id""", @"tb.""Id""")
                 }, @"tb.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -378,7 +381,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -634,11 +637,11 @@ namespace Mvkt.Api.Repositories
                 .Take(pagination, x => x switch
                 {
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
-                    "amount" => (@"tr.""Amount""::numeric", @"tr.""Amount""::numeric"),
+                    "amount" => (@"tr.""Amount""", @"tr.""Amount"""),
                     _ => (@"tr.""Id""", @"tr.""Id""")
                 }, @"tr.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -665,7 +668,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"t.""TypeHash""", filter.ticket.typeHash)
                 .FilterA(@"t.""ContentHash""", filter.ticket.contentHash);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -927,7 +930,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"tb.""Balance""", filter.balance)
                 .Take(pagination, _ => (@"tb.""Id""", @"tb.""Id"""), @"tb.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 

@@ -8,6 +8,7 @@ namespace Mvkt.Data.Models
         [Column("CreatorId")]
         public int CreatorId { get; set; }
         public PvmKind PvmKind { get; set; }
+        public byte[] ParameterSchema { get; set; }
         public string GenesisCommitment { get; set; }
         public string LastCommitment { get; set; }
         public int InboxLevel { get; set; }

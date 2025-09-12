@@ -10,6 +10,7 @@ namespace Mvkt.Data.Models
         public int Id { get; set; }
         public int Code { get; set; }
         public string Hash { get; set; }
+        public int Version { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
         public int FirstCycle { get; set; }
@@ -18,7 +19,8 @@ namespace Mvkt.Data.Models
         public int RampUpCycles { get; set; }
         public int NoRewardCycles { get; set; }
 
-        public int PreservedCycles { get; set; }
+        public int ConsensusRightsDelay { get; set; }
+        public int DelegateParametersActivationDelay { get; set; }
 
         public int BlocksPerCycle { get; set; }
         public int BlocksPerCommitment { get; set; }
@@ -72,14 +74,6 @@ namespace Mvkt.Data.Models
         public int SmartRollupTimeoutPeriod { get; set; }
 
         public string Dictator { get; set; }
-
-        public long BaseIssuedPerMinute { get; set; }
-        public int BlockRewardWeight { get; set; }
-        public int BlockBonusWeight { get; set; }
-        public int EndorsingRewardWeight { get; set; }
-        public int NonceRevelationRewardWeight { get; set; }
-        public int VdfRevelationRewardWeight { get; set; }
-        public int LBSubsidyWeight { get; set; }
 
         public int DoubleBakingSlashedPercentage { get; set; }
         public int DoubleEndorsingSlashedPercentage { get; set; }
@@ -139,9 +133,6 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<Protocol>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Protocol>()
-                .HasAlternateKey(x => x.Code);
             #endregion
 
             #region props
@@ -155,6 +146,16 @@ namespace Mvkt.Data.Models
             modelBuilder.Entity<Protocol>()
                 .Property<string>("Extras")
                 .HasColumnType("jsonb");
+            #endregion
+
+            #region indexes
+            modelBuilder.Entity<Protocol>()
+                .HasIndex(x => x.Code)
+                .IsUnique();
+
+            modelBuilder.Entity<Protocol>()
+                .HasIndex(x => x.Hash)
+                .IsUnique();
             #endregion
         }
     }

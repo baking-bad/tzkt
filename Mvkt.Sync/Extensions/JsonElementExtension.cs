@@ -141,6 +141,15 @@ namespace Mvkt.Sync
                 : throw new SerializationException($"Missed required BigInteger {name}");
         }
 
+        public static BigInteger? OptionalBigInteger(this JsonElement el, string name)
+        {
+            if (!el.TryGetProperty(name, out var prop))
+                return null;
+
+            return BigInteger.TryParse(prop.GetString(), out var res) ? res
+                : throw new SerializationException($"Invalid BigInteger {name}");
+        }
+
         public static bool TryGetBigInteger(this JsonElement el, string name, out BigInteger res)
         {
             res = BigInteger.Zero;

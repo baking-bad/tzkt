@@ -1,6 +1,4 @@
-﻿using System.Linq;
-using System.Threading.Tasks;
-using Newtonsoft.Json.Linq;
+﻿using Newtonsoft.Json.Linq;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Protocols.Proto8
@@ -20,22 +18,17 @@ namespace Mvkt.Sync.Protocols.Proto8
             protocol.BlocksPerVoting = 20_480;
         }
 
-        protected override Task MigrateContext(AppState state)
+        protected override async Task MigrateContext(AppState state)
         {
-            var prevPeriod = Db.ChangeTracker
-                .Entries()
-                .First(x => x.Entity is VotingPeriod p && p.Index == state.VotingPeriod - 1)
-                .Entity as VotingPeriod;
 
-            var newPeriod = Db.ChangeTracker
-                .Entries()
-                .First(x => x.Entity is VotingPeriod p && p.Index == state.VotingPeriod)
-                .Entity as VotingPeriod;
-
+            var prevPeriod = await Cache.Periods.GetAsync(state.VotingPeriod - 1);
+            Db.TryAttach(prevPeriod);
             prevPeriod.LastLevel -= 1;
+
+            var newPeriod = await Cache.Periods.GetAsync(state.VotingPeriod);
+            Db.TryAttach(newPeriod);
             newPeriod.FirstLevel -= 1;
             newPeriod.LastLevel = newPeriod.FirstLevel + 20_479;
-            return Task.CompletedTask;
         }
     }
 }

@@ -2,7 +2,7 @@
 {
     public static class Swagger
     {
-        const string Version = "1.13.3";
+        const string Version = "1.14.4";
         const string Path = "/v1/swagger.json";
 
         public static void AddOpenApiDocument(this IServiceCollection services)
@@ -21,16 +21,17 @@
                     document.Info.Version = Version;
                     document.Info.Contact = new NSwag.OpenApiContact
                     {
-                        Name = "Baking Bad Team",
-                        Email = "hello@bakingbad.dev",
-                        Url = "https://bakingbad.dev"
+                        Name = "Mavryk Dynamics Team",
+                        Email = "info@mavryk.io",
+                        Url = "https://mavrykdynamics.com"
                     };
                     document.Info.Description = File.Exists("Swagger/Description.md")
                         ? File.ReadAllText("Swagger/Description.md")
                         : null;
                     document.Info.ExtensionData = new Dictionary<string, object>
                     {
-                        { "x-logo", new { url = "https://tzkt.io/logo.png", href = "https://tzkt.io/" } }
+                        { "x-logo", new { url = "https://equiteez.s3.ap-southeast-1.amazonaws.com/mvkt/MVKT_medium.png", href = "https://atlasnet.api.mavryk.network/" } },
+                        { "x-favicon", "https://equiteez.s3.ap-southeast-1.amazonaws.com/mvkt/favicon.ico" }
                     };
                     document.Tags.Add(new NSwag.OpenApiTag
                     {

@@ -1,5 +1,4 @@
-﻿using System;
-using Mvkt.Data.Models.Base;
+﻿using Mvkt.Data.Models.Base;
 
 namespace Mvkt.Api
 {

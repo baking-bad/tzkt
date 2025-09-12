@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Serialization;
-using System.Threading.Tasks;
-
-namespace Mvkt.Api.Models
+﻿namespace Mvkt.Api.Models
 {
     public class DelegationOperation : Operation
     {
@@ -89,19 +83,9 @@ namespace Mvkt.Api.Models
         public long Amount { get; set; }
 
         /// <summary>
-        /// Amount of pseudotokens unstaked due to re-delegating.
+        /// Number of staking updates happened internally
         /// </summary>
-        public long? UnstakedPseudotokens { get; set; }
-
-        /// <summary>
-        /// Amount staked balance unstaked due to re-delegating.
-        /// </summary>
-        public long? UnstakedBalance { get; set; }
-
-        /// <summary>
-        /// Amount of pending rewards unstaked due to re-delegating.
-        /// </summary>
-        public long? UnstakedRewards { get; set; }
+        public int? StakingUpdatesCount { get; set; }
 
         /// <summary>
         /// Information about the previous delegate of the account. `null` if there is no previous delegate
@@ -131,6 +115,23 @@ namespace Mvkt.Api.Models
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? UnstakedPseudotokens => null;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? UnstakedBalance => null;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long? UnstakedRewards => null;
         #endregion
     }
 }

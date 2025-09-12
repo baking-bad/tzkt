@@ -1,6 +1,4 @@
-﻿using System;
-using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json.Linq;
 using Mvkt.Data.Models;
 
@@ -18,7 +16,7 @@ namespace Mvkt.Sync.Protocols.Proto14
 
         protected override void UpgradeParameters(Protocol protocol, Protocol prev)
         {
-            if (Cache.AppState.GetChainId() == "NetXnHfVqm9iesp") // basenet
+            if (Cache.AppState.GetChainId() == "NetXmtMsNf69w1w") // basenet
             {
                 protocol.BlocksPerVoting = prev.BlocksPerCycle;
                 protocol.Dictator = "mv1Rck3MEfcu8zZ8GDtnu9LjknmYv8bBPJea"; // oxhead_testnet_baker
@@ -27,9 +25,10 @@ namespace Mvkt.Sync.Protocols.Proto14
 
         protected override async Task MigrateContext(AppState state)
         {
-            // var block = await Cache.Blocks.CurrentAsync();
-            // var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
+            var _block = await Cache.Blocks.CurrentAsync();
+            // Db.TryAttach(block);
 
+            // var account = await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb");
             // Db.TryAttach(account);
             // account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             // account.LastLevel = state.Level;
@@ -48,11 +47,14 @@ namespace Mvkt.Sync.Protocols.Proto14
             //     BalanceChange = 3_000_000_000L
             // });
 
+            // Db.TryAttach(state);
             // state.MigrationOpsCount++;
 
-            // Cache.Statistics.Current.TotalCreated += 3_000_000_000L;
+            // var stats = Cache.Statistics.Current;
+            // Db.TryAttach(stats);
+            // stats.TotalCreated += 3_000_000_000L;
 
-            if (state.ChainId == "NetXnHfVqm9iesp") // basenet
+            if (state.ChainId == "NetXmtMsNf69w1w") // basenet
             {
                 var votingPeriod = await Cache.Periods.GetAsync(58);
                 Db.TryAttach(votingPeriod);

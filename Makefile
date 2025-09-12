@@ -5,7 +5,7 @@ init:
 	docker compose exec -T db createdb -U mvkt -T template0 mvkt_db
 	docker compose exec -T db apt update
 	docker compose exec -T db apt install -y wget
-	docker compose exec -T db wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O mvkt_db.backup
+	docker compose exec -T db wget "https://snapshots.mvkt.io/tzkt_v1.14_mainnet.backup" -O mvkt_db.backup
 	docker compose exec -T db pg_restore -U mvkt -O -x -v -d mvkt_db -e -j 4 mvkt_db.backup
 	docker compose exec -T db rm mvkt_db.backup
 	docker compose exec -T db apt autoremove --purge -y wget
@@ -45,49 +45,49 @@ api-image:
 sync-image:
 	docker build -t bakingbad/mvkt-sync:latest -f ./Mvkt.Sync/Dockerfile .
 
-ghost-init:
-	docker compose -f docker-compose.ghost.yml up   -d ghost-db
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db psql -U mvkt postgres -c '\l'
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db dropdb -U mvkt --if-exists mvkt_db
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db createdb -U mvkt -T template0 mvkt_db
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db apt update
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db apt install -y wget
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db wget "https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup" -O mvkt_db.backup
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db pg_restore -U mvkt -O -x -v -d mvkt_db -e -j 4 mvkt_db.backup
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db rm mvkt_db.backup
-	docker compose -f docker-compose.ghost.yml exec -T ghost-db apt autoremove --purge -y wget
+base-init:
+	docker compose -f docker compose.base.yml up   -d base-db
+	docker compose -f docker compose.base.yml exec -T base-db psql -U mvkt postgres -c '\l'
+	docker compose -f docker compose.base.yml exec -T base-db dropdb -U mvkt --if-exists mvkt_db
+	docker compose -f docker compose.base.yml exec -T base-db createdb -U mvkt -T template0 mvkt_db
+	docker compose -f docker compose.base.yml exec -T base-db apt update
+	docker compose -f docker compose.base.yml exec -T base-db apt install -y wget
+	docker compose -f docker compose.base.yml exec -T base-db wget "https://snapshots.mvkt.io/tzkt_v1.14_ghostnet.backup" -O mvkt_db.backup
+	docker compose -f docker compose.base.yml exec -T base-db pg_restore -U mvkt -O -x -v -d mvkt_db -e -j 4 mvkt_db.backup
+	docker compose -f docker compose.base.yml exec -T base-db rm mvkt_db.backup
+	docker compose -f docker compose.base.yml exec -T base-db apt autoremove --purge -y wget
 	docker compose pull	
 	
-ghost-start:
-	docker compose -f docker-compose.ghost.yml up -d
+base-start:
+	docker compose -f docker compose.base.yml up -d
 
-ghost-stop:
-	docker compose -f docker-compose.ghost.yml down
+base-stop:
+	docker compose -f docker compose.base.yml down
 
-ghost-db-start:
-	docker compose -f docker-compose.ghost.yml up -d ghost-db
+base-db-start:
+	docker compose -f docker compose.base.yml up -d base-db
 
-oxford-init:
-	docker compose -f docker-compose.oxford.yml up   -d oxford-db
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db psql -U mvkt postgres -c '\l'
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db dropdb -U mvkt --if-exists mvkt_db
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db createdb -U mvkt -T template0 mvkt_db
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db apt update
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db apt install -y wget
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db wget "https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup" -O mvkt_db.backup
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db pg_restore -U mvkt -O -x -v -d mvkt_db -e -j 4 mvkt_db.backup
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db rm mvkt_db.backup
-	docker compose -f docker-compose.oxford.yml exec -T oxford-db apt autoremove --purge -y wget
+boreas-init:
+	docker compose -f docker compose.boreas.yml up   -d boreas-db
+	docker compose -f docker compose.boreas.yml exec -T boreas-db psql -U mvkt postgres -c '\l'
+	docker compose -f docker compose.boreas.yml exec -T boreas-db dropdb -U mvkt --if-exists mvkt_db
+	docker compose -f docker compose.boreas.yml exec -T boreas-db createdb -U mvkt -T template0 mvkt_db
+	docker compose -f docker compose.boreas.yml exec -T boreas-db apt update
+	docker compose -f docker compose.boreas.yml exec -T boreas-db apt install -y wget
+	docker compose -f docker compose.boreas.yml exec -T boreas-db wget "https://snapshots.mvkt.io/tzkt_v1.14_parisnet.backup" -O mvkt_db.backup
+	docker compose -f docker compose.boreas.yml exec -T boreas-db pg_restore -U mvkt -O -x -v -d mvkt_db -e -j 4 mvkt_db.backup
+	docker compose -f docker compose.boreas.yml exec -T boreas-db rm mvkt_db.backup
+	docker compose -f docker compose.boreas.yml exec -T boreas-db apt autoremove --purge -y wget
 	docker compose pull	
 	
-oxford-start:
-	docker compose -f docker-compose.oxford.yml up -d
+boreas-start:
+	docker compose -f docker compose.boreas.yml up -d
 
-oxford-stop:
-	docker compose -f docker-compose.oxford.yml down
+boreas-stop:
+	docker compose -f docker compose.boreas.yml down
 
-oxford-db-start:
-	docker compose -f docker-compose.oxford.yml up -d oxford-db
+boreas-db-start:
+	docker compose -f docker compose.boreas.yml up -d boreas-db
 reset:
-	docker compose -f docker-compose.oxford.yml down --volumes
-	docker compose -f docker-compose.oxford.yml up -d oxford-db
+	docker compose -f docker compose.boreas.yml down --volumes
+	docker compose -f docker compose.boreas.yml up -d boreas-db

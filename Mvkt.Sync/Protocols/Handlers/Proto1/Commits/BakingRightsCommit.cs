@@ -139,7 +139,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
 
                 FutureBakingRights = await GetBakingRights(block, futureCycle);
                 FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);
@@ -210,8 +210,8 @@ namespace Mvkt.Sync.Protocols.Proto1
             {
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE FROM ""BakingRights""
-                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.PreservedCycles} AND ""Type"" = 0
-                    OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.PreservedCycles)}");
+                    WHERE   ""Cycle"" = {block.Cycle + block.Protocol.ConsensusRightsDelay} AND ""Type"" = 0
+                    OR      ""Level"" > {block.Protocol.GetCycleStart(block.Cycle + block.Protocol.ConsensusRightsDelay)}");
             }
             #endregion
         }

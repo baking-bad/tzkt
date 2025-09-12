@@ -6,11 +6,11 @@ using Mvkt.Data;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetSmartRollupOriginateStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(MvktContext.SmartRollupOriginateOps), hash);
         }
 
@@ -26,7 +26,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Status", filter.status)
                 .Filter("SmartRollupId", filter.rollup);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -80,7 +80,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("SmartRollupId", filter.rollup)
                 .Take(pagination, x => (@"""Id""", @"""Id"""));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 

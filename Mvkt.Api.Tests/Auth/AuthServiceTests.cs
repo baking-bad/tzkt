@@ -24,7 +24,8 @@ public class AuthServiceTests
 
         var auth = new PubKeyAuth(configuration);
         var config = configuration.GetAuthConfig();
-        var key = Key.FromBase58(configuration.GetSection("PrivKey").Value);
+        var key = Key.FromBase58(configuration.GetSection("PrivKey").Value
+            ?? throw new Exception("PubKeyAuthSample.json seems to be corrupted"));
 
         foreach (var credentials in config.Users)
         {

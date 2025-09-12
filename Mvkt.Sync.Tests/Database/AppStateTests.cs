@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Netmavryk.Rpc;
 using Mvkt.Data;
+using Mvkt.Data.Models.Base;
 
 namespace Mvkt.Sync.Tests.Database
 {
@@ -38,43 +39,41 @@ namespace Mvkt.Sync.Tests.Database
             }
             #endregion
 
+            #region state
+            if (state.PendingDelegateParameters != await db.SetDelegateParametersOps
+                .CountAsync(x => x.Status == OperationStatus.Applied && x.ActivationCycle > state.Cycle))
+                throw new Exception("Invalid AppState.PendingDelegateParameters");
+            #endregion
+
             #region counters
             if (state.AccountCounter != await db.Accounts.CountAsync())
                 throw new Exception("Invalid AppState.AccountCounter");
-
-            var opsCount = state.ActivationOpsCount +
-                state.BallotOpsCount +
+            
+            var opsCount =
                 state.BlocksCount +
+                state.AutostakingOpsCount +
+                state.EndorsingRewardOpsCount +
+                state.MigrationOpsCount +
+                state.RevelationPenaltyOpsCount +
+
+                state.ActivationOpsCount +
+                state.BallotOpsCount +
+                state.DalPublishCommitmentOpsCount +
                 state.DelegationOpsCount +
                 state.DoubleBakingOpsCount +
                 state.DoubleEndorsingOpsCount +
                 state.DoublePreendorsingOpsCount +
                 state.DrainDelegateOpsCount +
                 state.EndorsementOpsCount +
-                state.EndorsingRewardOpsCount +
                 state.IncreasePaidStorageOpsCount +
-                state.MigrationOpsCount +
                 state.NonceRevelationOpsCount +
                 state.OriginationOpsCount +
                 state.PreendorsementOpsCount +
                 state.ProposalOpsCount +
                 state.RegisterConstantOpsCount +
                 state.RevealOpsCount +
-                state.RevelationPenaltyOpsCount +
+                state.SetDelegateParametersOpsCount +
                 state.SetDepositsLimitOpsCount +
-                state.TransactionOpsCount +
-                state.StakingOpsCount +
-                state.TransferTicketOpsCount +
-                state.TxRollupCommitOpsCount +
-                state.TxRollupDispatchTicketsOpsCount +
-                state.TxRollupFinalizeCommitmentOpsCount +
-                state.TxRollupOriginationOpsCount +
-                state.TxRollupRejectionOpsCount +
-                state.TxRollupRemoveCommitmentOpsCount +
-                state.TxRollupReturnBondOpsCount +
-                state.TxRollupSubmitBatchOpsCount +
-                state.UpdateConsensusKeyOpsCount +
-                state.VdfRevelationOpsCount +
                 state.SmartRollupAddMessagesOpsCount +
                 state.SmartRollupCementOpsCount +
                 state.SmartRollupExecuteOpsCount +
@@ -82,19 +81,8 @@ namespace Mvkt.Sync.Tests.Database
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
                 state.SmartRollupRefuteOpsCount +
-                state.AutostakingOpsCount;
-
-            if (state.OperationCounter != opsCount)
-                throw new Exception("Invalid AppState.OperationCounter");
-
-            var managerOpsCount = await db.DelegationOps.CountAsync(x => x.InitiatorId == null) +
-                await db.OriginationOps.CountAsync(x => x.InitiatorId == null) +
-                await db.TransactionOps.CountAsync(x => x.InitiatorId == null) +
                 state.StakingOpsCount +
-                state.IncreasePaidStorageOpsCount +
-                state.RegisterConstantOpsCount +
-                state.RevealOpsCount +
-                state.SetDepositsLimitOpsCount +
+                state.TransactionOpsCount +
                 state.TransferTicketOpsCount +
                 state.TxRollupCommitOpsCount +
                 state.TxRollupDispatchTicketsOpsCount +
@@ -105,13 +93,39 @@ namespace Mvkt.Sync.Tests.Database
                 state.TxRollupReturnBondOpsCount +
                 state.TxRollupSubmitBatchOpsCount +
                 state.UpdateConsensusKeyOpsCount +
+                state.VdfRevelationOpsCount;
+
+            if (state.OperationCounter != opsCount)
+                throw new Exception("Invalid AppState.OperationCounter");
+
+            var managerOpsCount =
+                state.DalPublishCommitmentOpsCount +
+                await db.DelegationOps.CountAsync(x => x.InitiatorId == null) +
+                state.IncreasePaidStorageOpsCount +
+                await db.OriginationOps.CountAsync(x => x.InitiatorId == null) +
+                state.RegisterConstantOpsCount +
+                state.RevealOpsCount +
+                state.SetDelegateParametersOpsCount +
+                state.SetDepositsLimitOpsCount +
                 state.SmartRollupAddMessagesOpsCount +
                 state.SmartRollupCementOpsCount +
                 state.SmartRollupExecuteOpsCount +
                 state.SmartRollupOriginateOpsCount +
                 state.SmartRollupPublishOpsCount +
                 state.SmartRollupRecoverBondOpsCount +
-                state.SmartRollupRefuteOpsCount;
+                state.SmartRollupRefuteOpsCount +
+                state.StakingOpsCount +
+                await db.TransactionOps.CountAsync(x => x.InitiatorId == null) +
+                state.TransferTicketOpsCount +
+                state.TxRollupCommitOpsCount +
+                state.TxRollupDispatchTicketsOpsCount +
+                state.TxRollupFinalizeCommitmentOpsCount +
+                state.TxRollupOriginationOpsCount +
+                state.TxRollupRejectionOpsCount +
+                state.TxRollupRemoveCommitmentOpsCount +
+                state.TxRollupReturnBondOpsCount +
+                state.TxRollupSubmitBatchOpsCount +
+                state.UpdateConsensusKeyOpsCount;
 
             if (state.ManagerCounter != managerOpsCount)
                 throw new Exception("Invalid AppState.ManagerCounter");
@@ -147,9 +161,6 @@ namespace Mvkt.Sync.Tests.Database
             #region counts
             if (state.CommitmentsCount != await db.Commitments.CountAsync())
                 throw new Exception("Invalid AppState.CommitmentsCount");
-
-            if (state.AccountsCount != await db.Accounts.CountAsync())
-                throw new Exception("Invalid AppState.AccountsCount");
 
             if (state.BlocksCount != await db.Blocks.CountAsync())
                 throw new Exception("Invalid AppState.BlocksCount");
@@ -196,11 +207,14 @@ namespace Mvkt.Sync.Tests.Database
             if (state.RevealOpsCount != await db.RevealOps.CountAsync())
                 throw new Exception("Invalid AppState.RevealOpsCount");
 
-            if (state.TransactionOpsCount != await db.TransactionOps.CountAsync())
-                throw new Exception("Invalid AppState.TransactionOpsCount");
-
             if (state.StakingOpsCount != await db.StakingOps.CountAsync())
                 throw new Exception("Invalid AppState.StakingOpsCount");
+
+            if (state.SetDelegateParametersOpsCount != await db.SetDelegateParametersOps.CountAsync())
+                throw new Exception("Invalid AppState.SetDelegateParametersOpsCount");
+
+            if (state.TransactionOpsCount != await db.TransactionOps.CountAsync())
+                throw new Exception("Invalid AppState.TransactionOpsCount");
 
             if (state.RegisterConstantOpsCount != await db.RegisterConstantOps.CountAsync())
                 throw new Exception("Invalid AppState.RegisterConstantOpsCount");
@@ -253,6 +267,33 @@ namespace Mvkt.Sync.Tests.Database
             if (state.RevelationPenaltyOpsCount != await db.RevelationPenaltyOps.CountAsync())
                 throw new Exception("Invalid AppState.RevelationPenaltyOpsCount");
 
+            if (state.AutostakingOpsCount != await db.AutostakingOps.CountAsync())
+                throw new Exception("Invalid AppState.AutostakingOpsCount");
+
+            if (state.SmartRollupAddMessagesOpsCount != await db.SmartRollupAddMessagesOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupAddMessagesOpsCount");
+
+            if (state.SmartRollupCementOpsCount != await db.SmartRollupCementOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupCementOpsCount");
+
+            if (state.SmartRollupExecuteOpsCount != await db.SmartRollupExecuteOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupExecuteOpsCount");
+
+            if (state.SmartRollupOriginateOpsCount != await db.SmartRollupOriginateOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupOriginateOpsCount");
+
+            if (state.SmartRollupPublishOpsCount != await db.SmartRollupPublishOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupPublishOpsCount");
+
+            if (state.SmartRollupRecoverBondOpsCount != await db.SmartRollupRecoverBondOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupRecoverBondOpsCount");
+
+            if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
+                throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
+
+            if (state.DalPublishCommitmentOpsCount != await db.DalPublishCommitmentOps.CountAsync())
+                throw new Exception("Invalid AppState.DalPublishCommitmentOpsCount");
+
             if (state.ProposalsCount != await db.Proposals.CountAsync())
                 throw new Exception("Invalid AppState.ProposalsCount");
 
@@ -283,29 +324,11 @@ namespace Mvkt.Sync.Tests.Database
             if (state.EventsCount != await db.Events.CountAsync())
                 throw new Exception("Invalid AppState.EventsCount");
 
-            if (state.SmartRollupAddMessagesOpsCount != await db.SmartRollupAddMessagesOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupAddMessagesOpsCount");
+            if (state.StakingUpdatesCount != await db.StakingUpdates.CountAsync())
+                throw new Exception("Invalid AppState.StakingUpdatesCount");
 
-            if (state.SmartRollupCementOpsCount != await db.SmartRollupCementOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupCementOpsCount");
-
-            if (state.SmartRollupExecuteOpsCount != await db.SmartRollupExecuteOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupExecuteOpsCount");
-
-            if (state.SmartRollupOriginateOpsCount != await db.SmartRollupOriginateOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupOriginateOpsCount");
-
-            if (state.SmartRollupPublishOpsCount != await db.SmartRollupPublishOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupPublishOpsCount");
-
-            if (state.SmartRollupRecoverBondOpsCount != await db.SmartRollupRecoverBondOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupRecoverBondOpsCount");
-
-            if (state.SmartRollupRefuteOpsCount != await db.SmartRollupRefuteOps.CountAsync())
-                throw new Exception("Invalid AppState.SmartRollupRefuteOpsCount");
-
-            if (state.AutostakingOpsCount != await db.AutostakingOps.CountAsync())
-                throw new Exception("Invalid AppState.AutostakingOpsCount");
+            if (state.UnstakeRequestsCount != await db.UnstakeRequests.CountAsync())
+                throw new Exception("Invalid AppState.UnstakeRequestsCount");
             #endregion
 
             #region quotes

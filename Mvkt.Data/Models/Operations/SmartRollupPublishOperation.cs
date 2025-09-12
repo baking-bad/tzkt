@@ -57,10 +57,10 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.SenderId);
 
             modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasIndex(x => x.SmartRollupId);
+                .HasIndex(x => x.CommitmentId);
 
             modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasIndex(x => x.CommitmentId);
+                .HasIndex(x => new { x.SmartRollupId, x.SenderId, x.Id });
 
             modelBuilder.Entity<SmartRollupPublishOperation>()
                 .HasIndex(x => new { x.SmartRollupId, x.BondStatus, x.SenderId })

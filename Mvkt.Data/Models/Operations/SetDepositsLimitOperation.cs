@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mvkt.Data.Models.Base;
 
 namespace Mvkt.Data.Models
@@ -20,14 +19,11 @@ namespace Mvkt.Data.Models
             #endregion
 
             #region props
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger?, string>(
-                x => x == null ? null : x.ToString(),
-                x => x == null ? null : BigInteger.Parse(x));
-
             modelBuilder.Entity<SetDepositsLimitOperation>()
-                .Property(x => x.Limit)
-                .HasConversion(converter);
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
             #endregion
 
             #region indexes
@@ -38,7 +34,7 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<SetDepositsLimitOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
             #endregion
 
             #region relations

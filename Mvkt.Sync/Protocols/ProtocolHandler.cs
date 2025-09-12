@@ -13,7 +13,8 @@ namespace Mvkt.Sync
         public abstract IDiagnostics Diagnostics { get; }
         public abstract IValidator Validator { get; }
         public abstract IRpc Rpc { get; }
-        public abstract string Version { get; }
+        public abstract string VersionName { get; }
+        public abstract int VersionNumber { get; }
 
         public readonly MavrykNode Node;
         public readonly MvktContext Db;
@@ -25,6 +26,8 @@ namespace Mvkt.Sync
         public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
         public readonly InboxContext Inbox;
+
+        bool _ForceDiagnostics = false;
 
         public ProtocolHandler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger logger, IMetrics metrics)
         {
@@ -77,23 +80,17 @@ namespace Mvkt.Sync
                     await Commit(block);
                 }
 
-                var nextProtocol = this;
-                if (state.Protocol != state.NextProtocol)
-                {
-                    Logger.LogDebug("Activate protocol {hash}", state.NextProtocol);
-                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
-                    await nextProtocol.Activate(state, block);
-                }
-
                 Logger.LogDebug("Touch accounts");
                 TouchAccounts();
+
+                var nextProtocol = this;
+                if (state.Protocol != state.NextProtocol)
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
 
                 Logger.LogDebug("Save changes");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.SaveChangesTime))
                 {
-                    if (Config.Diagnostics)
-                        nextProtocol.Diagnostics.TrackChanges();
-
+                    nextProtocol.Diagnostics.TrackChanges();
                     await Db.SaveChangesAsync();
                 }
 
@@ -102,9 +99,7 @@ namespace Mvkt.Sync
                 {
                     await AfterCommit(block);
 
-                    if (Config.Diagnostics)
-                        nextProtocol.Diagnostics.TrackChanges();
-
+                    nextProtocol.Diagnostics.TrackChanges();
                     await Db.SaveChangesAsync();
                 }
 
@@ -116,17 +111,21 @@ namespace Mvkt.Sync
 
                 if (state.Protocol != state.NextProtocol)
                 {
-                    Logger.LogDebug("Run post activation");
-                    await nextProtocol.PostActivation(state);
+                    Logger.LogDebug("Activate protocol {hash}", state.NextProtocol);
+                    await nextProtocol.Activate(state, block);
+
+                    nextProtocol.Diagnostics.TrackChanges();
+                    await Db.SaveChangesAsync();
                 }
 
-                if (Config.Diagnostics)
+                if (Config.Diagnostics || _ForceDiagnostics)
                 {
                     Logger.LogDebug("Diagnostics");
                     using (Metrics.Measure.Timer.Time(MetricsRegistry.DiagnosticsTime))
                     {
                         await nextProtocol.Diagnostics.Run(block);
                     }
+                    _ForceDiagnostics = false;
                 }
 
                 Logger.LogDebug("Commit DB transaction");
@@ -155,9 +154,13 @@ namespace Mvkt.Sync
                 var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)
                 {
-                    Logger.LogDebug("Run pre deactivation");
                     nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
-                    await nextProtocol.PreDeactivation(state);
+
+                    Logger.LogDebug("Deactivate protocol {hash}", state.NextProtocol);
+                    await nextProtocol.Deactivate(state);
+
+                    nextProtocol.Diagnostics.TrackChanges();
+                    await Db.SaveChangesAsync();
                 }
 
                 Logger.LogDebug("Revert quotes");
@@ -170,12 +173,9 @@ namespace Mvkt.Sync
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertPostProcessingTime))
                 {
                     await BeforeRevert();
-                }
 
-                if (state.Protocol != state.NextProtocol)
-                {
-                    Logger.LogDebug("Deactivate latest protocol");
-                    await nextProtocol.Deactivate(state);
+                    nextProtocol.Diagnostics.TrackChanges();
+                    await Db.SaveChangesAsync();
                 }
 
                 Logger.LogDebug("Revert block");
@@ -187,20 +187,21 @@ namespace Mvkt.Sync
                 Logger.LogDebug("Touch accounts");
                 ClearAccounts(state.Level + 1);
 
-                if (Config.Diagnostics && state.Hash == predecessor)
+                Logger.LogDebug("Save changes");
+                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertSaveChangesTime))
+                {
+                    nextProtocol.Diagnostics.TrackChanges();
+                    await Db.SaveChangesAsync();
+                }
+
+                if ((Config.Diagnostics || _ForceDiagnostics) && state.Hash == predecessor)
                 {
                     Logger.LogDebug("Diagnostics");
                     using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertDiagnosticsTime))
                     {
-                        Diagnostics.TrackChanges();
                         await Diagnostics.Run(state.Level);
                     }
-                }
-
-                Logger.LogDebug("Save changes");
-                using (Metrics.Measure.Timer.Time(MetricsRegistry.RevertSaveChangesTime))
-                {
-                    await Db.SaveChangesAsync();
+                    _ForceDiagnostics = false;
                 }
 
                 Logger.LogDebug("Commit DB transaction");
@@ -238,7 +239,6 @@ namespace Mvkt.Sync
                     {
                         if (content.TryGetProperty("destination", out var dest))
                             accounts.Add(dest.GetString());
-
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
                             {
@@ -256,10 +256,6 @@ namespace Mvkt.Sync
             return Cache.Accounts.LoadAsync(accounts);
         }
 
-        public virtual Task PostActivation(AppState state) => Task.CompletedTask;
-
-        public virtual Task PreDeactivation(AppState state) => Task.CompletedTask;
-
         public virtual Task Activate(AppState state, JsonElement block) => Task.CompletedTask;
 
         public virtual Task Deactivate(AppState state) => Task.CompletedTask;
@@ -271,6 +267,8 @@ namespace Mvkt.Sync
         public abstract Task Commit(JsonElement block);
 
         public abstract Task Revert();
+
+        public void ForceDiagnostics() => _ForceDiagnostics = true;
 
         void TouchAccounts()
         {
@@ -288,7 +286,6 @@ namespace Mvkt.Sync
                 }
                 else if (entry.State == EntityState.Added)
                 {
-                    state.AccountsCount++;
                     if (account.FirstLevel == block.Level)
                         block.Events |= BlockEvents.NewAccounts;
                 }
@@ -311,7 +308,6 @@ namespace Mvkt.Sync
                     Db.Accounts.Remove(account);
                     Cache.Accounts.Remove(account);
                     Cache.AppState.ReleaseAccountId();
-                    state.AccountsCount--;
                 }
             }
         }
@@ -395,6 +391,8 @@ namespace Mvkt.Sync
                         b.SmartRollupPublishOps = null;
                         b.SmartRollupRecoverBondOps = null;
                         b.SmartRollupRefuteOps = null;
+                        b.SetDelegateParametersOps = null;
+                        b.DalPublishCommitmentOps = null;
                         break;
                 }
             }

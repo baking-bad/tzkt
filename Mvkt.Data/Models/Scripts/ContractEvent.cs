@@ -33,17 +33,7 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<ContractEvent>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<ContractEvent>()
                 .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<ContractEvent>()
-                .HasIndex(x => x.ContractId);
-
-            modelBuilder.Entity<ContractEvent>()
-                .HasIndex(x => x.ContractCodeHash);
 
             modelBuilder.Entity<ContractEvent>()
                 .HasIndex(x => x.TransactionId);

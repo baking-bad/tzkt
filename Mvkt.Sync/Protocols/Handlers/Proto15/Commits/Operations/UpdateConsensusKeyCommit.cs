@@ -32,7 +32,7 @@ namespace Mvkt.Sync.Protocols.Proto15
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 Sender = sender,
-                ActivationCycle = block.Cycle + block.Protocol.PreservedCycles + 1,
+                ActivationCycle = block.Cycle + block.Protocol.ConsensusRightsDelay + 1,
                 PublicKey = pubKey,
                 PublicKeyHash = pubKeyHash,
                 Status = result.RequiredString("status") switch

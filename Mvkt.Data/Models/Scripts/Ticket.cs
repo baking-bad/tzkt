@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Mvkt.Data.Models
 {
@@ -42,33 +41,9 @@ namespace Mvkt.Data.Models
             modelBuilder.Entity<Ticket>()
                 .Property(x => x.JsonContent)
                 .HasColumnType("jsonb");
-
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-            
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalMinted)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalBurned)
-                .HasConversion(converter);
-
-            modelBuilder.Entity<Ticket>()
-                .Property(x => x.TotalSupply)
-                .HasConversion(converter);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Ticket>()
-                .HasIndex(x => x.TicketerId);
-
             modelBuilder.Entity<Ticket>()
                 .HasIndex(x => x.FirstMinterId);
 

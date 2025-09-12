@@ -8,7 +8,6 @@ namespace Mvkt.Data.Models
         public int Index { get; set; }
         public int FirstLevel { get; set; }
         public int LastLevel { get; set; }
-        public int SnapshotIndex { get; set; }
         public int SnapshotLevel { get; set; }
 
         public int TotalBakers { get; set; }
@@ -18,11 +17,11 @@ namespace Mvkt.Data.Models
 
         public long BlockReward { get; set; }
         public long BlockBonusPerSlot { get; set; }
-        public long MaxBlockReward { get; set; }
         public long EndorsementRewardPerSlot { get; set; }
         public long NonceRevelationReward { get; set; }
         public long VdfRevelationReward { get; set; }
-        public long LBSubsidy { get; set; }
+
+        public long MaxBlockReward { get; set; }
     }
 
     public static class CycleModel
@@ -32,9 +31,6 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<Cycle>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Cycle>()
-                .HasAlternateKey(x => x.Index);
             #endregion
 
             #region props

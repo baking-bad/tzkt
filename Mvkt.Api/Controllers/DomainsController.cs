@@ -1,8 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Mvc;
-
+﻿using Microsoft.AspNetCore.Mvc;
 using Mvkt.Api.Models;
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services;

@@ -10,8 +10,9 @@ namespace Mvkt.Data.Models
         public int SenderId { get; set; }
         public int RevealedLevel { get; set; }
         public int RevealedCycle { get; set; }
-        public long RewardLiquid { get; set; }
+        public long RewardDelegated { get; set; }
         public long RewardStakedOwn { get; set; }
+        public long RewardStakedEdge { get; set; }
         public long RewardStakedShared { get; set; }
         public byte[] Nonce { get; set; }
 
@@ -35,9 +36,6 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<NonceRevelationOperation>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<NonceRevelationOperation>()
-                .HasAlternateKey(x => x.RevealedLevel);
             #endregion
             
             #region props

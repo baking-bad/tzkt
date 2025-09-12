@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Mvkt.Data.Models
 {
@@ -29,24 +28,9 @@ namespace Mvkt.Data.Models
                 .HasKey(x => x.Id);
             #endregion
 
-            #region props
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<TicketTransfer>()
-                .Property(x => x.Amount)
-                .HasConversion(converter);
-            #endregion
-
             #region indexes
             modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<TicketTransfer>()
-                .HasIndex(x => x.Level);
+                .HasIndex(x => new { x.Level, x.Id });
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TicketerId);
@@ -62,15 +46,15 @@ namespace Mvkt.Data.Models
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransactionId)
-                .HasFilter($@"""{nameof(TicketTransfer.TransactionId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.TransactionId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.TransferTicketId)
-                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.TransferTicketId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TicketTransfer>()
                 .HasIndex(x => x.SmartRollupExecuteId)
-                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" is not null");
+                .HasFilter($@"""{nameof(TicketTransfer.SmartRollupExecuteId)}"" IS NOT NULL");
             #endregion
         }
     }

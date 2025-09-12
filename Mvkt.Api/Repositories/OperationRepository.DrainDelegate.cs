@@ -1,13 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetDrainDelegatesCount(
             Int32Parameter level,
@@ -17,7 +13,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -31,7 +27,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51)
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new DrainDelegateOperation
@@ -45,6 +41,7 @@ namespace Mvkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -57,7 +54,7 @@ namespace Mvkt.Api.Repositories
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DrainDelegateOperation
@@ -71,6 +68,7 @@ namespace Mvkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -98,7 +96,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DrainDelegateOperation
@@ -112,6 +110,7 @@ namespace Mvkt.Api.Repositories
                 Target = Accounts.GetAlias(row.TargetId),
                 Amount = row.Amount,
                 Fee = row.Fee,
+                AllocationFee = row.AllocationFee,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -143,6 +142,7 @@ namespace Mvkt.Api.Repositories
                     case "target": columns.Add(@"o.""TargetId"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
                     case "fee": columns.Add(@"o.""Fee"""); break;
+                    case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -166,7 +166,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -213,6 +213,10 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Fee;
                         break;
+                    case "allocationFee":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AllocationFee;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -248,6 +252,7 @@ namespace Mvkt.Api.Repositories
                 case "target": columns.Add(@"o.""TargetId"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
                 case "fee": columns.Add(@"o.""Fee"""); break;
+                case "allocationFee": columns.Add(@"o.""AllocationFee"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -270,7 +275,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -314,6 +319,10 @@ namespace Mvkt.Api.Repositories
                 case "fee":
                     foreach (var row in rows)
                         result[j++] = row.Fee;
+                    break;
+                case "allocationFee":
+                    foreach (var row in rows)
+                        result[j++] = row.AllocationFee;
                     break;
                 case "quote":
                     foreach (var row in rows)

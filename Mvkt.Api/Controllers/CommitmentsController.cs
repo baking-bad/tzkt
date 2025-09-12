@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Threading.Tasks;
 using Mvkt.Api.Models;
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services.Cache;

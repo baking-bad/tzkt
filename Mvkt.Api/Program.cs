@@ -6,6 +6,7 @@ using App.Metrics;
 using App.Metrics.Extensions.Configuration;
 using App.Metrics.Formatters.Prometheus;
 using Dapper;
+using Npgsql;
 using Mvkt.Api;
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services;
@@ -35,8 +36,15 @@ builder.Logging.AddConsole();
 #endregion
 
 #region services
-builder.Services.AddDbContext<MvktContext>(options =>
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+builder.Services.AddDbContext<MvktContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddSingleton(serviceProvider =>
+{
+    var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
+    dataSourceBuilder.AddTypeResolverFactory(new CustomTypeHandlerResolverFactory());
+    dataSourceBuilder.UseLoggerFactory(serviceProvider.GetService<ILoggerFactory>());
+    return dataSourceBuilder.Build();
+});
 
 builder.Services.AddSingleton<AccountsCache>();
 builder.Services.AddSingleton<BigMapsCache>();
@@ -71,6 +79,7 @@ builder.Services.AddTransient<ConstantsRepository>();
 builder.Services.AddTransient<ContractEventsRepository>();
 builder.Services.AddTransient<DomainsRepository>();
 builder.Services.AddTransient<SmartRollupsRepository>();
+builder.Services.AddTransient<StakingRepository>();
 
 builder.Services.AddAuthService(builder.Configuration);
 builder.Services.AddSingleton<RpcHelpers>();
@@ -83,6 +92,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.Converters.Add(new AccountConverter());
+        options.JsonSerializerOptions.Converters.Add(new BigIntegerConverter());
+        options.JsonSerializerOptions.Converters.Add(new BigIntegerNullableConverter());
         options.JsonSerializerOptions.Converters.Add(new OperationConverter());
         options.JsonSerializerOptions.Converters.Add(new OperationErrorConverter());
         options.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
@@ -138,6 +149,8 @@ if (builder.Configuration.GetWebsocketConfig().Enabled)
     .AddJsonProtocol(jsonOptions =>
     {
         jsonOptions.PayloadSerializerOptions.Converters.Add(new AccountConverter());
+        jsonOptions.PayloadSerializerOptions.Converters.Add(new BigIntegerConverter());
+        jsonOptions.PayloadSerializerOptions.Converters.Add(new BigIntegerNullableConverter());
         jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationConverter());
         jsonOptions.PayloadSerializerOptions.Converters.Add(new OperationErrorConverter());
         jsonOptions.PayloadSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;

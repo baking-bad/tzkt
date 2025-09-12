@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "mumbai_016";
+        public override string VersionName => "mumbai_016";
+        public override int VersionNumber => 16;
 
         public Proto16Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto16Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
@@ -25,8 +26,6 @@ namespace Mvkt.Sync.Protocols
         }
 
         public override Task Activate(AppState state, JsonElement block) => new ProtoActivator(this).Activate(state, block);
-        public override Task PostActivation(AppState state) => Task.CompletedTask;
-        public override Task PreDeactivation(AppState state) => Task.CompletedTask;
         public override Task Deactivate(AppState state) => new ProtoActivator(this).Deactivate(state);
 
         public override async Task Commit(JsonElement block)

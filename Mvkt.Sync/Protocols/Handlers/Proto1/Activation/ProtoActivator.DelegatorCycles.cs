@@ -7,16 +7,26 @@ namespace Mvkt.Sync.Protocols.Proto1
     {
         public void BootstrapDelegatorCycles(Protocol protocol, List<Account> accounts)
         {
-            for (int cycle = 0; cycle <= protocol.PreservedCycles; cycle++)
+            for (int cycle = 0; cycle <= protocol.ConsensusRightsDelay; cycle++)
             {
                 Db.DelegatorCycles.AddRange(accounts.Where(x => x.DelegateId != null)
-                    .Select(x => new DelegatorCycle
+                    .Select(x =>
                     {
-                        Cycle = cycle,
-                        DelegatorId = x.Id,
-                        BakerId = (int)x.DelegateId,
-                        DelegatedBalance = x.Balance,
-                        StakedBalance = (x as User)?.StakedBalance ?? 0
+                        var stakedBalance = 0L;
+                        if (x is User user && user.StakedPseudotokens != null)
+                        {
+                            var baker = Cache.Accounts.GetDelegate(user.DelegateId);
+                            stakedBalance = (long)(baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens);
+                        }
+
+                        return new DelegatorCycle
+                        {
+                            Cycle = cycle,
+                            DelegatorId = x.Id,
+                            BakerId = (int)x.DelegateId,
+                            DelegatedBalance = x.Balance,
+                            StakedBalance = stakedBalance
+                        };
                     }));
             }
         }

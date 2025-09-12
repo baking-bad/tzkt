@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mvkt.Api
+﻿namespace Mvkt.Api
 {
     class ConfigurationException : Exception
     {

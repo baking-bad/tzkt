@@ -1,5 +1,4 @@
-﻿using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Protocols.Proto9
@@ -12,14 +11,16 @@ namespace Mvkt.Sync.Protocols.Proto9
 
         protected override async Task MigrateContext(AppState state)
         {
-            // var block = await Cache.Blocks.CurrentAsync();
-            // var account = await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf");
+            var _block = await Cache.Blocks.CurrentAsync();
+            // Db.TryAttach(block);
 
+            // var account = await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf");
             // Db.TryAttach(account);
             // account.Balance += 100_000_000;
             // if (account is Data.Models.Delegate delegat)
             //     delegat.StakingBalance += 100_000_000;
             // account.MigrationsCount++;
+            // account.LastLevel = block.Level;
 
             // block.Operations |= Operations.Migrations;
             // Db.MigrationOps.Add(new MigrationOperation
@@ -33,9 +34,12 @@ namespace Mvkt.Sync.Protocols.Proto9
             //     BalanceChange = 100_000_000
             // });
 
+            // Db.TryAttach(state);
             // state.MigrationOpsCount++;
 
-            // Cache.Statistics.Current.TotalCreated += 100_000_000;
+            // var stats = Cache.Statistics.Current;
+            // Db.TryAttach(stats);
+            // stats.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

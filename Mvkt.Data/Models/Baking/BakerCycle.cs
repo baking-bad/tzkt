@@ -32,14 +32,16 @@ namespace Mvkt.Data.Models
         #region rewards
         public long FutureBlockRewards { get; set; }
         public long MissedBlockRewards { get; set; }
-        public long BlockRewardsLiquid { get; set; }
+        public long BlockRewardsDelegated { get; set; }
         public long BlockRewardsStakedOwn { get; set; }
+        public long BlockRewardsStakedEdge { get; set; }
         public long BlockRewardsStakedShared { get; set; }
 
         public long FutureEndorsementRewards { get; set; }
         public long MissedEndorsementRewards { get; set; }
-        public long EndorsementRewardsLiquid { get; set; }
+        public long EndorsementRewardsDelegated { get; set; }
         public long EndorsementRewardsStakedOwn { get; set; }
+        public long EndorsementRewardsStakedEdge { get; set; }
         public long EndorsementRewardsStakedShared { get; set; }
 
         public long BlockFees { get; set; }
@@ -63,12 +65,14 @@ namespace Mvkt.Data.Models
         public long DoublePreendorsingLostExternalStaked { get; set; }
         public long DoublePreendorsingLostExternalUnstaked { get; set; }
 
-        public long VdfRevelationRewardsLiquid { get; set; }
+        public long VdfRevelationRewardsDelegated { get; set; }
         public long VdfRevelationRewardsStakedOwn { get; set; }
+        public long VdfRevelationRewardsStakedEdge { get; set; }
         public long VdfRevelationRewardsStakedShared { get; set; }
 
-        public long NonceRevelationRewardsLiquid { get; set; }
+        public long NonceRevelationRewardsDelegated { get; set; }
         public long NonceRevelationRewardsStakedOwn { get; set; }
+        public long NonceRevelationRewardsStakedEdge { get; set; }
         public long NonceRevelationRewardsStakedShared { get; set; }
         public long NonceRevelationLosses { get; set; }
         #endregion

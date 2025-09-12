@@ -13,6 +13,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             var protocol = new Protocol
             {
                 Code = 1,
+                Version = Proto.VersionNumber,
                 Hash = rawBlock.Required("metadata").RequiredString("next_protocol"),
                 FirstLevel = 2,
                 LastLevel = -1,
@@ -35,7 +36,7 @@ namespace Mvkt.Sync.Protocols.Proto1
         public async Task ClearProtocol()
         {
             await Db.Database.ExecuteSqlRawAsync(@"DELETE FROM ""Protocols"" WHERE ""Code"" = 1");
-            Cache.Protocols.Reset();
+            await Cache.Protocols.ResetAsync();
         }
 
         protected virtual void SetParameters(Protocol protocol, JToken parameters)
@@ -58,7 +59,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 400_000;
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = (parameters["origination_burn"]?.Value<int>() ?? 257_000) / protocol.ByteCost;
-            protocol.PreservedCycles = parameters["preserved_cycles"]?.Value<int>() ?? 5;
+            protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
             protocol.TimeBetweenBlocks = parameters["time_between_blocks"]?[0].Value<int>() ?? 60;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 10_000_000_000;
             protocol.BallotQuorumMin = 0;
@@ -74,7 +75,8 @@ namespace Mvkt.Sync.Protocols.Proto1
 
             var protocol = new Protocol
             {
-                Code = await Db.Protocols.CountAsync() - 1,
+                Code = prev.Code + 1,
+                Version = Proto.VersionNumber,
                 Hash = state.NextProtocol,
                 FirstLevel = state.Level + 1,
                 LastLevel = -1,
@@ -98,7 +100,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                 HardOperationGasLimit = prev.HardOperationGasLimit,
                 HardOperationStorageLimit = prev.HardOperationStorageLimit,
                 OriginationSize = prev.OriginationSize,
-                PreservedCycles = prev.PreservedCycles,
+                ConsensusRightsDelay = prev.ConsensusRightsDelay,
                 TimeBetweenBlocks = prev.TimeBetweenBlocks,
                 MinimalStake = prev.MinimalStake,
                 BallotQuorumMin = prev.BallotQuorumMin,
@@ -112,13 +114,6 @@ namespace Mvkt.Sync.Protocols.Proto1
                 DoubleEndorsingSlashedPercentage = prev.DoubleEndorsingSlashedPercentage,
                 MinimalFrozenStake = prev.MinimalFrozenStake,
                 StakePowerMultiplier = prev.StakePowerMultiplier,
-                BaseIssuedPerMinute = prev.BaseIssuedPerMinute,
-                BlockBonusWeight = prev.BlockBonusWeight,
-                BlockRewardWeight = prev.BlockRewardWeight,
-                EndorsingRewardWeight = prev.EndorsingRewardWeight,
-                LBSubsidyWeight = prev.LBSubsidyWeight,
-                NonceRevelationRewardWeight = prev.NonceRevelationRewardWeight,
-                VdfRevelationRewardWeight = prev.VdfRevelationRewardWeight,
                 MaxBakingReward = prev.MaxBakingReward,
                 MaxEndorsingReward = prev.MaxEndorsingReward,
                 MaxSlashingPeriod = prev.MaxSlashingPeriod,
@@ -129,7 +124,8 @@ namespace Mvkt.Sync.Protocols.Proto1
                 SmartRollupCommitmentPeriod = prev.SmartRollupCommitmentPeriod,
                 SmartRollupOriginationSize = prev.SmartRollupOriginationSize,
                 SmartRollupStakeAmount = prev.SmartRollupStakeAmount,
-                SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod
+                SmartRollupTimeoutPeriod = prev.SmartRollupTimeoutPeriod,
+                DelegateParametersActivationDelay = prev.DelegateParametersActivationDelay
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
@@ -146,7 +142,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             Db.TryAttach(prev);
             prev.LastLevel = -1;
 
-            Cache.Protocols.Reset();
+            await Cache.Protocols.ResetAsync();
         }
 
         protected virtual void UpgradeParameters(Protocol protocol, Protocol prev) { }

@@ -3,7 +3,7 @@ using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetAutostakingOpsCount(AutostakingOperationFilter filter)
         {
@@ -16,10 +16,10 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"o.""Level""", filter.timestamp)
                 .FilterA(@"o.""BakerId""", filter.baker)
                 .FilterA(@"o.""Action""", filter.action)
-                .FilterA(@"o.""Cycle""", filter.cycle)
-                .FilterA(@"o.""Amount""", filter.amount);
+                .FilterA(@"o.""Amount""", filter.amount)
+                .FilterA(@"o.""StakingUpdatesCount""", filter.stakingUpdatesCount);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -30,8 +30,8 @@ namespace Mvkt.Api.Repositories
                 o."Level",
                 o."BakerId",
                 o."Action",
-                o."Cycle",
-                o."Amount"
+                o."Amount",
+                o."StakingUpdatesCount"
             """;
 
             if (fields != null)
@@ -46,9 +46,12 @@ namespace Mvkt.Api.Repositories
                         case "timestamp": columns.Add(@"o.""Level"""); break;
                         case "baker": columns.Add(@"o.""BakerId"""); break;
                         case "action": columns.Add(@"o.""Action"""); break;
-                        case "cycle": columns.Add(@"o.""Cycle"""); break;
                         case "amount": columns.Add(@"o.""Amount"""); break;
+                        case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                         case "quote": columns.Add(@"o.""Level"""); break;
+                        #region deprecated
+                        case "cycle": columns.Add("1"); break;
+                        #endregion
                     }
                 }
 
@@ -67,11 +70,11 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"o.""Level""", filter.timestamp)
                 .FilterA(@"o.""BakerId""", filter.baker)
                 .FilterA(@"o.""Action""", filter.action)
-                .FilterA(@"o.""Cycle""", filter.cycle)
                 .FilterA(@"o.""Amount""", filter.amount)
+                .FilterA(@"o.""StakingUpdatesCount""", filter.stakingUpdatesCount)
                 .Take(pagination, x => (@"o.""Id""", @"o.""Id"""), @"o.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -84,9 +87,9 @@ namespace Mvkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = Times[row.Level],
                 Baker = Accounts.GetAlias(row.BakerId),
-                Action = AutostakingActions.ToString(row.Action),
-                Cycle = row.Cycle,
+                Action = StakingActions.ToString(row.Action),
                 Amount = row.Amount,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -133,20 +136,26 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "action":
                         foreach (var row in rows)
-                            result[j++][i] = AutostakingActions.ToString(row.Action);
-                        break;
-                    case "cycle":
-                        foreach (var row in rows)
-                            result[j++][i] = row.Cycle;
+                            result[j++][i] = StakingActions.ToString(row.Action);
                         break;
                     case "amount":
                         foreach (var row in rows)
                             result[j++][i] = row.Amount;
                         break;
+                    case "stakingUpdatesCount":
+                        foreach (var row in rows)
+                            result[j++][i] = row.StakingUpdatesCount;
+                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+                    #region deprecated
+                    case "cycle":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
+                    #endregion
                 }
             }
 

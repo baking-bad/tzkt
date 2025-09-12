@@ -1,14 +1,13 @@
-﻿using Microsoft.Extensions.Configuration;
-using Mvkt.Api.Models;
+﻿using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class StateRepository : DbConnection
+    public class StateRepository
     {
         readonly StateCache State;
 
-        public StateRepository(StateCache state, IConfiguration config) : base(config)
+        public StateRepository(StateCache state)
         {
             State = state;
         }

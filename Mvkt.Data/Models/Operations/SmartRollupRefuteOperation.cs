@@ -61,7 +61,7 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.SmartRollupId);
 
             modelBuilder.Entity<SmartRollupRefuteOperation>()
-                .HasIndex(x => x.GameId);
+                .HasIndex(x => new { x.GameId, x.Id });
             #endregion
 
             #region relations

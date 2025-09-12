@@ -21,6 +21,12 @@ namespace Mvkt.Data.Models
 
             #region props
             modelBuilder.Entity<RegisterConstantOperation>()
+                .Property(x => x.OpHash)
+                .IsFixedLength(true)
+                .HasMaxLength(51)
+                .IsRequired();
+
+            modelBuilder.Entity<RegisterConstantOperation>()
                 .Property(x => x.Address)
                 .HasMaxLength(54); // expr
 
@@ -42,8 +48,7 @@ namespace Mvkt.Data.Models
 
             modelBuilder.Entity<RegisterConstantOperation>()
                 .HasIndex(x => x.Address)
-                .HasFilter($@"""{nameof(RegisterConstantOperation.Address)}"" is not null")
-                .IsUnique();
+                .HasFilter($@"""{nameof(RegisterConstantOperation.Address)}"" IS NOT NULL");
             #endregion
 
             #region relations

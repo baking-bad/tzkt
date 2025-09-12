@@ -8,7 +8,6 @@ namespace Mvkt.Data.Models
         public int Id { get; set; }
         public int Level { get; set; }
         public int AccountId { get; set; }
-
         public int BakerId { get; set; }
         
         public long OwnDelegatedBalance { get; set; }
@@ -19,15 +18,9 @@ namespace Mvkt.Data.Models
         public long ExternalStakedBalance { get; set; }
         public int StakersCount { get; set; }
 
-        public long StakedPseudotokens { get; set; }
-        public long IssuedPseudotokens { get; set; }
-
         #region helpers
         [NotMapped]
         public long StakingBalance => OwnDelegatedBalance + ExternalDelegatedBalance + OwnStakedBalance + ExternalStakedBalance;
-
-        [NotMapped]
-        public long TotalStakedBalance => OwnStakedBalance + ExternalStakedBalance;
         #endregion
     }
 
@@ -42,10 +35,7 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level);
-
-            modelBuilder.Entity<SnapshotBalance>()
-                .HasIndex(x => x.Level, "IX_SnapshotBalance_Level_Partial")
+                .HasIndex(x => x.Level, $"IX_{nameof(MvktContext.SnapshotBalances)}_{nameof(SnapshotBalance.Level)}_Partial")
                 .HasFilter(@"""AccountId"" = ""BakerId""");
 
             modelBuilder.Entity<SnapshotBalance>()

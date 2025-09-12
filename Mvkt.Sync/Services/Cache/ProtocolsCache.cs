@@ -6,10 +6,8 @@ namespace Mvkt.Sync.Services.Cache
 {
     public class ProtocolsCache
     {
-        public const int MaxProtocols = 16; //TODO: set limits in app settings
-
-        static readonly Dictionary<int, Protocol> CachedByCode = new(17);
-        static readonly Dictionary<string, Protocol> CachedByHash = new(17);
+        static readonly Dictionary<int, Protocol> CachedByCode = new(37);
+        static readonly Dictionary<string, Protocol> CachedByHash = new(37);
 
         readonly MvktContext Db;
 
@@ -18,15 +16,17 @@ namespace Mvkt.Sync.Services.Cache
             Db = db;
         }
 
-        public void Reset()
+        public async Task ResetAsync()
         {
             CachedByCode.Clear();
             CachedByHash.Clear();
+
+            foreach (var protocol in await Db.Protocols.ToListAsync())
+                Add(protocol);
         }
 
         public void Add(Protocol protocol)
         {
-            CheckSpace();
             CachedByCode[protocol.Code] = protocol;
             CachedByHash[protocol.Hash] = protocol;
         }
@@ -95,31 +95,22 @@ namespace Mvkt.Sync.Services.Cache
             return protocol;
         }
 
-        public async Task<int> GetCycle(int level)
+        public Protocol FindByCycle(int cycle)
         {
-            var protocol = await FindByLevelAsync(level);
-            return protocol.GetCycle(level);
+            return CachedByCode.Values
+                .OrderByDescending(x => x.Code)
+                .FirstOrDefault(x => x.FirstCycle <= cycle)
+                    ?? throw new Exception($"Protocol for cycle {cycle} doesn't exist");
         }
 
-        public void Remove(Protocol protocol)
+        public int GetCycleStart(int cycle)
         {
-            CachedByCode.Remove(protocol.Code);
-            CachedByHash.Remove(protocol.Hash);
+            return FindByCycle(cycle).GetCycleStart(cycle);
         }
 
-        void CheckSpace()
+        public int GetCycleEnd(int cycle)
         {
-            if (CachedByCode.Count >= MaxProtocols)
-            {
-                var oldest = CachedByCode.Values
-                    .Take(MaxProtocols / 4);
-
-                foreach (var code in oldest.Select(x => x.Code).ToList())
-                    CachedByCode.Remove(code);
-
-                foreach (var hash in oldest.Select(x => x.Hash).ToList())
-                    CachedByHash.Remove(hash);
-            }
+            return FindByCycle(cycle).GetCycleEnd(cycle);
         }
     }
 }

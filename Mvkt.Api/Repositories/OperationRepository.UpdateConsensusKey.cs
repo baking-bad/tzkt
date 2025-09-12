@@ -1,18 +1,14 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Dapper;
+﻿using Dapper;
 using Mvkt.Api.Models;
 using Mvkt.Data;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetUpdateConsensusKeyStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(MvktContext.UpdateConsensusKeyOps), hash);
         }
 
@@ -24,7 +20,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -38,7 +34,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new UpdateConsensusKeyOperation
@@ -73,7 +69,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
             return rows.Select(row => new UpdateConsensusKeyOperation
@@ -106,7 +102,7 @@ namespace Mvkt.Api.Repositories
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new UpdateConsensusKeyOperation
@@ -156,7 +152,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new UpdateConsensusKeyOperation
@@ -240,7 +236,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -381,7 +377,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation

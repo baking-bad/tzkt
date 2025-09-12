@@ -4,11 +4,11 @@ using Mvkt.Data;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetSmartRollupAddMessagesStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(MvktContext.SmartRollupAddMessagesOps), hash);
         }
 
@@ -23,7 +23,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("SenderId", filter.sender)
                 .Filter("Status", filter.status);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -70,7 +70,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Status", filter.status)
                 .Take(pagination, x => (@"""Id""", @"""Id"""));
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 

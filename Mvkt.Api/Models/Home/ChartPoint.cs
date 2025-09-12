@@ -1,5 +1,3 @@
-using System;
-
 namespace Mvkt.Api.Models
 {
     public class ChartPoint : ChartPoint<long> { }

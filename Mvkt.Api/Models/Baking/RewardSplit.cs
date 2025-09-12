@@ -74,19 +74,26 @@
         public int Blocks { get; set; }
 
         /// <summary>
-        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Rewards, corresponding to delegated stake, received for baked blocks (both proposed and re-proposed blocks) on baker's liquid balance
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long BlockRewardsLiquid { get; set; }
+        public long BlockRewardsDelegated { get; set; }
 
         /// <summary>
-        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's staked balance (i.e. they are frozen).
+        /// Rewards, corresponding to baker's own stake, received for baked blocks (both proposed and re-proposed blocks) on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long BlockRewardsStakedOwn { get; set; }
 
         /// <summary>
-        /// Rewards received for baked blocks (both proposed and re-proposed blocks) on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Rewards, corresponding to baker's edge from external stake, received for baked blocks (both proposed and re-proposed blocks) on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long BlockRewardsStakedEdge { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's external stake, received for baked blocks (both proposed and re-proposed blocks) on baker's external staked balance
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long BlockRewardsStakedShared { get; set; }
 
@@ -116,19 +123,26 @@
         public int Endorsements { get; set; }
 
         /// <summary>
-        /// Rewards received for endorsed slots on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Rewards, corresponding to delegated stake, received for endorsed slots on baker's liquid balance
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long EndorsementRewardsLiquid { get; set; }
+        public long EndorsementRewardsDelegated { get; set; }
 
         /// <summary>
-        /// Rewards received for endorsed slots on baker's staked balance (i.e. they are frozen).
+        /// Rewards, corresponding to baker's own stake, received for endorsed slots on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long EndorsementRewardsStakedOwn { get; set; }
 
         /// <summary>
-        /// Rewards received for endorsed slots on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Rewards, corresponding to baker's edge from external stake, received for endorsed slots on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long EndorsementRewardsStakedEdge { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's external stake, received for endorsed slots on baker's external staked balance
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long EndorsementRewardsStakedShared { get; set; }
 
@@ -228,36 +242,50 @@
         public long DoublePreendorsingLostExternalUnstaked { get; set; }
 
         /// <summary>
-        /// Rewards for including vdf revelations, received on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Rewards, corresponding to delegated stake, for including vdf revelations, received on baker's liquid balance
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long VdfRevelationRewardsLiquid { get; set; }
+        public long VdfRevelationRewardsDelegated { get; set; }
 
         /// <summary>
-        /// Rewards for including vdf revelations, received on baker's staked balance (i.e. they are frozen).
+        /// Rewards, corresponding to baker's own stake, for including vdf revelations, received on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long VdfRevelationRewardsStakedOwn { get; set; }
 
         /// <summary>
-        /// Rewards for including vdf revelations, received on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Rewards, corresponding to baker's edge from external stake, for including vdf revelations, received on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long VdfRevelationRewardsStakedEdge { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's external stake, for including vdf revelations, received on baker's external staked balance
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long VdfRevelationRewardsStakedShared { get; set; }
 
         /// <summary>
-        /// Rewards for including seed nonce revelations, received on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Rewards, corresponding to delegated stake, for including seed nonce revelations, received on baker's liquid balance
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long NonceRevelationRewardsLiquid { get; set; }
+        public long NonceRevelationRewardsDelegated { get; set; }
 
         /// <summary>
-        /// Rewards for including seed nonce revelations, received on baker's staked balance (i.e. they are frozen).
+        /// Rewards, corresponding to baker's own stake, for including seed nonce revelations, received on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long NonceRevelationRewardsStakedOwn { get; set; }
 
         /// <summary>
-        /// Rewards for including seed nonce revelations, received on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Rewards, corresponding to baker's edge from external stake, for including seed nonce revelations, received on baker's own staked balance
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long NonceRevelationRewardsStakedEdge { get; set; }
+
+        /// <summary>
+        /// Rewards, corresponding to baker's external stake, for including seed nonce revelations, received on baker's external staked balance
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long NonceRevelationRewardsStakedShared { get; set; }
 
@@ -267,7 +295,7 @@
         public long NonceRevelationLosses { get; set; }
 
         /// <summary>
-        /// List of delegators at the snapshot time
+        /// List of delegators (including stakers) at the snapshot time
         /// </summary>
         public IEnumerable<SplitDelegator> Delegators { get; set; }
 
@@ -275,7 +303,27 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long RevelationRewards => NonceRevelationRewardsLiquid + NonceRevelationRewardsStakedOwn + NonceRevelationRewardsStakedShared + VdfRevelationRewardsLiquid + VdfRevelationRewardsStakedOwn + VdfRevelationRewardsStakedShared;
+        public long BlockRewardsLiquid => BlockRewardsDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long EndorsementRewardsLiquid => EndorsementRewardsDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long NonceRevelationRewardsLiquid => NonceRevelationRewardsDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long VdfRevelationRewardsLiquid => VdfRevelationRewardsDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long RevelationRewards => NonceRevelationRewardsDelegated + NonceRevelationRewardsStakedOwn + NonceRevelationRewardsStakedEdge + NonceRevelationRewardsStakedShared + VdfRevelationRewardsDelegated + VdfRevelationRewardsStakedOwn + VdfRevelationRewardsStakedEdge + VdfRevelationRewardsStakedShared;
 
         /// <summary>
         /// [DEPRECATED]
@@ -300,12 +348,12 @@
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long EndorsementRewards => EndorsementRewardsLiquid + EndorsementRewardsStakedOwn + EndorsementRewardsStakedShared;
+        public long EndorsementRewards => EndorsementRewardsDelegated + EndorsementRewardsStakedOwn + EndorsementRewardsStakedEdge + EndorsementRewardsStakedShared;
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long BlockRewards => BlockRewardsLiquid + BlockRewardsStakedOwn + BlockRewardsStakedShared;
+        public long BlockRewards => BlockRewardsDelegated + BlockRewardsStakedOwn + BlockRewardsStakedEdge + BlockRewardsStakedShared;
 
         /// <summary>
         /// [DEPRECATED]

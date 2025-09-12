@@ -14,7 +14,7 @@ namespace Mvkt.Sync.Protocols.Proto10
         public const string LiquidityToken = "KT1AafHA1C1vk959wvHWBispY9Y2f3fxBUUo";
         public const string FallbackToken = "KT1VqarPDicMFn1ejmQqqshUkUXTCTXwmkCN";
         public const string Tzbtc = "KT1PWx2mnDueood7fEmfbBDKx1D9BAnnXitn";
-        public const string ProtocolTreasuryContract = "KT1RfKYjLYpGBQ1YGSKoSoYEYwpJPFZrvmwH";
+        public const string BufferContract = "KT1RfKYjLYpGBQ1YGSKoSoYEYwpJPFZrvmwH";
 
         public ProtoActivator(ProtocolHandler proto) : base(proto) { }
 
@@ -27,7 +27,7 @@ namespace Mvkt.Sync.Protocols.Proto10
             protocol.HardOperationGasLimit = parameters["hard_gas_limit_per_operation"]?.Value<int>() ?? 1_040_000;
             protocol.HardOperationStorageLimit = parameters["hard_storage_limit_per_operation"]?.Value<int>() ?? 60_000;
             protocol.OriginationSize = parameters["origination_size"]?.Value<int>() ?? 257;
-            protocol.PreservedCycles = parameters["preserved_cycles"]?.Value<int>() ?? 5;
+            protocol.ConsensusRightsDelay = parameters["preserved_cycles"]?.Value<int>() ?? 5;
             protocol.MinimalStake = parameters["tokens_per_roll"]?.Value<long>() ?? 8_000_000_000;
             protocol.BallotQuorumMin = parameters["quorum_min"]?.Value<int>() ?? 2000;
             protocol.BallotQuorumMax = parameters["quorum_max"]?.Value<int>() ?? 7000;
@@ -82,7 +82,7 @@ namespace Mvkt.Sync.Protocols.Proto10
             var block = await Cache.Blocks.CurrentAsync();
             await OriginateContract(block, CpmmContract);
             await OriginateContract(block, LiquidityToken);
-            await OriginateContract(block, ProtocolTreasuryContract);
+            await OriginateContract(block, BufferContract);
             if (!await Cache.Accounts.ExistsAsync(Tzbtc))
                 await OriginateContract(block, FallbackToken);
         }
@@ -134,7 +134,7 @@ namespace Mvkt.Sync.Protocols.Proto10
             var block = await Cache.Blocks.CurrentAsync();
             await OriginateContract(block, CpmmContract);
             await OriginateContract(block, LiquidityToken);
-            await OriginateContract(block, ProtocolTreasuryContract);
+            await OriginateContract(block, BufferContract);
             if (!await Cache.Accounts.ExistsAsync(Tzbtc))
                 await OriginateContract(block, FallbackToken);
         }
@@ -162,7 +162,7 @@ namespace Mvkt.Sync.Protocols.Proto10
 
             await RemoveContract(CpmmContract);
             await RemoveContract(LiquidityToken);
-            await RemoveContract(ProtocolTreasuryContract);
+            await RemoveContract(BufferContract);
             if (await Cache.Accounts.ExistsAsync(FallbackToken))
                 await RemoveContract(FallbackToken);
         }
@@ -572,13 +572,17 @@ namespace Mvkt.Sync.Protocols.Proto10
             script.MigrationId = migration.Id;
             storage.MigrationId = migration.Id;
 
+            Db.TryAttach(block);
             block.Events |= BlockEvents.SmartContracts;
             block.Operations |= Operations.Migrations;
 
             var state = Cache.AppState.Get();
+            Db.TryAttach(state);
             state.MigrationOpsCount++;
 
-            Cache.Statistics.Current.TotalCreated += contract.Balance;
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+            stats.TotalCreated += contract.Balance;
 
             Db.MigrationOps.Add(migration);
             #endregion
@@ -713,6 +717,7 @@ namespace Mvkt.Sync.Protocols.Proto10
                     contract.Creator.ActiveTokensCount++;
                     contract.Creator.TokenBalancesCount++;
                     contract.Creator.TokenTransfersCount++;
+                    contract.Creator.LastLevel = tokenTransfer.Level;
 
                     block.Events |= BlockEvents.Tokens;
                     #endregion
@@ -728,11 +733,14 @@ namespace Mvkt.Sync.Protocols.Proto10
         async Task RemoveContract(string address)
         {
             var contract = await Cache.Accounts.GetAsync(address) as Contract;
+            Db.TryAttach(contract);
+
             var bigmaps = await Db.BigMaps.AsNoTracking()
                 .Where(x => x.ContractId == contract.Id)
                 .ToListAsync();
 
             var state = Cache.AppState.Get();
+            Db.TryAttach(state);
             state.MigrationOpsCount--;
 
             var creator = await Cache.Accounts.GetAsync(contract.CreatorId);
@@ -757,6 +765,7 @@ namespace Mvkt.Sync.Protocols.Proto10
                 state.TokensCount--;
 
                 contract.TokensCount--;
+
                 creator.ActiveTokensCount--;
                 creator.TokenBalancesCount--;
                 creator.TokenTransfersCount--;

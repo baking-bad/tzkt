@@ -1,4 +1,6 @@
 ﻿using System.Numerics;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Protocols.Proto18
@@ -7,83 +9,133 @@ namespace Mvkt.Sync.Protocols.Proto18
     {
         public DelegationsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override void Unstake(Account sender, Data.Models.Delegate baker, DelegationOperation op)
+        protected override async Task Unstake(DelegationOperation operation, List<JsonElement> balanceUpdates)
         {
-            if (baker == null || sender is not User user || user.StakedBalance == 0)
+            if (!balanceUpdates.Any())
                 return;
 
-            var unstakedAmount = (long)((BigInteger)baker.ExternalStakedBalance * user.StakedPseudotokens / baker.IssuedPseudotokens);
-            op.UnstakedPseudotokens = user.StakedPseudotokens;
-            op.UnstakedBalance = user.StakedBalance;
-            op.UnstakedRewards = unstakedAmount - user.StakedBalance; // rewards withdrawn
-            
-            user.Balance += op.UnstakedRewards.Value;
+            var updates = await ParseStakingUpdates(operation, balanceUpdates);
 
-            baker.IssuedPseudotokens -= user.StakedPseudotokens;
-            baker.TotalStakedBalance -= unstakedAmount;
-            baker.ExternalStakedBalance -= unstakedAmount;
-            baker.ExternalUnstakedBalance += unstakedAmount;
-            baker.DelegatedBalance += unstakedAmount;
+            await new StakingUpdateCommit(Proto).Apply(updates);
 
-            user.StakedPseudotokens = 0;
-            user.StakedBalance = 0;
-            user.UnstakedBalance += unstakedAmount;
-
-            if (user.UnstakedBalance > 0)
-            {
-                if (user.UnstakedBakerId == null)
-                    user.UnstakedBakerId = baker.Id;
-                else if (user.UnstakedBakerId != baker.Id)
-                    throw new Exception("Multiple unstaked bakers are not expected");
-            }
-
-            Cache.Statistics.Current.TotalFrozen -= unstakedAmount;
-
-            //#region temporary diagnostics
-            //var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{user.Address}").Result;
-
-            //if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
-            //    throw new Exception("Wrong sender.StakedPseudotokens");
-
-            //var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level}/context/raw/json/contracts/index/{baker.Address}").Result;
-
-            //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
-            //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-            //#endregion
+            operation.StakingUpdatesCount = updates.Count;
         }
 
-        protected override void RevertUnstake(Account sender, Data.Models.Delegate baker, DelegationOperation op)
+        protected override async Task RevertUnstake(DelegationOperation operation)
         {
-            if (op.UnstakedPseudotokens == null)
+            if (operation.StakingUpdatesCount == null)
                 return;
 
-            var user = sender as User;
-            user.Balance -= op.UnstakedRewards.Value;
+            var updates = await Db.StakingUpdates
+                .Where(x => x.DelegationOpId == operation.Id)
+                .OrderByDescending(x => x.Id)
+                .ToListAsync();
 
-            baker.IssuedPseudotokens += op.UnstakedPseudotokens.Value;
-            baker.TotalStakedBalance += op.UnstakedBalance.Value + op.UnstakedRewards.Value;
-            baker.ExternalStakedBalance += op.UnstakedBalance.Value + op.UnstakedRewards.Value;
-            baker.ExternalUnstakedBalance -= op.UnstakedBalance.Value + op.UnstakedRewards.Value;
-            baker.DelegatedBalance -= op.UnstakedBalance.Value + op.UnstakedRewards.Value;
+            await new StakingUpdateCommit(Proto).Revert(updates);
+            
+            operation.StakingUpdatesCount = null;
+        }
 
-            user.StakedPseudotokens = op.UnstakedPseudotokens.Value;
-            user.StakedBalance = op.UnstakedBalance.Value;
-            user.UnstakedBalance -= op.UnstakedBalance.Value + op.UnstakedRewards.Value;
+        async Task<List<StakingUpdate>> ParseStakingUpdates(DelegationOperation operation, List<JsonElement> balanceUpdates)
+        {
+            var res = new List<StakingUpdate>();
 
-            if (user.UnstakedBalance == 0)
-                user.UnstakedBakerId = null;
+            if (balanceUpdates.Count % 2 != 0)
+                throw new Exception("Unexpected staking balance updates behavior");
 
-            //#region temporary diagnostics
-            //var remoteSender = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{user.Address}").Result;
+            for (int i = 0; i < balanceUpdates.Count; i += 2)
+            {
+                var update = balanceUpdates[i];
+                var kind = update.RequiredString("kind");
+                var category = update.OptionalString("category");
 
-            //if ((remoteSender.OptionalInt64("staking_pseudotokens") ?? 0) != user.StakedPseudotokens)
-            //    throw new Exception("Wrong sender.StakedPseudotokens");
+                var nextUpdate = balanceUpdates[i + 1];
+                var nextKind = nextUpdate.RequiredString("kind");
+                var nextCategory = nextUpdate.OptionalString("category");
 
-            //var remoteDelegate = Proto.Node.GetAsync($"chains/main/blocks/{op.Level - 1}/context/raw/json/contracts/index/{baker.Address}").Result;
+                if (kind == "freezer" && category == "deposits")
+                {
+                    if (nextKind == "freezer" && nextCategory == "unstaked_deposits")
+                    {
+                        #region unstake
+                        var baker = nextUpdate.Required("staker").RequiredString("delegate");
+                        var staker = nextUpdate.Required("staker").RequiredString("contract");
+                        var change = nextUpdate.RequiredInt64("change");
+                        var cycle = nextUpdate.RequiredInt32("cycle");
 
-            //if ((remoteDelegate.OptionalInt64("frozen_deposits_pseudotokens") ?? 0) != baker.IssuedPseudotokens)
-            //    throw new Exception("Wrong senderDelegate.IssuedPseudotokens");
-            //#endregion
+                        if (baker != (update.Required("staker").RequiredString("delegate")) ||
+                            staker != (update.Required("staker").RequiredString("contract")) ||
+                            change != -update.RequiredInt64("change"))
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        var pseudotokens = (BigInteger?)null;
+                        if (i >= 2 && balanceUpdates[i - 1].RequiredString("kind") == "staking")
+                        {
+                            if (balanceUpdates[i - 2].RequiredString("kind") != "staking" ||
+                                balanceUpdates[i - 2].RequiredString("change") != balanceUpdates[i - 1].RequiredString("change"))
+                                throw new Exception("Unexpected staking balance updates behavior");
+
+                            pseudotokens = -balanceUpdates[i - 1].RequiredBigInteger("change");
+                        }
+
+                        res.Add(new StakingUpdate
+                        {
+                            Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                            Level = operation.Level,
+                            Cycle = cycle,
+                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
+                            StakerId = (await Cache.Accounts.GetAsync(staker)).Id,
+                            Type = StakingUpdateType.Unstake,
+                            Amount = change,
+                            Pseudotokens = pseudotokens,
+                            DelegationOpId = operation.Id,
+                        });
+                        #endregion
+                    }
+                    else
+                    {
+                        throw new Exception("Unexpected staking balance updates behavior");
+                    }
+                }
+                else if (kind == "freezer" && category == "unstaked_deposits")
+                {
+                    if (nextKind == "contract")
+                    {
+                        #region finalize
+                        var baker = update.Required("staker").RequiredString("delegate");
+                        var staker = update.Required("staker").RequiredString("contract");
+                        var change = nextUpdate.RequiredInt64("change");
+                        var cycle = update.RequiredInt32("cycle");
+
+                        if (staker != nextUpdate.RequiredString("contract") || change != -update.RequiredInt64("change"))
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        res.Add(new StakingUpdate
+                        {
+                            Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                            Level = operation.Level,
+                            Cycle = cycle,
+                            BakerId = Cache.Accounts.GetDelegate(baker).Id,
+                            StakerId = (await Cache.Accounts.GetAsync(staker)).Id,
+                            Type = StakingUpdateType.Finalize,
+                            Amount = change,
+                            Pseudotokens = null,
+                            DelegationOpId = operation.Id,
+                        });
+                        #endregion
+                    }
+                    else
+                    {
+                        throw new Exception("Unexpected staking balance updates behavior");
+                    }
+                }
+                else if (kind != "staking")
+                {
+                    throw new Exception("Unexpected staking balance updates behavior");
+                }
+            }
+
+            return res;
         }
     }
 }

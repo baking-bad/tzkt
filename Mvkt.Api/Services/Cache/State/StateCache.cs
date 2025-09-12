@@ -1,8 +1,9 @@
 ﻿using Dapper;
+using Npgsql;
 
 namespace Mvkt.Api.Services.Cache
 {
-    public class StateCache : DbConnection
+    public class StateCache
     {
         const string StateSql = @"SELECT * FROM ""AppState"" LIMIT 1";
 
@@ -10,13 +11,15 @@ namespace Mvkt.Api.Services.Cache
         public bool Reorganized { get; private set; }
         public int ValidLevel { get; private set; }
 
+        readonly NpgsqlDataSource DataSource;
         readonly ILogger Logger;
 
-        public StateCache(IConfiguration config, ILogger<StateCache> logger) : base(config)
+        public StateCache(NpgsqlDataSource dataSource, ILogger<StateCache> logger)
         {
             logger.LogDebug("Initializing state cache...");
+            DataSource = dataSource;
             Logger = logger;
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             Current = db.QueryFirst<RawState>(StateSql);
             logger.LogInformation("Loaded state [{level}:{hash}]", Current.Level, Current.Hash);
         }
@@ -45,7 +48,7 @@ namespace Mvkt.Api.Services.Cache
 
         public async Task<RawState> LoadAsync()
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<RawState>(StateSql);
         }
     }

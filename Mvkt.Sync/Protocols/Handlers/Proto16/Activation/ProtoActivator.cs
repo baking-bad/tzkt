@@ -205,6 +205,8 @@ namespace Mvkt.Sync.Protocols.Proto16
                     #region reset baker cycles
                     foreach (var bakerCycle in bakerCycles.Values)
                     {
+                        Db.TryAttach(bakerCycle);
+
                         bakerCycle.FutureBlocks = 0;
                         bakerCycle.FutureBlockRewards = 0;
                         bakerCycle.FutureEndorsements = 0;

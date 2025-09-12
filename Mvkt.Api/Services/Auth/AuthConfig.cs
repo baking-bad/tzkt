@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Netmavryk.Keys;
 
 namespace Mvkt.Api.Services.Auth

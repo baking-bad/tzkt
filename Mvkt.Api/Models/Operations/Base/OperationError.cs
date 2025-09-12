@@ -1,5 +1,4 @@
-﻿using System;
-using System.Runtime.Serialization;
+﻿using System.Runtime.Serialization;
 using NJsonSchema.Converters;
 using Newtonsoft.Json;
 
@@ -21,7 +20,7 @@ namespace Mvkt.Api.Models
         public abstract string Type { get; set; }
     }
 
-    public class OperationErrorJsonInheritanceConverter : JsonInheritanceConverter
+    public class OperationErrorJsonInheritanceConverter : JsonInheritanceConverter<OperationError>
     {
         public OperationErrorJsonInheritanceConverter(string name) : base(name) { }
 

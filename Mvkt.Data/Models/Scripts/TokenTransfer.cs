@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Mvkt.Data.Models
 {
@@ -30,22 +29,7 @@ namespace Mvkt.Data.Models
                 .HasKey(x => x.Id);
             #endregion
 
-            #region props
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<TokenTransfer>()
-                .Property(x => x.Amount)
-                .HasConversion(converter);
-            #endregion
-
             #region indexes
-            modelBuilder.Entity<TokenTransfer>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.ContractId);
 
@@ -53,31 +37,31 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.TokenId);
 
             modelBuilder.Entity<TokenTransfer>()
-                .HasIndex(x => x.Level);
+                .HasIndex(x => new { x.Level, x.Id });
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.IndexedAt)
-                .HasFilter($@"""{nameof(TokenTransfer.IndexedAt)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.IndexedAt)}"" IS NOT NULL");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.OriginationId)
-                .HasFilter($@"""{nameof(TokenTransfer.OriginationId)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.OriginationId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.TransactionId)
-                .HasFilter($@"""{nameof(TokenTransfer.TransactionId)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.TransactionId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.MigrationId)
-                .HasFilter($@"""{nameof(TokenTransfer.MigrationId)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.MigrationId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.FromId)
-                .HasFilter($@"""{nameof(TokenTransfer.FromId)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.FromId)}"" IS NOT NULL");
 
             modelBuilder.Entity<TokenTransfer>()
                 .HasIndex(x => x.ToId)
-                .HasFilter($@"""{nameof(TokenTransfer.ToId)}"" is not null");
+                .HasFilter($@"""{nameof(TokenTransfer.ToId)}"" IS NOT NULL");
             #endregion
         }
     }

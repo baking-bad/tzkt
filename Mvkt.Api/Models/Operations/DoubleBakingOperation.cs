@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mvkt.Api.Models
+﻿namespace Mvkt.Api.Models
 {
     public class DoubleBakingOperation : Operation
     {
@@ -81,9 +79,9 @@ namespace Mvkt.Api.Models
         public long LostExternalUnstaked { get; set; }
 
         /// <summary>
-        /// Amount lost due to inaccuracy of the economic protocol introduced in Oxford.
+        /// Number of staking updates happened internally
         /// </summary>
-        public long RoundingLoss { get; set; }
+        public int? StakingUpdatesCount { get; set; }
 
         #region injecting
         /// <summary>
@@ -96,7 +94,12 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long OffenderLoss => LostStaked + LostUnstaked + LostExternalStaked + LostExternalUnstaked + RoundingLoss;
+        public long RoundingLoss => 0;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long OffenderLoss => LostStaked + LostUnstaked + LostExternalStaked + LostExternalUnstaked;
 
         /// <summary>
         /// [DEPRECATED]

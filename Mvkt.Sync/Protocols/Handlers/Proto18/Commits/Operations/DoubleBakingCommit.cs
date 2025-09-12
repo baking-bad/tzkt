@@ -37,7 +37,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = accusedLevel,
-                SlashedLevel = block.Protocol.GetCycleEnd(block.Cycle),
+                SlashedLevel = GetSlashingLevel(block, block.Protocol, accusedLevel),
 
                 Accuser = accuser,
                 Offender = offender,
@@ -46,9 +46,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                 LostStaked = 0,
                 LostUnstaked = 0,
                 LostExternalStaked = 0,
-                LostExternalUnstaked = 0,
-
-                RoundingLoss = 0
+                LostExternalUnstaked = 0
             };
             #endregion
 
@@ -88,6 +86,11 @@ namespace Mvkt.Sync.Protocols.Proto18
 
             Db.DoubleBakingOps.Remove(operation);
             Cache.AppState.ReleaseOperationId();
+        }
+
+        protected virtual int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
+        {
+            return Cache.Protocols.GetCycleEnd(block.Cycle);
         }
     }
 }

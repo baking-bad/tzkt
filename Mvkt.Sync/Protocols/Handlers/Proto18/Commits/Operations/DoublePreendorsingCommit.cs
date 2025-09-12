@@ -28,7 +28,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                 OpHash = op.RequiredString("hash"),
 
                 AccusedLevel = accusedLevel,
-                SlashedLevel = block.Protocol.GetCycleEnd(block.Cycle),
+                SlashedLevel = GetSlashingLevel(block, block.Protocol, accusedLevel),
 
                 Accuser = accuser,
                 Offender = offender,
@@ -37,9 +37,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                 LostStaked = 0,
                 LostUnstaked = 0,
                 LostExternalStaked = 0,
-                LostExternalUnstaked = 0,
-
-                RoundingLoss = 0
+                LostExternalUnstaked = 0
             };
             #endregion
 
@@ -85,7 +83,7 @@ namespace Mvkt.Sync.Protocols.Proto18
         {
             var branch = op.RequiredString("branch");
             var content = op.Required("operations");
-            var preendorsement = new PreendorsementContent
+            var preattestation = new PreattestationContent
             {
                 Level = content.RequiredInt32("level"),
                 Round = content.RequiredInt32("round"),
@@ -96,7 +94,7 @@ namespace Mvkt.Sync.Protocols.Proto18
 
             var bytes = new byte[1] { 18 }
                 .Concat(Base58.Parse(chainId, 3))
-                .Concat(await new LocalForge().ForgeOperationAsync(branch, preendorsement))
+                .Concat(await new LocalForge().ForgeOperationAsync(branch, preattestation))
                 .ToArray();
 
             foreach (var baker in Cache.Accounts.GetDelegates().OrderByDescending(x => x.LastLevel))
@@ -104,6 +102,11 @@ namespace Mvkt.Sync.Protocols.Proto18
                     return baker;
 
             throw new Exception("Failed to determine double preendorser");
+        }
+
+        protected virtual int GetSlashingLevel(Block block, Protocol protocol, int accusedLevel)
+        {
+            return Cache.Protocols.GetCycleEnd(block.Cycle);
         }
     }
 }

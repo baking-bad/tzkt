@@ -374,7 +374,7 @@ namespace Mvkt.Sync.Protocols.Proto16
                 {
                     var prevMove = await Db.SmartRollupRefuteOps
                         .AsNoTracking()
-                        .Where(x => x.Id < operation.Id && x.Status == OperationStatus.Applied)
+                        .Where(x => x.GameId == game.Id && x.Id < operation.Id && x.Status == OperationStatus.Applied)
                         .OrderByDescending(x => x.Id)
                         .FirstAsync();
 

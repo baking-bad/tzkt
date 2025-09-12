@@ -1,4 +1,7 @@
-﻿namespace Mvkt.Api.Models
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
+
+namespace Mvkt.Api.Models
 {
     public class TicketTransfer
     {
@@ -41,7 +44,8 @@
         /// Amount of tickets transferred.  
         /// **[sortable]**
         /// </summary>
-        public string Amount { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// Internal MvKT id of the transaction operation, caused the ticket transfer.

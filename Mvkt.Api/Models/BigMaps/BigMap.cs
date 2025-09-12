@@ -1,5 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Api.Models

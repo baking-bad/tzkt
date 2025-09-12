@@ -20,7 +20,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Slots = metadata.RequiredInt32("endorsement_power"),
+                Slots = GetEndorsedSlots(metadata),
                 Delegate = baker,
                 DelegateId = baker.Id
             };
@@ -69,5 +69,7 @@ namespace Mvkt.Sync.Protocols.Proto12
             Db.EndorsementOps.Remove(endorsement);
             Cache.AppState.ReleaseOperationId();
         }
+
+        protected virtual int GetEndorsedSlots(JsonElement metadata) => metadata.RequiredInt32("endorsement_power");
     }
 }

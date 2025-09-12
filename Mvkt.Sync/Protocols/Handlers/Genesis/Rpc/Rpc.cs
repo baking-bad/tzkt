@@ -39,6 +39,12 @@ namespace Mvkt.Sync.Protocols.Genesis
 
         public Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address)
             => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetUnstakeRequests(int level, string address)
+            => throw new InvalidOperationException();
+
+        public Task<JsonElement> GetContractRawAsync(int level, string address)
+            => throw new InvalidOperationException();
         #endregion
 
         #region diagnostics

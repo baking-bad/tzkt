@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mvkt.Api.Models
+﻿namespace Mvkt.Api.Models
 {
     public class BakingOperation : Operation
     {
@@ -55,36 +53,50 @@ namespace Mvkt.Api.Models
         public long Deposit { get; set; }
 
         /// <summary>
-        /// Fixed reward paid to the payload proposer (micro tez) on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Portion of fixed reward, corresponding to delegated stake, paid to payload proposer's liquid balance (micro tez)
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long RewardLiquid { get; set; }
+        public long RewardDelegated { get; set; }
 
         /// <summary>
-        /// Fixed reward paid to the payload proposer (micro tez) on baker's staked balance (i.e. they are frozen).
+        /// Portion of fixed reward, corresponding to baker's own stake, paid to payload proposer's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long RewardStakedOwn { get; set; }
 
         /// <summary>
-        /// Fixed reward paid to the payload proposer (micro tez) on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Portion of fixed reward, corresponding to baker's edge from external stake, paid to payload proposer's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long RewardStakedEdge { get; set; }
+
+        /// <summary>
+        /// Portion of fixed reward, corresponding to baker's external stake, paid to payload proposer's external staked balance (micro tez)
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long RewardStakedShared { get; set; }
 
         /// <summary>
-        /// Bonus reward paid to the block producer (micro tez) on baker's liquid balance
-        /// (i.e. they are not frozen and can be spent immediately).
+        /// Portion of bonus reward, corresponding to delegated stake, paid to block producer's liquid balance (micro tez)
+        /// (it is not frozen and can be spent immediately).
         /// </summary>
-        public long BonusLiquid { get; set; }
+        public long BonusDelegated { get; set; }
 
         /// <summary>
-        /// Bonus reward paid to the block producer (micro tez) on baker's staked balance (i.e. they are frozen).
+        /// Portion of bonus reward, corresponding to baker's own stake, paid to block producer's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
         /// </summary>
         public long BonusStakedOwn { get; set; }
 
         /// <summary>
-        /// Bonus reward paid to the block producer (micro tez) on baker's external staked balance
-        /// (i.e. they are frozen and belong to stakers and can be withdrawn by unstaking).
+        /// Portion of bonus reward, corresponding to baker's edge from external stake, paid to block producer's own staked balance (micro tez)
+        /// (it is frozen and belongs to the baker).
+        /// </summary>
+        public long BonusStakedEdge { get; set; }
+
+        /// <summary>
+        /// Portion of fixed reward, corresponding to baker's external stake, paid to block producer's external staked balance (micro tez)
+        /// (it is frozen and belongs to baker's stakers).
         /// </summary>
         public long BonusStakedShared { get; set; }
 
@@ -104,12 +116,22 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long Reward => RewardLiquid + RewardStakedOwn + RewardStakedShared;
+        public long RewardLiquid => RewardDelegated;
 
         /// <summary>
         /// [DEPRECATED]
         /// </summary>
-        public long Bonus => BonusLiquid + BonusStakedOwn + BonusStakedShared;
+        public long BonusLiquid => BonusDelegated;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Reward => RewardDelegated + RewardStakedOwn + RewardStakedEdge + RewardStakedShared;
+
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long Bonus => BonusDelegated + BonusStakedOwn + BonusStakedEdge + BonusStakedShared;
 
         /// <summary>
         /// [DEPRECATED]

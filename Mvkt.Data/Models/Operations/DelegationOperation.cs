@@ -13,9 +13,7 @@ namespace Mvkt.Data.Models
 
         public long Amount { get; set; }
 
-        public long? UnstakedPseudotokens { get; set; }
-        public long? UnstakedBalance { get; set; }
-        public long? UnstakedRewards { get; set; }
+        public int? StakingUpdatesCount { get; set; }
 
         #region relations
         [ForeignKey(nameof(DelegateId))]
@@ -51,7 +49,7 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<DelegationOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
 
             modelBuilder.Entity<DelegationOperation>()
                 .HasIndex(x => x.SenderCodeHash)

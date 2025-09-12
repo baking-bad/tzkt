@@ -1,21 +1,19 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Dapper;
-
+﻿using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class DomainsRepository : DbConnection
+    public class DomainsRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public DomainsRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public DomainsRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -83,7 +81,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"""Id""", @"""Id""")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -103,7 +101,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("LastLevel", filter.lastLevel)
                 .Filter("LastLevel", filter.lastTime);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -115,7 +113,7 @@ namespace Mvkt.Api.Repositories
                 WHERE   ""Name"" = @name
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { name });
             if (row == null) return null;
 

@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-
-namespace Mvkt.Api
+﻿namespace Mvkt.Api
 {
     static class ContractTags
     {

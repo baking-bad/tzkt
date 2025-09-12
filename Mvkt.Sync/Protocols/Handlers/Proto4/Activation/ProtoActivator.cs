@@ -27,7 +27,7 @@ namespace Mvkt.Sync.Protocols.Proto4
 
         protected override async Task MigrateContext(AppState state)
         {
-            // var block = await Cache.Blocks.CurrentAsync();
+            var _block = await Cache.Blocks.CurrentAsync();
             // var account = await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi");
 
             // Db.TryAttach(account);
@@ -47,9 +47,12 @@ namespace Mvkt.Sync.Protocols.Proto4
             //     BalanceChange = 100_000_000
             // });
 
+            // Db.TryAttach(state);
             // state.MigrationOpsCount++;
 
-            // Cache.Statistics.Current.TotalCreated += 100_000_000;
+            // var stats = Cache.Statistics.Current;
+            // Db.TryAttach(stats);
+            // stats.TotalCreated += 100_000_000;
         }
 
         protected override async Task RevertContext(AppState state)

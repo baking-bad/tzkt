@@ -76,7 +76,9 @@ namespace Mvkt.Sync.Tests
 
                 using var scope = app.Services.CreateScope();
                 var db = scope.ServiceProvider.GetRequiredService<MvktContext>();
-                var rpc = new MavrykRpc(builder.Configuration.GetSection("MavrykNode").GetValue<string>("Endpoint"), 60);
+                var rpcEndpoint = builder.Configuration.GetSection("MavrykNode").GetValue<string>("Endpoint")
+                    ?? throw new Exception("MavrykNode.Endpoint is not specified in the configuration");
+                var rpc = new MavrykRpc(rpcEndpoint, 60);
 
                 logger.LogInformation("Run AppStateTests");
                 await AppStateTests.RunAsync(db, rpc);

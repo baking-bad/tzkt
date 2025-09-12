@@ -14,7 +14,7 @@ namespace Mvkt.Sync.Protocols.Proto1
         {
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
                 
                 var lastSeed = await Db.Cycles
                     .AsNoTracking()
@@ -51,7 +51,6 @@ namespace Mvkt.Sync.Protocols.Proto1
                     Index = futureCycle,
                     FirstLevel = block.Protocol.GetCycleStart(futureCycle),
                     LastLevel = block.Protocol.GetCycleEnd(futureCycle),
-                    SnapshotIndex = snapshotIndex,
                     SnapshotLevel = snapshotLevel,
                     TotalBakers = BakerSnapshots.Count(x => x.StakingBalance >= snapshotProto.MinimalStake),
                     TotalBakingPower = BakerSnapshots.Sum(x => x.StakingBalance - x.StakingBalance % snapshotProto.MinimalStake),
@@ -67,7 +66,7 @@ namespace Mvkt.Sync.Protocols.Proto1
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
                 block.Protocol ??= await Cache.Protocols.GetAsync(block.ProtoCode);
-                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
 
                 await Db.Database.ExecuteSqlRawAsync($@"
                     DELETE  FROM ""Cycles""

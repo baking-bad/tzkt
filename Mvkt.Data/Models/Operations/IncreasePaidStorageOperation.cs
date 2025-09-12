@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Mvkt.Data.Models.Base;
 
 namespace Mvkt.Data.Models
@@ -26,15 +25,6 @@ namespace Mvkt.Data.Models
                 .IsFixedLength(true)
                 .HasMaxLength(51)
                 .IsRequired();
-
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<IncreasePaidStorageOperation>()
-                .Property(x => x.Amount)
-                .HasConversion(converter);
             #endregion
 
             #region indexes

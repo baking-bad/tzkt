@@ -1,5 +1,4 @@
-﻿using System;
-using NJsonSchema.Annotations;
+﻿using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {

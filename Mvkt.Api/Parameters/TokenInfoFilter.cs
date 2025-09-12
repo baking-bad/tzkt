@@ -1,5 +1,4 @@
-﻿using Newtonsoft.Json;
-using Mvkt.Api.Services;
+﻿using Mvkt.Api.Services;
 
 namespace Mvkt.Api
 {

@@ -79,16 +79,9 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<BigMap>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<BigMap>()
-                .HasAlternateKey(x => x.Ptr);
             #endregion
 
             #region indexes
-            modelBuilder.Entity<BigMap>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
             modelBuilder.Entity<BigMap>()
                 .HasIndex(x => x.Ptr)
                 .IsUnique();

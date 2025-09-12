@@ -8,7 +8,7 @@ using Mvkt.Api.Utils;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class AccountRepository : DbConnection
+    public partial class AccountRepository
     {
         async Task<IEnumerable<dynamic>> QueryContractsAsync(bool includeStorage, ContractFilter filter, Pagination pagination, List<SelectionField> fields = null)
         {
@@ -112,7 +112,7 @@ namespace Mvkt.Api.Repositories
                     _ => (@"c.""Id""", @"c.""Id""")
                 }, @"c.""Id""");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -206,7 +206,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"c.""TypeHash""", filter.typeHash)
                 .FilterA(@"c.""CodeHash""", filter.codeHash);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -518,7 +518,7 @@ namespace Mvkt.Api.Repositories
             if (contract.Kind == 0)
                 return Data.Models.Script.ManagerTzBytes;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
@@ -548,7 +548,7 @@ namespace Mvkt.Api.Repositories
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetByteCode(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT *
                 FROM ""Scripts""
@@ -576,7 +576,7 @@ namespace Mvkt.Api.Repositories
             if (contract.Kind == 0)
                 return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
@@ -606,7 +606,7 @@ namespace Mvkt.Api.Repositories
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetMichelineCode(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT *
                 FROM ""Scripts""
@@ -634,7 +634,7 @@ namespace Mvkt.Api.Repositories
             if (contract.Kind == 0)
                 return Micheline.FromBytes(Data.Models.Script.ManagerTzBytes).ToMichelson();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null) return null;
 
@@ -664,7 +664,7 @@ namespace Mvkt.Api.Repositories
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetMichelsonCode(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT *
                 FROM ""Scripts""
@@ -701,7 +701,7 @@ namespace Mvkt.Api.Repositories
             }
             else
             {
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 var script = await db.QueryFirstOrDefaultAsync($@"
                     SELECT      ""StorageSchema"", ""ParameterSchema"", ""CodeSchema""
                     FROM        ""Scripts""
@@ -753,7 +753,7 @@ namespace Mvkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return null;
             
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync("""
                 SELECT "Views"
                 FROM "Scripts"
@@ -778,7 +778,7 @@ namespace Mvkt.Api.Repositories
             }
             else
             {
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
                 if (row == null) return null;
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
@@ -800,7 +800,7 @@ namespace Mvkt.Api.Repositories
             }
             else
             {
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
                 if (row == null) return null;
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
@@ -830,7 +830,7 @@ namespace Mvkt.Api.Repositories
             }
             else
             {
-                using var db = GetConnection();
+                await using var db = await DataSource.OpenConnectionAsync();
                 var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""ParameterSchema"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
                 if (row == null) return Enumerable.Empty<Entrypoint>();
                 param = new ContractParameter(Micheline.FromBytes(row.ParameterSchema));
@@ -857,7 +857,7 @@ namespace Mvkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract || contract.Kind == 0) return null;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null || row.Views == null) return null;
 
@@ -884,7 +884,7 @@ namespace Mvkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract || contract.Kind == 0) return Enumerable.Empty<ContractView>();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT ""Views"" FROM ""Scripts"" WHERE ""ContractId"" = {contract.Id} AND ""Current"" = true");
             if (row == null || row.Views == null) return Enumerable.Empty<ContractView>();
 
@@ -916,7 +916,7 @@ namespace Mvkt.Api.Repositories
             var pathSelector = path == null ? string.Empty : " #> @path";
             var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT   ""JsonValue""{pathSelector} as ""JsonValue""
                 FROM     ""Storages""
@@ -949,7 +949,7 @@ namespace Mvkt.Api.Repositories
             var pathSelector = path == null ? string.Empty : " #> @path";
             var pathParam = path == null ? null : new { path = JsonPath.Select(path) };
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT   ""JsonValue""{pathSelector} as ""JsonValue""
                 FROM     ""Storages""
@@ -973,7 +973,7 @@ namespace Mvkt.Api.Repositories
                 return new MichelineString(manager.Address);
             }
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT   ""RawValue""
                 FROM     ""Storages""
@@ -1003,7 +1003,7 @@ namespace Mvkt.Api.Repositories
             if (level >= contract.LastLevel)
                 return await GetRawStorageValue(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT   ""RawValue""
                 FROM     ""Storages""
@@ -1024,7 +1024,7 @@ namespace Mvkt.Api.Repositories
             if (contract.Kind == 0)
                 return Data.Models.Script.ManagerTz.Storage.Humanize();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
                 FROM        ""Scripts""
@@ -1052,7 +1052,7 @@ namespace Mvkt.Api.Repositories
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetStorageSchema(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
                 FROM        ""Scripts""
@@ -1074,7 +1074,7 @@ namespace Mvkt.Api.Repositories
             if (contract.Kind == 0)
                 return Data.Models.Script.ManagerTz.Storage.Schema.ToMicheline();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
                 FROM        ""Scripts""
@@ -1101,7 +1101,7 @@ namespace Mvkt.Api.Repositories
             if (contract.MigrationsCount == 0 || level >= contract.LastLevel)
                 return await GetRawStorageSchema(address);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync($@"
                 SELECT      ""StorageSchema""
                 FROM        ""Scripts""
@@ -1119,7 +1119,7 @@ namespace Mvkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync($@"
                 SELECT      ss.""Id"",
                             ss.""Level"",
@@ -1208,7 +1208,7 @@ namespace Mvkt.Api.Repositories
             var rawAccount = await Accounts.GetAsync(address);
             if (rawAccount is not RawContract contract) return Enumerable.Empty<StorageRecord>();
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync($@"
                 SELECT      ss.""Id"",
                             ss.""Level"",

@@ -4,9 +4,10 @@
     {
         public static string GetName(string chainId) => chainId switch
         {
-            "NetXdQprcVkpaWU" => "mainnet",
-            "NetXnHfVqm9iesp" => "basenet",
-            "NetXvyTAafh8goH" => "atlasnet",
+            "NetXXAAR1wWQhhe" => "mainnet",
+            "NetXmtMsNf69w1w" => "basenet",
+            "NetXUrNc8uioxP8" => "atlasnet",
+            "NetXi75cGgZdsGN" => "dailynet",
             "NetXRp4kyGKJTuB" => "weeklynet",
             _ => "private"
         };

@@ -31,6 +31,7 @@ namespace Mvkt.Data.Models
             #region props
             modelBuilder.Entity<BigMapKey>()
                 .Property(x => x.KeyHash)
+                .IsFixedLength(true)
                 .HasMaxLength(54);
 
             modelBuilder.Entity<BigMapKey>()
@@ -44,17 +45,10 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<BigMapKey>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<BigMapKey>()
-                .HasIndex(x => x.BigMapPtr);
-
-            modelBuilder.Entity<BigMapKey>()
                 .HasIndex(x => x.LastLevel);
 
             modelBuilder.Entity<BigMapKey>()
-                .HasIndex(x => new { x.BigMapPtr, x.Active })
+                .HasIndex(x => x.BigMapPtr, $"IX_{nameof(MvktContext.BigMapKeys)}_{nameof(BigMapKey.BigMapPtr)}_Partial")
                 .HasFilter($@"""{nameof(BigMapKey.Active)}"" = true");
 
             modelBuilder.Entity<BigMapKey>()

@@ -1,12 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Numerics;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services.Cache;
 
@@ -35,7 +28,7 @@ namespace Mvkt.Api.Websocket.Processors
         class ContractSub
         {
             public HashSet<string> All { get; set; }
-            public Dictionary<string, HashSet<string>> Tokens { get; set; }
+            public Dictionary<BigInteger, HashSet<string>> Tokens { get; set; }
 
             public bool Empty => All == null && Tokens == null;
         }
@@ -265,7 +258,7 @@ namespace Mvkt.Api.Websocket.Processors
                         if (parameter.TokenId != null)
                         {
                             contractSub.Tokens ??= new(4);
-                            TryAdd(contractSub.Tokens, parameter.TokenId, connectionId);
+                            TryAdd(contractSub.Tokens, parameter.TokenId.Value, connectionId);
                         }    
                         else
                         {
@@ -289,7 +282,7 @@ namespace Mvkt.Api.Websocket.Processors
                     if (parameter.TokenId != null)
                     {
                         contractSub.Tokens ??= new(4);
-                        TryAdd(contractSub.Tokens, parameter.TokenId, connectionId);
+                        TryAdd(contractSub.Tokens, parameter.TokenId.Value, connectionId);
                     }
                     else
                     {

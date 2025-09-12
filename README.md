@@ -87,7 +87,7 @@ postgres=# \q
 #### Download fresh snapshot (example for mainnet)
 
 ````
-wget "https://snapshots.tzkt.io/tzkt_v1.13_mainnet.backup" -O /tmp/mvkt_db.backup
+wget "https://snapshots.tzkt.io/tzkt_v1.14_mainnet.backup" -O /tmp/mvkt_db.backup
 ````
 
 #### Restore database from the snapshot
@@ -266,11 +266,11 @@ That's it. If you want to run the API as a daemon, take a look at this guide: ht
 
 In general the steps are the same as for the mainnet, you will just need to use a different RPC endpoint and DB snapshot. Here are presets for the current testnets:
  - Basenet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_ghostnet.backup
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_ghostnet.backup
    - RPC node: https://basenet.rpc.mavryk.network/
- - Atlasnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.13_oxfordnet.backup
-   - RPC node: https://atlasnet.rpc.mavryk.network/
+ - Boreasnet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.14_parisnet.backup
+   - RPC node: https://boreasnet.rpc.mavryk.network/
 
 ### Testnets & docker
 

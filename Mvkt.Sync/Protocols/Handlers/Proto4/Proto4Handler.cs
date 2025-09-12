@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "athens_004";
+        public override string VersionName => "athens_004";
+        public override int VersionNumber => 4;
 
         public Proto4Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto4Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

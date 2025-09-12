@@ -190,7 +190,7 @@ namespace Mvkt.Api.Controllers
         /// Get reward split delegator
         /// </summary>
         /// <remarks>
-        /// Returns delegator from the reward split for the specified cycle.
+        /// Returns delegator/staker from the reward split for the specified cycle.
         /// </remarks>
         /// <param name="baker">Baker address</param>
         /// <param name="cycle">Reward split cycle</param>

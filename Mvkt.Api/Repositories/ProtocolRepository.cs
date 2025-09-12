@@ -1,11 +1,14 @@
 ﻿using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public class ProtocolRepository : DbConnection
+    public class ProtocolRepository
     {
-        public ProtocolRepository(IConfiguration config) : base(config) { }
+        readonly NpgsqlDataSource DataSource;
+
+        public ProtocolRepository(NpgsqlDataSource dataSource) => DataSource = dataSource;
 
         public async Task<int> GetCount()
         {
@@ -13,7 +16,7 @@ namespace Mvkt.Api.Repositories
                 SELECT   COUNT(*)
                 FROM     ""Protocols""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql);
         }
 
@@ -26,7 +29,7 @@ namespace Mvkt.Api.Repositories
                 ORDER BY    ""FirstLevel"" DESC
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql);
             if (row == null) return null;
 
@@ -34,6 +37,7 @@ namespace Mvkt.Api.Repositories
             {
                 Code = row.Code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -60,7 +64,8 @@ namespace Mvkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreservedCycles = row.PreservedCycles,
+                    ConsensusRightsDelay = row.ConsensusRightsDelay,
+                    DelegateParametersActivationDelay = row.DelegateParametersActivationDelay,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
                     MinimalFrozenStake = row.MinimalFrozenStake,
@@ -93,7 +98,7 @@ namespace Mvkt.Api.Repositories
                 WHERE   ""Code"" = @code
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { code });
             if (row == null) return null;
 
@@ -101,6 +106,7 @@ namespace Mvkt.Api.Repositories
             {
                 Code = code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -127,7 +133,8 @@ namespace Mvkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreservedCycles = row.PreservedCycles,
+                    ConsensusRightsDelay = row.ConsensusRightsDelay,
+                    DelegateParametersActivationDelay = row.DelegateParametersActivationDelay,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
                     MinimalFrozenStake = row.MinimalFrozenStake,
@@ -160,7 +167,7 @@ namespace Mvkt.Api.Repositories
                 WHERE   ""Hash"" = @hash::character(51)
                 LIMIT   1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var row = await db.QueryFirstOrDefaultAsync(sql, new { hash });
             if (row == null) return null;
 
@@ -168,6 +175,7 @@ namespace Mvkt.Api.Repositories
             {
                 Code = row.Code,
                 Hash = hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -194,7 +202,8 @@ namespace Mvkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreservedCycles = row.PreservedCycles,
+                    ConsensusRightsDelay = row.ConsensusRightsDelay,
+                    DelegateParametersActivationDelay = row.DelegateParametersActivationDelay,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
                     MinimalFrozenStake = row.MinimalFrozenStake,
@@ -229,13 +238,14 @@ namespace Mvkt.Api.Repositories
                     _ => ("Code", "Code")
                 });
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new Protocol
             {
                 Code = row.Code,
                 Hash = row.Hash,
+                Version = row.Version,
                 FirstLevel = row.FirstLevel,
                 FirstCycle = row.FirstCycle,
                 FirstCycleLevel = row.FirstCycleLevel,
@@ -262,7 +272,8 @@ namespace Mvkt.Api.Repositories
                     HardOperationGasLimit = row.HardOperationGasLimit,
                     HardOperationStorageLimit = row.HardOperationStorageLimit,
                     OriginationSize = row.OriginationSize,
-                    PreservedCycles = row.PreservedCycles,
+                    ConsensusRightsDelay = row.ConsensusRightsDelay,
+                    DelegateParametersActivationDelay = row.DelegateParametersActivationDelay,
                     TimeBetweenBlocks = row.TimeBetweenBlocks,
                     MinimalStake = row.MinimalStake,
                     MinimalFrozenStake = row.MinimalFrozenStake,

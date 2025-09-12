@@ -1,22 +1,22 @@
-﻿using System.Collections.Generic;
-using System.Data;
-using System.Linq;
+﻿using System.Data;
+using System.Numerics;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 using Mvkt.Api.Services.Cache;
 
 namespace Mvkt.Api.Repositories
 {
-    public class TokensRepository : DbConnection
+    public class TokensRepository
     {
+        readonly NpgsqlDataSource DataSource;
         readonly AccountsCache Accounts;
         readonly TimeCache Times;
 
-        public TokensRepository(AccountsCache accounts, TimeCache times, IConfiguration config) : base(config)
+        public TokensRepository(NpgsqlDataSource dataSource, AccountsCache accounts, TimeCache times)
         {
+            DataSource = dataSource;
             Accounts = accounts;
             Times = times;
         }
@@ -108,7 +108,7 @@ namespace Mvkt.Api.Repositories
                 .Take(pagination, x => x switch
                 {
                     "id" => (@"""Id""", @"""Id"""),
-                    "tokenId" => (@"""TokenId""::numeric", @"""TokenId""::numeric"),
+                    "tokenId" => (@"""TokenId""", @"""TokenId"""),
                     "transfersCount" => (@"""TransfersCount""", @"""TransfersCount"""),
                     "holdersCount" => (@"""HoldersCount""", @"""HoldersCount"""),
                     "balancesCount" => (@"""BalancesCount""", @"""BalancesCount"""),
@@ -118,7 +118,7 @@ namespace Mvkt.Api.Repositories
                     _ => TryMetaSort(x)
                 }, @"""Id""", 100);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
@@ -137,7 +137,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("IndexedAt", filter.indexedAt)
                 .Filter("Metadata", filter.metadata);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -276,7 +276,7 @@ namespace Mvkt.Api.Repositories
                 tb.""Id"",
                 tb.""AccountId"",
                 tb.""Balance"",
-                (tb.""Balance""::numeric * t.""Value""::numeric)::numeric(1000,0) as ""BalanceValue"",
+                (tb.""Balance"" * t.""Value"")::numeric(1000,0) as ""BalanceValue"",
                 tb.""FirstLevel"",
                 tb.""LastLevel"",
                 tb.""TransfersCount"",
@@ -297,7 +297,7 @@ namespace Mvkt.Api.Repositories
                         case "id": columns.Add(@"tb.""Id"""); break;
                         case "account": columns.Add(@"tb.""AccountId"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
-                        case "balanceValue": columns.Add(@"(tb.""Balance""::numeric * t.""Value""::numeric)::numeric(1000,0) as ""BalanceValue"""); break;
+                        case "balanceValue": columns.Add(@"(tb.""Balance"" * t.""Value"")::numeric(1000,0) as ""BalanceValue"""); break;
                         case "firstLevel": columns.Add(@"tb.""FirstLevel"""); break;
                         case "firstTime": columns.Add(@"tb.""FirstLevel"""); break;
                         case "lastLevel": columns.Add(@"tb.""LastLevel"""); break;
@@ -356,7 +356,7 @@ namespace Mvkt.Api.Repositories
                 return (new string[1] { @"tb.""Id""" }, @"tb.""Id""");
             }
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
 
             #region optimizations
             if (filter.balance?.Gt == "0" && filter.balance.Ne == null)
@@ -370,7 +370,7 @@ namespace Mvkt.Api.Repositories
                     SELECT "Id"
                     FROM "Tokens"
                     WHERE "ContractId" = @contractId
-                    AND "TokenId" = @tokenId
+                    AND "TokenId" = @tokenId::numeric
                     LIMIT 1
                     """, new { contractId = filter.token.contract.Eq.Value, tokenId = filter.token.tokenId.Eq });
 
@@ -404,8 +404,8 @@ namespace Mvkt.Api.Repositories
                 .Take(pagination, x => x switch
                 {
                     "id" => (new string[1] { @"tb.""Id""" }, @"tb.""Id"""),
-                    "balance" => (new string[1] { @"tb.""Balance""::numeric" }, @"tb.""Balance""::numeric"),
-                    "balanceValue" => (new string[2] { @"""BalanceValue""", @"tb.""Balance""::numeric" }, @"""BalanceValue"""),
+                    "balance" => (new string[1] { @"tb.""Balance""" }, @"tb.""Balance"""),
+                    "balanceValue" => (new string[2] { @"""BalanceValue""", @"tb.""Balance""" }, @"""BalanceValue"""),
                     "transfersCount" => (new string[1] { @"tb.""TransfersCount""" }, @"tb.""TransfersCount"""),
                     "firstLevel" => (new string[1] { @"tb.""Id""" }, @"tb.""FirstLevel"""),
                     "lastLevel" => (new string[1] { @"tb.""LastLevel""" }, @"tb.""LastLevel"""),
@@ -435,7 +435,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -447,7 +447,7 @@ namespace Mvkt.Api.Repositories
                 Id = row.Id,
                 Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance,
-                BalanceValue = row.BalanceValue == 0M ? null : row.BalanceValue,
+                BalanceValue = row.BalanceValue == BigInteger.Zero ? null : row.BalanceValue,
                 FirstLevel = row.FirstLevel,
                 FirstTime = Times[row.FirstLevel],
                 LastLevel = row.LastLevel,
@@ -499,7 +499,7 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "balanceValue":
                         foreach (var row in rows)
-                            result[j++][i] = row.BalanceValue == 0M ? null : row.BalanceValue;
+                            result[j++][i] = row.BalanceValue == BigInteger.Zero ? null : row.BalanceValue;
                         break;
                     case "firstLevel":
                         foreach (var row in rows)
@@ -688,12 +688,12 @@ namespace Mvkt.Api.Repositories
                 {
                     "id" => (@"tr.""Id""", @"tr.""Id"""),
                     "level" => (@"tr.""Level""", @"tr.""Level"""),
-                    "amount" => (@"tr.""Amount""::numeric", @"tr.""Amount""::numeric"),
+                    "amount" => (@"tr.""Amount""", @"tr.""Amount"""),
                     "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => TryMetaSort(x)
                 }, @"tr.""Id""", 100);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
@@ -719,7 +719,7 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"t.""Tags""", filter.token.standard)
                 .FilterA(@"t.""Metadata""", filter.token.metadata);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -943,9 +943,9 @@ namespace Mvkt.Api.Repositories
 
             var sql = new SqlBuilder()
                 .Append($@"SELECT {select} FROM (")
-                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"")::text AS ""Balance"" FROM (")
+                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"") AS ""Balance"" FROM (")
                         
-                        .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount""::numeric AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
                         .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
                         .Filter($@"tr.""Level"" <= {level}")
                         .Filter($@"tr.""FromId"" IS NOT NULL")
@@ -959,7 +959,7 @@ namespace Mvkt.Api.Repositories
 
                         .Append("UNION ALL")
 
-                        .Append(@"SELECT tr.""TokenId"", tr.""ToId"" AS ""AccountId"", tr.""Amount""::numeric AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"SELECT tr.""TokenId"", tr.""ToId"" AS ""AccountId"", tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
                         .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
                         .Filter($@"tr.""Level"" <= {level}")
                         .Filter($@"tr.""ToId"" IS NOT NULL")
@@ -978,12 +978,12 @@ namespace Mvkt.Api.Repositories
                 .FilterA(@"tb.""Balance""", filter.balance)
                 .Take(pagination, x => x switch
                 {
-                    "balance" => (@"""Balance""::numeric", @"""Balance""::numeric"),
+                    "balance" => (@"""Balance""", @"""Balance"""),
                     "token.metadata" => (@"t.""Metadata""", @"t.""Metadata"""),
                     _ => TryMetaSort(x)
                 }, @"tb.""Id""", 100);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return (await db.QueryAsync(sql.Query, sql.Params)).Take(pagination.limit);
         }
 
@@ -994,7 +994,7 @@ namespace Mvkt.Api.Repositories
             {
                 Account = Accounts.GetAlias(row.AccountId),
                 Balance = row.Balance,
-                Token = new TokenInfo
+                Token = new TokenInfoShort
                 {
                     Id = row.tId,
                     Contract = Accounts.GetAlias(row.tContractId),
@@ -1035,7 +1035,7 @@ namespace Mvkt.Api.Repositories
                         break;
                     case "token":
                         foreach (var row in rows)
-                            result[j++][i] = new TokenInfo
+                            result[j++][i] = new TokenInfoShort
                             {
                                 Id = row.tId,
                                 Contract = Accounts.GetAlias(row.tContractId),

@@ -4,11 +4,11 @@ using Mvkt.Data;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetDelegationStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(MvktContext.DelegationOps), hash);
         }
 
@@ -20,7 +20,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -34,7 +34,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new DelegationOperation
@@ -54,9 +54,7 @@ namespace Mvkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
-                UnstakedPseudotokens = row.UnstakedPseudotokens,
-                UnstakedBalance = row.UnstakedBalance,
-                UnstakedRewards = row.UnstakedRewards,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -75,7 +73,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
             return rows.Select(row => new DelegationOperation
@@ -95,9 +93,7 @@ namespace Mvkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
-                UnstakedPseudotokens = row.UnstakedPseudotokens,
-                UnstakedBalance = row.UnstakedBalance,
-                UnstakedRewards = row.UnstakedRewards,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -116,7 +112,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
 
             return rows.Select(row => new DelegationOperation
@@ -136,9 +132,7 @@ namespace Mvkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
-                UnstakedPseudotokens = row.UnstakedPseudotokens,
-                UnstakedBalance = row.UnstakedBalance,
-                UnstakedRewards = row.UnstakedRewards,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -155,7 +149,7 @@ namespace Mvkt.Api.Repositories
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DelegationOperation
@@ -175,9 +169,7 @@ namespace Mvkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
-                UnstakedPseudotokens = row.UnstakedPseudotokens,
-                UnstakedBalance = row.UnstakedBalance,
-                UnstakedRewards = row.UnstakedRewards,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -192,6 +184,7 @@ namespace Mvkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -213,6 +206,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
@@ -225,7 +219,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DelegationOperation
@@ -245,9 +239,7 @@ namespace Mvkt.Api.Repositories
                 StorageLimit = row.StorageLimit,
                 BakerFee = row.BakerFee,
                 Amount = row.Amount,
-                UnstakedPseudotokens = row.UnstakedPseudotokens,
-                UnstakedBalance = row.UnstakedBalance,
-                UnstakedRewards = row.UnstakedRewards,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 PrevDelegate = row.PrevDelegateId != null ? Accounts.GetAlias(row.PrevDelegateId) : null,
                 NewDelegate = row.DelegateId != null ? Accounts.GetAlias(row.DelegateId) : null,
                 Status = OpStatuses.ToString(row.Status),
@@ -262,6 +254,7 @@ namespace Mvkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -293,9 +286,7 @@ namespace Mvkt.Api.Repositories
                     case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                     case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                     case "amount": columns.Add(@"o.""Amount"""); break;
-                    case "unstakedPseudotokens": columns.Add(@"o.""UnstakedPseudotokens"""); break;
-                    case "unstakedBalance": columns.Add(@"o.""UnstakedBalance"""); break;
-                    case "unstakedRewards": columns.Add(@"o.""UnstakedRewards"""); break;
+                    case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                     case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
                     case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
                     case "status": columns.Add(@"o.""Status"""); break;
@@ -305,6 +296,11 @@ namespace Mvkt.Api.Repositories
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
+                    #region deprecated
+                    case "unstakedPseudotokens": columns.Add("0"); break;
+                    case "unstakedBalance": columns.Add("0"); break;
+                    case "unstakedRewards": columns.Add("0"); break;
+                    #endregion
                 }
             }
 
@@ -323,6 +319,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
@@ -335,7 +332,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -406,17 +403,9 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.Amount;
                         break;
-                    case "unstakedPseudotokens":
+                    case "stakingUpdatesCount":
                         foreach (var row in rows)
-                            result[j++][i] = row.UnstakedPseudotokens;
-                        break;
-                    case "unstakedBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UnstakedBalance;
-                        break;
-                    case "unstakedRewards":
-                        foreach (var row in rows)
-                            result[j++][i] = row.UnstakedRewards;
+                            result[j++][i] = row.StakingUpdatesCount;
                         break;
                     case "prevDelegate":
                         foreach (var row in rows)
@@ -438,6 +427,20 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
+                    #region deprecated
+                    case "unstakedPseudotokens":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    case "unstakedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    case "unstakedRewards":
+                        foreach (var row in rows)
+                            result[j++][i] = null;
+                        break;
+                    #endregion
                 }
             }
 
@@ -450,6 +453,7 @@ namespace Mvkt.Api.Repositories
             AccountParameter sender,
             AccountParameter prevDelegate,
             AccountParameter newDelegate,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             Int32Parameter senderCodeHash,
@@ -479,9 +483,7 @@ namespace Mvkt.Api.Repositories
                 case "storageLimit": columns.Add(@"o.""StorageLimit"""); break;
                 case "bakerFee": columns.Add(@"o.""BakerFee"""); break;
                 case "amount": columns.Add(@"o.""Amount"""); break;
-                case "unstakedPseudotokens": columns.Add(@"o.""UnstakedPseudotokens"""); break;
-                case "unstakedBalance": columns.Add(@"o.""UnstakedBalance"""); break;
-                case "unstakedRewards": columns.Add(@"o.""UnstakedRewards"""); break;
+                case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                 case "prevDelegate": columns.Add(@"o.""PrevDelegateId"""); break;
                 case "newDelegate": columns.Add(@"o.""DelegateId"""); break;
                 case "status": columns.Add(@"o.""Status"""); break;
@@ -491,6 +493,11 @@ namespace Mvkt.Api.Repositories
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
+                #region deprecated
+                case "unstakedPseudotokens": columns.Add("0"); break;
+                case "unstakedBalance": columns.Add("0"); break;
+                case "unstakedRewards": columns.Add("0"); break;
+                #endregion
             }
 
             if (columns.Count == 0)
@@ -508,6 +515,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("SenderId", sender, x => x == "prevDelegate" ? "PrevDelegateId" : "DelegateId")
                 .Filter("PrevDelegateId", prevDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "DelegateId")
                 .Filter("DelegateId", newDelegate, x => x == "initiator" ? "InitiatorId" : x == "sender" ? "SenderId" : "PrevDelegateId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
@@ -520,7 +528,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -589,17 +597,9 @@ namespace Mvkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.Amount;
                     break;
-                case "unstakedPseudotokens":
+                case "stakingUpdatesCount":
                     foreach (var row in rows)
-                        result[j++] = row.UnstakedPseudotokens;
-                    break;
-                case "unstakedBalance":
-                    foreach (var row in rows)
-                        result[j++] = row.UnstakedBalance;
-                    break;
-                case "unstakedRewards":
-                    foreach (var row in rows)
-                        result[j++] = row.UnstakedRewards;
+                        result[j++] = row.StakingUpdatesCount;
                     break;
                 case "prevDelegate":
                     foreach (var row in rows)
@@ -621,6 +621,20 @@ namespace Mvkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
+                #region deprecated
+                case "unstakedPseudotokens":
+                    foreach (var row in rows)
+                        result[j++] = null;
+                    break;
+                case "unstakedBalance":
+                    foreach (var row in rows)
+                        result[j++] = null;
+                    break;
+                case "unstakedRewards":
+                    foreach (var row in rows)
+                        result[j++] = null;
+                    break;
+                #endregion
             }
 
             return result;

@@ -17,9 +17,6 @@ namespace Mvkt.Data.Models
         public long SmartRollupBonds { get; set; }
         public int Counter { get; set; }
 
-        // it's needed to handle negligent Oxford implementation
-        public long LostBalance { get; set; }
-
         public int? DelegateId { get; set; }
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
@@ -131,10 +128,6 @@ namespace Mvkt.Data.Models
 
             #region indexes
             modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
-            modelBuilder.Entity<Account>()
                 .HasIndex(x => x.Address)
                 .IsUnique();
 
@@ -142,7 +135,8 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.Type);
 
             modelBuilder.Entity<Account>()
-                .HasIndex(x => x.Staked);
+                .HasIndex(x => new { x.Staked, x.Type })
+                .HasFilter(@$"""{nameof(Account.Staked)}"" = true");
 
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.DelegateId);

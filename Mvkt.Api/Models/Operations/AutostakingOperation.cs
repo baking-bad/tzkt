@@ -29,26 +29,32 @@
         public Alias Baker { get; set; }
 
         /// <summary>
-        /// Autostaking action (`stake`, `unstake`, `finalize`, or `restake`)
+        /// Autostaking action (`stake`, `unstake`, `finalize`)
         /// </summary>
         public string Action { get; set; }
-
-        /// <summary>
-        /// If action is `stake`, this field contains an index of a cycle, from which the staked amount is applied.
-        /// Otherwise, it contains an index of a cycle of the unstaked deposits affected.
-        /// </summary>
-        public int Cycle { get; set; }
 
         /// <summary>
         /// Amount (micro tez)
         /// </summary>
         public long Amount { get; set; }
 
+        /// <summary>
+        /// Number of staking updates happened internally
+        /// </summary>
+        public long StakingUpdatesCount { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort Quote { get; set; }
+        #endregion
+
+        #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public int Cycle => 0;
         #endregion
     }
 }

@@ -40,9 +40,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
-                    "StakersCount",
-                    "StakedPseudotokens",
-                    "IssuedPseudotokens"
+                    "StakersCount"
                 )
                 SELECT
                     {block.Level},
@@ -53,8 +51,6 @@ namespace Mvkt.Sync.Protocols.Proto1
                     COALESCE("DelegatorsCount", 0),
                     0,
                     0,
-                    0,
-                    0,
                     0
                 FROM "Accounts"
                 WHERE "Staked" = true
@@ -63,7 +59,7 @@ namespace Mvkt.Sync.Protocols.Proto1
 
         protected Task RemoveOutdated(Block block, Protocol protocol)
         {
-            var level = block.Level - (protocol.PreservedCycles + 3) * protocol.BlocksPerCycle;
+            var level = block.Level - (protocol.ConsensusRightsDelay + 3) * protocol.BlocksPerCycle;
             return Db.Database.ExecuteSqlRawAsync($"""
                 DELETE FROM "SnapshotBalances"
                 WHERE "Level" <= {level}
@@ -82,8 +78,8 @@ namespace Mvkt.Sync.Protocols.Proto1
             {
                 var values = string.Join(",\n", deactivated
                     .SelectMany(baker =>
-                        new[] { $"({block.Level}, {baker.Id}, {baker.Id}, {baker.StakingBalance - baker.DelegatedBalance}, {baker.DelegatedBalance}, {baker.DelegatorsCount}, 0, 0, 0, 0, 0)" }
-                        .Concat(baker.DelegatedAccounts.Select(delegator => $"({block.Level}, {delegator.Id}, {delegator.DelegateId}, {delegator.Balance}, 0, 0, 0, 0, 0, 0, 0)"))));
+                        new[] { $"({block.Level}, {baker.Id}, {baker.Id}, {baker.StakingBalance - baker.DelegatedBalance}, {baker.DelegatedBalance}, {baker.DelegatorsCount}, 0, 0, 0)" }
+                        .Concat(baker.DelegatedAccounts.Select(delegator => $"({block.Level}, {delegator.Id}, {delegator.DelegateId}, {delegator.Balance}, 0, 0, 0, 0, 0)"))));
 
                 if (values.Length > 0)
                 {
@@ -97,9 +93,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                             "DelegatorsCount",
                             "OwnStakedBalance",
                             "ExternalStakedBalance",
-                            "StakersCount",
-                            "StakedPseudotokens",
-                            "IssuedPseudotokens"
+                            "StakersCount"
                         )
                         VALUES
                         {values}
@@ -168,8 +162,8 @@ namespace Mvkt.Sync.Protocols.Proto1
                 var values = string.Join(",\n", weirdDelegators
                     .Where(weirds => weirds.Sum(x => x.Balance) >= block.Protocol.MinimalStake)
                     .SelectMany(weirds =>
-                        new[] { $"({block.Level}, {weirds.First().WeirdDelegateId}, {weirds.First().WeirdDelegateId}, 0, {weirds.Sum(x => x.Balance)}, {weirds.Count()}, 0, 0, 0, 0, 0)" }
-                        .Concat(weirds.Select(x => $"({block.Level}, {x.Id}, {x.WeirdDelegateId}, {x.Balance}, 0, 0, 0, 0, 0, 0, 0)"))));
+                        new[] { $"({block.Level}, {weirds.First().WeirdDelegateId}, {weirds.First().WeirdDelegateId}, 0, {weirds.Sum(x => x.Balance)}, {weirds.Count()}, 0, 0, 0)" }
+                        .Concat(weirds.Select(x => $"({block.Level}, {x.Id}, {x.WeirdDelegateId}, {x.Balance}, 0, 0, 0, 0, 0)"))));
 
                 if (values.Length > 0)
                 {
@@ -183,9 +177,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                             "DelegatorsCount",
                             "OwnStakedBalance",
                             "ExternalStakedBalance",
-                            "StakersCount",
-                            "StakedPseudotokens",
-                            "IssuedPseudotokens"
+                            "StakersCount"
                         )
                         VALUES
                         {values}

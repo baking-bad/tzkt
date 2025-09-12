@@ -25,10 +25,7 @@ namespace Mvkt.Data.Models
         #endregion
 
         #region state
-        public bool AIActivated { get; set; }
-        public int AIActivationCycle { get; set; }
-        public int AIFinalUpvoteLevel { get; set; }
-        public int PendingStakingParameters { get; set; }
+        public int PendingDelegateParameters { get; set; }
         #endregion
 
         #region counters
@@ -48,7 +45,6 @@ namespace Mvkt.Data.Models
 
         #region entities count
         public int CommitmentsCount { get; set; }
-        public int AccountsCount { get; set; }
 
         public int BlocksCount { get; set; }
         public int ProtocolsCount { get; set; }
@@ -67,6 +63,7 @@ namespace Mvkt.Data.Models
         public int ProposalOpsCount { get; set; }
         public int RevealOpsCount { get; set; }
         public int StakingOpsCount { get; set; }
+        public int SetDelegateParametersOpsCount { get; set; }
         public int TransactionOpsCount { get; set; }
         public int RegisterConstantOpsCount { get; set; }
         public int EndorsingRewardOpsCount { get; set; }
@@ -98,6 +95,8 @@ namespace Mvkt.Data.Models
         public int SmartRollupRecoverBondOpsCount { get; set; }
         public int SmartRollupRefuteOpsCount { get; set; }
 
+        public int DalPublishCommitmentOpsCount { get; set; }
+
         public int ProposalsCount { get; set; }
 
         public int CyclesCount { get; set; }
@@ -112,6 +111,8 @@ namespace Mvkt.Data.Models
         public int TicketTransfersCount { get; set; }
 
         public int EventsCount { get; set; }
+        public int StakingUpdatesCount { get; set; }
+        public int UnstakeRequestsCount { get; set; }
         #endregion
 
         #region plugins

@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Threading;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Logging;
-
+﻿using Microsoft.AspNetCore.SignalR;
 using Mvkt.Api.Repositories;
 using Mvkt.Api.Services.Cache;
 

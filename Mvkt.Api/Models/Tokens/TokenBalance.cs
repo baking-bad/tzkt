@@ -1,4 +1,7 @@
-﻿namespace Mvkt.Api.Models
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
+
+namespace Mvkt.Api.Models
 {
     public class TokenBalance
     {
@@ -24,13 +27,15 @@
         /// Balance (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
-        public string Balance { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger Balance { get; set; }
 
         /// <summary>
         /// Balance value in mumav, based on the current token price.  
         /// **[sortable]**
         /// </summary>
-        public decimal? BalanceValue { get; set; } // TODO: change to BigInteger, when migrating to .net7
+        [JsonSchemaType(typeof(string), IsNullable = true)]
+        public BigInteger? BalanceValue { get; set; }
 
         /// <summary>
         /// Total number of transfers, affecting the token balance.  

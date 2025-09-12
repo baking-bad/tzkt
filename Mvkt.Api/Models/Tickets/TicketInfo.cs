@@ -1,4 +1,6 @@
-﻿using Netmavryk.Encoding;
+﻿using System.Numerics;
+using Netmavryk.Encoding;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -42,6 +44,7 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Total amount exists.
         /// </summary>
-        public string TotalSupply { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TotalSupply { get; set; }
     }
 }

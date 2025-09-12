@@ -31,7 +31,7 @@ namespace Mvkt.Sync.Protocols.Proto1
                         OwnDelegatedBalance = x.Balance,
                         ExternalDelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
-                        OwnStakedBalance = x.StakedBalance,
+                        OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         BakingPower = bakingPower,

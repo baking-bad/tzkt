@@ -34,12 +34,12 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<SmartRollupCementOperation>()
+                .HasIndex(x => new { x.SmartRollupId, x.Id });
+
+            modelBuilder.Entity<SmartRollupCementOperation>()
                 .HasIndex(x => x.SenderId);
 
-            modelBuilder.Entity<SmartRollupPublishOperation>()
-                .HasIndex(x => x.SmartRollupId);
-
-            modelBuilder.Entity<SmartRollupPublishOperation>()
+            modelBuilder.Entity<SmartRollupCementOperation>()
                 .HasIndex(x => x.CommitmentId);
             #endregion
 

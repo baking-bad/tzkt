@@ -60,14 +60,18 @@ namespace Mvkt.Data.Models
         {
             #region indexes
             modelBuilder.Entity<Contract>()
-                .HasIndex(x => new { x.Type, x.Kind })
-                .HasFilter(@"""Type"" = 2");
+                .HasIndex(x => x.Kind, $"IX_{nameof(MvktContext.Accounts)}_{nameof(Contract.Kind)}_Partial")
+                .HasFilter($@"""{nameof(Account.Type)}"" = {(int)AccountType.Contract}");
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.CreatorId);
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.ManagerId);
+
+            modelBuilder.Entity<Contract>()
+                .HasIndex(x => x.WeirdDelegateId)
+                .HasFilter($@"""{nameof(Contract.WeirdDelegateId)}"" IS NOT NULL");
 
             modelBuilder.Entity<Contract>()
                 .HasIndex(x => x.TypeHash);

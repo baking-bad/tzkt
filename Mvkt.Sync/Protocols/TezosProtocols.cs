@@ -33,6 +33,8 @@ namespace Mvkt.Sync
             services.AddScoped<Proto16Handler>();
             services.AddScoped<Proto17Handler>();
             services.AddScoped<Proto18Handler>();
+            services.AddScoped<Proto19Handler>();
+            services.AddScoped<Proto20Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -69,7 +71,9 @@ namespace Mvkt.Sync
         {
             return protocol switch
             {
-                "PtAtLasomUEW99aVhVTrqjCHjJSpFUa8uHNEAEamx9v2SNeTaNp" => services.GetRequiredService<Proto18Handler>(),
+                "PtAtLasdzXg4XxeVNtWheo13nG4wHXP22qYMqFcT3fyBpWkFero" => services.GetRequiredService<Proto18Handler>(),
+                "PtBoreasK2KPuKbeYtXeEdudEHS7YcMFHE9amwheUc4kejTxgRi" => services.GetRequiredService<Proto20Handler>(),
+                "ProtoALphaALphaALphaALphaALphaALphaALphaALphaDdp3zK" => services.GetRequiredService<Proto20Handler>(),
                 _ => null,
             };
         }

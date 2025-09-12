@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "oxford_018";
+        public override string VersionName => "oxford_018";
+        public override int VersionNumber => 18;
 
         public Proto18Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto18Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)
@@ -25,8 +26,6 @@ namespace Mvkt.Sync.Protocols
         }
 
         public override Task Activate(AppState state, JsonElement block) => new ProtoActivator(this).Activate(state, block);
-        public override Task PostActivation(AppState state) => Task.CompletedTask;
-        public override Task PreDeactivation(AppState state) => Task.CompletedTask;
         public override Task Deactivate(AppState state) => new ProtoActivator(this).Deactivate(state);
 
         public override async Task Commit(JsonElement block)
@@ -39,7 +38,7 @@ namespace Mvkt.Sync.Protocols
             var cycleCommit = new CycleCommit(this);
             await cycleCommit.Apply(blockCommit.Block);
 
-            await new StakingCommit(this).ActivateStakingParameters(blockCommit.Block);
+            await new SetDelegateParametersCommit(this).ActivateStakingParameters(blockCommit.Block);
 
             await new SoftwareCommit(this).Apply(blockCommit.Block, block);
             await new DeactivationCommit(this).Apply(blockCommit.Block, block);
@@ -174,11 +173,18 @@ namespace Mvkt.Sync.Protocols
                             var dst = content.RequiredString("destination");
                             if (src == dst &&
                                 src.StartsWith("mv") &&
-                                content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint &&
-                                StakingCommit.Entrypoints.Contains(entrypoint))
+                                content.Optional("parameters")?.RequiredString("entrypoint") is string entrypoint)
                             {
-                                await new StakingCommit(this).Apply(blockCommit.Block, operation, content);
-                                break;
+                                if (StakingCommit.Entrypoints.Contains(entrypoint))
+                                {
+                                    await new StakingCommit(this).Apply(blockCommit.Block, operation, content);
+                                    break;
+                                }
+                                else if (SetDelegateParametersCommit.Entrypoint == entrypoint)
+                                {
+                                    await new SetDelegateParametersCommit(this).Apply(blockCommit.Block, operation, content);
+                                    break;
+                                }
                             }
 
                             var parent = new TransactionsCommit(this);
@@ -346,7 +352,7 @@ namespace Mvkt.Sync.Protocols
             await new SnapshotBalanceCommit(this).Apply(rawBlock, block);
             await new SlashingCommit(this).Apply(block, rawBlock);
             await new VotingCommit(this).Apply(block, rawBlock);
-            new AutostakingCommit(this).Apply(block, rawBlock);
+            await new AutostakingCommit(this).Apply(block, rawBlock);
         }
 
         public override async Task BeforeRevert()
@@ -386,6 +392,9 @@ namespace Mvkt.Sync.Protocols
 
             if (currBlock.Operations.HasFlag(Operations.SetDepositsLimits))
                 operations.AddRange(await Db.SetDepositsLimitOps.Where(x => x.Level == currBlock.Level).ToListAsync());
+
+            if (currBlock.Operations.HasFlag(Operations.SetDelegateParameters))
+                operations.AddRange(await Db.SetDelegateParametersOps.Where(x => x.Level == currBlock.Level).ToListAsync());
 
             if (currBlock.Operations.HasFlag(Operations.RegisterConstant))
                 operations.AddRange(await Db.RegisterConstantOps.Where(x => x.Level == currBlock.Level).ToListAsync());
@@ -463,8 +472,6 @@ namespace Mvkt.Sync.Protocols
                     Cache.Accounts.Add(account);
             }
             #endregion
-
-            await new StakingCommit(this).DeactivateStakingParameters(currBlock);
 
             await new StatisticsCommit(this).Revert(currBlock);
 
@@ -547,6 +554,9 @@ namespace Mvkt.Sync.Protocols
                     case StakingOperation op:
                         await new StakingCommit(this).Revert(currBlock, op);
                         break;
+                    case SetDelegateParametersOperation op:
+                        await new SetDelegateParametersCommit(this).Revert(currBlock, op);
+                        break;
                     case TransactionOperation op:
                         if (op.InitiatorId == null)
                             await new TransactionsCommit(this).Revert(currBlock, op);
@@ -586,6 +596,7 @@ namespace Mvkt.Sync.Protocols
 
             await new DeactivationCommit(this).Revert(currBlock);
             await new SoftwareCommit(this).Revert(currBlock);
+            await new SetDelegateParametersCommit(this).DeactivateStakingParameters(currBlock);
             await new CycleCommit(this).Revert(currBlock);
             new BlockCommit(this).Revert(currBlock);
 

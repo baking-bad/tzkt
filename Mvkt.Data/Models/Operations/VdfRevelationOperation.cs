@@ -8,8 +8,9 @@ namespace Mvkt.Data.Models
     {
         public int Cycle { get; set; }
         public int BakerId { get; set; }
-        public long RewardLiquid { get; set; }
+        public long RewardDelegated { get; set; }
         public long RewardStakedOwn { get; set; }
+        public long RewardStakedEdge { get; set; }
         public long RewardStakedShared { get; set; }
         public byte[] Solution { get; set; }
         public byte[] Proof { get; set; }
@@ -48,7 +49,7 @@ namespace Mvkt.Data.Models
                 .HasIndex(x => x.BakerId);
 
             modelBuilder.Entity<VdfRevelationOperation>()
-                .HasIndex(x => x.Cycle);
+                .HasIndex(x => new { x.Cycle, x.Id });
             #endregion
 
             #region relations

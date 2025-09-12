@@ -26,6 +26,7 @@ namespace Mvkt.Sync.Services
         public SmartRollupCommitmentCache SmartRollupCommitments { get; private set; }
         public SmartRollupStakesCache SmartRollupStakes { get; private set; }
         public RefutationGameCache RefutationGames { get; private set; }
+        public UnstakeRequestsCache UnstakeRequests { get; private set; }
 
         public CacheService(MvktContext db)
         {
@@ -50,6 +51,7 @@ namespace Mvkt.Sync.Services
             SmartRollupCommitments = new(db);
             SmartRollupStakes = new(db);
             RefutationGames = new(db);
+            UnstakeRequests = new(db);
         }
 
         public async Task ResetAsync()
@@ -57,7 +59,6 @@ namespace Mvkt.Sync.Services
             BakerCycles.Reset();
             BakingRights.Reset();
             Blocks.Reset();
-            Protocols.Reset();
             Proposals.Reset();
             Periods.Reset();
             Software.Reset();
@@ -72,7 +73,9 @@ namespace Mvkt.Sync.Services
             SmartRollupCommitments.Reset();
             SmartRollupStakes.Reset();
             RefutationGames.Reset();
+            UnstakeRequests.Reset();
 
+            await Protocols.ResetAsync();
             await AppState.ResetAsync();
             await Accounts.ResetAsync();
             await Statistics.ResetAsync();
@@ -87,6 +90,7 @@ namespace Mvkt.Sync.Services
             SmartRollupCommitments.Trim();
             SmartRollupStakes.Trim();
             RefutationGames.Trim();
+            UnstakeRequests.Trim();
         }
     }
 

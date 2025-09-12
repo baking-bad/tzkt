@@ -1,6 +1,5 @@
 ﻿using System.Numerics;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace Mvkt.Data.Models
 {
@@ -25,30 +24,12 @@ namespace Mvkt.Data.Models
                 .HasKey(x => x.Id);
             #endregion
 
-            #region props
-            // TODO: switch to `numeric` type after migration to .NET 6
-            var converter = new ValueConverter<BigInteger, string>(
-                x => x.ToString(),
-                x => BigInteger.Parse(x));
-
-            modelBuilder.Entity<TicketBalance>()
-                .Property(x => x.Balance)
-                .HasConversion(converter);
-            #endregion
-
             #region indexes
-            modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.Id)
-                .IsUnique();
-
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.TicketerId);
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => x.TicketId);
-
-            modelBuilder.Entity<TicketBalance>()
-                .HasIndex(x => x.AccountId);
 
             modelBuilder.Entity<TicketBalance>()
                 .HasIndex(x => new { x.AccountId, x.TicketerId });

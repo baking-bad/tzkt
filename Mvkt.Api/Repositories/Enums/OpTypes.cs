@@ -53,6 +53,9 @@ namespace Mvkt.Api
         public const string EndorsingReward = "endorsing_reward";
         public const string Autostaking = "autostaking";
 
+        public const string SetDelegateParameters = "set_delegate_parameters";
+        public const string DalPublishCommitment = "dal_publish_commitment";
+
         public static bool TryParse(string type, out Operations res)
         {
             res = Operations.None;
@@ -99,6 +102,8 @@ namespace Mvkt.Api
                 case SmartRollupRecoverBond: res = Operations.SmartRollupRecoverBond; break;
                 case SmartRollupRefute: res = Operations.SmartRollupRefute; break;
                 case Autostaking: res = Operations.Autostaking; break;
+                case SetDelegateParameters: res = Operations.SetDelegateParameters; break;
+                case DalPublishCommitment: res = Operations.DalPublishCommitment; break;
                 default: return false;
             }
             return true;
@@ -140,7 +145,9 @@ namespace Mvkt.Api
             SmartRollupOriginate,
             SmartRollupPublish,
             SmartRollupRecoverBond,
-            SmartRollupRefute
+            SmartRollupRefute,
+            SetDelegateParameters,
+            DalPublishCommitment
         };
     }
 }

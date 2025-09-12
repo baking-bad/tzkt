@@ -1,18 +1,19 @@
 ﻿using System.Data;
 using System.Text.Json;
 using Dapper;
+using Npgsql;
 using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Services.Cache
 {
-    public class AccountsCache : DbConnection
+    public class AccountsCache
     {
         #region static
         const string SelectQuery = """
-            SELECT  *,
-                    "Extras"#>>'{profile,alias}' as "Alias",
-                    "Extras"->'profile' as "Profile"
-            FROM    "Accounts"
+            SELECT *,
+                   "Extras"#>>'{profile,alias}' AS "Alias",
+                   "Extras"->'profile' AS "Profile"
+            FROM "Accounts"
             """;
         #endregion
         
@@ -21,28 +22,30 @@ namespace Mvkt.Api.Services.Cache
         readonly Dictionary<string, RawAccount> AccountsByAddress;
         int LastUpdate;
 
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly CacheConfig Config;
         readonly ILogger Logger;
 
-        public AccountsCache(StateCache state, IConfiguration config, ILogger<AccountsCache> logger) : base(config)
+        public AccountsCache(NpgsqlDataSource dataSource, StateCache state, IConfiguration config, ILogger<AccountsCache> logger)
         {
             logger.LogDebug("Initializing accounts cache...");
 
+            DataSource = dataSource;
             State = state;
             Config = config.GetCacheConfig();
             Logger = logger;
 
             var limit = Config.MaxAccounts > 0
-                ? (int)(Math.Min(State.Current.AccountsCount, Config.MaxAccounts) * Config.LoadRate)
-                : (int)(State.Current.AccountsCount * Config.LoadRate);
+                ? (int)(Math.Min(State.Current.AccountCounter, Config.MaxAccounts) * Config.LoadRate)
+                : (int)(State.Current.AccountCounter * Config.LoadRate);
 
             var capacity = Config.MaxAccounts > 0
                 ? Math.Min((int)(limit * 1.1), Config.MaxAccounts + 1)
                 : (int)(limit * 1.1);
 
-            using var db = GetConnection();
-            using var reader = db.ExecuteReader($@"{SelectQuery} ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
+            using var db = DataSource.OpenConnection();
+            using IDataReader reader = db.ExecuteReader($@"{SelectQuery} ORDER BY ""LastLevel"" DESC LIMIT @limit", new { limit });
 
             AccountsById = new Dictionary<int, RawAccount>(capacity);
             AccountsByAddress = new Dictionary<string, RawAccount>(capacity);
@@ -65,7 +68,7 @@ namespace Mvkt.Api.Services.Cache
             }
 
             LastUpdate = State.Current.Level;
-            logger.LogInformation("Loaded {cnt} of {total} accounts", AccountsByAddress.Count, State.Current.AccountsCount);
+            logger.LogInformation("Loaded {cnt} of {total} accounts", AccountsByAddress.Count, State.Current.AccountCounter);
         }
 
         public async Task UpdateAsync()
@@ -94,8 +97,8 @@ namespace Mvkt.Api.Services.Cache
             }
             #endregion
 
-            using var db = GetConnection();
-            using var reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
+            await using var db = await DataSource.OpenConnectionAsync();
+            using IDataReader reader = await db.ExecuteReaderAsync($@"{SelectQuery} WHERE ""LastLevel"" > @from", new { from });
 
             var parsers = new Func<IDataReader, RawAccount>[6]
             {
@@ -105,19 +108,45 @@ namespace Mvkt.Api.Services.Cache
                 reader.GetRowParser<RawAccount>(),
                 reader.GetRowParser<RawRollup>(),
                 reader.GetRowParser<RawSmartRollup>()
-
             };
 
-            var cnt = 0;
+            var accounts = new List<RawAccount>(512);
             while (reader.Read())
             {
                 var accType = reader.GetInt32(2);
-                Add(parsers[accType](reader)); // TODO: don't cache new accounts until they are requested
-                cnt++;
+                accounts.Add(parsers[accType](reader)); // TODO: don't cache new accounts until they are requested
             }
 
-            LastUpdate = State.Current.Level;
-            Logger.LogDebug("Updated {cnt} accounts since block {level}", cnt, from);
+            lock (Crit)
+            {
+                #region check limits
+                if (Config.MaxAccounts > 0 && AccountsByAddress.Count + accounts.Count >= Config.MaxAccounts)
+                {
+                    Logger.LogDebug("Cache is full. Clearing...");
+                    var oldest = AccountsByAddress.Values
+                        .Take(AccountsByAddress.Count / 4)
+                        .ToList();
+
+                    foreach (var acc in oldest)
+                    {
+                        AccountsById.Remove(acc.Id);
+                        AccountsByAddress.Remove(acc.Address);
+                    }
+                    Logger.LogDebug("Removed {cnt} oldest accounts", oldest.Count);
+                }
+                #endregion
+
+                foreach (var account in accounts)
+                {
+                    AccountsById[account.Id] = account;
+                    AccountsByAddress[account.Address] = account;
+                    Logger.LogDebug("Account {address} cached", account.Address);
+                }
+
+                LastUpdate = State.Current.Level;
+            }
+
+            Logger.LogDebug("Updated {cnt} accounts since block {level}", accounts.Count, from);
         }
 
         #region extras
@@ -233,7 +262,7 @@ namespace Mvkt.Api.Services.Cache
 
         RawAccount LoadRawAccount(string sql, object param)
         {
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             using var reader = db.ExecuteReader(sql, param);
 
             if (!reader.Read()) return null;
@@ -251,7 +280,7 @@ namespace Mvkt.Api.Services.Cache
 
         async Task<RawAccount> LoadRawAccountAsync(string sql, object param)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             using var reader = await db.ExecuteReaderAsync(sql, param);
 
             if (!reader.Read()) return null;
@@ -292,7 +321,7 @@ namespace Mvkt.Api.Services.Cache
                 {
                     Logger.LogDebug("Cache is full. Clearing...");
                     var oldest = AccountsByAddress.Values
-                        .Take((int)(AccountsByAddress.Count * 0.25))
+                        .Take(AccountsByAddress.Count / 4)
                         .ToList();
 
                     foreach (var acc in oldest)

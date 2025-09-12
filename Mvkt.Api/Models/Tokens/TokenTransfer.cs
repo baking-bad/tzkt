@@ -1,4 +1,5 @@
-﻿using System;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -43,7 +44,8 @@ namespace Mvkt.Api.Models
         /// Amount of tokens transferred (raw value, not divided by `decimals`).  
         /// **[sortable]**
         /// </summary>
-        public string Amount { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger Amount { get; set; }
 
         /// <summary>
         /// Internal MvKT id of the transaction operation, caused the token transfer.

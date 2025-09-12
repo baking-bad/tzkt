@@ -6,11 +6,11 @@ using Mvkt.Data;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<bool?> GetOriginationStatus(string hash)
         {
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await GetStatus(db, nameof(MvktContext.OriginationOps), hash);
         }
 
@@ -22,7 +22,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Level", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -38,7 +38,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51)
                 ORDER BY    o.""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             #region include storage
@@ -129,7 +129,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter
                 ORDER BY    o.""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter });
 
             #region include storage
@@ -220,7 +220,7 @@ namespace Mvkt.Api.Repositories
                 WHERE       o.""OpHash"" = @hash::character(51) AND o.""Counter"" = @counter AND o.""Nonce"" = @nonce
                 LIMIT       1";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash, counter, nonce });
 
             #region include storage
@@ -307,7 +307,7 @@ namespace Mvkt.Api.Repositories
                 WHERE     ""Level"" = @level
                 ORDER BY  ""Id""";
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row =>
@@ -379,6 +379,9 @@ namespace Mvkt.Api.Repositories
             bool includeBigmaps = false)
         {
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
@@ -430,7 +433,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             #region include storage
@@ -579,6 +582,9 @@ namespace Mvkt.Api.Repositories
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
 
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
@@ -625,7 +631,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -866,6 +872,9 @@ namespace Mvkt.Api.Repositories
                 joins.Add(@"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""");
 
             #region opts
+            if (offset?.Cr == 0 && (sort == null || sort.Asc == "id" || sort.Asc == "level"))
+                offset.Cr = null;
+
             if (ImplicitSortByLevel)
             {
                 if ((level != null || timestamp != null) && offset?.Cr == null)
@@ -912,7 +921,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation

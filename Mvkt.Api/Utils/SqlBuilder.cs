@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Numerics;
 using System.Text;
 using System.Text.RegularExpressions;
 using Dapper;
@@ -135,6 +133,19 @@ namespace Mvkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(string column, AccountTypeParameter type)
+        {
+            if (type == null) return this;
+
+            if (type.Eq != null)
+                AppendFilter($@"{column} = {type.Eq}");
+
+            if (type.Ne != null)
+                AppendFilter($@"{column} != {type.Ne}");
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, BakingRightTypeParameter type)
         {
             if (type == null) return this;
@@ -199,7 +210,7 @@ namespace Mvkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, AutostakingActionParameter action)
+        public SqlBuilder FilterA(string column, StakingActionParameter action)
         {
             if (action == null) return this;
 
@@ -218,7 +229,7 @@ namespace Mvkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string column, StakingOperationKindParameter value)
+        public SqlBuilder FilterA(string column, StakingUpdateTypeParameter value)
         {
             if (value == null) return this;
 
@@ -367,6 +378,45 @@ namespace Mvkt.Api
 
             if (status.Ni != null && status.Ni.Count > 0)
                 AppendFilter($@"NOT (""{column}"" = ANY ({Param(status.Ni)}))");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, UnstakeRequestStatusParameter status, int unfrozenCycle)
+        {
+            if (status == null) return this;
+
+            if (status.Eq != null)
+            {
+                switch (status.Eq)
+                {
+                    case UnstakeRequestStatuses.Pending:
+                        AppendFilter($"{cycleCol} > {unfrozenCycle}");
+                        break;
+                    case UnstakeRequestStatuses.Finalizable:
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} != 0)");
+                        break;
+                    case UnstakeRequestStatuses.Finalized:
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} = 0)");
+                        break;
+                }
+            }
+
+            if (status.Ne != null)
+            {
+                switch (status.Ne)
+                {
+                    case UnstakeRequestStatuses.Pending:
+                        AppendFilter($"{cycleCol} <= {unfrozenCycle}");
+                        break;
+                    case UnstakeRequestStatuses.Finalizable:
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} = 0)");
+                        break;
+                    case UnstakeRequestStatuses.Finalized:
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} != 0)");
+                        break;
+                }
+            }
 
             return this;
         }
@@ -1219,6 +1269,44 @@ namespace Mvkt.Api
 
             if (value.Ni != null)
                 AppendFilter($@"({string.Join(" AND ", columns.Select(col => $@"NOT ({col} = ANY ({Param(value.Ni)}))"))})");
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, BigIntegerNullableParameter value)
+        {
+            if (value == null) return this;
+
+            if (value.Eq != null)
+                AppendFilter($"{column} = '{value.Eq}'::numeric");
+
+            if (value.Ne != null)
+                AppendFilter($"({column} IS NULL OR {column} != '{value.Ne}'::numeric)");
+
+            if (value.Gt != null)
+                AppendFilter($"{column} > '{value.Gt}'::numeric");
+
+            if (value.Ge != null)
+                AppendFilter($"{column} >= '{value.Ge}'::numeric");
+
+            if (value.Lt != null)
+                AppendFilter($"{column} < '{value.Lt}'::numeric");
+
+            if (value.Le != null)
+                AppendFilter($"{column} <= '{value.Le}'::numeric");
+
+            if (value.In != null)
+                AppendFilter($"{column} = ANY ({Param(value.In)}::numeric[])");
+
+            if (value.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(value.Ni)}::numeric[])))");
+
+            if (value.Null != null)
+            {
+                AppendFilter(value.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
+            }
 
             return this;
         }

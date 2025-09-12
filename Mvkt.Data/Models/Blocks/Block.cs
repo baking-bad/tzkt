@@ -22,11 +22,13 @@ namespace Mvkt.Data.Models
         public Operations Operations { get; set; }
 
         public long Deposit { get; set; }
-        public long RewardLiquid { get; set; }
+        public long RewardDelegated { get; set; }
         public long RewardStakedOwn { get; set; }
+        public long RewardStakedEdge { get; set; }
         public long RewardStakedShared { get; set; }
-        public long BonusLiquid { get; set; }
+        public long BonusDelegated { get; set; }
         public long BonusStakedOwn { get; set; }
+        public long BonusStakedEdge { get; set; }
         public long BonusStakedShared { get; set; }
         public long Fees { get; set; }
 
@@ -105,6 +107,9 @@ namespace Mvkt.Data.Models
         public List<SmartRollupPublishOperation> SmartRollupPublishOps { get; set; }
         public List<SmartRollupRecoverBondOperation> SmartRollupRecoverBondOps { get; set; }
         public List<SmartRollupRefuteOperation> SmartRollupRefuteOps { get; set; }
+
+        public List<SetDelegateParametersOperation> SetDelegateParametersOps { get; set; }
+        public List<DalPublishCommitmentOperation> DalPublishCommitmentOps { get; set; }
         #endregion
     }
 
@@ -115,9 +120,6 @@ namespace Mvkt.Data.Models
             #region keys
             modelBuilder.Entity<Block>()
                 .HasKey(x => x.Id);
-
-            modelBuilder.Entity<Block>()
-                .HasAlternateKey(x => x.Level);
             #endregion
 
             #region props

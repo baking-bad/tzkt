@@ -3,7 +3,7 @@ using Mvkt.Api.Models;
 
 namespace Mvkt.Api.Repositories
 {
-    public partial class OperationRepository : DbConnection
+    public partial class OperationRepository
     {
         public async Task<int> GetDoubleEndorsingsCount(
             Int32Parameter level,
@@ -13,7 +13,7 @@ namespace Mvkt.Api.Repositories
                 .Filter("Level", level)
                 .Filter("Timestamp", timestamp);
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -28,7 +28,7 @@ namespace Mvkt.Api.Repositories
                 LIMIT       1
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { hash });
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -47,7 +47,7 @@ namespace Mvkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -61,7 +61,7 @@ namespace Mvkt.Api.Repositories
                 ORDER BY    "Id"
                 """;
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql, new { level = block.Level });
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -80,7 +80,7 @@ namespace Mvkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -89,6 +89,7 @@ namespace Mvkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -105,6 +106,7 @@ namespace Mvkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -119,7 +121,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             return rows.Select(row => new DoubleEndorsingOperation
@@ -138,7 +140,7 @@ namespace Mvkt.Api.Repositories
                 LostUnstaked = row.LostUnstaked,
                 LostExternalStaked = row.LostExternalStaked,
                 LostExternalUnstaked = row.LostExternalUnstaked,
-                RoundingLoss = row.RoundingLoss,
+                StakingUpdatesCount = row.StakingUpdatesCount,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -147,6 +149,7 @@ namespace Mvkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -175,13 +178,14 @@ namespace Mvkt.Api.Repositories
                     case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
                     case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
                     case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
-                    case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
+                    case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                         break;
                     case "quote": columns.Add(@"o.""Level"""); break;
                     #region deprecated
+                    case "roundingLoss": columns.Add("0"); break;
                     case "accuserReward":
                         columns.Add(@"o.""Reward""");
                         break;
@@ -190,7 +194,6 @@ namespace Mvkt.Api.Repositories
                         columns.Add(@"o.""LostUnstaked""");
                         columns.Add(@"o.""LostExternalStaked""");
                         columns.Add(@"o.""LostExternalUnstaked""");
-                        columns.Add(@"o.""RoundingLoss""");
                         break;
                     #endregion
                 }
@@ -203,6 +206,7 @@ namespace Mvkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -217,7 +221,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             var result = new object[rows.Count()][];
@@ -284,22 +288,26 @@ namespace Mvkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LostExternalUnstaked;
                         break;
-                    case "roundingLoss":
+                    case "stakingUpdatesCount":
                         foreach (var row in rows)
-                            result[j++][i] = row.RoundingLoss;
+                            result[j++][i] = row.StakingUpdatesCount;
                         break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
                         break;
                     #region deprecated
+                    case "roundingLoss":
+                        foreach (var row in rows)
+                            result[j++][i] = 0;
+                        break;
                     case "accuserReward":
                         foreach (var row in rows)
                             result[j++][i] = row.Reward;
                         break;
                     case "offenderLoss":
                         foreach (var row in rows)
-                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                            result[j++][i] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
                         break;
                     #endregion
                 }
@@ -312,6 +320,7 @@ namespace Mvkt.Api.Repositories
             AnyOfParameter anyof,
             AccountParameter accuser,
             AccountParameter offender,
+            Int64Parameter id,
             Int32Parameter level,
             DateTimeParameter timestamp,
             SortParameter sort,
@@ -338,13 +347,14 @@ namespace Mvkt.Api.Repositories
                 case "lostUnstaked": columns.Add(@"o.""LostUnstaked"""); break;
                 case "lostExternalStaked": columns.Add(@"o.""LostExternalStaked"""); break;
                 case "lostExternalUnstaked": columns.Add(@"o.""LostExternalUnstaked"""); break;
-                case "roundingLoss": columns.Add(@"o.""RoundingLoss"""); break;
+                case "stakingUpdatesCount": columns.Add(@"o.""StakingUpdatesCount"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
                     break;
                 case "quote": columns.Add(@"o.""Level"""); break;
                 #region deprecated
+                case "roundingLoss": columns.Add("0"); break;
                 case "accuserReward":
                     columns.Add(@"o.""Reward""");
                     break;
@@ -353,7 +363,6 @@ namespace Mvkt.Api.Repositories
                     columns.Add(@"o.""LostUnstaked""");
                     columns.Add(@"o.""LostExternalStaked""");
                     columns.Add(@"o.""LostExternalUnstaked""");
-                    columns.Add(@"o.""RoundingLoss""");
                     break;
                 #endregion
             }
@@ -365,6 +374,7 @@ namespace Mvkt.Api.Repositories
                 .Filter(anyof, x => x == "accuser" ? "AccuserId" : "OffenderId")
                 .Filter("AccuserId", accuser, x => "OffenderId")
                 .Filter("OffenderId", offender, x => "AccuserId")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Timestamp""", timestamp)
                 .Take(sort, offset, limit, x => x switch
@@ -379,7 +389,7 @@ namespace Mvkt.Api.Repositories
                     _ => ("Id", "Id")
                 }, "o");
 
-            using var db = GetConnection();
+            await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql.Query, sql.Params);
 
             //TODO: optimize memory allocation
@@ -444,22 +454,26 @@ namespace Mvkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.LostExternalUnstaked;
                     break;
-                case "roundingLoss":
+                case "stakingUpdatesCount":
                     foreach (var row in rows)
-                        result[j++] = row.RoundingLoss;
+                        result[j++] = row.StakingUpdatesCount;
                     break;
                 case "quote":
                     foreach (var row in rows)
                         result[j++] = Quotes.Get(quote, row.Level);
                     break;
                 #region deprecated
+                case "roundingLoss":
+                    foreach (var row in rows)
+                        result[j++] = 0;
+                    break;
                 case "accuserReward":
                     foreach (var row in rows)
                         result[j++] = row.Reward;
                     break;
                 case "offenderLoss":
                     foreach (var row in rows)
-                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked + row.RoundingLoss;
+                        result[j++] = row.LostStaked + row.LostUnstaked + row.LostExternalStaked + row.LostExternalUnstaked;
                     break;
                 #endregion
             }

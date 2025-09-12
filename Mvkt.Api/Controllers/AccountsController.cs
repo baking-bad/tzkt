@@ -38,6 +38,7 @@ namespace Mvkt.Api.Controllers
         /// <param name="type">Filters accounts by type (`user`, `delegate`, `contract`, `rollup`, `smart_rollup`, `ghost`).</param>
         /// <param name="kind">Filters accounts by contract kind (`delegator_contract` or `smart_contract`)</param>
         /// <param name="delegate">Filters accounts by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="stakedPseudotokens">Filters accounts by amount of staked pseudotokens.</param>
         /// <param name="balance">Filters accounts by balance</param>
         /// <param name="staked">Filters accounts by participation in staking</param>
         /// <param name="lastActivity">Filters accounts by last activity level (where the account was updated)</param>
@@ -53,6 +54,7 @@ namespace Mvkt.Api.Controllers
             AccountTypeParameter type,
             ContractKindParameter kind,
             AccountParameter @delegate,
+            BigIntegerNullableParameter stakedPseudotokens,
             Int64Parameter balance,
             BoolParameter staked,
             Int32Parameter lastActivity,
@@ -74,7 +76,7 @@ namespace Mvkt.Api.Controllers
                     return Ok(Enumerable.Empty<Account>());
             }
 
-            if (sort != null && !sort.Validate("id", "balance", "rollupBonds", "firstActivity", "lastActivity", "numTransactions", "numContracts"))
+            if (sort != null && !sort.Validate("id", "balance", "rollupBonds", "firstActivity", "lastActivity", "numTransactions", "numContracts", "stakedPseudotokens"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 
@@ -84,8 +86,9 @@ namespace Mvkt.Api.Controllers
             #endregion
             
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("id", id), ("address", address),  ("type", type), ("kind", kind), ("delegate", @delegate), ("balance", balance), ("staked", staked),
-                ("lastActivity", lastActivity), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
+                ("id", id), ("address", address),  ("type", type), ("kind", kind), ("delegate", @delegate),
+                ("stakedPseudotokens", stakedPseudotokens), ("balance", balance), ("staked", staked), ("lastActivity", lastActivity),
+                ("select", select), ("sort", sort), ("offset", offset), ("limit", limit));
 
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
@@ -93,25 +96,25 @@ namespace Mvkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit);
+                res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Values[0]);
                 else
-                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Values);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Values);
             }
             else
             {
                 if (select.Fields.Length == 1)
-                    res = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
+                    res = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Fields[0]);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Accounts.Get(id, address, type, kind, @delegate, balance, staked, lastActivity, sort, offset, limit, select.Fields)
+                        Rows = await Accounts.Get(id, address, type, kind, @delegate, stakedPseudotokens, balance, staked, lastActivity, sort, offset, limit, select.Fields)
                     };
                 }
             }
@@ -141,7 +144,7 @@ namespace Mvkt.Api.Controllers
         {
             #region optimize
             if (type == null && kind == null && balance == null && staked == null && firstActivity == null)
-                return Ok(State.Current.AccountsCount);
+                return Ok(State.Current.AccountCounter);
 
             if (kind?.Eq != null && type == null)
                 type = new AccountTypeParameter { Eq = 2 };
@@ -484,10 +487,7 @@ namespace Mvkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
             
-            var rawAccount = await Accounts.GetRawAsync(address);
-            var res = rawAccount == null || rawAccount is RawUser && rawAccount.Balance == 0
-                ? State.Current.ManagerCounter
-                : rawAccount.Counter;
+            var res = await Accounts.GetCounterAsync(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -508,7 +508,7 @@ namespace Mvkt.Api.Controllers
             if (ResponseCache.TryGet(query, out var cached))
                 return this.Bytes(cached);
 
-            var res = (await Accounts.GetRawAsync(address))?.Balance ?? 0;
+            var res = await Accounts.GetBalanceAsync(address);
             cached = ResponseCache.Set(query, res);
             return this.Bytes(cached);
         }
@@ -517,7 +517,11 @@ namespace Mvkt.Api.Controllers
         /// Get balance at level
         /// </summary>
         /// <remarks>
-        /// Returns account balance at the specified block
+        /// Returns account balance* at the specified block.  
+        /// \* - for non-baker tz-accounts historical balances do not include staked tez,
+        /// because stakers do not really have staked tez on their balance, they have staking pseudotokens instead.
+        /// If you want to get a full historical balance, including staked tez, use the Tezos node RPC:
+        /// `/chains/main/blocks/{level}/context/contracts/{address}/full_balance`.
         /// </remarks>
         /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="level">Block height at which you want to know account balance</param>
@@ -541,7 +545,11 @@ namespace Mvkt.Api.Controllers
         /// Get balance at date
         /// </summary>
         /// <remarks>
-        /// Returns account balance at the specified datetime
+        /// Returns account balance* at the specified datetime.  
+        /// \* - for non-baker tz-accounts historical balances do not include staked tez,
+        /// because stakers do not really have staked tez on their balance, they have staking pseudotokens instead.
+        /// If you want to get a full historical balance, including staked tez, use the Tezos node RPC:
+        /// `/chains/main/blocks/{level}/context/contracts/{address}/full_balance`.
         /// </remarks>
         /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="datetime">Datetime at which you want to know account balance (e.g. `2020-01-01`, or `2019-12-30T23:42:59Z`)</param>
@@ -565,7 +573,11 @@ namespace Mvkt.Api.Controllers
         /// Get balance history
         /// </summary>
         /// <remarks>
-        /// Returns time series with historical balances (only changes, without duplicates).
+        /// Returns time series with historical balances* (only changes, without duplicates).  
+        /// \* - for non-baker tz-accounts historical balances do not include staked tez,
+        /// because stakers do not really have staked tez on their balance, they have staking pseudotokens instead.
+        /// If you want to get a full historical balance, including staked tez, use the Tezos node RPC:
+        /// `/chains/main/blocks/{level}/context/contracts/{address}/full_balance`.
         /// </remarks>
         /// <param name="address">Account address (starting with mv or KT)</param>
         /// <param name="step">Step of the time series, for example if `step = 1000` you will get balances at blocks `1000, 2000, 3000, ...`.</param>

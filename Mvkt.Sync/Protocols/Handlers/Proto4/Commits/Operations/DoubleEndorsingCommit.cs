@@ -49,9 +49,7 @@ namespace Mvkt.Sync.Protocols.Proto4
                 LostStaked = lostDepositsValue + lostRewardsValue + lostFeesValue,
                 LostUnstaked = 0,
                 LostExternalStaked = 0,
-                LostExternalUnstaked = 0,
-
-                RoundingLoss = 0
+                LostExternalUnstaked = 0
             };
             #endregion
 

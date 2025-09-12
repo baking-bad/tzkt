@@ -46,6 +46,8 @@ namespace Mvkt.Api.Models
     [KnownType(typeof(SmartRollupRefuteOperation))]
     [KnownType(typeof(AutostakingOperation))]
     [KnownType(typeof(StakingOperation))]
+    [KnownType(typeof(SetDelegateParametersOperation))]
+    [KnownType(typeof(DalPublishCommitmentOperation))]
     public abstract class Operation
     {
         /// <summary>
@@ -59,7 +61,7 @@ namespace Mvkt.Api.Models
         public abstract long Id { get; set; }
     }
 
-    public class OperationJsonInheritanceConverter : JsonInheritanceConverter
+    public class OperationJsonInheritanceConverter : JsonInheritanceConverter<Operation>
     {
         public OperationJsonInheritanceConverter(string name) : base(name) { }
 
@@ -187,6 +189,12 @@ namespace Mvkt.Api.Models
 
             if (type == typeof(StakingOperation))
                 return OpTypes.Staking;
+
+            if (type == typeof(SetDelegateParametersOperation))
+                return OpTypes.SetDelegateParameters;
+
+            if (type == typeof(DalPublishCommitmentOperation))
+                return OpTypes.DalPublishCommitment;
 
             return base.GetDiscriminatorValue(type);
         }

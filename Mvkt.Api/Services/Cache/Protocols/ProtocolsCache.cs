@@ -1,23 +1,21 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using Dapper;
+﻿using Dapper;
+using Npgsql;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Api.Services.Cache
 {
-    public class ProtocolsCache : DbConnection
+    public class ProtocolsCache
     {
         public Protocol Current => Protocols[^1];
 
         List<Protocol> Protocols;
+        readonly NpgsqlDataSource DataSource;
         readonly StateCache State;
         readonly ILogger Logger;
 
-        public ProtocolsCache(StateCache state, IConfiguration config, ILogger<ProtocolsCache> logger) : base(config)
+        public ProtocolsCache(NpgsqlDataSource dataSource, StateCache state, ILogger<ProtocolsCache> logger)
         {
+            DataSource = dataSource;
             State = state;
             Logger = logger;
 
@@ -46,7 +44,7 @@ namespace Mvkt.Api.Services.Cache
 
         void InitCache()
         {
-            using var db = GetConnection();
+            using var db = DataSource.OpenConnection();
             Protocols = db.Query<Protocol>(@"SELECT * FROM ""Protocols"" ORDER BY ""Code""").ToList();
         }
     }

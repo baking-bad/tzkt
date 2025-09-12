@@ -1,7 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
-using Microsoft.Extensions.Configuration;
-
 namespace Mvkt.Api.Services.Auth
 {
     public class PasswordAuth : IAuthService

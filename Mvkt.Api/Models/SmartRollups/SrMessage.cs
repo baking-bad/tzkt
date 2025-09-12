@@ -15,6 +15,11 @@
         public int Level { get; set; }
 
         /// <summary>
+        /// Index of the inbox message within the block.  
+        /// </summary>
+        public int Index { get; set; }
+
+        /// <summary>
         /// Timestamp of the block where the message was pushed.
         /// </summary>
         public DateTime Timestamp { get; set; }

@@ -1,4 +1,7 @@
-﻿namespace Mvkt.Api.Models
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
+
+namespace Mvkt.Api.Models
 {
     public class TicketBalanceShort
     {
@@ -23,6 +26,7 @@
         /// <summary>
         /// Balance.  
         /// </summary>
-        public string Balance { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger Balance { get; set; }
     }
 }

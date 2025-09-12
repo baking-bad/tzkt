@@ -1,7 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-namespace Mvkt.Api.Services.Auth
+﻿namespace Mvkt.Api.Services.Auth
 {
     public interface IAuthService
     {

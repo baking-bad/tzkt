@@ -65,18 +65,17 @@ namespace Mvkt.Sync.Protocols.Proto12
 
         protected override async Task MigrateContext(AppState state)
         {
-            var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
-
-            var bakers = await MigrateBakers(nextProto);
-            await MigrateCycles(state, bakers, nextProto);
-            MigrateStatistics(bakers, nextProto);
-        }
-
-        public async Task PostActivation(AppState state)
-        {
-            if (state.Level == 1) return;
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
+
+            var bakers = await MigrateBakers();
+            await MigrateCycles(state, bakers, nextProto);
+            MigrateStatistics(bakers, nextProto);
+
+            if (state.Level == 1) return;
+
+            Proto.Diagnostics.TrackChanges();
+            await Db.SaveChangesAsync();
 
             await MigrateSnapshots(state);
             await MigrateCurrentRights(state, prevProto, nextProto);
@@ -84,13 +83,6 @@ namespace Mvkt.Sync.Protocols.Proto12
 
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
-
-            await Db.SaveChangesAsync();
-        }
-
-        public Task PreDeactivation(AppState state)
-        {
-            throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
         protected override Task RevertContext(AppState state)
@@ -98,7 +90,7 @@ namespace Mvkt.Sync.Protocols.Proto12
             throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
-        async Task<List<Data.Models.Delegate>> MigrateBakers(Protocol nextProto)
+        async Task<List<Data.Models.Delegate>> MigrateBakers()
         {            
             var bakers = await Db.Delegates.ToListAsync();
             foreach (var baker in bakers)
@@ -120,7 +112,6 @@ namespace Mvkt.Sync.Protocols.Proto12
 
             foreach (var cycle in await Db.Cycles.Where(x => x.LastLevel > state.Level).ToListAsync())
             {
-                cycle.SnapshotIndex = 0;
                 cycle.SnapshotLevel = state.Level;
                 cycle.TotalBakers = selectedBakers;
                 cycle.TotalBakingPower = selectedStake;
@@ -129,7 +120,9 @@ namespace Mvkt.Sync.Protocols.Proto12
 
         void MigrateStatistics(List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
-            Cache.Statistics.Current.TotalFrozen = bakers
+            var stats = Cache.Statistics.Current;
+            Db.TryAttach(stats);
+            stats.TotalFrozen = bakers
                 .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
                 .Sum(x => {
                     var activeStake = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
@@ -152,9 +145,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
-                    "StakersCount",
-                    "StakedPseudotokens",
-                    "IssuedPseudotokens"
+                    "StakersCount"
                 )
                 SELECT
                     {state.Level},
@@ -163,8 +154,6 @@ namespace Mvkt.Sync.Protocols.Proto12
                     COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
                     COALESCE("DelegatedBalance", 0),
                     COALESCE("DelegatorsCount", 0),
-                    0,
-                    0,
                     0,
                     0,
                     0
@@ -258,7 +247,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                 bc.OwnDelegatedBalance = baker.StakingBalance - baker.DelegatedBalance;
                 bc.ExternalDelegatedBalance = baker.DelegatedBalance;
                 bc.DelegatorsCount = baker.DelegatorsCount;
-                bc.OwnStakedBalance = baker.StakedBalance;
+                bc.OwnStakedBalance = baker.OwnStakedBalance;
                 bc.ExternalStakedBalance = baker.ExternalStakedBalance;
                 bc.StakersCount = baker.StakersCount;
                 bc.BakingPower = 0;
@@ -452,7 +441,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                         OwnDelegatedBalance = x.StakingBalance - x.DelegatedBalance,
                         ExternalDelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
-                        OwnStakedBalance = x.StakedBalance,
+                        OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         BakingPower = 0,

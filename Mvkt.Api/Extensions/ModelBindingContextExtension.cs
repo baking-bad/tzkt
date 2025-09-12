@@ -1,6 +1,4 @@
-﻿using System;
-using System.Linq;
-using System.Collections.Generic;
+﻿using System.Numerics;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -10,6 +8,66 @@ namespace Mvkt.Api
 {
     static class ModelBindingContextExtension
     {
+        public static bool TryGetBigInteger(this ModelBindingContext bindingContext, string name, ref bool hasValue, out BigInteger? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!BigInteger.TryParse(valueObject.FirstValue, out var value))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid BigInteger value.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = value;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetBigIntegerList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<BigInteger> result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<BigInteger>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!BigInteger.TryParse(rawValue, out var value))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid BigInteger value.");
+                            return false;
+                        }
+                        result.Add(value);
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetNat(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
         {
             result = null;
@@ -1322,6 +1380,29 @@ namespace Mvkt.Api
             return true;
         }
 
+        public static bool TryGetUnstakeRequestStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                bindingContext.ModelState.SetModelValue(name, valueObject);
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!UnstakeRequestStatuses.TryParse(valueObject.FirstValue, out var status))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid unstake request status.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = status;
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetSrCommitmentStatus(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
@@ -1442,7 +1523,7 @@ namespace Mvkt.Api
             return true;
         }
 
-        public static bool TryGetAutostakingAction(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        public static bool TryGetStakingAction(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1452,9 +1533,9 @@ namespace Mvkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!AutostakingActions.TryParse(valueObject.FirstValue, out var value))
+                    if (!StakingActions.TryParse(valueObject.FirstValue, out var value))
                     {
-                        bindingContext.ModelState.TryAddModelError(name, "Invalid autostaking action.");
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid staking action.");
                         return false;
                     }
                     hasValue = true;
@@ -1465,7 +1546,7 @@ namespace Mvkt.Api
             return true;
         }
 
-        public static bool TryGetAutostakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingActionsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1488,9 +1569,9 @@ namespace Mvkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!AutostakingActions.TryParse(rawValue, out var value))
+                        if (!StakingActions.TryParse(rawValue, out var value))
                         {
-                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid autostaking action.");
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid staking action.");
                             return false;
                         }
                         hasValue = true;
@@ -1502,7 +1583,7 @@ namespace Mvkt.Api
             return true;
         }
 
-        public static bool TryGetStakingOperationKind(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
+        public static bool TryGetStakingUpdateType(this ModelBindingContext bindingContext, string name, ref bool hasValue, out int? result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1512,9 +1593,9 @@ namespace Mvkt.Api
                 bindingContext.ModelState.SetModelValue(name, valueObject);
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
-                    if (!StakingOperationKinds.TryParse(valueObject.FirstValue, out var value))
+                    if (!StakingUpdateTypes.TryParse(valueObject.FirstValue, out var value))
                     {
-                        bindingContext.ModelState.TryAddModelError(name, "Invalid staking operation kind.");
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid staking update type.");
                         return false;
                     }
                     hasValue = true;
@@ -1525,7 +1606,7 @@ namespace Mvkt.Api
             return true;
         }
 
-        public static bool TryGetStakingOperationKindsList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
+        public static bool TryGetStakingUpdateTypesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<int> result)
         {
             result = null;
             var valueObject = bindingContext.ValueProvider.GetValue(name);
@@ -1548,9 +1629,9 @@ namespace Mvkt.Api
 
                     foreach (var rawValue in rawValues)
                     {
-                        if (!StakingOperationKinds.TryParse(rawValue, out var value))
+                        if (!StakingUpdateTypes.TryParse(rawValue, out var value))
                         {
-                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid staking operation kind.");
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid staking update type.");
                             return false;
                         }
                         hasValue = true;

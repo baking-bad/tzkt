@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Mvkt.Api.Services.Auth
 {
     public class AuthUser

@@ -111,7 +111,7 @@ namespace Mvkt.Sync.Protocols.Proto3
             #region new cycle
             if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                var futureCycle = block.Cycle + block.Protocol.PreservedCycles;
+                var futureCycle = block.Cycle + block.Protocol.ConsensusRightsDelay;
 
                 FutureBakingRights = await GetBakingRights(block, futureCycle);
                 FutureEndorsingRights = await GetEndorsingRights(block, futureCycle);

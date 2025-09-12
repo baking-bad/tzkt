@@ -1,6 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-
-namespace Mvkt.Api.Services
+﻿namespace Mvkt.Api.Services
 {
     public class ResponseCacheConfig
     {

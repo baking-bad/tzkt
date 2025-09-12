@@ -1,6 +1,4 @@
-﻿using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
 
@@ -73,6 +71,16 @@ namespace Mvkt.Api
         /// Example: `?level.ni=12,14,52,69`.
         /// </summary>
         public List<long> Ni { get; set; }
+
+        public bool Empty =>
+            Eq == null &&
+            Ne == null &&
+            Gt == null &&
+            Ge == null &&
+            Lt == null &&
+            Le == null &&
+            In == null &&
+            Ni == null;
 
         public string Normalize(string name)
         {

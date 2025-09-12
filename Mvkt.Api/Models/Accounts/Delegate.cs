@@ -1,4 +1,5 @@
-﻿using NJsonSchema.Annotations;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -61,11 +62,6 @@ namespace Mvkt.Api.Models
         public long StakedBalance { get; set; }
 
         /// <summary>
-        /// Amount of "pseudo-tokens" received after staking. These pseudotokens are used for unstaking.
-        /// </summary>
-        public long StakedPseudotokens { get; set; }
-
-        /// <summary>
         /// Amount that was unstaked, but not yet finalized (i.e. it is still frozen) (micro tez).
         /// </summary>
         public long UnstakedBalance { get; set; }
@@ -87,6 +83,11 @@ namespace Mvkt.Api.Models
         public long ExternalUnstakedBalance { get; set; }
 
         /// <summary>
+        /// Amount that was lost due to inconsistend rounding introduced in Oxford (micro tez).
+        /// </summary>
+        public long RoundingError { get; set; }
+
+        /// <summary>
         /// Total staked balance, which is `stakedBalance + externalStakedBalance`.
         /// </summary>
         public long TotalStakedBalance { get; set; }
@@ -94,18 +95,13 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Total amount of issued "pseudo-tokens". These pseudotokens are used for unstaking.
         /// </summary>
-        public long IssuedPseudotokens { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = true)]
+        public BigInteger? IssuedPseudotokens { get; set; }
 
         /// <summary>
         /// Number of external stakers.
         /// </summary>
         public int StakersCount { get; set; }
-
-        /// <summary>
-        /// Amount lost due to inaccuracy of the economic protocol introduced in Oxford.
-        /// This amount is literally lost, because it is no longer available for the account in any mean, but for some reason it is counted as delegated.
-        /// </summary>
-        public long LostBalance { get; set; }
 
         /// <summary>
         /// Configured max amount allowed to be locked as a security deposit (micro tez)
@@ -429,6 +425,21 @@ namespace Mvkt.Api.Models
         public int AutostakingOpsCount { get; set; }
 
         /// <summary>
+        /// Number of staking updates related to the account
+        /// </summary>
+        public int StakingUpdatesCount { get; set; }
+
+        /// <summary>
+        /// Number of set delegate parameters operations related to the account
+        /// </summary>
+        public int SetDelegateParametersOpsCount { get; set; }
+
+        /// <summary>
+        /// Number of DAL publish commitment operations related to the account
+        /// </summary>
+        public int DalPublishCommitmentOpsCount { get; set; }
+
+        /// <summary>
         /// Block height of the first operation, related to the delegate (baker)
         /// </summary>
         public int FirstActivity { get; set; }
@@ -460,6 +471,11 @@ namespace Mvkt.Api.Models
         public SoftwareAlias Software { get; set; }
 
         #region deprecated
+        /// <summary>
+        /// [DEPRECATED]
+        /// </summary>
+        public long LostBalance => RoundingError;
+
         /// <summary>
         /// [DEPRECATED]
         /// </summary>

@@ -19,15 +19,13 @@ namespace Mvkt.Sync.Protocols.Proto18
                 )
                 SELECT
                     {futureCycle.Index},
-                    snapshot."AccountId",
-                    snapshot."BakerId",
-                    snapshot."OwnDelegatedBalance",
-                    (baker."ExternalStakedBalance"::numeric * snapshot."StakedPseudotokens" / GREATEST(baker."IssuedPseudotokens", 1))::bigint
-                FROM "SnapshotBalances" as snapshot
-                INNER JOIN "SnapshotBalances" as baker
-                        ON baker."AccountId" = snapshot."BakerId" AND baker."BakerId" = snapshot."BakerId" and baker."Level" = snapshot."Level"
-                WHERE snapshot."Level" = {futureCycle.SnapshotLevel}
-                AND snapshot."AccountId" != snapshot."BakerId"
+                    "AccountId",
+                    "BakerId",
+                    "OwnDelegatedBalance",
+                    "OwnStakedBalance"
+                FROM "SnapshotBalances"
+                WHERE "Level" = {futureCycle.SnapshotLevel}
+                AND "AccountId" != "BakerId"
                 """);
         }
     }

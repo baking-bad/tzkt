@@ -1,4 +1,4 @@
-﻿using System;
+﻿using System.Numerics;
 using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
@@ -20,7 +20,8 @@ namespace Mvkt.Api.Models
         /// Token id, unique within the contract.  
         /// **[sortable]**
         /// </summary>
-        public string TokenId { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TokenId { get; set; }
 
         /// <summary>
         /// Token standard (`fa1.2` or `fa2`).
@@ -75,17 +76,20 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Total number of minted tokens (raw value, not divided by `decimals`).
         /// </summary>
-        public string TotalMinted { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TotalMinted { get; set; }
 
         /// <summary>
         /// Total number of burned tokens (raw value, not divided by `decimals`).
         /// </summary>
-        public string TotalBurned { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TotalBurned { get; set; }
 
         /// <summary>
         /// Total number of existing tokens (raw value, not divided by `decimals`).
         /// </summary>
-        public string TotalSupply { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TotalSupply { get; set; }
 
         /// <summary>
         /// Token metadata.  

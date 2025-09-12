@@ -1,4 +1,5 @@
-﻿using NJsonSchema.Annotations;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -17,7 +18,8 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Token id, unique within the contract.
         /// </summary>
-        public string TokenId { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TokenId { get; set; }
 
         /// <summary>
         /// Token standard (either `fa1.2` or `fa2`).
@@ -25,9 +27,10 @@ namespace Mvkt.Api.Models
         public string Standard { get; set; }
 
         /// <summary>
-        /// Total number of existing tokens (raw value, not divided by `decimals`). In historical token balances this field is omitted.
+        /// Total number of existing tokens (raw value, not divided by `decimals`).
         /// </summary>
-        public string TotalSupply { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = false)]
+        public BigInteger TotalSupply { get; set; }
 
         /// <summary>
         /// Token metadata.  

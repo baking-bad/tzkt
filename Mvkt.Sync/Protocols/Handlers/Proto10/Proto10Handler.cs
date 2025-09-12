@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "granada_010";
+        public override string VersionName => "granada_010";
+        public override int VersionNumber => 10;
 
         public Proto10Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto10Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

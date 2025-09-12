@@ -14,7 +14,8 @@ namespace Mvkt.Sync.Protocols
         public override IDiagnostics Diagnostics { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
-        public override string Version => "hangzhou_011";
+        public override string VersionName => "hangzhou_011";
+        public override int VersionNumber => 11;
 
         public Proto11Handler(MavrykNode node, MvktContext db, CacheService cache, QuotesService quotes, IServiceProvider services, IConfiguration config, ILogger<Proto11Handler> logger, IMetrics metrics)
             : base(node, db, cache, quotes, services, config, logger, metrics)

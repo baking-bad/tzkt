@@ -37,7 +37,8 @@ namespace Mvkt.Api.Controllers
             [Range(0, 10000)] int limit = 100)
         {
             #region validate
-            if (sort != null && !sort.Validate("id", "stakingBalance", "balance", "numDelegators", "activationLevel", "deactivationLevel"))
+            if (sort != null && !sort.Validate("id", "stakedBalance", "externalStakedBalance", "delegatedBalance",
+                "stakingBalance", "balance", "numDelegators", "stakersCount", "activationLevel", "deactivationLevel"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

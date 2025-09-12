@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-
 namespace Mvkt.Api.Models
 {
     public class HomeStats

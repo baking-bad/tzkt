@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Mvkt.Api.Models
+﻿namespace Mvkt.Api.Models
 {
     public class UpdateConsensusKeyOperation : Operation
     {

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Mvkt.Api.Models
+﻿namespace Mvkt.Api.Models
 {
     public class DrainDelegateOperation : Operation
     {
@@ -53,6 +51,11 @@ namespace Mvkt.Api.Models
         /// Amount sent from the drained baker to the block baker
         /// </summary>
         public long Fee { get; set; }
+
+        /// <summary>
+        /// The amount of funds burned from the drained baker for account creation (micro tez)
+        /// </summary>
+        public long AllocationFee { get; set; }
 
         #region injecting
         /// <summary>

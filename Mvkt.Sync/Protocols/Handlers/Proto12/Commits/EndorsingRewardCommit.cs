@@ -37,7 +37,7 @@ namespace Mvkt.Sync.Protocols.Proto12
                     Level = block.Level,
                     Timestamp = block.Timestamp,
                     Expected = bakerCycle.FutureEndorsementRewards,
-                    RewardLiquid = bakerCycle.FutureEndorsementRewards
+                    RewardDelegated = bakerCycle.FutureEndorsementRewards
                 });
 
                 Db.TryAttach(bakerCycle);
@@ -46,13 +46,13 @@ namespace Mvkt.Sync.Protocols.Proto12
                     if (bakerCycle.FutureEndorsementRewards != loss)
                         throw new Exception("FutureEndorsementRewards != loss");
 
-                    Ops[^1].RewardLiquid = 0; 
+                    Ops[^1].RewardDelegated = 0; 
                     bakerCycle.MissedEndorsementRewards += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
                 else
                 {
-                    bakerCycle.EndorsementRewardsLiquid += bakerCycle.FutureEndorsementRewards;
+                    bakerCycle.EndorsementRewardsDelegated += bakerCycle.FutureEndorsementRewards;
                     bakerCycle.FutureEndorsementRewards = 0;
                 }
             }
@@ -62,13 +62,13 @@ namespace Mvkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance += op.RewardLiquid;
-                baker.StakingBalance += op.RewardLiquid;
+                baker.Balance += op.RewardDelegated;
+                baker.StakingBalance += op.RewardDelegated;
                 baker.EndorsingRewardsCount++;
 
                 block.Operations |= Operations.EndorsingRewards;
 
-                Cache.Statistics.Current.TotalCreated += op.RewardLiquid;
+                Cache.Statistics.Current.TotalCreated += op.RewardDelegated;
             }
 
             Cache.AppState.Get().EndorsingRewardOpsCount += Ops.Count;
@@ -88,16 +88,16 @@ namespace Mvkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance -= op.RewardLiquid;
-                baker.StakingBalance -= op.RewardLiquid;
+                baker.Balance -= op.RewardDelegated;
+                baker.StakingBalance -= op.RewardDelegated;
                 baker.EndorsingRewardsCount--;
 
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, baker.Id);
                 Db.TryAttach(bakerCycle);
 
                 bakerCycle.FutureEndorsementRewards = op.Expected;
-                if (op.Expected == op.RewardLiquid)
-                    bakerCycle.EndorsementRewardsLiquid -= op.Expected;
+                if (op.Expected == op.RewardDelegated)
+                    bakerCycle.EndorsementRewardsDelegated -= op.Expected;
                 else
                     bakerCycle.MissedEndorsementRewards -= op.Expected;
             }

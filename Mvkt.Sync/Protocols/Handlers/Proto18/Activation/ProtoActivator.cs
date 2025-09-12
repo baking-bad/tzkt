@@ -19,12 +19,17 @@ namespace Mvkt.Sync.Protocols.Proto18
                 .Select(x => x as Data.Models.Delegate);
 
             Cache.Statistics.Current.TotalFrozen = 0;
-            foreach (var baker in bakers)
+
+            await new StakingUpdateCommit(Proto).Apply(bakers.Select(x => new StakingUpdate
             {
-                baker.StakedBalance = baker.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1);
-                baker.TotalStakedBalance = baker.StakedBalance;
-                Cache.Statistics.Current.TotalFrozen += baker.StakedBalance;
-            }
+                Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                Level = 1,
+                Cycle = 0,
+                BakerId = x.Id,
+                StakerId = x.Id,
+                Type = StakingUpdateType.Stake,
+                Amount = x.StakingBalance / (protocol.MaxDelegatedOverFrozenRatio + 1)
+            }).ToList());
 
             return accounts;
         }
@@ -41,7 +46,7 @@ namespace Mvkt.Sync.Protocols.Proto18
 
             foreach (var cycle in cycles)
             {
-                cycle.TotalBakingPower = bakers.Sum(x => Math.Min(x.StakingBalance, x.TotalStakedBalance * (protocol.MaxDelegatedOverFrozenRatio + 1)));
+                cycle.TotalBakingPower = bakers.Sum(x => Math.Min(x.StakingBalance, (x.OwnStakedBalance + x.ExternalStakedBalance) * (protocol.MaxDelegatedOverFrozenRatio + 1)));
                 cycle.TotalBakers = bakers.Count();
 
                 var issuance = issuances.EnumerateArray().First(x => x.RequiredInt32("cycle") == cycle.Index);
@@ -52,7 +57,6 @@ namespace Mvkt.Sync.Protocols.Proto18
                 cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
-                cycle.LBSubsidy = issuance.RequiredInt64("liquidity_baking_subsidy");
             }
 
             return cycles;
@@ -77,10 +81,10 @@ namespace Mvkt.Sync.Protocols.Proto18
                     {
                         Cycle = cycle.Index,
                         BakerId = x.Id,
-                        OwnDelegatedBalance = x.Balance - x.StakedBalance,
+                        OwnDelegatedBalance = x.Balance - x.OwnStakedBalance,
                         ExternalDelegatedBalance = x.DelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
-                        OwnStakedBalance = x.StakedBalance,
+                        OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         BakingPower = 0,
@@ -88,7 +92,7 @@ namespace Mvkt.Sync.Protocols.Proto18
                     };
                     if (x.StakingBalance >= protocol.MinimalStake)
                     {
-                        var bakingPower = Math.Min(x.StakingBalance, x.TotalStakedBalance * (protocol.MaxDelegatedOverFrozenRatio + 1));
+                        var bakingPower = Math.Min(x.StakingBalance, (x.OwnStakedBalance + x.ExternalStakedBalance) * (protocol.MaxDelegatedOverFrozenRatio + 1));
                         var expectedEndorsements = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.EndorsersPerBlock * bakingPower / cycle.TotalBakingPower);
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
@@ -144,16 +148,10 @@ namespace Mvkt.Sync.Protocols.Proto18
             protocol.MaxExternalOverOwnStakeRatio = parameters["global_limit_of_staking_over_baking"]?.Value<int>() ?? 5;
             protocol.StakePowerMultiplier = parameters["edge_of_staking_over_delegation"]?.Value<int>() ?? 2;
             
-            protocol.BaseIssuedPerMinute = parameters["issuance_weights"]?["base_total_issued_per_minute"]?.Value<long>() ?? 85_007_812;
-            protocol.BlockRewardWeight = parameters["issuance_weights"]?["baking_reward_fixed_portion_weight"]?.Value<int>() ?? 5120;
-            protocol.BlockBonusWeight = parameters["issuance_weights"]?["baking_reward_bonus_weight"]?.Value<int>() ?? 5120;
-            protocol.EndorsingRewardWeight = parameters["issuance_weights"]?["attesting_reward_weight"]?.Value<int>() ?? 10240;
-            protocol.NonceRevelationRewardWeight = parameters["issuance_weights"]?["seed_nonce_revelation_tip_weight"]?.Value<int>() ?? 1;
-            protocol.VdfRevelationRewardWeight = parameters["issuance_weights"]?["vdf_revelation_tip_weight"]?.Value<int>() ?? 1;
-            protocol.LBSubsidyWeight = parameters["issuance_weights"]?["liquidity_baking_subsidy_weight"]?.Value<int>() ?? 1280;
+            protocol.DoubleBakingSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 5) * 100;
+            protocol.DoubleEndorsingSlashedPercentage = (parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50) * 100;
 
-            protocol.DoubleBakingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_baking"]?.Value<int>() ?? 5;
-            protocol.DoubleEndorsingSlashedPercentage = parameters["percentage_of_frozen_deposits_slashed_per_double_attestation"]?.Value<int>() ?? 50;
+            protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 
             protocol.BlockDeposit = 0;
             protocol.BlockReward0 = 0;
@@ -172,16 +170,10 @@ namespace Mvkt.Sync.Protocols.Proto18
             protocol.MaxExternalOverOwnStakeRatio = 5;
             protocol.StakePowerMultiplier = 2;
 
-            protocol.BaseIssuedPerMinute = 85_007_812;
-            protocol.BlockRewardWeight = 5120;
-            protocol.BlockBonusWeight = 5120;
-            protocol.EndorsingRewardWeight = 10240;
-            protocol.NonceRevelationRewardWeight = 1;
-            protocol.VdfRevelationRewardWeight = 1;
-            protocol.LBSubsidyWeight = 1280;
+            protocol.DoubleBakingSlashedPercentage = 500;
+            protocol.DoubleEndorsingSlashedPercentage = 5000;
 
-            protocol.DoubleBakingSlashedPercentage = 5;
-            protocol.DoubleEndorsingSlashedPercentage = 50;
+            protocol.DelegateParametersActivationDelay = protocol.ConsensusRightsDelay;
 
             protocol.BlockDeposit = 0;
             protocol.BlockReward0 = 0;
@@ -316,7 +308,10 @@ namespace Mvkt.Sync.Protocols.Proto18
             if (bigmap?.ValueType.IsEqual(valueType.ToBytes()) != true)
                 return;
 
+            Db.TryAttach(state);
+
             var block = await Cache.Blocks.CurrentAsync();
+            Db.TryAttach(block);
             
             var contract = await Cache.Accounts.GetAsync(bigmap.ContractId);
             Db.TryAttach(contract);
@@ -344,7 +339,10 @@ namespace Mvkt.Sync.Protocols.Proto18
                     Db.MigrationOps.Add(migration);
 
                     block.Operations |= Operations.Migrations;
+                    
                     contract.MigrationsCount++;
+                    contract.LastLevel = migration.Level;
+
                     state.MigrationOpsCount++;
 
                     var update = new BigMapUpdate
@@ -379,12 +377,22 @@ namespace Mvkt.Sync.Protocols.Proto18
                     x => x.EnumerateArray().First().RequiredString(),
                     x => x.EnumerateArray().Last().RequiredInt64("own_frozen"));
 
-            foreach (var baker in Cache.Accounts.GetDelegates())
+            var bakers = stakes
+                .Where(x => x.Value > 0)
+                .Select(x => Cache.Accounts.GetDelegate(x.Key));
+
+            Cache.Statistics.Current.TotalFrozen = 0;
+
+            await new StakingUpdateCommit(Proto).Apply(bakers.Select(x => new StakingUpdate
             {
-                Db.TryAttach(baker);
-                baker.StakedBalance = stakes.GetValueOrDefault(baker.Address);
-                baker.TotalStakedBalance = stakes.GetValueOrDefault(baker.Address);
-            }
+                Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                Level = state.Level,
+                Cycle = state.Cycle,
+                BakerId = x.Id,
+                StakerId = x.Id,
+                Type = StakingUpdateType.Stake,
+                Amount = stakes[x.Address]
+            }).ToList());
         }
 
         async Task MigrateCycles(AppState state)
@@ -402,7 +410,6 @@ namespace Mvkt.Sync.Protocols.Proto18
                 cycle.EndorsementRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
-                cycle.LBSubsidy = issuance.RequiredInt64("liquidity_baking_subsidy");
             }
 
         }

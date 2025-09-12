@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Numerics;
+using NJsonSchema.Annotations;
 
 namespace Mvkt.Api.Models
 {
@@ -76,7 +76,8 @@ namespace Mvkt.Api.Models
         /// <summary>
         /// Frozen deposits limit (mumav), or `null` if no limit.
         /// </summary>
-        public string Limit { get; set; }
+        [JsonSchemaType(typeof(string), IsNullable = true)]
+        public BigInteger? Limit { get; set; }
 
         /// <summary>
         /// List of errors provided by the node, injected the operation to the blockchain. `null` if there is no errors
