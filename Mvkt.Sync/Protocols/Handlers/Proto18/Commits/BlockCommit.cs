@@ -110,6 +110,12 @@ namespace Mvkt.Sync.Protocols.Proto18
             Block.BonusStakedEdge = bonusStakedEdge;
             Block.BonusStakedShared = bonusStakedShared;
 
+            if (buffer != null && feeProtocolTreasury != 0)
+            {
+                Db.TryAttach(buffer);
+                buffer.Balance += feeProtocolTreasury;
+            }
+
             Db.TryAttach(burnAddress);
             burnAddress.Balance += feeBurnAddress;
 
