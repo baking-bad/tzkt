@@ -48,6 +48,11 @@ namespace Mvkt.Sync.Protocols.Proto20
                 Db.TryAttach(protocolTreasury);
                 protocolTreasury.Balance += feeProtocolTreasury;
             }
+            else if (buffer != null && feeProtocolTreasury != 0)
+            {
+                Db.TryAttach(buffer);
+                buffer.Balance += feeProtocolTreasury;
+            }
 
             Db.TryAttach(burnAddress);
             burnAddress.Balance += feeBurnAddress;
