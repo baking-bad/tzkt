@@ -54,6 +54,7 @@ namespace Mvkt.Api.Services
         readonly AccountRepository AccountsRepo;
         readonly BakingRightsRepository RightsRepo;
         readonly BlockRepository BlocksRepo;
+        readonly BigMapsRepository BigMapsRepo;
         readonly QuotesRepository QuotesRepo;
         readonly VotingRepository VotingRepo;
 
@@ -67,8 +68,8 @@ namespace Mvkt.Api.Services
         static int LastUpdate;
 
         public HomeService(NpgsqlDataSource dataSource, BakingRightsRepository rights, TimeCache times,
-            BlockRepository blocks, VotingRepository voting, AccountRepository accounts, ProtocolsCache protocols,
-            StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger)
+            BlockRepository blocks, VotingRepository voting, AccountRepository accounts, BigMapsRepository bigMaps,
+            ProtocolsCache protocols, StateCache state, QuotesRepository quotes, IConfiguration config, ILogger<HomeService> logger)
         {
             DataSource = dataSource;
             RightsRepo = rights;
@@ -76,6 +77,7 @@ namespace Mvkt.Api.Services
             BlocksRepo = blocks;
             VotingRepo = voting;
             AccountsRepo = accounts;
+            BigMapsRepo = bigMaps;
             Protocols = protocols;
             State = state;
             QuotesRepo = quotes;
@@ -140,6 +142,7 @@ namespace Mvkt.Api.Services
             // };
             // Quotes disabled: return null price chart to allow /home to work without quotes
             List<ChartPoint<double>> priceChart = null;
+            
             return new HomeStats
             {
                 DailyData = DailyData,
@@ -177,6 +180,8 @@ namespace Mvkt.Api.Services
                     AssetsTab = await GetAssets(); // 100
 
                     var statistics = await GetStatistics(db); // 15
+                    var vestingAmount = await GetVestingAmount(db); // Get vesting amount separately
+                    var burnBalance = await GetBurnBalance(db); // Get burn address balance
 
                     DailyData = await GetDailyData(db); // 260
                     TxsData = await GetTxsData(db); // 2800
@@ -184,7 +189,9 @@ namespace Mvkt.Api.Services
                     MarketData = new MarketData
                     {
                         TotalSupply = statistics.TotalSupply,
-                        CirculatingSupply = statistics.CirculatingSupply
+                        CirculatingSupply = statistics.CirculatingSupply,
+                        VestingAmount = vestingAmount,
+                        TotalBurned = statistics.TotalBurned + burnBalance // Complete burned amount
                     };
                     AccountsData = await GetAccountsData(db); // 320
                     
@@ -257,6 +264,9 @@ namespace Mvkt.Api.Services
         {
             var row = await db.QueryFirstOrDefaultAsync($@"SELECT * FROM ""Statistics"" WHERE ""Level"" = {State.Current.Level}");
 
+            // Calculate vesting amount from vesting factory contract
+            var vestingAmount = await GetVestingAmount(db);
+
             return new Statistics
             {
                 Cycle = row.Cycle,
@@ -275,7 +285,7 @@ namespace Mvkt.Api.Services
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
                             - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
-                                  - row.TotalBurned - row.TotalBanished - row.TotalLost,
+                                  - row.TotalBurned - row.TotalBanished - row.TotalLost - vestingAmount,
             };
         }
 
@@ -407,6 +417,8 @@ namespace Mvkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {currPeriod}
+                    UNION ALL
+                    SELECT 0::bigint AS fee, COALESCE(SUM(""Fees""), 0)::bigint * 0.5 AS burn FROM ""Blocks"" WHERE ""Level"" >= {currPeriod}
                 ) AS current");
             
             var txs = await db.QueryFirstOrDefaultAsync(
@@ -485,6 +497,8 @@ namespace Mvkt.Api.Services
                     SELECT SUM(""BakerFee"")::bigint AS fee, SUM(COALESCE(""StorageFee"", 0))::bigint AS burn FROM ""TxRollupSubmitBatchOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                     UNION ALL
                     SELECT SUM(""BakerFee"")::bigint AS fee, 0::bigint AS burn FROM ""UpdateConsensusKeyOps"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
+                    UNION ALL
+                    SELECT 0::bigint AS fee, COALESCE(SUM(""Fees""), 0)::bigint * 0.5 AS burn FROM ""Blocks"" WHERE ""Level"" >= {prevPeriod} AND ""Level"" < {currPeriod}
                 ) AS previous");
             
             var prevTxs = await db.QueryFirstOrDefaultAsync(
@@ -658,6 +672,58 @@ namespace Mvkt.Api.Services
             }
 
             return result;
+        }
+
+        async Task<long> GetBurnBalance(IDbConnection db)
+        {
+            try
+            {
+                var burnBalance = await db.QueryFirstOrDefaultAsync<long?>($@"
+                    SELECT ""Balance"" FROM ""Accounts"" WHERE ""Address"" = 'mv2burnburnburnburnburnburnbur7hzNeg'") ?? 0;
+                
+                return burnBalance;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to get burn address balance");
+                return 0;
+            }
+        }
+
+        async Task<long> GetVestingAmount(IDbConnection db)
+        {
+            const string vestingFactoryAddress = "KT1MJ2dtHRs5haM8Pcc26WWdCUZ5uKYrjZS9";
+            
+            try
+            {
+                // Query all vesting contract addresses from the bigmap
+                var vestingContracts = await db.QueryAsync<string>($@"
+                    SELECT DISTINCT ""JsonValue""->>'vestingContractAddress' as ""VestingContract""
+                    FROM ""BigMapKeys""
+                    WHERE ""BigMapPtr"" = 34
+                    AND ""Active"" = true
+                    AND ""JsonValue""->>'vestingContractAddress' IS NOT NULL");
+
+                if (!vestingContracts.Any())
+                    return 0;
+
+                // Get the total balance of all vesting contracts
+                var vestingAddresses = vestingContracts.Where(x => !string.IsNullOrEmpty(x)).ToList();
+                if (!vestingAddresses.Any())
+                    return 0;
+
+                var totalVestingBalance = await db.QueryFirstOrDefaultAsync<long>($@"
+                    SELECT COALESCE(SUM(""Balance""), 0)::bigint
+                    FROM ""Accounts""
+                    WHERE ""Address"" = ANY(@addresses)", new { addresses = vestingAddresses });
+
+                return totalVestingBalance;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to calculate vesting amount");
+                return 0;
+            }
         }
         #endregion
 
