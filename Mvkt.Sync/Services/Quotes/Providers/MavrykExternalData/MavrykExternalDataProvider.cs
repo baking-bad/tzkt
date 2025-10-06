@@ -9,16 +9,16 @@ using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Services
 {
-    class MvktQuotesProvider : IQuoteProvider, IDisposable
+    class MavrykExternalDataProvider : IQuoteProvider, IDisposable
     {
-        public const string ProviderName = "MvktQuotes";
+        public const string ProviderName = "MavrykExternalData";
 
         readonly MvktClient Client;
-        readonly MvktQuotesProviderConfig Config;
+        readonly MavrykExternalDataProviderConfig Config;
 
-        public MvktQuotesProvider(IConfiguration config)
+        public MavrykExternalDataProvider(IConfiguration config)
         {
-            Config = config.GetMvktQuotesProviderConfig();
+            Config = config.GetMavrykExternalDataProviderConfig();
             Client = new MvktClient(Config.BaseUrl, Config.Timeout);
         }
 
