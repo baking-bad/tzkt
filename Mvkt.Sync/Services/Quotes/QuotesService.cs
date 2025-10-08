@@ -41,6 +41,8 @@ namespace Mvkt.Sync.Services
             Logger.LogInformation($"Quote provider: {Provider.GetType().Name} ({(Config.Async ? "Async" : "Sync")})");
 
             var state = Cache.AppState.Get();
+            // Gate quotes sync by configured start timestamp (if provided)
+            DateTime startFrom = Config.StartFromUtc ?? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
             if (state.QuoteLevel < state.Level)
             {
                 try
@@ -50,7 +52,7 @@ namespace Mvkt.Sync.Services
                     {
                         var quotes = await Db.Blocks
                             .AsNoTracking()
-                            .Where(x => x.Level > state.QuoteLevel)
+                            .Where(x => x.Level > state.QuoteLevel && x.Timestamp >= startFrom)
                             .OrderBy(x => x.Level)
                             .Take(Chunk)
                             .Select(x => new Quote
@@ -59,6 +61,24 @@ namespace Mvkt.Sync.Services
                                 Timestamp = x.Timestamp
                             })
                             .ToListAsync();
+
+                        if (quotes.Count == 0)
+                        {
+                            // Nothing eligible yet; advance QuoteLevel to the last block before startFrom to avoid re-querying
+                            var nextEligible = await Db.Blocks
+                                .AsNoTracking()
+                                .Where(x => x.Timestamp >= startFrom)
+                                .OrderBy(x => x.Level)
+                                .Select(x => new { x.Level })
+                                .FirstOrDefaultAsync();
+
+                            if (nextEligible != null && nextEligible.Level - 1 > state.QuoteLevel)
+                            {
+                                Db.Database.ExecuteSqlRaw($"UPDATE \"AppState\" SET \"QuoteLevel\" = {nextEligible.Level - 1};");
+                                state.QuoteLevel = nextEligible.Level - 1;
+                            }
+                            break;
+                        }
 
                         var filled = await Provider.FillQuotes(quotes, LastQuote(state));
                         if (filled == 0) throw new Exception("0 quotes filled");
@@ -91,19 +111,61 @@ namespace Mvkt.Sync.Services
             try
             {
                 var state = Cache.AppState.Get();
+                // Gate runtime commit by configured start timestamp (if provided)
+                DateTime startFrom = Config.StartFromUtc ?? DateTime.SpecifyKind(DateTime.MinValue, DateTimeKind.Utc);
                 if (state.Level - state.QuoteLevel < CacheSize)
                 {
                     var quotes = new List<Quote>(state.Level - state.QuoteLevel);
                     for (int level = state.QuoteLevel + 1; level <= state.Level; level++)
                     {
+                        var ts = (await Cache.Blocks.GetAsync(level)).Timestamp;
+                        if (ts < startFrom) continue;
                         quotes.Add(new Quote
                         {
                             Level = level,
-                            Timestamp = (await Cache.Blocks.GetAsync(level)).Timestamp
+                            Timestamp = ts
                         });
                     }
 
-                    var filled = await Provider.FillQuotes(quotes, LastQuote(state));
+                    if (quotes.Count == 0)
+                    {
+                        // Nothing to commit yet due to startFrom gate
+                        return;
+                    }
+
+                    // If all new quotes are within the same minute as the last saved quote,
+                    // reuse last values without hitting the external provider.
+                    var lastQuoteTimestamp = state.QuoteLevel >= 0
+                        ? (await Cache.Blocks.GetAsync(state.QuoteLevel)).Timestamp
+                        : DateTime.MinValue;
+
+                    bool IsSameMinute(DateTime a, DateTime b)
+                        => a.Year == b.Year && a.Month == b.Month && a.Day == b.Day && a.Hour == b.Hour && a.Minute == b.Minute;
+
+                    var lastMinuteKnown = state.QuoteLevel >= 0 ? new DateTime(lastQuoteTimestamp.Year, lastQuoteTimestamp.Month, lastQuoteTimestamp.Day, lastQuoteTimestamp.Hour, lastQuoteTimestamp.Minute, 0, DateTimeKind.Utc) : DateTime.MinValue;
+                    var newestMinute = new DateTime(quotes[^1].Timestamp.Year, quotes[^1].Timestamp.Month, quotes[^1].Timestamp.Day, quotes[^1].Timestamp.Hour, quotes[^1].Timestamp.Minute, 0, DateTimeKind.Utc);
+
+                    int filled;
+                    if (state.QuoteLevel >= 0 && newestMinute <= lastMinuteKnown && quotes.Count > 0)
+                    {
+                        var last = LastQuote(state);
+                        foreach (var q in quotes)
+                        {
+                            q.Btc = last.Btc;
+                            q.Eur = last.Eur;
+                            q.Usd = last.Usd;
+                            q.Cny = last.Cny;
+                            q.Jpy = last.Jpy;
+                            q.Krw = last.Krw;
+                            q.Eth = last.Eth;
+                            q.Gbp = last.Gbp;
+                        }
+                        filled = quotes.Count;
+                    }
+                    else
+                    {
+                        filled = await Provider.FillQuotes(quotes, LastQuote(state));
+                    }
                     if (filled == 0) throw new Exception("0 quotes filled");
 
                     if (filled == 1)
@@ -126,7 +188,7 @@ namespace Mvkt.Sync.Services
                     {
                         var quotes = await Db.Blocks
                             .AsNoTracking()
-                            .Where(x => x.Level > state.QuoteLevel)
+                            .Where(x => x.Level > state.QuoteLevel && x.Timestamp >= startFrom)
                             .OrderBy(x => x.Level)
                             .Take(Chunk)
                             .Select(x => new Quote
@@ -136,7 +198,40 @@ namespace Mvkt.Sync.Services
                             })
                             .ToListAsync();
 
-                        var filled = await Provider.FillQuotes(quotes, LastQuote(state));
+                        if (quotes.Count == 0)
+                        {
+                            // Nothing eligible in this chunk due to startFrom gate
+                            break;
+                        }
+
+                        // Reuse last values if the chunk is still within the same minute as the last saved quote
+                        var lastQuoteTimestamp = state.QuoteLevel >= 0
+                            ? (await Cache.Blocks.GetAsync(state.QuoteLevel)).Timestamp
+                            : DateTime.MinValue;
+                        var lastMinuteKnown = state.QuoteLevel >= 0 ? new DateTime(lastQuoteTimestamp.Year, lastQuoteTimestamp.Month, lastQuoteTimestamp.Day, lastQuoteTimestamp.Hour, lastQuoteTimestamp.Minute, 0, DateTimeKind.Utc) : DateTime.MinValue;
+                        var newestMinute = new DateTime(quotes[^1].Timestamp.Year, quotes[^1].Timestamp.Month, quotes[^1].Timestamp.Day, quotes[^1].Timestamp.Hour, quotes[^1].Timestamp.Minute, 0, DateTimeKind.Utc);
+
+                        int filled;
+                        if (state.QuoteLevel >= 0 && newestMinute <= lastMinuteKnown && quotes.Count > 0)
+                        {
+                            var last = LastQuote(state);
+                            foreach (var q in quotes)
+                            {
+                                q.Btc = last.Btc;
+                                q.Eur = last.Eur;
+                                q.Usd = last.Usd;
+                                q.Cny = last.Cny;
+                                q.Jpy = last.Jpy;
+                                q.Krw = last.Krw;
+                                q.Eth = last.Eth;
+                                q.Gbp = last.Gbp;
+                            }
+                            filled = quotes.Count;
+                        }
+                        else
+                        {
+                            filled = await Provider.FillQuotes(quotes, LastQuote(state));
+                        }
                         if (filled == 0) throw new Exception("0 quotes filled");
 
                         SaveQuotes(quotes.Count == filled ? quotes : quotes.Take(filled));
