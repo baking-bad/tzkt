@@ -5,7 +5,6 @@ namespace Mvkt.Sync.Services
     public class QuotesServiceConfig
     {
         public bool Async { get; set; } = true;
-        public DateTime? StartFromUtc { get; set; }
     }
 
     public static class QuotesServiceConfigExt

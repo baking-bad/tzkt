@@ -12,28 +12,28 @@ services:
     volumes:
       - postgres:/var/lib/postgresql/data
     ports:
-      - 127.0.0.1:5532:5432
+      - 127.0.0.1:5432:5432
 
   api:
     container_name: mvkt-api
     restart: always
-    image: mvkt-api:local 
+    image: mavrykdynamics/mvkt-api:latest
     depends_on:
       - db
     environment:
       ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5000
     ports:
-      - 0.0.0.0:5005:5000
+      - 0.0.0.0:5000:5000
 
   sync:
     container_name: mvkt-sync
     restart: always
-    image: mvkt-sync:local 
+    image: mavrykdynamics/mvkt-sync:latest
     environment:
       ConnectionStrings__DefaultConnection: host=db;port=5432;database=${POSTGRES_DB:-mvkt_db};username=${POSTGRES_USER:-mvkt};password=${POSTGRES_PASSWORD:-qwerty};command timeout=${COMMAND_TIMEOUT:-600};
       Kestrel__Endpoints__Http__Url: http://0.0.0.0:5001
-      MavrykNode__Endpoint: ${NODE_RPC:-https://eugene.rpc.mavryk.network}
+      MavrykNode__Endpoint: ${NODE_RPC:-https://basenet.rpc.mavryk.network/}
     depends_on:
       - db
     ports:
