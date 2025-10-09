@@ -6,7 +6,7 @@
     "DefaultConnection": "host=db;port=5432;database=mvkt_db;username=mvkt;password=qwerty;command timeout=0;"
   },
   "MavrykNode": {
-    "Endpoint": "https://basenet.rpc.mavryk.network"
+    "Endpoint": "https://basenet.rpc.mavryk.network/"
   },
   "Protocols": {
     "Diagnostics": true,
