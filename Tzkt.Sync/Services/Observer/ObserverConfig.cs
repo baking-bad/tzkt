@@ -6,6 +6,7 @@
         public bool Debounce { get; set; } = true;
         public int Period { get; set; } = 1000;
         public int Lag { get; set; } = 0;
+        public bool LessReorgs { get; set; } = true;
     }
 
     public static class ObserverConfigExt
