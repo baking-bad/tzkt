@@ -19,6 +19,7 @@ namespace Tzkt.Sync.Services
 
         readonly CancellationTokenSource _cts = new();
         readonly HeadNotifier _headNotifier = HeadNotifier.Create(_config.GetObserverConfig(), _node, _logger);
+        readonly bool _lessReorgs = _config.GetObserverConfig().LessReorgs;
         readonly Lock _lock = new();
 
         Task? _headNotifierTask;
@@ -266,7 +267,7 @@ namespace Tzkt.Sync.Services
 
         private bool CanApplyUpdates()
         {
-            return _head.Level > _appState.Level || _head.Level == _appState.Level && _head.Hash != _appState.Hash;
+            return _head.Level > _appState.Level || _head.Level == _appState.Level && _head.Hash != _appState.Hash && !_lessReorgs;
         }
     }
 }
