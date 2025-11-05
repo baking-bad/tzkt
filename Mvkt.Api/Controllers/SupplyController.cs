@@ -24,11 +24,11 @@ namespace Mvkt.Api.Controllers
         /// Get total supply
         /// </summary>
         /// <remarks>
-        /// Returns the total supply of tokens.
+        /// Returns the total supply of tokens in normal decimal format (6 decimal places).
         /// </remarks>
         /// <returns></returns>
         [HttpGet("totalSupply")]
-        public async Task<ActionResult<long>> GetTotalSupply()
+        public async Task<ActionResult<decimal>> GetTotalSupply()
         {
             try
             {
@@ -38,8 +38,10 @@ namespace Mvkt.Api.Controllers
                 if (row == null)
                     return NotFound("Statistics not found for current level");
 
-                var totalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
-                                - row.TotalBurned - row.TotalBanished;
+                var totalSupplyMicro = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
+                                     - row.TotalBurned - row.TotalBanished;
+
+                var totalSupply = totalSupplyMicro / 1_000_000m;
 
                 return Ok(totalSupply);
             }
@@ -53,11 +55,11 @@ namespace Mvkt.Api.Controllers
         /// Get circulating supply
         /// </summary>
         /// <remarks>
-        /// Returns the circulating supply of tokens (excluding locked vested funds).
+        /// Returns the circulating supply of tokens (excluding locked vested funds) in normal decimal format (6 decimal places).
         /// </remarks>
         /// <returns></returns>
         [HttpGet("circulating")]
-        public async Task<ActionResult<long>> GetCirculating()
+        public async Task<ActionResult<decimal>> GetCirculating()
         {
             try
             {
@@ -69,8 +71,10 @@ namespace Mvkt.Api.Controllers
 
                 var vestingAmount = await GetVestingAmount(db);
 
-                var circulatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
-                                      - row.TotalBurned - row.TotalBanished - row.TotalLost - vestingAmount;
+                var circulatingSupplyMicro = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
+                                           - row.TotalBurned - row.TotalBanished - row.TotalLost - vestingAmount;
+
+                var circulatingSupply = circulatingSupplyMicro / 1_000_000m;
 
                 return Ok(circulatingSupply);
             }
