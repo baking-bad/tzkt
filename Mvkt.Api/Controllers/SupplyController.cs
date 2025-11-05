@@ -27,7 +27,7 @@ namespace Mvkt.Api.Controllers
         /// Returns the total supply of tokens.
         /// </remarks>
         /// <returns></returns>
-        [HttpGet("total_supply")]
+        [HttpGet("totalSupply")]
         public async Task<ActionResult<long>> GetTotalSupply()
         {
             try
