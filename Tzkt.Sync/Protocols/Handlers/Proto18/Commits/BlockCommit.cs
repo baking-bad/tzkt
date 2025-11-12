@@ -38,7 +38,6 @@ namespace Tzkt.Sync.Protocols.Proto18
             var payloadRound = header.RequiredInt32("payload_round");
             var blockRound = Hex.Parse(header.RequiredArray("fitness", 5)[4].RequiredString()).ToInt32();
             var lbVote = header.RequiredString("liquidity_baking_toggle_vote");
-            var aiVote = header.RequiredString("adaptive_issuance_vote");
 
             Block = new Block
             {
@@ -55,8 +54,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Events = events,
                 LBToggle = lbVote == "on" ? true : lbVote == "off" ? false : null,
                 LBToggleEma = metadata.RequiredInt32("liquidity_baking_toggle_ema"),
-                AIToggle = aiVote == "on" ? true : aiVote == "off" ? false : null,
-                AIToggleEma = metadata.RequiredInt32("adaptive_issuance_vote_ema")
+                AIToggle = GetAiToggle(header),
+                AIToggleEma = GetAiToggleEma(metadata)
             };
 
             Db.TryAttach(protocol); // if we don't attach it, ef will recognize it as 'added'
@@ -279,6 +278,17 @@ namespace Tzkt.Sync.Protocols.Proto18
             }
 
             return (rewardDelegated, rewardStakedOwn, 0L, 0L, bonusDelegated, bonusStakedOwn, 0L, 0L);
+        }
+
+        protected virtual bool? GetAiToggle(JsonElement header)
+        {
+            var aiVote = header.RequiredString("adaptive_issuance_vote");
+            return aiVote == "on" ? true : aiVote == "off" ? false : null;
+        }
+
+        protected virtual int GetAiToggleEma(JsonElement metadata)
+        {
+            return metadata.RequiredInt32("adaptive_issuance_vote_ema");
         }
     }
 }
