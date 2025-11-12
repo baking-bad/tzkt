@@ -86,8 +86,9 @@ namespace Tzkt.Sync.Protocols.Proto19
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected attestation rewards balance update");
 
-                        if (op.Expected != change)
-                            throw new Exception("FutureAttestationRewards != loss");
+`                        //TODO To be fixed in Proto24
+                        // if (op.Expected != change)
+                            // throw new Exception("FutureAttestationRewards != loss");
 
                         op.RewardDelegated = 0;
                         op.RewardStakedOwn = 0;

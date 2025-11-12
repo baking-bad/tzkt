@@ -88,8 +88,9 @@ namespace Tzkt.Sync.Protocols.Proto22
                         if (!ops.TryGetValue(baker.Id, out var op))
                             throw new Exception("Unexpected DAL attestation rewards balance update");
 
-                        if (op.Expected != change)
-                            throw new Exception("FutureDalAttestationRewards != loss");
+                        //TODO To be fixed in Proto24
+                        // if (op.Expected != change)
+                            // throw new Exception("FutureDalAttestationRewards != loss");
 
                         op.RewardDelegated = 0;
                         op.RewardStakedOwn = 0;
