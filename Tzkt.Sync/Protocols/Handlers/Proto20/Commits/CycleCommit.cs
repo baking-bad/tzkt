@@ -74,6 +74,6 @@ namespace Tzkt.Sync.Protocols.Proto20
 
         protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;
         protected virtual long GetBlockBonusPerSlot(JsonElement issuance) => issuance.RequiredInt64("baking_reward_bonus_per_slot");
-        protected virtual long GetAttestationBonusPerSlot(JsonElement issuance) => issuance.RequiredInt64("attesting_reward_per_slot ");
+        protected virtual long GetAttestationBonusPerSlot(JsonElement issuance) => issuance.RequiredInt64("attesting_reward_per_slot");
     }
 }
