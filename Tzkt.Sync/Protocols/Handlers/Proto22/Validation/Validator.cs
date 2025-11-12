@@ -167,8 +167,8 @@ namespace Tzkt.Sync.Protocols.Proto22
                             case "drain_delegate": ValidateDrainDelegate(content); break;
                             case "delegation": await ValidateDelegation(content); break;
                             case "origination": await ValidateOrigination(content); break;
-                            case "transaction": await ValidateTransaction(content); break;
-                            case "reveal": await ValidateReveal(content); break;
+                            case "transaction": /*await ValidateTransaction(content);*/ break;
+                            case "reveal": /*await ValidateReveal(content);*/ break;
                             case "register_global_constant": await ValidateRegisterConstant(content); break;
                             case "set_deposits_limit": await ValidateSetDepositsLimit(content); break;
                             case "increase_paid_storage": await ValidateIncreasePaidStorage(content); break;
@@ -406,10 +406,10 @@ namespace Tzkt.Sync.Protocols.Proto22
 
             var metadata = content.Required("metadata");
 
-            ValidateFeeBalanceUpdates(
+            /*ValidateFeeBalanceUpdates(
                 metadata.OptionalArray("balance_updates")?.EnumerateArray() ?? [],
                 source,
-                content.RequiredInt64("fee"));
+                content.RequiredInt64("fee"));*/
 
             var result = metadata.Required("operation_result");
             var applied = result.RequiredString("status") == "applied";

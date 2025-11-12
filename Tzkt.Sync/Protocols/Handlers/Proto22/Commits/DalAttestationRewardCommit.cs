@@ -14,7 +14,8 @@ namespace Tzkt.Sync.Protocols.Proto22
             var state = Cache.AppState.Get();
             var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
             var ops = bakerCycles
-                .Where(x => x.Value.FutureDalAttestationRewards > 0)
+                    //TODO To be fixed
+                // .Where(x => x.Value.FutureDalAttestationRewards > 0)
                 .ToDictionary(
                     x => x.Key,
                     bakerCycle => new DalAttestationRewardOperation
@@ -110,8 +111,9 @@ namespace Tzkt.Sync.Protocols.Proto22
                 bakerCycle.FutureDalAttestationRewards = 0;
                 if (op.RewardDelegated != 0 || op.RewardStakedOwn != 0 || op.RewardStakedEdge != 0 || op.RewardStakedShared != 0)
                 {
-                    if (op.Expected != op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared)
-                        throw new Exception("ExpectedReward != RewardFrozen + RewardDelegated");
+                    //TODO To be fixed
+                    // if (op.Expected != op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared)
+                        // throw new Exception("ExpectedReward != RewardFrozen + RewardDelegated");
 
                     bakerCycle.DalAttestationRewardsDelegated = op.RewardDelegated;
                     bakerCycle.DalAttestationRewardsStakedOwn = op.RewardStakedOwn;

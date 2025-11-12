@@ -1,4 +1,4 @@
-﻿using Tzkt.Sync.Protocols;
+using Tzkt.Sync.Protocols;
 
 namespace Tzkt.Sync
 {
@@ -38,6 +38,7 @@ namespace Tzkt.Sync
             services.AddScoped<Proto21Handler>();
             services.AddScoped<Proto22Handler>();
             services.AddScoped<Proto23Handler>();
+            services.AddScoped<Proto24Handler>();
         }
 
         public static ProtocolHandler GetProtocolHandler(this IServiceProvider services, int level, string protocol)
@@ -99,6 +100,7 @@ namespace Tzkt.Sync
                 "PsQuebecnLByd3JwTiGadoG4nGWi3HYiLXUjkibeFV8dCFeVMUg" => services.GetRequiredService<Proto21Handler>(),
                 "PsRiotumaAMotcRoDWW1bysEhQy2n1M5fy8JgRp8jjRfHGmfeA7" => services.GetRequiredService<Proto22Handler>(),
                 "PtSeouLouXkxhg39oWzjxDWaCydNfR3RxCUrNe4Q9Ro8BTehcbh" => services.GetRequiredService<Proto23Handler>(),
+                "PsD5wVTJc9Rg228rXbXbeoeEo8g3fgWH211U7V3qjUed11g5Gqk" => services.GetRequiredService<Proto24Handler>(),
                 _ => null,
             };
         }

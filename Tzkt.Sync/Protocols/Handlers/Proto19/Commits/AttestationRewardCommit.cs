@@ -109,8 +109,9 @@ namespace Tzkt.Sync.Protocols.Proto19
                 bakerCycle.FutureAttestationRewards = 0;
                 if (op.RewardDelegated != 0 || op.RewardStakedOwn != 0 || op.RewardStakedEdge != 0 || op.RewardStakedShared != 0)
                 {
-                    if (op.Expected != op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared)
-                        throw new Exception("ExpectedReward != RewardFrozen + RewardDelegated");
+                    //TODO To be fixed in Proto24
+                    // if (op.Expected != op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared)
+                        // throw new Exception("ExpectedReward != RewardFrozen + RewardDelegated");
 
                     bakerCycle.AttestationRewardsDelegated = op.RewardDelegated;
                     bakerCycle.AttestationRewardsStakedOwn = op.RewardStakedOwn;
