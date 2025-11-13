@@ -12,7 +12,8 @@ namespace Tzkt.Sync.Protocols.Proto23
             foreach (var c in content.Required("metadata").RequiredArray("committee").EnumerateArray())
             {
                 var baker = Cache.Accounts.GetExistingDelegate(c.RequiredString("delegate"));
-                var slots = c.RequiredInt32("consensus_power");
+                var consensus = c.Required("consensus_power");
+                var slots = consensus.RequiredInt32("slots");
                 res.Add((opHash, baker.Address, slots));
             }
 
