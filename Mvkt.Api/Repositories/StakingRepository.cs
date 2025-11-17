@@ -489,7 +489,6 @@ namespace Mvkt.Api.Repositories
             var protocol = Protocols.Current;
             await using var db = await DataSource.OpenConnectionAsync();
 
-            // Get network-wide totals
             var total = await db.QueryFirstOrDefaultAsync($"""
                 SELECT  COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
                         COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
@@ -500,7 +499,6 @@ namespace Mvkt.Api.Repositories
                 AND "Staked" = true
             """);
 
-            // Get future cycle rewards
             var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
                 SELECT *
                 FROM "Cycles"
@@ -517,7 +515,6 @@ namespace Mvkt.Api.Repositories
             var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
             var totalRewardsPerMonth = totalRewardsPerYear / 12;
 
-            // Calculate network-wide effective stake
             var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
             var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
             var totalEffectiveStake = 2 * totalStaked + totalDelegated / protocol.StakePowerMultiplier;
@@ -525,28 +522,20 @@ namespace Mvkt.Api.Repositories
             if (totalEffectiveStake == 0)
                 return null;
 
-            // Baker's effective stake
             var bakerEffectiveStake = 2 * delegat.OwnStakedBalance 
                 + delegat.ExternalStakedBalance 
                 + delegat.DelegatedBalance / protocol.StakePowerMultiplier;
 
-            // Base monthly rate (rewards per effective stake unit)
             var baseMonthlyRate = (double)totalRewardsPerMonth / totalEffectiveStake;
 
-            // Baker's expected monthly rewards based on effective stake
             var expectedMonthlyRewards = (long)(baseMonthlyRate * bakerEffectiveStake);
 
-            // Calculate monthly rewards for each component
-            // Own stake: gets 2x the base rate (because it has 2x weight in effective stake)
             var ownStakeMonthlyRewards = baseMonthlyRate * 2 * delegat.OwnStakedBalance;
             
-            // External stake: gets base rate (1x weight, but rewards go to stakers)
             var externalStakeMonthlyRewards = baseMonthlyRate * delegat.ExternalStakedBalance;
             
-            // Delegated: gets base rate / stake power multiplier (reduced weight)
             var delegatedMonthlyRewards = baseMonthlyRate * delegat.DelegatedBalance / protocol.StakePowerMultiplier;
 
-            // Calculate APY for own stake
             var ownStakeMonthlyYield = delegat.OwnStakedBalance > 0
                 ? ownStakeMonthlyRewards / delegat.OwnStakedBalance
                 : 0.0;
@@ -554,7 +543,6 @@ namespace Mvkt.Api.Repositories
                 ? (Math.Pow(1 + ownStakeMonthlyYield, 12) - 1) * 100
                 : 0.0;
 
-            // Calculate APY for external stakers (rewards go to stakers, not baker)
             var externalStakeMonthlyYield = delegat.ExternalStakedBalance > 0
                 ? externalStakeMonthlyRewards / delegat.ExternalStakedBalance
                 : 0.0;
@@ -562,7 +550,6 @@ namespace Mvkt.Api.Repositories
                 ? (Math.Pow(1 + externalStakeMonthlyYield, 12) - 1) * 100
                 : 0.0;
 
-            // Calculate APY for delegators
             var delegationMonthlyYield = delegat.DelegatedBalance > 0
                 ? delegatedMonthlyRewards / delegat.DelegatedBalance
                 : 0.0;
