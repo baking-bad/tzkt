@@ -201,5 +201,26 @@ namespace Mvkt.Api.Controllers
         {
             return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
         }
+
+        /// <summary>
+        /// Get baker statistics
+        /// </summary>
+        /// <remarks>
+        /// Returns aggregated statistics for a baker based on historical rewards data.
+        /// Includes performance metrics, reliability, luck, total income, fees, and more.
+        /// </remarks>
+        /// <param name="address">Baker address (starting with mv)</param>
+        /// <returns></returns>
+        [HttpGet("bakers/{address}/stats")]
+        public async Task<ActionResult<BakerStats>> GetBakerStats(
+            [Required][TzAddress] string address)
+        {
+            var stats = await Rewards.GetBakerStats(address);
+            if (stats == null)
+                return NotFound();
+
+            return Ok(stats);
+        }
     }
 }
+
