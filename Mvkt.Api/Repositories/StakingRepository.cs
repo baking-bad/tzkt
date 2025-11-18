@@ -475,5 +475,106 @@ namespace Mvkt.Api.Repositories
             return result;
         }
         #endregion
+
+        #region baker apy
+        public async Task<BakerApy> GetBakerApy(string address)
+        {
+            var baker = await Accounts.GetAsync(address);
+            if (baker is not Services.Cache.RawDelegate delegat)
+                return null;
+
+            if (!delegat.Staked || delegat.OwnStakedBalance == 0)
+                return null;
+
+            var protocol = Protocols.Current;
+            await using var db = await DataSource.OpenConnectionAsync();
+
+            var total = await db.QueryFirstOrDefaultAsync($"""
+                SELECT  COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
+                        COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
+                        COALESCE(SUM("Balance" - "OwnStakedBalance"), 0)::bigint AS "OwnDelegated",
+                        COALESCE(SUM("DelegatedBalance"), 0)::bigint AS "ExternalDelegated"
+                FROM "Accounts"
+                WHERE "Type" = 1
+                AND "Staked" = true
+            """);
+
+            var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
+                SELECT *
+                FROM "Cycles"
+                ORDER BY "Index" DESC
+                LIMIT 1
+                """);
+
+            var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
+            var maxRewardsPerBlock = futureCycle.BlockReward
+                + futureCycle.BlockBonusPerSlot * (protocol.EndorsersPerBlock - protocol.ConsensusThreshold)
+                + futureCycle.EndorsementRewardPerSlot * protocol.EndorsersPerBlock;
+
+            var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
+            var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
+            var totalRewardsPerMonth = totalRewardsPerYear / 12;
+
+            var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
+            var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
+            var totalEffectiveStake = 2 * totalStaked + totalDelegated / protocol.StakePowerMultiplier;
+
+            if (totalEffectiveStake == 0)
+                return null;
+
+            var bakerEffectiveStake = 2 * delegat.OwnStakedBalance 
+                + delegat.ExternalStakedBalance 
+                + delegat.DelegatedBalance / protocol.StakePowerMultiplier;
+
+            var baseMonthlyRate = (double)totalRewardsPerMonth / totalEffectiveStake;
+
+            var expectedMonthlyRewards = (long)(baseMonthlyRate * bakerEffectiveStake);
+
+            var ownStakeMonthlyRewards = baseMonthlyRate * 2 * delegat.OwnStakedBalance;
+            
+            var externalStakeMonthlyRewards = baseMonthlyRate * delegat.ExternalStakedBalance;
+            
+            var delegatedMonthlyRewards = baseMonthlyRate * delegat.DelegatedBalance / protocol.StakePowerMultiplier;
+
+            var ownStakeMonthlyYield = delegat.OwnStakedBalance > 0
+                ? ownStakeMonthlyRewards / delegat.OwnStakedBalance
+                : 0.0;
+            var ownStakeApy = ownStakeMonthlyYield > 0
+                ? (Math.Pow(1 + ownStakeMonthlyYield, 12) - 1) * 100
+                : 0.0;
+
+            var externalStakeMonthlyYield = delegat.ExternalStakedBalance > 0
+                ? externalStakeMonthlyRewards / delegat.ExternalStakedBalance
+                : 0.0;
+            var externalStakeApy = externalStakeMonthlyYield > 0
+                ? (Math.Pow(1 + externalStakeMonthlyYield, 12) - 1) * 100
+                : 0.0;
+
+            var delegationMonthlyYield = delegat.DelegatedBalance > 0
+                ? delegatedMonthlyRewards / delegat.DelegatedBalance
+                : 0.0;
+            var delegationApy = delegationMonthlyYield > 0
+                ? (Math.Pow(1 + delegationMonthlyYield, 12) - 1) * 100
+                : 0.0;
+
+            var alias = Accounts.GetAlias(delegat.Id);
+
+            return new BakerApy
+            {
+                Address = delegat.Address,
+                Alias = alias?.Name,
+                OwnStakedBalance = delegat.OwnStakedBalance,
+                ExternalStakedBalance = delegat.ExternalStakedBalance,
+                DelegatedBalance = delegat.DelegatedBalance,
+                EffectiveStake = bakerEffectiveStake,
+                TotalEffectiveStake = totalEffectiveStake,
+                TotalMonthlyRewards = totalRewardsPerMonth,
+                ExpectedMonthlyRewards = expectedMonthlyRewards,
+                OwnStakeApy = Math.Round(ownStakeApy, 2),
+                ExternalStakeApy = Math.Round(externalStakeApy, 2),
+                DelegationApy = Math.Round(delegationApy, 2)
+            };
+        }
+        #endregion
     }
 }
