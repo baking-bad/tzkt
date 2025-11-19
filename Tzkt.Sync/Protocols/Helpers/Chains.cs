@@ -21,7 +21,7 @@
             "NetXuTeGinLEqxp" => "quebecnet",
             "NetXPdgaoabtBth" => "rionet",
             "NetXd56aBs1aeW3" => "seoulnet",
-            "NetXQxxuRar4toQ" => "nextnet",
+            "NetXYRoAfQDxZux" => "nextnet",
             _ => "private"
         };
     }

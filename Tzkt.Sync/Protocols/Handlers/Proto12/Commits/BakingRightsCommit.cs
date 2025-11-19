@@ -24,101 +24,83 @@ namespace Tzkt.Sync.Protocols.Proto12
             CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
             var sql = string.Empty;
 
-            if (block.BlockRound == 0 && block.Validations == Context.Protocol.AttestersPerBlock)
-            {
-                CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
-                CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
+            #region load missed rounds
+            var maxExistedRound = CurrentRights
+                .Where(x => x.Type == BakingRightType.Baking)
+                .Select(x => x.Round)
+                .Max();
 
-                sql = $@"
+            if (maxExistedRound < block.BlockRound)
+            {
+                var cycle = await Db.Cycles.FirstAsync(x => x.Index == block.Cycle);
+                var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
+                var sampler = GetSampler(
+                    bakerCycles.Values.Where(x => x.BakingPower > 0).Select(x => (x.BakerId, x.BakingPower)),
+                    block.ProtoCode > 1 && block.Cycle <= Context.Protocol.FirstCycle + Context.Protocol.ConsensusRightsDelay); //TODO: remove this crutch after ithaca is gone
+                #region temporary diagnostics
+                await sampler.Validate(Proto, block.Level, block.Cycle);
+                #endregion
+                var bakingRights = RightsGenerator.GetBakingRights(sampler, cycle, block.Level, block.BlockRound + 1);
+
+                var sqlInsert = @"
+                    INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") VALUES ";
+
+                foreach (var br in bakingRights.SkipWhile(x => x.Round <= maxExistedRound))
+                    sqlInsert += $@"
+                        ({block.Cycle}, {block.Level}, {br.Baker}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.Round}, null),";
+
+                await Db.Database.ExecuteSqlRawAsync(sqlInsert[..^1]);
+
+                //TODO: execute sql with RETURNS to get identity
+                var addedRights = await Db.BakingRights
+                    .Where(x => x.Level == block.Level && x.Type == BakingRightType.Baking && x.Round > maxExistedRound)
+                    .ToListAsync();
+
+                CurrentRights.AddRange(addedRights);
+            }
+            #endregion
+
+            #region remove excess
+            if (CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > block.BlockRound) > 0)
+            {
+                sql += $@"
                     DELETE  FROM ""BakingRights""
                     WHERE   ""Level"" = {block.Level}
                     AND     ""Type"" = {(int)BakingRightType.Baking}
-                    AND     ""Round"" > 0;
-
-                    UPDATE  ""BakingRights""
-                    SET     ""Status"" = {(int)BakingRightStatus.Realized}
-                    WHERE   ""Level"" = {block.Level};";
+                    AND     ""Round"" > {block.BlockRound};";
             }
-            else
+            #endregion
+
+            foreach (var cr in CurrentRights)
+                cr.Status = BakingRightStatus.Missed;
+
+            CurrentRights.First(x => x.Round == block.PayloadRound).Status = BakingRightStatus.Realized;
+            if (block.PayloadRound != block.BlockRound)
+                CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
+
+            if (Context.AttestationOps.Count != 0)
             {
-                #region load missed rounds
-                var maxExistedRound = CurrentRights
-                    .Where(x => x.Type == BakingRightType.Baking)
-                    .Select(x => x.Round)
-                    .Max();
+                var attesters = new HashSet<int>(Context.AttestationOps.Select(x => x.DelegateId));
+                foreach (var ar in CurrentRights.Where(x => x.Type == BakingRightType.Attestation && attesters.Contains(x.BakerId)))
+                    ar.Status = BakingRightStatus.Realized;
+            }
 
-                if (maxExistedRound < block.BlockRound)
-                {
-                    var cycle = await Db.Cycles.FirstAsync(x => x.Index == block.Cycle);
-                    var bakerCycles = await Cache.BakerCycles.GetAsync(block.Cycle);
-                    var sampler = GetSampler(
-                        bakerCycles.Values.Where(x => x.BakingPower > 0).Select(x => (x.BakerId, x.BakingPower)),
-                        block.ProtoCode > 1 && block.Cycle <= Context.Protocol.FirstCycle + Context.Protocol.ConsensusRightsDelay); //TODO: remove this crutch after ithaca is gone
-                    #region temporary diagnostics
-                    await sampler.Validate(Proto, block.Level, block.Cycle);
-                    #endregion
-                    var bakingRights = RightsGenerator.GetBakingRights(sampler, cycle, block.Level, block.BlockRound + 1);
+            var realized = CurrentRights.Where(x => x.Status == BakingRightStatus.Realized);
+            var missed = CurrentRights.Where(x => x.Status == BakingRightStatus.Missed);
 
-                    var sqlInsert = @"
-                        INSERT INTO ""BakingRights"" (""Cycle"", ""Level"", ""BakerId"", ""Type"", ""Status"", ""Round"", ""Slots"") VALUES ";
+            sql += $@"
+                UPDATE  ""BakingRights""
+                SET     ""Status"" = {(int)BakingRightStatus.Realized}
+                WHERE   ""Level"" = {block.Level}
+                AND     ""Id"" = ANY(ARRAY[{string.Join(',', realized.Select(x => x.Id))}]);";
 
-                    foreach (var br in bakingRights.SkipWhile(x => x.Round <= maxExistedRound))
-                        sqlInsert += $@"
-                            ({block.Cycle}, {block.Level}, {br.Baker}, {(int)BakingRightType.Baking}, {(int)BakingRightStatus.Future}, {br.Round}, null),";
-
-                    await Db.Database.ExecuteSqlRawAsync(sqlInsert[..^1]);
-
-                    //TODO: execute sql with RETURNS to get identity
-                    var addedRights = await Db.BakingRights
-                        .Where(x => x.Level == block.Level && x.Type == BakingRightType.Baking && x.Round > maxExistedRound)
-                        .ToListAsync();
-
-                    CurrentRights.AddRange(addedRights);
-                }
-                #endregion
-
-                #region remove excess
-                if (CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > block.BlockRound) > 0)
-                {
-                    sql += $@"
-                        DELETE  FROM ""BakingRights""
-                        WHERE   ""Level"" = {block.Level}
-                        AND     ""Type"" = {(int)BakingRightType.Baking}
-                        AND     ""Round"" > {block.BlockRound};";
-                }
-                #endregion
-
-                foreach (var cr in CurrentRights)
-                    cr.Status = BakingRightStatus.Missed;
-
-                CurrentRights.First(x => x.Round == block.PayloadRound).Status = BakingRightStatus.Realized;
-                if (block.PayloadRound != block.BlockRound)
-                    CurrentRights.First(x => x.Round == block.BlockRound).Status = BakingRightStatus.Realized;
-
-                if (Context.AttestationOps.Count != 0)
-                {
-                    var attesters = new HashSet<int>(Context.AttestationOps.Select(x => x.DelegateId));
-                    foreach (var ar in CurrentRights.Where(x => x.Type == BakingRightType.Attestation && attesters.Contains(x.BakerId)))
-                        ar.Status = BakingRightStatus.Realized;
-                }
-
-                var realized = CurrentRights.Where(x => x.Status == BakingRightStatus.Realized);
-                var missed = CurrentRights.Where(x => x.Status == BakingRightStatus.Missed);
-
+            if (missed.Any())
+            {
                 sql += $@"
                     UPDATE  ""BakingRights""
-                    SET     ""Status"" = {(int)BakingRightStatus.Realized}
+                    SET     ""Status"" = {(int)BakingRightStatus.Missed}
                     WHERE   ""Level"" = {block.Level}
-                    AND     ""Id"" = ANY(ARRAY[{string.Join(',', realized.Select(x => x.Id))}]);";
-
-                if (missed.Any())
-                {
-                    sql += $@"
-                        UPDATE  ""BakingRights""
-                        SET     ""Status"" = {(int)BakingRightStatus.Missed}
-                        WHERE   ""Level"" = {block.Level}
-                        AND     ""Id"" = ANY(ARRAY[{string.Join(',', missed.Select(x => x.Id))}]);";
-                }
+                    AND     ""Id"" = ANY(ARRAY[{string.Join(',', missed.Select(x => x.Id))}]);";
             }
 
             await Db.Database.ExecuteSqlRawAsync(sql);
@@ -209,7 +191,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .OrderByDescending(x => x.stake)
                 .ThenByDescending(x => Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
 
-            return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
+            return new Sampler([..sorted.Select(x => x.id)], [..sorted.Select(x => x.stake)]);
         }
     }
 }

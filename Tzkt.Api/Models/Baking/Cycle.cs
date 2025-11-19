@@ -55,12 +55,12 @@
         /// <summary>
         /// Bonus reward paid to the block producer in this cycle (micro tez)
         /// </summary>
-        public long BlockBonusPerSlot { get; set; }
+        public long BlockBonusPerBlock { get; set; }
 
         /// <summary>
         /// Reward for attestation in this cycle (micro tez)
         /// </summary>
-        public long AttestationRewardPerSlot { get; set; }
+        public long AttestationRewardPerBlock { get; set; }
 
         /// <summary>
         /// Reward for seed nonce revelation in this cycle (micro tez)
@@ -85,6 +85,14 @@
         #endregion
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long BlockBonusPerSlot => BlockBonusPerBlock / 2333;
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long AttestationRewardPerSlot => AttestationRewardPerBlock / 7000;
         /// <summary>
         /// **DEPRECATED**
         /// </summary>

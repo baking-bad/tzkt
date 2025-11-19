@@ -38,7 +38,6 @@ namespace Tzkt.Sync.Protocols.Proto18
             var payloadRound = header.RequiredInt32("payload_round");
             var blockRound = Hex.Parse(header.RequiredArray("fitness", 5)[4].RequiredString()).ToInt32();
             var lbVote = header.RequiredString("liquidity_baking_toggle_vote");
-            var aiVote = header.RequiredString("adaptive_issuance_vote");
 
             Block = new Block
             {
@@ -54,9 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 ProducerId = producer.Id,
                 Events = events,
                 LBToggle = lbVote == "on" ? true : lbVote == "off" ? false : null,
-                LBToggleEma = metadata.RequiredInt32("liquidity_baking_toggle_ema"),
-                AIToggle = aiVote == "on" ? true : aiVote == "off" ? false : null,
-                AIToggleEma = metadata.RequiredInt32("adaptive_issuance_vote_ema")
+                LBToggleEma = metadata.RequiredInt32("liquidity_baking_toggle_ema")
             };
 
             Db.TryAttach(protocol); // if we don't attach it, ef will recognize it as 'added'

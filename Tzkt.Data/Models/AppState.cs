@@ -24,6 +24,7 @@ namespace Tzkt.Data.Models
         #endregion
 
         #region state
+        public int? AbaActivationLevel { get; set; }
         public int PendingDelegateParameters { get; set; }
         #endregion
 

@@ -68,8 +68,6 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
-                AIToggle = row.AIToggle,
-                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, level)
             };
 
@@ -120,8 +118,6 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
-                AIToggle = row.AIToggle,
-                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             };
 
@@ -197,8 +193,6 @@ namespace Tzkt.Api.Repositories
                 Software = row.SoftwareId != null ? Software[row.SoftwareId] : null,
                 LBToggle = row.LBToggle,
                 LBToggleEma = row.LBToggleEma,
-                AIToggle = row.AIToggle,
-                AIToggleEma = row.AIToggleEma,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -246,8 +240,6 @@ namespace Tzkt.Api.Repositories
                     case "quote": columns.Add(@"""Level"""); break;
                     case "lbToggle": columns.Add(@"""LBToggle"""); break; 
                     case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break;
-                    case "aiToggle": columns.Add(@"""AIToggle"""); break;
-                    case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
                 }
             }
 
@@ -386,14 +378,6 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.LBToggleEma;
                         break;
-                    case "aiToggle":
-                        foreach (var row in rows)
-                            result[j++][i] = row.AIToggle;
-                        break;
-                    case "aiToggleEma":
-                        foreach (var row in rows)
-                            result[j++][i] = row.AIToggleEma;
-                        break;
                     case "quote":
                         foreach (var row in rows)
                             result[j++][i] = Quotes.Get(quote, row.Level);
@@ -445,8 +429,6 @@ namespace Tzkt.Api.Repositories
                 case "quote": columns.Add(@"""Level"""); break;
                 case "lbToggle": columns.Add(@"""LBToggle"""); break;
                 case "lbToggleEma": columns.Add(@"""LBToggleEma"""); break;
-                case "aiToggle": columns.Add(@"""AIToggle"""); break;
-                case "aiToggleEma": columns.Add(@"""AIToggleEma"""); break;
             }
 
             if (columns.Count == 0)
@@ -581,14 +563,6 @@ namespace Tzkt.Api.Repositories
                 case "lbToggleEma":
                     foreach (var row in rows)
                         result[j++] = row.LBToggleEma;
-                    break;
-                case "aiToggle":
-                    foreach (var row in rows)
-                        result[j++] = row.AIToggle;
-                    break;
-                case "aiToggleEma":
-                    foreach (var row in rows)
-                        result[j++] = row.AIToggleEma;
                     break;
                 case "quote":
                     foreach (var row in rows)

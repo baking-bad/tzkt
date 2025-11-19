@@ -17,9 +17,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             var issuance = res.EnumerateArray().First(x => x.RequiredInt32("cycle") == FutureCycle!.Index);
 
             FutureCycle!.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
-            FutureCycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-            FutureCycle.MaxBlockReward = FutureCycle.BlockReward + FutureCycle.BlockBonusPerSlot * (Context.Protocol.AttestersPerBlock - Context.Protocol.ConsensusThreshold);
-            FutureCycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+            FutureCycle.BlockBonusPerBlock = issuance.RequiredInt64("baking_reward_bonus_per_slot") * (Context.Protocol.AttestersPerBlock - Context.Protocol.ConsensusThreshold);
+            FutureCycle.AttestationRewardPerBlock = issuance.RequiredInt64("attesting_reward_per_slot") * Context.Protocol.AttestersPerBlock;
             FutureCycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
             FutureCycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
         }

@@ -38,9 +38,6 @@ namespace Tzkt.Data.Models
 
         public bool? LBToggle { get; set; }
         public int LBToggleEma { get; set; }
-
-        public bool? AIToggle { get; set; }
-        public int AIToggleEma { get; set; }
     }
 
     public static class BlockModel

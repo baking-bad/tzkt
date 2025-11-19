@@ -132,16 +132,6 @@
         /// </summary>
         public int LBToggleEma { get; set; }
 
-        /// <summary>
-        /// Adaptive issuance toggle (`true` if enabled, `false` if disabled, or `null` if the baker says 'pass')
-        /// </summary>
-        public bool? AIToggle { get; set; }
-
-        /// <summary>
-        /// Adaptive issuance EMA value with precision of 1000000 for integer computation
-        /// </summary>
-        public int AIToggleEma { get; set; }
-
         #region operations
         /// <summary>
         /// List of attestation (is operation, which specifies the head of the chain as seen by the attester of a given slot)
@@ -374,6 +364,14 @@
         #endregion
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public bool? AIToggle => null;
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int AIToggleEma => 0;
         /// <summary>
         /// **DEPRECATED**
         /// </summary>

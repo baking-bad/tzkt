@@ -53,7 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap bakers
-            foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 == null))
+            foreach (var (pubKey, balance, _) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && (x.Item3 == null || x.Item3[0] != 't')))
             {
                 var address = PubKey.FromBase58(pubKey).Address;
                 if (Cache.Accounts.TryGetCached(address, out var acc))
@@ -82,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap delegated users
-            foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null))
+            foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null && x.Item3[0] == 't'))
             {
                 var address = PubKey.FromBase58(pubKey).Address;
                 if (Cache.Accounts.TryGetCached(address, out var acc))
@@ -190,7 +190,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     StorageSchema = micheStorage.ToBytes(),
                     CodeSchema = micheCode.ToBytes(),
                     Views = micheViews.Any()
-                        ? micheViews.Select(x => x.ToBytes()).ToArray()
+                        ? [..micheViews.Select(x => x.ToBytes())]
                         : null,
                     Current = true
                 };

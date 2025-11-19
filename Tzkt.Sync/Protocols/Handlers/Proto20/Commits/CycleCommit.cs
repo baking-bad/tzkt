@@ -48,15 +48,12 @@ namespace Tzkt.Sync.Protocols.Proto20
                 TotalBakingPower = SelectedStakes.Values.Sum(),
                 Seed = Hex.Parse(context.RequiredString("random_seed")),
                 BlockReward = cycleIssuance.RequiredInt64("baking_reward_fixed_portion"),
-                BlockBonusPerSlot = cycleIssuance.RequiredInt64("baking_reward_bonus_per_slot"),
-                AttestationRewardPerSlot = cycleIssuance.RequiredInt64("attesting_reward_per_slot"),
+                BlockBonusPerBlock = GetBlockBonusPerBlock(cycleIssuance, Context.Protocol),
+                AttestationRewardPerBlock = GetAttestationRewardPerBlock(cycleIssuance, Context.Protocol),
                 NonceRevelationReward = cycleIssuance.RequiredInt64("seed_nonce_revelation_tip"),
                 VdfRevelationReward = cycleIssuance.RequiredInt64("vdf_revelation_tip"),
                 DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(cycleIssuance)
             };
-
-            FutureCycle.MaxBlockReward = FutureCycle.BlockReward
-                + FutureCycle.BlockBonusPerSlot * (Context.Protocol.AttestersPerBlock - Context.Protocol.ConsensusThreshold);
 
             Db.Cycles.Add(FutureCycle);
         }
@@ -71,6 +68,12 @@ namespace Tzkt.Sync.Protocols.Proto20
                 WHERE "Index" = {0}
                 """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
         }
+
+        protected virtual long GetBlockBonusPerBlock(JsonElement issuance, Protocol protocol)
+            => issuance.RequiredInt64("baking_reward_bonus_per_slot") * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
+
+        protected virtual long GetAttestationRewardPerBlock(JsonElement issuance, Protocol protocol)
+            => issuance.RequiredInt64("attesting_reward_per_slot") * protocol.AttestersPerBlock;
 
         protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;
     }

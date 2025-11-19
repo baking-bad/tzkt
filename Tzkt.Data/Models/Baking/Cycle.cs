@@ -15,13 +15,11 @@ namespace Tzkt.Data.Models
         public long TotalBakingPower { get; set; }
 
         public long BlockReward { get; set; }
-        public long BlockBonusPerSlot { get; set; }
-        public long AttestationRewardPerSlot { get; set; }
+        public long BlockBonusPerBlock { get; set; }
+        public long AttestationRewardPerBlock { get; set; }
         public long NonceRevelationReward { get; set; }
         public long VdfRevelationReward { get; set; }
         public long DalAttestationRewardPerShard{ get; set; }
-
-        public long MaxBlockReward { get; set; }
     }
 
     public static class CycleModel

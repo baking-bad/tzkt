@@ -59,9 +59,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var issuance = issuances.EnumerateArray().First(x => x.RequiredInt32("cycle") == cycle.Index);
 
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
-                cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
-                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.BlockBonusPerBlock = GetBlockBonusPerBlock(issuance, protocol);
+                cycle.AttestationRewardPerBlock = GetAttestationRewardPerBlock(issuance, protocol);
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
                 cycle.DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(issuance);
@@ -69,6 +68,12 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             return cycles;
         }
+
+        protected virtual long GetBlockBonusPerBlock(JsonElement issuance, Protocol protocol)
+            => issuance.RequiredInt64("baking_reward_bonus_per_slot") * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
+        
+        protected virtual long GetAttestationRewardPerBlock(JsonElement issuance, Protocol protocol)
+            => issuance.RequiredInt64("attesting_reward_per_slot") * protocol.AttestersPerBlock;
 
         protected virtual long GetDalAttestationRewardPerShard(JsonElement issuance) => 0;
 
@@ -85,6 +90,9 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             foreach (var cycle in cycles)
             {
+                var attestationRewardPerSlot = cycle.AttestationRewardPerBlock / protocol.AttestersPerBlock;
+                var maxBlockReward = cycle.BlockReward + cycle.BlockBonusPerBlock;
+
                 var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
                     var bakerCycle = new BakerCycle
@@ -110,7 +118,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         bakerCycle.BakingPower = bakingPower;
                         bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
-                        bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
+                        bakerCycle.FutureAttestationRewards = expectedAttestations * attestationRewardPerSlot;
                         bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
                         bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * cycle.DalAttestationRewardPerShard;
                     }
@@ -124,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         throw new Exception("Unknown baking right recipient");
 
                     bakerCycle.FutureBlocks++;
-                    bakerCycle.FutureBlockRewards += cycle.MaxBlockReward;
+                    bakerCycle.FutureBlockRewards += maxBlockReward;
                 }
                 #endregion
 
@@ -397,7 +405,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             Cache.Statistics.Current.TotalFrozen = 0;
 
-            await new StakingUpdateCommit(Proto).Apply(bakers.Select(x => new StakingUpdate
+            await new StakingUpdateCommit(Proto).Apply([..bakers.Select(x => new StakingUpdate
             {
                 Id = ++Cache.AppState.Get().StakingUpdatesCount,
                 Level = state.Level,
@@ -406,7 +414,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 StakerId = x.Id,
                 Type = StakingUpdateType.Stake,
                 Amount = stakes[x.Address]
-            }).ToList());
+            })]);
         }
 
         async Task MigrateCycles(AppState state)
@@ -419,11 +427,11 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var issuance = issuances.EnumerateArray().First(x => x.RequiredInt32("cycle") == cycle.Index);
 
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
-                cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold);
-                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.BlockBonusPerBlock = GetBlockBonusPerBlock(issuance, protocol);
+                cycle.AttestationRewardPerBlock = GetAttestationRewardPerBlock(issuance, protocol);
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
+                cycle.DalAttestationRewardPerShard = GetDalAttestationRewardPerShard(issuance);
             }
 
         }
