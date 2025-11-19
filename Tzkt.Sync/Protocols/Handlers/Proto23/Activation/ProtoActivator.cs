@@ -4,7 +4,7 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto23
 {
-    partial class ProtoActivator(ProtocolHandler proto) : Proto21.ProtoActivator(proto)
+    partial class ProtoActivator(ProtocolHandler proto) : Proto22.ProtoActivator(proto)
     {
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {

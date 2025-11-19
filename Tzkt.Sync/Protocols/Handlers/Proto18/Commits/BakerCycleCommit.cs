@@ -6,7 +6,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 {
     class BakerCycleCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public async Task Apply(
+        public virtual async Task Apply(
             Block block,
             Cycle? futureCycle,
             IEnumerable<RightsGenerator.BR>? futureBakingRights,
@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 await ApplyNewCycle(block, futureCycle!, futureBakingRights!, futureAttestationRights!, snapshots!, selectedStakes!);
         }
 
-        protected virtual async Task ApplyCurrentRights(
+        protected async Task ApplyCurrentRights(
             Block block,
             List<BakingRight> currentRights)
         {
@@ -141,6 +141,8 @@ namespace Tzkt.Sync.Protocols.Proto18
             List<SnapshotBalance> snapshots,
             Dictionary<int, long> selectedStakes)
         {
+            var maxBlockReward = futureCycle.BlockReward + futureCycle.BlockBonusPerBlock;
+
             var bakerCycles = snapshots.ToDictionary(x => x.AccountId, snapshot =>
             {
                 var bakerCycle = new BakerCycle
@@ -165,7 +167,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     bakerCycle.BakingPower = bakingPower;
                     bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
                     bakerCycle.ExpectedAttestations = expectedAttestations;
-                    bakerCycle.FutureAttestationRewards = expectedAttestations * futureCycle.AttestationRewardPerSlot;
+                    bakerCycle.FutureAttestationRewards = GetFutureAttestationRewards(Context.Protocol, futureCycle, bakingPower);
                     bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
                     bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * futureCycle.DalAttestationRewardPerShard;
                 }
@@ -179,7 +181,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     throw new Exception("Nonexistent baker cycle");
 
                 bakerCycle.FutureBlocks++;
-                bakerCycle.FutureBlockRewards += futureCycle.MaxBlockReward;
+                bakerCycle.FutureBlockRewards += maxBlockReward;
             }
             #endregion
 
@@ -219,7 +221,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 await RevertNewCycle(block);
         }
 
-        protected virtual async Task RevertCurrentRights(Block block)
+        protected async Task RevertCurrentRights(Block block)
         {
             var currentRights = await Cache.BakingRights.GetAsync(block.Level);
             var currentCycle = await Db.Cycles.SingleAsync(x => x.Index == block.Cycle);
@@ -229,7 +231,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, block.ProposerId!.Value);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureBlockRewards += currentCycle.MaxBlockReward;
+                bakerCycle.FutureBlockRewards += bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
                 bakerCycle.FutureBlocks++;
                 bakerCycle.Blocks--;
                 bakerCycle.BlockRewardsDelegated -= block.RewardDelegated + block.BonusDelegated;
@@ -256,7 +258,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                         if (br.Round == 0)
                         {
-                            bakerCycle.FutureBlockRewards += currentCycle.MaxBlockReward;
+                            bakerCycle.FutureBlockRewards += bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
                             bakerCycle.FutureBlocks++;
                         }
 
@@ -344,6 +346,13 @@ namespace Tzkt.Sync.Protocols.Proto18
                 DELETE FROM "BakerCycles"
                 WHERE "Cycle" = {0}
                 """, block.Cycle + Context.Protocol.ConsensusRightsDelay);
+        }
+
+        protected virtual long GetFutureAttestationRewards(Protocol protocol, Cycle cycle, long bakingPower)
+        {
+            var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
+            var attestationRewardPerSlot = cycle.AttestationRewardPerBlock / Context.Protocol.AttestersPerBlock;
+            return expectedAttestations * attestationRewardPerSlot;
         }
     }
 }

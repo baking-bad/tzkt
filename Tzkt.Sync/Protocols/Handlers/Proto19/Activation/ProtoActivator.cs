@@ -159,9 +159,8 @@ namespace Tzkt.Sync.Protocols.Proto19
             foreach (var cycle in cycles.Where(x => x.Index > state.Cycle))
             {
                 cycle.BlockReward = issuance.RequiredInt64("baking_reward_fixed_portion");
-                cycle.BlockBonusPerSlot = issuance.RequiredInt64("baking_reward_bonus_per_slot");
-                cycle.MaxBlockReward = cycle.BlockReward + cycle.BlockBonusPerSlot * (nextProto.AttestersPerBlock - nextProto.ConsensusThreshold);
-                cycle.AttestationRewardPerSlot = issuance.RequiredInt64("attesting_reward_per_slot");
+                cycle.BlockBonusPerBlock = GetBlockBonusPerBlock(issuance, nextProto);
+                cycle.AttestationRewardPerBlock = GetAttestationRewardPerBlock(issuance, nextProto);
                 cycle.NonceRevelationReward = issuance.RequiredInt64("seed_nonce_revelation_tip");
                 cycle.VdfRevelationReward = issuance.RequiredInt64("vdf_revelation_tip");
 
@@ -260,6 +259,9 @@ namespace Tzkt.Sync.Protocols.Proto19
                     #endregion
 
                     #region reset baker cycles
+                    var attestationRewardPerSlot = cycle.AttestationRewardPerBlock / nextProto.AttestersPerBlock;
+                    var maxBlockReward = cycle.BlockReward + cycle.BlockBonusPerBlock;
+
                     foreach (var bakerCycle in bakerCycles.Values)
                     {
                         Db.TryAttach(bakerCycle);
@@ -271,7 +273,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                         var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
                         bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
-                        bakerCycle.FutureAttestationRewards = expectedAttestations * cycle.AttestationRewardPerSlot;
+                        bakerCycle.FutureAttestationRewards = expectedAttestations * attestationRewardPerSlot;
                     }
 
                     foreach (var br in brs.Where(x => x.Round == 0))
@@ -280,7 +282,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                             throw new Exception("Nonexistent baker cycle");
 
                         bakerCycle.FutureBlocks++;
-                        bakerCycle.FutureBlockRewards += cycle.MaxBlockReward;
+                        bakerCycle.FutureBlockRewards += maxBlockReward;
                     }
 
                     foreach (var ar in shifted)
@@ -300,7 +302,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                     }
                     #endregion
 
-                    shifted = ars.Where(x => x.Level == cycle.LastLevel).ToList();
+                    shifted = [..ars.Where(x => x.Level == cycle.LastLevel)];
                 }
             }
         }
@@ -313,7 +315,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                 return new byte[] { (byte)baker.PublicKey![0] }.Concat(Base58.Parse(baker.Address));
             }, new BytesComparer());
 
-            return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
+            return new Sampler([..sorted.Select(x => x.id)], [..sorted.Select(x => x.stake)]);
         }
     }
 }

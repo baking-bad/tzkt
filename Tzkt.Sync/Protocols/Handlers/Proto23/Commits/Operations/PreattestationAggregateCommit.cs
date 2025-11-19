@@ -12,11 +12,16 @@ namespace Tzkt.Sync.Protocols.Proto23
             foreach (var c in content.Required("metadata").RequiredArray("committee").EnumerateArray())
             {
                 var baker = Cache.Accounts.GetExistingDelegate(c.RequiredString("delegate"));
-                var slots = c.RequiredInt32("consensus_power");
+                var slots = GetAttestedSlots(c);
                 res.Add((opHash, baker.Address, slots));
             }
 
             return res;
+        }
+
+        protected virtual int GetAttestedSlots(JsonElement c)
+        {
+            return c.RequiredInt32("consensus_power");
         }
     }
 }

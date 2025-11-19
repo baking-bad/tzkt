@@ -256,6 +256,9 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<int?>("AbaActivationLevel")
+                        .HasColumnType("integer");
+
                     b.Property<int>("AccountCounter")
                         .HasColumnType("integer");
 
@@ -1253,12 +1256,6 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
-                    b.Property<bool?>("AIToggle")
-                        .HasColumnType("boolean");
-
-                    b.Property<int>("AIToggleEma")
-                        .HasColumnType("integer");
-
                     b.Property<int>("BlockRound")
                         .HasColumnType("integer");
 
@@ -1457,10 +1454,10 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<long>("AttestationRewardPerSlot")
+                    b.Property<long>("AttestationRewardPerBlock")
                         .HasColumnType("bigint");
 
-                    b.Property<long>("BlockBonusPerSlot")
+                    b.Property<long>("BlockBonusPerBlock")
                         .HasColumnType("bigint");
 
                     b.Property<long>("BlockReward")
@@ -1477,9 +1474,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
-
-                    b.Property<long>("MaxBlockReward")
-                        .HasColumnType("bigint");
 
                     b.Property<long>("NonceRevelationReward")
                         .HasColumnType("bigint");
@@ -4736,7 +4730,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TargetId");
 
                     b.HasIndex(new[] { "TargetId" }, "IX_TransactionOps_TargetId_Partial")
-                        .HasFilter("\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
+                        .HasFilter("\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
 
                     b.ToTable("TransactionOps");
                 });

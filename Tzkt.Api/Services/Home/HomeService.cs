@@ -544,8 +544,8 @@ namespace Tzkt.Api.Services
             var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
             
             var maxRewardsPerBlock = futureCycle.BlockReward
-                + futureCycle.BlockBonusPerSlot * (protocol.AttestersPerBlock - protocol.ConsensusThreshold)
-                + futureCycle.AttestationRewardPerSlot * protocol.AttestersPerBlock
+                + futureCycle.BlockBonusPerBlock
+                + futureCycle.AttestationRewardPerBlock
                 + futureCycle.DalAttestationRewardPerShard * protocol.NumberOfShards
                 + futureCycle.NonceRevelationReward / protocol.BlocksPerCommitment
                 + futureCycle.VdfRevelationReward / protocol.BlocksPerCycle;

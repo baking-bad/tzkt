@@ -50,8 +50,8 @@ namespace Tzkt.Api.Repositories
                 TotalBakers = row.TotalBakers,
                 TotalBakingPower = row.TotalBakingPower,
                 BlockReward = row.BlockReward,
-                BlockBonusPerSlot = row.BlockBonusPerSlot,
-                AttestationRewardPerSlot = row.AttestationRewardPerSlot,
+                BlockBonusPerBlock = row.BlockBonusPerBlock,
+                AttestationRewardPerBlock = row.AttestationRewardPerBlock,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
                 DalAttestationRewardPerShard = row.DalAttestationRewardPerShard,
@@ -83,8 +83,8 @@ namespace Tzkt.Api.Repositories
                 TotalBakers = row.TotalBakers,
                 TotalBakingPower = row.TotalBakingPower,
                 BlockReward = row.BlockReward,
-                BlockBonusPerSlot = row.BlockBonusPerSlot,
-                AttestationRewardPerSlot = row.AttestationRewardPerSlot,
+                BlockBonusPerBlock = row.BlockBonusPerBlock,
+                AttestationRewardPerBlock = row.AttestationRewardPerBlock,
                 NonceRevelationReward = row.NonceRevelationReward,
                 VdfRevelationReward = row.VdfRevelationReward,
                 DalAttestationRewardPerShard = row.DalAttestationRewardPerShard,
@@ -114,8 +114,8 @@ namespace Tzkt.Api.Repositories
                     case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                     case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
                     case "blockReward": columns.Add(@"""BlockReward"""); break;
-                    case "blockBonusPerSlot": columns.Add(@"""BlockBonusPerSlot"""); break;
-                    case "attestationRewardPerSlot": columns.Add(@"""AttestationRewardPerSlot"""); break;
+                    case "blockBonusPerBlock": columns.Add(@"""BlockBonusPerBlock"""); break;
+                    case "attestationRewardPerBlock": columns.Add(@"""AttestationRewardPerBlock"""); break;
                     case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                     case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
                     case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
@@ -180,13 +180,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BlockReward;
                         break;
-                    case "blockBonusPerSlot":
+                    case "blockBonusPerBlock":
                         foreach (var row in rows)
-                            result[j++][i] = row.BlockBonusPerSlot;
+                            result[j++][i] = row.BlockBonusPerBlock;
                         break;
-                    case "attestationRewardPerSlot":
+                    case "attestationRewardPerBlock":
                         foreach (var row in rows)
-                            result[j++][i] = row.AttestationRewardPerSlot;
+                            result[j++][i] = row.AttestationRewardPerBlock;
                         break;
                     case "nonceRevelationReward":
                         foreach (var row in rows)
@@ -230,8 +230,8 @@ namespace Tzkt.Api.Repositories
                 case "totalBakers": columns.Add(@"""TotalBakers"""); break;
                 case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
                 case "blockReward": columns.Add(@"""BlockReward"""); break;
-                case "blockBonusPerSlot": columns.Add(@"""BlockBonusPerSlot"""); break;
-                case "attestationRewardPerSlot": columns.Add(@"""AttestationRewardPerSlot"""); break;
+                case "blockBonusPerBlock": columns.Add(@"""BlockBonusPerBlock"""); break;
+                case "attestationRewardPerBlock": columns.Add(@"""AttestationRewardPerBlock"""); break;
                 case "nonceRevelationReward": columns.Add(@"""NonceRevelationReward"""); break;
                 case "vdfRevelationReward": columns.Add(@"""VdfRevelationReward"""); break;
                 case "dalAttestationRewardPerShard": columns.Add(@"""DalAttestationRewardPerShard"""); break;
@@ -293,13 +293,13 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.BlockReward;
                     break;
-                case "blockBonusPerSlot":
+                case "blockBonusPerBlock":
                     foreach (var row in rows)
-                        result[j++] = row.BlockBonusPerSlot;
+                        result[j++] = row.BlockBonusPerBlock;
                     break;
-                case "attestationRewardPerSlot":
+                case "attestationRewardPerBlock":
                     foreach (var row in rows)
-                        result[j++] = row.AttestationRewardPerSlot;
+                        result[j++] = row.AttestationRewardPerBlock;
                     break;
                 case "nonceRevelationReward":
                     foreach (var row in rows)
