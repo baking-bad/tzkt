@@ -21,7 +21,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<AttestationOperation>> GetAttestations(string hash, Symbols quote)
         {
             var sql = @"
-                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Slots"", o.""Reward"", o.""Deposit"", b.""Hash""
+                SELECT      o.""Id"", o.""Level"", o.""Timestamp"", o.""DelegateId"", o.""Power"", o.""Reward"", o.""Deposit"", b.""Hash""
                 FROM        ""AttestationOps"" as o
                 INNER JOIN  ""Blocks"" as b 
                         ON  b.""Level"" = o.""Level""
@@ -38,7 +38,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Rewards = row.Reward,
                 Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, row.Level)
@@ -48,7 +48,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<AttestationOperation>> GetAttestations(Block block, Symbols quote)
         {
             var sql = @"
-                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Slots"", ""Reward"", ""Deposit""
+                SELECT      ""Id"", ""Timestamp"", ""OpHash"", ""DelegateId"", ""Power"", ""Reward"", ""Deposit""
                 FROM        ""AttestationOps""
                 WHERE       ""Level"" = @level
                 ORDER BY    ""Id""";
@@ -64,7 +64,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Rewards = row.Reward,
                 Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, block.Level)
@@ -135,7 +135,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Rewards = row.Reward,
                 Deposit = row.Deposit,
                 Quote = Quotes.Get(quote, row.Level)
@@ -164,7 +164,7 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "delegate": columns.Add(@"o.""DelegateId"""); break;
-                    case "slots": columns.Add(@"o.""Slots"""); break;
+                    case "power": columns.Add(@"o.""Power"""); break;
                     case "rewards": columns.Add(@"o.""Reward"""); break;
                     case "deposit": columns.Add(@"o.""Deposit"""); break;
                     case "block":
@@ -219,9 +219,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.DelegateId);
                         break;
-                    case "slots":
+                    case "power":
                         foreach (var row in rows)
-                            result[j++][i] = row.Slots;
+                            result[j++][i] = row.Power;
                         break;
                     case "rewards":
                         foreach (var row in rows)
@@ -261,7 +261,7 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "delegate": columns.Add(@"o.""DelegateId"""); break;
-                case "slots": columns.Add(@"o.""Slots"""); break;
+                case "power": columns.Add(@"o.""Power"""); break;
                 case "rewards": columns.Add(@"o.""Reward"""); break;
                 case "deposit": columns.Add(@"o.""Deposit"""); break;
                 case "block":
@@ -313,9 +313,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.DelegateId);
                     break;
-                case "slots":
+                case "power":
                     foreach (var row in rows)
-                        result[j++] = row.Slots;
+                        result[j++] = row.Power;
                     break;
                 case "rewards":
                     foreach (var row in rows)

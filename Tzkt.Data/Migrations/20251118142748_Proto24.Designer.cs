@@ -692,14 +692,14 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength();
 
+                    b.Property<long>("Power")
+                        .HasColumnType("bigint");
+
                     b.Property<int?>("ResetDeactivation")
                         .HasColumnType("integer");
 
                     b.Property<long>("Reward")
                         .HasColumnType("bigint");
-
-                    b.Property<int>("Slots")
-                        .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
@@ -1266,6 +1266,12 @@ namespace Tzkt.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
 
+                    b.Property<long>("AttestationCommittee")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("AttestationPower")
+                        .HasColumnType("bigint");
+
                     b.Property<int>("BlockRound")
                         .HasColumnType("integer");
 
@@ -1352,9 +1358,6 @@ namespace Tzkt.Data.Migrations
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");
-
-                    b.Property<int>("Validations")
-                        .HasColumnType("integer");
 
                     b.HasKey("Id");
 
@@ -2426,8 +2429,8 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("character(51)")
                         .IsFixedLength();
 
-                    b.Property<int>("Slots")
-                        .HasColumnType("integer");
+                    b.Property<long>("Power")
+                        .HasColumnType("bigint");
 
                     b.Property<DateTime>("Timestamp")
                         .HasColumnType("timestamp with time zone");

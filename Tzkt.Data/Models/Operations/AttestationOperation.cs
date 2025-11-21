@@ -8,7 +8,7 @@ namespace Tzkt.Data.Models
     public class AttestationOperation : BaseOperation
     {
         public required int DelegateId { get; set; }
-        public int Slots { get; set; }
+        public long Power { get; set; }
         public long Reward { get; set; }
         public long Deposit { get; set; }
 
@@ -21,7 +21,7 @@ namespace Tzkt.Data.Models
                 COPY "{nameof(TzktContext.AttestationOps)}" (
                     "{nameof(Id)}",
                     "{nameof(DelegateId)}",
-                    "{nameof(Slots)}",
+                    "{nameof(Power)}",
                     "{nameof(Reward)}",
                     "{nameof(Deposit)}",
                     "{nameof(ResetDeactivation)}",
@@ -38,7 +38,7 @@ namespace Tzkt.Data.Models
 
                 writer.Write(op.Id, NpgsqlDbType.Bigint);
                 writer.Write(op.DelegateId, NpgsqlDbType.Integer);
-                writer.Write(op.Slots, NpgsqlDbType.Integer);
+                writer.Write(op.Power, NpgsqlDbType.Bigint);
                 writer.Write(op.Reward, NpgsqlDbType.Bigint);
                 writer.Write(op.Deposit, NpgsqlDbType.Bigint);
                 writer.WriteNullable(op.ResetDeactivation, NpgsqlDbType.Integer);

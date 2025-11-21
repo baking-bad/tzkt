@@ -15,7 +15,8 @@ namespace Tzkt.Data.Models
 
         public int PayloadRound { get; set; }
         public int BlockRound { get; set; }
-        public int Validations { get; set; }
+        public long AttestationPower { get; set; }
+        public long AttestationCommittee { get; set; }
         public BlockEvents Events { get; set; }
         public Operations Operations { get; set; }
 

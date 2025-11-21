@@ -8,10 +8,10 @@ namespace Tzkt.Sync.Protocols.Proto12
         public void Apply(Block block, JsonElement op, JsonElement content)
         {
             var metadata = content.Required("metadata");
-            Apply(block, op.RequiredString("hash"), metadata.RequiredString("delegate"), GetPreattestedSlots(metadata));
+            Apply(block, op.RequiredString("hash"), metadata.RequiredString("delegate"), GetPower(metadata));
         }
 
-        public void Apply(Block block, string opHash, string bakerAddress, int slots)
+        public void Apply(Block block, string opHash, string bakerAddress, long power)
         {
             var baker = Cache.Accounts.GetExistingDelegate(bakerAddress);
 
@@ -21,7 +21,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = opHash,
-                Slots = slots,
+                Power = power,
                 DelegateId = baker.Id
             };
 
@@ -50,6 +50,6 @@ namespace Tzkt.Sync.Protocols.Proto12
             return Task.CompletedTask;
         }
 
-        protected virtual int GetPreattestedSlots(JsonElement metadata) => metadata.OptionalInt32("preendorsement_power") ?? metadata.RequiredInt32("consensus_power");
+        protected virtual long GetPower(JsonElement metadata) => metadata.OptionalInt64("preendorsement_power") ?? metadata.RequiredInt64("consensus_power");
     }
 }

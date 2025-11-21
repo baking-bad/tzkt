@@ -38,9 +38,14 @@
         public int BlockRound { get; set; }
 
         /// <summary>
-        /// Number of attestations (slots), included into the block
+        /// Recorder attestation power
         /// </summary>
-        public int Validations { get; set; }
+        public long AttestationPower { get; set; }
+
+        /// <summary>
+        /// Total attestation committee power
+        /// </summary>
+        public long AttestationCommittee { get; set; }
 
         /// <summary>
         /// Security deposit frozen on the baker's account for producing the block (micro tez)
@@ -364,6 +369,10 @@
         #endregion
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int Validations => AttestationPower > 7000 ? 0 : (int)AttestationPower;
         /// <summary>
         /// **DEPRECATED**
         /// </summary>

@@ -2,13 +2,11 @@
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class PreattestationsCommit : Proto12.PreattestationsCommit
+    class PreattestationsCommit(ProtocolHandler protocol) : Proto12.PreattestationsCommit(protocol)
     {
-        public PreattestationsCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        protected override int GetPreattestedSlots(JsonElement metadata)
+        protected override long GetPower(JsonElement metadata)
         {
-            return metadata.RequiredInt32("consensus_power");
+            return metadata.RequiredInt64("consensus_power");
         }
     }
 }

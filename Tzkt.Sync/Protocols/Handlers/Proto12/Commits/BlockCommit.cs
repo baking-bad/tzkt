@@ -49,6 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 Level = level,
                 ProtoCode = protocol.Code,
                 Timestamp = header.RequiredDateTime("timestamp"),
+                AttestationCommittee = protocol.AttestersPerBlock,
                 PayloadRound = payloadRound,
                 BlockRound = blockRound,
                 ProposerId = proposer.Id,

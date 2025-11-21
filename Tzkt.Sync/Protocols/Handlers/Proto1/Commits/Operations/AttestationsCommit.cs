@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                Slots = metadata.RequiredArray("slots").Count(),
+                Power = metadata.RequiredArray("slots").Count(),
                 DelegateId = sender.Id,
                 Reward = reward.ValueKind != JsonValueKind.Undefined ? reward.RequiredInt64("change") : 0,
                 Deposit = deposit.ValueKind != JsonValueKind.Undefined ? deposit.RequiredInt64("change") : 0
@@ -43,7 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.AttestationsCount++;
 
             block.Operations |= Operations.Attestations;
-            block.Validations += attestation.Slots;
+            block.AttestationPower += attestation.Power;
 
             var newDeactivationLevel = sender.Staked ? GracePeriod.Reset(attestation.Level, Context.Protocol) : GracePeriod.Init(attestation.Level, Context.Protocol);
             if (sender.DeactivationLevel < newDeactivationLevel)

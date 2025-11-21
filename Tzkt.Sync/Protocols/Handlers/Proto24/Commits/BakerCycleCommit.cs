@@ -28,6 +28,8 @@ namespace Tzkt.Sync.Protocols.Proto24
 
         public override async Task Revert(Block block)
         {
+            await base.Revert(block);
+
             if (Cache.AppState.Get().AbaActivationLevel == block.Level)
             {
                 var state = Cache.AppState.Get();
@@ -42,8 +44,6 @@ namespace Tzkt.Sync.Protocols.Proto24
                     }
                 }
             }
-
-            await base.Revert(block);
         }
 
         protected override long GetFutureAttestationRewards(Protocol protocol, Cycle cycle, long bakingPower)

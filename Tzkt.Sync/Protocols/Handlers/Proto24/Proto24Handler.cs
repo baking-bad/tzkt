@@ -66,8 +66,8 @@ namespace Tzkt.Sync.Protocols
                             break;
                         case "attestations_aggregate":
                             var attestations = new AttestationAggregateCommit(this).ExtractAttestations(operation, content);
-                            foreach (var (opHash, baker, slots) in attestations)
-                                await new AttestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
+                            foreach (var (opHash, baker, power) in attestations)
+                                await new AttestationsCommit(this).Apply(blockCommit.Block, opHash, baker, power);
                             break;
                         case "preattestation":
                         case "preattestation_with_dal":
@@ -75,8 +75,8 @@ namespace Tzkt.Sync.Protocols
                             break;
                         case "preattestations_aggregate":
                             var preattestations = new PreattestationAggregateCommit(this).ExtractPreattestations(operation, content);
-                            foreach (var (opHash, baker, slots) in preattestations)
-                                new PreattestationsCommit(this).Apply(blockCommit.Block, opHash, baker, slots);
+                            foreach (var (opHash, baker, power) in preattestations)
+                                new PreattestationsCommit(this).Apply(blockCommit.Block, opHash, baker, power);
                             break;
                         default:
                             throw new NotImplementedException($"'{content.RequiredString("kind")}' is not allowed in operations[0]");

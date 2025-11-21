@@ -14,7 +14,7 @@ namespace Tzkt.Sync
 
         public static JsonElement? Optional(this JsonElement el, string name)
         {
-            return el.TryGetProperty(name, out var res) ? res
+            return el.TryGetProperty(name, out var res) && res.ValueKind != JsonValueKind.Null ? res
                 : null;
         }
 
@@ -37,7 +37,7 @@ namespace Tzkt.Sync
 
         public static JsonElement? OptionalArray(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var res))
+            if (!el.TryGetProperty(name, out var res) || res.ValueKind == JsonValueKind.Null)
                 return null;
 
             return res.ValueKind == JsonValueKind.Array ? res
@@ -65,7 +65,7 @@ namespace Tzkt.Sync
 
         public static string? OptionalString(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var res))
+            if (!el.TryGetProperty(name, out var res) || res.ValueKind == JsonValueKind.Null)
                 return null;
             
             return res.ValueKind == JsonValueKind.String ? res.GetString()
@@ -80,7 +80,7 @@ namespace Tzkt.Sync
 
         public static IMicheline? OptionalMicheline(this JsonElement el, string name)
         {
-            return el.TryGetProperty(name, out var res) ? Micheline.FromJson(res) : null;
+            return el.TryGetProperty(name, out var res) && res.ValueKind != JsonValueKind.Null ? Micheline.FromJson(res) : null;
         }
 
         public static DateTime RequiredDateTime(this JsonElement el, string name)
@@ -98,7 +98,7 @@ namespace Tzkt.Sync
 
         public static bool? OptionalBool(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var prop))
+            if (!el.TryGetProperty(name, out var prop) || prop.ValueKind == JsonValueKind.Null)
                 return null;
 
             return prop.ValueKind == JsonValueKind.True || (prop.ValueKind == JsonValueKind.False ? false
@@ -107,7 +107,7 @@ namespace Tzkt.Sync
 
         public static int? OptionalInt32(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var prop))
+            if (!el.TryGetProperty(name, out var prop) || prop.ValueKind == JsonValueKind.Null)
                 return null;
 
             return prop.TryParseInt32(out var res) ? res
@@ -116,7 +116,7 @@ namespace Tzkt.Sync
 
         public static long? OptionalInt64(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var prop))
+            if (!el.TryGetProperty(name, out var prop) || prop.ValueKind == JsonValueKind.Null)
                 return null;
 
             return prop.TryParseInt64(out var res) ? res
@@ -155,7 +155,7 @@ namespace Tzkt.Sync
 
         public static BigInteger? OptionalBigInteger(this JsonElement el, string name)
         {
-            if (!el.TryGetProperty(name, out var prop))
+            if (!el.TryGetProperty(name, out var prop) || prop.ValueKind == JsonValueKind.Null)
                 return null;
 
             return BigInteger.TryParse(prop.GetString(), out var res) ? res
