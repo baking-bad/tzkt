@@ -76,6 +76,9 @@ namespace Tzkt.Data.Migrations
                     b.Property<int>("IncreasePaidStorageCount")
                         .HasColumnType("integer");
 
+                    b.Property<int?>("Index")
+                        .HasColumnType("integer");
+
                     b.Property<int>("LastLevel")
                         .HasColumnType("integer");
 
@@ -192,6 +195,10 @@ namespace Tzkt.Data.Migrations
                     NpgsqlIndexBuilderExtensions.HasOperators(b.HasIndex("Extras"), new[] { "jsonb_path_ops" });
 
                     b.HasIndex("FirstLevel");
+
+                    b.HasIndex("Index")
+                        .IsUnique()
+                        .HasFilter("\"Index\" IS NOT NULL");
 
                     b.HasIndex("Metadata");
 
@@ -4600,6 +4607,9 @@ namespace Tzkt.Data.Migrations
                         .HasColumnType("bigint");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<int?>("AddressRegistryIndex")
+                        .HasColumnType("integer");
 
                     b.Property<long?>("AllocationFee")
                         .HasColumnType("bigint");

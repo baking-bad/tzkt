@@ -413,7 +413,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await RevertScript(origination, contract!);
 
                 contract!.OriginationsCount--;
-                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
+                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0 && contract.Index is null)
                 {
                     Db.Accounts.Remove(contract);
                     Cache.Accounts.Remove(contract);
@@ -535,7 +535,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await RevertScript(origination, contract!);
 
                 contract!.OriginationsCount--;
-                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0)
+                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0 && contract.Index is null)
                 {
                     Db.Accounts.Remove(contract);
                     Cache.Accounts.Remove(contract);
@@ -688,7 +688,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 StorageSchema = micheStorage.ToBytes(),
                 CodeSchema = micheCode.ToBytes(),
                 Views = micheViews.Any()
-                    ? micheViews.Select(x => x.ToBytes()).ToArray()
+                    ? [..micheViews.Select(x => x.ToBytes())]
                     : null,
                 Current = true
             };

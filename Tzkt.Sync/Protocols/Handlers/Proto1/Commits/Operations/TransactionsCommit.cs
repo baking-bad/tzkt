@@ -133,6 +133,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     await ProcessStorage(transaction, target, storage);
                 }
 
+                await ApplyAddressRegistryDiffs(transaction, result);
+
                 TicketUpdates = ParseTicketUpdates("ticket_updates", result);
                 
                 if (target is SmartRollup)
@@ -272,7 +274,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
                     await ProcessStorage(transaction, target, storage);
                 }
-                
+
+                await ApplyAddressRegistryDiffs(transaction, result);
+
                 TicketUpdates = ParseTicketUpdates("ticket_receipt", result);
 
                 if (target is SmartRollup)
@@ -343,6 +347,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (transaction.StorageId != null)
                     await RevertStorage(transaction, (target as Contract)!);
+
+                await RevertAddressRegistryDiffs(transaction);
             }
             #endregion
 
@@ -437,6 +443,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 if (transaction.StorageId != null)
                     await RevertStorage(transaction, (target as Contract)!);
+
+                await RevertAddressRegistryDiffs(transaction);
             }
             #endregion
 
@@ -703,5 +711,9 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             return res.Count > 0 ? res : null;
         }
+
+        protected virtual Task ApplyAddressRegistryDiffs(TransactionOperation transaction, JsonElement result) => Task.CompletedTask;
+
+        protected virtual Task RevertAddressRegistryDiffs(TransactionOperation transaction) => Task.CompletedTask;
     }
 }

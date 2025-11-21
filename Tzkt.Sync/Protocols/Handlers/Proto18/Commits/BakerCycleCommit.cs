@@ -225,13 +225,14 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var currentRights = await Cache.BakingRights.GetAsync(block.Level);
             var currentCycle = await Db.Cycles.SingleAsync(x => x.Index == block.Cycle);
+            var maxBlockReward = currentCycle.BlockReward + currentCycle.BlockBonusPerBlock;
 
             if (block.BlockRound == 0)
             {
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, block.ProposerId!.Value);
                 Db.TryAttach(bakerCycle);
 
-                bakerCycle.FutureBlockRewards += bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                bakerCycle.FutureBlockRewards += maxBlockReward;
                 bakerCycle.FutureBlocks++;
                 bakerCycle.Blocks--;
                 bakerCycle.BlockRewardsDelegated -= block.RewardDelegated + block.BonusDelegated;
@@ -258,7 +259,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                         if (br.Round == 0)
                         {
-                            bakerCycle.FutureBlockRewards += bakerCycle.FutureBlockRewards / bakerCycle.FutureBlocks;
+                            bakerCycle.FutureBlockRewards += maxBlockReward;
                             bakerCycle.FutureBlocks++;
                         }
 

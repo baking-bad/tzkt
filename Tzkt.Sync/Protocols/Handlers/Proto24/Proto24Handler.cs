@@ -150,12 +150,6 @@ namespace Tzkt.Sync.Protocols
             #region operations 3
             foreach (var operation in operations[3].EnumerateArray())
             {
-                //// TODO: handle address_registry_diff
-                //if (operation.RequiredArray("contents").EnumerateArray().Any(c => c.Required("metadata").Required("operation_result").Optional("address_registry_diff") != null))
-                //{
-                //    throw new NotImplementedException();
-                //}
-
                 Manager.Init(operation);
                 foreach (var content in operation.RequiredArray("contents").EnumerateArray())
                 {
