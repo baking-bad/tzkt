@@ -48,7 +48,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters blocks by timestamp.</param>
         /// <param name="blockRound">Filters blocks by block round.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
-        /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `payloadRound`, `blockRound`, `validations`, `reward`, `bonus`, `fees`.</param>
+        /// <param name="sort">Sorts blocks by specified field. Supported fields: `id` (default), `level`, `payloadRound`, `blockRound`, `attestationPower`, `reward`, `bonus`, `fees`.</param>
         /// <param name="offset">Specifies which or how many items should be skipped</param>
         /// <param name="limit">Maximum number of items to return</param>
         /// <param name="quote">Comma-separated list of ticker symbols to inject historical prices into response</param>
@@ -101,7 +101,7 @@ namespace Tzkt.Api.Controllers
                     return Ok(Enumerable.Empty<Block>());
             }
 
-            if (sort != null && !sort.Validate("id", "level", "payloadRound", "blockRound", "validations", "reward", "bonus", "fees"))
+            if (sort != null && !sort.Validate("id", "level", "payloadRound", "blockRound", "attestationPower", "reward", "bonus", "fees"))
                 return new BadRequest($"{nameof(sort)}", "Sorting by the specified field is not allowed.");
             #endregion
 

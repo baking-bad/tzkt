@@ -4,10 +4,10 @@ namespace Tzkt.Sync.Protocols.Proto24
 {
     class PreattestationsCommit(ProtocolHandler protocol) : Proto19.PreattestationsCommit(protocol)
     {
-        protected override int GetPreattestedSlots(JsonElement metadata)
+        protected override long GetPower(JsonElement metadata)
         {
-            // TODO: remove it when block receipts are updated
-            return metadata.Required("consensus_power").RequiredInt32("slots");
+            var consensusPower = metadata.Required("consensus_power");
+            return consensusPower.OptionalInt64("baking_power") ?? consensusPower.RequiredInt64("slots");
         }
     }
 }

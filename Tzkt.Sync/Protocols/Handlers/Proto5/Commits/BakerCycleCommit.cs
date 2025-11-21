@@ -100,14 +100,14 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (bakingRights[0].Round == 0)
                         bakerCycle.FutureBlockRewards -= GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.AttestationPower);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.AttestationPower)
                         : 0;
 
                     var maxReward = attestationRight?.Status > BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations + attestationRight.Slots!.Value)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.AttestationPower + attestationRight.Slots!.Value)
                         : successReward;
 
                     if (actualReward > 0)
@@ -421,14 +421,14 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (bakingRights[0].Round == 0)
                         bakerCycle.FutureBlockRewards += GetFutureBlockReward(Context.Protocol, block.Cycle);
 
-                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations);
+                    var successReward = GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.AttestationPower);
 
                     var actualReward = bakingRights[^1].Status == BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.Validations)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[^1].Round!.Value, block.AttestationPower)
                         : 0;
 
                     var maxReward = attestationRight?.Status > BakingRightStatus.Realized
-                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.Validations + attestationRight.Slots!.Value)
+                        ? GetBlockReward(Context.Protocol, block.Cycle, bakingRights[0].Round!.Value, block.AttestationPower + attestationRight.Slots!.Value)
                         : successReward;
 
                     if (actualReward > 0)
@@ -528,10 +528,10 @@ namespace Tzkt.Sync.Protocols.Proto5
         protected virtual long GetFutureBlockReward(Protocol protocol, int cycle)
             => cycle < protocol.NoRewardCycles ? 0 : protocol.BlockReward0;
 
-        protected virtual long GetBlockReward(Protocol protocol, int cycle, int priority, int slots)
+        protected virtual long GetBlockReward(Protocol protocol, int cycle, int priority, long slots)
             => cycle < protocol.NoRewardCycles ? 0 : (protocol.BlockReward0 * (8 + 2 * slots / protocol.AttestersPerBlock) / 10 / (priority + 1));
 
-        protected virtual long GetFutureAttestationReward(Protocol protocol, int cycle, int slots)
+        protected virtual long GetFutureAttestationReward(Protocol protocol, int cycle, long slots)
             => cycle < protocol.NoRewardCycles ? 0 : (slots * protocol.AttestationReward0);
 
         protected virtual long GetAttestationReward(Protocol protocol, int cycle, int slots, int priority)

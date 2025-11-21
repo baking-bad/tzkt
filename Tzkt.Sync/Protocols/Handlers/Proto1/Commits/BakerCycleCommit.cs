@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         : 0;
 
                     //var maxReward = attestationRight?.Status > BakingRightStatus.Realized
-                    //    ? GetBlockReward(Context.Protocol, (int)bakingRights[0].Round, block.Validations + attestationRight.Slots.Value)
+                    //    ? GetBlockReward(Context.Protocol, (int)bakingRights[0].Round, block.AttestationPower + attestationRight.Slots.Value)
                     //    : successReward;
 
                     if (actualReward > 0)
@@ -479,7 +479,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                         : 0;
 
                     //var maxReward = attestationRight?.Status > BakingRightStatus.Realized
-                    //    ? GetBlockReward(Context.Protocol, bakingRights[0].Round!.Value, block.Validations + attestationRight.Slots.Value)
+                    //    ? GetBlockReward(Context.Protocol, bakingRights[0].Round!.Value, block.AttestationPower + attestationRight.Slots.Value)
                     //    : successReward;
 
                     if (actualReward > 0)

@@ -38,15 +38,22 @@
         public required Alias Delegate { get; set; }
 
         /// <summary>
-        /// Number of assigned attestation slots to the baker who sent the operation
+        /// Attestation power
         /// </summary>
-        public int Slots { get; set; }
+        public long Power { get; set; }
 
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of operation
         /// </summary>
         public QuoteShort? Quote { get; set; }
+        #endregion
+
+        #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public int Slots => Power > 7000 ? 0 : (int)Power;
         #endregion
     }
 }

@@ -6,7 +6,7 @@ namespace Tzkt.Data.Models
     public class PreattestationOperation : BaseOperation
     {
         public required int DelegateId { get; set; }
-        public int Slots { get; set; }
+        public long Power { get; set; }
     }
 
     public static class PreattestationOperationModel

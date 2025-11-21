@@ -9,16 +9,12 @@ namespace Tzkt.Sync.Protocols.Proto24
         {
             await base.Apply(rawBlock);
 
-            // TODO: rework it when block receipts are updated
-            if (Block.Events.HasFlag(BlockEvents.CycleEnd))
+            var state = Cache.AppState.Get();
+            if (state.AbaActivationLevel is null)
             {
-                var state = Cache.AppState.Get();
-                if (state.AbaActivationLevel is null)
-                {
-                    var json = await Proto.Node.GetAsync($"chains/main/blocks/{Block.Level}/helpers/validators");
-                    if (json.EnumerateArray().First().RequiredInt64("consensus_committee") != 7000)
-                        state.AbaActivationLevel = Block.Level;
-                }
+                var abaLevel = rawBlock.Required("metadata").Optional("all_bakers_attest_activation_level")?.RequiredInt32("level");
+                if (abaLevel == Block.Level)
+                    state.AbaActivationLevel = abaLevel;
             }
         }
 
@@ -30,5 +26,8 @@ namespace Tzkt.Sync.Protocols.Proto24
 
             base.Revert(block);
         }
+
+        protected override long GetAttestationCommittee(Protocol protocol, JsonElement metadata)
+            => metadata.Optional("attestations")?.RequiredInt64("total_committee_power") ?? 0L;
     }
 }

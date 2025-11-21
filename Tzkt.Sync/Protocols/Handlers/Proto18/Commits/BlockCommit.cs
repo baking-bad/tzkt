@@ -47,6 +47,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Level = level,
                 ProtoCode = protocol.Code,
                 Timestamp = header.RequiredDateTime("timestamp"),
+                AttestationCommittee = GetAttestationCommittee(protocol, metadata),
                 PayloadRound = payloadRound,
                 BlockRound = blockRound,
                 ProposerId = proposer.Id,
@@ -277,5 +278,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             return (rewardDelegated, rewardStakedOwn, 0L, 0L, bonusDelegated, bonusStakedOwn, 0L, 0L);
         }
+
+        protected virtual long GetAttestationCommittee(Protocol protocol, JsonElement metadata) => protocol.AttestersPerBlock;
     }
 }

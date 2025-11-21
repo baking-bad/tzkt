@@ -32,7 +32,7 @@ namespace Tzkt.Api.Services
         public static object?[][] BlocksTab { get; private set; } = [];
         public static readonly string[] BlockFields =
         [
-            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "validations", "fees", "hash",
+            "timestamp", "level", "proposer", "producer", "payloadRound", "blockRound", "attestationPower", "fees", "hash",
             "rewardDelegated", "rewardStakedOwn", "rewardStakedShared", "rewardStakedEdge",
             "bonusDelegated", "bonusStakedOwn", "bonusStakedShared", "bonusStakedEdge"
         ];
@@ -212,7 +212,7 @@ namespace Tzkt.Api.Services
                 null,
                 new SortParameter { Desc = "level" },
                 null, 5, [
-                    "timestamp", "level", "baker", "baker", "round", "round", "validations", "fees", "hash",
+                    "timestamp", "level", "baker", "baker", "round", "round", "attestationPower", "fees", "hash",
                     "rewardDelegated", "rewardStakedOwn", "rewardStakedShared", "rewardStakedEdge",
                     "bonusDelegated", "bonusStakedOwn", "bonusStakedShared", "bonusStakedEdge"
                 ]);

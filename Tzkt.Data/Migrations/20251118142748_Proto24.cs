@@ -14,6 +14,52 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TransactionOps_TargetId_Partial",
                 table: "TransactionOps");
 
+            migrationBuilder.AlterColumn<long>(
+                name: "Slots",
+                table: "AttestationOps",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer");
+
+            migrationBuilder.RenameColumn(
+                name: "Slots",
+                table: "AttestationOps",
+                newName: "Power");
+
+            migrationBuilder.AlterColumn<long>(
+                name: "Slots",
+                table: "PreattestationOps",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer");
+
+            migrationBuilder.RenameColumn(
+                name: "Slots",
+                table: "PreattestationOps",
+                newName: "Power");
+
+            migrationBuilder.AlterColumn<long>(
+                name: "Validations",
+                table: "Blocks",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "integer");
+
+            migrationBuilder.RenameColumn(
+                name: "Validations",
+                table: "Blocks",
+                newName: "AttestationPower");
+
+            migrationBuilder.AddColumn<long>(
+                name: "AttestationCommittee",
+                table: "Blocks",
+                type: "bigint",
+                nullable: false,
+                defaultValue: 0L);
+
             migrationBuilder.DropColumn(
                 name: "AIToggle",
                 table: "Blocks");
@@ -152,6 +198,49 @@ namespace Tzkt.Data.Migrations
                 table: "Blocks",
                 type: "boolean",
                 nullable: true);
+
+            migrationBuilder.DropColumn(
+                name: "AttestationCommittee",
+                table: "Blocks");
+
+            migrationBuilder.RenameColumn(
+                name: "AttestationPower",
+                table: "Blocks",
+                newName: "Validations");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Validations",
+                table: "Blocks",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint");
+
+            migrationBuilder.RenameColumn(
+                name: "Power",
+                table: "PreattestationOps",
+                newName: "Slots");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Slots",
+                table: "PreattestationOps",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint");
+
+            migrationBuilder.RenameColumn(
+                name: "Power",
+                table: "AttestationOps",
+                newName: "Slots");
+
+            migrationBuilder.AlterColumn<int>(
+                name: "Slots",
+                table: "AttestationOps",
+                type: "integer",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransactionOps_TargetId_Partial",

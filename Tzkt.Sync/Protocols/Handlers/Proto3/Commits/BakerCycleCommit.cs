@@ -119,7 +119,7 @@ namespace Tzkt.Sync.Protocols.Proto3
                         : 0;
 
                     //var maxReward = attestationRight?.Status > BakingRightStatus.Realized
-                    //    ? GetBlockReward(Context.Protocol, bakingRights[0].Round!.Value, block.Validations + attestationRight.Slots.Value)
+                    //    ? GetBlockReward(Context.Protocol, bakingRights[0].Round!.Value, block.AttestationPower + attestationRight.Slots.Value)
                     //    : successReward;
 
                     if (actualReward > 0)

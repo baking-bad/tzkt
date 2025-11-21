@@ -4,24 +4,24 @@ namespace Tzkt.Sync.Protocols.Proto23
 {
     class AttestationAggregateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public IEnumerable<(string, string, int)> ExtractAttestations(JsonElement op, JsonElement content)
+        public IEnumerable<(string, string, long)> ExtractAttestations(JsonElement op, JsonElement content)
         {
-            var res = new List<(string, string, int)>();
+            var res = new List<(string, string, long)>();
 
             var opHash = op.RequiredString("hash");
             foreach (var c in content.Required("metadata").RequiredArray("committee").EnumerateArray())
             {
                 var baker = Cache.Accounts.GetExistingDelegate(c.RequiredString("delegate"));
-                var slots = GetAttestedSlots(c);
-                res.Add((opHash, baker.Address, slots));
+                var power = GetPower(c);
+                res.Add((opHash, baker.Address, power));
             }
 
             return res;
         }
 
-        protected virtual int GetAttestedSlots(JsonElement c)
+        protected virtual long GetPower(JsonElement c)
         {
-            return c.RequiredInt32("consensus_power");
+            return c.RequiredInt64("consensus_power");
         }
     }
 }

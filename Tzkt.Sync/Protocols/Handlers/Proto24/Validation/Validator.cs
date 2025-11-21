@@ -139,6 +139,13 @@ namespace Tzkt.Sync.Protocols.Proto24
                 }
             }
             #endregion
+
+            #region aba activation level
+            var state = Cache.AppState.Get();
+            var abaLevel = metadata.Optional("all_bakers_attest_activation_level")?.RequiredInt32("level");
+            if (abaLevel != state.AbaActivationLevel && abaLevel < Level)
+                throw new ValidationException("invalid ABA activation level");
+            #endregion
         }
 
         protected virtual async Task ValidateOperations(JsonElement operations)

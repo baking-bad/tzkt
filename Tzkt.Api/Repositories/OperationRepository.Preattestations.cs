@@ -38,7 +38,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = hash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -62,7 +62,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Quote = Quotes.Get(quote, block.Level)
             });
         }
@@ -131,7 +131,7 @@ namespace Tzkt.Api.Repositories
                 Timestamp = row.Timestamp,
                 Hash = row.OpHash,
                 Delegate = Accounts.GetAlias(row.DelegateId),
-                Slots = row.Slots,
+                Power = row.Power,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -158,7 +158,7 @@ namespace Tzkt.Api.Repositories
                     case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                     case "hash": columns.Add(@"o.""OpHash"""); break;
                     case "delegate": columns.Add(@"o.""DelegateId"""); break;
-                    case "slots": columns.Add(@"o.""Slots"""); break;
+                    case "power": columns.Add(@"o.""Power"""); break;
                     case "block":
                         columns.Add(@"b.""Hash""");
                         joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -211,9 +211,9 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = await Accounts.GetAliasAsync(row.DelegateId);
                         break;
-                    case "slots":
+                    case "power":
                         foreach (var row in rows)
-                            result[j++][i] = row.Slots;
+                            result[j++][i] = row.Power;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -245,7 +245,7 @@ namespace Tzkt.Api.Repositories
                 case "timestamp": columns.Add(@"o.""Timestamp"""); break;
                 case "hash": columns.Add(@"o.""OpHash"""); break;
                 case "delegate": columns.Add(@"o.""DelegateId"""); break;
-                case "slots": columns.Add(@"o.""Slots"""); break;
+                case "power": columns.Add(@"o.""Power"""); break;
                 case "block":
                     columns.Add(@"b.""Hash""");
                     joins.Add(@"INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""");
@@ -295,9 +295,9 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = await Accounts.GetAliasAsync(row.DelegateId);
                     break;
-                case "slots":
+                case "power":
                     foreach (var row in rows)
-                        result[j++] = row.Slots;
+                        result[j++] = row.Power;
                     break;
                 case "quote":
                     foreach (var row in rows)

@@ -51,7 +51,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 PayloadRound = row.PayloadRound,
                 BlockRound = row.BlockRound,
-                Validations = row.Validations,
+                AttestationPower = row.AttestationPower,
+                AttestationCommittee = row.AttestationCommittee,
                 Deposit = row.Deposit,
                 RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
@@ -101,7 +102,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 PayloadRound = row.PayloadRound,
                 BlockRound = row.BlockRound,
-                Validations = row.Validations,
+                AttestationPower = row.AttestationPower,
+                AttestationCommittee = row.AttestationCommittee,
                 Deposit = row.Deposit,
                 RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
@@ -151,7 +153,7 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
-                    "validations" => ("Validations", "Validations"),
+                    "attestationPower" => ("AttestationPower", "AttestationPower"),
                     "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
                     "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
@@ -176,7 +178,8 @@ namespace Tzkt.Api.Repositories
                 Proto = row.ProtoCode,
                 PayloadRound = row.PayloadRound,
                 BlockRound = row.BlockRound,
-                Validations = row.Validations,
+                AttestationPower = row.AttestationPower,
+                AttestationCommittee = row.AttestationCommittee,
                 Deposit = row.Deposit,
                 RewardDelegated = row.RewardDelegated,
                 RewardStakedOwn = row.RewardStakedOwn,
@@ -222,7 +225,8 @@ namespace Tzkt.Api.Repositories
                     case "proto": columns.Add(@"""ProtoCode"""); break;
                     case "payloadRound": columns.Add(@"""PayloadRound"""); break;
                     case "blockRound": columns.Add(@"""BlockRound"""); break;
-                    case "validations": columns.Add(@"""Validations"""); break;
+                    case "attestationPower": columns.Add(@"""AttestationPower"""); break;
+                    case "attestationCommittee": columns.Add(@"""AttestationCommittee"""); break;
                     case "deposit": columns.Add(@"""Deposit"""); break;
                     case "rewardDelegated": columns.Add(@"""RewardDelegated"""); break;
                     case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
@@ -258,7 +262,7 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
-                    "validations" => ("Validations", "Validations"),
+                    "attestationPower" => ("AttestationPower", "AttestationPower"),
                     "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
                     "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
@@ -310,9 +314,13 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.BlockRound;
                         break;
-                    case "validations":
+                    case "attestationPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.Validations;
+                            result[j++][i] = row.AttestationPower;
+                        break;
+                    case "attestationCommittee":
+                        foreach (var row in rows)
+                            result[j++][i] = row.AttestationCommittee;
                         break;
                     case "deposit":
                         foreach (var row in rows)
@@ -411,7 +419,8 @@ namespace Tzkt.Api.Repositories
                 case "proto": columns.Add(@"""ProtoCode"""); break;
                 case "payloadRound": columns.Add(@"""PayloadRound"""); break;
                 case "blockRound": columns.Add(@"""BlockRound"""); break;
-                case "validations": columns.Add(@"""Validations"""); break;
+                case "attestationPower": columns.Add(@"""AttestationPower"""); break;
+                case "attestationCommittee": columns.Add(@"""AttestationCommittee"""); break;
                 case "deposit": columns.Add(@"""Deposit"""); break;
                 case "rewardDelegated": columns.Add(@"""RewardDelegated"""); break;
                 case "rewardStakedOwn": columns.Add(@"""RewardStakedOwn"""); break;
@@ -446,7 +455,7 @@ namespace Tzkt.Api.Repositories
                     "level" => ("Level", "Level"),
                     "payloadRound" => ("PayloadRound", "PayloadRound"),
                     "blockRound" => ("BlockRound", "BlockRound"),
-                    "validations" => ("Validations", "Validations"),
+                    "attestationPower" => ("AttestationPower", "AttestationPower"),
                     "rewardDelegated" => ("RewardDelegated", "RewardDelegated"),
                     "rewardStakedOwn" => ("RewardStakedOwn", "RewardStakedOwn"),
                     "rewardStakedEdge" => ("RewardStakedEdge", "RewardStakedEdge"),
@@ -496,9 +505,13 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.BlockRound;
                     break;
-                case "validations":
+                case "attestationPower":
                     foreach (var row in rows)
-                        result[j++] = row.Validations;
+                        result[j++] = row.AttestationPower;
+                    break;
+                case "attestationCommittee":
+                    foreach (var row in rows)
+                        result[j++] = row.AttestationCommittee;
                     break;
                 case "deposit":
                     foreach (var row in rows)

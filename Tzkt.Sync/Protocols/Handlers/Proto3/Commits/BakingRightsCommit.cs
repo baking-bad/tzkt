@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto3
             CurrentRights = await Cache.BakingRights.GetAsync(block.Level);
             var sql = string.Empty;
 
-            if (block.BlockRound == 0 && block.Validations == Context.Protocol.AttestersPerBlock)
+            if (block.BlockRound == 0 && block.AttestationPower == block.AttestationCommittee)
             {
                 CurrentRights.RemoveAll(x => x.Type == BakingRightType.Baking && x.Round > 0);
                 CurrentRights.ForEach(x => x.Status = BakingRightStatus.Realized);
