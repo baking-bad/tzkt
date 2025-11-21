@@ -44,7 +44,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Address = NullAddress.Address,
                 Type = AccountType.User,
                 FirstLevel = 1,
-                LastLevel = 1
+                LastLevel = 1,
+                Index = 0
             };
             if (nullAddress.Id != NullAddress.Id)
                 throw new Exception("Failed to allocate null-address");

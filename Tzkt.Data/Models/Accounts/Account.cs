@@ -20,6 +20,8 @@ namespace Tzkt.Data.Models
         public int? DelegationLevel { get; set; }
         public bool Staked { get; set; }
 
+        public int? Index { get; set; }
+
         #region counters
         public int ContractsCount { get; set; }
         public int RollupsCount { get; set; }
@@ -135,6 +137,11 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<Account>()
                 .HasIndex(x => x.FirstLevel);
+
+            modelBuilder.Entity<Account>()
+                .HasIndex(x => x.Index)
+                .HasFilter(@$"""{nameof(Account.Index)}"" IS NOT NULL")
+                .IsUnique();
 
             // shadow property
             modelBuilder.Entity<Account>()

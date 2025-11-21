@@ -43,6 +43,7 @@ namespace Tzkt.Sync.Protocols.Proto24
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
+            await InitAddressRegistry();
             await RemoveDeadRefutationGames(state);
             await MigrateSlashing(state, nextProto);
             MigrateBakers(state, prevProto, nextProto);
@@ -52,8 +53,13 @@ namespace Tzkt.Sync.Protocols.Proto24
 
             Cache.BakerCycles.Reset();
             Cache.BakingRights.Reset();
+        }
 
-            // TODO: register null-address in address registry
+        async Task InitAddressRegistry()
+        {
+            var nullAddress = await Cache.Accounts.GetAsync(NullAddress.Id);
+            Db.TryAttach(nullAddress);
+            nullAddress.Index = 0;
         }
 
         async Task MigrateSlashing(AppState state, Protocol nextProto)

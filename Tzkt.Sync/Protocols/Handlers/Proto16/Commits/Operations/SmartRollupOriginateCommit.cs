@@ -222,7 +222,7 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 sender.SmartRollupsCount--;
 
-                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0)
+                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0 && rollup.Index is null)
                 {
                     Db.SmartRollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);

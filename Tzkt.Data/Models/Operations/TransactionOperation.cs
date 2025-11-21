@@ -25,6 +25,7 @@ namespace Tzkt.Data.Models
 
         public int? EventsCount { get; set; }
         public int? TicketTransfers { get; set; }
+        public int? AddressRegistryIndex { get; set; }
 
         #region binary writer
         public static void Write(NpgsqlConnection conn, IEnumerable<TransactionOperation> ops)
@@ -46,6 +47,7 @@ namespace Tzkt.Data.Models
                     "{nameof(InternalTransactions)}",
                     "{nameof(EventsCount)}",
                     "{nameof(TicketTransfers)}",
+                    "{nameof(AddressRegistryIndex)}",
                     "{nameof(Level)}",
                     "{nameof(Timestamp)}",
                     "{nameof(OpHash)}",
@@ -89,6 +91,7 @@ namespace Tzkt.Data.Models
                 writer.WriteNullable(op.InternalTransactions, NpgsqlDbType.Smallint);
                 writer.WriteNullable(op.EventsCount, NpgsqlDbType.Integer);
                 writer.WriteNullable(op.TicketTransfers, NpgsqlDbType.Integer);
+                writer.WriteNullable(op.AddressRegistryIndex, NpgsqlDbType.Integer);
                 writer.Write(op.Level, NpgsqlDbType.Integer);
                 writer.Write(op.Timestamp, NpgsqlDbType.TimestampTz);
                 writer.Write(op.OpHash, NpgsqlDbType.Char);
