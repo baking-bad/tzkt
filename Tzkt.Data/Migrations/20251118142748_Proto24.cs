@@ -10,10 +10,6 @@ namespace Tzkt.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_TransactionOps_TargetId_Partial",
-                table: "TransactionOps");
-
             migrationBuilder.AlterColumn<long>(
                 name: "Slots",
                 table: "AttestationOps",
@@ -125,21 +121,11 @@ namespace Tzkt.Data.Migrations
                 column: "Index",
                 unique: true,
                 filter: "\"Index\" IS NOT NULL");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionOps_TargetId_Partial",
-                table: "TransactionOps",
-                column: "TargetId",
-                filter: "\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropIndex(
-                name: "IX_TransactionOps_TargetId_Partial",
-                table: "TransactionOps");
-
             migrationBuilder.DropIndex(
                 name: "IX_Accounts_Index",
                 table: "Accounts");
@@ -241,12 +227,6 @@ namespace Tzkt.Data.Migrations
                 nullable: false,
                 oldClrType: typeof(long),
                 oldType: "bigint");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_TransactionOps_TargetId_Partial",
-                table: "TransactionOps",
-                column: "TargetId",
-                filter: "\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
         }
     }
 }
