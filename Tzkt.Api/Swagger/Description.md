@@ -12,8 +12,7 @@ Your feedback is much appreciated!
 
 - Discord: https://discord.gg/aG8XKuwsQd
 - Telegram: https://t.me/baking_bad_chat
-- Slack: https://tezos-dev.slack.com/archives/CV5NX7F2L
-- Twitter: https://twitter.com/TezosBakingBad
+- X: https://x.com/TezosBakingBad
 - Email: hello@bakingbad.dev
 
 And don't forget to star TzKT [on GitHub](https://github.com/baking-bad/tzkt) if you like it 😊
@@ -39,7 +38,9 @@ It's available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
 - Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
+- Shadownet: `https://api.shadownet.tzkt.io/` ([view docs](https://api.shadownet.tzkt.io))
 - Seoulnet: `https://api.seoulnet.tzkt.io/` ([view docs](https://api.seoulnet.tzkt.io))
+- Tallinnnet: `https://api.tallinnnet.tzkt.io/` ([view docs](https://api.tallinnnet.tzkt.io))
 
 ### Sending Requests
 
