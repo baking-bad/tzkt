@@ -4746,7 +4746,7 @@ namespace Tzkt.Data.Migrations
                     b.HasIndex("TargetId");
 
                     b.HasIndex(new[] { "TargetId" }, "IX_TransactionOps_TargetId_Partial")
-                        .HasFilter("\"Entrypoint\" = 'transfer'\r\nAND \"TokenTransfers\" IS NULL\r\nAND \"Status\" = 1");
+                        .HasFilter("\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
 
                     b.ToTable("TransactionOps");
                 });
