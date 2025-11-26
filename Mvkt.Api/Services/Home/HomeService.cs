@@ -543,6 +543,29 @@ namespace Mvkt.Api.Services
                 AND "StakingBalance" >= {protocol.MinimalStake}
                 """);
 
+            // Get vesting contracts for circulation calculations
+            var vestingContracts = await db.QueryAsync<string>($@"
+                SELECT DISTINCT ""JsonValue""->>'vestingContractAddress' as ""VestingContract""
+                FROM ""BigMapKeys""
+                WHERE ""BigMapPtr"" = 34
+                AND ""Active"" = true
+                AND ""JsonValue""->>'vestingContractAddress' IS NOT NULL");
+
+            var vestingAddresses = vestingContracts.Where(x => !string.IsNullOrEmpty(x)).ToList();
+
+            long vestingDelegated = 0;
+
+            if (vestingAddresses.Any())
+            {
+                // Calculate total delegated by vesting contracts (KT1 contracts only)
+                // For contracts, delegated amount = entire Balance (contracts cannot stake)
+                vestingDelegated = await db.ExecuteScalarAsync<long?>($@"
+                    SELECT COALESCE(SUM(""Balance""), 0)::bigint
+                    FROM ""Accounts""
+                    WHERE ""Address"" = ANY(@addresses)
+                    AND ""DelegateId"" IS NOT NULL", new { addresses = vestingAddresses }) ?? 0;
+            }
+
             var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
                 SELECT *
                 FROM "Cycles"
@@ -564,6 +587,8 @@ namespace Mvkt.Api.Services
             var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
             var totalBakingPower = totalStaked + totalDelegated / protocol.StakePowerMultiplier;
 
+            var totalDelegatedInCirculation = totalDelegated - vestingDelegated;
+
             return new StakingData
             {
                 TotalStaking = total.TotalStaking,
@@ -584,6 +609,8 @@ namespace Mvkt.Api.Services
                 ExternalDelegatedPercentage = Math.Round(100.0 * total.ExternalDelegated / totalSupply, 2),
                 TotalDelegated = totalDelegated,
                 TotalDelegatedPercentage = Math.Round(100.0 * totalDelegated / totalSupply, 2),
+                TotalDelegatedInCirculation = totalDelegatedInCirculation,
+                TotalDelegatedInCirculationPercentage = Math.Round(100.0 * totalDelegatedInCirculation / totalSupply, 2),
                 StakingApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2),
                 DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier
             };

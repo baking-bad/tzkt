@@ -27,6 +27,9 @@ namespace Mvkt.Api.Models
         public long TotalDelegated { get; set; }
         public double TotalDelegatedPercentage { get; set; }
 
+        public long TotalDelegatedInCirculation { get; set; }
+        public double TotalDelegatedInCirculationPercentage { get; set; }
+
         public double StakingApy { get; set; }
         public double DelegationApy { get; set; }
     }
