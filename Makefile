@@ -40,10 +40,10 @@ api:
 	export $$(cat .env | xargs) && dotnet run -p Mvkt.Api -v normal
 
 api-image:
-	docker build -t bakingbad/mvkt-api:latest -f ./Mvkt.Api/Dockerfile .
+	docker build -t mavrykdynamics/mvkt-api:latest -f ./Mvkt.Api/Dockerfile .
 
 sync-image:
-	docker build -t bakingbad/mvkt-sync:latest -f ./Mvkt.Sync/Dockerfile .
+	docker build -t mavrykdynamics/mvkt-sync:latest -f ./Mvkt.Sync/Dockerfile .
 
 base-init:
 	docker compose -f docker compose.base.yml up   -d base-db

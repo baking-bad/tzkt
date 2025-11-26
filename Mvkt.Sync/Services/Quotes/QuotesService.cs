@@ -303,8 +303,8 @@ namespace Mvkt.Sync.Services
     {
         public static void AddQuotes(this IServiceCollection services, IConfiguration config)
         {
-            if (config["Quotes:Provider:Name"] == MvktQuotesProvider.ProviderName)
-                services.AddSingleton<IQuoteProvider, MvktQuotesProvider>();
+            if (config["Quotes:Provider:Name"] == MavrykExternalDataProvider.ProviderName)
+                services.AddSingleton<IQuoteProvider, MavrykExternalDataProvider>();
             else if (config["Quotes:Provider:Name"] == CoingeckoProvider.ProviderName)
                 services.AddSingleton<IQuoteProvider, CoingeckoProvider>();
             else

@@ -1,8 +1,8 @@
 # Mavryk Network Indexer
 [![Made With](https://img.shields.io/badge/made%20with-C%23-success.svg?)](https://docs.microsoft.com/en-gb/dotnet/csharp/language-reference/)
-[![License: MIT](https://img.shields.io/github/license/baking-bad/netezos.svg)](https://opensource.org/licenses/MIT)
+[![License: MIT](https://img.shields.io/github/license/mavryk-network/netmavryk.svg)](https://opensource.org/licenses/MIT)
 
-MvKT is the most advanced [Mavryk](https://mavryk.org/) blockchain indexer with powerful API created by the [Mavryk Dynamics](https://mavrykdynamics.com/) team. Forked from [MvKT](https://github.com/baking-bad/tzkt) made by [Baking Bad](https://bakingbad.dev)
+MvKT is the most advanced [Mavryk](https://mavryk.org/) blockchain indexer with powerful API created by the [Mavryk Dynamics](https://mavrykdynamics.com/) team. Forked from [TzKT](https://github.com/baking-bad/tzkt) made by [Baking Bad](https://bakingbad.dev)
 
 The indexer fetches raw data from the Mavryk blockchain, processes it, and saves it to its database to provide efficient access to the blockchain data. Using indexers is necessary part for most blockchain-related applications, because indexers expose much more data and cover much more use-cases than native node RPC, for example getting operations by hash, or operations related to particular accounts and smart contracts, or created NFTs, or token balances, or baking rewards, etc.
 
@@ -116,7 +116,7 @@ mvkt_db=# \q
 #### Clone repo
 
 ````
-git clone https://github.com/baking-bad/mvkt.git ~/mvkt
+git clone https://github.com/mavryk-network/mvkt.git ~/mvkt
 ````
 
 #### Build indexer

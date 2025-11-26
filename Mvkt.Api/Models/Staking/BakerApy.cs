@@ -66,4 +66,3 @@ namespace Mvkt.Api.Models
         public double DelegationApy { get; set; }
     }
 }
-
