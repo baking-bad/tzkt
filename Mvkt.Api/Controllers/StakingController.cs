@@ -152,32 +152,6 @@ namespace Mvkt.Api.Controllers
         }
         #endregion
 
-        #region baker apy
-        /// <summary>
-        /// Get baker APY
-        /// </summary>
-        /// <remarks>
-        /// Returns APY (Annual Percentage Yield) information for a specific baker.
-        /// </remarks>
-        /// <param name="address">Baker address (starting with mv)</param>
-        /// <returns></returns>
-        [HttpGet("bakers/{address}/apy")]
-        public async Task<ActionResult<BakerApy>> GetBakerApy(
-            [Required][TzAddress] string address)
-        {
-            var query = ResponseCacheService.BuildKey(Request.Path.Value);
-
-            if (ResponseCache.TryGet(query, out var cached))
-                return this.Bytes(cached);
-
-            var res = await Repo.GetBakerApy(address);
-            if (res == null)
-                return NotFound();
-
-            cached = ResponseCache.Set(query, res);
-            return this.Bytes(cached);
-        }
-        #endregion
     }
 }
 

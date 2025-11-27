@@ -2198,46 +2198,13 @@ namespace Mvkt.Api.Repositories
 
             var alias = Accounts.GetAlias(baker.Id);
 
-            var bonds = baker.OwnStakedBalance + baker.ExternalStakedBalance;
-
-            var totalIncome = rewardsList.Sum(r =>
-                r.BlockRewardsDelegated + r.BlockRewardsStakedOwn + r.BlockRewardsStakedEdge + r.BlockRewardsStakedShared +
-                r.EndorsementRewardsDelegated + r.EndorsementRewardsStakedOwn + r.EndorsementRewardsStakedEdge + r.EndorsementRewardsStakedShared +
-                r.BlockFees +
-                r.DoubleBakingRewards + r.DoubleEndorsingRewards + r.DoublePreendorsingRewards +
-                r.VdfRevelationRewardsDelegated + r.VdfRevelationRewardsStakedOwn + r.VdfRevelationRewardsStakedEdge + r.VdfRevelationRewardsStakedShared +
-                r.NonceRevelationRewardsDelegated + r.NonceRevelationRewardsStakedOwn + r.NonceRevelationRewardsStakedEdge + r.NonceRevelationRewardsStakedShared);
-
-            var fees = rewardsList.Sum(r => r.BlockFees);
-
-            var bakerRewards = rewardsList.Sum(r =>
-                r.BlockRewardsDelegated + r.BlockRewardsStakedOwn + r.BlockRewardsStakedEdge +
-                r.EndorsementRewardsDelegated + r.EndorsementRewardsStakedOwn + r.EndorsementRewardsStakedEdge +
-                r.VdfRevelationRewardsDelegated + r.VdfRevelationRewardsStakedOwn + r.VdfRevelationRewardsStakedEdge +
-                r.NonceRevelationRewardsDelegated + r.NonceRevelationRewardsStakedOwn + r.NonceRevelationRewardsStakedEdge +
-                r.DoubleBakingRewards + r.DoubleEndorsingRewards + r.DoublePreendorsingRewards);
-
-            var extraRewards = rewardsList.Sum(r =>
-                r.DoubleBakingRewards + r.DoubleEndorsingRewards + r.DoublePreendorsingRewards +
-                r.VdfRevelationRewardsDelegated + r.VdfRevelationRewardsStakedOwn + r.VdfRevelationRewardsStakedEdge + r.VdfRevelationRewardsStakedShared +
-                r.NonceRevelationRewardsDelegated + r.NonceRevelationRewardsStakedOwn + r.NonceRevelationRewardsStakedEdge + r.NonceRevelationRewardsStakedShared);
-
-            var lostRewards = rewardsList.Sum(r =>
-                r.MissedBlockRewards + r.MissedEndorsementRewards + r.MissedBlockFees);
-
-            var slashedRewards = rewardsList.Sum(r =>
-                r.DoubleBakingLostStaked + r.DoubleBakingLostExternalStaked + r.DoubleBakingLostUnstaked + r.DoubleBakingLostExternalUnstaked +
-                r.DoubleEndorsingLostStaked + r.DoubleEndorsingLostExternalStaked + r.DoubleEndorsingLostUnstaked + r.DoubleEndorsingLostExternalUnstaked +
-                r.DoublePreendorsingLostStaked + r.DoublePreendorsingLostExternalStaked + r.DoublePreendorsingLostUnstaked + r.DoublePreendorsingLostExternalUnstaked +
-                r.NonceRevelationLosses);
-
             var totalExpectedBlocks = rewardsList.Sum(r => r.ExpectedBlocks);
-            var totalBlocks = rewardsList.Sum(r => r.Blocks);
-            var totalMissedBlocks = rewardsList.Sum(r => r.MissedBlocks);
+            var totalBlocks = rewardsList.Sum(r => (long)r.Blocks);
+            var totalMissedBlocks = rewardsList.Sum(r => (long)r.MissedBlocks);
 
             var totalExpectedEndorsements = rewardsList.Sum(r => r.ExpectedEndorsements);
-            var totalEndorsements = rewardsList.Sum(r => r.Endorsements);
-            var totalMissedEndorsements = rewardsList.Sum(r => r.MissedEndorsements);
+            var totalEndorsements = rewardsList.Sum(r => (long)r.Endorsements);
+            var totalMissedEndorsements = rewardsList.Sum(r => (long)r.MissedEndorsements);
 
             var totalExpectedRewards = rewardsList.Sum(r => r.FutureBlockRewards + r.FutureEndorsementRewards);
             
@@ -2265,23 +2232,9 @@ namespace Mvkt.Api.Repositories
             {
                 Address = baker.Address,
                 Alias = alias?.Name,
-                Bonds = bonds,
-                TotalIncome = totalIncome,
-                Fees = fees,
-                BakerRewards = bakerRewards,
-                ExtraRewards = extraRewards,
-                LostRewards = lostRewards,
-                SlashedRewards = slashedRewards,
                 Luck = luck,
                 Performance = performance,
                 Reliability = reliability,
-                CyclesCount = rewardsList.Count,
-                TotalExpectedBlocks = Math.Round(totalExpectedBlocks, 2),
-                TotalBlocks = totalBlocks,
-                TotalMissedBlocks = totalMissedBlocks,
-                TotalExpectedEndorsements = Math.Round(totalExpectedEndorsements, 2),
-                TotalEndorsements = totalEndorsements,
-                TotalMissedEndorsements = totalMissedEndorsements,
                 TotalExpectedRewards = totalExpectedRewards,
                 TotalActualRewards = totalActualRewards
             };

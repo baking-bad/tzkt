@@ -11,10 +11,12 @@ namespace Mvkt.Api.Controllers
     public class RewardsController : ControllerBase
     {
         private readonly RewardsRepository Rewards;
+        private readonly StakingRepository Staking;
 
-        public RewardsController(RewardsRepository rewards)
+        public RewardsController(RewardsRepository rewards, StakingRepository staking)
         {
             Rewards = rewards;
+            Staking = staking;
         }
 
         /// <summary>
@@ -218,6 +220,8 @@ namespace Mvkt.Api.Controllers
             var stats = await Rewards.GetBakerStats(address);
             if (stats == null)
                 return NotFound();
+
+            stats.Apy = await Staking.GetBakerApy(address);
 
             return Ok(stats);
         }
