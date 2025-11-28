@@ -22,7 +22,7 @@ namespace Mvkt.Api.Models
 
         /// <summary>
         /// Luck percentage (actual rewards / expected rewards * 100)
-        /// Values > 100% indicate good luck, < 100% indicate bad luck
+        /// Values &gt; 100% indicate good luck, &lt; 100% indicate bad luck
         /// </summary>
         public double Luck { get; set; }
 
