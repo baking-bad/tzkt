@@ -2204,18 +2204,14 @@ namespace Mvkt.Api.Repositories
 
             var totalExpectedEndorsements = rewardsList.Sum(r => r.ExpectedEndorsements);
             var totalEndorsements = rewardsList.Sum(r => (long)r.Endorsements);
-            var totalMissedEndorsements = rewardsList.Sum(r => (long)r.MissedEndorsements);
+            var totalMissedEndorsements = rewardsList.Sum(r => (long)r.MissedEndorsementRewards
 
-            // For past cycles: expected = actual + missed
-            // For future cycles: use FutureBlockRewards + FutureEndorsementRewards
-            // We calculate expected rewards as actual + missed for all cycles
             var totalActualRewards = rewardsList.Sum(r =>
                 r.BlockRewardsDelegated + r.BlockRewardsStakedOwn + r.BlockRewardsStakedEdge + r.BlockRewardsStakedShared +
                 r.EndorsementRewardsDelegated + r.EndorsementRewardsStakedOwn + r.EndorsementRewardsStakedEdge + r.EndorsementRewardsStakedShared);
             
             var totalMissedRewards = rewardsList.Sum(r => r.MissedBlockRewards + r.MissedEndorsementRewards);
             
-            // Expected rewards = what was actually received + what was missed
             var totalExpectedRewards = totalActualRewards + totalMissedRewards;
 
             var luck = totalExpectedRewards > 0
