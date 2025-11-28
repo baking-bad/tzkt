@@ -2196,7 +2196,7 @@ namespace Mvkt.Api.Repositories
             if (!rewardsList.Any())
                 return null;
 
-            var alias = Accounts.GetAlias(baker.Id);
+            var alias = await Accounts.GetAliasAsync(baker.Id);
 
             var totalExpectedBlocks = rewardsList.Sum(r => (long)Math.Round(r.ExpectedBlocks));
             var totalBlocks = rewardsList.Sum(r => (long)r.Blocks);

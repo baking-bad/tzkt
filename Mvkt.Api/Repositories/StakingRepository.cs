@@ -522,10 +522,6 @@ namespace Mvkt.Api.Repositories
             if (totalEffectiveStake == 0)
                 return null;
 
-            var bakerEffectiveStake = 2 * delegat.OwnStakedBalance 
-                + delegat.ExternalStakedBalance 
-                + delegat.DelegatedBalance / protocol.StakePowerMultiplier;
-
             var baseMonthlyRate = (double)totalRewardsPerMonth / totalEffectiveStake;
 
             var ownStakeMonthlyRewards = baseMonthlyRate * 2 * delegat.OwnStakedBalance;
