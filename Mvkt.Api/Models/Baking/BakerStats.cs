@@ -6,11 +6,6 @@ namespace Mvkt.Api.Models
     public class BakerStats
     {
         /// <summary>
-        /// Baker address
-        /// </summary>
-        public string Address { get; set; }
-
-        /// <summary>
         /// Baker alias
         /// </summary>
         public string Alias { get; set; }
@@ -32,7 +27,7 @@ namespace Mvkt.Api.Models
         public double Performance { get; set; }
 
         /// <summary>
-        /// Reliability percentage (blocks + endorsements / expected blocks + expected endorsements * 100)
+        /// Reliability percentage (blocks + attestations / expected blocks + expected attestations * 100)
         /// </summary>
         public double Reliability { get; set; }
 

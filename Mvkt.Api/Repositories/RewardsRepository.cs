@@ -2198,13 +2198,13 @@ namespace Mvkt.Api.Repositories
 
             var alias = Accounts.GetAlias(baker.Id);
 
-            var totalExpectedBlocks = rewardsList.Sum(r => r.ExpectedBlocks);
+            var totalExpectedBlocks = rewardsList.Sum(r => (long)Math.Round(r.ExpectedBlocks));
             var totalBlocks = rewardsList.Sum(r => (long)r.Blocks);
             var totalMissedBlocks = rewardsList.Sum(r => (long)r.MissedBlocks);
 
-            var totalExpectedEndorsements = rewardsList.Sum(r => r.ExpectedEndorsements);
-            var totalEndorsements = rewardsList.Sum(r => (long)r.Endorsements);
-            var totalMissedEndorsements = rewardsList.Sum(r => (long)r.MissedEndorsementRewards
+            var totalExpectedAttestations = rewardsList.Sum(r => (long)Math.Round(r.ExpectedEndorsements));
+            var totalAttestations = rewardsList.Sum(r => (long)r.Endorsements);
+            var totalMissedAttestations = rewardsList.Sum(r => (long)r.MissedEndorsements);
 
             var totalActualRewards = rewardsList.Sum(r =>
                 r.BlockRewardsDelegated + r.BlockRewardsStakedOwn + r.BlockRewardsStakedEdge + r.BlockRewardsStakedShared +
@@ -2218,21 +2218,20 @@ namespace Mvkt.Api.Repositories
                 ? Math.Round((double)totalActualRewards / totalExpectedRewards * 100, 2)
                 : 0.0;
 
-            var totalOpportunities = totalBlocks + totalMissedBlocks + totalEndorsements + totalMissedEndorsements;
-            var successfulOperations = totalBlocks + totalEndorsements;
+            var totalOpportunities = totalBlocks + totalMissedBlocks + totalAttestations + totalMissedAttestations;
+            var successfulOperations = totalBlocks + totalAttestations;
             var performance = totalOpportunities > 0
                 ? Math.Round((double)successfulOperations / totalOpportunities * 100, 2)
                 : 0.0;
 
-            var totalExpectedOperations = totalExpectedBlocks + totalExpectedEndorsements;
-            var totalActualOperations = totalBlocks + totalEndorsements;
+            var totalExpectedOperations = totalExpectedBlocks + totalExpectedAttestations;
+            var totalActualOperations = totalBlocks + totalAttestations;
             var reliability = totalExpectedOperations > 0
                 ? Math.Round((double)totalActualOperations / totalExpectedOperations * 100, 2)
                 : 0.0;
 
             return new BakerStats
             {
-                Address = baker.Address,
                 Alias = alias?.Name,
                 Luck = luck,
                 Performance = performance,
