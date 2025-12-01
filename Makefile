@@ -39,6 +39,12 @@ api:
 	# Set up env file: cp .env.sample .env
 	export $$(cat .env | xargs) && dotnet run -p Mvkt.Api -v normal
 
+test:
+	dotnet test --verbosity normal
+
+test-api:
+	dotnet test Mvkt.Api.Tests --verbosity normal
+
 api-image:
 	docker build -t mavrykdynamics/mvkt-api:latest -f ./Mvkt.Api/Dockerfile .
 
