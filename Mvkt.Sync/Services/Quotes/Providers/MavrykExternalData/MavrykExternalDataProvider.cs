@@ -19,6 +19,8 @@ namespace Mvkt.Sync.Services
         public MavrykExternalDataProvider(IConfiguration config)
         {
             Config = config.GetMavrykExternalDataProviderConfig();
+            if (string.IsNullOrEmpty(Config.BaseUrl))
+                throw new ArgumentException("BaseUrl must be configured in Quotes:Provider:BaseUrl");
             Client = new MvktClient(Config.BaseUrl, Config.Timeout);
         }
 

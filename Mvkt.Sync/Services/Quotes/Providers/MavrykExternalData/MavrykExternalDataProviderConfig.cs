@@ -4,8 +4,8 @@ namespace Mvkt.Sync.Services
 {
     public class MavrykExternalDataProviderConfig
     {
-        public string BaseUrl { get; set; } = "https://services.api.mavryk.network";
-        public int Timeout { get; set; } = 10;
+        public string BaseUrl { get; set; }
+        public int Timeout { get; set; } = 60;
     }
 
     public static class MavrykExternalDataProviderConfigExt
