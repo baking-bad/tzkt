@@ -43,32 +43,13 @@ namespace Tzkt.Sync.Protocols.Proto12
             };
             #endregion
 
-            #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            #endregion
-
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
-
-            sender.SetDepositsLimitsCount++;
+            Db.TryAttach(sender);
+            PayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter;
+            sender.SetDepositsLimitsCount++;
 
             block.Operations |= Operations.SetDepositsLimits;
-            block.Fees += operation.BakerFee;
 
             Cache.AppState.Get().SetDepositsLimitOpsCount++;
             #endregion
@@ -86,6 +67,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     (sender as Data.Models.Delegate)!.FrozenDepositLimit = null;
                 }
+                UpdateBakerPower((sender as Data.Models.Delegate)!);
             }
             #endregion
 
@@ -97,13 +79,9 @@ namespace Tzkt.Sync.Protocols.Proto12
         public virtual async Task Revert(Block block, SetDepositsLimitOperation op)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = (User)await Cache.Accounts.GetAsync(op.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             #endregion
 
             #region revert result
@@ -124,21 +102,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     (sender as Data.Models.Delegate)!.FrozenDepositLimit = null;
                 }
+                UpdateBakerPower((sender as Data.Models.Delegate)!);
             }
             #endregion
 
             #region revert operation
-            sender.Balance += op.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += op.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += op.BakerFee;
-            }
-
-            blockBaker.Balance -= op.BakerFee;
-            blockBaker.StakingBalance -= op.BakerFee;
-
+            RevertPayFee(sender, op.BakerFee);
             sender.SetDepositsLimitsCount--;
             sender.Counter = op.Counter - 1;
             sender.Revealed = true;

@@ -66,7 +66,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             #region apply operation
             Db.TryAttach(sender);
-            sender.Balance -= operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter;
             sender.StakingOpsCount++;
 
@@ -76,19 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 staker.StakingOpsCount++;
             }
 
-            if (senderDelegate != null)
-            {
-                Db.TryAttach(senderDelegate);
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-
-            Context.Proposer.Balance += operation.BakerFee;
-            Context.Proposer.StakingBalance += operation.BakerFee;
-
             block.Operations |= Operations.Staking;
-            block.Fees += operation.BakerFee;
 
             Cache.AppState.Get().StakingOpsCount++;
             #endregion
@@ -145,11 +133,9 @@ namespace Tzkt.Sync.Protocols.Proto18
         public async Task Revert(Block block, StakingOperation operation)
         {
             var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
-            var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
             var staker = (await Cache.Accounts.GetAsync(operation.StakerId) as User)!;
 
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
@@ -172,7 +158,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter - 1;
             sender.StakingOpsCount--;
 
@@ -181,16 +167,6 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(staker);
                 staker.StakingOpsCount--;
             }
-
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-
-            Context.Proposer.Balance -= operation.BakerFee;
-            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().StakingOpsCount--;
             #endregion

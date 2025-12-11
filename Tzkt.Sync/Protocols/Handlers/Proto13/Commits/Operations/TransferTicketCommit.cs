@@ -69,33 +69,19 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(target);
             Db.TryAttach(ticketer);
             #endregion
 
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
 
             sender.TransferTicketCount++;
             if (target != null && target != sender) target.TransferTicketCount++;
             if (ticketer != null && ticketer != sender && ticketer != target) ticketer.TransferTicketCount++;
 
             block.Operations |= Operations.TransferTicket;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -108,13 +94,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 var burned = operation.StorageFee ?? 0;
                 Proto.Manager.Burn(burned);
 
-                sender.Balance -= burned;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= burned;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= burned;
-                }
+                Spend(sender, burned);
                 
                 TicketUpdates = ParseTicketUpdates(result);
 
@@ -131,15 +111,11 @@ namespace Tzkt.Sync.Protocols.Proto13
         public virtual async Task Revert(Block block, TransferTicketOperation operation)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var target = await Cache.Accounts.GetAsync(operation.TargetId);
             var ticketer = await Cache.Accounts.GetAsync(operation.TicketerId);
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(target);
             Db.TryAttach(ticketer);
             #endregion
@@ -147,30 +123,12 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                var spent = operation.StorageFee ?? 0;
-
-                sender.Balance += spent;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += spent;
-                    if (senderDelegate.Id != sender.Id)
-                    {
-                        senderDelegate.DelegatedBalance += spent;
-                    }
-                }
+                RevertSpend(sender, operation.StorageFee ?? 0);
             }
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
 
             sender.TransferTicketCount--;
             if (target != null && target != sender) target.TransferTicketCount--;

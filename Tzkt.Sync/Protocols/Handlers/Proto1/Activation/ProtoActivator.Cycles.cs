@@ -13,9 +13,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             var delegates = accounts
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => (x as Data.Models.Delegate)!);
-            var selected = delegates.Where(x => x.StakingBalance >= protocol.MinimalStake);
+            var selected = delegates.Where(x => x.BakingPower != 0);
             var selectedBakers = selected.Count();
-            var selectedStaking = selected.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
+            var selectedPower = selected.Sum(x => x.BakingPower);
 
             var initialSeed = parameters["initial_seed"]?.Value<string>() is string base58Seed &&
                 Base58.TryParse(base58Seed, new byte[3], out var _initialSeed) &&
@@ -34,7 +34,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     LastLevel = protocol.GetCycleEnd(index),
                     SnapshotLevel = 1,
                     TotalBakers = selectedBakers,
-                    TotalBakingPower = selectedStaking,
+                    TotalBakingPower = selectedPower,
                     Seed = seeds[index]
                 };
                 Db.Cycles.Add(cycle);

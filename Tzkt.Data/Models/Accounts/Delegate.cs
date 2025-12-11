@@ -9,8 +9,11 @@ namespace Tzkt.Data.Models
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
-        public long StakingBalance { get; set; }
-        public long DelegatedBalance { get; set; }
+        public long BakingPower { get; set; }
+        public long VotingPower { get; set; }
+
+        public long OwnDelegatedBalance { get; set; }
+        public long ExternalDelegatedBalance { get; set; }
         public long MinTotalDelegated { get; set; }
         public int MinTotalDelegatedLevel { get; set; }
         public int DelegatorsCount { get; set; }
@@ -46,7 +49,10 @@ namespace Tzkt.Data.Models
 
         #region helpers
         [NotMapped]
-        public long TotalDelegated => StakingBalance - OwnStakedBalance - ExternalStakedBalance;
+        public long TotalDelegated => OwnDelegatedBalance + ExternalDelegatedBalance;
+
+        [NotMapped]
+        public long TotalStaked => OwnStakedBalance + ExternalStakedBalance;
         #endregion
     }
 

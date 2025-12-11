@@ -67,10 +67,12 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Db.TryAttach(delegat);
                 #endregion
 
-                delegat.Balance -= penalty.Loss;
-                delegat.StakingBalance -= penalty.Loss > 0
-                    ? (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees
-                    : 0;
+                if (penalty.Loss != 0)
+                {
+                    var lostFees = (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees;
+                    Spend(delegat, delegat, lostFees);
+                    BurnLockedRewards(delegat, penalty.Loss - lostFees);
+                }
 
                 delegat.RevelationPenaltiesCount++;
                 block.Operations |= Operations.RevelationPenalty;
@@ -93,10 +95,12 @@ namespace Tzkt.Sync.Protocols.Proto2
                 Db.TryAttach(delegat);
                 #endregion
 
-                delegat.Balance += penalty.Loss;
-                delegat.StakingBalance += penalty.Loss > 0
-                    ? (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees
-                    : 0;
+                if (penalty.Loss != 0)
+                {
+                    var lostFees = (await Cache.Blocks.GetAsync(penalty.MissedLevel)).Fees;
+                    RevertSpend(delegat, delegat, lostFees);
+                    RevertBurnLockedRewards(delegat, penalty.Loss - lostFees);
+                }
 
                 delegat.RevelationPenaltiesCount--;
 

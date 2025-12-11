@@ -2,10 +2,8 @@
 
 namespace Tzkt.Sync.Protocols.Proto21
 {
-    class Diagnostics : Proto18.Diagnostics
+    class Diagnostics(ProtocolHandler handler) : Proto18.Diagnostics(handler)
     {
-        public Diagnostics(ProtocolHandler handler) : base(handler) { }
-
         protected override bool CheckMinDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
             var minDelegated = remote.Required("min_delegated_in_current_cycle");
@@ -20,7 +18,7 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         protected override bool CheckStakingBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return remote.RequiredInt64("total_staked") + remote.RequiredInt64("total_delegated") == delegat.StakingBalance;
+            return remote.RequiredInt64("total_staked") == delegat.TotalStaked && remote.RequiredInt64("total_delegated") == delegat.TotalDelegated;
         }
 
         protected override void TestDelegatorsCount(JsonElement remote, Data.Models.Delegate local)
@@ -37,7 +35,12 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return remote.RequiredInt64("external_delegated") == delegat.DelegatedBalance;
+            return remote.RequiredInt64("external_delegated") == delegat.ExternalDelegatedBalance;
+        }
+
+        protected override bool CheckVotingPower(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return delegat.VotingPower == remote.RequiredInt64("current_voting_power");
         }
     }
 }

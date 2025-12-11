@@ -42,8 +42,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {0},
                     COALESCE("DelegateId", "Id"),
                     "Id",
-                    COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
-                    "DelegatedBalance",
+                    COALESCE("OwnDelegatedBalance", "Balance"),
+                    "ExternalDelegatedBalance",
                     "DelegatorsCount"
                 FROM "Accounts"
                 WHERE "Staked" = true
@@ -74,7 +74,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 var values = string.Join(",\n", deactivated
                     .SelectMany(row =>
-                        new[] { $"({block.Level}, {row.baker.Id}, {row.baker.Id}, {row.baker.StakingBalance - row.baker.DelegatedBalance}, {row.baker.DelegatedBalance}, {row.baker.DelegatorsCount})" }
+                        new[] { $"({block.Level}, {row.baker.Id}, {row.baker.Id}, {row.baker.OwnDelegatedBalance}, {row.baker.ExternalDelegatedBalance}, {row.baker.DelegatorsCount})" }
                         .Concat(row.delegators.Select(delegator => $"({block.Level}, {delegator.DelegateId}, {delegator.Id}, {delegator.Balance}, NULL::bigint, NULL::integer)"))));
 
                 if (values.Length > 0)

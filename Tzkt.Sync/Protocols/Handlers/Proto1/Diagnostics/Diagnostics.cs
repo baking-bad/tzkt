@@ -12,7 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected readonly TzktContext Db = handler.Db;
         protected readonly CacheService Cache = handler.Cache;
         protected readonly IRpc Rpc = handler.Rpc;
-        protected readonly BlockContext Context = handler.Context;
+        protected BlockContext Context => handler.Context;
 
         int AddedOperations = 0;
         readonly Dictionary<int, Account> ChangedAccounts = [];
@@ -171,7 +171,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (remote.RequiredInt32("grace_period") != deactivationCycle)
                 throw new Exception($"Diagnostics failed: wrong delegate grace period {delegat.Address}");
             
-            if (remote.RequiredInt64("staking_balance") != delegat.StakingBalance)
+            if (remote.RequiredInt64("staking_balance") != delegat.OwnDelegatedBalance + delegat.ExternalDelegatedBalance)
                 throw new Exception($"Diagnostics failed: wrong staking balance {delegat.Address}");
 
             TestDelegatorsCount(remote, delegat);

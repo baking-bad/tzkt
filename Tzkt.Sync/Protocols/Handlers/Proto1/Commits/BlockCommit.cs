@@ -54,19 +54,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                 LBToggleEma = GetLBToggleEma(rawBlock)
             };
 
+            Context.Block = Block;
+            Context.Proposer = baker;
+            Context.Protocol = protocol;
+
             #region entities
             Db.TryAttach(protocol);
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance += Block.RewardDelegated;
+            ReceiveLockedRewards(baker, Block.RewardDelegated);
             baker.BlocksCount++;
 
             var newDeactivationLevel = baker.Staked ? GracePeriod.Reset(Block.Level, protocol) : GracePeriod.Init(Block.Level, protocol);
             if (baker.DeactivationLevel < newDeactivationLevel)
             {
                 if (baker.DeactivationLevel <= Block.Level)
-                    await UpdateDelegate(baker, true);
+                    await ActivateBaker(baker);
 
                 Block.ResetBakerDeactivation = baker.DeactivationLevel;
                 baker.DeactivationLevel = newDeactivationLevel;
@@ -81,10 +85,6 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
-
-            Context.Block = Block;
-            Context.Proposer = baker;
-            Context.Protocol = protocol;
         }
 
         public virtual async Task Revert(Block block)
@@ -96,13 +96,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(baker);
             #endregion
 
-            baker.Balance -= Block.RewardDelegated;
+            RevertReceiveLockedRewards(baker, Block.RewardDelegated);
             baker.BlocksCount--;
 
             if (Block.ResetBakerDeactivation != null)
             {
                 if (Block.ResetBakerDeactivation <= Block.Level)
-                    await UpdateDelegate(baker, false);
+                    await DeactivateBaker(baker);
 
                 baker.DeactivationLevel = (int)Block.ResetBakerDeactivation;
             }

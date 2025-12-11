@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
-using Netezos.Encoding;
+﻿using Netezos.Encoding;
+using System;
+using System.Text.Json;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -61,9 +62,12 @@ namespace Tzkt.Sync.Protocols.Proto12
                 LBToggleEma = GetLBToggleEma(rawBlock)
             };
 
+            Context.Block = Block;
+            Context.Proposer = proposer;
+            Context.Protocol = protocol;
+
             Db.TryAttach(proposer);
-            proposer.Balance += Block.RewardDelegated;
-            proposer.StakingBalance += Block.RewardDelegated;
+            Receive(proposer, proposer, Block.RewardDelegated);
             proposer.BlocksCount++;
 
             #region set baker active
@@ -71,7 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (proposer.DeactivationLevel < newDeactivationLevel)
             {
                 if (proposer.DeactivationLevel <= Block.Level)
-                    await UpdateDelegate(proposer, true);
+                    await ActivateBaker(proposer);
 
                 Block.ResetBakerDeactivation = proposer.DeactivationLevel;
                 proposer.DeactivationLevel = newDeactivationLevel;
@@ -79,8 +83,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             Db.TryAttach(producer);
-            producer.Balance += Block.BonusDelegated;
-            producer.StakingBalance += Block.BonusDelegated;
+            Receive(producer, producer, Block.BonusDelegated);
             if (producer.Id != proposer.Id)
             {
                 producer.BlocksCount++;
@@ -90,7 +93,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (producer.DeactivationLevel < newDeactivationLevel)
                 {
                     if (producer.DeactivationLevel <= Block.Level)
-                        await UpdateDelegate(producer, true);
+                        await ActivateBaker(producer);
 
                     Block.ResetProposerDeactivation = producer.DeactivationLevel;
                     producer.DeactivationLevel = newDeactivationLevel;
@@ -108,10 +111,6 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
-
-            Context.Block = Block;
-            Context.Proposer = proposer;
-            Context.Protocol = protocol;
         }
 
         public virtual async Task Revert(Block block)
@@ -120,15 +119,14 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var proposer = Context.Proposer;
             Db.TryAttach(proposer);
-            proposer.Balance -= Block.RewardDelegated;
-            proposer.StakingBalance -= Block.RewardDelegated;
+            RevertReceive(proposer, proposer, Block.RewardDelegated);
             proposer.BlocksCount--;
 
             #region reset baker activity
             if (Block.ResetBakerDeactivation != null)
             {
                 if (Block.ResetBakerDeactivation <= Block.Level)
-                    await UpdateDelegate(proposer, false);
+                    await DeactivateBaker(proposer);
 
                 proposer.DeactivationLevel = (int)Block.ResetBakerDeactivation;
             }
@@ -136,8 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
             var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
-            producer.Balance -= Block.BonusDelegated;
-            producer.StakingBalance -= Block.BonusDelegated;
+            RevertReceive(producer, producer, Block.BonusDelegated);
             if (producer.Id != proposer.Id)
             {
                 producer.BlocksCount--;
@@ -146,7 +143,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 if (Block.ResetProposerDeactivation != null)
                 {
                     if (Block.ResetProposerDeactivation <= Block.Level)
-                        await UpdateDelegate(producer, false);
+                        await DeactivateBaker(producer);
 
                     producer.DeactivationLevel = (int)Block.ResetProposerDeactivation;
                 }

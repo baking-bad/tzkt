@@ -165,14 +165,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, protocol))
+                .Where(x => x.VotingPower != 0)
                 .Select(x => new VotingSnapshot
                 {
                     Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, protocol),
+                    VotingPower = x.VotingPower,
                     Status = VoterStatus.None
                 });
 
@@ -222,14 +222,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, protocol))
+                .Where(x => x.VotingPower != 0)
                 .Select(x => new VotingSnapshot
                 {
                     Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, protocol),
+                    VotingPower = x.VotingPower,
                     Status = VoterStatus.None
                 });
 
@@ -284,14 +284,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region snapshot
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => BakerIsListed(x, block, protocol))
+                .Where(x => x.VotingPower != 0)
                 .Select(x => new VotingSnapshot
                 {
                     Id = 0,
                     Level = block.Level,
                     Period = period.Index,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, block, protocol),
+                    VotingPower = x.VotingPower,
                     Status = VoterStatus.None
                 });
 
@@ -348,16 +348,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
 
             return 8000;
-        }
-
-        protected virtual long GetVotingPower(Data.Models.Delegate baker, Block block, Protocol protocol)
-        {
-            return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
-        }
-
-        protected virtual bool BakerIsListed(Data.Models.Delegate baker, Block block, Protocol protocol)
-        {
-            return baker.Staked && baker.StakingBalance >= protocol.MinimalStake;
         }
     }
 }

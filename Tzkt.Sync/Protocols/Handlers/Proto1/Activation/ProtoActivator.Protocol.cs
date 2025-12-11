@@ -23,6 +23,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
+            Context.Protocol = protocol;
 
             var parameters = Bson.Parse(rawBlock
                 .Required("header")
@@ -139,6 +140,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
             Db.Protocols.Add(protocol);
             Cache.Protocols.Add(protocol);
+            Context.Protocol = protocol;
 
             UpgradeParameters(protocol, prev);
         }

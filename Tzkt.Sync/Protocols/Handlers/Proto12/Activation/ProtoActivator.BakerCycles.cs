@@ -27,21 +27,19 @@ namespace Tzkt.Sync.Protocols.Proto12
                         Cycle = cycle.Index,
                         BakerId = x.Id,
                         OwnDelegatedBalance = x.Balance,
-                        ExternalDelegatedBalance = x.DelegatedBalance,
+                        ExternalDelegatedBalance = x.ExternalDelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         IssuedPseudotokens = x.IssuedPseudotokens,
-                        BakingPower = 0,
+                        BakingPower = x.BakingPower,
                         TotalBakingPower = cycle.TotalBakingPower
                     };
-                    if (x.StakingBalance >= protocol.MinimalStake)
+                    if (x.BakingPower != 0)
                     {
-                        var bakingPower = Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
-                        bakerCycle.BakingPower = bakingPower;
-                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * x.BakingPower / cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * x.BakingPower / cycle.TotalBakingPower;
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * protocol.AttestationReward0;
                     }

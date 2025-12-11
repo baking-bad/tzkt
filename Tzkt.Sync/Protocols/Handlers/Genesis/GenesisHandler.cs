@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols
     class GenesisHandler : ProtocolHandler
     {
         public override IDiagnostics Diagnostics { get; }
+        public override IHelpers Helpers { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
         public override string VersionName => "genesis";
@@ -21,6 +22,7 @@ namespace Tzkt.Sync.Protocols
         {
             Diagnostics = new Diagnostics();
             Validator = new Validator(this);
+            Helpers = new Helpers();
             Rpc = new Rpc(node);
         }
 

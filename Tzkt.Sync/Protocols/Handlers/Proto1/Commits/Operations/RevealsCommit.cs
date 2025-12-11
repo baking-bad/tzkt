@@ -39,32 +39,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             };
             #endregion
 
-            #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            #endregion
-
             #region apply operation
-            sender.Balance -= reveal.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= reveal.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= reveal.BakerFee;
-            }
-            blockBaker.Balance += reveal.BakerFee;
-            blockBaker.StakingBalance += reveal.BakerFee;
-
+            Db.TryAttach(sender);
+            PayFee(sender, reveal.BakerFee);
+            sender.Counter = reveal.Counter;
             sender.RevealsCount++;
 
             block.Operations |= Operations.Reveals;
-            block.Fees += reveal.BakerFee;
-
-            sender.Counter = reveal.Counter;
 
             Cache.AppState.Get().RevealOpsCount++;
             #endregion
@@ -81,13 +62,9 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Revert(Block block, RevealOperation reveal)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(reveal.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             #endregion
 
             #region revert result
@@ -95,19 +72,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            sender.Balance += reveal.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += reveal.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += reveal.BakerFee;
-            }
-            blockBaker.Balance -= reveal.BakerFee;
-            blockBaker.StakingBalance -= reveal.BakerFee;
-
-            sender.RevealsCount--;
-
+            RevertPayFee(sender, reveal.BakerFee);
             sender.Counter = reveal.Counter - 1;
+            sender.RevealsCount--;
 
             Cache.AppState.Get().RevealOpsCount--;
             #endregion

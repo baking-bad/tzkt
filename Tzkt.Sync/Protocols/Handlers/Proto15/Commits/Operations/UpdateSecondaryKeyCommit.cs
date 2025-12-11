@@ -50,30 +50,13 @@ namespace Tzkt.Sync.Protocols.Proto15
             };
             #endregion
 
-            #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            #endregion
-
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            Db.TryAttach(sender);
+            PayFee(sender, operation.BakerFee);
 
             sender.UpdateSecondaryKeyCount++;
 
             block.Operations |= Operations.UpdateSecondaryKey;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -91,28 +74,16 @@ namespace Tzkt.Sync.Protocols.Proto15
         public virtual async Task Revert(Block block, UpdateSecondaryKeyOperation operation)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             #endregion
 
             #region revert result
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
 
             sender.UpdateSecondaryKeyCount--;
 

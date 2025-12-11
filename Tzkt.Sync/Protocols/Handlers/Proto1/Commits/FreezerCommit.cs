@@ -20,7 +20,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'r':
                         var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
-                        delegat.StakingBalance -= change;
+                        UnlockRewards(delegat, -change);
                         break;
                     case 'f':
                         break;
@@ -51,7 +51,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     case 'r':
                         var delegat = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate"));
                         Db.TryAttach(delegat);
-                        delegat.StakingBalance += change;
+                        RevertUnlockRewards(delegat, -change);
                         break;
                     case 'f':
                         break;

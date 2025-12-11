@@ -41,10 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region apply operation
-            baker.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            baker.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            baker.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            baker.ExternalStakedBalance += revelation.RewardStakedShared;
+            ReceiveRewards(baker, revelation.RewardDelegated, revelation.RewardStakedOwn, revelation.RewardStakedEdge, revelation.RewardStakedShared);
             baker.NonceRevelationsCount++;
 
             if (revelation.SenderId != baker.Id)
@@ -74,16 +71,13 @@ namespace Tzkt.Sync.Protocols.Proto18
             var sender = Cache.Accounts.GetDelegate(revelation.SenderId);
             var revealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
 
-            Db.TryAttach(blockBaker);
+            //Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(revealedBlock);
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            blockBaker.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            blockBaker.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            blockBaker.ExternalStakedBalance -= revelation.RewardStakedShared;
+            RevertReceiveRewards(blockBaker, revelation.RewardDelegated, revelation.RewardStakedOwn, revelation.RewardStakedEdge, revelation.RewardStakedShared);
             blockBaker.NonceRevelationsCount--;
 
             if (sender.Id != blockBaker.Id)

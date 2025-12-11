@@ -59,10 +59,9 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleBaking.Reward;
-            offender.Balance -= doubleBaking.LostStaked;
-            offender.StakingBalance -= lostDepositsValue;
-            offender.StakingBalance -= lostFeesValue;
+            ReceiveLockedRewards(accuser, doubleBaking.Reward);
+            Spend(offender, offender, lostDepositsValue + lostFeesValue);
+            BurnLockedRewards(offender, lostRewardsValue);
 
             accuser.DoubleBakingCount++;
             if (offender != accuser) offender.DoubleBakingCount++;
@@ -92,11 +91,11 @@ namespace Tzkt.Sync.Protocols.Proto2
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleBaking.Reward;
-            offender.Balance += doubleBaking.LostStaked;
-            offender.StakingBalance += doubleBaking.Reward * 2;
+            RevertReceiveLockedRewards(accuser, doubleBaking.Reward);
             // here we can miss 1 mutez, but this may happen only in legacy protocols
             // TODO: replace it with NotImplementedException after Ithaca
+            RevertSpend(offender, offender, doubleBaking.Reward * 2);
+            RevertBurnLockedRewards(offender, doubleBaking.LostStaked - doubleBaking.Reward * 2);
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;

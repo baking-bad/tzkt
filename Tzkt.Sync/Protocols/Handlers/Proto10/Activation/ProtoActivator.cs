@@ -468,10 +468,10 @@ namespace Tzkt.Sync.Protocols.Proto10
                 contract = new Contract
                 {
                     Id = ghost.Id,
+                    Index = ghost.Index,
                     FirstLevel = ghost.FirstLevel,
                     LastLevel = block.Level,
                     Address = address,
-                    Balance = rawContract.RequiredInt64("balance"),
                     CreatorId = creator.Id,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
@@ -491,7 +491,6 @@ namespace Tzkt.Sync.Protocols.Proto10
                     FirstLevel = block.Level,
                     LastLevel = block.Level,
                     Address = address,
-                    Balance = rawContract.RequiredInt64("balance"),
                     CreatorId = creator.Id,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
@@ -499,6 +498,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 };
                 Db.Accounts.Add(contract);
             }
+            Receive(contract, rawContract.RequiredInt64("balance"));
             Cache.Accounts.Add(contract);
 
             Db.TryAttach(creator);
@@ -810,6 +810,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 var ghost = new Account
                 {
                     Id = contract.Id,
+                    Index = contract.Index,
                     Address = contract.Address,
                     FirstLevel = contract.FirstLevel,
                     LastLevel = contract.LastLevel,

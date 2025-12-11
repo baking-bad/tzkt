@@ -126,10 +126,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance += op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge;
-                baker.StakingBalance += op.RewardDelegated + op.RewardStakedOwn + op.RewardStakedEdge + op.RewardStakedShared;
-                baker.OwnStakedBalance += op.RewardStakedOwn + op.RewardStakedEdge;
-                baker.ExternalStakedBalance += op.RewardStakedShared;
+                ReceiveRewards(baker, op.RewardDelegated, op.RewardStakedOwn, op.RewardStakedEdge, op.RewardStakedShared);
                 baker.AttestationRewardsCount++;
 
                 block.Operations |= Operations.AttestationRewards;

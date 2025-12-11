@@ -57,21 +57,21 @@ namespace Tzkt.Sync.Protocols.Proto18
                 LBToggleEma = metadata.RequiredInt32("liquidity_baking_toggle_ema")
             };
 
+            Context.Block = Block;
+            Context.Proposer = proposer;
+            Context.Protocol = protocol;
+
             Db.TryAttach(protocol); // if we don't attach it, ef will recognize it as 'added'
             if (Block.Events.HasFlag(BlockEvents.ProtocolEnd))
                 protocol.LastLevel = Block.Level;
 
             Db.TryAttach(proposer); // if we don't attach it, ef will recognize it as 'added'
             Db.TryAttach(producer); // if we don't attach it, ef will recognize it as 'added'
-
+            
             Cache.AppState.Get().BlocksCount++;
 
             Db.Blocks.Add(Block);
             Cache.Blocks.Add(Block);
-
-            Context.Block = Block;
-            Context.Proposer = proposer;
-            Context.Protocol = protocol;
         }
         
         public async Task ApplyRewards(JsonElement rawBlock)
@@ -107,10 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             Block.BonusStakedShared = bonusStakedShared;
 
             Db.TryAttach(proposer);
-            proposer.Balance += Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge;
-            proposer.StakingBalance += Block.RewardDelegated + Block.RewardStakedOwn + Block.RewardStakedEdge + Block.RewardStakedShared;
-            proposer.OwnStakedBalance += Block.RewardStakedOwn + Block.RewardStakedEdge;
-            proposer.ExternalStakedBalance += Block.RewardStakedShared;
+            ReceiveRewards(proposer, Block.RewardDelegated, Block.RewardStakedOwn, Block.RewardStakedEdge, Block.RewardStakedShared);
             proposer.BlocksCount++;
 
             #region set baker active
@@ -118,7 +115,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (proposer.DeactivationLevel < newDeactivationLevel)
             {
                 if (proposer.DeactivationLevel <= Block.Level)
-                    await UpdateDelegate(proposer, true);
+                    await ActivateBaker(proposer);
 
                 Block.ResetBakerDeactivation = proposer.DeactivationLevel;
                 proposer.DeactivationLevel = newDeactivationLevel;
@@ -126,10 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             Db.TryAttach(producer);
-            producer.Balance += Block.BonusDelegated + Block.BonusStakedOwn + Block.BonusStakedEdge;
-            producer.StakingBalance += Block.BonusDelegated + Block.BonusStakedOwn + Block.BonusStakedEdge + Block.BonusStakedShared;
-            producer.OwnStakedBalance += Block.BonusStakedOwn + Block.BonusStakedEdge;
-            producer.ExternalStakedBalance += Block.BonusStakedShared;
+            ReceiveRewards(producer, Block.BonusDelegated, Block.BonusStakedOwn, Block.BonusStakedEdge, Block.BonusStakedShared);
             if (producer != proposer)
             {
                 producer.BlocksCount++;
@@ -139,7 +133,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 if (producer.DeactivationLevel < newDeactivationLevel)
                 {
                     if (producer.DeactivationLevel <= Block.Level)
-                        await UpdateDelegate(producer, true);
+                        await ActivateBaker(producer);
 
                     Block.ResetProposerDeactivation = producer.DeactivationLevel;
                     producer.DeactivationLevel = newDeactivationLevel;
@@ -168,17 +162,14 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var proposer = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
             Db.TryAttach(proposer);
-            proposer.Balance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge;
-            proposer.StakingBalance -= block.RewardDelegated + block.RewardStakedOwn + block.RewardStakedEdge + block.RewardStakedShared;
-            proposer.OwnStakedBalance -= block.RewardStakedOwn + block.RewardStakedEdge;
-            proposer.ExternalStakedBalance -= block.RewardStakedShared;
+            RevertReceiveRewards(proposer, Block.RewardDelegated, Block.RewardStakedOwn, Block.RewardStakedEdge, Block.RewardStakedShared);
             proposer.BlocksCount--;
 
             #region reset baker activity
             if (block.ResetBakerDeactivation != null)
             {
                 if (block.ResetBakerDeactivation <= block.Level)
-                    await UpdateDelegate(proposer, false);
+                    await DeactivateBaker(proposer);
 
                 proposer.DeactivationLevel = (int)block.ResetBakerDeactivation;
             }
@@ -186,10 +177,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
-            producer.Balance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge;
-            producer.StakingBalance -= block.BonusDelegated + block.BonusStakedOwn + block.BonusStakedEdge + block.BonusStakedShared;
-            producer.OwnStakedBalance -= block.BonusStakedOwn + block.BonusStakedEdge;
-            producer.ExternalStakedBalance -= block.BonusStakedShared;
+            RevertReceiveRewards(producer, Block.BonusDelegated, Block.BonusStakedOwn, Block.BonusStakedEdge, Block.BonusStakedShared);
             if (producer != proposer)
             {
                 producer.BlocksCount--;
@@ -198,7 +186,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 if (block.ResetProposerDeactivation != null)
                 {
                     if (block.ResetProposerDeactivation <= block.Level)
-                        await UpdateDelegate(producer, false);
+                        await DeactivateBaker(producer);
 
                     producer.DeactivationLevel = (int)block.ResetProposerDeactivation;
                 }

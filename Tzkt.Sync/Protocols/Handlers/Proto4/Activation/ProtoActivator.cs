@@ -28,10 +28,12 @@ namespace Tzkt.Sync.Protocols.Proto4
             var block = await Cache.Blocks.CurrentAsync();
             Db.TryAttach(block);
 
+            UpdateBakersPower();
+
             var account = (await Cache.Accounts.GetAsync("tz1iSQEcaGpUn6EW5uAy3XhPiNg7BHMnRSXi"))!;
             Db.TryAttach(account);
+            Receive(account, 100_000_000);
             account.FirstLevel = account.LastLevel = state.Level;
-            account.Balance += 100_000_000;
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;
@@ -67,7 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto4
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);
 
-            account.Balance -= 100_000_000;
+            RevertReceive(account, 100_000_000);
             account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);

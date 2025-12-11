@@ -22,6 +22,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!CheckMinDelegatedBalance(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong min delegated balance {delegat.Address}");
 
+            if (!CheckVotingPower(remote, delegat))
+                throw new Exception($"Diagnostics failed: wrong voting power {delegat.Address}");
+
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong deactivation state {delegat.Address}");
 
@@ -98,14 +101,19 @@ namespace Tzkt.Sync.Protocols.Proto12
             remote.RequiredInt64("full_balance") == delegat.Balance;
 
         protected virtual bool CheckStakingBalance(JsonElement remote, Data.Models.Delegate delegat) =>
-            remote.RequiredInt64("staking_balance") == delegat.StakingBalance;
+            remote.RequiredInt64("staking_balance") == delegat.TotalDelegated + delegat.TotalStaked;
 
         protected virtual bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) =>
-            remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.RollupBonds;
+            remote.RequiredInt64("delegated_balance") == delegat.ExternalDelegatedBalance + delegat.RollupBonds;
 
         protected virtual bool CheckMinDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat) => true;
 
         protected virtual bool CheckFrozenDepositLimit(JsonElement remote, Data.Models.Delegate delegat) =>
             remote.OptionalInt64("frozen_deposits_limit") == delegat.FrozenDepositLimit;
+
+        protected virtual bool CheckVotingPower(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return true;
+        }
     }
 }

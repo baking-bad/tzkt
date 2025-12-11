@@ -10,9 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region init
             var sender = (User)await Cache.Accounts.GetOrCreateAsync(content.RequiredString("pkh"));
-            var senderDelegate = sender.DelegateId is int senderDelegateId
-                ? await Cache.Accounts.GetAsync(senderDelegateId) as Data.Models.Delegate
-                : sender as Data.Models.Delegate;
 
             var activatedBalance = content
                 .Required("metadata")
@@ -37,16 +34,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             Db.TryAttach(sender);
-            sender.Balance += activation.Balance;
+            Receive(sender, activation.Balance);
             sender.ActivationsCount++;
-
-            if (senderDelegate != null)
-            {
-                Db.TryAttach(senderDelegate);
-                senderDelegate.StakingBalance += activation.Balance;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance += activation.Balance;
-            }
 
             block.Operations |= Operations.Activations;
 
@@ -65,25 +54,13 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region entities
             var sender = (User)await Cache.Accounts.GetAsync(activation.AccountId);
-            var senderDelegate = sender.DelegateId is int senderDelegateId
-                ? await Cache.Accounts.GetAsync(senderDelegateId) as Data.Models.Delegate
-                : sender as Data.Models.Delegate;
-
             var commitment = await Db.Commitments.FirstAsync(x => x.AccountId == activation.AccountId);
             #endregion
 
             #region revert operation
             Db.TryAttach(sender);
-            sender.Balance -= activation.Balance;
+            RevertReceive(sender, activation.Balance);
             sender.ActivationsCount--;
-
-            if (senderDelegate != null)
-            {
-                Db.TryAttach(senderDelegate);
-                senderDelegate.StakingBalance -= activation.Balance;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance -= activation.Balance;
-            }
 
             commitment.AccountId = null;
             commitment.Level = null;

@@ -51,8 +51,8 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region apply operation
             Db.TryAttach(sender);
+            PayFee(sender, delegation.BakerFee);
             sender.LastLevel = delegation.Level;
-            sender.Balance -= delegation.BakerFee;
             sender.Counter = delegation.Counter;
             sender.DelegationsCount++;
 
@@ -60,12 +60,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 Db.TryAttach(prevDelegate);
                 prevDelegate.LastLevel = delegation.Level;
-                prevDelegate.StakingBalance -= delegation.BakerFee;
                 if (prevDelegate != sender)
-                {
-                    prevDelegate.DelegatedBalance -= delegation.BakerFee;
                     prevDelegate.DelegationsCount++;
-                }
             }
 
             if (newDelegate != null)
@@ -76,11 +72,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     newDelegate.DelegationsCount++;
             }
 
-            Context.Proposer.Balance += delegation.BakerFee;
-            Context.Proposer.StakingBalance += delegation.BakerFee;
-
             Context.Block.Operations |= Operations.Delegations;
-            Context.Block.Fees += delegation.BakerFee;
 
             Cache.AppState.Get().DelegationOpsCount++;
             #endregion
@@ -93,15 +85,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     #region reactivate baker
                     delegation.PrevDeactivationLevel = baker.DeactivationLevel;
 
+                    await ActivateBaker(baker);
                     baker.DeactivationLevel = GracePeriod.Init(Context.Block.Level, Context.Protocol);
-                    baker.Staked = true;
-
-                    foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
-                    {
-                        Cache.Accounts.Add(delegator);
-                        delegator.LastLevel = delegation.Level;
-                        delegator.Staked = true;
-                    }
                     #endregion
                 }
                 else
@@ -121,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (sender == newDelegate)
                     {
                         #region register baker
-                        sender = newDelegate = UpgradeUser((sender as User)!);
+                        sender = newDelegate = RegisterBaker((sender as User)!);
 
                         if (sender.OriginationsCount != 0)
                         {
@@ -281,7 +266,6 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(sender);
             Db.TryAttach(prevDelegate);
             Db.TryAttach(newDelegate);
-            Db.TryAttach(Context.Proposer);
             #endregion
 
             #region revert result
@@ -292,15 +276,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (delegation.PrevDeactivationLevel is int prevDeactivationLevel)
                     {
                         #region deactivate baker
+                        await DeactivateBaker(baker);
                         baker.DeactivationLevel = prevDeactivationLevel;
-                        baker.Staked = false;
-
-                        foreach (var delegator in await Db.Accounts.Where(x => x.DelegateId == baker.Id).ToListAsync())
-                        {
-                            Cache.Accounts.Add(delegator);
-                            delegator.LastLevel = delegation.Level;
-                            delegator.Staked = false;
-                        }
                         #endregion
                     }
                     else
@@ -330,7 +307,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                             }
                         }
 
-                        sender = newDelegate = DowngradeDelegate(baker);
+                        sender = newDelegate = UnregisterBaker(baker);
 
                         if (prevDelegate != null)
                         {
@@ -357,8 +334,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
+            RevertPayFee(sender, delegation.BakerFee);
             sender.LastLevel = delegation.Level;
-            sender.Balance += delegation.BakerFee;
             sender.Counter = delegation.Counter - 1;
             if (sender is User user) user.Revealed = true;
             sender.DelegationsCount--;
@@ -366,12 +343,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (prevDelegate != null)
             {
                 prevDelegate.LastLevel = delegation.Level;
-                prevDelegate.StakingBalance += delegation.BakerFee;
                 if (prevDelegate != sender)
-                {
-                    prevDelegate.DelegatedBalance += delegation.BakerFee;
                     prevDelegate.DelegationsCount--;
-                }
             }
 
             if (newDelegate != null)
@@ -380,9 +353,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (newDelegate != sender && newDelegate != prevDelegate)
                     newDelegate.DelegationsCount--;
             }
-
-            Context.Proposer.Balance -= delegation.BakerFee;
-            Context.Proposer.StakingBalance -= delegation.BakerFee;
 
             Cache.AppState.Get().DelegationOpsCount--;
             #endregion
@@ -459,180 +429,6 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected virtual int GetConsumedGas(JsonElement result)
         {
             return result.OptionalInt32("consumed_gas") ?? 0;
-        }
-
-        Data.Models.Delegate UpgradeUser(User user)
-        {
-            var delegat = new Data.Models.Delegate
-            {
-                ActivationLevel = Context.Block.Level,
-                Address = user.Address,
-                FirstLevel = user.FirstLevel,
-                LastLevel = user.LastLevel,
-                Balance = user.Balance,
-                Counter = user.Counter,
-                DeactivationLevel = GracePeriod.Init(Context.Block.Level, Context.Protocol),
-                DelegateId = null,
-                DelegationLevel = null,
-                Id = user.Id,
-                ActivationsCount = user.ActivationsCount,
-                DelegationsCount = user.DelegationsCount,
-                OriginationsCount = user.OriginationsCount,
-                TransactionsCount = user.TransactionsCount,
-                RevealsCount = user.RevealsCount,
-                RegisterConstantsCount = user.RegisterConstantsCount,
-                SetDepositsLimitsCount = user.SetDepositsLimitsCount,
-                ContractsCount = user.ContractsCount,
-                MigrationsCount = user.MigrationsCount,
-                PublicKey = user.PublicKey,
-                Revealed = user.Revealed,
-                Staked = true,
-                StakingBalance = user.Balance - user.UnstakedBalance,
-                StakedPseudotokens = user.StakedPseudotokens,
-                UnstakedBalance = user.UnstakedBalance,
-                UnstakedBakerId = user.UnstakedBakerId,
-                StakingOpsCount = user.StakingOpsCount,
-                DelegatedBalance = 0, 
-                MinTotalDelegated = long.MaxValue,
-                MinTotalDelegatedLevel = 0,
-                Type = AccountType.Delegate,
-                ActiveTokensCount = user.ActiveTokensCount,
-                TokenBalancesCount = user.TokenBalancesCount,
-                TokenTransfersCount = user.TokenTransfersCount,
-                ActiveTicketsCount = user.ActiveTicketsCount,
-                TicketBalancesCount = user.TicketBalancesCount,
-                TicketTransfersCount = user.TicketTransfersCount,
-                TransferTicketCount = user.TransferTicketCount,
-                TxRollupCommitCount = user.TxRollupCommitCount,
-                TxRollupDispatchTicketsCount = user.TxRollupDispatchTicketsCount,
-                TxRollupFinalizeCommitmentCount = user.TxRollupFinalizeCommitmentCount,
-                TxRollupOriginationCount = user.TxRollupOriginationCount,
-                TxRollupRejectionCount = user.TxRollupRejectionCount,
-                TxRollupRemoveCommitmentCount = user.TxRollupRemoveCommitmentCount,
-                TxRollupReturnBondCount = user.TxRollupReturnBondCount,
-                TxRollupSubmitBatchCount = user.TxRollupSubmitBatchCount,
-                IncreasePaidStorageCount = user.IncreasePaidStorageCount,
-                UpdateSecondaryKeyCount = user.UpdateSecondaryKeyCount,
-                DrainDelegateCount = user.DrainDelegateCount,
-                RollupBonds = user.RollupBonds,
-                RollupsCount = user.RollupsCount,
-                SmartRollupBonds = user.SmartRollupBonds,
-                SmartRollupsCount = user.SmartRollupsCount,
-                SmartRollupAddMessagesCount = user.SmartRollupAddMessagesCount,
-                SmartRollupCementCount = user.SmartRollupCementCount,
-                SmartRollupExecuteCount = user.SmartRollupExecuteCount,
-                SmartRollupOriginateCount = user.SmartRollupOriginateCount,
-                SmartRollupPublishCount = user.SmartRollupPublishCount,
-                SmartRollupRecoverBondCount = user.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = user.SmartRollupRefuteCount,
-                DalPublishCommitmentOpsCount = user.DalPublishCommitmentOpsCount,
-                SetDelegateParametersOpsCount = user.SetDelegateParametersOpsCount,
-                RefutationGamesCount = user.RefutationGamesCount,
-                ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
-                StakingUpdatesCount = user.StakingUpdatesCount
-            };
-
-            var isAdded = Db.Entry(user).State == EntityState.Added;
-            Db.Entry(user).State = EntityState.Detached;
-            Db.Entry(delegat).State = isAdded ? EntityState.Added : EntityState.Modified;
-            Cache.Accounts.Add(delegat);
-
-            return delegat;
-        }
-
-        User DowngradeDelegate(Data.Models.Delegate delegat)
-        {
-            var user = new User
-            {
-                Address = delegat.Address,
-                FirstLevel = delegat.FirstLevel,
-                LastLevel = delegat.LastLevel,
-                Balance = delegat.Balance,
-                Counter = delegat.Counter,
-                DelegateId = null,
-                DelegationLevel = null,
-                StakedPseudotokens = delegat.StakedPseudotokens,
-                UnstakedBalance = delegat.UnstakedBalance,
-                UnstakedBakerId = delegat.UnstakedBakerId,
-                StakingOpsCount = delegat.StakingOpsCount,
-                Id = delegat.Id,
-                ActivationsCount = delegat.ActivationsCount,
-                DelegationsCount = delegat.DelegationsCount,
-                OriginationsCount = delegat.OriginationsCount,
-                TransactionsCount = delegat.TransactionsCount,
-                RevealsCount = delegat.RevealsCount,
-                RegisterConstantsCount = delegat.RegisterConstantsCount,
-                SetDepositsLimitsCount = delegat.SetDepositsLimitsCount,
-                ContractsCount = delegat.ContractsCount,
-                MigrationsCount = delegat.MigrationsCount,
-                PublicKey = delegat.PublicKey,
-                Revealed = delegat.Revealed,
-                Staked = false,
-                Type = AccountType.User,
-                ActiveTokensCount = delegat.ActiveTokensCount,
-                TokenBalancesCount = delegat.TokenBalancesCount,
-                TokenTransfersCount = delegat.TokenTransfersCount,
-                ActiveTicketsCount = delegat.ActiveTicketsCount,
-                TicketBalancesCount = delegat.TicketBalancesCount,
-                TicketTransfersCount = delegat.TicketTransfersCount,
-                TransferTicketCount = delegat.TransferTicketCount,
-                TxRollupCommitCount = delegat.TxRollupCommitCount,
-                TxRollupDispatchTicketsCount = delegat.TxRollupDispatchTicketsCount,
-                TxRollupFinalizeCommitmentCount = delegat.TxRollupFinalizeCommitmentCount,
-                TxRollupOriginationCount = delegat.TxRollupOriginationCount,
-                TxRollupRejectionCount = delegat.TxRollupRejectionCount,
-                TxRollupRemoveCommitmentCount = delegat.TxRollupRemoveCommitmentCount,
-                TxRollupReturnBondCount = delegat.TxRollupReturnBondCount,
-                TxRollupSubmitBatchCount = delegat.TxRollupSubmitBatchCount,
-                IncreasePaidStorageCount = delegat.IncreasePaidStorageCount,
-                UpdateSecondaryKeyCount = delegat.UpdateSecondaryKeyCount,
-                DrainDelegateCount = delegat.DrainDelegateCount,
-                RollupBonds = delegat.RollupBonds,
-                RollupsCount = delegat.RollupsCount,
-                SmartRollupBonds = delegat.SmartRollupBonds,
-                SmartRollupsCount = delegat.SmartRollupsCount,
-                SmartRollupAddMessagesCount = delegat.SmartRollupAddMessagesCount,
-                SmartRollupCementCount = delegat.SmartRollupCementCount,
-                SmartRollupExecuteCount = delegat.SmartRollupExecuteCount,
-                SmartRollupOriginateCount = delegat.SmartRollupOriginateCount,
-                SmartRollupPublishCount = delegat.SmartRollupPublishCount,
-                SmartRollupRecoverBondCount = delegat.SmartRollupRecoverBondCount,
-                SmartRollupRefuteCount = delegat.SmartRollupRefuteCount,
-                SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
-                DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
-                RefutationGamesCount = delegat.RefutationGamesCount,
-                ActiveRefutationGamesCount = delegat.ActiveRefutationGamesCount,
-                StakingUpdatesCount = delegat.StakingUpdatesCount
-            };
-
-            var isAdded = Db.Entry(delegat).State == EntityState.Added;
-            Db.Entry(delegat).State = EntityState.Detached;
-            Db.Entry(user).State = isAdded ? EntityState.Added : EntityState.Modified;
-            Cache.Accounts.Add(user);
-
-            return user;
-        }
-
-        void Delegate(Account delegator, Data.Models.Delegate baker, int delegationLevel)
-        {
-            delegator.DelegateId = baker.Id;
-            delegator.DelegationLevel = delegationLevel;
-            delegator.Staked = baker.Staked;
-
-            baker.DelegatorsCount++;
-            baker.StakingBalance += delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
-            baker.DelegatedBalance += delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
-        }
-
-        void Undelegate(Account delegator, Data.Models.Delegate baker)
-        {
-            baker.DelegatorsCount--;
-            baker.StakingBalance -= delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
-            baker.DelegatedBalance -= delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
-
-            delegator.DelegateId = null;
-            delegator.DelegationLevel = null;
-            delegator.Staked = false;
         }
 
         protected virtual Task Unstake(DelegationOperation op, List<JsonElement> balanceUpdates) => Task.CompletedTask;

@@ -62,8 +62,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                     .Sum(x => x.RequiredInt64("change"));
 
                 Db.TryAttach(accuser);
-                accuser.Balance += reward;
-                accuser.StakingBalance += reward;
+                Receive(accuser, accuser, reward);
                 accuser.LastLevel = block.Level;
 
                 var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
@@ -135,8 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
-                    accuser.Balance -= op.Reward;
-                    accuser.StakingBalance -= op.Reward;
+                    RevertReceive(accuser, accuser, op.Reward);
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                     if (accuserCycle != null)
@@ -178,8 +176,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 {
                     var accuser = Cache.Accounts.GetDelegate(op.AccuserId);
                     Db.TryAttach(accuser);
-                    accuser.Balance -= op.Reward;
-                    accuser.StakingBalance -= op.Reward;
+                    RevertReceive(accuser, accuser, op.Reward);
 
                     var accuserCycle = await Cache.BakerCycles.GetOrDefaultAsync(block.Cycle, accuser.Id);
                     if (accuserCycle != null)

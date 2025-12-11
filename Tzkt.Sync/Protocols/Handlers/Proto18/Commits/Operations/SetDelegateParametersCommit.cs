@@ -28,7 +28,6 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             #region init
             var sender = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as User)!;
-            var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
             var status = result.RequiredString("status") switch
@@ -77,26 +76,11 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             #region apply operation
             Db.TryAttach(sender);
-            sender.Balance -= operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter;
             sender.SetDelegateParametersOpsCount++;
 
-            if (senderDelegate != null)
-            {
-                Db.TryAttach(senderDelegate);
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate != sender)
-                {
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-                    senderDelegate.SetDelegateParametersOpsCount++;
-                }
-            }
-
-            Context.Proposer.Balance += operation.BakerFee;
-            Context.Proposer.StakingBalance += operation.BakerFee;
-
             block.Operations |= Operations.SetDelegateParameters;
-            block.Fees += operation.BakerFee;
 
             Cache.AppState.Get().SetDelegateParametersOpsCount++;
             #endregion
@@ -116,10 +100,7 @@ namespace Tzkt.Sync.Protocols.Proto18
         public async Task Revert(Block block, SetDelegateParametersOperation operation)
         {
             var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
-            var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
-
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
@@ -129,22 +110,9 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter - 1;
             sender.SetDelegateParametersOpsCount--;
-
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate != sender)
-                {
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-                    senderDelegate.SetDelegateParametersOpsCount--;
-                }
-            }
-
-            Context.Proposer.Balance -= operation.BakerFee;
-            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().SetDelegateParametersOpsCount--;
             #endregion
@@ -170,6 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(baker);
                 baker.EdgeOfBakingOverStaking = op.EdgeOfBakingOverStaking;
                 baker.LimitOfStakingOverBaking = op.LimitOfStakingOverBaking;
+                UpdateBakerPower(baker);
                 Cache.AppState.Get().PendingDelegateParameters--;
             }
         }
@@ -200,6 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(baker);
                 baker.EdgeOfBakingOverStaking = prevOp?.EdgeOfBakingOverStaking;
                 baker.LimitOfStakingOverBaking = prevOp?.LimitOfStakingOverBaking;
+                UpdateBakerPower(baker);
                 Cache.AppState.Get().PendingDelegateParameters++;
             }
         }

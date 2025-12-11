@@ -1,5 +1,5 @@
-﻿using System.Numerics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Numerics;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
@@ -7,10 +7,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
 {
-    partial class ProtoActivator : Proto11.ProtoActivator
+    partial class ProtoActivator(ProtocolHandler proto) : Proto11.ProtoActivator(proto)
     {
-        public ProtoActivator(ProtocolHandler proto) : base(proto) { }
-
         protected override void SetParameters(Protocol protocol, JToken parameters)
         {
             base.SetParameters(protocol, parameters);
@@ -70,7 +68,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             var prevProto = await Cache.Protocols.GetAsync(state.Protocol);
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
-            var bakers = await MigrateBakers();
+            var bakers = MigrateBakers();
             await MigrateCycles(state, bakers, nextProto);
             MigrateStatistics(bakers, nextProto);
 
@@ -80,8 +78,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             await Db.SaveChangesAsync();
 
             await MigrateSnapshots(state);
-            await MigrateCurrentRights(state, prevProto, nextProto);
-            await MigrateFutureRights(state, nextProto);
+            await MigrateCurrentRights(state, bakers, prevProto, nextProto);
+            await MigrateFutureRights(state, bakers, nextProto);
 
             Cache.BakingRights.Reset();
             Cache.BakerCycles.Reset();
@@ -92,22 +90,23 @@ namespace Tzkt.Sync.Protocols.Proto12
             throw new NotImplementedException("Reverting Ithaca migration block is technically impossible");
         }
 
-        async Task<List<Data.Models.Delegate>> MigrateBakers()
+        List<Data.Models.Delegate> MigrateBakers()
         {            
-            var bakers = await Db.Delegates.ToListAsync();
+            var bakers = Cache.Accounts.GetDelegates().ToList();
             foreach (var baker in bakers)
             {
-                Cache.Accounts.Add(baker);
-                baker.StakingBalance = baker.Balance + baker.DelegatedBalance;
+                Db.TryAttach(baker);
+                baker.OwnDelegatedBalance = baker.Balance;
+                UpdateBakerPower(baker);
             }
-            return bakers.Where(x => x.Staked).ToList();
+            return bakers;
         }
 
         async Task MigrateCycles(AppState state, List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
             var selectedStakes = bakers
-                .Where(x => x.StakingBalance >= nextProto.MinimalStake)
-                .Select(x => Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)));
+                .Where(x => x.BakingPower != 0)
+                .Select(x => x.BakingPower);
 
             var selectedBakers = selectedStakes.Count();
             var selectedStake = selectedStakes.Sum();
@@ -125,11 +124,8 @@ namespace Tzkt.Sync.Protocols.Proto12
             var stats = Cache.Statistics.Current;
             Db.TryAttach(stats);
             stats.TotalFrozen = bakers
-                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
-                .Sum(x => {
-                    var activeStake = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                    return activeStake / (nextProto.MaxDelegatedOverFrozenRatio + 1);
-                });
+                .Where(x => x.BakingPower != 0)
+                .Sum(x => x.BakingPower / (nextProto.MaxDelegatedOverFrozenRatio + 1));
         }
 
         Task<int> MigrateSnapshots(AppState state)
@@ -150,23 +146,21 @@ namespace Tzkt.Sync.Protocols.Proto12
                     {0},
                     COALESCE("DelegateId", "Id"),
                     "Id",
-                    COALESCE("StakingBalance", "Balance") - COALESCE("DelegatedBalance", 0),
-                    "DelegatedBalance",
+                    COALESCE("OwnDelegatedBalance", "Balance"),
+                    "ExternalDelegatedBalance",
                     "DelegatorsCount"
                 FROM "Accounts"
                 WHERE "Staked" = true;
                 """, state.Level);
         }
 
-        async Task MigrateCurrentRights(AppState state, Protocol prevProto, Protocol nextProto)
+        async Task MigrateCurrentRights(AppState state, List<Data.Models.Delegate> bakers, Protocol prevProto, Protocol nextProto)
         {
             var cycle = await Db.Cycles.AsNoTracking().FirstAsync(x => x.Index == state.Cycle);
             if (state.Level == cycle.LastLevel) return;
 
             var bakerCycles = await Cache.BakerCycles.GetAsync(state.Cycle);
-            var selectedBakers = await Db.Delegates.AsNoTracking()
-                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
-                .ToListAsync();
+            var selectedBakers = bakers.Where(x => x.BakingPower != 0);
 
             #region revert current rights
             var rights = await Db.BakingRights
@@ -245,30 +239,26 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(bakerId);
 
                 Db.TryAttach(bc);
-                bc.OwnDelegatedBalance = baker.StakingBalance - baker.DelegatedBalance;
-                bc.ExternalDelegatedBalance = baker.DelegatedBalance;
+                bc.OwnDelegatedBalance = baker.OwnDelegatedBalance;
+                bc.ExternalDelegatedBalance = baker.ExternalDelegatedBalance;
                 bc.DelegatorsCount = baker.DelegatorsCount;
                 bc.OwnStakedBalance = baker.OwnStakedBalance;
                 bc.ExternalStakedBalance = baker.ExternalStakedBalance;
                 bc.IssuedPseudotokens = baker.IssuedPseudotokens;
                 bc.StakersCount = baker.StakersCount;
-                bc.BakingPower = 0;
+                bc.BakingPower = baker.BakingPower;
                 bc.TotalBakingPower = cycle.TotalBakingPower;
 
-                if (baker.StakingBalance >= nextProto.MinimalStake)
+                if (baker.BakingPower != 0)
                 {
-                    var bakingPower = Math.Min(baker.StakingBalance, baker.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                    var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
-                    bakerCycles[baker.Id].BakingPower = bakingPower;
-                    bakerCycles[baker.Id].FutureAttestationRewards += expectedAttestations * nextProto.AttestationReward0;
+                    var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * baker.BakingPower / cycle.TotalBakingPower);
+                    bc.FutureAttestationRewards += expectedAttestations * nextProto.AttestationReward0;
                 }
             }
             #endregion
 
             #region apply new rights
-            var sampler = GetSampler(selectedBakers
-                .Where(x => x.Balance > 0)
-                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)))));
+            var sampler = GetSampler(selectedBakers.Select(x => (x.Id, x.BakingPower)));
 
             #region temporary diagnostics
             await sampler.Validate(Proto, state.Level, cycle.Index);
@@ -331,7 +321,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
         }
 
-        async Task MigrateFutureRights(AppState state, Protocol nextProto)
+        async Task MigrateFutureRights(AppState state, List<Data.Models.Delegate> bakers, Protocol nextProto)
         {
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "BakingRights" WHERE "Cycle" > {0};
@@ -339,10 +329,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                 DELETE FROM "DelegatorCycles" WHERE "Cycle" > {0};
                 """, state.Cycle);
 
-            var bakers = await Db.Delegates.AsNoTracking().Where(x => x.Staked).ToListAsync();
-            var sampler = GetSampler(bakers
-                .Where(x => x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
-                .Select(x => (x.Id, Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1)))));
+            var seelctedBakers = bakers.Where(x => x.BakingPower != 0);
+            var sampler = GetSampler(seelctedBakers.Select(x => (x.Id, x.BakingPower)));
 
             #region temporary diagnostics
             await sampler.Validate(Proto, state.Level, state.Cycle);
@@ -436,29 +424,27 @@ namespace Tzkt.Sync.Protocols.Proto12
                 #endregion
 
                 #region save baker cycles
-                var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
+                var bakerCycles = bakers.Where(x => x.Staked).ToDictionary(x => x.Id, x =>
                 {
                     var bc = new BakerCycle
                     {
                         Id = 0,
                         BakerId = x.Id,
                         Cycle = cycle.Index,
-                        OwnDelegatedBalance = x.StakingBalance - x.DelegatedBalance,
-                        ExternalDelegatedBalance = x.DelegatedBalance,
+                        OwnDelegatedBalance = x.OwnDelegatedBalance,
+                        ExternalDelegatedBalance = x.ExternalDelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         IssuedPseudotokens = x.IssuedPseudotokens,
-                        BakingPower = 0,
+                        BakingPower = x.BakingPower,
                         TotalBakingPower = cycle.TotalBakingPower
                     };
-                    if (x.StakingBalance >= nextProto.MinimalStake && x.Balance > 0)
+                    if (x.BakingPower != 0)
                     {
-                        var bakingPower = Math.Min(x.StakingBalance, x.Balance * (nextProto.MaxDelegatedOverFrozenRatio + 1));
-                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
-                        bc.BakingPower = bakingPower;
-                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * bakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * x.BakingPower / cycle.TotalBakingPower);
+                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * x.BakingPower / cycle.TotalBakingPower;
                         bc.ExpectedAttestations = expectedAttestations;
                         bc.FutureAttestationRewards = expectedAttestations * nextProto.AttestationReward0;
                     }
@@ -505,7 +491,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 .OrderByDescending(x => x.stake)
                 .ThenByDescending(x => Base58.Parse(Cache.Accounts.GetDelegate(x.id).Address), new BytesComparer());
 
-            return new Sampler(sorted.Select(x => x.id).ToArray(), sorted.Select(x => x.stake).ToArray());
+            return new Sampler([..sorted.Select(x => x.id)], [..sorted.Select(x => x.stake)]);
         }
     }
 }

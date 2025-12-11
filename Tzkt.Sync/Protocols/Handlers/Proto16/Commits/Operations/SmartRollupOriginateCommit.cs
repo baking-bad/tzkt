@@ -12,10 +12,7 @@ namespace Tzkt.Sync.Protocols.Proto16
         {
             #region init
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
 
             var pvmKind = content.RequiredString("pvm_kind") switch
             {
@@ -35,13 +32,12 @@ namespace Tzkt.Sync.Protocols.Proto16
                     rollup = new()
                     {
                         Id = ghost.Id,
+                        Index = ghost.Index,
                         FirstLevel = ghost.FirstLevel,
                         LastLevel = ghost.LastLevel,
                         Address = address,
-                        Balance = 0,
                         Counter = 0,
                         CreatorId = sender.Id,
-                        Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
                         ParameterSchema = content.RequiredMicheline("parameters_ty").ToBytes(),
@@ -74,10 +70,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                         FirstLevel = block.Level,
                         LastLevel = block.Level,
                         Address = address,
-                        Balance = 0,
                         Counter = 0,
                         CreatorId = sender.Id,
-                        Staked = false,
                         Type = AccountType.SmartRollup,
                         PvmKind = pvmKind,
                         ParameterSchema = content.RequiredMicheline("parameters_ty").ToBytes(),
@@ -142,26 +136,13 @@ namespace Tzkt.Sync.Protocols.Proto16
             }
             #endregion
 
-            #region entities
-            var blockBaker = Context.Proposer;
-            #endregion
-
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
 
             sender.SmartRollupOriginateCount++;
             if (rollup != null) rollup.SmartRollupOriginateCount++;
 
             block.Operations |= Operations.SmartRollupOriginate;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -174,13 +155,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                 var burned = operation.StorageFee ?? 0;
                 Proto.Manager.Burn(burned);
 
-                sender.Balance -= burned;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= burned;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= burned;
-                }
+                Spend(sender, burned);
 
                 sender.SmartRollupsCount++;
 
@@ -196,29 +171,17 @@ namespace Tzkt.Sync.Protocols.Proto16
         public virtual async Task Revert(Block block, SmartRollupOriginateOperation operation)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.SmartRollupId) as SmartRollup;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             #endregion
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                var spent = operation.StorageFee ?? 0;
-
-                sender.Balance += spent;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += spent;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance += spent;
-                }
+                RevertSpend(sender, operation.StorageFee ?? 0);
 
                 sender.SmartRollupsCount--;
 
@@ -232,6 +195,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     var ghost = new Account
                     {
                         Id = rollup.Id,
+                        Index = rollup.Index,
                         Address = rollup.Address,
                         FirstLevel = rollup.FirstLevel,
                         LastLevel = rollup.LastLevel,
@@ -254,15 +218,7 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
 
             sender.SmartRollupOriginateCount--;
 

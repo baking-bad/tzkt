@@ -53,11 +53,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleBaking.Reward;
-            accuser.StakingBalance += doubleBaking.Reward;
-
-            offender.Balance -= doubleBaking.LostStaked;
-            offender.StakingBalance -= doubleBaking.LostStaked;
+            Receive(accuser, accuser, doubleBaking.Reward);
+            
+            Spend(offender, offender, doubleBaking.LostStaked);
 
             accuser.DoubleBakingCount++;
             if (offender != accuser) offender.DoubleBakingCount++;
@@ -83,11 +81,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleBaking.Reward;
-            accuser.StakingBalance -= doubleBaking.Reward;
+            RevertReceive(accuser, accuser, doubleBaking.Reward);
 
-            offender.Balance += doubleBaking.LostStaked;
-            offender.StakingBalance += doubleBaking.LostStaked;
+            RevertSpend(offender, offender, doubleBaking.LostStaked);
 
             accuser.DoubleBakingCount--;
             if (offender != accuser) offender.DoubleBakingCount--;

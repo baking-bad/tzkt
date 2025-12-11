@@ -26,13 +26,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                     {0},
                     "Id",
                     "Id",
-                    "Balance" - "OwnStakedBalance" - (CASE
-                                                      WHEN "UnstakedBakerId" IS NOT NULL
-                                                      AND  "UnstakedBakerId" != "Id"
-                                                      THEN "UnstakedBalance"
-                                                      ELSE 0
-                                                      END),
-                    "DelegatedBalance",
+                    "OwnDelegatedBalance",
+                    "ExternalDelegatedBalance",
                     "DelegatorsCount",
                     "OwnStakedBalance",
                     "ExternalStakedBalance",
@@ -114,7 +109,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         baker.Id,
                         baker.Id,
                         baker.Balance - baker.OwnStakedBalance - (baker.UnstakedBakerId != null && baker.UnstakedBakerId != baker.Id ? baker.UnstakedBalance : 0),
-                        baker.DelegatedBalance,
+                        baker.ExternalDelegatedBalance,
                         baker.DelegatorsCount,
                         baker.OwnStakedBalance,
                         baker.ExternalStakedBalance,

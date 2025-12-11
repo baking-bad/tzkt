@@ -16,28 +16,25 @@ namespace Tzkt.Sync.Protocols.Proto1
                 .Where(x => x.Type == AccountType.Delegate)
                 .Select(x => (x as Data.Models.Delegate)!);
 
-            var totalPower = bakers.Sum(x => x.StakingBalance - x.StakingBalance % protocol.MinimalStake);
-
             foreach (var cycle in cycles)
             {
                 var bakerCycles = bakers.ToDictionary(x => x.Id, x =>
                 {
-                    var bakingPower = x.StakingBalance - x.StakingBalance % protocol.MinimalStake;
-                    var share = (double)bakingPower / totalPower;
+                    var share = (double)x.BakingPower / cycle.TotalBakingPower;
                     return new BakerCycle
                     {
                         Id = 0,
                         Cycle = cycle.Index,
                         BakerId = x.Id,
                         OwnDelegatedBalance = x.Balance,
-                        ExternalDelegatedBalance = x.DelegatedBalance,
+                        ExternalDelegatedBalance = x.ExternalDelegatedBalance,
                         DelegatorsCount = x.DelegatorsCount,
                         OwnStakedBalance = x.OwnStakedBalance,
                         ExternalStakedBalance = x.ExternalStakedBalance,
                         StakersCount = x.StakersCount,
                         IssuedPseudotokens = x.IssuedPseudotokens,
-                        BakingPower = bakingPower,
-                        TotalBakingPower = totalPower,
+                        BakingPower = x.BakingPower,
+                        TotalBakingPower = cycle.TotalBakingPower,
                         ExpectedBlocks = protocol.BlocksPerCycle * share, 
                         ExpectedAttestations = protocol.AttestersPerBlock * protocol.BlocksPerCycle * share
                     };

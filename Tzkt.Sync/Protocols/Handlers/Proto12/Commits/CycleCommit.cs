@@ -81,7 +81,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                         lastBalance -= block.BonusDelegated;
 
                     var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
-                    return Math.Min((long)x.StakingBalance, depositCap * (Context.Protocol.MaxDelegatedOverFrozenRatio + 1));
+                    return Math.Min(x.StakingBalance, depositCap * (Context.Protocol.MaxDelegatedOverFrozenRatio + 1));
                 });
 
             FutureCycle = new Cycle
