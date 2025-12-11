@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Level = 1,
                     Period = 0,
                     BakerId = x.Id,
-                    VotingPower = GetVotingPower(x, protocol),
+                    VotingPower = x.VotingPower,
                     Status = VoterStatus.None
                 });
 
@@ -50,11 +50,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 DELETE FROM "VotingSnapshots";
                 """);
             Cache.Periods.Reset();
-        }
-
-        protected virtual long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
-        {
-            return baker.StakingBalance - baker.StakingBalance % protocol.MinimalStake;
         }
     }
 }

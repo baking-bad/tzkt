@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto10
             Cache.Statistics.Current.TotalCreated += op.BalanceChange;
 
             contract.MigrationsCount++;
-            contract.Balance += op.BalanceChange;
+            Receive(contract, null, op.BalanceChange);
 
             block.Operations |= Operations.Migrations;
             
@@ -66,8 +66,8 @@ namespace Tzkt.Sync.Protocols.Proto10
             {
                 var contract = (await Cache.Accounts.GetAsync(op.AccountId) as Contract)!;
                 Db.TryAttach(contract);
-                contract.Balance -= op.BalanceChange;
                 contract.MigrationsCount--;
+                RevertReceive(contract, null, op.BalanceChange);
 
                 Cache.AppState.Get().MigrationOpsCount--;
                 Cache.AppState.ReleaseOperationId();

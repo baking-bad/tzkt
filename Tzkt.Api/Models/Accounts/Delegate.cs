@@ -144,14 +144,24 @@ namespace Tzkt.Api.Models
         public DateTime? DeactivationTime { get; set; }
 
         /// <summary>
-        /// Baker's own balance plus delegated balance (micro tez)
+        /// Current baking power
         /// </summary>
-        public long StakingBalance { get; set; }
+        public long BakingPower { get; set; }
 
         /// <summary>
-        /// Total amount delegated to the baker (micro tez)
+        /// Current voting power
         /// </summary>
-        public long DelegatedBalance { get; set; }
+        public long VotingPower { get; set; }
+
+        /// <summary>
+        /// Amount delegated from the own balance (micro tez).
+        /// </summary>
+        public long OwnDelegatedBalance { get; set; }
+
+        /// <summary>
+        /// Amount delegated from the external delegators (micro tez).
+        /// </summary>
+        public long ExternalDelegatedBalance { get; set; }
 
         /// <summary>
         /// Number of contracts, created (originated) and/or managed by the delegate (baker)
@@ -475,6 +485,16 @@ namespace Tzkt.Api.Models
         public SoftwareAlias? Software { get; set; }
 
         #region [DEPRECATED]
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long StakingBalance => VotingPower;
+
+        /// <summary>
+        /// **DEPRECATED**
+        /// </summary>
+        public long DelegatedBalance => ExternalDelegatedBalance;
+
         /// <summary>
         /// **DEPRECATED**
         /// </summary>

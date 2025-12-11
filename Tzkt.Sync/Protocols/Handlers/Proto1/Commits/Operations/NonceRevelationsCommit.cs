@@ -37,13 +37,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region entities
             var blockBaker = Context.Proposer;
 
-            Db.TryAttach(blockBaker);
+            //Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(revealedBlock);
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.RewardDelegated;
+            ReceiveLockedRewards(blockBaker, revelation.RewardDelegated);
 
             sender.NonceRevelationsCount++;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount++;
@@ -68,13 +68,13 @@ namespace Tzkt.Sync.Protocols.Proto1
             var sender = Cache.Accounts.GetDelegate(revelation.SenderId);
             var revealedBlock = await Cache.Blocks.GetAsync(revelation.RevealedLevel);
 
-            Db.TryAttach(blockBaker);
+            //Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
             Db.TryAttach(revealedBlock);
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.RewardDelegated;
+            RevertReceiveLockedRewards(blockBaker, revelation.RewardDelegated);
 
             sender.NonceRevelationsCount--;
             if (blockBaker != sender) blockBaker.NonceRevelationsCount--;

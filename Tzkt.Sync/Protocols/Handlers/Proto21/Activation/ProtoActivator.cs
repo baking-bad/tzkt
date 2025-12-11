@@ -109,11 +109,10 @@ namespace Tzkt.Sync.Protocols.Proto21
 
         void MigrateBakers(AppState state, Protocol prevProto, Protocol nextProto)
         {
+            UpdateBakersPower();
+
             foreach (var baker in Cache.Accounts.GetDelegates().Where(x => x.DeactivationLevel > state.Level))
-            {
-                Db.TryAttach(baker);
                 baker.DeactivationLevel = nextProto.GetCycleStart(prevProto.GetCycle(baker.DeactivationLevel));
-            }
         }
 
         async Task MigrateVotingPeriods(AppState state, Protocol nextProto)

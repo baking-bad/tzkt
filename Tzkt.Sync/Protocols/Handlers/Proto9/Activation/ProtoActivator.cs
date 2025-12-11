@@ -14,9 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             var account = (await Cache.Accounts.GetAsync("tz1abmz7jiCV2GH2u81LRrGgAFFgvQgiDiaf"))!;
             Db.TryAttach(account);
-            account.Balance += 100_000_000;
-            if (account is Data.Models.Delegate delegat)
-                delegat.StakingBalance += 100_000_000;
+            Receive(account, 100_000_000);
             account.MigrationsCount++;
             account.LastLevel = block.Level;
 
@@ -52,10 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto9
 
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);
-
-            account.Balance -= 100_000_000;
-            if (account is Data.Models.Delegate delegat)
-                delegat.StakingBalance -= 100_000_000;
+            RevertReceive(account, 100_000_000);
             account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);

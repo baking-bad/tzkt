@@ -54,35 +54,19 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-            var committerDelegate = Cache.Accounts.GetDelegate(committer.DelegateId) ?? committer as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             Db.TryAttach(committer);
-            Db.TryAttach(committerDelegate);
             #endregion
 
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
 
             sender.TxRollupRejectionCount++;
             if (rollup != null) rollup.TxRollupRejectionCount++;
             if (sender.Id != committer.Id) committer.TxRollupRejectionCount++;
 
             block.Operations |= Operations.TxRollupRejection;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -92,23 +76,11 @@ namespace Tzkt.Sync.Protocols.Proto13
             #region apply result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.Balance += operation.Reward;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += operation.Reward;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance += operation.Reward;
-                }
+                Receive(sender, operation.Reward);
 
-                committer.Balance -= operation.Loss;
-                if (committerDelegate != null)
-                {
-                    committerDelegate.StakingBalance -= operation.Loss;
-                    if (committerDelegate.Id != committer.Id)
-                        committerDelegate.DelegatedBalance -= operation.Loss;
-                }
+                Spend(committer, operation.Loss);
 
-                if (sender.Id != committer.Id)
+                if (sender != committer)
                 {
                     Proto.Manager.Credit(operation.Reward);
 
@@ -135,41 +107,23 @@ namespace Tzkt.Sync.Protocols.Proto13
         public virtual async Task Revert(Block block, TxRollupRejectionOperation operation)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.RollupId);
             var committer = await Cache.Accounts.GetAsync(operation.CommitterId);
-            var committerDelegate = Cache.Accounts.GetDelegate(committer.DelegateId) ?? committer as Data.Models.Delegate;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             Db.TryAttach(committer);
-            Db.TryAttach(committerDelegate);
             #endregion
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
             {
-                sender.Balance -= operation.Reward;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= operation.Reward;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= operation.Reward;
-                }
+                RevertReceive(sender, operation.Reward);
 
-                committer.Balance += operation.Loss;
-                if (committerDelegate != null)
-                {
-                    committerDelegate.StakingBalance += operation.Loss;
-                    if (committerDelegate.Id != committer.Id)
-                        committerDelegate.DelegatedBalance += operation.Loss;
-                }
+                RevertSpend(committer, operation.Loss);
 
-                if (sender.Id != committer.Id)
+                if (sender != committer)
                 {
                     if (committer.Balance == operation.Loss && committer is User user && user.Type == AccountType.User && !user.Revealed)
                     {
@@ -184,15 +138,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
 
             sender.TxRollupRejectionCount--;
             if (rollup != null) rollup.TxRollupRejectionCount--;

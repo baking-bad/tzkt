@@ -9,7 +9,7 @@ namespace Tzkt.Sync.Protocols.Proto18
     {
         protected override bool CheckDelegatedBalance(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return remote.RequiredInt64("delegated_balance") == delegat.DelegatedBalance + delegat.ExternalStakedBalance;
+            return remote.RequiredInt64("delegated_balance") == delegat.ExternalDelegatedBalance + delegat.ExternalStakedBalance;
         }
 
         protected override async Task TestDelegate(int level, Data.Models.Delegate delegat, Protocol proto)
@@ -24,7 +24,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             if (stakingBalance.RequiredInt64("staked_frozen") != delegat.ExternalStakedBalance)
                 throw new Exception($"Diagnostics failed: wrong staked_frozen balance for {delegat.Address}");
 
-            if (stakingBalance.RequiredInt64("delegated") != delegat.StakingBalance - delegat.OwnStakedBalance - delegat.ExternalStakedBalance)
+            if (stakingBalance.RequiredInt64("delegated") != delegat.TotalDelegated)
                 throw new Exception($"Diagnostics failed: wrong delegated balance for {delegat.Address}");
 
             if (level > proto.FirstLevel)

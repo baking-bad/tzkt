@@ -59,15 +59,13 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var address = PubKey.FromBase58(pubKey).Address;
                 if (Cache.Accounts.TryGetCached(address, out var acc))
                 {
-                    acc.Balance += balance;
+                    Receive(acc, acc as Data.Models.Delegate, balance);
                     continue;
                 }
                 var baker = new Data.Models.Delegate
                 {
                     Id = Cache.AppState.NextAccountId(),
                     Address = address,
-                    Balance = balance,
-                    StakingBalance = balance,
                     PublicKey = pubKey,
                     FirstLevel = 1,
                     LastLevel = 1,
@@ -77,6 +75,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Revealed = true,
                     Type = AccountType.Delegate
                 };
+                Receive(baker, baker, balance);
                 Cache.Accounts.Add(baker);
                 accounts.Add(baker);
             }
@@ -85,33 +84,28 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region bootstrap delegated users
             foreach (var (pubKey, balance, delegateTo) in bootstrapAccounts.Where(x => x.Item1[0] != 't' && x.Item3 != null && x.Item3[0] == 't'))
             {
+                var delegat = Cache.Accounts.GetExistingDelegate(delegateTo!);
+
                 var address = PubKey.FromBase58(pubKey).Address;
                 if (Cache.Accounts.TryGetCached(address, out var acc))
                 {
-                    acc.Balance += balance;
+                    Receive(acc, delegat, balance);
                     continue;
                 }
-
-                var delegat = Cache.Accounts.GetExistingDelegate(delegateTo!);
 
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),
                     Address = address,
-                    Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User,
                     PublicKey = pubKey,
                     Revealed = true,
-                    Staked = true,
-                    DelegationLevel = 1,
-                    DelegateId = delegat.Id
                 };
+                Receive(user, null, balance);
 
-                delegat.DelegatorsCount++;
-                delegat.StakingBalance += user.Balance;
-                delegat.DelegatedBalance += user.Balance;
+                Delegate(user, delegat, 1);
 
                 Cache.Accounts.Add(user);
                 accounts.Add(user);
@@ -123,18 +117,19 @@ namespace Tzkt.Sync.Protocols.Proto1
             {
                 if (Cache.Accounts.TryGetCached(pkh, out var acc))
                 {
-                    acc.Balance += balance;
+                    Receive(acc, null, balance);
                     continue;
                 }
                 var user = new User
                 {
                     Id = Cache.AppState.NextAccountId(),
                     Address = pkh,
-                    Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
                     Type = AccountType.User
                 };
+                Receive(user, null, balance);
+
                 Cache.Accounts.Add(user);
                 accounts.Add(user);
             }
@@ -147,30 +142,23 @@ namespace Tzkt.Sync.Protocols.Proto1
                 #region contract
                 var delegat = Cache.Accounts.GetDelegate(delegatePkh);
                 var creator = nullAddress;
-
+                
                 var contract = new Contract
                 {
                     Id = Cache.AppState.NextAccountId(),
                     Address = hash ?? OriginationNonce.GetContractAddress(index++),
-                    Balance = balance,
                     FirstLevel = 1,
                     LastLevel = 1,
-                    DelegationLevel = delegat == null ? null : 1,
-                    DelegateId = delegat?.Id,
                     CreatorId = creator.Id,
-                    Staked = delegat != null,
                     Type = AccountType.Contract,
                     Kind = ContractKind.SmartContract,
                 };
+                Receive(contract, null, balance);
 
                 creator.ContractsCount++;
 
                 if (delegat != null)
-                {
-                    delegat.DelegatorsCount++;
-                    delegat.StakingBalance += contract.Balance;
-                    delegat.DelegatedBalance += contract.Balance;
-                }
+                    Delegate(contract, delegat, 1);
 
                 Cache.Accounts.Add(contract);
                 accounts.Add(contract);
@@ -255,9 +243,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     FirstLevel = 1,
                     LastLevel = 1,
                     Address = address,
-                    Balance = 0,
                     CreatorId = creator.Id,
-                    Staked = false,
                     Type = AccountType.SmartRollup,
                     PvmKind = pvmKind switch
                     {

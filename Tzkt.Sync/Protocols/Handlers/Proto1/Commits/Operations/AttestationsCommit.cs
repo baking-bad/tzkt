@@ -38,7 +38,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region apply operation
-            sender.Balance += attestation.Reward;
+            ReceiveLockedRewards(sender, attestation.Reward);
 
             sender.AttestationsCount++;
 
@@ -49,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (sender.DeactivationLevel < newDeactivationLevel)
             {
                 if (sender.DeactivationLevel <= attestation.Level)
-                    await UpdateDelegate(sender, true);
+                    await ActivateBaker(sender);
 
                 attestation.ResetDeactivation = sender.DeactivationLevel;
                 sender.DeactivationLevel = newDeactivationLevel;
@@ -72,14 +72,14 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            sender.Balance -= attestation.Reward;
+            RevertReceiveLockedRewards(sender, attestation.Reward);
 
             sender.AttestationsCount--;
 
             if (attestation.ResetDeactivation != null)
             {
                 if (attestation.ResetDeactivation <= attestation.Level)
-                    await UpdateDelegate(sender, false);
+                    await DeactivateBaker(sender);
 
                 sender.DeactivationLevel = (int)attestation.ResetDeactivation;
             }

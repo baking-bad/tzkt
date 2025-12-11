@@ -1,7 +1,4 @@
 ﻿namespace Tzkt.Sync.Protocols.Proto20
 {
-    class VotingCommit : Proto13.VotingCommit
-    {
-        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-    }
+    class VotingCommit(ProtocolHandler protocol) : Proto8.VotingCommit(protocol) { }
 }

@@ -53,8 +53,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance += op.RewardDelegated;
-                baker.StakingBalance += op.RewardDelegated;
+                Receive(baker, baker, op.RewardDelegated);
                 baker.AttestationRewardsCount++;
 
                 block.Operations |= Operations.AttestationRewards;
@@ -78,8 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 var baker = Cache.Accounts.GetDelegate(op.BakerId);
                 Db.TryAttach(baker);
 
-                baker.Balance -= op.RewardDelegated;
-                baker.StakingBalance -= op.RewardDelegated;
+                RevertReceive(baker, baker, op.RewardDelegated);
                 baker.AttestationRewardsCount--;
 
                 var bakerCycle = await Cache.BakerCycles.GetAsync(block.Cycle, baker.Id);

@@ -20,7 +20,11 @@ namespace Tzkt.Api.Services
         public static object?[][] BakersTab { get; private set; } = [];
         public static readonly string[] BakerFields =
         [
-            "alias", "address", "firstActivityTime", "balance", "stakingBalance", "numDelegators", "lastActivityTime"
+            "alias", "address", "firstActivityTime", "bakingPower", "stakedBalance", "externalStakedBalance",
+            "ownDelegatedBalance", "externalDelegatedBalance", "numDelegators", "stakersCount", "lastActivityTime",
+            #region [DEPRECATED]
+            "balance", "stakingBalance"
+	        #endregion
         ];
 
         public static object?[][] AssetsTab { get; private set; } = [];
@@ -232,7 +236,7 @@ namespace Tzkt.Api.Services
         async Task<object?[][]> GetBakers()
         {
             return await AccountsRepo.GetDelegates(new BoolParameter { Eq = true }, null,
-                new SortParameter { Desc = "stakingBalance" }, null, 10, BakerFields);
+                new SortParameter { Desc = "bakingPower" }, null, 10, BakerFields);
         }
 
         async Task<object?[][]> GetAssets()
@@ -516,22 +520,21 @@ namespace Tzkt.Api.Services
 
             var total = await db.QueryFirstAsync($"""
                 SELECT  COUNT(*)::integer as "ActiveBakers",
-                        COALESCE(SUM("StakingBalance"), 0)::bigint AS "TotalStaking",
                         COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
                         COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
-                        COALESCE(SUM("Balance" - "OwnStakedBalance"), 0)::bigint AS "OwnDelegated",
-                        COALESCE(SUM("DelegatedBalance"), 0)::bigint AS "ExternalDelegated"
+                        COALESCE(SUM("OwnDelegatedBalance"), 0)::bigint AS "OwnDelegated",
+                        COALESCE(SUM("ExternalDelegatedBalance"), 0)::bigint AS "ExternalDelegated"
                 FROM "Accounts"
                 WHERE "Type" = 1
                 AND "Staked" = true
             """);
 
-            var funded = await db.ExecuteScalarAsync<int>($"""
+            var funded = await db.ExecuteScalarAsync<int>("""
                 SELECT COUNT(*)
                 FROM "Accounts"
                 WHERE "Type" = 1
                 AND "Staked" = true
-                AND "StakingBalance" >= {protocol.MinimalStake}
+                AND "BakingPower" != 0
                 """);
 
             var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
@@ -557,12 +560,13 @@ namespace Tzkt.Api.Services
             var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
             var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
             var totalBakingPower = totalStaked + totalDelegated / protocol.StakePowerMultiplier;
+            var totalStaking = totalStaked + totalDelegated;
 
             return new StakingData
             {
-                TotalStaking = total.TotalStaking,
-                StakingPercentage = Math.Round(100.0 * total.TotalStaking / totalSupply, 2),
-                AvgRoi = Math.Round(100.0 * totalRewardsPerYear / total.TotalStaking, 2),
+                TotalStaking = totalStaking,
+                StakingPercentage = Math.Round(100.0 * totalStaking / totalSupply, 2),
+                AvgRoi = Math.Round(100.0 * totalRewardsPerYear / totalStaking, 2),
                 Inflation = Math.Round(100.0 * totalCreatedPerYear / totalSupply, 2),
                 Bakers = total.ActiveBakers,
                 FundedBakers = funded,

@@ -10,7 +10,6 @@ namespace Tzkt.Sync.Protocols.Proto19
         {
             #region init
             var sender = (await Cache.Accounts.GetExistingAsync(content.RequiredString("source")) as User)!;
-            var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
 
             var result = content.Required("metadata").Required("operation_result");
             var operation = new DalPublishCommitmentOperation
@@ -46,23 +45,11 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             #region apply operation
             Db.TryAttach(sender);
-            sender.Balance -= operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter;
             sender.DalPublishCommitmentOpsCount++;
 
-            if (senderDelegate != null)
-            {
-                Db.TryAttach(senderDelegate);
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-
-            Context.Proposer.Balance += operation.BakerFee;
-            Context.Proposer.StakingBalance += operation.BakerFee;
-
             block.Operations |= Operations.DalPublishCommitment;
-            block.Fees += operation.BakerFee;
 
             Cache.AppState.Get().DalPublishCommitmentOpsCount++;
             #endregion
@@ -82,10 +69,7 @@ namespace Tzkt.Sync.Protocols.Proto19
         public async Task Revert(Block block, DalPublishCommitmentOperation operation)
         {
             var sender = (await Cache.Accounts.GetAsync(operation.SenderId) as User)!;
-            var senderDelegate = sender as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(sender.DelegateId);
-
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
 
             #region revert result
             if (operation.Status == OperationStatus.Applied)
@@ -95,19 +79,9 @@ namespace Tzkt.Sync.Protocols.Proto19
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
             sender.Counter = operation.Counter - 1;
             sender.DalPublishCommitmentOpsCount--;
-
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate != sender)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-
-            Context.Proposer.Balance -= operation.BakerFee;
-            Context.Proposer.StakingBalance -= operation.BakerFee;
 
             Cache.AppState.Get().DalPublishCommitmentOpsCount--;
             #endregion

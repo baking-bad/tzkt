@@ -45,31 +45,17 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             #endregion
 
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
 
             sender.TxRollupReturnBondCount++;
             if (rollup != null) rollup.TxRollupReturnBondCount++;
 
             block.Operations |= Operations.TxRollupReturnBond;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -94,14 +80,10 @@ namespace Tzkt.Sync.Protocols.Proto13
         public virtual async Task Revert(Block block, TxRollupReturnBondOperation operation)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var rollup = await Cache.Accounts.GetAsync(operation.RollupId);
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             #endregion
 
@@ -114,15 +96,7 @@ namespace Tzkt.Sync.Protocols.Proto13
             #endregion
 
             #region revert operation
-            sender.Balance += operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += operation.BakerFee;
-            }
-            blockBaker.Balance -= operation.BakerFee;
-            blockBaker.StakingBalance -= operation.BakerFee;
+            RevertPayFee(sender, operation.BakerFee);
 
             sender.TxRollupReturnBondCount--;
             if (rollup != null) rollup.TxRollupReturnBondCount--;

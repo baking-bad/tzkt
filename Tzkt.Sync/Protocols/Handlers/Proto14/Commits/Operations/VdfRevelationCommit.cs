@@ -33,12 +33,11 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             #region entities
             var blockBaker = Context.Proposer;
-            Db.TryAttach(blockBaker);
+            //Db.TryAttach(blockBaker);
             #endregion
 
             #region apply operation
-            blockBaker.Balance += revelation.RewardDelegated;
-            blockBaker.StakingBalance += revelation.RewardDelegated;
+            Receive(blockBaker, blockBaker, revelation.RewardDelegated);
 
             blockBaker.VdfRevelationsCount++;
             Cache.AppState.Get().VdfRevelationOpsCount++;
@@ -56,13 +55,12 @@ namespace Tzkt.Sync.Protocols.Proto14
         public virtual Task Revert(Block block, VdfRevelationOperation revelation)
         {
             #region entities
-            var blockBaker = Cache.Accounts.GetDelegate(revelation.BakerId);
-            Db.TryAttach(blockBaker);
+            var blockBaker = Context.Proposer;
+            //Db.TryAttach(blockBaker);
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.RewardDelegated;
-            blockBaker.StakingBalance -= revelation.RewardDelegated;
+            RevertReceive(blockBaker, blockBaker, revelation.RewardDelegated);
 
             blockBaker.VdfRevelationsCount--;
             Cache.AppState.Get().VdfRevelationOpsCount--;

@@ -99,13 +99,15 @@ namespace Tzkt.Api.Repositories
                         FrozenDepositLimit = delegat.FrozenDepositLimit,
                         LimitOfStakingOverBaking = delegat.LimitOfStakingOverBaking,
                         EdgeOfBakingOverStaking = delegat.EdgeOfBakingOverStaking,
-                        DelegatedBalance = delegat.DelegatedBalance,
+                        BakingPower = delegat.BakingPower,
+                        VotingPower = delegat.VotingPower,
+                        OwnDelegatedBalance = delegat.OwnDelegatedBalance,
+                        ExternalDelegatedBalance = delegat.ExternalDelegatedBalance,
                         Counter = delegat.Counter,
                         ActivationLevel = delegat.ActivationLevel,
                         ActivationTime = Time[delegat.ActivationLevel],
                         DeactivationLevel = delegat.Staked ? null : delegat.DeactivationLevel,
                         DeactivationTime = delegat.Staked ? null : Time[delegat.DeactivationLevel],
-                        StakingBalance = delegat.StakingBalance,
                         FirstActivity = delegat.FirstLevel,
                         FirstActivityTime = Time[delegat.FirstLevel],
                         LastActivity = delegat.LastLevel,
@@ -586,13 +588,15 @@ namespace Tzkt.Api.Repositories
                             FrozenDepositLimit = row.FrozenDepositLimit,
                             LimitOfStakingOverBaking = row.LimitOfStakingOverBaking,
                             EdgeOfBakingOverStaking = row.EdgeOfBakingOverStaking,
-                            DelegatedBalance = row.DelegatedBalance,
+                            BakingPower = row.BakingPower,
+                            VotingPower = row.VotingPower,
+                            OwnDelegatedBalance = row.OwnDelegatedBalance,
+                            ExternalDelegatedBalance = row.ExternalDelegatedBalance,
                             Counter = row.Counter,
                             ActivationLevel = row.ActivationLevel,
                             ActivationTime = Time[row.ActivationLevel],
                             DeactivationLevel = row.Staked ? null : (int?)row.DeactivationLevel,
                             DeactivationTime = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel],
-                            StakingBalance = row.StakingBalance,
                             FirstActivity = row.FirstLevel,
                             FirstActivityTime = Time[row.FirstLevel],
                             LastActivity = row.LastLevel,
@@ -829,13 +833,15 @@ namespace Tzkt.Api.Repositories
                     case "frozenDepositLimit": columns.Add(@"acc.""FrozenDepositLimit"""); break;
                     case "limitOfStakingOverBaking": columns.Add(@"acc.""LimitOfStakingOverBaking"""); break;
                     case "edgeOfBakingOverStaking": columns.Add(@"acc.""EdgeOfBakingOverStaking"""); break;
-                    case "delegatedBalance": columns.Add(@"acc.""DelegatedBalance"""); break;
+                    case "bakingPower": columns.Add(@"acc.""BakingPower"""); break;
+                    case "votingPower": columns.Add(@"acc.""VotingPower"""); break;
+                    case "ownDelegatedBalance": columns.Add(@"acc.""OwnDelegatedBalance"""); break;
+                    case "externalDelegatedBalance": columns.Add(@"acc.""ExternalDelegatedBalance"""); break;
                     case "counter": columns.Add(@"acc.""Counter"""); break;
                     case "activationLevel": columns.Add(@"acc.""ActivationLevel"""); break;
                     case "activationTime": columns.Add(@"acc.""ActivationLevel"""); break;
                     case "deactivationLevel": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
                     case "deactivationTime": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
-                    case "stakingBalance": columns.Add(@"acc.""StakingBalance"""); break;
                     case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                     case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -938,7 +944,9 @@ namespace Tzkt.Api.Repositories
                     case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
 
                     #region [DEPRECATED]
-                    case "updateConsensusKeyCount": columns.Add(@"""UpdateSecondaryKeyCount"""); break;
+                    case "stakingBalance": columns.Add(@"acc.""VotingPower"""); break;
+                    case "delegatedBalance": columns.Add(@"acc.""ExternalDelegatedBalance"""); break;
+                    case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateSecondaryKeyCount"""); break;
                     #endregion
                 }
             }
@@ -1031,9 +1039,21 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.EdgeOfBakingOverStaking;
                         break;
-                    case "delegatedBalance":
+                    case "bakingPower":
                         foreach (var row in rows)
-                            result[j++][i] = row.DelegatedBalance;
+                            result[j++][i] = row.BakingPower;
+                        break;
+                    case "votingPower":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VotingPower;
+                        break;
+                    case "ownDelegatedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.OwnDelegatedBalance;
+                        break;
+                    case "externalDelegatedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExternalDelegatedBalance;
                         break;
                     case "counter":
                         foreach (var row in rows)
@@ -1054,10 +1074,6 @@ namespace Tzkt.Api.Repositories
                     case "deactivationTime":
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
-                        break;
-                    case "stakingBalance":
-                        foreach (var row in rows)
-                            result[j++][i] = row.StakingBalance;
                         break;
                     case "firstActivity":
                         foreach (var row in rows)
@@ -1444,6 +1460,14 @@ namespace Tzkt.Api.Repositories
                             result[j++][i] = row.OrphanCommitments;
                         break;
                     #region [DEPRECATED]
+                    case "delegatedBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ExternalDelegatedBalance;
+                        break;
+                    case "stakingBalance":
+                        foreach (var row in rows)
+                            result[j++][i] = row.VotingPower;
+                        break;
                     case "updateConsensusKeyCount":
                         foreach (var row in rows)
                             result[j++][i] = row.UpdateSecondaryKeyCount;
@@ -1488,13 +1512,15 @@ namespace Tzkt.Api.Repositories
                 case "frozenDepositLimit": columns.Add(@"acc.""FrozenDepositLimit"""); break;
                 case "limitOfStakingOverBaking": columns.Add(@"acc.""LimitOfStakingOverBaking"""); break;
                 case "edgeOfBakingOverStaking": columns.Add(@"acc.""EdgeOfBakingOverStaking"""); break;
-                case "delegatedBalance": columns.Add(@"acc.""DelegatedBalance"""); break;
+                case "bakingPower": columns.Add(@"acc.""BakingPower"""); break;
+                case "votingPower": columns.Add(@"acc.""VotingPower"""); break;
+                case "ownDelegatedBalance": columns.Add(@"acc.""OwnDelegatedBalance"""); break;
+                case "externalDelegatedBalance": columns.Add(@"acc.""ExternalDelegatedBalance"""); break;
                 case "counter": columns.Add(@"acc.""Counter"""); break;
                 case "activationLevel": columns.Add(@"acc.""ActivationLevel"""); break;
                 case "activationTime": columns.Add(@"acc.""ActivationLevel"""); break;
                 case "deactivationLevel": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
                 case "deactivationTime": columns.Add(@"acc.""DeactivationLevel"""); columns.Add(@"acc.""Staked"""); break;
-                case "stakingBalance": columns.Add(@"acc.""StakingBalance"""); break;
                 case "firstActivity": columns.Add(@"acc.""FirstLevel"""); break;
                 case "firstActivityTime": columns.Add(@"acc.""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"acc.""LastLevel"""); break;
@@ -1597,7 +1623,9 @@ namespace Tzkt.Api.Repositories
                 case "orphanCommitments": columns.Add(@"acc.""OrphanCommitments"""); break;
 
                 #region [DEPRECATED]
-                case "updateConsensusKeyCount": columns.Add(@"""UpdateSecondaryKeyCount"""); break;
+                case "stakingBalance": columns.Add(@"acc.""VotingPower"""); break;
+                case "delegatedBalance": columns.Add(@"acc.""ExternalDelegatedBalance"""); break;
+                case "updateConsensusKeyCount": columns.Add(@"acc.""UpdateSecondaryKeyCount"""); break;
                 #endregion
             }
 
@@ -1686,9 +1714,21 @@ namespace Tzkt.Api.Repositories
                     foreach (var row in rows)
                         result[j++] = row.EdgeOfBakingOverStaking;
                     break;
-                case "delegatedBalance":
+                case "bakingPower":
                     foreach (var row in rows)
-                        result[j++] = row.DelegatedBalance;
+                        result[j++] = row.BakingPower;
+                    break;
+                case "votingPower":
+                    foreach (var row in rows)
+                        result[j++] = row.VotingPower;
+                    break;
+                case "ownDelegatedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.OwnDelegatedBalance;
+                    break;
+                case "externalDelegatedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.ExternalDelegatedBalance;
                     break;
                 case "counter":
                     foreach (var row in rows)
@@ -1709,10 +1749,6 @@ namespace Tzkt.Api.Repositories
                 case "deactivationTime":
                     foreach (var row in rows)
                         result[j++] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
-                    break;
-                case "stakingBalance":
-                    foreach (var row in rows)
-                        result[j++] = row.StakingBalance;
                     break;
                 case "firstActivity":
                     foreach (var row in rows)
@@ -2099,6 +2135,14 @@ namespace Tzkt.Api.Repositories
                         result[j++] = row.OrphanCommitments;
                     break;
                 #region [DEPRECATED]
+                case "delegatedBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.ExternalDelegatedBalance;
+                    break;
+                case "stakingBalance":
+                    foreach (var row in rows)
+                        result[j++] = row.VotingPower;
+                    break;
                 case "updateConsensusKeyCount":
                     foreach (var row in rows)
                         result[j++] = row.UpdateSecondaryKeyCount;

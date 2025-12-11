@@ -68,32 +68,18 @@ namespace Tzkt.Sync.Protocols.Proto16
             #endregion
 
             #region entities
-            var blockBaker = Context.Proposer;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(rollup);
             Db.TryAttach(game);
             #endregion
 
             #region apply operation
-            sender.Balance -= operation.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= operation.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= operation.BakerFee;
-            }
-            blockBaker.Balance += operation.BakerFee;
-            blockBaker.StakingBalance += operation.BakerFee;
+            PayFee(sender, operation.BakerFee);
 
             sender.SmartRollupRefuteCount++;
             if (rollup != null) rollup.SmartRollupRefuteCount++;
 
             block.Operations |= Operations.SmartRollupRefute;
-            block.Fees += operation.BakerFee;
 
             sender.Counter = operation.Counter;
 
@@ -223,21 +209,15 @@ namespace Tzkt.Sync.Protocols.Proto16
                     }
                 }
 
-                initiator.Balance += initiatorChange;
-                if (initiatorBaker != null)
-                {
-                    initiatorBaker.StakingBalance += initiatorChange;
-                    if (initiatorBaker.Id != initiator.Id)
-                        initiatorBaker.DelegatedBalance += initiatorChange;
-                }
+                if (initiatorChange > 0)
+                    Receive(initiator, initiatorChange);
+                else
+                    Spend(initiator, -initiatorChange);
 
-                opponent.Balance += opponentChange;
-                if (opponentBaker != null)
-                {
-                    opponentBaker.StakingBalance += opponentChange;
-                    if (opponentBaker.Id != opponent.Id)
-                        opponentBaker.DelegatedBalance += opponentChange;
-                }
+                if (opponentChange > 0)
+                    Receive(opponent, opponentChange);
+                else
+                    Spend(opponent, -opponentChange);
 
                 initiator.ActiveRefutationGamesCount--;
                 opponent.ActiveRefutationGamesCount--;

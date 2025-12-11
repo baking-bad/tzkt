@@ -1,10 +1,36 @@
 ﻿using System.Text.Json;
+using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto19
 {
-    class BlockCommit : Proto18.BlockCommit
+    class BlockCommit(ProtocolHandler protocol) : Proto18.BlockCommit(protocol)
     {
-        public BlockCommit(ProtocolHandler protocol) : base(protocol) { }
+        public override async Task Apply(JsonElement rawBlock)
+        {
+            await base.Apply(rawBlock);
+
+            var state = Cache.AppState.Get();
+            if (state.AiActivationLevel is null)
+            {
+                if (rawBlock.Required("metadata").OptionalInt32("adaptive_issuance_activation_cycle") is int aiCycle && aiCycle == state.Cycle)
+                {
+                    state.AiActivationLevel = Block.Level;
+                    UpdateBakersPower();
+                }
+            }
+        }
+
+        public override void Revert(Block block)
+        {
+            var state = Cache.AppState.Get();
+            if (state.AiActivationLevel == block.Level)
+            {
+                state.AiActivationLevel = null;
+                UpdateBakersPower();
+            }
+
+            base.Revert(block);
+        }
 
         protected override (long, long, long, long, long, long, long, long) ParseRewards(Data.Models.Delegate proposer, Data.Models.Delegate producer, List<JsonElement> balanceUpdates)
         {

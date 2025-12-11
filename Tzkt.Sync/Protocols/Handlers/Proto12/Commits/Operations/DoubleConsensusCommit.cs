@@ -61,11 +61,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleConsensus.Reward;
-            accuser.StakingBalance += doubleConsensus.Reward;
+            Receive(accuser, accuser, doubleConsensus.Reward);
 
-            offender.Balance -= doubleConsensus.LostStaked;
-            offender.StakingBalance -= doubleConsensus.LostStaked;
+            Spend(offender, offender, doubleConsensus.LostStaked);
 
             accuser.DoubleConsensusCount++;
             if (offender != accuser) offender.DoubleConsensusCount++;
@@ -91,11 +89,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleConsensus.Reward;
-            accuser.StakingBalance -= doubleConsensus.Reward;
+            RevertReceive(accuser, accuser, doubleConsensus.Reward);
 
-            offender.Balance += doubleConsensus.LostStaked;
-            offender.StakingBalance += doubleConsensus.LostStaked;
+            RevertSpend(offender, offender, doubleConsensus.LostStaked);
 
             accuser.DoubleConsensusCount--;
             if (offender != accuser) offender.DoubleConsensusCount--;

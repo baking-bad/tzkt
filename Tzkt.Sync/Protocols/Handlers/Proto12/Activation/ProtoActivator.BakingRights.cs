@@ -10,11 +10,10 @@ namespace Tzkt.Sync.Protocols.Proto12
             Cycle cycle)
         {
             var bakers = accounts
-                .Where(x => x is Data.Models.Delegate d && d.Balance > 0 && d.StakingBalance >= protocol.MinimalStake)
+                .Where(x => x is Data.Models.Delegate d && d.BakingPower != 0)
                 .Select(x => (x as Data.Models.Delegate)!);
 
-            var sampler = GetSampler(bakers.Select(x => 
-                (x.Id, Math.Min(x.StakingBalance, x.Balance * (protocol.MaxDelegatedOverFrozenRatio + 1)))));
+            var sampler = GetSampler(bakers.Select(x => (x.Id, x.BakingPower)));
 
             #region temporary diagnostics
             await sampler.Validate(Proto, 1, cycle.Index);

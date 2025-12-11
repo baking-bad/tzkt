@@ -133,9 +133,9 @@ namespace Tzkt.Sync.Protocols.Proto15
 
             var account = (await Cache.Accounts.GetAsync(address))!;
             Db.TryAttach(account);
+            Receive(account, amount);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
-            account.Balance += amount;
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;

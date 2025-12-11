@@ -60,41 +60,21 @@ namespace Tzkt.Sync.Protocols.Proto15
             #endregion
 
             #region entities
-            var blockBaker = Context.Proposer;
-            var targetDelegate = Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate;
-
-            Db.TryAttach(blockBaker);
             Db.TryAttach(delegat);
             Db.TryAttach(target);
-            Db.TryAttach(targetDelegate);
             #endregion
 
             #region apply operation
-            delegat.Balance -= operation.Amount;
-            delegat.StakingBalance -= operation.Amount;
+            PayFee(delegat, operation.Fee);
 
-            delegat.Balance -= operation.Fee;
-            delegat.StakingBalance -= operation.Fee;
+            Spend(delegat, delegat, operation.Amount + operation.AllocationFee);
 
-            delegat.Balance -= operation.AllocationFee;
-            delegat.StakingBalance -= operation.AllocationFee;
-
-            target.Balance += operation.Amount;
-            if (targetDelegate != null)
-            {
-                targetDelegate.StakingBalance += operation.Amount;
-                if (targetDelegate.Id != target.Id)
-                    targetDelegate.DelegatedBalance += operation.Amount;
-            }
-
-            blockBaker.Balance += operation.Fee;
-            blockBaker.StakingBalance += operation.Fee;
+            Receive(target, operation.Amount);
 
             delegat.DrainDelegateCount++;
             if (target != delegat) target.DrainDelegateCount++;
 
             block.Operations |= Operations.DrainDelegate;
-            block.Fees += operation.Fee;
 
             Cache.AppState.Get().DrainDelegateOpsCount++;
 
@@ -108,39 +88,19 @@ namespace Tzkt.Sync.Protocols.Proto15
         public virtual async Task Revert(Block block, DrainDelegateOperation operation)
         {
             #region entities
-            var blockBaker = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
-            Db.TryAttach(blockBaker);
-            
             var delegat = Cache.Accounts.GetDelegate(operation.DelegateId);
             Db.TryAttach(delegat);
             
             var target = await Cache.Accounts.GetAsync(operation.TargetId);
             Db.TryAttach(target);
-            
-            var targetDelegate = Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate;
-            Db.TryAttach(targetDelegate);
             #endregion
 
             #region apply operation
-            delegat.Balance += operation.Amount;
-            delegat.StakingBalance += operation.Amount;
+            RevertPayFee(delegat, operation.Fee);
 
-            delegat.Balance += operation.Fee;
-            delegat.StakingBalance += operation.Fee;
+            RevertSpend(delegat, delegat, operation.Amount + operation.AllocationFee);
 
-            delegat.Balance += operation.AllocationFee;
-            delegat.StakingBalance += operation.AllocationFee;
-
-            target.Balance -= operation.Amount;
-            if (targetDelegate != null)
-            {
-                targetDelegate.StakingBalance -= operation.Amount;
-                if (targetDelegate.Id != target.Id)
-                    targetDelegate.DelegatedBalance -= operation.Amount;
-            }
-
-            blockBaker.Balance -= operation.Fee;
-            blockBaker.StakingBalance -= operation.Fee;
+            RevertReceive(target, operation.Amount);
 
             delegat.DrainDelegateCount--;
             if (target != delegat) target.DrainDelegateCount--;

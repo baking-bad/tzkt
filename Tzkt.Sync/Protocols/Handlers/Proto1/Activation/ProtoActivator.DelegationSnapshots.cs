@@ -16,7 +16,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     AccountId = x.Id,
 
                     OwnDelegatedBalance = x.Balance - ((x as Data.Models.Delegate)?.OwnStakedBalance ?? 0),
-                    ExternalDelegatedBalance = (x as Data.Models.Delegate)?.DelegatedBalance,
+                    ExternalDelegatedBalance = (x as Data.Models.Delegate)?.ExternalDelegatedBalance,
                     DelegatorsCount = (x as Data.Models.Delegate)?.DelegatorsCount,
 
                     PrevMinTotalDelegatedLevel = (x as Data.Models.Delegate)?.MinTotalDelegatedLevel,

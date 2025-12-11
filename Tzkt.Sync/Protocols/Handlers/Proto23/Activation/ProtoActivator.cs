@@ -17,6 +17,13 @@ namespace Tzkt.Sync.Protocols.Proto23
                 protocol.BlocksPerCommitment = 84;
         }
 
+        protected override async Task ActivateContext(AppState state)
+        {
+            await base.ActivateContext(state);
+            Cache.AppState.Get().AiActivationLevel = 1;
+            UpdateBakersPower();
+        }
+
         protected override async Task MigrateContext(AppState state)
         {
             #region unreveal tz4

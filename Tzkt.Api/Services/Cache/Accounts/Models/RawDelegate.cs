@@ -7,8 +7,11 @@ namespace Tzkt.Api.Services.Cache
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
-        public long StakingBalance { get; set; }
-        public long DelegatedBalance { get; set; }
+        public long BakingPower { get; set; }
+        public long VotingPower { get; set; }
+
+        public long OwnDelegatedBalance { get; set; }
+        public long ExternalDelegatedBalance { get; set; }
         public int DelegatorsCount { get; set; }
 
         public long OwnStakedBalance { get; set; }

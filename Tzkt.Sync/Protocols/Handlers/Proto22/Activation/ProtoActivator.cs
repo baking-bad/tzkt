@@ -93,6 +93,8 @@ namespace Tzkt.Sync.Protocols.Proto22
 
         void MigrateBakers(AppState state, Protocol prevProto, Protocol nextProto)
         {
+            UpdateBakersPower();
+
             foreach (var baker in Cache.Accounts.GetDelegates().Where(x => x.DeactivationLevel > state.Level))
             {
                 Db.TryAttach(baker);

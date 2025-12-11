@@ -11,6 +11,7 @@ namespace Tzkt.Sync.Protocols
     class InitiatorHandler : ProtocolHandler
     {
         public override IDiagnostics Diagnostics { get; }
+        public override IHelpers Helpers { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
         public override string VersionName => "genesis";
@@ -20,6 +21,7 @@ namespace Tzkt.Sync.Protocols
             : base(node, db, cache, quotes, services, config, logger, metrics)
         {
             Diagnostics = new Diagnostics();
+            Helpers = new Helpers();
             Validator = new Validator(this);
             Rpc = new Rpc(node);
         }

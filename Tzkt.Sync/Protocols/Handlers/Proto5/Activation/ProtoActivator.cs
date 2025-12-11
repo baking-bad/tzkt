@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
+using System.Security.Principal;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
@@ -48,7 +49,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     Db.TryAttach(manager);
 
-                    manager.Balance = 1;
+                    Receive(manager, 1);
                     manager.Counter = state.ManagerCounter;
                     manager.MigrationsCount++;
                     manager.LastLevel = block.Level;
@@ -76,7 +77,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region invoice
             var account = (await Cache.Accounts.GetAsync("KT1DUfaMfTRZZkvZAYQT5b3byXnvqoAykc43"))!;
             Db.TryAttach(account);
-            account.Balance += 500_000_000;
+            Receive(account, 500_000_000);
             account.MigrationsCount++;
             account.LastLevel = block.Level;
 
@@ -285,7 +286,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var account = await Cache.Accounts.GetAsync(airDrop.AccountId);
                 Db.TryAttach(account);
 
-                account.Balance = 0;
+                RevertReceive(account, 1);
                 account.MigrationsCount--;
             }
 
@@ -303,7 +304,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             var invoiceAccount = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(invoiceAccount);
 
-            invoiceAccount.Balance -= 500_000_000;
+            RevertReceive(invoiceAccount, 500_000_000);
             invoiceAccount.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);

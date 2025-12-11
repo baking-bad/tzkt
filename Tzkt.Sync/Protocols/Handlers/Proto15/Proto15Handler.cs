@@ -10,6 +10,7 @@ namespace Tzkt.Sync.Protocols
     class Proto15Handler : ProtocolHandler
     {
         public override IDiagnostics Diagnostics { get; }
+        public override IHelpers Helpers { get; }
         public override IValidator Validator { get; }
         public override IRpc Rpc { get; }
         public override string VersionName => "lima_015";
@@ -20,6 +21,7 @@ namespace Tzkt.Sync.Protocols
         {
             Rpc = new Rpc(node);
             Diagnostics = new Diagnostics(this);
+            Helpers = new Helpers(this);
             Validator = new Validator(this);
         }
 

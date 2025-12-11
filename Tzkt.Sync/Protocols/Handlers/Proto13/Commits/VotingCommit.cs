@@ -1,14 +1,4 @@
-﻿using Tzkt.Data.Models;
-
-namespace Tzkt.Sync.Protocols.Proto13
+﻿namespace Tzkt.Sync.Protocols.Proto13
 {
-    class VotingCommit : Proto8.VotingCommit
-    {
-        public VotingCommit(ProtocolHandler protocol) : base(protocol) { }
-
-        protected override long GetVotingPower(Data.Models.Delegate baker, Block block, Protocol protocol)
-        {
-            return baker.StakingBalance;
-        }
-    }
+    class VotingCommit(ProtocolHandler protocol) : Proto8.VotingCommit(protocol) { }
 }

@@ -11,6 +11,7 @@ namespace Tzkt.Sync
     public abstract class ProtocolHandler
     {
         public abstract IDiagnostics Diagnostics { get; }
+        public abstract IHelpers Helpers { get; }
         public abstract IValidator Validator { get; }
         public abstract IRpc Rpc { get; }
         public abstract string VersionName { get; }
@@ -26,7 +27,7 @@ namespace Tzkt.Sync
         public readonly IMetrics Metrics;
         public readonly ManagerContext Manager;
         public readonly InboxContext Inbox;
-        public readonly BlockContext Context;
+        public BlockContext Context { get; private set; }
 
         bool _ForceDiagnostics = false;
 
@@ -43,6 +44,12 @@ namespace Tzkt.Sync
             Manager = new(this);
             Inbox = new();
             Context = new();
+        }
+
+        public ProtocolHandler WithContext(BlockContext context)
+        {
+            Context = context;
+            return this;
         }
 
         public virtual async Task<AppState> CommitNextBlock()
@@ -87,7 +94,7 @@ namespace Tzkt.Sync
 
                 var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)
-                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                    nextProtocol = Services.GetProtocolHandler(state.Level + 1, state.NextProtocol).WithContext(Context);
 
                 Logger.LogDebug("Save changes");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.SaveChangesTime))
@@ -156,6 +163,7 @@ namespace Tzkt.Sync
 
                 Logger.LogDebug("Init block context");
                 await InitContext(state);
+                Db.TryAttach(Context.Proposer);
 
                 var nextProtocol = this;
                 if (state.Protocol != state.NextProtocol)

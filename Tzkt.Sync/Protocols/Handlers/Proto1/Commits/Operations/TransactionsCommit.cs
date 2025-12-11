@@ -63,41 +63,20 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ProcessParameters(transaction, target, parameters);
             #endregion
 
-            #region entities
-            var blockBaker = Context.Proposer;
-
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-
-            //var target = transaction.Target;
-            var targetDelegate = target != null
-                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
-                : null;
-
-            Db.TryAttach(blockBaker);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            Db.TryAttach(target);
-            Db.TryAttach(targetDelegate);
-            #endregion
-
             #region apply operation
-            sender.Balance -= transaction.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance -= transaction.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance -= transaction.BakerFee;
-            }
-            blockBaker.Balance += transaction.BakerFee;
-            blockBaker.StakingBalance += transaction.BakerFee;
-
+            Db.TryAttach(sender);
+            PayFee(sender, transaction.BakerFee);
+            sender.Counter = transaction.Counter;
             sender.TransactionsCount++;
-            if (target != null && target != sender) target.TransactionsCount++;
+
+            if (target != null)
+            {
+                Db.TryAttach(target);
+                if (target != sender)
+                    target.TransactionsCount++;
+            }
 
             block.Operations |= Operations.Transactions;
-            block.Fees += transaction.BakerFee;
-
-            sender.Counter = transaction.Counter;
 
             Cache.AppState.Get().TransactionOpsCount++;
             #endregion
@@ -106,31 +85,18 @@ namespace Tzkt.Sync.Protocols.Proto1
             if (transaction.Status == OperationStatus.Applied)
             {
                 var burned = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
-                var spent = transaction.Amount + burned;
                 Proto.Manager.Burn(burned);
 
-                sender.Balance -= spent;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= spent;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= spent;
-                }
+                Spend(sender, transaction.Amount + burned);
 
-                target!.Balance += transaction.Amount;
-                if (targetDelegate != null)
-                {
-                    targetDelegate.StakingBalance += transaction.Amount;
-                    if (targetDelegate.Id != target.Id)
-                        targetDelegate.DelegatedBalance += transaction.Amount;
-                }
+                Receive(target!, transaction.Amount);
 
-                await ResetGracePeriod(transaction, target);
+                await ResetGracePeriod(transaction, target!);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, target, storage);
+                    await ProcessStorage(transaction, target!, storage);
                 }
 
                 await ApplyAddressRegistryDiffs(transaction, result);
@@ -141,7 +107,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (target.Id == NullAddress.Id)
+                if (target!.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
@@ -156,6 +122,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task ApplyInternal(Block block, ManagerOperation parent, JsonElement content)
         {
             #region init
+            var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
 
@@ -200,24 +167,6 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ProcessParameters(transaction, target, parameters);
             #endregion
 
-            #region entities
-            var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
-            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
-            //var target = transaction.Target;
-            var targetDelegate = target != null
-                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
-                : null;
-
-            //Db.TryAttach(parentTx);
-            //Db.TryAttach(parentSender);
-            Db.TryAttach(parentDelegate);
-            Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
-            Db.TryAttach(target);
-            Db.TryAttach(targetDelegate);
-            #endregion
-
             #region apply operation
             if (parent is TransactionOperation parentTx)
             {
@@ -225,9 +174,18 @@ namespace Tzkt.Sync.Protocols.Proto1
                 parentTx.InternalTransactions = (short?)((parentTx.InternalTransactions ?? 0) + 1);
             }
 
+            Db.TryAttach(sender);
             sender.TransactionsCount++;
-            if (target != null && target != sender) target.TransactionsCount++;
-            if (parentSender != sender && parentSender != target) parentSender.TransactionsCount++;
+
+            if (target != null)
+            {
+                Db.TryAttach(target);
+                if (target != sender)
+                    target.TransactionsCount++;
+            }
+
+            if (parentSender != sender && parentSender != target)
+                parentSender.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
 
@@ -240,39 +198,21 @@ namespace Tzkt.Sync.Protocols.Proto1
                 var burned = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
                 Proto.Manager.Burn(burned);
 
-                parentSender.Balance -= burned;
-                if (parentDelegate != null)
-                {
-                    parentDelegate.StakingBalance -= burned;
-                    if (parentDelegate.Id != parentSender.Id)
-                        parentDelegate.DelegatedBalance -= burned;
-                }
+                Spend(parentSender, burned);
 
-                sender.Balance -= transaction.Amount;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance -= transaction.Amount;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance -= transaction.Amount;
-                }
+                Spend(sender, transaction.Amount);
 
-                target!.Balance += transaction.Amount;
-                if (target.Id == parentSender.Id)
+                Receive(target!, transaction.Amount);
+
+                if (target == parentSender)
                     Proto.Manager.Credit(transaction.Amount);
 
-                if (targetDelegate != null)
-                {
-                    targetDelegate.StakingBalance += transaction.Amount;
-                    if (targetDelegate.Id != target.Id)
-                        targetDelegate.DelegatedBalance += transaction.Amount;
-                }
-
-                await ResetGracePeriod(transaction, target);
+                await ResetGracePeriod(transaction, target!);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, target, storage);
+                    await ProcessStorage(transaction, target!, storage);
                 }
 
                 await ApplyAddressRegistryDiffs(transaction, result);
@@ -283,7 +223,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (target.Id == NullAddress.Id)
+                if (target!.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
@@ -297,53 +237,30 @@ namespace Tzkt.Sync.Protocols.Proto1
         public virtual async Task Revert(Block block, TransactionOperation transaction)
         {
             #region entities
-            var blockBaker = Context.Proposer;
             var sender = await Cache.Accounts.GetAsync(transaction.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var target = await Cache.Accounts.GetAsync(transaction.TargetId);
-            var targetDelegate = target != null
-                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
-                : null;
 
-            Db.TryAttach(blockBaker);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(target);
-            Db.TryAttach(targetDelegate);
             #endregion
 
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target!.Balance -= transaction.Amount;
-
-                if (targetDelegate != null)
-                {
-                    targetDelegate.StakingBalance -= transaction.Amount;
-                    if (targetDelegate.Id != target.Id)
-                        targetDelegate.DelegatedBalance -= transaction.Amount;
-                }
-
+                RevertReceive(target!, transaction.Amount);
+                
                 if (target is Data.Models.Delegate delegat)
                 {
                     if (transaction.ResetDeactivation != null)
                     {
                         if (transaction.ResetDeactivation <= transaction.Level)
-                            await UpdateDelegate(delegat, false);
+                            await DeactivateBaker(delegat);
 
                         delegat.DeactivationLevel = (int)transaction.ResetDeactivation;
                     }
                 }
 
-                var spent = transaction.Amount + (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
-
-                sender.Balance += spent;
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += spent;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance += spent;
-                }
+                RevertSpend(sender, transaction.Amount + (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0));
 
                 if (transaction.StorageId != null)
                     await RevertStorage(transaction, (target as Contract)!);
@@ -353,15 +270,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region revert operation
-            sender.Balance += transaction.BakerFee;
-            if (senderDelegate != null)
-            {
-                senderDelegate.StakingBalance += transaction.BakerFee;
-                if (senderDelegate.Id != sender.Id)
-                    senderDelegate.DelegatedBalance += transaction.BakerFee;
-            }
-            blockBaker.Balance -= transaction.BakerFee;
-            blockBaker.StakingBalance -= transaction.BakerFee;
+            RevertPayFee(sender, transaction.BakerFee);
 
             sender.TransactionsCount--;
             if (target != null && target != sender) target.TransactionsCount--;
@@ -381,65 +290,33 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region entities
             var parentSender = await Cache.Accounts.GetAsync(transaction.InitiatorId!.Value);
-            var parentDelegate = Cache.Accounts.GetDelegate(parentSender.DelegateId) ?? parentSender as Data.Models.Delegate;
             var sender = await Cache.Accounts.GetAsync(transaction.SenderId);
-            var senderDelegate = Cache.Accounts.GetDelegate(sender.DelegateId) ?? sender as Data.Models.Delegate;
             var target = await Cache.Accounts.GetAsync(transaction.TargetId);
-            var targetDelegate = target != null
-                ? (Cache.Accounts.GetDelegate(target.DelegateId) ?? target as Data.Models.Delegate)
-                : null;
 
-            //Db.TryAttach(block);
-            //Db.TryAttach(parentTx);
             Db.TryAttach(parentSender);
-            Db.TryAttach(parentDelegate);
             Db.TryAttach(sender);
-            Db.TryAttach(senderDelegate);
             Db.TryAttach(target);
-            Db.TryAttach(targetDelegate);
             #endregion
 
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                target!.Balance -= transaction.Amount;
-
-                if (targetDelegate != null)
-                {
-                    targetDelegate.StakingBalance -= transaction.Amount;
-                    if (targetDelegate.Id != target.Id)
-                        targetDelegate.DelegatedBalance -= transaction.Amount;
-                }
+                RevertReceive(target!, transaction.Amount);
 
                 if (target is Data.Models.Delegate delegat)
                 {
                     if (transaction.ResetDeactivation != null)
                     {
                         if (transaction.ResetDeactivation <= transaction.Level)
-                            await UpdateDelegate(delegat, false);
+                            await DeactivateBaker(delegat);
 
                         delegat.DeactivationLevel = (int)transaction.ResetDeactivation;
                     }
                 }
 
-                sender.Balance += transaction.Amount;
+                RevertSpend(sender, transaction.Amount);
 
-                if (senderDelegate != null)
-                {
-                    senderDelegate.StakingBalance += transaction.Amount;
-                    if (senderDelegate.Id != sender.Id)
-                        senderDelegate.DelegatedBalance += transaction.Amount;
-                }
-
-                var spent = (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0);
-                
-                parentSender.Balance += spent;
-                if (parentDelegate != null)
-                {
-                    parentDelegate.StakingBalance += spent;
-                    if (parentDelegate.Id != parentSender.Id)
-                        parentDelegate.DelegatedBalance += spent;
-                }
+                RevertSpend(parentSender, (transaction.StorageFee ?? 0) + (transaction.AllocationFee ?? 0));
 
                 if (transaction.StorageId != null)
                     await RevertStorage(transaction, (target as Contract)!);
@@ -470,7 +347,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (delegat.DeactivationLevel < newDeactivationLevel)
                 {
                     if (delegat.DeactivationLevel <= transaction.Level)
-                        await UpdateDelegate(delegat, true);
+                        await ActivateBaker(delegat);
 
                     transaction.ResetDeactivation = delegat.DeactivationLevel;
                     delegat.DeactivationLevel = newDeactivationLevel;

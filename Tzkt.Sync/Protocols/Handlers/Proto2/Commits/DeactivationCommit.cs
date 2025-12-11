@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto2
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             #region init
-            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
+            List<Data.Models.Delegate>? bakers = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations))
             {
                 var deactivated = rawBlock
@@ -19,77 +19,43 @@ namespace Tzkt.Sync.Protocols.Proto2
                     .RequiredArray("deactivated")
                     .EnumerateArray()
                     .Select(x => x.RequiredString())
-                    .ToList();
+                    .ToHashSet();
 
-                delegates = (await Db.Delegates
-                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
-                    .Where(x => x.baker.Staked && deactivated.Contains(x.baker.Address))
-                    .ToListAsync())
-                    .Select(x => (x.baker, x.delegators));
+                bakers = [..Cache.Accounts.GetDelegates().Where(x => x.Staked && deactivated.Contains(x.Address))];
             }
             else if (block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                delegates = (await Db.Delegates
-                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
-                    .Where(x => x.baker.Staked && x.baker.DeactivationLevel == block.Level)
-                    .ToListAsync())
-                    .Select(x => (x.baker, x.delegators));
+                bakers = [..Cache.Accounts.GetDelegates().Where(x => x.Staked && x.DeactivationLevel == block.Level)];
             }
             #endregion
 
-            if (delegates == null) return;
+            if (bakers == null) return;
 
-            foreach (var (delegat, delegators) in delegates)
+            foreach (var baker in bakers)
             {
-                Cache.Accounts.Add(delegat);
-                Db.TryAttach(delegat);
-
-                delegat.DeactivationLevel = block.Level;
-                delegat.Staked = false;
-
-                foreach (var delegator in delegators)
-                {
-                    Cache.Accounts.Add(delegator);
-                    Db.TryAttach(delegator);
-
-                    delegator.Staked = false;
-                }
+                Db.TryAttach(baker);
+                baker.DeactivationLevel = block.Level;
+                await DeactivateBaker(baker);
             }
         }
 
         public virtual async Task Revert(Block block)
         {
             #region init
-            IEnumerable<(Data.Models.Delegate, IEnumerable<Account>)>? delegates = null;
+            List<Data.Models.Delegate>? bakers = null;
             if (block.Events.HasFlag(BlockEvents.Deactivations) || block.Events.HasFlag(BlockEvents.CycleBegin))
             {
-                delegates = (await Db.Delegates
-                    .GroupJoin(Db.Accounts, x => x.Id, x => x.DelegateId, (baker, delegators) => new { baker, delegators })
-                    .Where(x => x.baker.DeactivationLevel == block.Level)
-                    .ToListAsync())
-                    .Select(x => (x.baker, x.delegators));
+                bakers = [..Cache.Accounts.GetDelegates().Where(x => x.DeactivationLevel == block.Level)];
             }
             #endregion
 
-            if (delegates == null) return;
+            if (bakers == null) return;
 
-            foreach (var (delegat, delegators) in delegates)
+            foreach (var baker in bakers)
             {
-                Cache.Accounts.Add(delegat);
-                Db.TryAttach(delegat);
-
-                delegat.DeactivationLevel = block.Events.HasFlag(BlockEvents.CycleEnd)
-                    ? block.Level + 1
-                    : block.Level;
-                delegat.Staked = true;
-
-                foreach (var delegator in delegators)
-                {
-                    Cache.Accounts.Add(delegator);
-                    Db.TryAttach(delegator);
-
-                    delegator.Staked = true;
-                }
+                Db.TryAttach(baker);
+                baker.DeactivationLevel = block.Events.HasFlag(BlockEvents.CycleEnd) ? block.Level + 1 : block.Level;
+                await ActivateBaker(baker);
             }
         }
     }

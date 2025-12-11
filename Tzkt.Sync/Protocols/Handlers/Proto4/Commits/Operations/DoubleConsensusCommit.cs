@@ -60,10 +60,9 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance += doubleConsensus.Reward;
-            offender.Balance -= doubleConsensus.LostStaked;
-            offender.StakingBalance -= lostDepositsValue;
-            offender.StakingBalance -= lostFeesValue;
+            ReceiveLockedRewards(accuser, doubleConsensus.Reward);
+            Spend(offender, offender, lostDepositsValue + lostFeesValue);
+            BurnLockedRewards(offender, lostRewardsValue);
 
             accuser.DoubleConsensusCount++;
             if (offender != accuser) offender.DoubleConsensusCount++;
@@ -93,11 +92,11 @@ namespace Tzkt.Sync.Protocols.Proto4
             #endregion
 
             #region apply operation
-            accuser.Balance -= doubleConsensus.Reward;
-            offender.Balance += doubleConsensus.LostStaked;
-            offender.StakingBalance += doubleConsensus.Reward * 2;
-            // here we can miss 1 mutez, but this may happen only in legacy protocols, so let's ignore
+            RevertReceiveLockedRewards(accuser, doubleConsensus.Reward);
+            // here we can miss 1 mutez, but this may happen only in legacy protocols
             // TODO: replace it with NotImplementedException after Ithaca
+            RevertSpend(offender, offender, doubleConsensus.Reward * 2);
+            RevertBurnLockedRewards(offender, doubleConsensus.LostStaked - doubleConsensus.Reward * 2);
 
             accuser.DoubleConsensusCount--;
             if (offender != accuser) offender.DoubleConsensusCount--;

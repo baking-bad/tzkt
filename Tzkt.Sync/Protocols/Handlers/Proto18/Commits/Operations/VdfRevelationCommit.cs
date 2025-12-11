@@ -37,10 +37,7 @@ namespace Tzkt.Sync.Protocols.Proto18
             #endregion
 
             #region apply operation
-            Context.Proposer.Balance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            Context.Proposer.StakingBalance += revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            Context.Proposer.OwnStakedBalance += revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            Context.Proposer.ExternalStakedBalance += revelation.RewardStakedShared;
+            ReceiveRewards(Context.Proposer, revelation.RewardDelegated, revelation.RewardStakedOwn, revelation.RewardStakedEdge, revelation.RewardStakedShared);
             Context.Proposer.VdfRevelationsCount++;
 
             Cache.AppState.Get().VdfRevelationOpsCount++;
@@ -60,14 +57,11 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             #region entities
             var blockBaker = Context.Proposer;
-            Db.TryAttach(blockBaker);
+            //Db.TryAttach(blockBaker);
             #endregion
 
             #region apply operation
-            blockBaker.Balance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            blockBaker.StakingBalance -= revelation.RewardDelegated + revelation.RewardStakedOwn + revelation.RewardStakedEdge + revelation.RewardStakedShared;
-            blockBaker.OwnStakedBalance -= revelation.RewardStakedOwn + revelation.RewardStakedEdge;
-            blockBaker.ExternalStakedBalance -= revelation.RewardStakedShared;
+            RevertReceiveRewards(blockBaker, revelation.RewardDelegated, revelation.RewardStakedOwn, revelation.RewardStakedEdge, revelation.RewardStakedShared);
             blockBaker.VdfRevelationsCount--;
 
             Cache.AppState.Get().VdfRevelationOpsCount--;

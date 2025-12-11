@@ -33,7 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (baker.DeactivationLevel < newDeactivationLevel)
             {
                 if (baker.DeactivationLevel <= block.Level)
-                    await UpdateDelegate(baker, true);
+                    await ActivateBaker(baker);
 
                 attestation.ResetDeactivation = baker.DeactivationLevel;
                 baker.DeactivationLevel = newDeactivationLevel;
@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (attestation.ResetDeactivation != null)
             {
                 if (attestation.ResetDeactivation <= block.Level)
-                    await UpdateDelegate(baker, false);
+                    await DeactivateBaker(baker);
 
                 baker.DeactivationLevel = (int)attestation.ResetDeactivation;
             }

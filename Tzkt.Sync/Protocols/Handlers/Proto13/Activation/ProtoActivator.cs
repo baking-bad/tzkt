@@ -20,11 +20,6 @@ namespace Tzkt.Sync.Protocols.Proto13
             protocol.LBToggleThreshold = 1_000_000_000;
         }
 
-        protected override long GetVotingPower(Data.Models.Delegate baker, Protocol protocol)
-        {
-            return baker.StakingBalance;
-        }
-
         protected override Sampler GetSampler(IEnumerable<(int id, long stake)> selection)
         {
             var sorted = selection.OrderByDescending(x =>
@@ -38,6 +33,10 @@ namespace Tzkt.Sync.Protocols.Proto13
             var block = await Cache.Blocks.CurrentAsync();
             var nextProto = await Cache.Protocols.GetAsync(state.NextProtocol);
 
+            #region voting power
+            UpdateBakersPower();
+            #endregion
+
             #region voting snapshots
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "VotingSnapshots"
@@ -45,14 +44,14 @@ namespace Tzkt.Sync.Protocols.Proto13
                 """, state.VotingPeriod);
 
             var snapshots = Cache.Accounts.GetDelegates()
-                .Where(x => x.Staked && x.StakingBalance >= nextProto.MinimalStake)
+                .Where(x => x.VotingPower != 0)
                 .Select(x => new VotingSnapshot
                 {
                     Id = 0,
                     Level = state.Level,
                     Period = state.VotingPeriod,
                     BakerId = x.Id,
-                    VotingPower = x.StakingBalance,
+                    VotingPower = x.VotingPower,
                     Status = VoterStatus.None
                 });
 

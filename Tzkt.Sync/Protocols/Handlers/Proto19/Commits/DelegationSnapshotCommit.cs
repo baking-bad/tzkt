@@ -30,12 +30,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                         {0},
                         "Id",
                         "Id",
-                        "Balance" - "OwnStakedBalance" - (CASE
-                                                          WHEN "UnstakedBakerId" IS NOT NULL AND  "UnstakedBakerId" != "Id"
-                                                          THEN "UnstakedBalance"
-                                                          ELSE 0
-                                                          END),
-                        "DelegatedBalance",
+                        "OwnDelegatedBalance",
+                        "ExternalDelegatedBalance",
                         "DelegatorsCount",
                         "MinTotalDelegatedLevel",
                         "MinTotalDelegated"
@@ -86,7 +82,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
                 await Db.Database.ExecuteSqlRawAsync("""
                     UPDATE "Accounts"
-                    SET "MinTotalDelegated" = "StakingBalance" - "OwnStakedBalance" - "ExternalStakedBalance",
+                    SET "MinTotalDelegated" = "OwnDelegatedBalance" + "ExternalDelegatedBalance",
                         "MinTotalDelegatedLevel" = {0}
                     WHERE "Type" = {1}
                     """, Context.Block.Level, (int)AccountType.Delegate);
@@ -117,12 +113,8 @@ namespace Tzkt.Sync.Protocols.Proto19
                         {0},
                         "Id",
                         "Id",
-                        "Balance" - "OwnStakedBalance" - (CASE
-                                                          WHEN "UnstakedBakerId" IS NOT NULL AND "UnstakedBakerId" != "Id"
-                                                          THEN "UnstakedBalance"
-                                                          ELSE 0
-                                                          END),
-                        "DelegatedBalance",
+                        "OwnDelegatedBalance",
+                        "ExternalDelegatedBalance",
                         "DelegatorsCount",
                         "MinTotalDelegatedLevel",
                         "MinTotalDelegated"
@@ -173,7 +165,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
                 await Db.Database.ExecuteSqlRawAsync("""
                     UPDATE "Accounts"
-                    SET "MinTotalDelegated" = "StakingBalance" - "OwnStakedBalance" - "ExternalStakedBalance",
+                    SET "MinTotalDelegated" = "OwnDelegatedBalance" + "ExternalDelegatedBalance",
                         "MinTotalDelegatedLevel" = {0}
                     WHERE "Id" = ANY({1})
                     """, Context.Block.Level, ids);

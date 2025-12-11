@@ -30,9 +30,9 @@ namespace Tzkt.Sync.Protocols.Proto14
 
             var account = (await Cache.Accounts.GetAsync("tz1X81bCXPtMiHu1d4UZF4GPhMPkvkp56ssb"))!;
             Db.TryAttach(account);
+            Receive(account, 3_000_000_000L);
             account.FirstLevel = Math.Min(account.FirstLevel, state.Level);
             account.LastLevel = state.Level;
-            account.Balance += 3_000_000_000L;
             account.MigrationsCount++;
 
             block.Operations |= Operations.Migrations;
@@ -76,7 +76,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             var account = await Cache.Accounts.GetAsync(invoice.AccountId);
             Db.TryAttach(account);
 
-            account.Balance -= invoice.BalanceChange;
+            RevertReceive(account, invoice.BalanceChange);
             account.MigrationsCount--;
 
             Db.MigrationOps.Remove(invoice);
