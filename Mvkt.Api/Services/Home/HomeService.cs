@@ -182,7 +182,7 @@ namespace Mvkt.Api.Services
 
                     DailyData = await GetDailyData(db); // 260
                     TxsData = await GetTxsData(db); // 2800
-                    StakingData = await GetStakingData(db, statistics.TotalSupply); // 50
+                    StakingData = await GetStakingData(db, statistics.TotalSupply, statistics.CirculatingSupply); // 50
                     MarketData = new MarketData
                     {
                         TotalSupply = statistics.TotalSupply,
@@ -519,7 +519,7 @@ namespace Mvkt.Api.Services
             };
         }
 
-        async Task<StakingData> GetStakingData(IDbConnection db, long totalSupply)
+        async Task<StakingData> GetStakingData(IDbConnection db, long totalSupply, long circulatingSupply)
         {
             var protocol = Protocols.Current;
 
@@ -589,6 +589,26 @@ namespace Mvkt.Api.Services
 
             var totalDelegatedInCirculation = totalDelegated - vestingDelegated;
 
+            double T = GetCurrentTValue(State.Current.Timestamp);
+            double S = totalSupply / 1_000_000.0;
+            double C = circulatingSupply / 1_000_000.0;
+            double Co = totalStaked / 1_000_000.0;
+            double D = totalDelegatedInCirculation / 1_000_000.0; 
+
+            double i = (100.0 * totalCreatedPerYear / totalSupply) / 100.0;
+
+            double numerator = ((i * S) / 12.0) * (1.0 - ((S - C) / S) * T);
+            double denominator = 2.0 * Co + D;
+
+            double monthlyRate = denominator > 0 ? numerator / denominator : 0;
+            double monthlyRateCs = monthlyRate * 2.0;
+
+            double delegationApy = Math.Pow(1 + monthlyRate, 12) - 1;
+            double costakingApy = Math.Pow(1 + monthlyRateCs, 12) - 1;
+
+            double delegationApyPercent = Math.Round(delegationApy * 100, 2);
+            double costakingApyPercent = Math.Round(costakingApy * 100, 2);
+
             return new StakingData
             {
                 TotalStaking = total.TotalStaking,
@@ -611,8 +631,8 @@ namespace Mvkt.Api.Services
                 TotalDelegatedPercentage = Math.Round(100.0 * totalDelegated / totalSupply, 2),
                 TotalDelegatedInCirculation = totalDelegatedInCirculation,
                 TotalDelegatedInCirculationPercentage = Math.Round(100.0 * totalDelegatedInCirculation / totalSupply, 2),
-                StakingApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2),
-                DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier
+                StakingApy = costakingApyPercent,
+                DelegationApy = delegationApyPercent,
             };
         }
 
@@ -769,6 +789,39 @@ namespace Mvkt.Api.Services
         static double Diff(long current, long previous)
         {
             return previous == 0 ? 0 : Math.Round(100.0 * (current - previous) / previous, 2);
+        }
+
+        /// <summary>
+        /// Get current T value from schedule based on timestamp
+        /// </summary>
+        static double GetCurrentTValue(DateTime timestamp)
+        {
+            var schedule = new[]
+            {
+                (value: 1.0, startTime: new DateTime(2025, 11, 7, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.79, startTime: new DateTime(2025, 11, 28, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.78, startTime: new DateTime(2025, 12, 19, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.76, startTime: new DateTime(2026, 1, 9, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.74, startTime: new DateTime(2026, 1, 30, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.72, startTime: new DateTime(2026, 2, 20, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.7, startTime: new DateTime(2026, 3, 13, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.68, startTime: new DateTime(2026, 4, 3, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.66, startTime: new DateTime(2026, 4, 24, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.64, startTime: new DateTime(2026, 5, 15, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.62, startTime: new DateTime(2026, 6, 5, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.6, startTime: new DateTime(2026, 6, 26, 0, 0, 0, DateTimeKind.Utc)),
+                (value: 0.58, startTime: new DateTime(2026, 7, 17, 0, 0, 0, DateTimeKind.Utc)),
+            };
+
+            for (int i = schedule.Length - 1; i >= 0; i--)
+            {
+                if (timestamp >= schedule[i].startTime)
+                {
+                    return schedule[i].value;
+                }
+            }
+
+            return schedule[0].value;
         }
     }
     
