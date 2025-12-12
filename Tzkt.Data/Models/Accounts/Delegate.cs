@@ -46,6 +46,7 @@ namespace Tzkt.Data.Models
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }
+        public int? SoftwareUpdateLevel { get; set; }
 
         #region helpers
         [NotMapped]
