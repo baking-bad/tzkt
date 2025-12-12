@@ -2,7 +2,6 @@ using System.Net.Http;
 using System.Threading.Tasks;
 using Dynamic.Json;
 using Dynamic.Json.Extensions;
-using System.Text.Json;
 using Xunit;
 
 namespace Mvkt.Api.Tests.Api
@@ -16,24 +15,11 @@ namespace Mvkt.Api.Tests.Api
             Client = settings.Client;
         }
 
-        private async Task<object?> GetJsonOrNullAsync(string uri)
-        {
-            try
-            {
-                return await Client.GetJsonAsync(uri);
-            }
-            catch (System.Text.Json.JsonException)
-            {
-                return null;
-            }
-        }
-
         [Fact]
         public async Task TestHomeStats()
         {
-            var res = await GetJsonOrNullAsync("/v1/home");
-
-            Assert.True(res is DJsonObject || res == null);
+            var res = await Client.GetAsync("/v1/home");
+            res.EnsureSuccessStatusCode();
         }
 
         [Theory]
@@ -47,9 +33,8 @@ namespace Mvkt.Api.Tests.Api
         [InlineData("gbp")]
         public async Task TestHomeStatsWithQuote(string quote)
         {
-            var res = await GetJsonOrNullAsync($"/v1/home?quote={quote}");
-
-            Assert.True(res is DJsonObject || res == null);
+            var res = await Client.GetAsync($"/v1/home?quote={quote}");
+            res.EnsureSuccessStatusCode();
         }
 
         [Fact]
@@ -58,8 +43,6 @@ namespace Mvkt.Api.Tests.Api
             var res = await Client.GetJsonAsync("/v1/home/blocks");
 
             Assert.True(res is DJsonArray);
-            var arr = res as DJsonArray;
-            Assert.NotNull(arr);
         }
 
         [Fact]
@@ -68,8 +51,6 @@ namespace Mvkt.Api.Tests.Api
             var res = await Client.GetJsonAsync("/v1/home/accounts");
 
             Assert.True(res is DJsonArray);
-            var arr = res as DJsonArray;
-            Assert.NotNull(arr);
         }
 
         [Fact]
@@ -78,8 +59,6 @@ namespace Mvkt.Api.Tests.Api
             var res = await Client.GetJsonAsync("/v1/home/bakers");
 
             Assert.True(res is DJsonArray);
-            var arr = res as DJsonArray;
-            Assert.NotNull(arr);
         }
 
         [Fact]
@@ -88,8 +67,6 @@ namespace Mvkt.Api.Tests.Api
             var res = await Client.GetJsonAsync("/v1/home/assets");
 
             Assert.True(res is DJsonArray);
-            var arr = res as DJsonArray;
-            Assert.NotNull(arr);
         }
     }
 }
