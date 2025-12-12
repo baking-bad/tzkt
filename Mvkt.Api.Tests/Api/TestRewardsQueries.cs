@@ -44,7 +44,6 @@ namespace Mvkt.Api.Tests.Api
             }
             catch (System.Net.Http.HttpRequestException ex) when (ex.Message.Contains("404"))
             {
-                // Endpoint might not exist or baker not found - acceptable in test environment
                 Assert.True(true);
             }
         }
