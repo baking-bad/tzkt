@@ -28,75 +28,20 @@ namespace Mvkt.Api.Tests.Api
             }
         }
 
-        [Fact]
-        public async Task TestHomeStats()
+        [Theory]
+        [InlineData(null)]
+        [InlineData("usd")]
+        [InlineData("btc")]
+        [InlineData("eur")]
+        [InlineData("cny")]
+        [InlineData("jpy")]
+        [InlineData("krw")]
+        [InlineData("eth")]
+        [InlineData("gbp")]
+        public async Task TestHomeStats(string? quote)
         {
-            var res = await GetJsonOrNullAsync("/v1/home");
-
-            // Can be null if LastUpdate <= 0, or DJsonObject if data is available
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithUsdQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=usd");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithBtcQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=btc");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithEurQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=eur");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithCnyQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=cny");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithJpyQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=jpy");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithKrwQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=krw");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithEthQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=eth");
-
-            Assert.True(res is DJsonObject || res == null);
-        }
-
-        [Fact]
-        public async Task TestHomeStatsWithGbpQuote()
-        {
-            var res = await GetJsonOrNullAsync("/v1/home?quote=gbp");
+            var uri = quote == null ? "/v1/home" : $"/v1/home?quote={quote}";
+            var res = await GetJsonOrNullAsync(uri);
 
             Assert.True(res is DJsonObject || res == null);
         }
