@@ -588,25 +588,25 @@ namespace Mvkt.Api.Services
 
             var totalDelegatedInCirculation = totalDelegated - vestingDelegated;
 
-            double T = GetCurrentTValue(State.Current.Timestamp);
-            double S = totalSupply / 1_000_000.0;
-            double C = circulatingSupply / 1_000_000.0;
-            double Co = totalStaked / 1_000_000.0;
-            double D = totalDelegatedInCirculation / 1_000_000.0; 
+            var t = GetCurrentTValue(State.Current.Timestamp);
+            var s = totalSupply / 1_000_000.0;
+            var c = circulatingSupply / 1_000_000.0;
+            var co = totalStaked / 1_000_000.0;
+            var d = totalDelegatedInCirculation / 1_000_000.0;
 
-            double i = (100.0 * totalCreatedPerYear / totalSupply) / 100.0;
+            var i = (double)totalCreatedPerYear / totalSupply;
 
-            double numerator = ((i * S) / 12.0) * (1.0 - ((S - C) / S) * T);
-            double denominator = 2.0 * Co + D;
+            var numerator = (i * s / 12.0) * (1.0 - ((s - c) / s) * t);
+            var denominator = 2.0 * co + d;
 
-            double monthlyRate = denominator > 0 ? numerator / denominator : 0;
-            double monthlyRateCs = monthlyRate * 2.0;
+            var monthlyRate = denominator > 0 ? numerator / denominator : 0;
+            var monthlyRateCostaking = monthlyRate * 2.0;
 
-            double delegationApy = Math.Pow(1 + monthlyRate, 12) - 1;
-            double costakingApy = Math.Pow(1 + monthlyRateCs, 12) - 1;
+            var delegationApy = Math.Pow(1 + monthlyRate, 12) - 1;
+            var costakingApy = Math.Pow(1 + monthlyRateCostaking, 12) - 1;
 
-            double delegationApyPercent = Math.Round(delegationApy * 100, 2);
-            double costakingApyPercent = Math.Round(costakingApy * 100, 2);
+            var delegationApyPercent = Math.Round(delegationApy * 100, 2);
+            var costakingApyPercent = Math.Round(costakingApy * 100, 2);
 
             return new StakingData
             {
