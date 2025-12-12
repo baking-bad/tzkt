@@ -28,8 +28,15 @@ namespace Mvkt.Api.Tests.Api
             }
         }
 
+        [Fact]
+        public async Task TestHomeStats()
+        {
+            var res = await GetJsonOrNullAsync("/v1/home");
+
+            Assert.True(res is DJsonObject || res == null);
+        }
+
         [Theory]
-        [InlineData(null)]
         [InlineData("usd")]
         [InlineData("btc")]
         [InlineData("eur")]
@@ -38,10 +45,9 @@ namespace Mvkt.Api.Tests.Api
         [InlineData("krw")]
         [InlineData("eth")]
         [InlineData("gbp")]
-        public async Task TestHomeStats(string? quote)
+        public async Task TestHomeStatsWithQuote(string quote)
         {
-            var uri = quote == null ? "/v1/home" : $"/v1/home?quote={quote}";
-            var res = await GetJsonOrNullAsync(uri);
+            var res = await GetJsonOrNullAsync($"/v1/home?quote={quote}");
 
             Assert.True(res is DJsonObject || res == null);
         }
