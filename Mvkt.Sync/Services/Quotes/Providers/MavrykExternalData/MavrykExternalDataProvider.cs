@@ -92,7 +92,7 @@ namespace Mvkt.Sync.Services
             }
             catch (Exception ex)
             {
-                Logger.LogWarning($"Failed to fetch quotes from external API, returning empty list: {ex?.Message ?? "Unknown error"}");
+                Logger.LogWarning(ex, "Failed to fetch quotes from external API, returning empty list");
                 return new List<MvktQuote>();
             }
 
@@ -105,7 +105,7 @@ namespace Mvkt.Sync.Services
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning($"Failed to fetch additional quotes, returning partial result: {ex?.Message ?? "Unknown error"}");
+                    Logger.LogWarning(ex, "Failed to fetch additional quotes, returning partial result");
                     break;
                 }
             }
