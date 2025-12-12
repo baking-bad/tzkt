@@ -585,7 +585,6 @@ namespace Mvkt.Api.Services
 
             var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
             var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
-            var totalBakingPower = totalStaked + totalDelegated / protocol.StakePowerMultiplier;
 
             var totalDelegatedInCirculation = totalDelegated - vestingDelegated;
 
