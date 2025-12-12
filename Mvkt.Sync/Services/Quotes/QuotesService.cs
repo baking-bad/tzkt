@@ -61,7 +61,7 @@ namespace Mvkt.Sync.Services
                             .ToListAsync();
 
                         var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                        if (filled == 0) throw new Exception("0 quotes filled");
+                        if (filled == 0) continue;
 
                         using var tx = await Db.Database.BeginTransactionAsync();
                         try
@@ -104,7 +104,7 @@ namespace Mvkt.Sync.Services
                     }
 
                     var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                    if (filled == 0) throw new Exception("0 quotes filled");
+                    if (filled == 0) return;
 
                     if (filled == 1)
                     {
@@ -137,7 +137,7 @@ namespace Mvkt.Sync.Services
                             .ToListAsync();
 
                         var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                        if (filled == 0) throw new Exception("0 quotes filled");
+                        if (filled == 0) continue;
 
                         SaveQuotes(quotes.Count == filled ? quotes : quotes.Take(filled));
                         UpdateState(state, quotes[filled - 1]);

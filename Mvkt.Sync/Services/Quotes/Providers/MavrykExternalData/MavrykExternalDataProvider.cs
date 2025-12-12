@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Services
@@ -15,11 +16,13 @@ namespace Mvkt.Sync.Services
 
         readonly MvktClient Client;
         readonly MavrykExternalDataProviderConfig Config;
+        readonly ILogger Logger;
 
-        public MavrykExternalDataProvider(IConfiguration config)
+        public MavrykExternalDataProvider(IConfiguration config, ILogger<MavrykExternalDataProvider> logger)
         {
             Config = config.GetMavrykExternalDataProviderConfig();
             Client = new MvktClient(Config.BaseUrl, Config.Timeout);
+            Logger = logger;
         }
 
         public void Dispose() => Client.Dispose();
@@ -81,12 +84,31 @@ namespace Mvkt.Sync.Services
 
         async Task<List<MvktQuote>> GetQuotes(DateTime from, DateTime to)
         {
-            var res = await Client.GetObjectAsync<List<MvktQuote>>(
-                $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
+            List<MvktQuote> res;
+            try
+            {
+                res = await Client.GetObjectAsync<List<MvktQuote>>(
+                    $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning($"Failed to fetch quotes from external API, returning empty list: {ex?.Message ?? "Unknown error"}");
+                return new List<MvktQuote>();
+            }
 
             while (res.Count > 0 && res.Count % 10000 == 0)
-                res.AddRange(await Client.GetObjectAsync<List<MvktQuote>>(
-                    $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"));
+            {
+                try
+                {
+                    res.AddRange(await Client.GetObjectAsync<List<MvktQuote>>(
+                        $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"));
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning($"Failed to fetch additional quotes, returning partial result: {ex?.Message ?? "Unknown error"}");
+                    break;
+                }
+            }
 
             return res;
         }
