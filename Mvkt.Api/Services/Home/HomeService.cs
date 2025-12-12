@@ -736,8 +736,6 @@ namespace Mvkt.Api.Services
 
         async Task<long> GetVestingAmount(IDbConnection db)
         {
-            const string vestingFactoryAddress = "KT1MJ2dtHRs5haM8Pcc26WWdCUZ5uKYrjZS9";
-            
             try
             {
                 // Query all vesting contract addresses from the bigmap
