@@ -3,10 +3,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto5
 {
-    class SoftwareCommit : ProtocolCommit
+    class SoftwareCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public SoftwareCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public virtual async Task Apply(Block block, JsonElement rawBlock)
         {
             var version = rawBlock.Required("header").RequiredString("proof_of_work_nonce")[..8];
@@ -30,7 +28,11 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             var blockProducer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             //Db.TryAttach(blockProducer);
-            blockProducer.SoftwareId = software.Id;
+            if (blockProducer.SoftwareId != software.Id)
+            {
+                blockProducer.SoftwareId = software.Id;
+                blockProducer.SoftwareUpdateLevel = block.Level;
+            }
         }
 
         public virtual async Task Revert(Block block)
