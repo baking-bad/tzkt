@@ -46,5 +46,13 @@ namespace Mvkt.Api.Tests.Api
 
             Assert.True(res is DJsonObject);
         }
+
+        [Fact]
+        public async Task TestBlockQuotes()
+        {
+            var res = await Client.GetJsonAsync("/v1/blocks/10?quote=usd");
+
+            Assert.True(res is DJsonObject);
+        }
     }
 }
