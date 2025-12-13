@@ -83,6 +83,51 @@
         /// </summary>
         public long TotalLost { get; set; }
 
+        /// <summary>
+        /// Total active bakers' own staked balance
+        /// </summary>
+        public long TotalOwnStaked { get; set; }
+
+        /// <summary>
+        /// Total active bakers' own delegated balance
+        /// </summary>
+        public long TotalOwnDelegated { get; set; }
+
+        /// <summary>
+        /// Total active bakers' external staked balance
+        /// </summary>
+        public long TotalExternalStaked { get; set; }
+
+        /// <summary>
+        /// Total active bakers' external delegated balance
+        /// </summary>
+        public long TotalExternalDelegated { get; set; }
+
+        /// <summary>
+        /// Total active bakers' baking power
+        /// </summary>
+        public long TotalBakingPower { get; set; }
+
+        /// <summary>
+        /// Total active bakers' voting power
+        /// </summary>
+        public long TotalVotingPower { get; set; }
+
+        /// <summary>
+        /// Total number of active bakers
+        /// </summary>
+        public int TotalBakers { get; set; }
+
+        /// <summary>
+        /// Total number of active bakers' stakers
+        /// </summary>
+        public int TotalStakers { get; set; }
+
+        /// <summary>
+        /// Total number of active bakers' delegators
+        /// </summary>
+        public int TotalDelegators { get; set; }
+
         #region injecting
         /// <summary>
         /// Injected historical quote at the time of the block at which the statistics has been calculated

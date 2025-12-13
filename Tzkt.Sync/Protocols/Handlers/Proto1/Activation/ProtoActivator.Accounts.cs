@@ -78,6 +78,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Receive(baker, baker, balance);
                 Cache.Accounts.Add(baker);
                 accounts.Add(baker);
+
+                Cache.Statistics.Current.TotalBakers++;
             }
             #endregion
 

@@ -100,6 +100,53 @@ namespace Tzkt.Sync.Tests.Database
 
             if (totalBalancesStats != totalBalances)
                 throw new Exception("Invalid Statistics.TotalBalances");
+
+            var activeBakers = await db.Delegates.Where(x => x.Staked).ToListAsync();
+
+            var ownStaked = activeBakers.Sum(x => x.OwnStakedBalance);
+
+            if (stats.TotalOwnStaked != ownStaked)
+                throw new Exception("Invalid Statistics.TotalOwnStaked");
+
+            var ownDelegated = activeBakers.Sum(x => x.OwnDelegatedBalance);
+
+            if (stats.TotalOwnDelegated != ownDelegated)
+                throw new Exception("Invalid Statistics.TotalOwnDelegated");
+
+            var externalStaked = activeBakers.Sum(x => x.ExternalStakedBalance);
+
+            if (stats.TotalExternalStaked != externalStaked)
+                throw new Exception("Invalid Statistics.TotalExternalStaked");
+
+            var externalDelegated = activeBakers.Sum(x => x.ExternalDelegatedBalance);
+
+            if (stats.TotalExternalDelegated != externalDelegated)
+                throw new Exception("Invalid Statistics.TotalExternalDelegated");
+
+            var bakingPower = activeBakers.Sum(x => x.BakingPower);
+
+            if (stats.TotalBakingPower != bakingPower)
+                throw new Exception("Invalid Statistics.TotalBakingPower");
+
+            var votingPower = activeBakers.Sum(x => x.VotingPower);
+
+            if (stats.TotalVotingPower != votingPower)
+                throw new Exception("Invalid Statistics.TotalVotingPower");
+
+            var bakers  = activeBakers.Count;
+
+            if (stats.TotalBakers != bakers)
+                throw new Exception("Invalid Statistics.TotalBakers");
+
+            var stakers = activeBakers.Sum(x => x.StakersCount);
+
+            if (stats.TotalStakers != stakers)
+                throw new Exception("Invalid Statistics.TotalStakers");
+
+            var delegators = activeBakers.Sum(x => x.DelegatorsCount);
+
+            if (stats.TotalDelegators != delegators)
+                throw new Exception("Invalid Statistics.TotalDelegators");
         }
     }
 }

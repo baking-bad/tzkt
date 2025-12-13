@@ -96,7 +96,15 @@ namespace Tzkt.Sync.Protocols.Proto12
             foreach (var baker in bakers)
             {
                 Db.TryAttach(baker);
+
+                if (baker.Staked)
+                    Cache.Statistics.Current.TotalOwnDelegated -= baker.OwnDelegatedBalance;
+
                 baker.OwnDelegatedBalance = baker.Balance;
+
+                if (baker.Staked)
+                    Cache.Statistics.Current.TotalOwnDelegated += baker.OwnDelegatedBalance;
+
                 UpdateBakerPower(baker);
             }
             return bakers;
