@@ -42,5 +42,6 @@ namespace Tzkt.Api.Services.Cache
         public int AutostakingOpsCount { get; set; }
 
         public int? SoftwareId { get; set; }
+        public int? SoftwareUpdateLevel { get; set; }
     }
 }

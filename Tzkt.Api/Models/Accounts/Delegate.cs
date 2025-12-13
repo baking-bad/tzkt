@@ -484,6 +484,16 @@ namespace Tzkt.Api.Models
         /// </summary>
         public SoftwareAlias? Software { get; set; }
 
+        /// <summary>
+        /// Level of the first block baked by the baker with the current software version
+        /// </summary>
+        public int? SoftwareUpdateLevel { get; set; }
+
+        /// <summary>
+        /// Datetime of the first block baked by the baker with the current software version
+        /// </summary>
+        public DateTime? SoftwareUpdateTime { get; set; }
+
         #region [DEPRECATED]
         /// <summary>
         /// **DEPRECATED**

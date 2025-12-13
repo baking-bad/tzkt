@@ -84,8 +84,11 @@ namespace Tzkt.Sync.Protocols
                 ActiveRefutationGamesCount = user.ActiveRefutationGamesCount,
                 StakingUpdatesCount = user.StakingUpdatesCount
             };
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+
+            UpdateBakerPower(baker);
+
+            Cache.Statistics.Current.TotalOwnDelegated += baker.OwnDelegatedBalance;
+            Cache.Statistics.Current.TotalBakers++;
 
             var isAdded = Db.Entry(user).State == EntityState.Added;
             Db.Entry(user).State = EntityState.Detached;
@@ -180,8 +183,16 @@ namespace Tzkt.Sync.Protocols
                 delegator.Staked = true;
             }
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            UpdateBakerPower(baker);
+
+            Cache.Statistics.Current.TotalOwnStaked += baker.OwnStakedBalance;
+            Cache.Statistics.Current.TotalExternalStaked += baker.ExternalStakedBalance;
+            Cache.Statistics.Current.TotalOwnDelegated += baker.OwnDelegatedBalance;
+            Cache.Statistics.Current.TotalExternalDelegated += baker.ExternalDelegatedBalance;
+
+            Cache.Statistics.Current.TotalBakers++;
+            Cache.Statistics.Current.TotalStakers += baker.StakersCount;
+            Cache.Statistics.Current.TotalDelegators += baker.DelegatorsCount;
         }
 
         protected async Task DeactivateBaker(Data.Models.Delegate baker)
@@ -195,14 +206,16 @@ namespace Tzkt.Sync.Protocols
                 delegator.Staked = false;
             }
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
-        }
+            UpdateBakerPower(baker);
 
-        protected void UpdateBakerPower(Data.Models.Delegate baker)
-        {
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            Cache.Statistics.Current.TotalOwnStaked -= baker.OwnStakedBalance;
+            Cache.Statistics.Current.TotalExternalStaked -= baker.ExternalStakedBalance;
+            Cache.Statistics.Current.TotalOwnDelegated -= baker.OwnDelegatedBalance;
+            Cache.Statistics.Current.TotalExternalDelegated -= baker.ExternalDelegatedBalance;
+
+            Cache.Statistics.Current.TotalBakers--;
+            Cache.Statistics.Current.TotalStakers -= baker.StakersCount;
+            Cache.Statistics.Current.TotalDelegators -= baker.DelegatorsCount;
         }
 
         protected void UpdateBakersPower()
@@ -210,57 +223,74 @@ namespace Tzkt.Sync.Protocols
             foreach (var baker in Cache.Accounts.GetDelegates())
             {
                 Db.TryAttach(baker);
-                baker.BakingPower = Proto.Helpers.BakingPower(baker);
-                baker.VotingPower = Proto.Helpers.VotingPower(baker);
+                UpdateBakerPower(baker);
             }
+        }
+
+        protected void UpdateBakerPower(Data.Models.Delegate baker)
+        {
+            Cache.Statistics.Current.TotalBakingPower -= baker.BakingPower;
+            Cache.Statistics.Current.TotalVotingPower -= baker.VotingPower;
+            
+            baker.BakingPower = Proto.Helpers.BakingPower(baker);
+            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+
+            Cache.Statistics.Current.TotalBakingPower += baker.BakingPower;
+            Cache.Statistics.Current.TotalVotingPower += baker.VotingPower;
+        }
+
+        protected void RevertBakersPower()
+        {
+            foreach (var baker in Cache.Accounts.GetDelegates())
+            {
+                Db.TryAttach(baker);
+                RevertBakerPower(baker);
+            }
+        }
+
+        protected void RevertBakerPower(Data.Models.Delegate baker)
+        {
+            baker.BakingPower = Proto.Helpers.BakingPower(baker);
+            baker.VotingPower = Proto.Helpers.VotingPower(baker);
         }
 
         protected void ReceiveLockedRewards(Data.Models.Delegate baker, long amount)
         {
             baker.Balance += amount;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            UpdateBakerPower(baker);
         }
 
         protected void RevertReceiveLockedRewards(Data.Models.Delegate baker, long amount)
         {
             baker.Balance -= amount;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            RevertBakerPower(baker);
         }
 
         protected void BurnLockedRewards(Data.Models.Delegate baker, long amount)
         {
             baker.Balance -= amount;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            UpdateBakerPower(baker);
         }
 
         protected void RevertBurnLockedRewards(Data.Models.Delegate baker, long amount)
         {
             baker.Balance += amount;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            RevertBakerPower(baker);
         }
 
         protected void UnlockRewards(Data.Models.Delegate baker, long amount)
         {
             baker.OwnDelegatedBalance += amount;
+            UpdateBakerPower(baker);
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            if (baker.Staked)
+                Cache.Statistics.Current.TotalOwnDelegated += amount;
         }
 
         protected void RevertUnlockRewards(Data.Models.Delegate baker, long amount)
         {
             baker.OwnDelegatedBalance -= amount;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            RevertBakerPower(baker);
         }
 
         protected void PayFee(Account account, long bakerFee)
@@ -271,9 +301,9 @@ namespace Tzkt.Sync.Protocols
 
             Context.Proposer.Balance += bakerFee;
             Context.Proposer.OwnDelegatedBalance += bakerFee;
+            UpdateBakerPower(Context.Proposer);
 
-            Context.Proposer.BakingPower = Proto.Helpers.BakingPower(Context.Proposer);
-            Context.Proposer.VotingPower = Proto.Helpers.VotingPower(Context.Proposer);
+            Cache.Statistics.Current.TotalOwnDelegated += bakerFee;
         }
 
         protected void RevertPayFee(Account account, long bakerFee)
@@ -282,9 +312,7 @@ namespace Tzkt.Sync.Protocols
 
             Context.Proposer.Balance -= bakerFee;
             Context.Proposer.OwnDelegatedBalance -= bakerFee;
-
-            Context.Proposer.BakingPower = Proto.Helpers.BakingPower(Context.Proposer);
-            Context.Proposer.VotingPower = Proto.Helpers.VotingPower(Context.Proposer);
+            RevertBakerPower(Context.Proposer);
         }
 
         protected void Spend(Account account, long amount)
@@ -302,12 +330,19 @@ namespace Tzkt.Sync.Protocols
             if (baker != null)
             {
                 if (baker == account)
+                {
                     baker.OwnDelegatedBalance -= amount;
+                    if (baker.Staked)
+                        Cache.Statistics.Current.TotalOwnDelegated -= amount;
+                }
                 else
+                {
                     baker.ExternalDelegatedBalance -= amount;
+                    if (baker.Staked)
+                        Cache.Statistics.Current.TotalExternalDelegated -= amount;
+                }
 
-                baker.BakingPower = Proto.Helpers.BakingPower(baker);
-                baker.VotingPower = Proto.Helpers.VotingPower(baker);
+                UpdateBakerPower(baker);
             }
         }
 
@@ -330,8 +365,7 @@ namespace Tzkt.Sync.Protocols
                 else
                     baker.ExternalDelegatedBalance += amount;
 
-                baker.BakingPower = Proto.Helpers.BakingPower(baker);
-                baker.VotingPower = Proto.Helpers.VotingPower(baker);
+                RevertBakerPower(baker);
             }
         }
 
@@ -350,12 +384,19 @@ namespace Tzkt.Sync.Protocols
             if (baker != null)
             {
                 if (baker == account)
+                {
                     baker.OwnDelegatedBalance += amount;
+                    if (baker.Staked)
+                        Cache.Statistics.Current.TotalOwnDelegated += amount;
+                }
                 else
+                {
                     baker.ExternalDelegatedBalance += amount;
+                    if (baker.Staked)
+                        Cache.Statistics.Current.TotalExternalDelegated += amount;
+                }
 
-                baker.BakingPower = Proto.Helpers.BakingPower(baker);
-                baker.VotingPower = Proto.Helpers.VotingPower(baker);
+                UpdateBakerPower(baker);
             }
         }
 
@@ -378,8 +419,7 @@ namespace Tzkt.Sync.Protocols
                 else
                     baker.ExternalDelegatedBalance -= amount;
 
-                baker.BakingPower = Proto.Helpers.BakingPower(baker);
-                baker.VotingPower = Proto.Helpers.VotingPower(baker);
+                RevertBakerPower(baker);
             }
         }
 
@@ -389,9 +429,11 @@ namespace Tzkt.Sync.Protocols
             baker.OwnDelegatedBalance += delegated;
             baker.OwnStakedBalance += stakedOwn + stakedEdge;
             baker.ExternalStakedBalance += stakedShared;
+            UpdateBakerPower(baker);
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            Cache.Statistics.Current.TotalOwnDelegated += delegated;
+            Cache.Statistics.Current.TotalOwnStaked += stakedOwn + stakedEdge;
+            Cache.Statistics.Current.TotalExternalStaked += stakedShared;
         }
 
         protected void RevertReceiveRewards(Data.Models.Delegate baker, long delegated, long stakedOwn, long stakedEdge, long stakedShared)
@@ -400,35 +442,47 @@ namespace Tzkt.Sync.Protocols
             baker.OwnDelegatedBalance -= delegated;
             baker.OwnStakedBalance -= stakedOwn + stakedEdge;
             baker.ExternalStakedBalance -= stakedShared;
-
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            RevertBakerPower(baker);
         }
 
         protected void Delegate(Account delegator, Data.Models.Delegate baker, int delegationLevel)
         {
+            var amount = delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+
             delegator.DelegateId = baker.Id;
             delegator.DelegationLevel = delegationLevel;
             delegator.Staked = baker.Staked;
 
             baker.DelegatorsCount++;
-            baker.ExternalDelegatedBalance += delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+            baker.ExternalDelegatedBalance += amount;
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            UpdateBakerPower(baker);
+
+            if (baker.Staked)
+            {
+                Cache.Statistics.Current.TotalExternalDelegated += amount;
+                Cache.Statistics.Current.TotalDelegators++;
+            }
         }
 
         protected void Undelegate(Account delegator, Data.Models.Delegate baker)
         {
+            var amount = delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+
             delegator.DelegateId = null;
             delegator.DelegationLevel = null;
             delegator.Staked = false;
 
             baker.DelegatorsCount--;
-            baker.ExternalDelegatedBalance -= delegator.Balance - ((delegator as User)?.UnstakedBalance ?? 0);
+            baker.ExternalDelegatedBalance -= amount;
 
-            baker.BakingPower = Proto.Helpers.BakingPower(baker);
-            baker.VotingPower = Proto.Helpers.VotingPower(baker);
+            UpdateBakerPower(baker);
+
+            if (baker.Staked)
+            {
+                Cache.Statistics.Current.TotalExternalDelegated -= amount;
+                Cache.Statistics.Current.TotalDelegators--;
+            }
         }
     }
 }

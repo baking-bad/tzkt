@@ -102,7 +102,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                 {
                     (sender as Data.Models.Delegate)!.FrozenDepositLimit = null;
                 }
-                UpdateBakerPower((sender as Data.Models.Delegate)!);
+                RevertBakerPower((sender as Data.Models.Delegate)!);
             }
             #endregion
 

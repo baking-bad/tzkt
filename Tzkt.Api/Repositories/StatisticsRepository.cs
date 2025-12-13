@@ -5,18 +5,11 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class StatisticsRepository
+    public class StatisticsRepository(NpgsqlDataSource dataSource, TimeCache time, QuotesCache quotes)
     {
-        readonly NpgsqlDataSource DataSource;
-        readonly TimeCache Time;
-        readonly QuotesCache Quotes;
-
-        public StatisticsRepository(NpgsqlDataSource dataSource, TimeCache time, QuotesCache quotes)
-        {
-            DataSource = dataSource;
-            Time = time;
-            Quotes = quotes;
-        }
+        readonly NpgsqlDataSource DataSource = dataSource;
+        readonly TimeCache Time = time;
+        readonly QuotesCache Quotes = quotes;
 
         public async Task<IEnumerable<Statistics>> Get(
             StatisticsPeriod period,
@@ -67,6 +60,15 @@ namespace Tzkt.Api.Repositories
                 TotalRollupBonds = row.TotalRollupBonds,
                 TotalSmartRollupBonds = row.TotalSmartRollupBonds,
                 TotalLost = row.TotalLost,
+                TotalOwnStaked = row.TotalOwnStaked,
+                TotalExternalStaked = row.TotalExternalStaked,
+                TotalOwnDelegated = row.TotalOwnDelegated,
+                TotalExternalDelegated = row.TotalExternalDelegated,
+                TotalBakingPower = row.TotalBakingPower,
+                TotalVotingPower = row.TotalVotingPower,
+                TotalBakers = row.TotalBakers,
+                TotalStakers = row.TotalStakers,
+                TotalDelegators = row.TotalDelegators,
                 TotalSupply = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
                             - row.TotalBurned - row.TotalBanished,
                 CirculatingSupply = row.TotalBootstrapped + row.TotalActivated + row.TotalCreated
@@ -106,6 +108,15 @@ namespace Tzkt.Api.Repositories
                     case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
                     case "totalSmartRollupBonds": columns.Add(@"""TotalSmartRollupBonds"""); break;
                     case "totalLost": columns.Add(@"""TotalLost"""); break;
+                    case "totalOwnStaked": columns.Add(@"""TotalOwnStaked"""); break;
+                    case "totalOwnDelegated": columns.Add(@"""TotalOwnDelegated"""); break;
+                    case "totalExternalStaked": columns.Add(@"""TotalExternalStaked"""); break;
+                    case "totalExternalDelegated": columns.Add(@"""TotalExternalDelegated"""); break;
+                    case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
+                    case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
+                    case "totalBakers": columns.Add(@"""TotalBakers"""); break;
+                    case "totalStakers": columns.Add(@"""TotalStakers"""); break;
+                    case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                     case "totalSupply":
                         columns.Add(@"""TotalBootstrapped""");
                         columns.Add(@"""TotalCommitments""");
@@ -216,6 +227,42 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.TotalLost;
                         break;
+                    case "totalOwnStaked":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalOwnStaked;
+                        break;
+                    case "totalOwnDelegated":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalOwnDelegated;
+                        break;
+                    case "totalExternalStaked":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalExternalStaked;
+                        break;
+                    case "totalExternalDelegated":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalExternalDelegated;
+                        break;
+                    case "totalBakingPower":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalBakingPower;
+                        break;
+                    case "totalVotingPower":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalVotingPower;
+                        break;
+                    case "totalBakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalBakers;
+                        break;
+                    case "totalStakers":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalStakers;
+                        break;
+                    case "totalDelegators":
+                        foreach (var row in rows)
+                            result[j++][i] = row.TotalDelegators;
+                        break;
                     case "totalSupply":
                         foreach (var row in rows)
                             result[j++][i] = row.TotalBootstrapped + row.TotalCommitments + row.TotalCreated
@@ -265,6 +312,15 @@ namespace Tzkt.Api.Repositories
                 case "totalRollupBonds": columns.Add(@"""TotalRollupBonds"""); break;
                 case "totalSmartRollupBonds": columns.Add(@"""TotalSmartRollupBonds"""); break;
                 case "totalLost": columns.Add(@"""TotalLost"""); break;
+                case "totalOwnStaked": columns.Add(@"""TotalOwnStaked"""); break;
+                case "totalOwnDelegated": columns.Add(@"""TotalOwnDelegated"""); break;
+                case "totalExternalStaked": columns.Add(@"""TotalExternalStaked"""); break;
+                case "totalExternalDelegated": columns.Add(@"""TotalExternalDelegated"""); break;
+                case "totalBakingPower": columns.Add(@"""TotalBakingPower"""); break;
+                case "totalVotingPower": columns.Add(@"""TotalVotingPower"""); break;
+                case "totalBakers": columns.Add(@"""TotalBakers"""); break;
+                case "totalStakers": columns.Add(@"""TotalStakers"""); break;
+                case "totalDelegators": columns.Add(@"""TotalDelegators"""); break;
                 case "totalSupply":
                     columns.Add(@"""TotalBootstrapped""");
                     columns.Add(@"""TotalCommitments""");
@@ -370,6 +426,42 @@ namespace Tzkt.Api.Repositories
                 case "totalLost":
                     foreach (var row in rows)
                         result[j++] = row.TotalLost;
+                    break;
+                case "totalOwnStaked":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalOwnStaked;
+                    break;
+                case "totalOwnDelegated":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalOwnDelegated;
+                    break;
+                case "totalExternalStaked":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalExternalStaked;
+                    break;
+                case "totalExternalDelegated":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalExternalDelegated;
+                    break;
+                case "totalBakingPower":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalBakingPower;
+                    break;
+                case "totalVotingPower":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalVotingPower;
+                    break;
+                case "totalBakers":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalBakers;
+                    break;
+                case "totalStakers":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalStakers;
+                    break;
+                case "totalDelegators":
+                    foreach (var row in rows)
+                        result[j++] = row.TotalDelegators;
                     break;
                 case "totalSupply":
                     foreach (var row in rows)

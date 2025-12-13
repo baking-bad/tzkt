@@ -169,7 +169,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 Db.TryAttach(baker);
                 baker.EdgeOfBakingOverStaking = prevOp?.EdgeOfBakingOverStaking;
                 baker.LimitOfStakingOverBaking = prevOp?.LimitOfStakingOverBaking;
-                UpdateBakerPower(baker);
+                RevertBakerPower(baker);
                 Cache.AppState.Get().PendingDelegateParameters++;
             }
         }

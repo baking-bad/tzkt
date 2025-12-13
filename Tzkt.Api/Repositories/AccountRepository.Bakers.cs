@@ -105,7 +105,9 @@ namespace Tzkt.Api.Repositories
                 StakingUpdatesCount = delegat.StakingUpdatesCount ?? 0,
                 SetDelegateParametersOpsCount = delegat.SetDelegateParametersOpsCount,
                 DalPublishCommitmentOpsCount = delegat.DalPublishCommitmentOpsCount,
-                Software = delegat.SoftwareId == null ? null : Software[(int)delegat.SoftwareId]
+                Software = delegat.SoftwareId == null ? null : Software[delegat.SoftwareId.Value],
+                SoftwareUpdateLevel = delegat.SoftwareUpdateLevel,
+                SoftwareUpdateTime = delegat.SoftwareUpdateLevel == null ? null : Time[delegat.SoftwareUpdateLevel.Value]
             };
         }
 
@@ -244,7 +246,9 @@ namespace Tzkt.Api.Repositories
                     StakingUpdatesCount = row.StakingUpdatesCount ?? 0,
                     SetDelegateParametersOpsCount = row.SetDelegateParametersOpsCount,
                     DalPublishCommitmentOpsCount = row.DalPublishCommitmentOpsCount,
-                    Software = row.SoftwareId == null ? null : Software[row.SoftwareId]
+                    Software = row.SoftwareId == null ? null : Software[row.SoftwareId],
+                    SoftwareUpdateLevel = row.SoftwareUpdateLevel,
+                    SoftwareUpdateTime = row.SoftwareUpdateLevel == null ? null : Time[row.SoftwareUpdateLevel]
                 };
             });
         }
@@ -316,6 +320,8 @@ namespace Tzkt.Api.Repositories
                     case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                     case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                     case "software": columns.Add(@"""SoftwareId"""); break;
+                    case "softwareUpdateLevel": columns.Add(@"""SoftwareUpdateLevel"""); break;
+                    case "softwareUpdateTime": columns.Add(@"""SoftwareUpdateLevel"""); break;
                     case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                     case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
                     case "stakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
@@ -614,6 +620,14 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
                         break;
+                    case "softwareUpdateLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SoftwareUpdateLevel;
+                        break;
+                    case "softwareUpdateTime":
+                        foreach (var row in rows)
+                            result[j++][i] = row.SoftwareUpdateLevel != null ? Time[row.SoftwareUpdateLevel] : null;
+                        break;
                     case "rollupBonds":
                         foreach (var row in rows)
                             result[j++][i] = row.RollupBonds;
@@ -859,6 +873,8 @@ namespace Tzkt.Api.Repositories
                 case "numMigrations": columns.Add(@"""MigrationsCount"""); break;
                 case "numTransactions": columns.Add(@"""TransactionsCount"""); break;
                 case "software": columns.Add(@"""SoftwareId"""); break;
+                case "softwareUpdateLevel": columns.Add(@"""SoftwareUpdateLevel"""); break;
+                case "softwareUpdateTime": columns.Add(@"""SoftwareUpdateLevel"""); break;
                 case "rollupBonds": columns.Add(@"""RollupBonds"""); break;
                 case "rollupsCount": columns.Add(@"""RollupsCount"""); break;
                 case "stakedBalance": columns.Add(@"""OwnStakedBalance"""); break;
@@ -1152,6 +1168,14 @@ namespace Tzkt.Api.Repositories
                 case "software":
                     foreach (var row in rows)
                         result[j++] = row.SoftwareId != null ? Software[row.SoftwareId] : null;
+                    break;
+                case "softwareUpdateLevel":
+                    foreach (var row in rows)
+                        result[j++] = row.SoftwareUpdateLevel;
+                    break;
+                case "softwareUpdateTime":
+                    foreach (var row in rows)
+                        result[j++] = row.SoftwareUpdateLevel != null ? Time[row.SoftwareUpdateLevel] : null;
                     break;
                 case "rollupBonds":
                     foreach (var row in rows)

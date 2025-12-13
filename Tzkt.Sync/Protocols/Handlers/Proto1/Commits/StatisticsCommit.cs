@@ -22,7 +22,16 @@ namespace Tzkt.Sync.Protocols.Proto1
                 TotalCreated = prev.TotalCreated,
                 TotalFrozen = prev.TotalFrozen,
                 TotalRollupBonds = prev.TotalRollupBonds,
-                TotalSmartRollupBonds = prev.TotalSmartRollupBonds
+                TotalSmartRollupBonds = prev.TotalSmartRollupBonds,
+                TotalOwnStaked = prev.TotalOwnStaked,
+                TotalExternalStaked = prev.TotalExternalStaked,
+                TotalOwnDelegated = prev.TotalOwnDelegated,
+                TotalExternalDelegated = prev.TotalExternalDelegated,
+                TotalBakingPower = prev.TotalBakingPower,
+                TotalVotingPower = prev.TotalVotingPower,
+                TotalBakers = prev.TotalBakers,
+                TotalStakers = prev.TotalStakers,
+                TotalDelegators = prev.TotalDelegators
             };
 
             var protocol = await Cache.Protocols.GetAsync(rawBlock.RequiredString("protocol"));

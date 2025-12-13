@@ -4,10 +4,8 @@ using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
 {
-    class StakingUpdateCommit : ProtocolCommit
+    class StakingUpdateCommit(ProtocolHandler protocol) : ProtocolCommit(protocol)
     {
-        public StakingUpdateCommit(ProtocolHandler protocol) : base(protocol) { }
-
         public async Task Apply(IEnumerable<StakingUpdate> updates)
         {
             foreach (var update in updates)
@@ -33,6 +31,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                         {
                             baker.OwnDelegatedBalance -= update.Amount;
                             baker.OwnStakedBalance += update.Amount;
+
+                            if (baker.Staked)
+                            {
+                                Cache.Statistics.Current.TotalOwnDelegated -= update.Amount;
+                                Cache.Statistics.Current.TotalOwnStaked += update.Amount;
+                            }
                         }
                         else
                         {
@@ -41,10 +45,20 @@ namespace Tzkt.Sync.Protocols.Proto18
                             baker.ExternalDelegatedBalance -= update.Amount;
                             baker.ExternalStakedBalance += update.Amount;
 
+                            if (baker.Staked)
+                            {
+                                Cache.Statistics.Current.TotalExternalDelegated -= update.Amount;
+                                Cache.Statistics.Current.TotalExternalStaked += update.Amount;
+                            }
+
                             if (update.Pseudotokens is BigInteger pseudotokens && pseudotokens > BigInteger.Zero)
                             {
                                 if (staker.StakedPseudotokens == null)
+                                {
                                     baker.StakersCount++;
+                                    if (baker.Staked)
+                                        Cache.Statistics.Current.TotalStakers++;
+                                }
 
                                 staker.StakedPseudotokens = (staker.StakedPseudotokens ?? BigInteger.Zero) + pseudotokens;
                                 baker.IssuedPseudotokens = (baker.IssuedPseudotokens ?? BigInteger.Zero) + pseudotokens;
@@ -67,6 +81,12 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                             baker.OwnDelegatedBalance += update.Amount;
                             baker.UnstakedBalance += update.Amount;
+
+                            if (baker.Staked)
+                            {
+                                Cache.Statistics.Current.TotalOwnDelegated += update.Amount;
+                                Cache.Statistics.Current.TotalOwnStaked -= update.Amount;
+                            }
                         }
                         else
                         {
@@ -77,6 +97,12 @@ namespace Tzkt.Sync.Protocols.Proto18
                             baker.ExternalDelegatedBalance += update.Amount;
                             baker.ExternalUnstakedBalance += update.Amount;
 
+                            if (baker.Staked)
+                            {
+                                Cache.Statistics.Current.TotalExternalDelegated += update.Amount;
+                                Cache.Statistics.Current.TotalExternalStaked -= update.Amount;
+                            }
+
                             if (update.Pseudotokens is BigInteger pseudotokens && pseudotokens > BigInteger.Zero)
                             {
                                 staker.StakedPseudotokens -= pseudotokens;
@@ -85,6 +111,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 if (staker.StakedPseudotokens == BigInteger.Zero)
                                 {
                                     baker.StakersCount--;
+                                    if (baker.Staked)
+                                        Cache.Statistics.Current.TotalStakers--;
+
                                     staker.StakedPseudotokens = null;
                                     if (baker.IssuedPseudotokens == BigInteger.Zero)
                                         baker.IssuedPseudotokens = null;
@@ -120,6 +149,12 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                         baker.OwnStakedBalance += update.Amount;
 
+                        if (baker.Staked)
+                        {
+                            Cache.Statistics.Current.TotalOwnDelegated -= update.Amount;
+                            Cache.Statistics.Current.TotalOwnStaked += update.Amount;
+                        }
+
                         if (baker.UnstakedBalance == 0)
                             baker.UnstakedBakerId = null;
 
@@ -141,15 +176,26 @@ namespace Tzkt.Sync.Protocols.Proto18
                             baker.ExternalUnstakedBalance -= update.Amount;
                             baker.ExternalDelegatedBalance -= update.Amount;
 
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalExternalDelegated -= update.Amount;
+
                             var currentBaker = staker as Data.Models.Delegate ?? Cache.Accounts.GetDelegate(staker.DelegateId);
                             if (currentBaker != null)
                             {
                                 Db.TryAttach(currentBaker);
 
                                 if (currentBaker == staker)
+                                {
                                     currentBaker.OwnDelegatedBalance += update.Amount;
+                                    if (currentBaker.Staked)
+                                        Cache.Statistics.Current.TotalOwnDelegated += update.Amount;
+                                }
                                 else
+                                {
                                     currentBaker.ExternalDelegatedBalance += update.Amount;
+                                    if (currentBaker.Staked)
+                                        Cache.Statistics.Current.TotalExternalDelegated += update.Amount;
+                                }
 
                                 UpdateBakerPower(currentBaker);
                             }
@@ -170,6 +216,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                             //Cache.Statistics.Current.TotalBurned += update.Amount;
                             Cache.Statistics.Current.TotalFrozen -= update.Amount;
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalOwnStaked -= update.Amount;
                             #endregion
                         }
                         else
@@ -180,6 +228,8 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                             //Cache.Statistics.Current.TotalBurned += slashed;
                             Cache.Statistics.Current.TotalFrozen -= slashed;
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalExternalStaked -= slashed;
                             #endregion
                         }
                         break;
@@ -190,6 +240,9 @@ namespace Tzkt.Sync.Protocols.Proto18
                             baker.Balance -= update.Amount;
                             baker.UnstakedBalance -= update.Amount;
                             baker.OwnDelegatedBalance -= update.Amount;
+
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalOwnDelegated -= update.Amount;
                         }
                         else
                         {
@@ -198,12 +251,18 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                             baker.ExternalUnstakedBalance -= update.Amount;
                             baker.ExternalDelegatedBalance -= update.Amount;
+
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalExternalDelegated -= update.Amount;
                         }
                         
                         if (update.RoundingError is long roundingError)
                         {
                             baker.ExternalDelegatedBalance += roundingError;
                             baker.RoundingError += roundingError;
+
+                            if (baker.Staked)
+                                Cache.Statistics.Current.TotalExternalDelegated += roundingError;
                         }
 
                         await UpdateUnstakeRequests(update);
@@ -356,7 +415,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                                 else
                                     currentBaker.ExternalDelegatedBalance -= update.Amount;
 
-                                UpdateBakerPower(currentBaker);
+                                RevertBakerPower(currentBaker);
                             }
                         }
                         #endregion
@@ -407,7 +466,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                         throw new Exception("Unexpected staking event type");
                 }
 
-                UpdateBakerPower(baker);
+                RevertBakerPower(baker);
 
                 Cache.AppState.Get().StakingUpdatesCount--;
 

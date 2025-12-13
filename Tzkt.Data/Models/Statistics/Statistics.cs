@@ -23,6 +23,20 @@ namespace Tzkt.Data.Models
         public long TotalRollupBonds { get; set; }
         public long TotalSmartRollupBonds { get; set; }
         #endregion
+
+        #region staking
+        public long TotalOwnStaked { get; set; }
+        public long TotalOwnDelegated { get; set; }
+        public long TotalExternalStaked { get; set; }
+        public long TotalExternalDelegated { get; set; }
+
+        public long TotalBakingPower { get; set; }
+        public long TotalVotingPower { get; set; }
+
+        public int TotalBakers { get; set; }
+        public int TotalStakers { get; set; }
+        public int TotalDelegators { get; set; }
+        #endregion
     }
 
     public static class StatisticsModel

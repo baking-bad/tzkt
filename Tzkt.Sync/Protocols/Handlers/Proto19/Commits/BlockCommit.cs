@@ -26,7 +26,7 @@ namespace Tzkt.Sync.Protocols.Proto19
             if (state.AiActivationLevel == block.Level)
             {
                 state.AiActivationLevel = null;
-                UpdateBakersPower();
+                RevertBakersPower();
             }
 
             base.Revert(block);
