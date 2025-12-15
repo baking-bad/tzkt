@@ -50,16 +50,9 @@ namespace Mvkt.Api.Tests.Api
         [Fact]
         public async Task TestBlockQuotes()
         {
-            try
-            {
-                var res = await Client.GetJsonAsync("/v1/blocks/10?quote=usd");
+            var res = await Client.GetJsonAsync("/v1/blocks/10?quote=usd");
 
-                Assert.True(res is DJsonObject);
-            }
-            catch (System.Net.Http.HttpRequestException ex) when (ex.Message.Contains("500"))
-            {
-                Assert.True(true);
-            }
+            Assert.True(res is DJsonObject);
         }
     }
 }
