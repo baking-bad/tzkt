@@ -32,8 +32,19 @@ namespace Mvkt.Sync.Services
                 #endregion
 
                 #region init quotes
-                await InitQuotes();
-                Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
+                // Initialize quotes in background to avoid blocking block synchronization.
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await InitQuotes();
+                        Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning(ex, "Failed to initialize quotes, will retry during sync");
+                    }
+                });
                 #endregion
 
                 Logger.LogInformation("Synchronization started");
@@ -189,3 +200,4 @@ namespace Mvkt.Sync.Services
         }
     }
 }
+
