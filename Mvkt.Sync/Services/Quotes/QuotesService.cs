@@ -38,12 +38,6 @@ namespace Mvkt.Sync.Services
 
         public async Task Init()
         {
-            if (!Config.Enabled)
-            {
-                Logger.LogInformation("Quotes synchronization is disabled");
-                return;
-            }
-
             Logger.LogInformation($"Quote provider: {Provider.GetType().Name} ({(Config.Async ? "Async" : "Sync")})");
 
             var state = Cache.AppState.Get();
@@ -103,9 +97,6 @@ namespace Mvkt.Sync.Services
 
         public async Task Commit()
         {
-            if (!Config.Enabled)
-                return;
-
             try
             {
                 var state = Cache.AppState.Get();
@@ -178,9 +169,6 @@ namespace Mvkt.Sync.Services
 
         public async Task Revert()
         {
-            if (!Config.Enabled)
-                return;
-
             var state = Cache.AppState.Get();
             if (state.QuoteLevel >= state.Level)
             {
