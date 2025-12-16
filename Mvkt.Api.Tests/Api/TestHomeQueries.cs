@@ -18,14 +18,14 @@ namespace Mvkt.Api.Tests.Api
         [Fact]
         public async Task TestHomeStats()
         {
-            var res = await Client.GetAsync("/v1/home");
+            var res = await Client.GetJsonAsync("/v1/home");
             Assert.True(res is DJsonObject);
         }
 
         [Fact]
         public async Task TestHomeStatsWithQuote()
         {
-            var res = await Client.GetAsync("/v1/home?quote=usd");
+            var res = await Client.GetJsonAsync("/v1/home?quote=usd");
             Assert.True(res is DJsonObject);
         }
 
