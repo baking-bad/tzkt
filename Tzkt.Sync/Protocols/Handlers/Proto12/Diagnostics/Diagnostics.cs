@@ -22,6 +22,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!CheckMinDelegatedBalance(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong min delegated balance {delegat.Address}");
 
+            if (!CheckBakingPower(remote, delegat))
+                throw new Exception($"Diagnostics failed: wrong baking power {delegat.Address}");
+
             if (!CheckVotingPower(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong voting power {delegat.Address}");
 
@@ -110,6 +113,11 @@ namespace Tzkt.Sync.Protocols.Proto12
 
         protected virtual bool CheckFrozenDepositLimit(JsonElement remote, Data.Models.Delegate delegat) =>
             remote.OptionalInt64("frozen_deposits_limit") == delegat.FrozenDepositLimit;
+
+        protected virtual bool CheckBakingPower(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return true;
+        }
 
         protected virtual bool CheckVotingPower(JsonElement remote, Data.Models.Delegate delegat)
         {

@@ -105,10 +105,10 @@ namespace Tzkt.Sync.Protocols.Proto18
                     };
                     if (x.BakingPower != 0)
                     {
-                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * x.BakingPower / cycle.TotalBakingPower);
-                        var expectedDalAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.NumberOfShards * x.BakingPower / cycle.TotalBakingPower);
+                        var expectedAttestations = (protocol.BlocksPerCycle * protocol.AttestersPerBlock).MulRatio(x.BakingPower, cycle.TotalBakingPower);
+                        var expectedDalAttestations = (protocol.BlocksPerCycle * protocol.NumberOfShards).MulRatio(x.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.BakingPower = x.BakingPower;
-                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * x.BakingPower / cycle.TotalBakingPower;
+                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle.MulRatio(x.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * attestationRewardPerSlot;
                         bakerCycle.ExpectedDalAttestations = expectedDalAttestations;

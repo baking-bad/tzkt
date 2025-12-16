@@ -411,7 +411,7 @@ namespace Tzkt.Api.Repositories
 
             if (ImplicitSortByLevel)
             {
-                if ((level != null || timestamp != null) && offset?.Cr == null)
+                if (id == null && (level != null || timestamp != null) && offset?.Cr == null)
                 {
                     if (sort == null || sort.Asc == "id")
                         sort = new() { Asc = "level" };
@@ -620,7 +620,7 @@ namespace Tzkt.Api.Repositories
 
             if (ImplicitSortByLevel)
             {
-                if ((level != null || timestamp != null) && offset?.Cr == null)
+                if (id == null && (level != null || timestamp != null) && offset?.Cr == null)
                 {
                     if (sort == null || sort.Asc == "id")
                         sort = new() { Asc = "level" };
@@ -917,7 +917,7 @@ namespace Tzkt.Api.Repositories
 
             if (ImplicitSortByLevel)
             {
-                if ((level != null || timestamp != null) && offset?.Cr == null)
+                if (id == null && (level != null || timestamp != null) && offset?.Cr == null)
                 {
                     if (sort == null || sort.Asc == "id")
                         sort = new() { Asc = "level" };
