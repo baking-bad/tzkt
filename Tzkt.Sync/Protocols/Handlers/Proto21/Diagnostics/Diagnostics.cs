@@ -38,9 +38,41 @@ namespace Tzkt.Sync.Protocols.Proto21
             return remote.RequiredInt64("external_delegated") == delegat.ExternalDelegatedBalance;
         }
 
+        protected override bool CheckBakingPower(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            var externalStakeCap = 0L;
+            if (delegat.LimitOfStakingOverBaking is long limit)
+            {
+                var (q, r) = Math.DivRem(limit, 1_000_000);
+                if (r == 0)
+                {
+                    externalStakeCap = delegat.OwnStakedBalance * Math.Min(q, Context.Protocol.MaxExternalOverOwnStakeRatio);
+                }
+                else
+                {
+                    var limitOfStakingOverBaking = Math.Min(limit, Context.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000);
+                    externalStakeCap = delegat.OwnStakedBalance.MulRatio(limitOfStakingOverBaking, 1_000_000);
+                }
+            }
+            var overstaked = Math.Max(0, delegat.ExternalStakedBalance - externalStakeCap);
+            var totalDelegated = remote.Required("min_delegated_in_current_cycle").RequiredInt64("amount") + overstaked;
+            var delegationCap = delegat.OwnStakedBalance * Context.Protocol.MaxDelegatedOverFrozenRatio;
+
+            var actualStaked = delegat.OwnStakedBalance + delegat.ExternalStakedBalance - overstaked;
+            var actualDelegated = Math.Min(totalDelegated, delegationCap);
+
+            var state = Cache.AppState.Get();
+            if (state.AiActivationLevel is int aiLevel && state.Level >= aiLevel)
+                actualDelegated /= Context.Protocol.StakePowerMultiplier;
+
+            var uncheckedBakingPower = actualStaked + actualDelegated;
+            return uncheckedBakingPower == remote.RequiredInt64("baking_power");
+        }
+
         protected override bool CheckVotingPower(JsonElement remote, Data.Models.Delegate delegat)
         {
-            return delegat.VotingPower == remote.RequiredInt64("current_voting_power");
+            var uncheckedVotingPower = delegat.TotalDelegated + delegat.TotalStaked;
+            return uncheckedVotingPower == remote.RequiredInt64("current_voting_power");
         }
     }
 }

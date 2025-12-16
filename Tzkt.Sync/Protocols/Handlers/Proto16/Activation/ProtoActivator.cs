@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Netezos.Encoding;
 using Newtonsoft.Json.Linq;
 using Npgsql;
@@ -209,8 +208,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                         bakerCycle.FutureBlockRewards = 0;
                         bakerCycle.FutureAttestations = 0;
                         
-                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
-                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (nextProto.BlocksPerCycle * nextProto.AttestersPerBlock).MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle.MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * nextProto.AttestationReward0;
                     }

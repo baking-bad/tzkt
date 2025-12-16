@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using System.Numerics;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto24
@@ -49,7 +48,7 @@ namespace Tzkt.Sync.Protocols.Proto24
         protected override long GetFutureAttestationRewards(Protocol protocol, Cycle cycle, long bakingPower)
         {
             if (Cache.AppState.Get().AbaActivationLevel is not null)
-                return (long)((new BigInteger(protocol.BlocksPerCycle) * cycle.AttestationRewardPerBlock * bakingPower + cycle.TotalBakingPower - 1) / cycle.TotalBakingPower);
+                return (protocol.BlocksPerCycle * cycle.AttestationRewardPerBlock).MulRatioUp(bakingPower, cycle.TotalBakingPower);
 
             return base.GetFutureAttestationRewards(protocol, cycle, bakingPower);
         }

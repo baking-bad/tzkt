@@ -259,7 +259,7 @@ namespace Tzkt.Sync.Protocols.Proto12
 
                 if (baker.BakingPower != 0)
                 {
-                    var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * baker.BakingPower / cycle.TotalBakingPower);
+                    var expectedAttestations = (nextProto.BlocksPerCycle * nextProto.AttestersPerBlock).MulRatio(baker.BakingPower, cycle.TotalBakingPower);
                     bc.FutureAttestationRewards += expectedAttestations * nextProto.AttestationReward0;
                 }
             }
@@ -451,8 +451,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     };
                     if (x.BakingPower != 0)
                     {
-                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * x.BakingPower / cycle.TotalBakingPower);
-                        bc.ExpectedBlocks = nextProto.BlocksPerCycle * x.BakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (nextProto.BlocksPerCycle * nextProto.AttestersPerBlock).MulRatio(x.BakingPower, cycle.TotalBakingPower);
+                        bc.ExpectedBlocks = nextProto.BlocksPerCycle.MulRatio(x.BakingPower, cycle.TotalBakingPower);
                         bc.ExpectedAttestations = expectedAttestations;
                         bc.FutureAttestationRewards = expectedAttestations * nextProto.AttestationReward0;
                     }

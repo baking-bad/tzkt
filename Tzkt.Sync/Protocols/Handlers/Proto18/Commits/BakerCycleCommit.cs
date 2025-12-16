@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -162,10 +161,10 @@ namespace Tzkt.Sync.Protocols.Proto18
                 };
                 if (selectedStakes.TryGetValue(bakerCycle.BakerId, out var bakingPower))
                 {
-                    var expectedAttestations = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.AttestersPerBlock * bakingPower / futureCycle.TotalBakingPower);
-                    var expectedDalAttestations = (int)(new BigInteger(Context.Protocol.BlocksPerCycle) * Context.Protocol.NumberOfShards * bakingPower / futureCycle.TotalBakingPower);
+                    var expectedAttestations = (Context.Protocol.BlocksPerCycle * Context.Protocol.AttestersPerBlock).MulRatio(bakingPower, futureCycle.TotalBakingPower);
+                    var expectedDalAttestations = (Context.Protocol.BlocksPerCycle * Context.Protocol.NumberOfShards).MulRatio(bakingPower, futureCycle.TotalBakingPower);
                     bakerCycle.BakingPower = bakingPower;
-                    bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle * bakingPower / futureCycle.TotalBakingPower;
+                    bakerCycle.ExpectedBlocks = Context.Protocol.BlocksPerCycle.MulRatio(bakingPower, futureCycle.TotalBakingPower);
                     bakerCycle.ExpectedAttestations = expectedAttestations;
                     bakerCycle.FutureAttestationRewards = GetFutureAttestationRewards(Context.Protocol, futureCycle, bakingPower);
                     bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
@@ -351,7 +350,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
         protected virtual long GetFutureAttestationRewards(Protocol protocol, Cycle cycle, long bakingPower)
         {
-            var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * bakingPower / cycle.TotalBakingPower);
+            var expectedAttestations = (protocol.BlocksPerCycle * protocol.AttestersPerBlock).MulRatio(bakingPower, cycle.TotalBakingPower);
             var attestationRewardPerSlot = cycle.AttestationRewardPerBlock / Context.Protocol.AttestersPerBlock;
             return expectedAttestations * attestationRewardPerSlot;
         }

@@ -162,7 +162,7 @@ namespace Tzkt.Sync.Protocols.Proto18
         {
             var proposer = Cache.Accounts.GetDelegate(block.ProposerId!.Value);
             Db.TryAttach(proposer);
-            RevertReceiveRewards(proposer, Block.RewardDelegated, Block.RewardStakedOwn, Block.RewardStakedEdge, Block.RewardStakedShared);
+            RevertReceiveRewards(proposer, block.RewardDelegated, block.RewardStakedOwn, block.RewardStakedEdge, block.RewardStakedShared);
             proposer.BlocksCount--;
 
             #region reset baker activity
@@ -177,7 +177,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
             var producer = Cache.Accounts.GetDelegate(block.ProducerId!.Value);
             Db.TryAttach(producer);
-            RevertReceiveRewards(producer, Block.BonusDelegated, Block.BonusStakedOwn, Block.BonusStakedEdge, Block.BonusStakedShared);
+            RevertReceiveRewards(producer, block.BonusDelegated, block.BonusStakedOwn, block.BonusStakedEdge, block.BonusStakedShared);
             if (producer != proposer)
             {
                 producer.BlocksCount--;

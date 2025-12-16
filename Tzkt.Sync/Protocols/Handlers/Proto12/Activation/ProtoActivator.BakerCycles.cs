@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto12
@@ -38,8 +37,8 @@ namespace Tzkt.Sync.Protocols.Proto12
                     };
                     if (x.BakingPower != 0)
                     {
-                        var expectedAttestations = (int)(new BigInteger(protocol.BlocksPerCycle) * protocol.AttestersPerBlock * x.BakingPower / cycle.TotalBakingPower);
-                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle * x.BakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (protocol.BlocksPerCycle * protocol.AttestersPerBlock).MulRatio(x.BakingPower, cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = protocol.BlocksPerCycle.MulRatio(x.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * protocol.AttestationReward0;
                     }

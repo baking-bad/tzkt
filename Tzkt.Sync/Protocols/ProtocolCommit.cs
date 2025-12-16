@@ -303,7 +303,8 @@ namespace Tzkt.Sync.Protocols
             Context.Proposer.OwnDelegatedBalance += bakerFee;
             UpdateBakerPower(Context.Proposer);
 
-            Cache.Statistics.Current.TotalOwnDelegated += bakerFee;
+            if (Context.Proposer.Staked)
+                Cache.Statistics.Current.TotalOwnDelegated += bakerFee;
         }
 
         protected void RevertPayFee(Account account, long bakerFee)
@@ -431,9 +432,12 @@ namespace Tzkt.Sync.Protocols
             baker.ExternalStakedBalance += stakedShared;
             UpdateBakerPower(baker);
 
-            Cache.Statistics.Current.TotalOwnDelegated += delegated;
-            Cache.Statistics.Current.TotalOwnStaked += stakedOwn + stakedEdge;
-            Cache.Statistics.Current.TotalExternalStaked += stakedShared;
+            if (baker.Staked)
+            {
+                Cache.Statistics.Current.TotalOwnDelegated += delegated;
+                Cache.Statistics.Current.TotalOwnStaked += stakedOwn + stakedEdge;
+                Cache.Statistics.Current.TotalExternalStaked += stakedShared;
+            }
         }
 
         protected void RevertReceiveRewards(Data.Models.Delegate baker, long delegated, long stakedOwn, long stakedEdge, long stakedShared)

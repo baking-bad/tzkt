@@ -10,8 +10,20 @@
             if (baker.OwnStakedBalance < Context.Protocol.MinimalFrozenStake)
                 return 0;
 
-            var limitOfStakingOverBaking = Math.Min(baker.LimitOfStakingOverBaking ?? 0, Context.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000);
-            var externalStakeCap = baker.OwnStakedBalance * limitOfStakingOverBaking / 1_000_000;
+            var externalStakeCap = 0L;
+            if (baker.LimitOfStakingOverBaking is long limit)
+            {
+                var (q, r) = Math.DivRem(limit, 1_000_000);
+                if (r == 0)
+                {
+                    externalStakeCap = baker.OwnStakedBalance * Math.Min(q, Context.Protocol.MaxExternalOverOwnStakeRatio);
+                }
+                else
+                {
+                    var limitOfStakingOverBaking = Math.Min(limit, Context.Protocol.MaxExternalOverOwnStakeRatio * 1_000_000);
+                    externalStakeCap = baker.OwnStakedBalance.MulRatio(limitOfStakingOverBaking, 1_000_000);
+                }
+            }
             var overstaked = Math.Max(0, baker.ExternalStakedBalance - externalStakeCap);
             var totalDelegated = baker.OwnDelegatedBalance + baker.ExternalDelegatedBalance + overstaked;
             var delegationCap = baker.OwnStakedBalance * Context.Protocol.MaxDelegatedOverFrozenRatio;

@@ -80,7 +80,7 @@ namespace Tzkt.Sync.Protocols.Proto12
                     if (block.ProducerId == baker.Id)
                         lastBalance -= block.BonusDelegated;
 
-                    var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? (long.MaxValue / 100));
+                    var depositCap = Math.Min(lastBalance, baker.FrozenDepositLimit ?? lastBalance);
                     return Math.Min(x.StakingBalance, depositCap * (Context.Protocol.MaxDelegatedOverFrozenRatio + 1));
                 });
 

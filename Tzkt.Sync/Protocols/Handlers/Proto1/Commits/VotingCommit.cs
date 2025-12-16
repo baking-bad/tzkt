@@ -68,7 +68,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (p.ProposalsCount == 0)
                     return PeriodStatus.NoProposals;
 
-                if (p.TopVotingPower < p.TotalVotingPower * p.UpvotesQuorum / 10000)
+                if (p.TopVotingPower < p.TotalVotingPower.MulRatio(p.UpvotesQuorum!.Value, 10000))
                     return PeriodStatus.NoQuorum;
 
                 if (p.SingleWinner == false)
@@ -76,10 +76,10 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
             else if (p.Kind == PeriodKind.Exploration || p.Kind == PeriodKind.Promotion)
             {
-                if (p.YayVotingPower + p.NayVotingPower + p.PassVotingPower < p.TotalVotingPower * p.BallotsQuorum / 10000)
+                if (p.YayVotingPower + p.NayVotingPower + p.PassVotingPower < p.TotalVotingPower.MulRatio(p.BallotsQuorum!.Value, 10000))
                     return PeriodStatus.NoQuorum;
 
-                if (p.YayVotingPower < (p.YayVotingPower + p.NayVotingPower) * p.Supermajority / 10000)
+                if (p.YayVotingPower < (p.YayVotingPower!.Value + p.NayVotingPower!.Value).MulRatio(p.Supermajority!.Value, 10000))
                     return PeriodStatus.NoSupermajority;
             }
 
@@ -327,7 +327,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                var participation = 10000.MulRatio(prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value, prev.TotalVotingPower);
                 return (int)((prev.ParticipationEma!.Value * 8000 + participation * 2000) / 10000);
             }
 
@@ -343,7 +343,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                var participation = 10000.MulRatio(prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value, prev.TotalVotingPower);
                 return (int)((prev.BallotsQuorum!.Value * 8000 + participation * 2000) / 10000);
             }
 

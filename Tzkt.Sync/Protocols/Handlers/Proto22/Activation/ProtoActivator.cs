@@ -237,9 +237,9 @@ namespace Tzkt.Sync.Protocols.Proto22
                         bakerCycle.FutureBlockRewards = 0;
                         bakerCycle.FutureAttestations = 0;
 
-                        var expectedAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.AttestersPerBlock * bakerCycle.BakingPower / cycle.TotalBakingPower);
-                        var expectedDalAttestations = (int)(new BigInteger(nextProto.BlocksPerCycle) * nextProto.NumberOfShards * bakerCycle.BakingPower / cycle.TotalBakingPower);
-                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle * bakerCycle.BakingPower / cycle.TotalBakingPower;
+                        var expectedAttestations = (nextProto.BlocksPerCycle * nextProto.AttestersPerBlock).MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
+                        var expectedDalAttestations = (nextProto.BlocksPerCycle * nextProto.NumberOfShards).MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
+                        bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle.MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * attestationRewardPerSlot;
                         bakerCycle.ExpectedDalAttestations = expectedDalAttestations;

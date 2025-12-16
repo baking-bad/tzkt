@@ -14,7 +14,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             if (prev != null)
             {
-                var participation = 10000 * (prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value) / prev.TotalVotingPower;
+                var participation = 10000.MulRatio(prev.YayVotingPower!.Value + prev.NayVotingPower!.Value + prev.PassVotingPower!.Value, prev.TotalVotingPower);
                 return (int)((prev.ParticipationEma!.Value * 8000 + participation * 2000) / 10000);
             }
 

@@ -1,5 +1,4 @@
-﻿using System.Numerics;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Tzkt.Data.Models;
 
 namespace Tzkt.Sync.Protocols.Proto18
@@ -49,16 +48,16 @@ namespace Tzkt.Sync.Protocols.Proto18
                 var externalStaked = x.ExternalStakedBalance!.Value;
                 if (slashings.TryGetValue(x.AccountId, out var percentage))
                 {
-                    ownStaked = ownStaked * Math.Max(0, 10_000 - percentage) / 10_000;
-                    externalStaked = externalStaked * Math.Max(0, 10_000 - percentage) / 10_000;
+                    ownStaked = ownStaked.MulRatio(Math.Max(0, 10_000 - percentage), 10_000);
+                    externalStaked = externalStaked.MulRatio(Math.Max(0, 10_000 - percentage), 10_000);
                 }
                 var totalStaked = ownStaked + externalStaked;
 
                 var stakingOverBaking = Math.Min(
                     protocol.MaxExternalOverOwnStakeRatio * 1_000_000,
-                    Cache.Accounts.GetDelegate(x.AccountId).LimitOfStakingOverBaking ?? long.MaxValue);
+                    Cache.Accounts.GetDelegate(x.AccountId).LimitOfStakingOverBaking ?? 0);
 
-                var frozen = Math.Min(totalStaked, ownStaked + (long)((BigInteger)ownStaked * stakingOverBaking / 1_000_000));
+                var frozen = Math.Min(totalStaked, ownStaked + ownStaked.MulRatio(stakingOverBaking, 1_000_000));
                 var delegated = Math.Min(x.StakingBalance - frozen, ownStaked * protocol.MaxDelegatedOverFrozenRatio);
 
                 return (x.AccountId, frozen, delegated);
