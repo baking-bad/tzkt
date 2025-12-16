@@ -33,6 +33,11 @@ namespace Mvkt.Sync.Services
                 quotes.First().Timestamp.AddMinutes(-30),
                 quotes.Last().Timestamp);
             
+            if (res == null)
+            {
+                return 0;
+            }
+            
             if (res.Count == 0)
             {
                 foreach (var quote in quotes)
@@ -82,7 +87,7 @@ namespace Mvkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<List<MvktQuote>> GetQuotes(DateTime from, DateTime to)
+        async Task<List<MvktQuote>?> GetQuotes(DateTime from, DateTime to)
         {
             List<MvktQuote> res;
             try
@@ -92,8 +97,8 @@ namespace Mvkt.Sync.Services
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, "Failed to fetch quotes from external API, returning empty list");
-                return new List<MvktQuote>();
+                Logger.LogWarning(ex, "Failed to fetch quotes from external API, returning null to skip saving quotes");
+                return null;
             }
 
             while (res.Count > 0 && res.Count % 10000 == 0)
@@ -147,3 +152,4 @@ namespace Mvkt.Sync.Services
         int IQuote.Level => throw new NotImplementedException();
     }
 }
+

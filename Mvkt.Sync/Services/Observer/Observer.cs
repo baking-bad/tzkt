@@ -32,8 +32,19 @@ namespace Mvkt.Sync.Services
                 #endregion
 
                 #region init quotes
-                await InitQuotes();
-                Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
+                // Initialize quotes in background to avoid blocking block synchronization.
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        await InitQuotes();
+                        Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogWarning(ex, "Failed to initialize quotes, will retry during sync");
+                    }
+                });
                 #endregion
 
                 Logger.LogInformation("Synchronization started");
@@ -43,9 +54,19 @@ namespace Mvkt.Sync.Services
                     #region wait for updates
                     try
                     {
-                        if (!await WaitForUpdatesAsync(cancelToken)) break;
+                        // Check if we're behind - if so, skip waiting and process immediately
                         var head = await Node.GetHeaderAsync();
-                        Logger.LogDebug("New head is found [{level}:{hash}]", head.Level, head.Hash);
+                        if (AppState.Level < head.Level)
+                        {
+                            // We're behind, process blocks immediately without waiting
+                        }
+                        else
+                        {
+                            // We're caught up, wait for new blocks
+                            if (!await WaitForUpdatesAsync(cancelToken)) break;
+                            head = await Node.GetHeaderAsync();
+                        }
+                        
                         if (head.Level == AppState.Level + 1)
                         {
                             Metrics.Measure.Histogram.Update(MetricsRegistry.BlockAppearanceDelay,
@@ -64,7 +85,12 @@ namespace Mvkt.Sync.Services
                     try
                     {
                         if (!await ApplyUpdatesAsync(cancelToken)) break;
-                        Logger.LogDebug("Current head [{level}:{hash}]", AppState.Level, AppState.Hash);
+                    }
+                    catch (InvalidOperationException ex) when (ex.Message.Contains("Block not found"))
+                    {
+                        // Block not found - wait and retry, don't reset state
+                        await Task.Delay(100, CancellationToken.None);
+                        continue;
                     }
                     catch (BaseException ex) when (ex.RebaseRequired)
                     {
@@ -135,12 +161,18 @@ namespace Mvkt.Sync.Services
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
         {
+            // Use shorter delay during sync to check more frequently
+            var consecutiveChecks = 0;
             while (!await Node.HasUpdatesAsync(AppState.Level))
             {
                 if (cancelToken.IsCancellationRequested)
                     return false;
 
-                await Task.Delay(1000, CancellationToken.None);
+                // First check is immediate, then use short delays
+                if (consecutiveChecks++ > 0)
+                {
+                    await Task.Delay(100, CancellationToken.None);
+                }
             }
             return true;
         }
@@ -167,25 +199,63 @@ namespace Mvkt.Sync.Services
 
         private async Task<bool> ApplyUpdatesAsync(CancellationToken cancelToken)
         {
+            var lastLoggedLevel = AppState.Level;
+            var logInterval = 100; // Log every 100 blocks to reduce I/O overhead
+            var headerCache = await Node.GetHeaderAsync();
+            var headerCacheTime = DateTime.UtcNow;
+            var headerCacheLevel = AppState.Level;
+            
             while (!cancelToken.IsCancellationRequested)
             {
-                var header = await Node.GetHeaderAsync();
-                if (AppState.Level == header.Level) break;
+                // Refresh header cache periodically (every 10 blocks or every 500ms)
+                var blocksSinceUpdate = AppState.Level - headerCacheLevel;
+                var timeSinceUpdate = (DateTime.UtcNow - headerCacheTime).TotalMilliseconds;
+                if (blocksSinceUpdate >= 10 || timeSinceUpdate > 500)
+                {
+                    headerCache = await Node.GetHeaderAsync();
+                    headerCacheTime = DateTime.UtcNow;
+                    headerCacheLevel = AppState.Level;
+                }
+                
+                if (AppState.Level == headerCache.Level) break;
+
+                // Check if the next block exists before trying to fetch it
+                var nextLevel = AppState.Level + 1;
+                if (nextLevel > headerCache.Level)
+                {
+                    // Next block doesn't exist yet, refresh header and wait briefly
+                    await Task.Delay(100, CancellationToken.None);
+                    headerCache = await Node.GetHeaderAsync();
+                    headerCacheTime = DateTime.UtcNow;
+                    headerCacheLevel = AppState.Level;
+                    continue;
+                }
 
                 //if (AppState.Level >= 0)
                 //    throw new ValidationException("Test", true);
 
-                Logger.LogDebug($"Applying block...");
                 using (Metrics.Measure.Timer.Time(MetricsRegistry.ApplyBlockTime))
                 {
                     using var scope = Services.CreateScope();
                     var protocol = scope.ServiceProvider.GetProtocolHandler(AppState.Level + 1, AppState.NextProtocol);
-                    AppState = await protocol.CommitBlock(header.Level);
+                    AppState = await protocol.CommitBlock(headerCache.Level);
                 }
-                Logger.LogInformation("Applied {level} of {total}", AppState.Level, AppState.KnownHead);
+                
+                // Log progress less frequently to reduce I/O overhead
+                var blocksProcessed = AppState.Level - lastLoggedLevel;
+                if (blocksProcessed >= logInterval || AppState.Level == AppState.KnownHead)
+                {
+                    var percent = AppState.KnownHead > 0 
+                        ? (double)AppState.Level / AppState.KnownHead * 100 
+                        : 0;
+                    Logger.LogInformation("Applied {level} of {total} ({percent:F2}%)", 
+                        AppState.Level, AppState.KnownHead, percent);
+                    lastLoggedLevel = AppState.Level;
+                }
             }
 
             return !cancelToken.IsCancellationRequested;
         }
     }
 }
+
