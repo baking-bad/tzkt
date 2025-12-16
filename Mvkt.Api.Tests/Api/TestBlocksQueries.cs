@@ -46,7 +46,7 @@ namespace Mvkt.Api.Tests.Api
 
             Assert.True(res is DJsonObject);
         }
-        
+
         [Fact]
         public async Task TestBlockQuotes()
         {
