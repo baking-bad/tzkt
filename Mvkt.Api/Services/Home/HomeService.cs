@@ -789,8 +789,27 @@ namespace Mvkt.Api.Services
         }
 
         /// <summary>
-        /// Get current T value from schedule based on timestamp
+        /// Returns the current T coefficient based on the provided timestamp.
         /// </summary>
+        /// <remarks>
+        /// The T coefficient models gradual token unlocking over time. As vesting tokens are released,
+        /// the proportion of locked tokens decreases, which in turn reduces the T value. This coefficient
+        /// is used to adjust the APY calculation so it accurately reflects the changing token distribution
+        /// during the vesting period.
+        ///
+        /// TODO (after 2026-07-17):
+        /// The T coefficient is no longer required.
+        /// At that point:
+        /// - Remove the T adjustment from the APY formula in GetStakingData.
+        /// - Simplify the formula from:
+        ///     (i * s / 12.0) * (1.0 - ((s - c) / s) * t)
+        ///   to:
+        ///     (i * s / 12.0) * (1.0 - ((s - c) / s))
+        ///   or potentially to:
+        ///     (i * s / 12.0)
+        ///     if (s - c) becomes negligible.
+        /// - Remove or refactor this method and its usages accordingly.
+        /// </remarks>
         static double GetCurrentTValue(DateTime timestamp)
         {
             var schedule = new[]
