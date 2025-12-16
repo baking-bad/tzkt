@@ -36,16 +36,9 @@ namespace Mvkt.Api.Tests.Api
         [Fact]
         public async Task TestBakerStats()
         {
-            try
-            {
-                var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/stats");
+            var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/stats");
 
-                Assert.True(res is DJsonObject);
-            }
-            catch (System.Net.Http.HttpRequestException ex) when (ex.Message.Contains("404"))
-            {
-                Assert.True(true);
-            }
+            Assert.True(res is DJsonObject);
         }
 
         [Fact]
