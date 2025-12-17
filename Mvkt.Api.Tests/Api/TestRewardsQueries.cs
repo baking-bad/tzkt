@@ -34,6 +34,14 @@ namespace Mvkt.Api.Tests.Api
         }
 
         [Fact]
+        public async Task TestBakerStats()
+        {
+            var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/stats");
+
+            Assert.True(res is DJsonObject);
+        }
+
+        [Fact]
         public async Task TestBakerRewardsByCycle()
         {
             var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/{Settings.Cycle}");

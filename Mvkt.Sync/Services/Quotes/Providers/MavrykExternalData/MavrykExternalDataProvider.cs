@@ -5,6 +5,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Mvkt.Data.Models;
 
 namespace Mvkt.Sync.Services
@@ -15,11 +16,13 @@ namespace Mvkt.Sync.Services
 
         readonly MvktClient Client;
         readonly MavrykExternalDataProviderConfig Config;
+        readonly ILogger Logger;
 
-        public MavrykExternalDataProvider(IConfiguration config)
+        public MavrykExternalDataProvider(IConfiguration config, ILogger<MavrykExternalDataProvider> logger)
         {
             Config = config.GetMavrykExternalDataProviderConfig();
             Client = new MvktClient(Config.BaseUrl, Config.Timeout);
+            Logger = logger;
         }
 
         public void Dispose() => Client.Dispose();
@@ -29,6 +32,11 @@ namespace Mvkt.Sync.Services
             var res = await GetQuotes(
                 quotes.First().Timestamp.AddMinutes(-30),
                 quotes.Last().Timestamp);
+            
+            if (res == null)
+            {
+                return 0;
+            }
             
             if (res.Count == 0)
             {
@@ -79,16 +87,21 @@ namespace Mvkt.Sync.Services
             return quotes.Count();
         }
 
-        async Task<List<MvktQuote>> GetQuotes(DateTime from, DateTime to)
+        async Task<List<MvktQuote>?> GetQuotes(DateTime from, DateTime to)
         {
-            var res = await Client.GetObjectAsync<List<MvktQuote>>(
-                $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
-
-            while (res.Count > 0 && res.Count % 10000 == 0)
-                res.AddRange(await Client.GetObjectAsync<List<MvktQuote>>(
-                    $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"));
-
-            return res;
+            try
+            {
+                Logger.LogDebug($"Fetching quotes from {from:yyyy-MM-ddTHH:mm:ssZ} to {to:yyyy-MM-ddTHH:mm:ssZ}");
+                var res = await Client.GetObjectAsync<List<MvktQuote>>(
+                    $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
+                Logger.LogDebug($"Fetched {res.Count} quotes");
+                return res;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Failed to fetch quotes from external API, returning null to skip saving quotes");
+                return null;
+            }
         }
     }
 
@@ -125,3 +138,4 @@ namespace Mvkt.Sync.Services
         int IQuote.Level => throw new NotImplementedException();
     }
 }
+

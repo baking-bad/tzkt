@@ -281,10 +281,10 @@ namespace Mvkt.Api.Repositories
 
             var sql = new SqlBuilder($"""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
-                	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
-                	FROM "UnstakeRequests"
+                    SELECT  *,
+                            "RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
+                            "RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                    FROM "UnstakeRequests"
                 )
                 SELECT {select} FROM "UnstakeRequestsExt"
                 """)
@@ -323,10 +323,10 @@ namespace Mvkt.Api.Repositories
 
             var sql = new SqlBuilder("""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
-                	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
-                	FROM "UnstakeRequests"
+                    SELECT  *,
+                            "RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
+                            "RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                    FROM "UnstakeRequests"
                 )
                 SELECT COUNT(*) FROM "UnstakeRequestsExt"
                 """)
@@ -522,13 +522,7 @@ namespace Mvkt.Api.Repositories
             if (totalEffectiveStake == 0)
                 return null;
 
-            var bakerEffectiveStake = 2 * delegat.OwnStakedBalance 
-                + delegat.ExternalStakedBalance 
-                + delegat.DelegatedBalance / protocol.StakePowerMultiplier;
-
             var baseMonthlyRate = (double)totalRewardsPerMonth / totalEffectiveStake;
-
-            var expectedMonthlyRewards = (long)(baseMonthlyRate * bakerEffectiveStake);
 
             var ownStakeMonthlyRewards = baseMonthlyRate * 2 * delegat.OwnStakedBalance;
             
@@ -557,19 +551,8 @@ namespace Mvkt.Api.Repositories
                 ? (Math.Pow(1 + delegationMonthlyYield, 12) - 1) * 100
                 : 0.0;
 
-            var alias = Accounts.GetAlias(delegat.Id);
-
             return new BakerApy
             {
-                Address = delegat.Address,
-                Alias = alias?.Name,
-                OwnStakedBalance = delegat.OwnStakedBalance,
-                ExternalStakedBalance = delegat.ExternalStakedBalance,
-                DelegatedBalance = delegat.DelegatedBalance,
-                EffectiveStake = bakerEffectiveStake,
-                TotalEffectiveStake = totalEffectiveStake,
-                TotalMonthlyRewards = totalRewardsPerMonth,
-                ExpectedMonthlyRewards = expectedMonthlyRewards,
                 OwnStakeApy = Math.Round(ownStakeApy, 2),
                 ExternalStakeApy = Math.Round(externalStakeApy, 2),
                 DelegationApy = Math.Round(delegationApy, 2)
@@ -578,3 +561,4 @@ namespace Mvkt.Api.Repositories
         #endregion
     }
 }
+

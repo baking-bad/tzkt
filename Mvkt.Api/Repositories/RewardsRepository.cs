@@ -2183,5 +2183,63 @@ namespace Mvkt.Api.Repositories
             };
         }
         #endregion
+
+        #region baker stats
+        public async Task<BakerStats> GetBakerStats(string address)
+        {
+            if (await Accounts.GetAsync(address) is not RawDelegate baker)
+                return null;
+
+            var rewards = await GetBakerRewards(address, null, null, null, 10000, Symbols.None);
+            var rewardsList = rewards.ToList();
+
+            if (!rewardsList.Any())
+                return null;
+
+            var alias = await Accounts.GetAliasAsync(baker.Id);
+
+            var totalExpectedBlocks = rewardsList.Sum(r => (long)Math.Round(r.ExpectedBlocks));
+            var totalBlocks = rewardsList.Sum(r => (long)r.Blocks);
+            var totalMissedBlocks = rewardsList.Sum(r => (long)r.MissedBlocks);
+
+            var totalExpectedAttestations = rewardsList.Sum(r => (long)Math.Round(r.ExpectedEndorsements));
+            var totalAttestations = rewardsList.Sum(r => (long)r.Endorsements);
+            var totalMissedAttestations = rewardsList.Sum(r => (long)r.MissedEndorsements);
+
+            var totalActualRewards = rewardsList.Sum(r =>
+                r.BlockRewardsDelegated + r.BlockRewardsStakedOwn + r.BlockRewardsStakedEdge + r.BlockRewardsStakedShared +
+                r.EndorsementRewardsDelegated + r.EndorsementRewardsStakedOwn + r.EndorsementRewardsStakedEdge + r.EndorsementRewardsStakedShared);
+            
+            var totalMissedRewards = rewardsList.Sum(r => r.MissedBlockRewards + r.MissedEndorsementRewards);
+            
+            var totalExpectedRewards = totalActualRewards + totalMissedRewards;
+
+            var luck = totalExpectedRewards > 0
+                ? Math.Round((double)totalActualRewards / totalExpectedRewards * 100, 2)
+                : 0.0;
+
+            var totalOpportunities = totalBlocks + totalMissedBlocks + totalAttestations + totalMissedAttestations;
+            var successfulOperations = totalBlocks + totalAttestations;
+            var performance = totalOpportunities > 0
+                ? Math.Round((double)successfulOperations / totalOpportunities * 100, 2)
+                : 0.0;
+
+            var totalExpectedOperations = totalExpectedBlocks + totalExpectedAttestations;
+            var totalActualOperations = totalBlocks + totalAttestations;
+            var reliability = totalExpectedOperations > 0
+                ? Math.Round((double)totalActualOperations / totalExpectedOperations * 100, 2)
+                : 0.0;
+
+            return new BakerStats
+            {
+                Alias = alias?.Name,
+                Luck = luck,
+                Performance = performance,
+                Reliability = reliability,
+                TotalExpectedRewards = totalExpectedRewards,
+                TotalActualRewards = totalActualRewards
+            };
+        }
+        #endregion
     }
 }

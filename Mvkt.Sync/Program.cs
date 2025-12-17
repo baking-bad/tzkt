@@ -34,6 +34,7 @@ builder.Services.AddMavrykNode();
 builder.Services.AddMavrykProtocols();
 builder.Services.AddQuotes(builder.Configuration);
 builder.Services.AddHostedService<Observer>();
+builder.Services.AddHostedService<QuotesSyncService>();
 
 if (builder.Configuration.GetDomainsConfig().Enabled)
     builder.Services.AddHostedService<DomainsService>();
