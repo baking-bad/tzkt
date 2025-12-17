@@ -103,12 +103,6 @@ namespace Mvkt.Sync
                     await Db.SaveChangesAsync();
                 }
 
-                Logger.LogDebug("Process quotes");
-                using (Metrics.Measure.Timer.Time(MetricsRegistry.QuotesProcessingTime))
-                {
-                    await Quotes.Commit();
-                }
-
                 if (state.Protocol != state.NextProtocol)
                 {
                     Logger.LogDebug("Activate protocol {hash}", state.NextProtocol);

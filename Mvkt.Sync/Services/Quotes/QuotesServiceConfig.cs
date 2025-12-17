@@ -5,6 +5,7 @@ namespace Mvkt.Sync.Services
     public class QuotesServiceConfig
     {
         public bool Async { get; set; } = true;
+        public int CopyThreshold { get; set; } = 64;
     }
 
     public static class QuotesServiceConfigExt

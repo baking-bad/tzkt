@@ -32,19 +32,16 @@ namespace Mvkt.Sync.Services
                 #endregion
 
                 #region init quotes
-                // Initialize quotes in background to avoid blocking block synchronization.
-                _ = Task.Run(async () =>
+                try
                 {
-                    try
-                    {
-                        await InitQuotes();
-                        Logger.LogInformation("Quotes initialized: [{level}]", AppState.QuoteLevel);
-                    }
-                    catch (Exception ex)
-                    {
-                        Logger.LogWarning(ex, "Failed to initialize quotes, will retry during sync");
-                    }
-                });
+                    using var scope = Services.CreateScope();
+                    var quotes = scope.ServiceProvider.GetRequiredService<QuotesService>();
+                    await quotes.Init();
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogWarning(ex, "Failed to initialize quotes service");
+                }
                 #endregion
 
                 Logger.LogInformation("Synchronization started");
@@ -135,13 +132,6 @@ namespace Mvkt.Sync.Services
                 }
             }
             return !cancelToken.IsCancellationRequested;
-        }
-
-        private async Task InitQuotes()
-        {
-            using var scope = Services.CreateScope();
-            var quotes = scope.ServiceProvider.GetRequiredService<QuotesService>();
-            await quotes.Init();
         }
 
         private async Task<bool> WaitForUpdatesAsync(CancellationToken cancelToken)
