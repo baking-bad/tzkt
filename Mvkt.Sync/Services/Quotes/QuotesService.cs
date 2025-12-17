@@ -46,6 +46,7 @@ namespace Mvkt.Sync.Services
                 try
                 {
                     Logger.LogDebug($"{state.Level - state.QuoteLevel} quotes missed. Start sync...");
+                    var consecutiveFailures = 0;
                     while (state.QuoteLevel < state.Level)
                     {
                         var quotes = await Db.Blocks
@@ -61,7 +62,15 @@ namespace Mvkt.Sync.Services
                             .ToListAsync();
 
                         var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                        if (filled == 0) throw new Exception("0 quotes filled");
+                        if (filled == 0)
+                        {
+                            consecutiveFailures++;
+                            var delay = Math.Min(5000 * consecutiveFailures, 60000);
+                            await Task.Delay(delay);
+                            continue;
+                        }
+
+                        consecutiveFailures = 0;
 
                         using var tx = await Db.Database.BeginTransactionAsync();
                         try
@@ -104,7 +113,10 @@ namespace Mvkt.Sync.Services
                     }
 
                     var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                    if (filled == 0) throw new Exception("0 quotes filled");
+                    if (filled == 0)
+                    {
+                        return;
+                    }
 
                     if (filled == 1)
                     {
@@ -137,7 +149,11 @@ namespace Mvkt.Sync.Services
                             .ToListAsync();
 
                         var filled = await Provider.FillQuotes(quotes, LastQuote(state));
-                        if (filled == 0) throw new Exception("0 quotes filled");
+                        if (filled == 0)
+                        {
+                            await Task.Delay(5000);
+                            continue;
+                        }
 
                         SaveQuotes(quotes.Count == filled ? quotes : quotes.Take(filled));
                         UpdateState(state, quotes[filled - 1]);
@@ -314,3 +330,4 @@ namespace Mvkt.Sync.Services
         }
     }
 }
+

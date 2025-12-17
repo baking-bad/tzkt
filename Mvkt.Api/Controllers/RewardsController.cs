@@ -11,10 +11,12 @@ namespace Mvkt.Api.Controllers
     public class RewardsController : ControllerBase
     {
         private readonly RewardsRepository Rewards;
+        private readonly StakingRepository Staking;
 
-        public RewardsController(RewardsRepository rewards)
+        public RewardsController(RewardsRepository rewards, StakingRepository staking)
         {
             Rewards = rewards;
+            Staking = staking;
         }
 
         /// <summary>
@@ -201,5 +203,28 @@ namespace Mvkt.Api.Controllers
         {
             return Rewards.GetRewardSplitDelegator(baker, cycle, delegator);
         }
+
+        /// <summary>
+        /// Get baker statistics
+        /// </summary>
+        /// <remarks>
+        /// Returns aggregated statistics for a baker based on historical rewards data.
+        /// Includes performance metrics, reliability, luck, total income, fees, and more.
+        /// </remarks>
+        /// <param name="address">Baker address (starting with mv)</param>
+        /// <returns></returns>
+        [HttpGet("bakers/{address}/stats")]
+        public async Task<ActionResult<BakerStats>> GetBakerStats(
+            [Required][TzAddress] string address)
+        {
+            var stats = await Rewards.GetBakerStats(address);
+            if (stats == null)
+                return NotFound();
+
+            stats.Apy = await Staking.GetBakerApy(address);
+
+            return Ok(stats);
+        }
     }
 }
+
