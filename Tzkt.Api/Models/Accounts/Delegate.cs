@@ -16,9 +16,19 @@ namespace Tzkt.Api.Models
         public override string Type => AccountTypes.Delegate;
 
         /// <summary>
-        /// Public key hash of the delegate (baker)
+        /// Public key hash of the delegate's main key
         /// </summary>
         public override required string Address { get; set; }
+
+        /// <summary>
+        /// Public key hash of the delegate's consensus key
+        /// </summary>
+        public string? ConsensusAddress { get; set; }
+
+        /// <summary>
+        /// Public key hash of the delegate's companion key
+        /// </summary>
+        public string? CompanionAddress { get; set; }
 
         /// <summary>
         /// Delegation status (`true` - active, `false` - deactivated)

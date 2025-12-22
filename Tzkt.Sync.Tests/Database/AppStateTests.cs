@@ -43,6 +43,10 @@ namespace Tzkt.Sync.Tests.Database
             if (state.PendingDelegateParameters != await db.SetDelegateParametersOps
                 .CountAsync(x => x.Status == OperationStatus.Applied && x.ActivationCycle > state.Cycle))
                 throw new Exception("Invalid AppState.PendingDelegateParameters");
+
+            if (state.PendingSecondaryKeys != await db.UpdateSecondaryKeyOps
+                .CountAsync(x => x.Status == OperationStatus.Applied && x.ActivationCycle > state.Cycle))
+                throw new Exception("Invalid AppState.PendingSecondaryKeys");
             #endregion
 
             #region counters

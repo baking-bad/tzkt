@@ -42,7 +42,10 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => x.OpHash);
 
             modelBuilder.Entity<UpdateSecondaryKeyOperation>()
-                .HasIndex(x => x.SenderId);
+                .HasIndex(x => new { x.SenderId, x.Id });
+
+            modelBuilder.Entity<UpdateSecondaryKeyOperation>()
+                .HasIndex(x => x.ActivationCycle);
             #endregion
         }
     }

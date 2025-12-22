@@ -57,6 +57,8 @@ namespace Tzkt.Api.Repositories
                 ActivationTime = Time[delegat.ActivationLevel],
                 DeactivationLevel = delegat.Staked ? null : delegat.DeactivationLevel,
                 DeactivationTime = delegat.Staked ? null : Time[delegat.DeactivationLevel],
+                ConsensusAddress = delegat.ConsensusAddress,
+                CompanionAddress = delegat.CompanionAddress,
                 FirstActivity = delegat.FirstLevel,
                 FirstActivityTime = Time[delegat.FirstLevel],
                 LastActivity = delegat.LastLevel,
@@ -198,6 +200,8 @@ namespace Tzkt.Api.Repositories
                     ActivationTime = Time[row.ActivationLevel],
                     DeactivationLevel = row.Staked ? null : (int?)row.DeactivationLevel,
                     DeactivationTime = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel],
+                    ConsensusAddress = row.ConsensusAddress,
+                    CompanionAddress = row.CompanionAddress,
                     FirstActivity = row.FirstLevel,
                     FirstActivityTime = Time[row.FirstLevel],
                     LastActivity = row.LastLevel,
@@ -287,6 +291,8 @@ namespace Tzkt.Api.Repositories
                     case "activationTime": columns.Add(@"""ActivationLevel"""); break;
                     case "deactivationLevel": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
                     case "deactivationTime": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
+                    case "consensusAddress": columns.Add(@"""ConsensusAddress"""); break;
+                    case "companionAddress": columns.Add(@"""CompanionAddress"""); break;
                     case "firstActivity": columns.Add(@"""FirstLevel"""); break;
                     case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
                     case "lastActivity": columns.Add(@"""LastLevel"""); break;
@@ -487,6 +493,14 @@ namespace Tzkt.Api.Repositories
                     case "deactivationTime":
                         foreach (var row in rows)
                             result[j++][i] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
+                        break;
+                    case "consensusAddress":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ConsensusAddress;
+                        break;
+                    case "companionAddress":
+                        foreach (var row in rows)
+                            result[j++][i] = row.CompanionAddress;
                         break;
                     case "firstActivity":
                         foreach (var row in rows)
@@ -840,6 +854,8 @@ namespace Tzkt.Api.Repositories
                 case "activationTime": columns.Add(@"""ActivationLevel"""); break;
                 case "deactivationLevel": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
                 case "deactivationTime": columns.Add(@"""DeactivationLevel"""); columns.Add(@"""Staked"""); break;
+                case "consensusAddress": columns.Add(@"""ConsensusAddress"""); break;
+                case "companionAddress": columns.Add(@"""CompanionAddress"""); break;
                 case "firstActivity": columns.Add(@"""FirstLevel"""); break;
                 case "firstActivityTime": columns.Add(@"""FirstLevel"""); break;
                 case "lastActivity": columns.Add(@"""LastLevel"""); break;
@@ -1036,6 +1052,14 @@ namespace Tzkt.Api.Repositories
                 case "deactivationTime":
                     foreach (var row in rows)
                         result[j++] = row.Staked ? null : (DateTime?)Time[row.DeactivationLevel];
+                    break;
+                case "consensusAddress":
+                    foreach (var row in rows)
+                        result[j++] = row.ConsensusAddress;
+                    break;
+                case "companionAddress":
+                    foreach (var row in rows)
+                        result[j++] = row.CompanionAddress;
                     break;
                 case "firstActivity":
                     foreach (var row in rows)

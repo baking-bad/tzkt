@@ -9,6 +9,9 @@ namespace Tzkt.Data.Models
         public int ActivationLevel { get; set; }
         public int DeactivationLevel { get; set; }
 
+        public string? ConsensusAddress { get; set; }
+        public string? CompanionAddress { get; set; }
+
         public long BakingPower { get; set; }
         public long VotingPower { get; set; }
 

@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Netezos.Keys;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
@@ -53,17 +54,19 @@ namespace Tzkt.Sync.Protocols.Proto15
             #region apply operation
             Db.TryAttach(sender);
             PayFee(sender, operation.BakerFee);
-
+            sender.Counter = operation.Counter;
             sender.UpdateSecondaryKeyCount++;
 
             block.Operations |= Operations.UpdateSecondaryKey;
-
-            sender.Counter = operation.Counter;
 
             Cache.AppState.Get().UpdateSecondaryKeyOpsCount++;
             #endregion
 
             #region apply result
+            if (operation.Status == OperationStatus.Applied)
+            {
+                Cache.AppState.Get().PendingSecondaryKeys++;
+            }
             #endregion
 
             Proto.Manager.Set(sender);
@@ -73,21 +76,20 @@ namespace Tzkt.Sync.Protocols.Proto15
 
         public virtual async Task Revert(Block block, UpdateSecondaryKeyOperation operation)
         {
-            #region entities
             var sender = await Cache.Accounts.GetAsync(operation.SenderId);
-
             Db.TryAttach(sender);
-            #endregion
 
             #region revert result
+            if (operation.Status == OperationStatus.Applied)
+            {
+                Cache.AppState.Get().PendingSecondaryKeys--;
+            }
             #endregion
 
             #region revert operation
             RevertPayFee(sender, operation.BakerFee);
-
-            sender.UpdateSecondaryKeyCount--;
-
             sender.Counter = operation.Counter - 1;
+            sender.UpdateSecondaryKeyCount--;
 
             Cache.AppState.Get().UpdateSecondaryKeyOpsCount--;
             #endregion
@@ -95,6 +97,62 @@ namespace Tzkt.Sync.Protocols.Proto15
             Db.UpdateSecondaryKeyOps.Remove(operation);
             Cache.AppState.ReleaseManagerCounter();
             Cache.AppState.ReleaseOperationId();
+        }
+
+        public async Task ActivateSecondaryKeys(Block block)
+        {
+            if (!block.Events.HasFlag(BlockEvents.CycleBegin) || Cache.AppState.Get().PendingSecondaryKeys == 0)
+                return;
+
+            var ops = await Db.UpdateSecondaryKeyOps
+                .AsNoTracking()
+                .Where(x => x.ActivationCycle == block.Cycle && x.Status == OperationStatus.Applied)
+                .ToListAsync();
+
+            foreach (var op in ops.OrderBy(x => x.Id))
+            {
+                var baker = Cache.Accounts.GetDelegate(op.SenderId);
+                Db.TryAttach(baker);
+                if (op.KeyType == SecondaryKeyType.Consensus)
+                    baker.ConsensusAddress = op.PublicKeyHash;
+                else
+                    baker.CompanionAddress = op.PublicKeyHash;
+                Cache.AppState.Get().PendingSecondaryKeys--;
+            }
+        }
+
+        public async Task DeactivateSecondaryKeys(Block block)
+        {
+            if (!block.Events.HasFlag(BlockEvents.CycleBegin))
+                return;
+
+            var ops = await Db.UpdateSecondaryKeyOps
+                .AsNoTracking()
+                .Where(x => x.ActivationCycle == block.Cycle && x.Status == OperationStatus.Applied)
+                .ToListAsync();
+
+            foreach (var op in ops.OrderByDescending(x => x.Id))
+            {
+                var baker = Cache.Accounts.GetDelegate(op.SenderId);
+                Db.TryAttach(baker);
+
+                var prevOp = await Db.UpdateSecondaryKeyOps
+                    .AsNoTracking()
+                    .Where(x =>
+                        x.SenderId == baker.Id &&
+                        x.KeyType == op.KeyType &&
+                        x.ActivationCycle < op.ActivationCycle &&
+                        x.Status == OperationStatus.Applied)
+                    .OrderByDescending(x => x.Id)
+                    .FirstOrDefaultAsync();
+
+                if (op.KeyType == SecondaryKeyType.Consensus)
+                    baker.ConsensusAddress = prevOp?.PublicKeyHash;
+                else
+                    baker.CompanionAddress = prevOp?.PublicKeyHash;
+
+                Cache.AppState.Get().PendingSecondaryKeys++;
+            }
         }
     }
 }

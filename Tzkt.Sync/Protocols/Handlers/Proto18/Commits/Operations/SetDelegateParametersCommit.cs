@@ -132,7 +132,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.ActivationCycle == block.Cycle && x.Status == OperationStatus.Applied)
                 .ToListAsync();
 
-            foreach (var op in ops)
+            foreach (var op in ops.OrderBy(x => x.Id))
             {
                 var baker = Cache.Accounts.GetDelegate(op.SenderId);
                 Db.TryAttach(baker);
@@ -153,7 +153,7 @@ namespace Tzkt.Sync.Protocols.Proto18
                 .Where(x => x.ActivationCycle == block.Cycle && x.Status == OperationStatus.Applied)
                 .ToListAsync();
 
-            foreach (var op in ops)
+            foreach (var op in ops.OrderByDescending(x => x.Id))
             {
                 var baker = Cache.Accounts.GetDelegate(op.SenderId);
 

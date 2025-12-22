@@ -12,7 +12,6 @@ namespace Tzkt.Sync.Protocols
         Task<JsonElement> GetLevelAttestationRightsAsync(int block, int level);
         Task<JsonElement> GetContractAsync(int level, string address);
         Task<JsonElement> GetDelegateAsync(int level, string address);
-        Task<JsonElement> GetStakeDistribution(int block, int cycle);
         Task<JsonElement> GetExpectedIssuance(int level);
         Task<JsonElement> GetSmartRollupGenesisInfo(int level, string address);
         Task<JsonElement> GetUnstakeRequests(int level, string address);
