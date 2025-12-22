@@ -146,11 +146,7 @@ namespace Tzkt.Data.Models
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.TargetId, $"IX_{nameof(TzktContext.TransactionOps)}_{nameof(TransactionOperation.TargetId)}_Partial")
-                .HasFilter($"""
-                    "{nameof(TransactionOperation.Entrypoint)}" = 'transfer'
-                    AND "{nameof(TransactionOperation.TokenTransfers)}" IS NULL
-                    AND "{nameof(TransactionOperation.Status)}" = {(int)OperationStatus.Applied}
-                    """);
+                .HasFilter($@"""{nameof(TransactionOperation.Entrypoint)}"" = 'transfer' AND ""{nameof(TransactionOperation.TokenTransfers)}"" IS NULL AND ""{nameof(TransactionOperation.Status)}"" = {(int)OperationStatus.Applied}");
 
             modelBuilder.Entity<TransactionOperation>()
                 .HasIndex(x => x.OpHash);

@@ -27,6 +27,7 @@ namespace Tzkt.Data.Models
         public int? AiActivationLevel { get; set; }
         public int? AbaActivationLevel { get; set; }
         public int PendingDelegateParameters { get; set; }
+        public int PendingSecondaryKeys { get; set; }
         #endregion
 
         #region counters
