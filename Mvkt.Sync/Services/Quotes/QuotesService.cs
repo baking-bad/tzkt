@@ -53,11 +53,17 @@ namespace Mvkt.Sync.Services
             try
             {
                 var state = Cache.AppState.Get();
-                if (state.QuoteLevel >= state.Level)
+                
+                var difference = state.Level - state.QuoteLevel;
+                if (difference <= Config.DelayLevels)
                     return 0;
 
-                var quotes = await LoadQuotes(state);
-                if (quotes.Count == 0)
+                var maxLevel = state.Level;
+                if (state.QuoteLevel > maxLevel)
+                    return 0;
+
+                var quotes = await LoadQuotes(state, maxLevel);
+                if (quotes == null || quotes.Count == 0)
                     return 0;
 
                 using var scope = Logger.BeginScope(new
@@ -80,16 +86,20 @@ namespace Mvkt.Sync.Services
             }
         }
 
-        async Task<List<Quote>> LoadQuotes(AppState state)
+        async Task<List<Quote>> LoadQuotes(AppState state, int maxLevel)
         {
-            var remaining = state.Level - state.QuoteLevel;
+            var remaining = maxLevel - state.QuoteLevel;
+            if (remaining <= 0)
+                return new List<Quote>();
+            
             var batchSize = Math.Min(remaining, Chunk);
             
-            Logger.LogDebug("Loading quotes batch: {BatchSize} quotes (remaining: {Remaining})", batchSize, remaining);
+            Logger.LogDebug("Loading quotes batch: {BatchSize} quotes (remaining: {Remaining}, maxLevel: {MaxLevel})", 
+                batchSize, remaining, maxLevel);
             
             return await Db.Blocks
                 .AsNoTracking()
-                .Where(x => x.Level > state.QuoteLevel)
+                .Where(x => x.Level > state.QuoteLevel && x.Level <= maxLevel)
                 .OrderBy(x => x.Level)
                 .Take(batchSize)
                 .Select(x => new Quote
