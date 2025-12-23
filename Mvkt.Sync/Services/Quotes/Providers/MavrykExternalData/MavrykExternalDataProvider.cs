@@ -89,33 +89,19 @@ namespace Mvkt.Sync.Services
 
         async Task<List<MvktQuote>?> GetQuotes(DateTime from, DateTime to)
         {
-            List<MvktQuote> res;
             try
             {
-                res = await Client.GetObjectAsync<List<MvktQuote>>(
+                Logger.LogDebug($"Fetching quotes from {from:yyyy-MM-ddTHH:mm:ssZ} to {to:yyyy-MM-ddTHH:mm:ssZ}");
+                var res = await Client.GetObjectAsync<List<MvktQuote>>(
                     $"quotes?from={from:yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000");
+                Logger.LogDebug($"Fetched {res.Count} quotes");
+                return res;
             }
             catch (Exception ex)
             {
                 Logger.LogWarning(ex, "Failed to fetch quotes from external API, returning null to skip saving quotes");
                 return null;
             }
-
-            while (res.Count > 0 && res.Count % 10000 == 0)
-            {
-                try
-                {
-                    res.AddRange(await Client.GetObjectAsync<List<MvktQuote>>(
-                        $"quotes?from={res[^1].Timestamp.AddSeconds(1):yyyy-MM-ddTHH:mm:ssZ}&to={to:yyyy-MM-ddTHH:mm:ssZ}&limit=10000"));
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning(ex, "Failed to fetch additional quotes, returning partial result");
-                    break;
-                }
-            }
-
-            return res;
         }
     }
 
