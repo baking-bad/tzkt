@@ -60,6 +60,21 @@
         public required string Status { get; set; }
 
         /// <summary>
+        /// Cycle at which the unstake request will become finalizable
+        /// </summary>
+        public int UnlockCycle { get; set; }
+
+        /// <summary>
+        /// Level of the block at which the unstake request will become finalizable
+        /// </summary>
+        public int UnlockLevel { get; set; }
+
+        /// <summary>
+        /// Timestamp of the block at which the unstake request will become finalizable
+        /// </summary>
+        public DateTime UnlockTime { get; set; }
+
+        /// <summary>
         /// Number of staking updates related to the unstake request.
         /// </summary>
         public int UpdatesCount { get; set; }

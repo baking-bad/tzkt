@@ -41,6 +41,7 @@ namespace Tzkt.Api.Services.Cache
 
         public Protocol FindByCycle(int cycle) => Protocols.Last(x => x.FirstCycle <= cycle);
         public Protocol FindByLevel(int level) => Protocols.Last(x => x.FirstLevel <= level);
+        public int GetCycleStart(int cycle) => Protocols.Last(x => x.FirstCycle <= cycle).GetCycleStart(cycle);
 
         void InitCache()
         {

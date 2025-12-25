@@ -164,6 +164,11 @@
         public int MaxExternalOverOwnStakeRatio { get; set; }
 
         /// <summary>
+        /// The divider by which delegation power is divided
+        /// </summary>
+        public int DelegationPowerDivider { get; set; }
+
+        /// <summary>
         /// Initial storage size of an originated (created) smart rollup (bytes)
         /// </summary>
         public int SmartRollupOriginationSize { get; set; }

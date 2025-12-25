@@ -29,5 +29,8 @@ namespace Tzkt.Api.Models
 
         public double StakingApy { get; set; }
         public double DelegationApy { get; set; }
+
+        public long TotalBakingPower { get; set; }
+        public long TotalVotingPower { get; set; }
     }
 }
