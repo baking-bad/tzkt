@@ -31,6 +31,7 @@ namespace Tzkt.Data.Migrations
                     DelegateId = table.Column<int>(type: "integer", nullable: true),
                     DelegationLevel = table.Column<int>(type: "integer", nullable: true),
                     Staked = table.Column<bool>(type: "boolean", nullable: false),
+                    Index = table.Column<int>(type: "integer", nullable: true),
                     ContractsCount = table.Column<int>(type: "integer", nullable: false),
                     RollupsCount = table.Column<int>(type: "integer", nullable: false),
                     SmartRollupsCount = table.Column<int>(type: "integer", nullable: false),
@@ -102,8 +103,12 @@ namespace Tzkt.Data.Migrations
                     DalPublishCommitmentOpsCount = table.Column<int>(type: "integer", nullable: true),
                     ActivationLevel = table.Column<int>(type: "integer", nullable: true),
                     DeactivationLevel = table.Column<int>(type: "integer", nullable: true),
-                    StakingBalance = table.Column<long>(type: "bigint", nullable: true),
-                    DelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    ConsensusAddress = table.Column<string>(type: "text", nullable: true),
+                    CompanionAddress = table.Column<string>(type: "text", nullable: true),
+                    BakingPower = table.Column<long>(type: "bigint", nullable: true),
+                    VotingPower = table.Column<long>(type: "bigint", nullable: true),
+                    OwnDelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
+                    ExternalDelegatedBalance = table.Column<long>(type: "bigint", nullable: true),
                     MinTotalDelegated = table.Column<long>(type: "bigint", nullable: true),
                     MinTotalDelegatedLevel = table.Column<int>(type: "integer", nullable: true),
                     DelegatorsCount = table.Column<int>(type: "integer", nullable: true),
@@ -130,7 +135,8 @@ namespace Tzkt.Data.Migrations
                     AttestationRewardsCount = table.Column<int>(type: "integer", nullable: true),
                     DalAttestationRewardsCount = table.Column<int>(type: "integer", nullable: true),
                     AutostakingOpsCount = table.Column<int>(type: "integer", nullable: true),
-                    SoftwareId = table.Column<int>(type: "integer", nullable: true)
+                    SoftwareId = table.Column<int>(type: "integer", nullable: true),
+                    SoftwareUpdateLevel = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -172,7 +178,10 @@ namespace Tzkt.Data.Migrations
                     Hash = table.Column<string>(type: "text", nullable: false),
                     VotingEpoch = table.Column<int>(type: "integer", nullable: false),
                     VotingPeriod = table.Column<int>(type: "integer", nullable: false),
+                    AiActivationLevel = table.Column<int>(type: "integer", nullable: true),
+                    AbaActivationLevel = table.Column<int>(type: "integer", nullable: true),
                     PendingDelegateParameters = table.Column<int>(type: "integer", nullable: false),
+                    PendingSecondaryKeys = table.Column<int>(type: "integer", nullable: false),
                     AccountCounter = table.Column<int>(type: "integer", nullable: false),
                     OperationCounter = table.Column<long>(type: "bigint", nullable: false),
                     ManagerCounter = table.Column<int>(type: "integer", nullable: false),
@@ -269,7 +278,7 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    Slots = table.Column<int>(type: "integer", nullable: false),
+                    Power = table.Column<long>(type: "bigint", nullable: false),
                     Reward = table.Column<long>(type: "bigint", nullable: false),
                     Deposit = table.Column<long>(type: "bigint", nullable: false),
                     ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
@@ -512,7 +521,8 @@ namespace Tzkt.Data.Migrations
                     SoftwareId = table.Column<int>(type: "integer", nullable: true),
                     PayloadRound = table.Column<int>(type: "integer", nullable: false),
                     BlockRound = table.Column<int>(type: "integer", nullable: false),
-                    Validations = table.Column<int>(type: "integer", nullable: false),
+                    AttestationPower = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationCommittee = table.Column<long>(type: "bigint", nullable: false),
                     Events = table.Column<int>(type: "integer", nullable: false),
                     Operations = table.Column<long>(type: "bigint", nullable: false),
                     Deposit = table.Column<long>(type: "bigint", nullable: false),
@@ -532,8 +542,6 @@ namespace Tzkt.Data.Migrations
                     ResetProposerDeactivation = table.Column<int>(type: "integer", nullable: true),
                     LBToggle = table.Column<bool>(type: "boolean", nullable: true),
                     LBToggleEma = table.Column<int>(type: "integer", nullable: false),
-                    AIToggle = table.Column<bool>(type: "boolean", nullable: true),
-                    AIToggleEma = table.Column<int>(type: "integer", nullable: false),
                     Extras = table.Column<string>(type: "jsonb", nullable: true)
                 },
                 constraints: table =>
@@ -571,12 +579,11 @@ namespace Tzkt.Data.Migrations
                     TotalBakers = table.Column<int>(type: "integer", nullable: false),
                     TotalBakingPower = table.Column<long>(type: "bigint", nullable: false),
                     BlockReward = table.Column<long>(type: "bigint", nullable: false),
-                    BlockBonusPerSlot = table.Column<long>(type: "bigint", nullable: false),
-                    AttestationRewardPerSlot = table.Column<long>(type: "bigint", nullable: false),
+                    BlockBonusPerBlock = table.Column<long>(type: "bigint", nullable: false),
+                    AttestationRewardPerBlock = table.Column<long>(type: "bigint", nullable: false),
                     NonceRevelationReward = table.Column<long>(type: "bigint", nullable: false),
                     VdfRevelationReward = table.Column<long>(type: "bigint", nullable: false),
-                    DalAttestationRewardPerShard = table.Column<long>(type: "bigint", nullable: false),
-                    MaxBlockReward = table.Column<long>(type: "bigint", nullable: false)
+                    DalAttestationRewardPerShard = table.Column<long>(type: "bigint", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -970,7 +977,7 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     DelegateId = table.Column<int>(type: "integer", nullable: false),
-                    Slots = table.Column<int>(type: "integer", nullable: false),
+                    Power = table.Column<long>(type: "bigint", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false)
@@ -1653,7 +1660,16 @@ namespace Tzkt.Data.Migrations
                     TotalLost = table.Column<long>(type: "bigint", nullable: false),
                     TotalFrozen = table.Column<long>(type: "bigint", nullable: false),
                     TotalRollupBonds = table.Column<long>(type: "bigint", nullable: false),
-                    TotalSmartRollupBonds = table.Column<long>(type: "bigint", nullable: false)
+                    TotalSmartRollupBonds = table.Column<long>(type: "bigint", nullable: false),
+                    TotalOwnStaked = table.Column<long>(type: "bigint", nullable: false),
+                    TotalOwnDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    TotalExternalStaked = table.Column<long>(type: "bigint", nullable: false),
+                    TotalExternalDelegated = table.Column<long>(type: "bigint", nullable: false),
+                    TotalBakingPower = table.Column<long>(type: "bigint", nullable: false),
+                    TotalVotingPower = table.Column<long>(type: "bigint", nullable: false),
+                    TotalBakers = table.Column<int>(type: "integer", nullable: false),
+                    TotalStakers = table.Column<int>(type: "integer", nullable: false),
+                    TotalDelegators = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -1837,6 +1853,7 @@ namespace Tzkt.Data.Migrations
                     InternalTransactions = table.Column<short>(type: "smallint", nullable: true),
                     EventsCount = table.Column<int>(type: "integer", nullable: true),
                     TicketTransfers = table.Column<int>(type: "integer", nullable: true),
+                    AddressRegistryIndex = table.Column<int>(type: "integer", nullable: true),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     OpHash = table.Column<string>(type: "character(51)", fixedLength: true, maxLength: 51, nullable: false),
@@ -2249,8 +2266,8 @@ namespace Tzkt.Data.Migrations
 
             migrationBuilder.InsertData(
                 table: "AppState",
-                columns: new[] { "Id", "AccountCounter", "ActivationOpsCount", "AttestationOpsCount", "AttestationRewardOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalAttestationRewardOpsCount", "DalEntrapmentEvidenceOpsCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleConsensusOpsCount", "DrainDelegateOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PreattestationOpsCount", "ProposalCounter", "ProposalOpsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "SoftwareCounter", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateSecondaryKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
-                values: new object[] { -1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "", "", 0, 0, -1, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
+                columns: new[] { "Id", "AbaActivationLevel", "AccountCounter", "ActivationOpsCount", "AiActivationLevel", "AttestationOpsCount", "AttestationRewardOpsCount", "AutostakingOpsCount", "BallotOpsCount", "BigMapCounter", "BigMapKeyCounter", "BigMapUpdateCounter", "BlocksCount", "Chain", "ChainId", "CommitmentsCount", "ConstantsCount", "Cycle", "CyclesCount", "DalAttestationRewardOpsCount", "DalEntrapmentEvidenceOpsCount", "DalPublishCommitmentOpsCount", "DelegationOpsCount", "DomainsLevel", "DomainsNameRegistry", "DoubleBakingOpsCount", "DoubleConsensusOpsCount", "DrainDelegateOpsCount", "EventCounter", "EventsCount", "Extras", "Hash", "InboxMessageCounter", "IncreasePaidStorageOpsCount", "KnownHead", "LastSync", "Level", "ManagerCounter", "MigrationOpsCount", "NextProtocol", "NonceRevelationOpsCount", "OperationCounter", "OriginationOpsCount", "PendingDelegateParameters", "PendingSecondaryKeys", "PreattestationOpsCount", "ProposalCounter", "ProposalOpsCount", "Protocol", "ProtocolsCount", "QuoteBtc", "QuoteCny", "QuoteEth", "QuoteEur", "QuoteGbp", "QuoteJpy", "QuoteKrw", "QuoteLevel", "QuoteUsd", "RefutationGameCounter", "RegisterConstantOpsCount", "RevealOpsCount", "RevelationPenaltyOpsCount", "ScriptCounter", "SetDelegateParametersOpsCount", "SetDepositsLimitOpsCount", "SmartRollupAddMessagesOpsCount", "SmartRollupCementOpsCount", "SmartRollupCommitmentCounter", "SmartRollupExecuteOpsCount", "SmartRollupOriginateOpsCount", "SmartRollupPublishOpsCount", "SmartRollupRecoverBondOpsCount", "SmartRollupRefuteOpsCount", "SoftwareCounter", "StakingOpsCount", "StakingUpdatesCount", "StorageCounter", "TicketBalancesCount", "TicketTransfersCount", "TicketsCount", "Timestamp", "TokenBalancesCount", "TokenTransfersCount", "TokensCount", "TransactionOpsCount", "TransferTicketOpsCount", "TxRollupCommitOpsCount", "TxRollupDispatchTicketsOpsCount", "TxRollupFinalizeCommitmentOpsCount", "TxRollupOriginationOpsCount", "TxRollupRejectionOpsCount", "TxRollupRemoveCommitmentOpsCount", "TxRollupReturnBondOpsCount", "TxRollupSubmitBatchOpsCount", "UnstakeRequestsCount", "UpdateSecondaryKeyOpsCount", "VdfRevelationOpsCount", "VotingEpoch", "VotingPeriod" },
+                values: new object[] { -1, null, 0, 0, null, 0, 0, 0, 0, 0, 0, 0, 0, "", "", 0, 0, -1, 0, 0, 0, 0, 0, 0, "", 0, 0, 0, 0, 0, null, "", 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Unspecified), -1, 0, 0, "", 0, 0L, 0, 0, 0, 0, 0, 0, "", 0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, new DateTime(1, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc), 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, -1, -1 });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Address",
@@ -2291,6 +2308,13 @@ namespace Tzkt.Data.Migrations
                 name: "IX_Accounts_FirstLevel",
                 table: "Accounts",
                 column: "FirstLevel");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Accounts_Index",
+                table: "Accounts",
+                column: "Index",
+                unique: true,
+                filter: "\"Index\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Accounts_Kind_Partial",
@@ -3697,7 +3721,7 @@ namespace Tzkt.Data.Migrations
                 name: "IX_TransactionOps_TargetId_Partial",
                 table: "TransactionOps",
                 column: "TargetId",
-                filter: "\"Entrypoint\" = 'transfer'\nAND \"TokenTransfers\" IS NULL\nAND \"Status\" = 1");
+                filter: "\"Entrypoint\" = 'transfer' AND \"TokenTransfers\" IS NULL AND \"Status\" = 1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TransferTicketOps_Level",
@@ -3900,6 +3924,11 @@ namespace Tzkt.Data.Migrations
                 columns: new[] { "StakerId", "Cycle" });
 
             migrationBuilder.CreateIndex(
+                name: "IX_UpdateSecondaryKeyOps_ActivationCycle",
+                table: "UpdateSecondaryKeyOps",
+                column: "ActivationCycle");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_UpdateSecondaryKeyOps_Level",
                 table: "UpdateSecondaryKeyOps",
                 column: "Level");
@@ -3910,9 +3939,9 @@ namespace Tzkt.Data.Migrations
                 column: "OpHash");
 
             migrationBuilder.CreateIndex(
-                name: "IX_UpdateSecondaryKeyOps_SenderId",
+                name: "IX_UpdateSecondaryKeyOps_SenderId_Id",
                 table: "UpdateSecondaryKeyOps",
-                column: "SenderId");
+                columns: new[] { "SenderId", "Id" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_VdfRevelationOps_BakerId",
