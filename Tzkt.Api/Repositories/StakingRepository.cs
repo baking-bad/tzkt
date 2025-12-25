@@ -6,23 +6,8 @@ using Tzkt.Api.Services.Cache;
 
 namespace Tzkt.Api.Repositories
 {
-    public class StakingRepository
+    public class StakingRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, StateCache state, TimeCache times)
     {
-        readonly NpgsqlDataSource DataSource;
-        readonly AccountsCache Accounts;
-        readonly ProtocolsCache Protocols;
-        readonly StateCache State;
-        readonly TimeCache Times;
-
-        public StakingRepository(NpgsqlDataSource dataSource, AccountsCache accounts, ProtocolsCache protocols, StateCache state, TimeCache times)
-        {
-            DataSource = dataSource;
-            Accounts = accounts;
-            Protocols = protocols;
-            State = state;
-            Times = times;
-        }
-
         #region staking updates
         async Task<IEnumerable<dynamic>> QueryStakingUpdatesAsync(StakingUpdateFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
@@ -82,7 +67,7 @@ namespace Tzkt.Api.Repositories
                     _ => (@"""Id""", @"""Id""")
                 }, @"""Id""");
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
@@ -106,7 +91,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""DoubleBakingOpId""", filter.doubleBakingOpId)
                 .FilterA(@"""DoubleConsensusOpId""", filter.doubleConsensusOpId);
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
@@ -117,10 +102,10 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Level = row.Level,
-                Timestamp = Times[row.Level],
+                Timestamp = times[row.Level],
                 Cycle = row.Cycle,
-                Baker = Accounts.GetAlias((int)row.BakerId),
-                Staker = Accounts.GetAlias((int)row.StakerId),
+                Baker = accounts.GetAlias((int)row.BakerId),
+                Staker = accounts.GetAlias((int)row.StakerId),
                 Type = StakingUpdateTypes.ToString((int)row.Type),
                 Amount = row.Amount,
                 Pseudotokens = row.Pseudotokens,
@@ -155,7 +140,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "timestamp":
                         foreach (var row in rows)
-                            result[j++][i] = Times[row.Level];
+                            result[j++][i] = times[row.Level];
                         break;
                     case "cycle":
                         foreach (var row in rows)
@@ -163,27 +148,27 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "baker":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId);
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId);
                         break;
                     case "baker.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId).Name;
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId).Name;
                         break;
                     case "baker.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId).Address;
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId).Address;
                         break;
                     case "staker":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.StakerId);
+                            result[j++][i] = accounts.GetAlias((int)row.StakerId);
                         break;
                     case "staker.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.StakerId).Name;
+                            result[j++][i] = accounts.GetAlias((int)row.StakerId).Name;
                         break;
                     case "staker.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.StakerId).Address;
+                            result[j++][i] = accounts.GetAlias((int)row.StakerId).Address;
                         break;
                     case "type":
                         foreach (var row in rows)
@@ -261,6 +246,11 @@ namespace Tzkt.Api.Repositories
                             columns.Add(@"""Cycle""");
                             columns.Add(@"""RemainingAmount""");
                             break;
+                        case "unlockCycle":
+                        case "unlockLevel":
+                        case "unlockTime":
+                            columns.Add(@"""Cycle""");
+                            break;
                     }
                 }
 
@@ -305,13 +295,13 @@ namespace Tzkt.Api.Repositories
                     _ => (@"""Id""", @"""Id""")
                 }, @"""Id""");
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryAsync(sql.Query, sql.Params);
         }
 
         public async Task<int> GetUnstakeRequestsCount(UnstakeRequestFilter filter)
         {
-            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+            var unfrozenCycle = state.Current.Cycle - protocols.Current.ConsensusRightsDelay - 2;
 
             var sql = new SqlBuilder("""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
@@ -339,20 +329,21 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""LastLevel""", filter.lastLevel)
                 .FilterA(@"""LastLevel""", filter.lastTime);
 
-            await using var db = await DataSource.OpenConnectionAsync();
+            await using var db = await dataSource.OpenConnectionAsync();
             return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<UnstakeRequest>> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination)
         {
-            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+            var unlockDelay = protocols.Current.ConsensusRightsDelay + 2;
+            var unfrozenCycle = state.Current.Cycle - unlockDelay;
             var rows = await QueryUnstakeRequestsAsync(unfrozenCycle, filter, pagination);
             return rows.Select(row => new UnstakeRequest
             {
                 Id = row.Id,
                 Cycle = row.Cycle,
-                Baker = Accounts.GetAlias((int)row.BakerId),
-                Staker = row.StakerId == null ? null : Accounts.GetAlias((int)row.StakerId),
+                Baker = accounts.GetAlias((int)row.BakerId),
+                Staker = row.StakerId == null ? null : accounts.GetAlias((int)row.StakerId),
                 RequestedAmount = row.RequestedAmount,
                 RestakedAmount = row.RestakedAmount,
                 FinalizedAmount = row.FinalizedAmount,
@@ -360,17 +351,21 @@ namespace Tzkt.Api.Repositories
                 RoundingError = row.RoundingError,
                 ActualAmount = row.ActualAmount,
                 Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle),
+                UnlockCycle = (int)row.Cycle + unlockDelay,
+                UnlockLevel = protocols.GetCycleStart((int)row.Cycle + unlockDelay),
+                UnlockTime = times[protocols.GetCycleStart((int)row.Cycle + unlockDelay)],
                 UpdatesCount = row.UpdatesCount,
                 FirstLevel = row.FirstLevel,
-                FirstTime = Times[row.FirstLevel],
+                FirstTime = times[row.FirstLevel],
                 LastLevel = row.LastLevel,
-                LastTime = Times[row.LastLevel]
+                LastTime = times[row.LastLevel]
             });
         }
 
         public async Task<object?[][]> GetUnstakeRequests(UnstakeRequestFilter filter, Pagination pagination, List<SelectionField> fields)
         {
-            var unfrozenCycle = State.Current.Cycle - Protocols.Current.ConsensusRightsDelay - 2;
+            var unlockDelay = protocols.Current.ConsensusRightsDelay + 2;
+            var unfrozenCycle = state.Current.Cycle - unlockDelay;
             var rows = await QueryUnstakeRequestsAsync(unfrozenCycle, filter, pagination, fields);
 
             var result = new object?[rows.Count()][];
@@ -391,27 +386,27 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "baker":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId);
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId);
                         break;
                     case "baker.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId).Name;
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId).Name;
                         break;
                     case "baker.address":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias((int)row.BakerId).Address;
+                            result[j++][i] = accounts.GetAlias((int)row.BakerId).Address;
                         break;
                     case "staker":
                         foreach (var row in rows)
-                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias((int)row.StakerId);
+                            result[j++][i] = row.StakerId == null ? null : accounts.GetAlias((int)row.StakerId);
                         break;
                     case "staker.alias":
                         foreach (var row in rows)
-                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias((int)row.StakerId).Name;
+                            result[j++][i] = row.StakerId == null ? null : accounts.GetAlias((int)row.StakerId).Name;
                         break;
                     case "staker.address":
                         foreach (var row in rows)
-                            result[j++][i] = row.StakerId == null ? null : Accounts.GetAlias((int)row.StakerId).Address;
+                            result[j++][i] = row.StakerId == null ? null : accounts.GetAlias((int)row.StakerId).Address;
                         break;
                     case "requestedAmount":
                         foreach (var row in rows)
@@ -441,6 +436,18 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle);
                         break;
+                    case "unlockCycle":
+                        foreach (var row in rows)
+                            result[j++][i] = (int)row.Cycle + unlockDelay;
+                        break;
+                    case "unlockLevel":
+                        foreach (var row in rows)
+                            result[j++][i] = protocols.GetCycleStart((int)row.Cycle + unlockDelay);
+                        break;
+                    case "unlockTime":
+                        foreach (var row in rows)
+                            result[j++][i] = times[protocols.GetCycleStart((int)row.Cycle + unlockDelay)];
+                        break;
                     case "updatesCount":
                         foreach (var row in rows)
                             result[j++][i] = row.UpdatesCount;
@@ -451,7 +458,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "firstTime":
                         foreach (var row in rows)
-                            result[j++][i] = Times[row.FirstLevel];
+                            result[j++][i] = times[row.FirstLevel];
                         break;
                     case "lastLevel":
                         foreach (var row in rows)
@@ -459,7 +466,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "lastTime":
                         foreach (var row in rows)
-                            result[j++][i] = Times[row.LastLevel];
+                            result[j++][i] = times[row.LastLevel];
                         break;
                 }
             }

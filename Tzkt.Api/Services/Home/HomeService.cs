@@ -523,7 +523,9 @@ namespace Tzkt.Api.Services
                         COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
                         COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
                         COALESCE(SUM("OwnDelegatedBalance"), 0)::bigint AS "OwnDelegated",
-                        COALESCE(SUM("ExternalDelegatedBalance"), 0)::bigint AS "ExternalDelegated"
+                        COALESCE(SUM("ExternalDelegatedBalance"), 0)::bigint AS "ExternalDelegated",
+                        COALESCE(SUM("BakingPower"), 0)::bigint AS "BakingPower",
+                        COALESCE(SUM("VotingPower"), 0)::bigint AS "VotingPower"
                 FROM "Accounts"
                 WHERE "Type" = 1
                 AND "Staked" = true
@@ -583,7 +585,9 @@ namespace Tzkt.Api.Services
                 TotalDelegated = totalDelegated,
                 TotalDelegatedPercentage = Math.Round(100.0 * totalDelegated / totalSupply, 2),
                 StakingApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2),
-                DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier
+                DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier,
+                TotalBakingPower = total.BakingPower,
+                TotalVotingPower = total.VotingPower
             };
         }
 
