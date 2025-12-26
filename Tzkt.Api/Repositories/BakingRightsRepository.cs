@@ -280,7 +280,7 @@ namespace Tzkt.Api.Repositories
             var toCycle = toLevel < 2 ? 0 : Protocols.FindByLevel(toLevel).GetCycle(toLevel);
 
             var sql = $@"
-                SELECT ""Level"", ""Slots"", ""Status"" FROM ""BakingRights""
+                SELECT ""Level"", ""Type"", ""Status"" FROM ""BakingRights""
                 WHERE ""BakerId"" = {rawAccount.Id}
                 AND   ""Cycle"" >= {fromCycle} AND ""Cycle"" <= {toCycle}
                 AND   ""Level"" >= {fromLevel} AND ""Level"" <= {toLevel}
@@ -312,13 +312,22 @@ namespace Tzkt.Api.Repositories
                 if (intervals[i].FirstLevel == null || row.Level < intervals[i].FirstLevel)
                     intervals[i].FirstLevel = row.Level;
 
-                if (intervals[i].Status == null || row.Status > intervals[i].Status)
-                    intervals[i].Status = row.Status;
-
-                if (row.Slots == null)
-                    intervals[i].Blocks++;
+                if (row.Type == (int)Data.Models.BakingRightType.Baking)
+                {
+                    intervals[i].TotalBlocks++;
+                    if (row.Status == (int)Data.Models.BakingRightStatus.Future)
+                        intervals[i].FutureBlocks++;
+                    else if (row.Status == (int)Data.Models.BakingRightStatus.Missed)
+                        intervals[i].MissedBlocks++;
+                }
                 else
-                    intervals[i].Slots += row.Slots;
+                {
+                    intervals[i].TotalAttestations++;
+                    if (row.Status == (int)Data.Models.BakingRightStatus.Future)
+                        intervals[i].FutureAttestations++;
+                    else if (row.Status == (int)Data.Models.BakingRightStatus.Missed)
+                        intervals[i].MissedAttestations++;
+                }
             }
 
             return intervals;
