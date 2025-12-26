@@ -111,7 +111,7 @@ namespace Tzkt.Api.Controllers
             [Required][TzAddress] string baker,
             [Required] DateTimeOffset from,
             [Required] DateTimeOffset to,
-            [Min(0)] int maxRound = 0)
+            int? type)
         {
             #region validate
             if (to <= from)
@@ -119,9 +119,14 @@ namespace Tzkt.Api.Controllers
 
             if ((to - from).TotalDays > 14)
                 return new BadRequest(nameof(to), "Maximum schedule period is 14 days");
+
+            if (type != null &&
+                type != (int)Data.Models.BakingRightType.Baking &&
+                type != (int)Data.Models.BakingRightType.Attestation)
+                return new BadRequest(nameof(to), "Invalid rights type");
             #endregion
 
-            return Ok(await BakingRights.GetSchedule(baker, from.UtcDateTime, to.UtcDateTime, maxRound));
+            return Ok(await BakingRights.GetSchedule(baker, from.UtcDateTime, to.UtcDateTime, type));
         }
     }
 }

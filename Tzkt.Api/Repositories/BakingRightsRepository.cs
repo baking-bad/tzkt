@@ -258,7 +258,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int maxRound)
+        public async Task<IEnumerable<BakingInterval>> GetSchedule(string address, DateTime from, DateTime to, int? type)
         {
             var state = State.Current;
             var proto = Protocols.Current;
@@ -279,12 +279,21 @@ namespace Tzkt.Api.Repositories
             var fromCycle = fromLevel < 2 ? 0 : Protocols.FindByLevel(fromLevel).GetCycle(fromLevel);
             var toCycle = toLevel < 2 ? 0 : Protocols.FindByLevel(toLevel).GetCycle(toLevel);
 
-            var sql = $@"
-                SELECT ""Level"", ""Type"", ""Status"" FROM ""BakingRights""
-                WHERE ""BakerId"" = {rawAccount.Id}
-                AND   ""Cycle"" >= {fromCycle} AND ""Cycle"" <= {toCycle}
-                AND   ""Level"" >= {fromLevel} AND ""Level"" <= {toLevel}
-                AND   NOT(""Status"" = 0 AND ""Round"" IS NOT NULL AND ""Round"" > {maxRound})";
+            var sql = $"""
+                SELECT "Level", "Type", "Status"
+                FROM "BakingRights"
+                WHERE "BakerId" = {rawAccount.Id}
+                AND "Cycle" >= {fromCycle} AND "Cycle" <= {toCycle}
+                AND "Level" >= {fromLevel} AND "Level" <= {toLevel}
+
+                """;
+
+            if (type == (int)Data.Models.BakingRightType.Baking)
+                sql += $@"AND ""Type"" = 0 AND (""Status"" != 0 OR ""Round"" = 0)";
+            else if (type == (int)Data.Models.BakingRightType.Attestation)
+                sql += $@"AND ""Type"" = 1";
+            else
+                sql += $@"AND (""Type"" != 0 OR ""Status"" != 0 OR ""Round"" = 0)";
 
             await using var db = await DataSource.OpenConnectionAsync();
             var rows = await db.QueryAsync(sql);
