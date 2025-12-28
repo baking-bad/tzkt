@@ -609,7 +609,21 @@ namespace Tzkt.Api.Services
                     {
                         In = [1, 2],
                     }
-                })
+                }),
+                TotalTz4Bakers = await db.ExecuteScalarAsync<int>("""
+                    SELECT COUNT(*)::integer
+                    FROM "Accounts"
+                    WHERE "Type" = 1
+                    AND "BakingPower" != 0
+                    AND ("Address" LIKE 'tz4%' OR "ConsensusAddress" IS NOT NULL AND "ConsensusAddress" LIKE 'tz4%')
+                    """),
+                TotalDalBakers = await db.ExecuteScalarAsync<int>("""
+                    SELECT COUNT(*)::integer
+                    FROM "Accounts"
+                    WHERE "Type" = 1
+                    AND "BakingPower" != 0
+                    AND "CompanionAddress" IS NOT NULL
+                    """),
             };
         }
         
