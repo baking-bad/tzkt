@@ -21,6 +21,7 @@
             "NetXuTeGinLEqxp" => "quebecnet",
             "NetXPdgaoabtBth" => "rionet",
             "NetXd56aBs1aeW3" => "seoulnet",
+            "NetXsqzbfFenSTS" => "shadownet",
             "NetXe8DbhW9A1eS" => "tallinnnet",
             "NetXYRoAfQDxZux" => "nextnet",
             _ => "private"
