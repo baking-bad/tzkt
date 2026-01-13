@@ -192,7 +192,7 @@ namespace Tzkt.Api.Repositories
             {
                 Address = member.Address,
                 DelegatedBalance = row.DelegatedBalance,
-                StakedPseudotokens = row.StakedPseudotokens,
+                StakedPseudotokens = row.StakedPseudotokens ?? BigInteger.Zero,
                 StakedBalance = row.StakedPseudotokens != null
                     ? (long)((long)row.ExternalStakedBalance * (BigInteger)row.StakedPseudotokens / (BigInteger)row.IssuedPseudotokens)
                     : 0,
