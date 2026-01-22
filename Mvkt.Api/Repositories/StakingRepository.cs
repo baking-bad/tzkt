@@ -491,7 +491,6 @@ namespace Mvkt.Api.Repositories
             var secondsPerCycle = protocol.TimeBetweenBlocks * protocol.BlocksPerCycle;
             var cyclesPerYear = 365.0 * 24 * 60 * 60 / secondsPerCycle;
             
-            // Get last N completed cycles of rewards data for this baker (use 12 cycles for better averaging)
             const int cyclesToAnalyze = 12;
             
             await using var db = await DataSource.OpenConnectionAsync();
