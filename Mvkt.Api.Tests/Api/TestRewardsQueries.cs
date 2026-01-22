@@ -1,4 +1,4 @@
-﻿using System.Net.Http;
+using System.Net.Http;
 using System.Threading.Tasks;
 using Dynamic.Json;
 using Dynamic.Json.Extensions;
@@ -39,6 +39,25 @@ namespace Mvkt.Api.Tests.Api
             var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/stats");
 
             Assert.True(res is DJsonObject);
+            
+            Assert.True((double)res.luck >= 0);
+            Assert.True((double)res.performance >= 0 && (double)res.performance <= 100);
+            Assert.True((double)res.reliability >= 0 && (double)res.reliability <= 100);
+            Assert.True((long)res.totalExpectedRewards >= 0);
+            Assert.True((long)res.totalActualRewards >= 0);
+            
+            if (res.apy != null)
+            {
+                Assert.True(res.apy is DJsonObject);
+                
+                Assert.True((double)res.apy.ownStakeApy >= 0);
+                Assert.True((double)res.apy.externalStakeApy >= 0);
+                Assert.True((double)res.apy.delegationApy >= 0);
+                
+                Assert.True((double)res.apy.ownStakeApy < 1000);
+                Assert.True((double)res.apy.externalStakeApy < 1000);
+                Assert.True((double)res.apy.delegationApy < 1000);
+            }
         }
 
         [Fact]
