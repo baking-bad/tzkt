@@ -219,9 +219,12 @@ namespace Tzkt.Sync.Protocols.Proto24
                         bakerCycle.FutureAttestations = 0;
 
                         var expectedAttestations = (nextProto.BlocksPerCycle * nextProto.AttestersPerBlock).MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
+                        var expectedDalAttestations = (nextProto.BlocksPerCycle * nextProto.NumberOfShards).MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedBlocks = nextProto.BlocksPerCycle.MulRatio(bakerCycle.BakingPower, cycle.TotalBakingPower);
                         bakerCycle.ExpectedAttestations = expectedAttestations;
                         bakerCycle.FutureAttestationRewards = expectedAttestations * attestationRewardPerSlot;
+                        bakerCycle.ExpectedDalAttestations = expectedDalAttestations;
+                        bakerCycle.FutureDalAttestationRewards = expectedDalAttestations * cycle.DalAttestationRewardPerShard;
                     }
 
                     foreach (var br in brs.Where(x => x.Round == 0))
