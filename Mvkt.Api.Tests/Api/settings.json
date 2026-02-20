@@ -1,7 +1,7 @@
 {
-  "url": "https://basenet.api.mavryk.network/",
-  "baker": "mv1V4h45W3p4e1sjSBvRkK2uYbvkTnSuHg8g",
-  "originator": "KT1WdbBw5DXF9fXN378v8VgrPqTsCKu2BPgD",
-  "delegator": "mv1LMue3zJSujtVeEQneaK7VZAeg8WSF3w5y",
-  "cycle": 137
+  "url": "https://api.mavryk.network/",
+  "baker": "mv1MtuibrK2PZpbJLhe1zkxfLq9HXwRsFWuZ",
+  "originator": "mv19MAVgCDwzuNMWprbHrUZhznoH8n9NWGWt",
+  "delegator": "mv1NvY27DrRFvgUMV86WoJKELVCyRa2ZRt9g",
+  "cycle": 50
 }

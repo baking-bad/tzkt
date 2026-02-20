@@ -10,5 +10,6 @@ namespace Mvkt.Api.Models
         public TxsData TxsData { get; set; }
         public MarketData MarketData { get; set; }
         public List<ChartPoint<double>> PriceChart { get; set; }
+        public NetworkRewardsData NetworkRewardsData { get; set; }
     }
 }

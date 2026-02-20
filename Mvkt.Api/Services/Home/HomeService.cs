@@ -47,6 +47,7 @@ namespace Mvkt.Api.Services
         static TxsData TxsData;
         static MarketData MarketData;
         static List<Quote> MarketChart;
+        static NetworkRewardsData NetworkRewardsData;
         #endregion
 
         readonly NpgsqlDataSource DataSource;
@@ -87,7 +88,7 @@ namespace Mvkt.Api.Services
             _ = UpdateAsync();
         }
         
-        public static HomeStats GetCurrentStats(Symbols quote)
+        public static HomeStats GetCurrentStats(Symbols quote, bool cycleRewardSummaries = false)
         {
             if (LastUpdate <= 0)
                 return null;
@@ -141,6 +142,21 @@ namespace Mvkt.Api.Services
                 }).ToList()
             };
             
+            var networkRewardsData = NetworkRewardsData;
+            if (networkRewardsData != null && !cycleRewardSummaries)
+            {
+                networkRewardsData = new NetworkRewardsData
+                {
+                    TotalRewardsAllTime = networkRewardsData.TotalRewardsAllTime,
+                    TotalBlockRewards = networkRewardsData.TotalBlockRewards,
+                    TotalEndorsementRewards = networkRewardsData.TotalEndorsementRewards,
+                    TotalBlockFees = networkRewardsData.TotalBlockFees,
+                    CyclesCount = networkRewardsData.CyclesCount,
+                    AverageRewardsPerCycle = networkRewardsData.AverageRewardsPerCycle,
+                    CycleRewardSummaries = null
+                };
+            }
+
             return new HomeStats
             {
                 DailyData = DailyData,
@@ -150,7 +166,8 @@ namespace Mvkt.Api.Services
                 AccountsData = AccountsData,
                 TxsData = TxsData,
                 MarketData = MarketData,
-                PriceChart = priceChart
+                PriceChart = priceChart,
+                NetworkRewardsData = networkRewardsData
             };
         }
 
@@ -191,7 +208,8 @@ namespace Mvkt.Api.Services
                         TotalBurned = statistics.TotalBurned + burnBalance // Complete burned amount
                     };
                     AccountsData = await GetAccountsData(db); // 320
-                    
+                    NetworkRewardsData = await GetNetworkRewardsData(db);
+
                     LastUpdate = State.Current.Level;
                 }
             }
@@ -656,7 +674,56 @@ namespace Mvkt.Api.Services
                 })
             };
         }
-        
+
+        async Task<NetworkRewardsData> GetNetworkRewardsData(IDbConnection db)
+        {
+            const string sql = @"
+                SELECT
+                    ""Cycle"",
+                    SUM(""BlockRewardsDelegated"" + ""BlockRewardsStakedOwn"" + ""BlockRewardsStakedEdge"" + ""BlockRewardsStakedShared"") AS total_block_rewards,
+                    SUM(""EndorsementRewardsDelegated"" + ""EndorsementRewardsStakedOwn"" + ""EndorsementRewardsStakedEdge"" + ""EndorsementRewardsStakedShared"") AS total_endorsement_rewards,
+                    SUM(""BlockFees"") AS total_block_fees,
+                    COUNT(DISTINCT ""BakerId"") AS active_bakers
+                FROM ""BakerCycles""
+                GROUP BY ""Cycle""
+                ORDER BY ""Cycle"" DESC";
+
+            var rows = (await db.QueryAsync<(int Cycle, long total_block_rewards, long total_endorsement_rewards, long total_block_fees, int active_bakers)>(sql)).ToList();
+
+            long totalBlockRewards = 0, totalEndorsementRewards = 0, totalBlockFees = 0;
+            var cycleRewardSummaries = new List<CycleRewardSummary>();
+
+            foreach (var r in rows)
+            {
+                totalBlockRewards += r.total_block_rewards;
+                totalEndorsementRewards += r.total_endorsement_rewards;
+                totalBlockFees += r.total_block_fees;
+                cycleRewardSummaries.Add(new CycleRewardSummary
+                {
+                    Cycle = r.Cycle,
+                    TotalBlockRewards = r.total_block_rewards,
+                    TotalEndorsementRewards = r.total_endorsement_rewards,
+                    TotalBlockFees = r.total_block_fees,
+                    TotalRewards = r.total_block_rewards + r.total_endorsement_rewards + r.total_block_fees,
+                    ActiveBakers = r.active_bakers
+                });
+            }
+
+            var totalRewardsAllTime = totalBlockRewards + totalEndorsementRewards + totalBlockFees;
+            var cyclesCount = rows.Count;
+
+            return new NetworkRewardsData
+            {
+                TotalRewardsAllTime = totalRewardsAllTime,
+                TotalBlockRewards = totalBlockRewards,
+                TotalEndorsementRewards = totalEndorsementRewards,
+                TotalBlockFees = totalBlockFees,
+                CyclesCount = cyclesCount,
+                AverageRewardsPerCycle = cyclesCount > 0 ? (double)totalRewardsAllTime / cyclesCount : 0,
+                CycleRewardSummaries = cycleRewardSummaries
+            };
+        }
+
         async Task<GovernanceData> GetGovernanceData()
         {
             var epoch = await VotingRepo.GetEpoch(State.Current.VotingEpoch);

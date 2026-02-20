@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
 using NSwag.Annotations;
 using Mvkt.Api.Models;
 using Mvkt.Api.Services;
@@ -11,9 +11,9 @@ namespace Mvkt.Api.Controllers
     public class HomeController : ControllerBase
     {
         [HttpGet]
-        public HomeStats Get(Symbols quote = Symbols.Usd)
+        public HomeStats Get([FromQuery] Symbols quote = Symbols.Usd, [FromQuery] bool cycleRewardSummaries = false)
         {
-            return HomeService.GetCurrentStats(quote);
+            return HomeService.GetCurrentStats(quote, cycleRewardSummaries);
         }
         
         [HttpGet("blocks")]
