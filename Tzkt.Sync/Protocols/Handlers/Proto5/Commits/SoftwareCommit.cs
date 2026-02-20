@@ -12,11 +12,11 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 Id = Cache.AppState.NextSoftwareId(),
                 FirstLevel = block.Level,
-                LastLevel = block.Level,
+                LastLevel = -1,
                 ShortHash = version
             });
 
-            if (software.BlocksCount == 0)
+            if (software.LastLevel == -1)
                 Db.Software.Add(software);
             else
                 Db.TryAttach(software);
