@@ -488,7 +488,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket.ticketer.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Name;
                         break;
                     case "ticket.ticketer.address":
                         foreach (var row in rows)
@@ -861,7 +861,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket.ticketer.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Name;
                         break;
                     case "ticket.ticketer.address":
                         foreach (var row in rows)
@@ -1083,7 +1083,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "ticket.ticketer.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tTicketerId).Name;
                         break;
                     case "ticket.ticketer.address":
                         foreach (var row in rows)

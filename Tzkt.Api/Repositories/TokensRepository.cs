@@ -550,7 +550,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.contract.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tContractId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tContractId).Name;
                         break;
                     case "token.contract.address":
                         foreach (var row in rows)
@@ -914,7 +914,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.contract.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tContractId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tContractId).Name;
                         break;
                     case "token.contract.address":
                         foreach (var row in rows)
@@ -1133,7 +1133,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "token.contract.alias":
                         foreach (var row in rows)
-                            result[j++][i] = Accounts.GetAlias(row.tContractId).Alias;
+                            result[j++][i] = Accounts.GetAlias(row.tContractId).Name;
                         break;
                     case "token.contract.address":
                         foreach (var row in rows)
