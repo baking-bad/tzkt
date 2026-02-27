@@ -1429,7 +1429,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "creator":
                         foreach (var row in rows)
-                            result[j++][i] = await Accounts.GetAliasAsync((int)row.CreatorId);
+                            result[j++][i] = row.CreatorId == null ? null : await Accounts.GetAliasAsync((int)row.CreatorId);
                         break;
                     case "tokensCount":
                         foreach (var row in rows)
@@ -1445,7 +1445,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "pvmKind":
                         foreach (var row in rows)
-                            result[j++][i] = PvmKinds.ToString((int)row.PvmKind);
+                            result[j++][i] = row.PvmKind == null ? null : PvmKinds.ToString((int)row.PvmKind);
                         break;
                     case "genesisCommitment":
                         foreach (var row in rows)
@@ -2124,7 +2124,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "creator":
                     foreach (var row in rows)
-                        result[j++] = await Accounts.GetAliasAsync((int)row.CreatorId);
+                        result[j++] = row.CreatorId == null ? null : await Accounts.GetAliasAsync((int)row.CreatorId);
                     break;
                 case "tokensCount":
                     foreach (var row in rows)
@@ -2140,7 +2140,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "pvmKind":
                     foreach (var row in rows)
-                        result[j++] = PvmKinds.ToString((int)row.PvmKind);
+                        result[j++] = row.PvmKind == null ? null : PvmKinds.ToString((int)row.PvmKind);
                     break;
                 case "genesisCommitment":
                     foreach (var row in rows)
