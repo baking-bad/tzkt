@@ -138,6 +138,21 @@ namespace Tzkt.Sync.Protocols.Proto1
             #endregion
 
             #region bootstrap contracts
+            if (Proto.Config.Precompiles?.Count > 0)
+            {
+                foreach (var hash in Proto.Config.Precompiles)
+                {
+                    var contract = await Proto.Rpc.GetContractAsync(1, hash);
+                    var balance = contract.RequiredInt64("balance");
+                    var delegatePkh = contract.OptionalString("delegate");
+                    var script = contract.Required("script");
+                    var codeStr = script.Required("code").GetRawText();
+                    var storageStr = script.Required("storage").GetRawText();
+
+                    bootstrapContracts.Add((balance, delegatePkh, codeStr, storageStr, hash));
+                }
+            }
+
             var index = 0;
             foreach (var (balance, delegatePkh, codeStr, storageStr, hash) in bootstrapContracts)
             {
