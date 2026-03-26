@@ -264,8 +264,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($"""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
                 	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
                 	FROM "UnstakeRequests"
                 )
                 SELECT {select} FROM "UnstakeRequestsExt"
@@ -306,8 +306,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder("""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
                 	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
                 	FROM "UnstakeRequests"
                 )
                 SELECT COUNT(*) FROM "UnstakeRequestsExt"
