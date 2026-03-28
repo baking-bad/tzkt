@@ -22,7 +22,7 @@ namespace Tzkt.Api
 
         public static string ToString(int cycle, long remainingAmount, int unfrozenCycle)
         {
-            return cycle > unfrozenCycle ? Pending : remainingAmount != 0 ? Finalizable : Finalized;
+            return cycle > unfrozenCycle ? Pending : remainingAmount > 0 ? Finalizable : Finalized;
         }
     }
 }

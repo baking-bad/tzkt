@@ -479,10 +479,10 @@ namespace Tzkt.Api
                         AppendFilter($"{cycleCol} > {unfrozenCycle}");
                         break;
                     case UnstakeRequestStatuses.Finalizable:
-                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} != 0)");
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} > 0)");
                         break;
                     case UnstakeRequestStatuses.Finalized:
-                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} = 0)");
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} <= 0)");
                         break;
                 }
             }
@@ -495,10 +495,10 @@ namespace Tzkt.Api
                         AppendFilter($"{cycleCol} <= {unfrozenCycle}");
                         break;
                     case UnstakeRequestStatuses.Finalizable:
-                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} = 0)");
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} <= 0)");
                         break;
                     case UnstakeRequestStatuses.Finalized:
-                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} != 0)");
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} > 0)");
                         break;
                 }
             }
