@@ -1,12 +1,13 @@
+using Tzkt.Data.Models;
 using Xunit;
 
 namespace Tzkt.Api.Tests.Utils;
 
 public class SqlBuilderUnstakeStatusFilterTests
 {
-    const string CycleCol = @"""Cycle""";
+    const string CycleCol = $@"""{nameof(UnstakeRequest.Cycle)}""";
     const string RemainingAmountCol = @"""RemainingAmount""";
-    const string RoundingErrorCol = @"COALESCE(""RoundingError"", 0)";
+    const string RoundingErrorCol = $@"COALESCE(""{nameof(UnstakeRequest.RoundingError)}"", 0)";
     const int UnfrozenCycle = 800;
 
     [Fact]

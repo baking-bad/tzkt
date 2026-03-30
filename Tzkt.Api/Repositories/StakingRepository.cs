@@ -350,7 +350,7 @@ namespace Tzkt.Api.Repositories
                 SlashedAmount = row.SlashedAmount,
                 RoundingError = row.RoundingError,
                 ActualAmount = row.ActualAmount,
-                Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError ?? 0, unfrozenCycle),
+                Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError, unfrozenCycle),
                 UnlockCycle = (int)row.Cycle + unlockDelay,
                 UnlockLevel = protocols.GetCycleStart((int)row.Cycle + unlockDelay),
                 UnlockTime = times[protocols.GetCycleStart((int)row.Cycle + unlockDelay)],
@@ -434,7 +434,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "status":
                         foreach (var row in rows)
-                            result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError ?? 0, unfrozenCycle);
+                            result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError, unfrozenCycle);
                         break;
                     case "unlockCycle":
                         foreach (var row in rows)

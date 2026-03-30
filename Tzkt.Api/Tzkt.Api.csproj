@@ -11,10 +11,6 @@
 		<Nullable>enable</Nullable>
 	</PropertyGroup>
 
-	<ItemGroup>
-		<InternalsVisibleTo Include="Tzkt.Api.Tests" />
-	</ItemGroup>
-
 	<PropertyGroup>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
 		<NoWarn>$(NoWarn);1591</NoWarn>
@@ -64,7 +60,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
+        <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
     </ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Tzkt.Api.Tests" />
+	</ItemGroup>
 
 </Project>
