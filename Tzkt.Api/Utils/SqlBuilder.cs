@@ -467,7 +467,7 @@ namespace Tzkt.Api
             return this;
         }
 
-        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, UnstakeRequestStatusParameter? status, int unfrozenCycle)
+        public SqlBuilder FilterA(string cycleCol, string remainingAmountCol, string roundingErrorCol, UnstakeRequestStatusParameter? status, int unfrozenCycle)
         {
             if (status == null) return this;
 
@@ -479,10 +479,10 @@ namespace Tzkt.Api
                         AppendFilter($"{cycleCol} > {unfrozenCycle}");
                         break;
                     case UnstakeRequestStatuses.Finalizable:
-                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} > 0)");
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} != {roundingErrorCol})");
                         break;
                     case UnstakeRequestStatuses.Finalized:
-                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} <= 0)");
+                        AppendFilter($"({cycleCol} <= {unfrozenCycle} AND {remainingAmountCol} = {roundingErrorCol})");
                         break;
                 }
             }
@@ -495,10 +495,10 @@ namespace Tzkt.Api
                         AppendFilter($"{cycleCol} <= {unfrozenCycle}");
                         break;
                     case UnstakeRequestStatuses.Finalizable:
-                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} <= 0)");
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} = {roundingErrorCol})");
                         break;
                     case UnstakeRequestStatuses.Finalized:
-                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} > 0)");
+                        AppendFilter($"({cycleCol} > {unfrozenCycle} OR {remainingAmountCol} != {roundingErrorCol})");
                         break;
                 }
             }
