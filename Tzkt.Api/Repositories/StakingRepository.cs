@@ -264,8 +264,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder($"""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
                 	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
                 	FROM "UnstakeRequests"
                 )
                 SELECT {select} FROM "UnstakeRequestsExt"
@@ -280,7 +280,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""SlashedAmount""", filter.slashedAmount)
                 .FilterA(@"""RoundingError""", filter.roundingError)
                 .FilterA(@"""ActualAmount""", filter.actualAmount)
-                .FilterA(@"""Cycle""", @"""RemainingAmount""", filter.status, unfrozenCycle)
+                .FilterA(@"""Cycle""", @"""RemainingAmount""", @"COALESCE(""RoundingError"", 0)", filter.status, unfrozenCycle)
                 .FilterA(@"""UpdatesCount""", filter.updatesCount)
                 .FilterA(@"""FirstLevel""", filter.firstLevel)
                 .FilterA(@"""FirstLevel""", filter.firstTime)
@@ -306,8 +306,8 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder("""
                 WITH "UnstakeRequestsExt" AS NOT MATERIALIZED (
                 	SELECT 	*,
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) AS "ActualAmount",
-                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" - COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) AS "ActualAmount",
+                			"RequestedAmount" - "RestakedAmount" - "SlashedAmount" + COALESCE("RoundingError", 0) - "FinalizedAmount" AS "RemainingAmount"
                 	FROM "UnstakeRequests"
                 )
                 SELECT COUNT(*) FROM "UnstakeRequestsExt"
@@ -322,7 +322,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"""SlashedAmount""", filter.slashedAmount)
                 .FilterA(@"""RoundingError""", filter.roundingError)
                 .FilterA(@"""ActualAmount""", filter.actualAmount)
-                .FilterA(@"""Cycle""", @"""RemainingAmount""", filter.status, unfrozenCycle)
+                .FilterA(@"""Cycle""", @"""RemainingAmount""", @"COALESCE(""RoundingError"", 0)", filter.status, unfrozenCycle)
                 .FilterA(@"""UpdatesCount""", filter.updatesCount)
                 .FilterA(@"""FirstLevel""", filter.firstLevel)
                 .FilterA(@"""FirstLevel""", filter.firstTime)
@@ -350,7 +350,7 @@ namespace Tzkt.Api.Repositories
                 SlashedAmount = row.SlashedAmount,
                 RoundingError = row.RoundingError,
                 ActualAmount = row.ActualAmount,
-                Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle),
+                Status = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError, unfrozenCycle),
                 UnlockCycle = (int)row.Cycle + unlockDelay,
                 UnlockLevel = protocols.GetCycleStart((int)row.Cycle + unlockDelay),
                 UnlockTime = times[protocols.GetCycleStart((int)row.Cycle + unlockDelay)],
@@ -434,7 +434,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "status":
                         foreach (var row in rows)
-                            result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, unfrozenCycle);
+                            result[j++][i] = UnstakeRequestStatuses.ToString(row.Cycle, row.RemainingAmount, row.RoundingError, unfrozenCycle);
                         break;
                     case "unlockCycle":
                         foreach (var row in rows)

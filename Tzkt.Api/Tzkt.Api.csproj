@@ -60,7 +60,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
+        <ProjectReference Include="..\Tzkt.Data\Tzkt.Data.csproj" />
     </ItemGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Tzkt.Api.Tests" />
+	</ItemGroup>
 
 </Project>

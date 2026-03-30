@@ -20,9 +20,9 @@ namespace Tzkt.Api
             return res != null;
         }
 
-        public static string ToString(int cycle, long remainingAmount, int unfrozenCycle)
+        public static string ToString(int cycle, long remainingAmount, long? roundingError, int unfrozenCycle)
         {
-            return cycle > unfrozenCycle ? Pending : remainingAmount != 0 ? Finalizable : Finalized;
+            return cycle > unfrozenCycle ? Pending : remainingAmount != (roundingError ?? 0) ? Finalizable : Finalized;
         }
     }
 }
