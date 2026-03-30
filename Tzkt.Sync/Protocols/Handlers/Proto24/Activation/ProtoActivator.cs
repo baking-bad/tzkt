@@ -7,6 +7,16 @@ namespace Tzkt.Sync.Protocols.Proto24
 {
     partial class ProtoActivator(ProtocolHandler proto) : Proto23.ProtoActivator(proto)
     {
+        protected override void ActivateFeatures()
+        {
+            Cache.AppState.Get().AiActivationLevel = 1;
+        }
+
+        protected override void DeactivateFeatures()
+        {
+            Cache.AppState.Get().AiActivationLevel = null;
+        }
+
         protected override long GetBlockBonusPerBlock(JsonElement issuance, Protocol protocol)
             => issuance.RequiredInt64("baking_reward_bonus_per_block");
 

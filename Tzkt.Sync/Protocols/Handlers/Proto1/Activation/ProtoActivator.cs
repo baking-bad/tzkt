@@ -9,8 +9,8 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (state.Level == 1) // bootstrap
             {
+                ActivateFeatures();
                 var (protocol, parameters) = BootstrapProtocol(rawBlock);
-
                 var accounts = await BootstrapAccounts(protocol, parameters);
                 var cycles = BootstrapCycles(protocol, accounts, parameters);
                 var (bakingRights, attestationRights) = await BootstrapBakingRights(protocol, accounts, cycles);
@@ -46,6 +46,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 await ClearBakingRights();
                 await ClearAccounts();
                 await ClearProtocol();
+                DeactivateFeatures();
             }
             else // downgrade
             {
@@ -54,6 +55,8 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
+        protected virtual void ActivateFeatures() { }
+        protected virtual void DeactivateFeatures() { }
         protected virtual Task ActivateContext(AppState state) => Task.CompletedTask;
         protected virtual Task DeactivateContext(AppState state) => Task.CompletedTask;
         protected virtual Task MigrateContext(AppState state) => Task.CompletedTask;
