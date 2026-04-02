@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Protocols.Proto5
     {
         public TransactionsCommit(ProtocolHandler protocol) : base(protocol) { }
 
-        protected override async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement param)
+        protected override async Task ProcessParameters(TransactionOperation transaction, Account target, JsonElement param)
         {
             string? rawEp = null;
             IMicheline? rawParam;

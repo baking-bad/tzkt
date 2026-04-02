@@ -864,7 +864,7 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ContractId = table.Column<int>(type: "integer", nullable: true),
+                    ContractId = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
                     Level = table.Column<int>(type: "integer", nullable: false),
                     Timestamp = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
@@ -1840,7 +1840,7 @@ namespace Tzkt.Data.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     SenderCodeHash = table.Column<int>(type: "integer", nullable: true),
-                    TargetId = table.Column<int>(type: "integer", nullable: true),
+                    TargetId = table.Column<int>(type: "integer", nullable: false),
                     TargetCodeHash = table.Column<int>(type: "integer", nullable: true),
                     ResetDeactivation = table.Column<int>(type: "integer", nullable: true),
                     Amount = table.Column<long>(type: "bigint", nullable: false),
@@ -1886,8 +1886,8 @@ namespace Tzkt.Data.Migrations
                 {
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    TargetId = table.Column<int>(type: "integer", nullable: true),
-                    TicketerId = table.Column<int>(type: "integer", nullable: true),
+                    TargetId = table.Column<int>(type: "integer", nullable: false),
+                    TicketerId = table.Column<int>(type: "integer", nullable: false),
                     Amount = table.Column<BigInteger>(type: "numeric", nullable: false),
                     RawType = table.Column<byte[]>(type: "bytea", nullable: true),
                     RawContent = table.Column<byte[]>(type: "bytea", nullable: true),

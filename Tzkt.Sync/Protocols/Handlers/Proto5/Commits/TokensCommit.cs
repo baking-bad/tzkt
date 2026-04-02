@@ -32,7 +32,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         var contract = (await Cache.Accounts.GetAsync(
                             op is TransactionOperation tx
-                                ? tx.TargetId!.Value
+                                ? tx.TargetId
                                 : (op as OriginationOperation)!.ContractId!.Value
                         ) as Contract)!;
 
@@ -57,7 +57,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         var contract = (await Cache.Accounts.GetAsync(
                             op is TransactionOperation tx
-                                ? tx.TargetId!.Value
+                                ? tx.TargetId
                                 : (op as OriginationOperation)!.ContractId!.Value
                         ) as Contract)!;
 
@@ -134,8 +134,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 // transfers with no balance updates, e.g. to itself or with 0 amount
                 var pendingTransfers = await Db.TransactionOps
                     //.AsNoTracking()
-                    .Where(x => x.TargetId != null &&
-                                contracts.Contains(x.TargetId.Value) &&
+                    .Where(x => contracts.Contains(x.TargetId) &&
                                 x.Status == OperationStatus.Applied &&
                                 x.Entrypoint == "transfer" &&
                                 x.TokenTransfers == null &&
@@ -148,7 +147,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                     .Concat(pendingUpdates.Select(x => x.Level))
                     .ToHashSet();
 
-                var targets = pendingTransfers.Select(x => x.TargetId!.Value)
+                var targets = pendingTransfers.Select(x => x.TargetId)
                     .Concat(pendingBigMaps.Select(x => x.Value.ContractId))
                     .ToHashSet();
 
@@ -181,7 +180,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ctx.Transfers.Add((from, to, amount));
                     }
 
-                    var contract = (Cache.Accounts.GetCached(tx.TargetId!.Value) as Contract)!;
+                    var contract = (Cache.Accounts.GetCached(tx.TargetId) as Contract)!;
                     ops.Add(tx, (false, contract, tokens));
                 }
 
@@ -235,7 +234,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 if (tx.Status == OperationStatus.Applied && tx.Entrypoint == "transfer")
                 {
-                    var contract = (await Cache.Accounts.GetAsync(tx.TargetId!.Value) as Contract)!;
+                    var contract = (await Cache.Accounts.GetAsync(tx.TargetId) as Contract)!;
                     if (contract.Tags.HasFlag(ContractTags.Ledger))
                     {
                         var tokens = new Dictionary<BigInteger, (
@@ -266,7 +265,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     var contract = (await Cache.Accounts.GetAsync(
                         op is TransactionOperation tx
-                            ? tx.TargetId!.Value
+                            ? tx.TargetId
                             : (op as OriginationOperation)!.ContractId!.Value
                     ) as Contract)!;
 

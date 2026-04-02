@@ -16,8 +16,8 @@ namespace Tzkt.Sync.Protocols.Proto13
         {
             #region init
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var target = await Cache.Accounts.GetAsync(content.RequiredString("destination"));
-            var ticketer = await Cache.Accounts.GetAsync(content.RequiredString("ticket_ticketer"));
+            var target = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
+            var ticketer = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("ticket_ticketer"));
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -49,9 +49,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                     ? result.OptionalInt32("paid_storage_size_diff") * Context.Protocol.ByteCost
                     : null,
                 Amount = BigInteger.Parse(content.RequiredString("ticket_amount")),
-                TicketerId = ticketer?.Id,
+                TicketerId = ticketer.Id,
                 Entrypoint = content.RequiredString("entrypoint"),
-                TargetId = target?.Id
+                TargetId = target.Id
             };
 
             try
@@ -78,8 +78,8 @@ namespace Tzkt.Sync.Protocols.Proto13
             PayFee(sender, operation.BakerFee);
 
             sender.TransferTicketCount++;
-            if (target != null && target != sender) target.TransferTicketCount++;
-            if (ticketer != null && ticketer != sender && ticketer != target) ticketer.TransferTicketCount++;
+            if (target != sender) target.TransferTicketCount++;
+            if (ticketer != sender && ticketer != target) ticketer.TransferTicketCount++;
 
             block.Operations |= Operations.TransferTicket;
 
@@ -131,8 +131,8 @@ namespace Tzkt.Sync.Protocols.Proto13
             RevertPayFee(sender, operation.BakerFee);
 
             sender.TransferTicketCount--;
-            if (target != null && target != sender) target.TransferTicketCount--;
-            if (ticketer != null && ticketer != sender && ticketer != target) ticketer.TransferTicketCount--;
+            if (target != sender) target.TransferTicketCount--;
+            if (ticketer != sender && ticketer != target) ticketer.TransferTicketCount--;
 
             sender.Counter = operation.Counter - 1;
             (sender as User)!.Revealed = true;

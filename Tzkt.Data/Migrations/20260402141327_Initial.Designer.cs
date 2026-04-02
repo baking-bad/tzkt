@@ -14,8 +14,8 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    [Migration("20251216213633_Triggers")]
-    partial class Triggers
+    [Migration("20260402141327_Initial")]
+    partial class Initial
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -2137,7 +2137,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<long>("BakerFee")
                         .HasColumnType("bigint");
 
-                    b.Property<int?>("ContractId")
+                    b.Property<int>("ContractId")
                         .HasColumnType("integer");
 
                     b.Property<int>("Counter")
@@ -4744,7 +4744,7 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("TargetCodeHash")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TargetId")
+                    b.Property<int>("TargetId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TicketTransfers")
@@ -4854,13 +4854,13 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("SubIds")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TargetId")
+                    b.Property<int>("TargetId")
                         .HasColumnType("integer");
 
                     b.Property<int?>("TicketTransfers")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TicketerId")
+                    b.Property<int>("TicketerId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("Timestamp")

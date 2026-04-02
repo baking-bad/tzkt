@@ -252,7 +252,7 @@ namespace Tzkt.Sync
                     accounts.Add(content.RequiredString("source"));
                     if (content.RequiredString("kind") == "transaction")
                     {
-                        if (content.OptionalString("destination") is string dest)
+                        if (content.RequiredString("destination") is string dest)
                         {
                             accounts.Add(dest);
                             if (dest[0] == 'K')
@@ -265,7 +265,7 @@ namespace Tzkt.Sync
                                 accounts.Add(internalContent.RequiredString("source"));
                                 if (internalContent.RequiredString("kind") == "transaction")
                                 {
-                                    if (internalContent.OptionalString("destination") is string internalDest)
+                                    if (internalContent.RequiredString("destination") is string internalDest)
                                     {
                                         accounts.Add(internalDest);
                                         if (internalDest[0] == 'K')

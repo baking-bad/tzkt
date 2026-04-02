@@ -19,7 +19,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region init
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
+            var target = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
 
             var result = content.Required("metadata").Required("operation_result");
 
@@ -35,7 +35,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                TargetId = target?.Id,
+                TargetId = target.Id,
                 TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
@@ -69,12 +69,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             sender.Counter = transaction.Counter;
             sender.TransactionsCount++;
 
-            if (target != null)
-            {
-                Db.TryAttach(target);
-                if (target != sender)
-                    target.TransactionsCount++;
-            }
+            Db.TryAttach(target);
+            if (target != sender)
+                target.TransactionsCount++;
 
             block.Operations |= Operations.Transactions;
 
@@ -89,14 +86,14 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 Spend(sender, transaction.Amount + burned);
 
-                Receive(target!, transaction.Amount);
+                Receive(target, transaction.Amount);
 
-                await ResetGracePeriod(transaction, target!);
+                await ResetGracePeriod(transaction, target);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, target!, storage);
+                    await ProcessStorage(transaction, target, storage);
                 }
 
                 await ApplyAddressRegistryDiffs(transaction, result);
@@ -107,7 +104,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (target!.Id == NullAddress.Id)
+                if (target.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
@@ -124,7 +121,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region init
             var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var target = await Cache.Accounts.GetAsync(content.OptionalString("destination"));
+            var target = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
 
             var result = content.Required("result");
 
@@ -140,7 +137,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 Nonce = content.RequiredInt32("nonce"),
                 SenderId = sender.Id,
                 SenderCodeHash = (sender as Contract)?.CodeHash,
-                TargetId = target?.Id,
+                TargetId = target.Id,
                 TargetCodeHash = (target as Contract)?.CodeHash,
                 Status = result.RequiredString("status") switch
                 {
@@ -177,12 +174,9 @@ namespace Tzkt.Sync.Protocols.Proto1
             Db.TryAttach(sender);
             sender.TransactionsCount++;
 
-            if (target != null)
-            {
-                Db.TryAttach(target);
-                if (target != sender)
-                    target.TransactionsCount++;
-            }
+            Db.TryAttach(target);
+            if (target != sender)
+                target.TransactionsCount++;
 
             if (parentSender != sender && parentSender != target)
                 parentSender.TransactionsCount++;
@@ -202,17 +196,17 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 Spend(sender, transaction.Amount);
 
-                Receive(target!, transaction.Amount);
+                Receive(target, transaction.Amount);
 
                 if (target == parentSender)
                     Proto.Manager.Credit(transaction.Amount);
 
-                await ResetGracePeriod(transaction, target!);
+                await ResetGracePeriod(transaction, target);
 
                 if (result.TryGetProperty("storage", out var storage))
                 {
                     BigMapDiffs = ParseBigMapDiffs(transaction, result);
-                    await ProcessStorage(transaction, target!, storage);
+                    await ProcessStorage(transaction, target, storage);
                 }
 
                 await ApplyAddressRegistryDiffs(transaction, result);
@@ -223,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Proto.Inbox.Push(transaction.Id);
 
                 Cache.Statistics.Current.TotalBurned += burned;
-                if (target!.Id == NullAddress.Id)
+                if (target.Id == NullAddress.Id)
                     Cache.Statistics.Current.TotalBanished += transaction.Amount;
             }
             #endregion
@@ -247,7 +241,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                RevertReceive(target!, transaction.Amount);
+                RevertReceive(target, transaction.Amount);
                 
                 if (target is Data.Models.Delegate delegat)
                 {
@@ -273,7 +267,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             RevertPayFee(sender, transaction.BakerFee);
 
             sender.TransactionsCount--;
-            if (target != null && target != sender) target.TransactionsCount--;
+            if (target != sender) target.TransactionsCount--;
 
             sender.Counter = transaction.Counter - 1;
             if (sender is User user) user.Revealed = true;
@@ -301,7 +295,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             #region revert result
             if (transaction.Status == OperationStatus.Applied)
             {
-                RevertReceive(target!, transaction.Amount);
+                RevertReceive(target, transaction.Amount);
 
                 if (target is Data.Models.Delegate delegat)
                 {
@@ -327,7 +321,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
             #region revert operation
             sender.TransactionsCount--;
-            if (target != null && target != sender) target.TransactionsCount--;
+            if (target != sender) target.TransactionsCount--;
             if (parentSender != sender && parentSender != target) parentSender.TransactionsCount--;
 
             Cache.AppState.Get().TransactionOpsCount--;
@@ -355,7 +349,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             }
         }
 
-        protected virtual async Task ProcessParameters(TransactionOperation transaction, Account? target, JsonElement parameters)
+        protected virtual async Task ProcessParameters(TransactionOperation transaction, Account target, JsonElement parameters)
         {
             var (rawEp, rawParam) = ("default", Micheline.FromJson(parameters)!);
 
@@ -458,7 +452,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             var view = schema.Storage.Schema.ToTreeView(storage);
             var bigmap = view.Nodes().FirstOrDefault(x => x.Schema.Prim == PrimType.big_map);
             if (bigmap != null)
-                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.TargetId!.Value));
+                storage = storage.Replace(bigmap.Value, new MichelineInt(transaction.TargetId));
             return storage;
         }
 
@@ -473,7 +467,7 @@ namespace Tzkt.Sync.Protocols.Proto1
             [
                 new UpdateDiff
                 {
-                    Ptr = transaction.TargetId!.Value,
+                    Ptr = transaction.TargetId,
                     KeyHash = "exprteAx9hWkXvYSQ4nN9SqjJGVR1sTneHQS1QEcSdzckYdXZVvsqY",
                     Key = new MichelineString("KT1R3uoZ6W1ZxEwzqtv75Ro7DhVY6UAcxuK2"),
                     Value = new MichelinePrim

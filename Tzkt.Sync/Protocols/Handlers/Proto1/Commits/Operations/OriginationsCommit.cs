@@ -326,7 +326,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Undelegate(contract!, _contractDelegate);
 
                 contract!.OriginationsCount--;
-                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0 && contract.Index is null)
+                if (contract.TransactionsCount == 0 &&
+                    contract.TransferTicketCount == 0 &&
+                    contract.IncreasePaidStorageCount == 0 &&
+                    contract.TokenTransfersCount == 0 &&
+                    contract.TicketTransfersCount == 0 &&
+                    contract.Index is null)
                 {
                     Db.Accounts.Remove(contract);
                     Cache.Accounts.Remove(contract);
@@ -410,7 +415,12 @@ namespace Tzkt.Sync.Protocols.Proto1
                     Undelegate(contract!, _contractDelegate);
 
                 contract!.OriginationsCount--;
-                if (contract.TokenTransfersCount == 0 && contract.TicketTransfersCount == 0 && contract.Index is null)
+                if (contract.TransactionsCount == 0 &&
+                    contract.TransferTicketCount == 0 &&
+                    contract.IncreasePaidStorageCount == 0 &&
+                    contract.TokenTransfersCount == 0 &&
+                    contract.TicketTransfersCount == 0 &&
+                    contract.Index is null)
                 {
                     Db.Accounts.Remove(contract);
                     Cache.Accounts.Remove(contract);

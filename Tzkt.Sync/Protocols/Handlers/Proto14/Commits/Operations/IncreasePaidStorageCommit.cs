@@ -11,7 +11,7 @@ namespace Tzkt.Sync.Protocols.Proto14
         {
             #region init
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
-            var contract = await Cache.Accounts.GetAsync(content.RequiredString("destination")) as Contract;
+            var contract = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
 
             var result = content.Required("metadata").Required("operation_result");
             var balanceUpdate = result.OptionalArray("balance_updates")?.EnumerateArray()
@@ -31,7 +31,7 @@ namespace Tzkt.Sync.Protocols.Proto14
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
-                ContractId = contract?.Id,
+                ContractId = contract.Id,
                 Amount = BigInteger.Parse(content.RequiredString("amount")),
                 Status = result.RequiredString("status") switch
                 {
@@ -59,7 +59,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             PayFee(sender, operation.BakerFee);
 
             sender.IncreasePaidStorageCount++;
-            if (contract != null) contract.IncreasePaidStorageCount++;
+            if (contract != sender) contract.IncreasePaidStorageCount++;
 
             block.Operations |= Operations.IncreasePaidStorage;
 
@@ -106,7 +106,7 @@ namespace Tzkt.Sync.Protocols.Proto14
             RevertPayFee(sender, operation.BakerFee);
 
             sender.IncreasePaidStorageCount--;
-            if (contract != null) contract.IncreasePaidStorageCount--;
+            if (contract != sender) contract.IncreasePaidStorageCount--;
 
             sender.Counter = operation.Counter - 1;
             (sender as User)!.Revealed = true;

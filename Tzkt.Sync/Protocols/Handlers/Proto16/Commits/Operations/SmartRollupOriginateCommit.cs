@@ -185,7 +185,12 @@ namespace Tzkt.Sync.Protocols.Proto16
 
                 sender.SmartRollupsCount--;
 
-                if (rollup!.TokenTransfersCount == 0 && rollup.TicketTransfersCount == 0 && rollup.Index is null)
+                if (rollup!.TransactionsCount == 0 &&
+                    rollup.TransferTicketCount == 0 &&
+                    rollup.IncreasePaidStorageCount == 0 &&
+                    rollup.TokenTransfersCount == 0 &&
+                    rollup.TicketTransfersCount == 0 &&
+                    rollup.Index is null)
                 {
                     Db.SmartRollups.Remove(rollup);
                     Cache.Accounts.Remove(rollup);

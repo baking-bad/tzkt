@@ -6,8 +6,8 @@ namespace Tzkt.Data.Models
 {
     public class TransferTicketOperation : ManagerOperation
     {
-        public int? TargetId { get; set; }
-        public int? TicketerId { get; set; }
+        public int TargetId { get; set; }
+        public int TicketerId { get; set; }
         public BigInteger Amount { get; set; }
 
         public byte[]? RawType { get; set; }
