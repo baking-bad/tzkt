@@ -12,18 +12,25 @@ namespace Tzkt.Api
 
         public override void Write(Utf8JsonWriter writer, SelectionSingleResponse value, JsonSerializerOptions options)
         {
-            writer.WriteStartObject();
-            for (int j = 0; j < value.Cols.Length; j++)
+            if (value.Vals != null)
             {
-                if (value.Vals?[j] == null)
-                    writer.WriteNull(value.Cols[j]);
-                else
+                writer.WriteStartObject();
+                for (int j = 0; j < value.Cols.Length; j++)
                 {
-                    writer.WritePropertyName(value.Cols[j]);
-                    JsonSerializer.Serialize(writer, value.Vals[j], options);
+                    if (value.Vals[j] == null)
+                        writer.WriteNull(value.Cols[j]);
+                    else
+                    {
+                        writer.WritePropertyName(value.Cols[j]);
+                        JsonSerializer.Serialize(writer, value.Vals[j], options);
+                    }
                 }
+                writer.WriteEndObject();
             }
-            writer.WriteEndObject();
+            else
+            {
+                writer.WriteNullValue();
+            }
         }
     }
 }

@@ -6,6 +6,6 @@ namespace Tzkt.Api
     public class SelectionSingleResponse
     {
         public required string[] Cols { get; set; }
-        public required object?[] Vals { get; set; }
+        public required object?[]? Vals { get; set; }
     }
 }

@@ -210,7 +210,7 @@ namespace Tzkt.Api.Controllers
                     return Ok(new SelectionSingleResponse
                     {
                         Cols = select.Fields,
-                        Vals = (await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields, quote)).First()
+                        Vals = (await Statistics.Get(StatisticsPeriod.None, null, level, null, null, null, null, 1, select.Fields, quote)).FirstOrDefault()
                     });
                 }
             }
