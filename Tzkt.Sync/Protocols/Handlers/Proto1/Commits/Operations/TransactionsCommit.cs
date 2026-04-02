@@ -120,7 +120,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             #region init
             var parentSender = await Cache.Accounts.GetAsync(parent.SenderId);
-            var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
+            var sender = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("source"));
             var target = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
 
             var result = content.Required("result");

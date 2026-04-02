@@ -230,7 +230,8 @@ namespace Tzkt.Sync.Protocols
                                                 ticketsCommit.Append(parent.Transaction, internalTx.Transaction, internalTx.TicketUpdates);
                                             break;
                                         case "event":
-                                            await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
+                                            if (internalContent.RequiredString("source") != NullAddress.Address)
+                                                await new ContractEventCommit(this).Apply(blockCommit.Block, internalContent);
                                             break;
                                         default:
                                             throw new NotImplementedException($"internal '{internalContent.RequiredString("kind")}' is not implemented");

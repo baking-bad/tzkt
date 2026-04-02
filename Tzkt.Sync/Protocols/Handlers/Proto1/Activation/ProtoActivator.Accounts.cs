@@ -11,6 +11,8 @@ namespace Tzkt.Sync.Protocols.Proto1
     {
         protected virtual async Task<List<Account>> BootstrapAccounts(Protocol protocol, JToken parameters)
         {
+            protocol.MaxDelegatedOverFrozenRatio = 0;
+
             var bootstrapAccounts = parameters["bootstrap_accounts"]?
                 .Select(x => (x[0]!.Value<string>()!, x[1]!.Value<long>(), x.Count() > 2 ? x[2]!.Value<string>()! : null))
                 .ToList() ?? [];
