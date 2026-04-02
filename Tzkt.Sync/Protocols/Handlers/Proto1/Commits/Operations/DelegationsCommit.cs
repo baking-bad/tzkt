@@ -83,9 +83,10 @@ namespace Tzkt.Sync.Protocols.Proto1
                 if (sender is Data.Models.Delegate baker)
                 {
                     #region reactivate baker
-                    delegation.PrevDeactivationLevel = baker.DeactivationLevel;
+                    if (baker.DeactivationLevel <= delegation.Level)
+                        await ActivateBaker(baker);
 
-                    await ActivateBaker(baker);
+                    delegation.PrevDeactivationLevel = baker.DeactivationLevel;
                     baker.DeactivationLevel = GracePeriod.Init(Context.Block.Level, Context.Protocol);
                     #endregion
                 }
@@ -276,7 +277,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (delegation.PrevDeactivationLevel is int prevDeactivationLevel)
                     {
                         #region deactivate baker
-                        await DeactivateBaker(baker);
+                        if (delegation.PrevDeactivationLevel <= delegation.Level)
+                            await DeactivateBaker(baker);
+
                         baker.DeactivationLevel = prevDeactivationLevel;
                         #endregion
                     }
