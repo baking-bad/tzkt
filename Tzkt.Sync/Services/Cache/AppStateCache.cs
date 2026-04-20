@@ -211,12 +211,12 @@ namespace Tzkt.Sync.Services.Cache
 
         public void IncreaseManagerCounter(int value)
         {
-            AppState.ManagerCounter += value;
+            //AppState.ManagerCounter += value;
         }
 
         public void ReleaseManagerCounter()
         {
-            --AppState.ManagerCounter;
+            //--AppState.ManagerCounter;
         }
     }
 }

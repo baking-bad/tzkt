@@ -541,7 +541,7 @@ namespace Tzkt.Api.Controllers
             [Required][Address] string address,
             DateTimeOffset? from,
             DateTimeOffset? to,
-            string currency,
+            string? currency,
             bool historical = false,
             string delimiter = "comma",
             string separator = "point")
