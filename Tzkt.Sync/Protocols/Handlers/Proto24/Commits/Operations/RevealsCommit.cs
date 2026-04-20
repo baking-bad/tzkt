@@ -12,14 +12,28 @@ namespace Tzkt.Sync.Protocols.Proto24
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
 
             var pubKey = content.RequiredString("public_key");
-            var result = content.Required("metadata").Required("operation_result");
+            var metadata = content.Required("metadata");
+            var result = metadata.Required("operation_result");
+
+            var refund = metadata
+                .OptionalArray("balance_updates")?
+                .EnumerateArray()
+                .FirstOrDefault(x =>
+                    x.RequiredString("kind") == "accumulator" &&
+                    x.RequiredString("category") == "block fees" &&
+                    x.RequiredInt64("change") < 0)
+                ?? default;
+
+            var bakerFee = content.RequiredInt64("fee")
+                + (refund.ValueKind != JsonValueKind.Undefined ? refund.RequiredInt64("change") : 0);
+
             var reveal = new RevealOperation
             {
                 Id = Cache.AppState.NextOperationId(),
                 OpHash = op.RequiredString("hash"),
                 Level = block.Level,
                 Timestamp = block.Timestamp,
-                BakerFee = content.RequiredInt64("fee"),
+                BakerFee = bakerFee,
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),

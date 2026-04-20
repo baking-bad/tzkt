@@ -13,9 +13,24 @@ namespace Tzkt.Sync.Protocols.Proto24
             var sender = await Cache.Accounts.GetExistingAsync(content.RequiredString("source"));
             var contract = await Cache.Accounts.GetOrCreateAsync(content.RequiredString("destination"));
 
-            var result = content.Required("metadata").Required("operation_result");
+            var metadata = content.Required("metadata");
+            var result = metadata.Required("operation_result");
+
+            var refund = metadata
+                .OptionalArray("balance_updates")?
+                .EnumerateArray()
+                .FirstOrDefault(x =>
+                    x.RequiredString("kind") == "accumulator" &&
+                    x.RequiredString("category") == "block fees" &&
+                    x.RequiredInt64("change") < 0)
+                ?? default;
+
+            var bakerFee = content.RequiredInt64("fee")
+                + (refund.ValueKind != JsonValueKind.Undefined ? refund.RequiredInt64("change") : 0);
+
             var balanceUpdate = result.OptionalArray("balance_updates")?.EnumerateArray()
                 .FirstOrDefault(x => x.RequiredString("kind") == "burned" && x.RequiredString("category") == "storage fees");
+
             var storageFee = balanceUpdate is JsonElement el && el.ValueKind != JsonValueKind.Undefined
                 ? el.RequiredInt64("change")
                 : 0;
@@ -26,7 +41,7 @@ namespace Tzkt.Sync.Protocols.Proto24
                 Level = block.Level,
                 Timestamp = block.Timestamp,
                 OpHash = op.RequiredString("hash"),
-                BakerFee = content.RequiredInt64("fee"),
+                BakerFee = bakerFee,
                 Counter = content.RequiredInt32("counter"),
                 GasLimit = content.RequiredInt32("gas_limit"),
                 StorageLimit = content.RequiredInt32("storage_limit"),
