@@ -25,6 +25,21 @@ namespace Tzkt.Api.Models
         public string? Alias { get; set; }
 
         /// <summary>
+        /// Number of all transaction (tez transfer) operations, related to the account
+        /// </summary>
+        public int NumTransactions { get; set; }
+
+        /// <summary>
+        /// Number of transfer ticket operations sent by the account
+        /// </summary>
+        public int TransferTicketCount { get; set; }
+
+        /// <summary>
+        /// Number of `increase_paid_storage` operations sent by the account
+        /// </summary>
+        public int IncreasePaidStorageCount { get; set; }
+
+        /// <summary>
         /// Number of account tokens with non-zero balances
         /// </summary>
         public int ActiveTokensCount { get; set; }

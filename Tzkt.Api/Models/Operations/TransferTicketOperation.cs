@@ -78,12 +78,12 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the target to which the operation was sent
         /// </summary>
-        public Alias? Target { get; set; }
+        public required Alias Target { get; set; }
 
         /// <summary>
         /// Information about the ticketer
         /// </summary>
-        public Alias? Ticketer { get; set; }
+        public required Alias Ticketer { get; set; }
 
         /// <summary>
         /// Amount sent

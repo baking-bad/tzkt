@@ -95,7 +95,7 @@
         /// <summary>
         /// Information about the target of the transaction
         /// </summary>
-        public Alias? Target { get; set; }
+        public required Alias Target { get; set; }
 
         /// <summary>
         /// Hash of the target contract code, or `null` is the target is not a contract

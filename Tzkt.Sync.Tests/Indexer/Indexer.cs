@@ -23,7 +23,7 @@ namespace Tzkt.Sync.Tests
                 logger.LogInformation("Applying {level} of {total}", state.Level + 1, head);
 
                 using var scope = app.Services.CreateScope();
-                var protocol = scope.ServiceProvider.GetProtocolHandler(state.Level + 1, state.NextProtocol);
+                var protocol = scope.ServiceProvider.GetNextBlockHandler(state);
                 state = await protocol.CommitNextBlock();
             }
 
