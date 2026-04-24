@@ -89,7 +89,7 @@ namespace Tzkt.Api.Websocket.Processors
                 var symbols = Symbols.None;
 
                 var attestations = TypeSubs.TryGetValue(Operations.Attestations, out var attestationsSub)
-                    ? Repo.GetAttestations(null, null, level, null, null, null, limit, symbols)
+                    ? Repo.GetAttestations(null, null, null, level, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.AttestationOperation>());
 
                 var preattestations = TypeSubs.TryGetValue(Operations.Preattestations, out var preattestationsSub)
@@ -121,11 +121,11 @@ namespace Tzkt.Api.Websocket.Processors
                     : Task.FromResult(Enumerable.Empty<Models.DoubleConsensusOperation>());
 
                 var revelations = TypeSubs.TryGetValue(Operations.Revelations, out var revelationsSub)
-                    ? Repo.GetNonceRevelations(null, null, null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetNonceRevelations(null, null, null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.NonceRevelationOperation>());
 
                 var vdfRevelations = TypeSubs.TryGetValue(Operations.VdfRevelation, out var vdfRevelationsSub)
-                    ? Repo.GetVdfRevelations(null, null, level, null, null, null, null, limit, symbols)
+                    ? Repo.GetVdfRevelations(null, null, null, level, null, null, null, null, limit, symbols)
                     : Task.FromResult(Enumerable.Empty<Models.VdfRevelationOperation>());
 
                 var delegations = TypeSubs.TryGetValue(Operations.Delegations, out var delegationsSub)

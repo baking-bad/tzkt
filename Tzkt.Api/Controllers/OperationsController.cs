@@ -149,6 +149,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of attestation operations.
         /// </remarks>
         /// <param name="delegate">Filters attestations by delegate. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters attestations by level.</param>
         /// <param name="timestamp">Filters attestations by timestamp.</param>
         /// <param name="select">Specify comma-separated list of fields to include into response or leave it undefined to return full object. If you select single field, response will be an array of values in both `.fields` and `.values` modes.</param>
@@ -160,6 +161,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("attestations")]
         public async Task<ActionResult<IEnumerable<AttestationOperation>>> GetAttestations(
             AccountParameter? @delegate,
+            Int64Parameter? id,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SelectParameter? select,
@@ -186,7 +188,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("delegate", @delegate), ("level", level), ("timestamp", timestamp),
+                ("delegate", @delegate), ("id", id), ("level", level), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -195,25 +197,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetAttestations(null, @delegate, level, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetAttestations(null, @delegate, id, level, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetAttestations(@delegate, id, level, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetAttestations(@delegate, id, level, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetAttestations(@delegate, id, level, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetAttestations(@delegate, level, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetAttestations(@delegate, id, level, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1332,6 +1334,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="anyof">Filters nonce revelation operations by any of the specified fields. Example: `anyof.baker.sender=tz1...` will return operations where `baker` OR `sender` is equal to the specified value. This parameter is useful when you need to retrieve all operations associated with a specified account.</param>
         /// <param name="baker">Filters nonce revelation operations by baker. Allowed fields for `.eqx` mode: `sender`.</param>
         /// <param name="sender">Filters nonce revelation operations by sender. Allowed fields for `.eqx` mode: `baker`.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters nonce revelation operations by level.</param>
         /// <param name="revealedCycle">Filters by cycle for which the nonce was revealed.</param>
         /// <param name="timestamp">Filters nonce revelation operations by timestamp.</param>
@@ -1348,6 +1351,7 @@ namespace Tzkt.Api.Controllers
             AnyOfParameter? anyof,
             AccountParameter? baker,
             AccountParameter? sender,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
             TimestampParameter? timestamp,
@@ -1396,7 +1400,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("anyof", anyof), ("baker", baker), ("sender", sender), ("level", level), ("revealedCycle", revealedCycle),
+                ("anyof", anyof), ("baker", baker), ("sender", sender), ("id", id), ("level", level), ("revealedCycle", revealedCycle),
                 ("timestamp", timestamp), ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -1405,25 +1409,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetNonceRevelations(null, anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetNonceRevelations(null, anyof, baker, sender, id, level, revealedCycle, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, id, level, revealedCycle, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, id, level, revealedCycle, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetNonceRevelations(anyof, baker, sender, id, level, revealedCycle, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetNonceRevelations(anyof, baker, sender, level, revealedCycle, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetNonceRevelations(anyof, baker, sender, id, level, revealedCycle, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -1493,6 +1497,7 @@ namespace Tzkt.Api.Controllers
         /// Returns a list of vdf revelation operations.
         /// </remarks>
         /// <param name="baker">Filters by baker. Allowed fields for `.eqx` mode: none.</param>
+        /// <param name="id">Filters operations by internal TzKT id.</param>
         /// <param name="level">Filters by level.</param>
         /// <param name="cycle">Filters by cycle in which the operation was included.</param>
         /// <param name="timestamp">Filters by timestamp.</param>
@@ -1505,6 +1510,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("vdf_revelations")]
         public async Task<ActionResult<IEnumerable<VdfRevelationOperation>>> GetVdfRevelations(
             AccountParameter? baker,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? cycle,
             TimestampParameter? timestamp,
@@ -1532,7 +1538,7 @@ namespace Tzkt.Api.Controllers
             #endregion
 
             var query = ResponseCacheService.BuildKey(Request.Path.Value,
-                ("baker", baker), ("level", level), ("cycle", cycle), ("timestamp", timestamp),
+                ("baker", baker), ("id", id), ("level", level), ("cycle", cycle), ("timestamp", timestamp),
                 ("select", select), ("sort", sort), ("offset", offset), ("limit", limit), ("quote", quote));
 
             if (ResponseCache.TryGet(query, out var cached))
@@ -1541,25 +1547,25 @@ namespace Tzkt.Api.Controllers
             object res;
             if (select == null)
             {
-                res = await Operations.GetVdfRevelations(null, baker, level, cycle, timestamp, sort, offset, limit, quote);
+                res = await Operations.GetVdfRevelations(null, baker, id, level, cycle, timestamp, sort, offset, limit, quote);
             }
             else if (select.Values != null)
             {
                 if (select.Values.Length == 1)
-                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values[0], quote);
+                    res = await Operations.GetVdfRevelations(baker, id, level, cycle, timestamp, sort, offset, limit, select.Values[0], quote);
                 else
-                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Values, quote);
+                    res = await Operations.GetVdfRevelations(baker, id, level, cycle, timestamp, sort, offset, limit, select.Values, quote);
             }
             else
             {
                 if (select.Fields!.Length == 1)
-                    res = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields[0], quote);
+                    res = await Operations.GetVdfRevelations(baker, id, level, cycle, timestamp, sort, offset, limit, select.Fields[0], quote);
                 else
                 {
                     res = new SelectionResponse
                     {
                         Cols = select.Fields,
-                        Rows = await Operations.GetVdfRevelations(baker, level, cycle, timestamp, sort, offset, limit, select.Fields, quote)
+                        Rows = await Operations.GetVdfRevelations(baker, id, level, cycle, timestamp, sort, offset, limit, select.Fields, quote)
                     };
                 }
             }
@@ -6025,6 +6031,7 @@ namespace Tzkt.Api.Controllers
         [HttpGet("endorsements")]
         public Task<ActionResult<IEnumerable<AttestationOperation>>> GetEndorsements(
             AccountParameter? @delegate,
+            Int64Parameter? id,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SelectParameter? select,
@@ -6033,7 +6040,7 @@ namespace Tzkt.Api.Controllers
             [Range(0, 10000)] int limit = 100,
             Symbols quote = Symbols.None)
         {
-            return GetAttestations(@delegate, level, timestamp, select, sort, offset, limit, quote);
+            return GetAttestations(@delegate, id, level, timestamp, select, sort, offset, limit, quote);
         }
 
         [OpenApiIgnore]

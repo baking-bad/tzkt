@@ -108,7 +108,7 @@ namespace Tzkt.Api.Repositories
 
             return await GetVdfRevelations(
                 or,
-                null, null, null,
+                null, null, null, null,
                 timestamp,
                 pagination.sort,
                 pagination.offset,
@@ -119,6 +119,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<VdfRevelationOperation>> GetVdfRevelations(
             OrParameter? or,
             AccountParameter? baker,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? cycle,
             TimestampParameter? timestamp,
@@ -130,6 +131,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""VdfRevelationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .FilterA(or)
                 .FilterA(@"o.""BakerId""", baker)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
                 .FilterA(@"o.""Level""", timestamp)
@@ -163,6 +165,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object?[][]> GetVdfRevelations(
             AccountParameter? baker,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? cycle,
             TimestampParameter? timestamp,
@@ -204,6 +207,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VdfRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""BakerId""", baker)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
                 .FilterA(@"o.""Level""", timestamp)
@@ -288,6 +292,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object?[]> GetVdfRevelations(
             AccountParameter? baker,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? cycle,
             TimestampParameter? timestamp,
@@ -326,6 +331,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""VdfRevelationOps"" as o {string.Join(' ', joins)}")
                 .FilterA(@"o.""BakerId""", baker)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Cycle""", cycle)
                 .FilterA(@"o.""Level""", timestamp)

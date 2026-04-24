@@ -2349,7 +2349,7 @@ namespace Tzkt.Api.Repositories
                     var _delegat = new AccountParameter { Eq = delegat.Id };
 
                     var attestations = delegat.AttestationsCount > 0 && types.Contains(ActivityTypes.Attestation)
-                        ? Operations.GetAttestations(null, _delegat, level, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetAttestations(null, _delegat, null, level, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<AttestationOperation>());
 
                     var preattestations = delegat.PreattestationsCount > 0 && types.Contains(ActivityTypes.Preattestation)
@@ -2381,11 +2381,11 @@ namespace Tzkt.Api.Repositories
                         : Task.FromResult(Enumerable.Empty<DoubleConsensusOperation>());
 
                     var nonceRevelations = delegat.NonceRevelationsCount > 0 && types.Contains(ActivityTypes.NonceRevelation)
-                        ? Operations.GetNonceRevelations(null, new AnyOfParameter { Fields = ["baker", "sender"], Eq = delegat.Id }, baker, sender, level, null, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetNonceRevelations(null, new AnyOfParameter { Fields = ["baker", "sender"], Eq = delegat.Id }, baker, sender, null, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<NonceRevelationOperation>());
 
                     var vdfRevelations = delegat.VdfRevelationsCount > 0 && types.Contains(ActivityTypes.VdfRevelation)
-                        ? Operations.GetVdfRevelations(null, _delegat, level, null, timestamp, sort, offset, limit, quote)
+                        ? Operations.GetVdfRevelations(null, _delegat, null, level, null, timestamp, sort, offset, limit, quote)
                         : Task.FromResult(Enumerable.Empty<VdfRevelationOperation>());
 
                     var delegations = delegat.DelegationsCount > 0 && types.Contains(ActivityTypes.Delegation)

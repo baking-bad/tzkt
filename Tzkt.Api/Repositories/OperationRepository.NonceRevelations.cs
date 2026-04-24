@@ -118,7 +118,7 @@ namespace Tzkt.Api.Repositories
 
             return await GetNonceRevelations(
                 or,
-                null, null, null, null, null,
+                null, null, null, null, null, null,
                 timestamp,
                 pagination.sort,
                 pagination.offset,
@@ -131,6 +131,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? baker,
             AccountParameter? sender,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
             TimestampParameter? timestamp,
@@ -144,6 +145,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Level""", timestamp)
@@ -181,6 +183,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? baker,
             AccountParameter? sender,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
             TimestampParameter? timestamp,
@@ -225,6 +228,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Level""", timestamp)
@@ -316,6 +320,7 @@ namespace Tzkt.Api.Repositories
             AnyOfParameter? anyof,
             AccountParameter? baker,
             AccountParameter? sender,
+            Int64Parameter? id,
             Int32Parameter? level,
             Int32Parameter? revealedCycle,
             TimestampParameter? timestamp,
@@ -357,6 +362,7 @@ namespace Tzkt.Api.Repositories
                 .FilterA(anyof, x => x == "baker" ? @"o.""BakerId""" : @"o.""SenderId""")
                 .FilterA(@"o.""BakerId""", baker, x => @"o.""SenderId""")
                 .FilterA(@"o.""SenderId""", sender, x => @"o.""BakerId""")
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""RevealedCycle""", revealedCycle)
                 .FilterA(@"o.""Level""", timestamp)

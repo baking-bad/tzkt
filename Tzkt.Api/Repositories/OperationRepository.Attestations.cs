@@ -99,7 +99,7 @@ namespace Tzkt.Api.Repositories
 
             return await GetAttestations(
                 or,
-                null, null,
+                null, null, null,
                 timestamp,
                 pagination.sort,
                 pagination.offset,
@@ -110,6 +110,7 @@ namespace Tzkt.Api.Repositories
         public async Task<IEnumerable<AttestationOperation>> GetAttestations(
             OrParameter? or,
             AccountParameter? delegat,
+            Int64Parameter? id,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -120,6 +121,7 @@ namespace Tzkt.Api.Repositories
             var sql = new SqlBuilder(@"SELECT o.*, b.""Hash"" FROM ""AttestationOps"" AS o INNER JOIN ""Blocks"" as b ON b.""Level"" = o.""Level""")
                 .Filter(or)
                 .Filter("DelegateId", delegat)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -144,6 +146,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object?[][]> GetAttestations(
             AccountParameter? delegat,
+            Int64Parameter? id,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -180,6 +183,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""AttestationOps"" as o {string.Join(' ', joins)}")
                 .Filter("DelegateId", delegat)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
@@ -243,6 +247,7 @@ namespace Tzkt.Api.Repositories
 
         public async Task<object?[]> GetAttestations(
             AccountParameter? delegat,
+            Int64Parameter? id,
             Int32Parameter? level,
             TimestampParameter? timestamp,
             SortParameter? sort,
@@ -276,6 +281,7 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""AttestationOps"" as o {string.Join(' ', joins)}")
                 .Filter("DelegateId", delegat)
+                .FilterA(@"o.""Id""", id)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .Take(sort, offset, limit, x => x == "level" ? ("Id", "Level") : ("Id", "Id"), "o");
