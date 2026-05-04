@@ -258,7 +258,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="timestamp">Filters attestations by timestamp.</param>
         /// <returns></returns>
         [HttpGet("attestations/count")]
-        public async Task<ActionResult<int>> GetAttestationsCount(
+        public async Task<ActionResult<long>> GetAttestationsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
@@ -6054,7 +6054,7 @@ namespace Tzkt.Api.Controllers
 
         [OpenApiIgnore]
         [HttpGet("endorsements/count")]
-        public Task<ActionResult<int>> GetEndorsementsCount(
+        public Task<ActionResult<long>> GetEndorsementsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {

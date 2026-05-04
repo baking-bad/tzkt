@@ -197,7 +197,7 @@ namespace Tzkt.Sync.Tests.Database
             if (state.DoubleConsensusOpsCount != await db.DoubleConsensusOps.CountAsync())
                 throw new Exception("Invalid AppState.DoubleConsensusOpsCount");
 
-            if (state.AttestationOpsCount != await db.AttestationOps.CountAsync())
+            if (state.AttestationOpsCount != await db.AttestationOps.LongCountAsync())
                 throw new Exception("Invalid AppState.AttestationOpsCount");
 
             if (state.PreattestationOpsCount != await db.PreattestationOps.CountAsync())
