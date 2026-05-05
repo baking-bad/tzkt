@@ -615,7 +615,7 @@ namespace Tzkt.Api.Websocket.Processors
                                     AddByCodeHash(senderSubs.CodeHashSubs, op);
                             }
 
-                            if (op.Target != null && transactionsSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
+                            if (transactionsSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs))
                             {
                                 if (targetSubs.Subs != null)
                                     Add(targetSubs.Subs, op);
@@ -670,10 +670,10 @@ namespace Tzkt.Api.Websocket.Processors
                             if (transferTicketSub.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs) && senderSubs.Subs != null)
                                 Add(senderSubs.Subs, op);
 
-                            if (op.Target != null && transferTicketSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs) && targetSubs.Subs != null)
+                            if (transferTicketSub.AddressSubs.TryGetValue(op.Target.Address, out var targetSubs) && targetSubs.Subs != null)
                                 Add(targetSubs.Subs, op);
 
-                            if (op.Ticketer != null && transferTicketSub.AddressSubs.TryGetValue(op.Ticketer.Address, out var ticketerSubs) && ticketerSubs.Subs != null)
+                            if (transferTicketSub.AddressSubs.TryGetValue(op.Ticketer.Address, out var ticketerSubs) && ticketerSubs.Subs != null)
                                 Add(ticketerSubs.Subs, op);
                         }
                 }
@@ -820,7 +820,7 @@ namespace Tzkt.Api.Websocket.Processors
                             if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Sender.Address, out var senderSubs) && senderSubs.Subs != null)
                                 Add(senderSubs.Subs, op);
 
-                            if (op.Contract != null && increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs) && contractSubs.Subs != null)
+                            if (increasePaidStorageSubs.AddressSubs.TryGetValue(op.Contract.Address, out var contractSubs) && contractSubs.Subs != null)
                                 Add(contractSubs.Subs, op);
                         }
                 }

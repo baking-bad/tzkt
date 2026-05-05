@@ -386,6 +386,9 @@ namespace Tzkt.Api.Repositories
                         Id = rawAccount.Id,
                         Alias = rawAccount.Alias,
                         Address = rawAccount.Address,
+                        NumTransactions = rawAccount.TransactionsCount,
+                        TransferTicketCount = rawAccount.TransferTicketCount,
+                        IncreasePaidStorageCount = rawAccount.IncreasePaidStorageCount,
                         ActiveTokensCount = rawAccount.ActiveTokensCount,
                         TokenBalancesCount = rawAccount.TokenBalancesCount,
                         TokenTransfersCount = rawAccount.TokenTransfersCount,
@@ -712,6 +715,9 @@ namespace Tzkt.Api.Repositories
                             Id = row.Id,
                             Alias = row.Alias,
                             Address = row.Address,
+                            NumTransactions = row.TransactionsCount,
+                            TransferTicketCount = row.TransferTicketCount,
+                            IncreasePaidStorageCount = row.IncreasePaidStorageCount,
                             ActiveTokensCount = row.ActiveTokensCount,
                             TokenBalancesCount = row.TokenBalancesCount,
                             TokenTransfersCount = row.TokenTransfersCount,
@@ -2964,6 +2970,31 @@ namespace Tzkt.Api.Repositories
                     result.AddRange(smartRollupSrPublishOps.Result);
                     result.AddRange(smartRollupSrRecoverBondOps.Result);
                     result.AddRange(smartRollupSrRefuteOps.Result);
+
+                    break;
+                case RawAccount ghost:
+                    var _ghost = new AccountParameter { Eq = ghost.Id };
+
+                    var ghostTransactions = ghost.TransactionsCount > 0 && types.Contains(ActivityTypes.Transaction)
+                        ? Operations.GetTransactions(null, new AnyOfParameter { Fields = ["initiator", "sender", "target"], Eq = ghost.Id }, initiator, sender, target, null, null, level, timestamp, null, null, null, entrypoint, parameter, hasInternals, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransactionOperation>());
+
+                    var ghostTransferTicketOps = ghost.TransferTicketCount > 0 && types.Contains(ActivityTypes.TransferTicket)
+                        ? Operations.GetTransferTicketOps(null, null, _ghost, null, null, null, level, timestamp, status, sort, offset, limit, format, quote)
+                        : Task.FromResult(Enumerable.Empty<TransferTicketOperation>());
+
+                    var ghostIncreasePaidStorageOps = ghost.IncreasePaidStorageCount > 0 && types.Contains(ActivityTypes.IncreasePaidStorage)
+                        ? Operations.GetIncreasePaidStorageOps(null, _ghost, null, level, timestamp, status, sort, offset, limit, quote)
+                        : Task.FromResult(Enumerable.Empty<IncreasePaidStorageOperation>());
+
+                    await Task.WhenAll(
+                        ghostTransactions,
+                        ghostTransferTicketOps,
+                        ghostIncreasePaidStorageOps);
+
+                    result.AddRange(ghostTransactions.Result);
+                    result.AddRange(ghostTransferTicketOps.Result);
+                    result.AddRange(ghostIncreasePaidStorageOps.Result);
 
                     break;
                 default:

@@ -4,6 +4,7 @@ using System.Numerics;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Tzkt.Data;
@@ -13,9 +14,11 @@ using Tzkt.Data;
 namespace Tzkt.Data.Migrations
 {
     [DbContext(typeof(TzktContext))]
-    partial class TzktContextModelSnapshot : ModelSnapshot
+    [Migration("20260402141343_Triggers")]
+    partial class Triggers
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -275,8 +278,8 @@ namespace Tzkt.Data.Migrations
                     b.Property<int?>("AiActivationLevel")
                         .HasColumnType("integer");
 
-                    b.Property<long>("AttestationOpsCount")
-                        .HasColumnType("bigint");
+                    b.Property<int>("AttestationOpsCount")
+                        .HasColumnType("integer");
 
                     b.Property<int>("AttestationRewardOpsCount")
                         .HasColumnType("integer");
@@ -576,7 +579,7 @@ namespace Tzkt.Data.Migrations
                             Id = -1,
                             AccountCounter = 0,
                             ActivationOpsCount = 0,
-                            AttestationOpsCount = 0L,
+                            AttestationOpsCount = 0,
                             AttestationRewardOpsCount = 0,
                             AutostakingOpsCount = 0,
                             BallotOpsCount = 0,
