@@ -121,8 +121,15 @@ while (true)
             var evmNode = scope.ServiceProvider.GetRequiredService<EvmNode>();
             var tezNode = scope.ServiceProvider.GetRequiredService<TezosNode>();
 
+            var evmChainId = await evmNode.PostAsync<string>("eth_chainId");
             var tezActivationLevel = 0;
-            try { tezActivationLevel = await evmNode.PostAsync<int>("tez_getMichelsonActivationLevel"); }
+            try {
+                tezActivationLevel = evmChainId switch
+                {
+                    "0x1f440" => 171555, // previewnet
+                    _ => await evmNode.PostAsync<int>("tez_getMichelsonActivationLevel"),
+                };
+            }
             catch { }
 
             try
