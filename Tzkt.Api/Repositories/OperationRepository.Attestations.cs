@@ -6,7 +6,7 @@ namespace Tzkt.Api.Repositories
 {
     public partial class OperationRepository
     {
-        public async Task<int> GetAttestationsCount(
+        public async Task<long> GetAttestationsCount(
             Int32Parameter? level,
             TimestampParameter? timestamp)
         {
@@ -15,7 +15,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Level", timestamp);
 
             await using var db = await DataSource.OpenConnectionAsync();
-            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+            return await db.QueryFirstAsync<long>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<AttestationOperation>> GetAttestations(string hash, Symbols quote)

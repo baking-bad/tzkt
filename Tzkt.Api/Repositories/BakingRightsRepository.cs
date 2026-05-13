@@ -22,7 +22,7 @@ namespace Tzkt.Api.Repositories
             State = state;
         }
 
-        public async Task<int> GetCount(
+        public async Task<long> GetCount(
             BakingRightTypeParameter? type,
             AccountParameter? baker,
             Int32Parameter? cycle,
@@ -41,7 +41,7 @@ namespace Tzkt.Api.Repositories
                 .Filter("Slots", slots);
 
             await using var db = await DataSource.OpenConnectionAsync();
-            return await db.QueryFirstAsync<int>(sql.Query, sql.Params);
+            return await db.QueryFirstAsync<long>(sql.Query, sql.Params);
         }
 
         public async Task<IEnumerable<BakingRight>> Get(

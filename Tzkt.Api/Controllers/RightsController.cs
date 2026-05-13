@@ -31,7 +31,7 @@ namespace Tzkt.Api.Controllers
         /// <param name="status">Filters rights by status (`future`, `realized`, `missed`)</param>
         /// <returns></returns>
         [HttpGet("count")]
-        public Task<int> GetCount(
+        public Task<long> GetCount(
             BakingRightTypeParameter? type,
             AccountParameter? baker,
             Int32Parameter? cycle,
