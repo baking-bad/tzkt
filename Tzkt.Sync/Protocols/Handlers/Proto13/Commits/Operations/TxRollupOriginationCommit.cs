@@ -1,5 +1,6 @@
-﻿using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
+using System.Diagnostics.Contracts;
+using System.Text.Json;
 using Tzkt.Data.Models;
 using Tzkt.Data.Models.Base;
 
@@ -39,8 +40,9 @@ namespace Tzkt.Sync.Protocols.Proto13
                         TicketBalancesCount = ghost.TicketBalancesCount,
                         TicketTransfersCount = ghost.TicketTransfersCount
                     };
+                    var isAdded = Db.Entry(ghost).State == EntityState.Added;
                     Db.Entry(ghost).State = EntityState.Detached;
-                    Db.Entry(rollup).State = EntityState.Modified;
+                    Db.Entry(rollup).State = isAdded ? EntityState.Added : EntityState.Modified;
                 }
                 else
                 {

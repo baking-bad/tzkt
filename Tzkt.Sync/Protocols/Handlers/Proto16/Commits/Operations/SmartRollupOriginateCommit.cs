@@ -59,8 +59,9 @@ namespace Tzkt.Sync.Protocols.Proto16
                         TicketBalancesCount = ghost.TicketBalancesCount,
                         TicketTransfersCount = ghost.TicketTransfersCount
                     };
+                    var isAdded = Db.Entry(ghost).State == EntityState.Added;
                     Db.Entry(ghost).State = EntityState.Detached;
-                    Db.Entry(rollup).State = EntityState.Modified;
+                    Db.Entry(rollup).State = isAdded ? EntityState.Added : EntityState.Modified;
                 }
                 else
                 {
