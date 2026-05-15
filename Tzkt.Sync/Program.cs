@@ -29,6 +29,7 @@ builder.Services.AddDbContext<TzktContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 builder.Services.AddCache(builder.Configuration);
+builder.Services.AddEvmNode();
 builder.Services.AddTezosNode();
 builder.Services.AddTezosProtocols();
 builder.Services.AddQuotes(builder.Configuration);
@@ -111,6 +112,44 @@ while (true)
         }
 
         logger.LogInformation("Database initialized");
+
+        logger.LogInformation("Initialize state...");
+
+        var state = await db.AppState.AsNoTracking().SingleAsync();
+        if (state.ChainId == string.Empty)
+        {
+            var evmNode = scope.ServiceProvider.GetRequiredService<EvmNode>();
+            var tezNode = scope.ServiceProvider.GetRequiredService<TezosNode>();
+
+            var evmChainId = await evmNode.PostAsync<string>("eth_chainId");
+            var tezActivationLevel = 0;
+            try {
+                tezActivationLevel = evmChainId switch
+                {
+                    "0x1f440" => 171555, // previewnet
+                    _ => await evmNode.PostAsync<int>("tez_getMichelsonActivationLevel"),
+                };
+            }
+            catch { }
+
+            try
+            {
+                var genesis = await tezNode.GetAsync($"chains/main/blocks/{tezActivationLevel}");
+                
+                db.TryAttach(state);
+                state.ChainId = genesis.RequiredString("chain_id");
+                state.NextProtocol = genesis.RequiredString("protocol");
+                state.Level = genesis.Required("header").RequiredInt32("level") - 1;
+                state.QuoteLevel = genesis.Required("header").RequiredInt32("level") - 1;
+                await db.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Failed to init genesis", ex);
+            }
+        }
+
+        logger.LogInformation("State initialized");
         break;
     }
     catch (Exception ex)

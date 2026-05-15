@@ -63,6 +63,15 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required string {name}");
         }
 
+        public static string? OptionalString(this JsonElement el)
+        {
+            if (el.ValueKind == JsonValueKind.Null)
+                return null;
+
+            return el.ValueKind == JsonValueKind.String ? el.GetString()
+                : throw new SerializationException($"Expected string but got {el.ValueKind}");
+        }
+
         public static string? OptionalString(this JsonElement el, string name)
         {
             if (!el.TryGetProperty(name, out var res) || res.ValueKind == JsonValueKind.Null)

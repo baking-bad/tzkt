@@ -289,19 +289,19 @@ namespace Tzkt.Api.Repositories
                 if (user.StakingUpdatesCount > 0) SumStakingUpdates(union, from, to);
             }
 
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.AttestationRewardsCount > 0) SumAttestationRewards(union, from, to);
-                if (delegat.DalAttestationRewardsCount > 0) SumDalAttestationRewards(union, from, to);
-                if (delegat.BlocksCount > 0) SumBaking(union, from, to);
-                if (delegat.AttestationsCount > 0) SumAttestations(union, from, to);
-                if (delegat.DoubleBakingCount > 0) SumDoubleBaking(union, from, to);
-                if (delegat.DoubleConsensusCount > 0) SumDoubleConsensus(union, from, to);
-                if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
-                if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
-                if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
-                if (delegat.UpdateSecondaryKeyCount > 0) SumUpdateSecondaryKeyOps(union, from, to);
-            }
+            //if (account is RawDelegate delegat)
+            //{
+            //    if (delegat.AttestationRewardsCount > 0) SumAttestationRewards(union, from, to);
+            //    if (delegat.DalAttestationRewardsCount > 0) SumDalAttestationRewards(union, from, to);
+            //    if (delegat.BlocksCount > 0) SumBaking(union, from, to);
+            //    if (delegat.AttestationsCount > 0) SumAttestations(union, from, to);
+            //    if (delegat.DoubleBakingCount > 0) SumDoubleBaking(union, from, to);
+            //    if (delegat.DoubleConsensusCount > 0) SumDoubleConsensus(union, from, to);
+            //    if (delegat.NonceRevelationsCount > 0) SumNonceRevelations(union, from, to);
+            //    if (delegat.VdfRevelationsCount > 0) SumVdfRevelations(union, from, to);
+            //    if (delegat.RevelationPenaltiesCount > 0) SumRevelationPenalties(union, from, to);
+            //    if (delegat.UpdateSecondaryKeyCount > 0) SumUpdateSecondaryKeyOps(union, from, to);
+            //}
 
             return union.ToString();
         }
@@ -1250,19 +1250,19 @@ namespace Tzkt.Api.Repositories
                 if (user.StakingUpdatesCount > 0) UnionStakingUpdates(union);
             }
 
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(union);
-                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(union);
-                if (delegat.BlocksCount > 0) UnionBaking(union);
-                if (delegat.AttestationsCount > 0) UnionAttestations(union);
-                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(union);
-                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(union);
-                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
-                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
-                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
-                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(union);
-            }
+            //if (account is RawDelegate delegat)
+            //{
+            //    if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(union);
+            //    if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(union);
+            //    if (delegat.BlocksCount > 0) UnionBaking(union);
+            //    if (delegat.AttestationsCount > 0) UnionAttestations(union);
+            //    if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(union);
+            //    if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(union);
+            //    if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(union);
+            //    if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(union);
+            //    if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(union);
+            //    if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(union);
+            //}
 
             return union.ToString();
         }

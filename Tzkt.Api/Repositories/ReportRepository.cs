@@ -70,19 +70,19 @@ namespace Tzkt.Api.Repositories
                 if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
-                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
-                if (delegat.BlocksCount > 0) UnionBaking(sql);
-                if (delegat.AttestationsCount > 0) UnionAttestations(sql);
-                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
-                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
-                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
-                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
-            }
+            //if (account is RawDelegate delegat)
+            //{
+            //    if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
+            //    if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
+            //    if (delegat.BlocksCount > 0) UnionBaking(sql);
+            //    if (delegat.AttestationsCount > 0) UnionAttestations(sql);
+            //    if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
+            //    if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
+            //    if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+            //    if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
+            //    if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+            //    if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
+            //}
 
             if (sql.Length == 0) return;
 
@@ -206,19 +206,19 @@ namespace Tzkt.Api.Repositories
                 if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
-                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
-                if (delegat.BlocksCount > 0) UnionBaking(sql);
-                if (delegat.AttestationsCount > 0) UnionAttestations(sql);
-                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
-                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
-                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
-                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
-            }
+            //if (account is RawDelegate delegat)
+            //{
+            //    if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
+            //    if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
+            //    if (delegat.BlocksCount > 0) UnionBaking(sql);
+            //    if (delegat.AttestationsCount > 0) UnionAttestations(sql);
+            //    if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
+            //    if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
+            //    if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+            //    if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
+            //    if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+            //    if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
+            //}
 
             if (sql.Length == 0) return;
 
@@ -376,19 +376,19 @@ namespace Tzkt.Api.Repositories
                 if (user.StakingUpdatesCount > 0) UnionStakingUpdates(sql);
             }
 
-            if (account is RawDelegate delegat)
-            {
-                if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
-                if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
-                if (delegat.BlocksCount > 0) UnionBaking(sql);
-                if (delegat.AttestationsCount > 0) UnionAttestations(sql);
-                if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
-                if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
-                if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
-                if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
-                if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
-                if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
-            }
+            //if (account is RawDelegate delegat)
+            //{
+            //    if (delegat.AttestationRewardsCount > 0) UnionAttestationRewards(sql);
+            //    if (delegat.DalAttestationRewardsCount > 0) UnionDalAttestationRewards(sql);
+            //    if (delegat.BlocksCount > 0) UnionBaking(sql);
+            //    if (delegat.AttestationsCount > 0) UnionAttestations(sql);
+            //    if (delegat.DoubleBakingCount > 0) UnionDoubleBaking(sql);
+            //    if (delegat.DoubleConsensusCount > 0) UnionDoubleConsensus(sql);
+            //    if (delegat.NonceRevelationsCount > 0) UnionNonceRevelations(sql);
+            //    if (delegat.VdfRevelationsCount > 0) UnionVdfRevelations(sql);
+            //    if (delegat.RevelationPenaltiesCount > 0) UnionRevelationPenalties(sql);
+            //    if (delegat.UpdateSecondaryKeyCount > 0) UnionUpdateSecondaryKeyOps(sql);
+            //}
 
             if (sql.Length == 0) return;
 

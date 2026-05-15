@@ -8,7 +8,7 @@ namespace Tzkt.Data.Models
     public class TransactionOperation : ContractOperation
     {
         public int? SenderCodeHash { get; set; }
-        public int? TargetId { get; set; }
+        public int TargetId { get; set; }
         public int? TargetCodeHash { get; set; }
         public int? ResetDeactivation { get; set; }
 

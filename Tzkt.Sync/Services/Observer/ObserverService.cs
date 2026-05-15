@@ -179,7 +179,7 @@ namespace Tzkt.Sync.Services
                     using (_metrics.Measure.Timer.Time(MetricsRegistry.ApplyBlockTime))
                     {
                         using var scope = _services.CreateScope();
-                        var protocol = scope.ServiceProvider.GetProtocolHandler(_appState.Level + 1, _appState.NextProtocol);
+                        var protocol = scope.ServiceProvider.GetNextBlockHandler(_appState);
                         _appState = await protocol.CommitNextBlock();
                     }
                     _metrics.Measure.Gauge.SetHealthValue(_appState);
@@ -202,7 +202,7 @@ namespace Tzkt.Sync.Services
 
         private async Task RebaseLocalBranch(CancellationToken cancellationToken)
         {
-            while (_appState.Level >= 0 && !cancellationToken.IsCancellationRequested)
+            while (_appState.BlocksCount > 0 && !cancellationToken.IsCancellationRequested)
             {
                 try
                 {
@@ -213,8 +213,8 @@ namespace Tzkt.Sync.Services
                     using (_metrics.Measure.Timer.Time(MetricsRegistry.RevertBlockTime))
                     {
                         using var scope = _services.CreateScope();
-                        var protocol = scope.ServiceProvider.GetProtocolHandler(_appState.Level, _appState.Protocol);
-                        _appState = await protocol.RevertLastBlock(remote.Predecessor);
+                        var protocol = scope.ServiceProvider.GetCurrentBlockHandler(_appState);
+                        _appState = await protocol.RevertLastBlock();
                     }
                     _metrics.Measure.Gauge.SetHealthValue(_appState);
                     _logger.LogInformation("Reverted to {level} of {total}", _appState.Level, _appState.KnownHead);

@@ -1,6 +1,5 @@
 using System.Data;
 using Dapper;
-using Dynamic.Json;
 using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Repositories;
@@ -330,23 +329,16 @@ namespace Tzkt.Api.Services
 
         CycleData GetCycleData()
         {
-            var state = State.Current;
-            var cycle = state.Cycle;
-            var level = state.Level;
-            var cycleSize = Protocols.FindByCycle(cycle).BlocksPerCycle;
-            var firstLevel = Protocols.FindByCycle(cycle).GetCycleStart(cycle);
-            var lastLevel = Protocols.FindByCycle(cycle).GetCycleEnd(cycle);
-
             return new CycleData
             {
-                Cycle = cycle,
-                Level = level,
-                Timestamp = state.Timestamp,
-                FirstLevel = firstLevel,
-                StartTime = Times[firstLevel],
-                LastLevel = lastLevel,
-                EndTime = Times[lastLevel],
-                Progress = Math.Round(100.0 * (level - firstLevel + 1) / cycleSize, 2)
+                Cycle = State.Current.Cycle,
+                Level = State.Current.Level,
+                Timestamp = State.Current.Timestamp,
+                FirstLevel = 0,
+                StartTime = DateTimeOffset.MinValue.UtcDateTime,
+                LastLevel = 0,
+                EndTime = DateTimeOffset.MinValue.UtcDateTime,
+                Progress = 0
             };
         }
 
@@ -516,78 +508,30 @@ namespace Tzkt.Api.Services
 
         async Task<StakingData> GetStakingData(IDbConnection db, long totalSupply)
         {
-            var protocol = Protocols.Current;
-
-            var total = await db.QueryFirstAsync($"""
-                SELECT  COUNT(*)::integer as "ActiveBakers",
-                        COALESCE(SUM("OwnStakedBalance"), 0)::bigint AS "OwnStaked",
-                        COALESCE(SUM("ExternalStakedBalance"), 0)::bigint AS "ExternalStaked",
-                        COALESCE(SUM("OwnDelegatedBalance"), 0)::bigint AS "OwnDelegated",
-                        COALESCE(SUM("ExternalDelegatedBalance"), 0)::bigint AS "ExternalDelegated",
-                        COALESCE(SUM("BakingPower"), 0)::bigint AS "BakingPower",
-                        COALESCE(SUM("VotingPower"), 0)::bigint AS "VotingPower"
-                FROM "Accounts"
-                WHERE "Type" = 1
-                AND "Staked" = true
-            """);
-
-            var funded = await db.ExecuteScalarAsync<int>("""
-                SELECT COUNT(*)
-                FROM "Accounts"
-                WHERE "Type" = 1
-                AND "Staked" = true
-                AND "BakingPower" != 0
-                """);
-
-            var futureCycle = await db.QueryFirstAsync<Data.Models.Cycle>("""
-                SELECT *
-                FROM "Cycles"
-                ORDER BY "Index" DESC
-                LIMIT 1
-                """);
-
-            var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
-            
-            var maxRewardsPerBlock = futureCycle.BlockReward
-                + futureCycle.BlockBonusPerBlock
-                + futureCycle.AttestationRewardPerBlock
-                + futureCycle.DalAttestationRewardPerShard * protocol.NumberOfShards
-                + futureCycle.NonceRevelationReward / protocol.BlocksPerCommitment
-                + futureCycle.VdfRevelationReward / protocol.BlocksPerCycle;
-
-            var blocksPerYear = 365 * 24 * 60 * 60 / protocol.TimeBetweenBlocks;
-            var totalRewardsPerYear = maxRewardsPerBlock * blocksPerYear;
-            var totalCreatedPerYear = (maxRewardsPerBlock + lbSubsidyPerBlock) * blocksPerYear;
-
-            var totalStaked = (long)total.OwnStaked + (long)total.ExternalStaked;
-            var totalDelegated = (long)total.OwnDelegated + (long)total.ExternalDelegated;
-            var totalBakingPower = totalStaked + totalDelegated / protocol.StakePowerMultiplier;
-            var totalStaking = totalStaked + totalDelegated;
-
             return new StakingData
             {
-                TotalStaking = totalStaking,
-                StakingPercentage = Math.Round(100.0 * totalStaking / totalSupply, 2),
-                AvgRoi = Math.Round(100.0 * totalRewardsPerYear / totalStaking, 2),
-                Inflation = Math.Round(100.0 * totalCreatedPerYear / totalSupply, 2),
-                Bakers = total.ActiveBakers,
-                FundedBakers = funded,
-                OwnStaked = total.OwnStaked,
-                OwnStakedPercentage = Math.Round(100.0 * total.OwnStaked / totalSupply, 2),
-                ExternalStaked = total.ExternalStaked,
-                ExternalStakedPercentage = Math.Round(100.0 * total.ExternalStaked / totalSupply, 2),
-                TotalStaked = totalStaked,
-                TotalStakedPercentage = Math.Round(100.0 * totalStaked / totalSupply, 2),
-                OwnDelegated = total.OwnDelegated,
-                OwnDelegatedPercentage = Math.Round(100.0 * total.OwnDelegated / totalSupply, 2),
-                ExternalDelegated = total.ExternalDelegated,
-                ExternalDelegatedPercentage = Math.Round(100.0 * total.ExternalDelegated / totalSupply, 2),
-                TotalDelegated = totalDelegated,
-                TotalDelegatedPercentage = Math.Round(100.0 * totalDelegated / totalSupply, 2),
-                StakingApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2),
-                DelegationApy = Math.Round(100.0 * totalRewardsPerYear / totalBakingPower, 2) / protocol.StakePowerMultiplier,
-                TotalBakingPower = total.BakingPower,
-                TotalVotingPower = total.VotingPower
+                TotalStaking = 0,
+                StakingPercentage = 0,
+                AvgRoi = 0,
+                Inflation = 0,
+                Bakers = 0,
+                FundedBakers = 0,
+                OwnStaked = 0,
+                OwnStakedPercentage = 0,
+                ExternalStaked = 0,
+                ExternalStakedPercentage = 0,
+                TotalStaked = 0,
+                TotalStakedPercentage = 0,
+                OwnDelegated = 0,
+                OwnDelegatedPercentage = 0,
+                ExternalDelegated = 0,
+                ExternalDelegatedPercentage = 0,
+                TotalDelegated = 0,
+                TotalDelegatedPercentage = 0,
+                StakingApy = 0,
+                DelegationApy = 0,
+                TotalBakingPower = 0,
+                TotalVotingPower = 0
             };
         }
 
@@ -629,62 +573,17 @@ namespace Tzkt.Api.Services
         
         async Task<GovernanceData> GetGovernanceData()
         {
-            var epoch = (await VotingRepo.GetEpoch(State.Current.VotingEpoch))!;
-            var period = epoch.Periods.Last();
-            var proposals = epoch.Proposals.OrderByDescending(x => x.VotingPower).ToList();
-            var proposal = proposals.FirstOrDefault();
-            var proposalExtras = proposal?.Extras == null ? null : DJson.Parse(proposal.Extras);
-            
-            if (period.Kind == PeriodKinds.Proposal)
+            return new GovernanceData
             {
-                return new GovernanceData
-                {
-                    Epoch = period.Epoch,
-                    Period = period.Kind,
-                    Protocol = proposals.Any() ? null : State.Current.Protocol,
-                    Proposals = proposals.Select(x => new ProposalData
-                    {
-                        Hash = x.Hash,
-                        Extras = x.Extras,
-                        VotingPower = x.VotingPower,
-                        VotingPowerPercentage = Math.Round(100.0 * x.VotingPower / period.TotalVotingPower, 2)
-                    }).ToList(),
-                    UpvotesQuorum = period.UpvotesQuorum,
-                    PeriodEndTime = period.EndTime,
-                    EpochStartTime = Times[epoch.FirstLevel],
-                    EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
-                };
-            }
-
-            var result = new GovernanceData
-            {
-                Epoch = period.Epoch,
-                Proposal = proposal!.Hash,
-                Protocol = proposalExtras?.alias,
-                Period = period.Kind,
-                PeriodEndTime = period.EndTime,
-                EpochStartTime = Times[epoch.FirstLevel],
-                EpochEndTime = Times[epoch.FirstLevel + (Protocols.Current.BlocksPerVoting * 5)],
+                Epoch = 0,
+                Period = "proposal",
+                Protocol = State.Current.Protocol,
+                Proposals = [],
+                UpvotesQuorum = 0,
+                PeriodEndTime = DateTimeOffset.MaxValue.UtcDateTime,
+                EpochStartTime = DateTimeOffset.MinValue.UtcDateTime,
+                EpochEndTime = DateTimeOffset.MaxValue.UtcDateTime,
             };
-
-            if (period.Kind is PeriodKinds.Exploration or PeriodKinds.Promotion)
-            {
-                var yayNaySum = (long)period.YayVotingPower! + (long)period.NayVotingPower!;
-                var totalVoted = yayNaySum + (long)period.PassVotingPower!;
-
-                result.YayVotes = yayNaySum > 0
-                    ? Math.Round(100.0 * (long)period.YayVotingPower / yayNaySum, 2)
-                    : 0;
-
-                result.Participation = period.TotalVotingPower > 0
-                    ? Math.Round(100.0 * totalVoted / period.TotalVotingPower, 2)
-                    : 0;
-
-                result.BallotsQuorum = Math.Round((double)period.BallotsQuorum!, 2);
-                result.Supermajority = Math.Round((double)period.Supermajority!, 2);
-            }
-
-            return result;
         }
         #endregion
 

@@ -91,7 +91,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                Target = Accounts.GetAlias(row.TargetId),
                 TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
@@ -167,7 +167,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                Target = Accounts.GetAlias(row.TargetId),
                 TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
@@ -242,7 +242,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                Target = Accounts.GetAlias(row.TargetId),
                 TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
@@ -299,7 +299,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                Target = Accounts.GetAlias(row.TargetId),
                 TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
@@ -501,7 +501,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 AllocationFee = row.AllocationFee ?? 0,
-                Target = row.TargetId != null ? Accounts.GetAlias(row.TargetId) : null,
+                Target = Accounts.GetAlias(row.TargetId),
                 TargetCodeHash = row.TargetCodeHash,
                 Amount = row.Amount,
                 Parameter = row.Entrypoint == null ? null : new TxParameter
@@ -743,7 +743,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "target":
                         foreach (var row in rows)
-                            result[j++][i] = row.TargetId != null ? await Accounts.GetAliasAsync(row.TargetId) : null;
+                            result[j++][i] = await Accounts.GetAliasAsync(row.TargetId);
                         break;
                     case "targetCodeHash":
                         foreach (var row in rows)
@@ -1038,7 +1038,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "target":
                     foreach (var row in rows)
-                        result[j++] = row.TargetId != null ? await Accounts.GetAliasAsync(row.TargetId) : null;
+                        result[j++] = await Accounts.GetAliasAsync(row.TargetId);
                     break;
                 case "targetCodeHash":
                     foreach (var row in rows)

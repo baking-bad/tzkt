@@ -230,7 +230,7 @@ while (true)
         }
 
         var state = db.AppState.Single();
-        if (state.Level < 1)
+        if (state.BlocksCount < 2)
         {
             logger.LogWarning("No data in the database. Let's wait for the indexer to index at least two blocks, and try again.");
             Thread.Sleep(3000);

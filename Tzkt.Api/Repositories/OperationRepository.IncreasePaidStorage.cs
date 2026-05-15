@@ -47,7 +47,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
-                Contract = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId),
+                Contract = Accounts.GetAlias(row.ContractId),
                 Amount = row.Amount,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -83,7 +83,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
-                Contract = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId),
+                Contract = Accounts.GetAlias(row.ContractId),
                 Amount = row.Amount,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -117,7 +117,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
-                Contract = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId),
+                Contract = Accounts.GetAlias(row.ContractId),
                 Amount = row.Amount,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -221,7 +221,7 @@ namespace Tzkt.Api.Repositories
                 BakerFee = row.BakerFee,
                 StorageFee = row.StorageFee ?? 0,
                 Status = OpStatuses.ToString(row.Status),
-                Contract = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId),
+                Contract = Accounts.GetAlias(row.ContractId),
                 Amount = row.Amount,
                 Errors = row.Errors != null ? OperationErrorSerializer.Deserialize(row.Errors) : null,
                 Quote = Quotes.Get(quote, row.Level)
@@ -359,7 +359,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "contract":
                         foreach (var row in rows)
-                            result[j++][i] = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId);
+                            result[j++][i] = Accounts.GetAlias(row.ContractId);
                         break;
                     case "amount":
                         foreach (var row in rows)
@@ -505,7 +505,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "contract":
                     foreach (var row in rows)
-                        result[j++] = row.ContractId == null ? null : Accounts.GetAlias(row.ContractId);
+                        result[j++] = Accounts.GetAlias(row.ContractId);
                     break;
                 case "amount":
                     foreach (var row in rows)

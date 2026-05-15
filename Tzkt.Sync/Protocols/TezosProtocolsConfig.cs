@@ -2,7 +2,6 @@
 {
     public class TezosProtocolsConfig
     {
-        public bool Diagnostics { get; set; } = false;
         public bool Validation { get; set; } = true;
         public List<string>? Precompiles { get; set; } = null;
     }

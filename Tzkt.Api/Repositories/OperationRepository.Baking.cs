@@ -50,7 +50,7 @@ namespace Tzkt.Api.Repositories
                 BonusStakedOwn = row.BonusStakedOwn,
                 BonusStakedEdge = row.BonusStakedEdge,
                 BonusStakedShared = row.BonusStakedShared,
-                Fees = row.Fees,
+                Fees = 0,//row.Fees,
                 Quote = Quotes.Get(quote, row.Level)
             };
         }
@@ -139,7 +139,7 @@ namespace Tzkt.Api.Repositories
                 BonusStakedOwn = row.BonusStakedOwn,
                 BonusStakedEdge = row.BonusStakedEdge,
                 BonusStakedShared = row.BonusStakedShared,
-                Fees = row.Fees,
+                Fees = 0,//row.Fees,
                 Quote = Quotes.Get(quote, row.Level)
             });
         }
@@ -278,7 +278,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "fees":
                         foreach (var row in rows)
-                            result[j++][i] = row.Fees;
+                            result[j++][i] = 0;// row.Fees;
                         break;
                     case "quote":
                         foreach (var row in rows)
@@ -419,7 +419,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "fees":
                     foreach (var row in rows)
-                        result[j++] = row.Fees;
+                        result[j++] = 0;// row.Fees;
                     break;
                 case "quote":
                     foreach (var row in rows)

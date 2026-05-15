@@ -86,7 +86,7 @@ namespace Tzkt.Api.Models
         /// <summary>
         /// Information about the contract for which paid storage was increased
         /// </summary>
-        public Alias? Contract { get; set; }
+        public required Alias Contract { get; set; }
 
         /// <summary>
         /// Amount of storage in bytes prepaid.
