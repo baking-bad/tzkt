@@ -122,8 +122,9 @@ namespace Tzkt.Sync.Protocols.Proto24
                         TicketBalancesCount = ghost.TicketBalancesCount,
                         TicketTransfersCount = ghost.TicketTransfersCount
                     };
+                    var isAdded = Db.Entry(ghost).State == EntityState.Added;
                     Db.Entry(ghost).State = EntityState.Detached;
-                    Db.Entry(contract).State = EntityState.Modified;
+                    Db.Entry(contract).State = isAdded ? EntityState.Added : EntityState.Modified;
                 }
                 else
                 {
@@ -269,8 +270,9 @@ namespace Tzkt.Sync.Protocols.Proto24
                         TicketBalancesCount = ghost.TicketBalancesCount,
                         TicketTransfersCount = ghost.TicketTransfersCount
                     };
+                    var isAdded = Db.Entry(ghost).State == EntityState.Added;
                     Db.Entry(ghost).State = EntityState.Detached;
-                    Db.Entry(contract).State = EntityState.Modified;
+                    Db.Entry(contract).State = isAdded ? EntityState.Added : EntityState.Modified;
                 }
                 else
                 {
