@@ -546,7 +546,16 @@ namespace Tzkt.Api.Services
                 LIMIT 1
                 """);
 
-            var lbSubsidyPerBlock = 5_000_000 * protocol.TimeBetweenBlocks / 60;
+            var lbToggleEma = await db.ExecuteScalarAsync<int>("""
+                SELECT "LBToggleEma"
+                FROM "Blocks"
+                ORDER BY "Id" DESC
+                LIMIT 1
+                """);
+
+            var lbSubsidyPerBlock = lbToggleEma < protocol.LBToggleThreshold
+                ? 5_000_000 * protocol.TimeBetweenBlocks / 60
+                : 0;
             
             var maxRewardsPerBlock = futureCycle.BlockReward
                 + futureCycle.BlockBonusPerBlock
