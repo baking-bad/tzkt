@@ -217,7 +217,7 @@ namespace Tzkt.Sync.Protocols.Proto19
 
             await Db.Database.ExecuteSqlRawAsync("""
                 UPDATE "Blocks"
-                SET "Events" = "Events" & {0}
+                SET "Events" = "Events" | {0}
                 WHERE "Level" = {1}
                 """, BlockEvents.DelegationSnapshot, block.Level);
         }

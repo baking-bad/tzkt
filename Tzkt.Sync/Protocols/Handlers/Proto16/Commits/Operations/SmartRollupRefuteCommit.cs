@@ -364,7 +364,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                         {
                             game.InitiatorReward = null;
                         }
-                        else
+                        else if (initiatorChange < 0)
                         {
                             game.InitiatorLoss = null;
                             initiator.SmartRollupBonds -= initiatorChange;
@@ -397,12 +397,17 @@ namespace Tzkt.Sync.Protocols.Proto16
                                 }
                             }
                         }
+                        else
+                        {
+                            game.InitiatorReward = null;
+                            game.InitiatorLoss = null;
+                        }
 
                         if (opponentChange > 0)
                         {
                             game.OpponentReward = null;
                         }
-                        else
+                        else if (opponentChange < 0)
                         {
                             game.OpponentLoss = null;
                             opponent.SmartRollupBonds -= opponentChange;
@@ -434,6 +439,11 @@ namespace Tzkt.Sync.Protocols.Proto16
                                     rollup.PendingCommitments += cnt;
                                 }
                             }
+                        }
+                        else
+                        {
+                            game.OpponentReward = null;
+                            game.OpponentLoss = null;
                         }
 
                         if (initiatorChange > 0)
