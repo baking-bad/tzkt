@@ -252,12 +252,10 @@ namespace Tzkt.Sync
                     accounts.Add(content.RequiredString("source"));
                     if (content.RequiredString("kind") == "transaction")
                     {
-                        if (content.OptionalString("destination") is string dest)
-                        {
-                            accounts.Add(dest);
-                            if (dest[0] == 'K')
-                                contracts.Add(dest);
-                        }
+                        var dest = content.RequiredString("destination");
+                        accounts.Add(dest);
+                        if (dest[0] == 'K')
+                            contracts.Add(dest);
 
                         if (content.Required("metadata").TryGetProperty("internal_operation_results", out var internalResults))
                             foreach (var internalContent in internalResults.RequiredArray().EnumerateArray())
@@ -265,12 +263,10 @@ namespace Tzkt.Sync
                                 accounts.Add(internalContent.RequiredString("source"));
                                 if (internalContent.RequiredString("kind") == "transaction")
                                 {
-                                    if (internalContent.OptionalString("destination") is string internalDest)
-                                    {
-                                        accounts.Add(internalDest);
-                                        if (internalDest[0] == 'K')
-                                            contracts.Add(internalDest);
-                                    }
+                                    var internalDest = internalContent.RequiredString("destination");
+                                    accounts.Add(internalDest);
+                                    if (internalDest[0] == 'K')
+                                        contracts.Add(internalDest);
                                 }
                             }
                     }
