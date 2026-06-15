@@ -23,6 +23,7 @@
             "NetXd56aBs1aeW3" => "seoulnet",
             "NetXsqzbfFenSTS" => "shadownet",
             "NetXe8DbhW9A1eS" => "tallinnnet",
+            "NetXpX8WSZkAZZA" => "ushuaianet",
             "NetXYRoAfQDxZux" => "nextnet",
             _ => "private"
         };
