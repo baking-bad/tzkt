@@ -37,10 +37,9 @@ If you use free-tier TzKT API, you **must** mention it on your website or applic
 It's available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
-- Ghostnet: `https://api.ghostnet.tzkt.io/` ([view docs](https://api.ghostnet.tzkt.io))
 - Shadownet: `https://api.shadownet.tzkt.io/` ([view docs](https://api.shadownet.tzkt.io))
-- Seoulnet: `https://api.seoulnet.tzkt.io/` ([view docs](https://api.seoulnet.tzkt.io))
 - Tallinnnet: `https://api.tallinnnet.tzkt.io/` ([view docs](https://api.tallinnnet.tzkt.io))
+- Ushuaianet: `https://api.ushuaianet.tzkt.io/` ([view docs](https://api.ushuaianet.tzkt.io))
 
 ### Sending Requests
 

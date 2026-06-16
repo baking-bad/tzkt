@@ -67,24 +67,24 @@ shadownet-stop:
 shadownet-db-start:
 	docker-compose -f docker-compose.shadownet.yml up -d shadownet-db
 
-tallinnnet-init:
-	docker-compose -f docker-compose.tallinnnet.yml up   -d tallinnnet-db
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db psql -U tzkt postgres -c '\l'
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db dropdb -U tzkt --if-exists tzkt_db
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db createdb -U tzkt -T template0 tzkt_db
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db apt update
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db apt install -y wget
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db wget "https://snapshots.tzkt.io/tzkt_v1.17_tallinnnet.backup" -O tzkt_db.backup
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db rm tzkt_db.backup
-	docker-compose -f docker-compose.tallinnnet.yml exec -T tallinnnet-db apt autoremove --purge -y wget
+ushuaianet-init:
+	docker-compose -f docker-compose.ushuaianet.yml up   -d ushuaianet-db
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db psql -U tzkt postgres -c '\l'
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db dropdb -U tzkt --if-exists tzkt_db
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db createdb -U tzkt -T template0 tzkt_db
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db apt update
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db apt install -y wget
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db wget "https://snapshots.tzkt.io/tzkt_v1.17_ushuaianet.backup" -O tzkt_db.backup
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db pg_restore -U tzkt -O -x -v -d tzkt_db -e -j 4 tzkt_db.backup
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db rm tzkt_db.backup
+	docker-compose -f docker-compose.ushuaianet.yml exec -T ushuaianet-db apt autoremove --purge -y wget
 	docker-compose pull	
 	
-tallinnnet-start:
-	docker-compose -f docker-compose.tallinnnet.yml up -d
+ushuaianet-start:
+	docker-compose -f docker-compose.ushuaianet.yml up -d
 
-tallinnnet-stop:
-	docker-compose -f docker-compose.tallinnnet.yml down
+ushuaianet-stop:
+	docker-compose -f docker-compose.ushuaianet.yml down
 
-tallinnnet-db-start:
-	docker-compose -f docker-compose.tallinnnet.yml up -d tallinnnet-db
+ushuaianet-db-start:
+	docker-compose -f docker-compose.ushuaianet.yml up -d ushuaianet-db

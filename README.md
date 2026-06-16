@@ -257,9 +257,9 @@ In general the steps are the same as for the mainnet, you will just need to use 
  - Shadownet:
    - Snapshot: https://snapshots.tzkt.io/tzkt_v1.17_shadownet.backup
    - RPC node: https://rpc.tzkt.io/shadownet/
- - Tallinnnet:
-   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.17_tallinnnet.backup
-   - RPC node: https://rpc.tzkt.io/tallinnnet/
+ - Ushuaianet:
+   - Snapshot: https://snapshots.tzkt.io/tzkt_v1.17_ushuaianet.backup
+   - RPC node: https://rpc.tzkt.io/ushuaianet/
 
 ### Testnets & docker
 
