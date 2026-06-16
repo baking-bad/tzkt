@@ -25,12 +25,3 @@ jobs:
             TzKT ${{ env.RELEASE_VERSION }} has been released 😻
             Docker images will be available in a few minutes.
             More info at https://github.com/baking-bad/tzkt/releases/tag/${{ env.RELEASE_VERSION }}
-      - name: Slack notification
-        uses: Ilshidur/action-slack@master
-        env:
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-        with:
-          args: |
-            TzKT ${{ env.RELEASE_VERSION }} has been released 😻
-            Docker images will be available in a few minutes.
-            More info at https://github.com/baking-bad/tzkt/releases/tag/${{ env.RELEASE_VERSION }}
