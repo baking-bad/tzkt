@@ -39,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     transaction.Entrypoint = normEp;
                     transaction.RawParameters = schema.OptimizeParameter(normEp, normParam).ToBytes();
-                    transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
+                    transaction.JsonParameters = Regexes.Metadata().Replace(schema.HumanizeParameter(normEp, normParam), string.Empty);
                 }
                 catch (Exception ex)
                 {
@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto5
 
                     transaction.Entrypoint = normEp;
                     transaction.RawParameters = schema.OptimizeParameter(normEp, normParam).ToBytes();
-                    transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
+                    transaction.JsonParameters = Regexes.Metadata().Replace(schema.HumanizeParameter(normEp, normParam), string.Empty);
                 }
                 catch (Exception ex)
                 {
@@ -123,7 +123,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ]
                     });
 
-                    transaction.JsonParameters = schema.Humanize(ticketValue);
+                    transaction.JsonParameters = Regexes.Metadata().Replace(schema.Humanize(ticketValue), string.Empty);
                 }
                 catch (Exception ex)
                 {
