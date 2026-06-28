@@ -358,6 +358,101 @@ namespace Tzkt.Api
             return true;
         }
 
+        public static bool TryGetAddressWithEntrypoint(this ModelBindingContext bindingContext, string name, ref bool hasValue, out (string, byte[]?)? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Regexes.AddressWithEntrypoint().IsMatch(valueObject.FirstValue))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid account address.");
+                        return false;
+                    }
+                    else if (valueObject.FirstValue.Length > 37)
+                    {
+                        if (!Utf8.TryParse(valueObject.FirstValue[37..], out var ep))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "Invalid account entrypoint.");
+                            return false;
+                        }
+                        hasValue = true;
+                        result = (valueObject.FirstValue[..36], ep);
+                    }
+                    else if (valueObject.FirstValue.Length == 37)
+                    {
+                        hasValue = true;
+                        result = (valueObject.FirstValue[..36], []);
+                    }
+                    else
+                    {
+                        hasValue = true;
+                        result = (valueObject.FirstValue, null);
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetAddressWithEntrypointNullList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<(string?, byte[]?)>? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    hasValue = true;
+                    result = new List<(string?, byte[]?)>(rawValues.Length);
+
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Regexes.AddressWithEntrypoint().IsMatch(rawValue))
+                        {
+                            if (rawValue != "null")
+                            {
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid account address.");
+                                return false;
+                            }
+                            result.Add((null, null));
+                        }
+                        else if (rawValue.Length > 37)
+                        {
+                            if (!Utf8.TryParse(rawValue[37..], out var ep))
+                            {
+                                bindingContext.ModelState.TryAddModelError(name, "List contains invalid account entrypoint.");
+                                return false;
+                            }
+                            result.Add((rawValue[..36], ep));
+                        }
+                        else if (rawValue.Length == 37)
+                        {
+                            result.Add((rawValue[..36], []));
+                        }
+                        else
+                        {
+                            result.Add((rawValue, null));
+                        }
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public static bool TryGetAddress(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)
         {
             result = null;
@@ -1950,6 +2045,64 @@ namespace Tzkt.Api
                 default:
                     return $"\"{value}\"";
             }
+        }
+
+        public static bool TryGetUtf8Bytes(this ModelBindingContext bindingContext, string name, ref bool hasValue, out byte[]? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    if (!Utf8.TryParse(valueObject.FirstValue, out var bytes))
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Invalid utf8.");
+                        return false;
+                    }
+                    hasValue = true;
+                    result = bytes;
+                }
+            }
+
+            return true;
+        }
+
+        public static bool TryGetUtf8BytesList(this ModelBindingContext bindingContext, string name, ref bool hasValue, out List<byte[]>? result)
+        {
+            result = null;
+            var valueObject = bindingContext.ValueProvider.GetValue(name);
+
+            if (valueObject != ValueProviderResult.None)
+            {
+                if (!string.IsNullOrEmpty(valueObject.FirstValue))
+                {
+                    var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+                    if (rawValues.Length == 0)
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List should contain at least one item.");
+                        return false;
+                    }
+
+                    var list = new List<byte[]>(rawValues.Length);
+                    foreach (var rawValue in rawValues)
+                    {
+                        if (!Utf8.TryParse(rawValue, out var bytes))
+                        {
+                            bindingContext.ModelState.TryAddModelError(name, "List contains invalid utf8.");
+                            return false;
+                        }
+                        list.Add(bytes);
+                    }
+
+                    hasValue = true;
+                    result = list;
+                }
+            }
+
+            return true;
         }
 
         public static bool TryGetString(this ModelBindingContext bindingContext, string name, ref bool hasValue, out string? result)

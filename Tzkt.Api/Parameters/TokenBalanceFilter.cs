@@ -15,7 +15,13 @@ namespace Tzkt.Api
         /// Filter by account address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter? account { get; set; }
+        public AccountWithEntrypointParameter? account { get; set; }
+
+        /// <summary>
+        /// Filter by account address entrypoint.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Utf8BytesParameter? entrypoint { get; set; }
 
         /// <summary>
         /// Filter by token.  
@@ -59,8 +65,9 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("account", account), ("token", token), ("balance", balance), ("firstLevel", firstLevel),
-                ("firstTime", firstTime), ("lastLevel", lastLevel), ("lastTime", lastTime), ("indexedAt", indexedAt));
+                ("id", id), ("account", account), ("entrypoint", entrypoint), ("token", token),
+                ("balance", balance), ("firstLevel", firstLevel), ("firstTime", firstTime),
+                ("lastLevel", lastLevel), ("lastTime", lastTime), ("indexedAt", indexedAt));
         }
     }
 }

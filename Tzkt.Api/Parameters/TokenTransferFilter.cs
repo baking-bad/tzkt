@@ -36,19 +36,31 @@ namespace Tzkt.Api
         /// This parameter is useful when you need to get both incoming and outgoing transfers of the account at once.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AnyOfParameter? anyof { get; set; }
+        public AnyOfWithEntrypointParameter? anyof { get; set; }
 
         /// <summary>
         /// Filter by sender account address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter? from { get; set; }
+        public AccountWithEntrypointParameter? from { get; set; }
+
+        /// <summary>
+        /// Filter by sender account address entrypoint.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Utf8BytesParameter? fromEntrypoint { get; set; }
 
         /// <summary>
         /// Filter by target account address.  
         /// Click on the parameter to expand more details.
         /// </summary>
-        public AccountParameter? to { get; set; }
+        public AccountWithEntrypointParameter? to { get; set; }
+
+        /// <summary>
+        /// Filter by target account address entrypoint.  
+        /// Click on the parameter to expand more details.
+        /// </summary>
+        public Utf8BytesParameter? toEntrypoint { get; set; }
 
         /// <summary>
         /// Filter by amount.  
@@ -83,8 +95,10 @@ namespace Tzkt.Api
         public string Normalize(string name)
         {
             return ResponseCacheService.BuildKey("",
-                ("id", id), ("level", level), ("timestamp", timestamp), ("token", token), ("anyof", anyof), ("from", from), ("to", to),
-                ("amount", amount), ("transactionId", transactionId), ("originationId", originationId), ("migrationId", migrationId), ("indexedAt", indexedAt));
+                ("id", id), ("level", level), ("timestamp", timestamp), ("token", token), ("anyof", anyof),
+                ("from", from), ("fromEntrypoint", fromEntrypoint), ("to", to), ("toEntrypoint", toEntrypoint),
+                ("amount", amount), ("transactionId", transactionId), ("originationId", originationId),
+                ("migrationId", migrationId), ("indexedAt", indexedAt));
         }
     }
 }

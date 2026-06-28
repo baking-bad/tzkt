@@ -35,10 +35,20 @@ namespace Tzkt.Api.Models
         public Alias? From { get; set; }
 
         /// <summary>
+        /// Address entrypoint, specified when sending tokens.
+        /// </summary>
+        public string? FromEntrypoint { get; set; }
+
+        /// <summary>
         /// Target account.  
         /// Click on the field to expand more details.
         /// </summary>
         public Alias? To { get; set; }
+
+        /// <summary>
+        /// Address entrypoint, specified when sending tokens.
+        /// </summary>
+        public string? ToEntrypoint { get; set; }
 
         /// <summary>
         /// Amount of tokens transferred (raw value, not divided by `decimals`).  

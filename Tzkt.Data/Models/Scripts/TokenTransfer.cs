@@ -12,7 +12,9 @@ namespace Tzkt.Data.Models
         public BigInteger Amount { get; set; }
 
         public int? FromId { get; set; }
+        public byte[]? FromEntrypoint { get; set; }
         public int? ToId { get; set; }
+        public byte[]? ToEntrypoint { get; set; }
 
         public long? OriginationId { get; set; }
         public long? TransactionId { get; set; }

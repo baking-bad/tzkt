@@ -9,6 +9,7 @@ namespace Tzkt.Data.Models
         public required long TokenId { get; set; }
         public required int ContractId { get; set; }
         public required int AccountId { get; set; }
+        public required byte[]? Entrypoint { get; set; }
         public required int FirstLevel { get; set; }
         public required int LastLevel { get; set; }
         public int TransfersCount { get; set; }
@@ -48,8 +49,7 @@ namespace Tzkt.Data.Models
                 .HasIndex(x => new { x.AccountId, x.ContractId });
 
             modelBuilder.Entity<TokenBalance>()
-                .HasIndex(x => new { x.AccountId, x.TokenId })
-                .IsUnique();
+                .HasIndex(x => new { x.AccountId, x.TokenId });
 
             modelBuilder.Entity<TokenBalance>()
                 .HasIndex(x => x.LastLevel);

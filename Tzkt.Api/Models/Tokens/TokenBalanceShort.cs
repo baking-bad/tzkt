@@ -12,6 +12,11 @@ namespace Tzkt.Api.Models
         public required Alias Account { get; set; }
 
         /// <summary>
+        /// Address entrypoint, specified when sending tokens.
+        /// </summary>
+        public string? Entrypoint { get; set; }
+
+        /// <summary>
         /// Token info.  
         /// Click on the field to expand more details.
         /// </summary>

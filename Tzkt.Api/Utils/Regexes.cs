@@ -7,6 +7,9 @@ namespace Tzkt.Api
         [GeneratedRegex("^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}$")]
         public static partial Regex Address();
 
+        [GeneratedRegex("^(tz1|tz2|tz3|tz4|KT1|txr1|sr1)[0-9A-Za-z]{33}(%.*)?$")]
+        public static partial Regex AddressWithEntrypoint();
+
         [GeneratedRegex("^tz[0-9A-Za-z]{34}$")]
         public static partial Regex TzAddress();
 

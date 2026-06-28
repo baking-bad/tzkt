@@ -16,8 +16,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                 bool Reset,
                 Contract Contract,
                 Dictionary<BigInteger, (
-                    List<(string From, string To, BigInteger Amount)> Transfers,
-                    List<(string Address, BigInteger Balance)> Balances
+                    List<(string From, byte[]? FromEp, string To, byte[]? ToEp, BigInteger Amount)> Transfers,
+                    List<(string Address, byte[]? Ep, BigInteger Balance)> Balances
                 )> Tokens
             )>();
             var opBlocks = new Dictionary<int, Block> { { block.Level, block } };
@@ -167,18 +167,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                     }
 
                     var tokens = new Dictionary<BigInteger, (
-                        List<(string From, string To, BigInteger Amount)> Transfers,
-                        List<(string Address, BigInteger Balance)> Balances
+                        List<(string From, byte[]? FromEp, string To, byte[]? ToEp, BigInteger Amount)> Transfers,
+                        List<(string Address, byte[]? Ep, BigInteger Balance)> Balances
                     )>();
 
-                    foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
+                    foreach (var (from, fromEp, to,  toEp, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
                     {
                         if (!tokens.TryGetValue(tokenId, out var ctx))
                         {
                             ctx = ([], []);
                             tokens.Add(tokenId, ctx);
                         }
-                        ctx.Transfers.Add((from, to, amount));
+                        ctx.Transfers.Add((from, fromEp, to, toEp, amount));
                     }
 
                     var contract = (Cache.Accounts.GetCached(tx.TargetId!.Value) as Contract)!;
@@ -214,14 +214,14 @@ namespace Tzkt.Sync.Protocols.Proto5
                     {
                         var key = keys[update.BigMapKeyId!.Value];
 
-                        foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
+                        foreach (var (address, ep, tokenId, balance) in BigMaps.ParseLedger(bigmap, key, update))
                         {
                             if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                             {
                                 tokenCtx = ([], []);
                                 opCtx.Tokens.Add(tokenId, tokenCtx);
                             }
-                            tokenCtx.Balances.Add((address, balance));
+                            tokenCtx.Balances.Add((address, ep, balance));
                         }
                     }
 
@@ -239,18 +239,18 @@ namespace Tzkt.Sync.Protocols.Proto5
                     if (contract.Tags.HasFlag(ContractTags.Ledger))
                     {
                         var tokens = new Dictionary<BigInteger, (
-                            List<(string From, string To, BigInteger Amount)> Transfers,
-                            List<(string Address, BigInteger Balance)> Balances
+                            List<(string From, byte[]? FromEp, string To, byte[]? ToEp, BigInteger Amount)> Transfers,
+                            List<(string Address, byte[]? Ep, BigInteger Balance)> Balances
                         )>();
 
-                        foreach (var (from, to, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
+                        foreach (var (from, fromEp, to, toEp, tokenId, amount) in ParseTransferParam(Micheline.FromBytes(tx.RawParameters!)))
                         {
                             if (!tokens.TryGetValue(tokenId, out var ctx))
                             {
                                 ctx = ([], []);
                                 tokens.Add(tokenId, ctx);
                             }
-                            ctx.Transfers.Add((from, to, amount));
+                            ctx.Transfers.Add((from, fromEp, to, toEp, amount));
                         }
 
                         ops.Add(tx, (false, contract, tokens));
@@ -280,14 +280,14 @@ namespace Tzkt.Sync.Protocols.Proto5
                 }
                 else
                 {
-                    foreach (var (address, tokenId, balance) in BigMaps.ParseLedger(bigmap, key!, update))
+                    foreach (var (address, ep, tokenId, balance) in BigMaps.ParseLedger(bigmap, key!, update))
                     {
                         if (!opCtx.Tokens.TryGetValue(tokenId, out var tokenCtx))
                         {
                             tokenCtx = ([], []);
                             opCtx.Tokens.Add(tokenId, tokenCtx);
                         }
-                        tokenCtx.Balances.Add((address, balance));
+                        tokenCtx.Balances.Add((address, ep, balance));
                     }
                 }
             }
@@ -298,20 +298,20 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region precache
             var accountsSet = new HashSet<string>();
             var tokensSet = new HashSet<(int, BigInteger)>();
-            var balancesSet = new HashSet<(int, long)>();
+            var balancesSet = new HashSet<(int, HashableBytes?, long)>();
             var nftAccountsSet = new HashSet<int>();
 
             foreach (var (op, opCtx) in ops)
             {
                 foreach (var (tokenId, tokenCtx) in opCtx.Tokens)
                 {
-                    foreach (var (from, to, _) in tokenCtx.Transfers)
+                    foreach (var (from, _, to, _, _) in tokenCtx.Transfers)
                     {
                         accountsSet.Add(from);
                         accountsSet.Add(to);
                         tokensSet.Add((opCtx.Contract.Id, tokenId));
                     }
-                    foreach (var (address, _) in tokenCtx.Balances)
+                    foreach (var (address, _, _) in tokenCtx.Balances)
                     {
                         accountsSet.Add(address);
                         tokensSet.Add((opCtx.Contract.Id, tokenId));
@@ -326,26 +326,26 @@ namespace Tzkt.Sync.Protocols.Proto5
             {
                 foreach (var (tokenId, tokenCtx) in opCtx.Tokens)
                 {
-                    foreach (var (from, to, _) in tokenCtx.Transfers)
+                    foreach (var (from, fromEp, to, toEp, _) in tokenCtx.Transfers)
                         if (Cache.Tokens.TryGet(opCtx.Contract.Id, tokenId, out var token))
                         {
                             if (Cache.Accounts.TryGetCached(from, out var fromAcc))
-                                balancesSet.Add((fromAcc.Id, token.Id));
+                                balancesSet.Add((fromAcc.Id, HashableBytes.From(fromEp), token.Id));
                             
                             if (Cache.Accounts.TryGetCached(to, out var toAcc))
-                                balancesSet.Add((toAcc.Id, token.Id));
+                                balancesSet.Add((toAcc.Id, HashableBytes.From(toEp), token.Id));
                         }
 
-                    foreach (var (address, _) in tokenCtx.Balances)
+                    foreach (var (address, ep, _) in tokenCtx.Balances)
                         if (Cache.Tokens.TryGet(opCtx.Contract.Id, tokenId, out var token))
                         {
                             if (Cache.Accounts.TryGetCached(address, out var acc))
-                                balancesSet.Add((acc.Id, token.Id));
+                                balancesSet.Add((acc.Id, HashableBytes.From(ep), token.Id));
 
                             if (token.OwnerId != null)
                             {
-                                nftAccountsSet.Add((int)token.OwnerId);
-                                balancesSet.Add(((int)token.OwnerId, token.Id));
+                                nftAccountsSet.Add(token.OwnerId.Value);
+                                balancesSet.Add((token.OwnerId.Value, HashableBytes.From(token.OwnerEntrypoint), token.Id));
                             }
                         }
                 }
@@ -371,7 +371,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         {
                             var prevHolder = Cache.Accounts.GetCached((int)token.OwnerId);
                             if (prevHolder.Address != tokenCtx.Balances[0].Address)
-                                tokenCtx.Balances.Add((prevHolder.Address, BigInteger.Zero));
+                                tokenCtx.Balances.Add((prevHolder.Address, token.OwnerEntrypoint, BigInteger.Zero));
                         }
 
                         if (tokenCtx.Transfers.Count > 0 && ValidateTransfers(token, tokenCtx))
@@ -438,116 +438,116 @@ namespace Tzkt.Sync.Protocols.Proto5
             }
         }
 
-        bool ValidateTransfers((List<(string, string, BigInteger)> Transfers, List<(string, BigInteger)> Balances) ctx)
+        bool ValidateTransfers((List<(string, byte[]?, string, byte[]?, BigInteger)> Transfers, List<(string, byte[]?, BigInteger)> Balances) ctx)
         {
-            var dic = new Dictionary<string, BigInteger>();
-            foreach (var (from, to, amount) in ctx.Transfers)
+            var dic = new Dictionary<(string, HashableBytes?), BigInteger>();
+            foreach (var (from, fromEp, to, toEp, amount) in ctx.Transfers)
             {
-                if (!dic.ContainsKey(from))
-                    dic.Add(from, BigInteger.Zero);
+                if (!dic.ContainsKey((from, HashableBytes.From(fromEp))))
+                    dic.Add((from, HashableBytes.From(fromEp)), BigInteger.Zero);
 
-                if (!dic.ContainsKey(to))
-                    dic.Add(to, BigInteger.Zero);
+                if (!dic.ContainsKey((to, HashableBytes.From(toEp))))
+                    dic.Add((to, HashableBytes.From(toEp)), BigInteger.Zero);
 
-                dic[from] -= amount;
-                dic[to] += amount;
+                dic[(from, HashableBytes.From(fromEp))] -= amount;
+                dic[(to, HashableBytes.From(toEp))] += amount;
             }
-            foreach (var (address, balance) in ctx.Balances)
+            foreach (var (address, ep, balance) in ctx.Balances)
             {
                 if (balance != BigInteger.Zero)
                 {
-                    if (!dic.ContainsKey(address))
+                    if (!dic.ContainsKey((address, HashableBytes.From(ep))))
                         return false;
 
-                    dic[address] -= balance;
+                    dic[(address, HashableBytes.From(ep))] -= balance;
                 }
             }
             return dic.Values.All(x => x == BigInteger.Zero);
         }
 
-        bool ValidateTransfers(Token token, (List<(string, string, BigInteger)> Transfers, List<(string, BigInteger)> Balances) ctx)
+        bool ValidateTransfers(Token token, (List<(string, byte[]?, string, byte[]?, BigInteger)> Transfers, List<(string, byte[]?, BigInteger)> Balances) ctx)
         {
-            var dic = new Dictionary<string, BigInteger>();
-            foreach (var (from, to, amount) in ctx.Transfers)
+            var dic = new Dictionary<(string, HashableBytes?), BigInteger>();
+            foreach (var (from, fromEp, to, toEp, amount) in ctx.Transfers)
             {
-                if (!dic.ContainsKey(from))
-                    dic.Add(from, BigInteger.Zero);
+                if (!dic.ContainsKey((from, HashableBytes.From(fromEp))))
+                    dic.Add((from, HashableBytes.From(fromEp)), BigInteger.Zero);
 
-                if (!dic.ContainsKey(to))
-                    dic.Add(to, BigInteger.Zero);
+                if (!dic.ContainsKey((to, HashableBytes.From(toEp))))
+                    dic.Add((to, HashableBytes.From(toEp)), BigInteger.Zero);
 
-                dic[from] -= amount;
-                dic[to] += amount;
+                dic[(from, HashableBytes.From(fromEp))] -= amount;
+                dic[(to, HashableBytes.From(toEp))] += amount;
             }
-            foreach (var (address, balance) in ctx.Balances)
+            foreach (var (address, ep, balance) in ctx.Balances)
             {
                 var prevBalance = BigInteger.Zero;
                 if (Cache.Accounts.TryGetCached(address, out var account) &&
-                    Cache.TokenBalances.TryGet(account.Id, token.Id, out var tokenBalance))
+                    Cache.TokenBalances.TryGet(account.Id, ep, token.Id, out var tokenBalance))
                     prevBalance = tokenBalance.Balance;
 
                 var diff = balance - prevBalance;
                 if (diff != BigInteger.Zero)
                 {
-                    if (!dic.ContainsKey(address))
+                    if (!dic.ContainsKey((address, HashableBytes.From(ep))))
                         return false;
 
-                    dic[address] -= diff;
+                    dic[(address, HashableBytes.From(ep))] -= diff;
                 }
             }
             return dic.Values.All(x => x == BigInteger.Zero);
         }
 
-        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Contract contract, BigInteger tokenId, List<(string, BigInteger)> balances)
+        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Contract contract, BigInteger tokenId, List<(string, byte[]?, BigInteger)> balances)
         {
             var diffs = new List<(Account, TokenBalance, BigInteger Diff)>(balances.Count);
-            foreach (var (address, balance) in balances)
+            foreach (var (address, ep, balance) in balances)
             {
                 if (balance != BigInteger.Zero)
                 {
                     var token = GetOrCreateToken(op, block, contract, tokenId);
                     var account = GetOrCreateAccount(op, block, address);
-                    var tokenBalance = GetOrCreateTokenBalance(op, block, token, account);
+                    var tokenBalance = GetOrCreateTokenBalance(op, block, token, account, ep);
                     diffs.Add((account, tokenBalance, balance));
                 }
             }
             return diffs;
         }
 
-        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Token token, List<(string, BigInteger)> balances)
+        List<(Account, TokenBalance, BigInteger)> GetDiffs(ContractOperation op, Block block, Token token, List<(string, byte[]?, BigInteger)> balances)
         {
             var diffs = new List<(Account, TokenBalance, BigInteger Diff)>(balances.Count);
-            foreach (var (address, balance) in balances)
+            foreach (var (address, ep, balance) in balances)
             {
                 var prevBalance = BigInteger.Zero;
                 if (Cache.Accounts.TryGetCached(address, out var account) &&
-                    Cache.TokenBalances.TryGet(account.Id, token.Id, out var tokenBalance))
+                    Cache.TokenBalances.TryGet(account.Id, ep, token.Id, out var tokenBalance))
                     prevBalance = tokenBalance.Balance;
 
                 var diff = balance - prevBalance;
                 if (diff != BigInteger.Zero)
                 {
                     account = GetOrCreateAccount(op, block, address);
-                    tokenBalance = GetOrCreateTokenBalance(op, block, token, account);
+                    tokenBalance = GetOrCreateTokenBalance(op, block, token, account, ep);
                     diffs.Add((account, tokenBalance, diff));
                 }
             }
             return diffs;
         }
 
-        void ProcessTransfers(ContractOperation op, Block block, Contract contract, Token token, List<(string, string, BigInteger)> transfers)
+        void ProcessTransfers(ContractOperation op, Block block, Contract contract, Token token, List<(string, byte[]?, string, byte[]?, BigInteger)> transfers)
         {
             Db.TryAttach(token);
             token.LastLevel = op.Level;
 
             block.Events |= BlockEvents.Tokens;
 
-            foreach (var (from, to, amount) in transfers)
+            foreach (var (from, fromEp, to, toEp, amount) in transfers)
             {
                 var fromAcc = GetOrCreateAccount(op, block, from);
-                var fromBalance = GetOrCreateTokenBalance(op, block, token, fromAcc);
+                var fromBalance = GetOrCreateTokenBalance(op, block, token, fromAcc, fromEp);
                 var toAcc = GetOrCreateAccount(op, block, to);
-                var toBalance = GetOrCreateTokenBalance(op, block, token, toAcc);
+                var toBalance = GetOrCreateTokenBalance(op, block, token, toAcc, toEp);
                 TransferTokens(op, contract, token, fromAcc, fromBalance, toAcc, toBalance, amount);
             }
         }
@@ -569,7 +569,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var (fromAcc, fromBalance, fromDiff) = diffs.First(x => x.Diff < BigInteger.Zero);
                 foreach (var (toAcc, toBalance, toDiff) in diffs)
                 {
-                    if (toAcc == fromAcc) continue;
+                    if (toBalance == fromBalance) continue;
                     TransferTokens(op, contract, token, fromAcc, fromBalance, toAcc, toBalance, toDiff);
                 }
             }
@@ -578,7 +578,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 var (toAcc, toBalance, toDiff) = diffs.First(x => x.Diff > BigInteger.Zero);
                 foreach (var (fromAcc, fromBalance, fromDiff) in diffs)
                 {
-                    if (fromAcc == toAcc) continue;
+                    if (fromBalance == toBalance) continue;
                     TransferTokens(op, contract, token, fromAcc, fromBalance, toAcc, toBalance, -fromDiff);
                 }
             }
@@ -656,9 +656,9 @@ namespace Tzkt.Sync.Protocols.Proto5
             return token;
         }
 
-        TokenBalance GetOrCreateTokenBalance(ContractOperation op, Block block, Token token, Account account)
+        TokenBalance GetOrCreateTokenBalance(ContractOperation op, Block block, Token token, Account account, byte[]? entrypoint)
         {
-            if (!Cache.TokenBalances.TryGet(account.Id, token.Id, out var tokenBalance))
+            if (!Cache.TokenBalances.TryGet(account.Id, entrypoint, token.Id, out var tokenBalance))
             {
                 var state = Cache.AppState.Get();
                 state.TokenBalancesCount++;
@@ -667,6 +667,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     Id = Cache.AppState.NextSubId(op),
                     AccountId = account.Id,
+                    Entrypoint = entrypoint,
                     TokenId = token.Id,
                     ContractId = token.ContractId,
                     FirstLevel = op.Level,
@@ -728,7 +729,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                     token.HoldersCount++;
                 }
                 if (contract.Tags.HasFlag(ContractTags.Nft))
+                {
                     token.OwnerId = to.Id;
+                    token.OwnerEntrypoint = toBalance.Entrypoint;
+                }
             }
 
             var state = Cache.AppState.Get();
@@ -739,7 +743,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Id = Cache.AppState.NextSubId(op),
                 Amount = amount,
                 FromId = from.Id,
+                FromEntrypoint = fromBalance.Entrypoint,
                 ToId = to.Id,
+                ToEntrypoint = toBalance.Entrypoint,
                 Level = op.Level,
                 TokenId = token.Id,
                 ContractId = token.ContractId,
@@ -770,7 +776,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 token.HoldersCount--;
 
                 if (contract.Tags.HasFlag(ContractTags.Nft))
+                {
                     token.OwnerId = null;
+                    token.OwnerEntrypoint = null;
+                }
             }
             if (balance.Balance == diff)
             {
@@ -778,7 +787,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                 token.HoldersCount++;
 
                 if (contract.Tags.HasFlag(ContractTags.Nft))
+                {
                     token.OwnerId = account.Id;
+                    token.OwnerEntrypoint = balance.Entrypoint;
+                }
             }
             if (diff > 0) token.TotalMinted += diff;
             else token.TotalBurned += -diff;
@@ -792,7 +804,9 @@ namespace Tzkt.Sync.Protocols.Proto5
                 Id = Cache.AppState.NextSubId(op),
                 Amount = diff > BigInteger.Zero ? diff : -diff,
                 FromId = diff < BigInteger.Zero ? account.Id : null,
+                FromEntrypoint = diff < BigInteger.Zero ? balance.Entrypoint : null,
                 ToId = diff > BigInteger.Zero ? account.Id : null,
+                ToEntrypoint = diff > BigInteger.Zero ? balance.Entrypoint : null,
                 Level = op.Level,
                 TokenId = token.Id,
                 ContractId = token.ContractId,
@@ -818,7 +832,7 @@ namespace Tzkt.Sync.Protocols.Proto5
             #region precache
             var accountsSet = new HashSet<int>();
             var tokensSet = new HashSet<long>();
-            var tokenBalancesSet = new HashSet<(int, long)>();
+            var tokenBalancesSet = new HashSet<(int, HashableBytes?, long)>();
 
             foreach (var tr in transfers)
                 tokensSet.Add(tr.TokenId);
@@ -830,13 +844,13 @@ namespace Tzkt.Sync.Protocols.Proto5
                 if (tr.FromId is int fromId)
                 {
                     accountsSet.Add(fromId);
-                    tokenBalancesSet.Add((fromId, tr.TokenId));
+                    tokenBalancesSet.Add((fromId, HashableBytes.From(tr.FromEntrypoint), tr.TokenId));
                 }
 
                 if (tr.ToId is int toId)
                 {
                     accountsSet.Add(toId);
-                    tokenBalancesSet.Add((toId, tr.TokenId));
+                    tokenBalancesSet.Add((toId, HashableBytes.From(tr.ToEntrypoint), tr.TokenId));
                 }
             }
 
@@ -867,8 +881,8 @@ namespace Tzkt.Sync.Protocols.Proto5
                     #region revert transfer
                     var from = Cache.Accounts.GetCached(fromId);
                     var to = Cache.Accounts.GetCached(toId);
-                    var fromBalance = Cache.TokenBalances.Get(from.Id, token.Id);
-                    var toBalance = Cache.TokenBalances.Get(to.Id, token.Id);
+                    var fromBalance = Cache.TokenBalances.Get(from.Id, transfer.FromEntrypoint, token.Id);
+                    var toBalance = Cache.TokenBalances.Get(to.Id, transfer.ToEntrypoint, token.Id);
 
                     Db.TryAttach(from);
                     Db.TryAttach(to);
@@ -905,7 +919,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
 
                         if (contract.Tags.HasFlag(ContractTags.Nft))
+                        {
                             token.OwnerId = from.Id;
+                            token.OwnerEntrypoint = fromBalance.Entrypoint;
+                        }
                     }
 
                     state.TokenTransfersCount--;
@@ -915,7 +932,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     #region revert mint
                     var to = Cache.Accounts.GetCached((int)transfer.ToId);
-                    var toBalance = Cache.TokenBalances.Get(to.Id, token.Id);
+                    var toBalance = Cache.TokenBalances.Get(to.Id, transfer.ToEntrypoint, token.Id);
 
                     Db.TryAttach(to);
                     Db.TryAttach(toBalance);
@@ -938,7 +955,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
 
                         if (contract.Tags.HasFlag(ContractTags.Nft))
+                        {
                             token.OwnerId = null;
+                            token.OwnerEntrypoint = null;
+                        }
 
                         token.TotalMinted -= transfer.Amount;
                         token.TotalSupply -= transfer.Amount;
@@ -951,7 +971,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                 {
                     #region revert burn
                     var from = Cache.Accounts.GetCached(transfer.FromId!.Value);
-                    var fromBalance = Cache.TokenBalances.Get(from.Id, token.Id);
+                    var fromBalance = Cache.TokenBalances.Get(from.Id, transfer.FromEntrypoint, token.Id);
 
                     Db.TryAttach(from);
                     Db.TryAttach(fromBalance);
@@ -974,7 +994,10 @@ namespace Tzkt.Sync.Protocols.Proto5
                         }
 
                         if (contract.Tags.HasFlag(ContractTags.Nft))
+                        {
                             token.OwnerId = from.Id;
+                            token.OwnerEntrypoint = fromBalance.Entrypoint;
+                        }
 
                         token.TotalBurned -= transfer.Amount;
                         token.TotalSupply += transfer.Amount;
@@ -1025,35 +1048,35 @@ namespace Tzkt.Sync.Protocols.Proto5
                 """, block.Level);
         }
 
-        static List<(string, string, BigInteger, BigInteger)> ParseTransferParam(IMicheline micheline)
+        static List<(string, byte[]?, string, byte[]?, BigInteger, BigInteger)> ParseTransferParam(IMicheline micheline)
         {
-            var transfers = new List<(string, string, BigInteger, BigInteger)>();
+            var transfers = new List<(string, byte[]?, string, byte[]?, BigInteger, BigInteger)>();
             if (micheline is MichelineArray arr)
             {
                 foreach (var transfer in arr)
                 {
                     var transferPair = (transfer as MichelinePrim)!;
-                    var from = transferPair.Args![0].ParseAddress();
+                    var (from, fromEp) = transferPair.Args![0].ParseAddressWithEntrypoint();
                     foreach (var tx in (transferPair.Args[1] as MichelineArray)!)
                     {
                         var txPair = (tx as MichelinePrim)!;
-                        var to = txPair.Args![0].ParseAddress();
+                        var (to, toEp) = txPair.Args![0].ParseAddressWithEntrypoint();
                         var txPair2 = (txPair.Args[1] as MichelinePrim)!;
                         var tokenId = (txPair2.Args![0] as MichelineInt)!.Value;
                         var amount = (txPair2.Args[1] as MichelineInt)!.Value;
 
-                        transfers.Add((from, to, tokenId, amount));
+                        transfers.Add((from, fromEp, to, toEp, tokenId, amount));
                     }
                 }
             }
             else if (micheline is MichelinePrim pair)
             {
-                var from = pair.Args![0].ParseAddress();
+                var (from, fromEp) = pair.Args![0].ParseAddressWithEntrypoint();
                 var pair2 = (pair.Args[1] as MichelinePrim)!;
-                var to = pair2.Args![0].ParseAddress();
+                var (to, toEp) = pair2.Args![0].ParseAddressWithEntrypoint();
                 var value = (pair2.Args[1] as MichelineInt)!.Value;
 
-                transfers.Add((from, to, BigInteger.Zero, value));
+                transfers.Add((from, fromEp, to, toEp, BigInteger.Zero, value));
             }
             return transfers;
         }

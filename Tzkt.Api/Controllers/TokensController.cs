@@ -115,6 +115,7 @@ namespace Tzkt.Api.Controllers
         public async Task<ActionResult<int>> GetTokenBalancesCount([FromQuery] TokenBalanceFilter filter)
         {
             if (filter.account != null ||
+                filter.entrypoint != null ||
                 filter.balance != null ||
                 filter.firstTime != null ||
                 filter.firstLevel != null ||
@@ -129,7 +130,7 @@ namespace Tzkt.Api.Controllers
                 filter.token.metadata != null)
             {
                 #region optimizations
-                if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+                if (filter.account != null && (filter.account.Eq?.Item1 == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
                     return Ok(0);
                 #endregion
 
@@ -163,7 +164,7 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Selection selection)
         {
             #region optimizations
-            if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+            if (filter.account != null && (filter.account.Eq?.Item1 == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
                 return Ok(Enumerable.Empty<TokenBalance>());
             #endregion
 
@@ -206,7 +207,9 @@ namespace Tzkt.Api.Controllers
             if (filter.level != null ||
                 filter.timestamp != null ||
                 filter.from != null ||
+                filter.fromEntrypoint != null ||
                 filter.to != null ||
+                filter.toEntrypoint != null ||
                 filter.anyof != null ||
                 filter.amount != null ||
                 filter.id != null ||
@@ -221,13 +224,13 @@ namespace Tzkt.Api.Controllers
                 filter.token.metadata != null)
             {
                 #region optimizations
-                if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
+                if (filter.from != null && (filter.from.Eq?.Item1 == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
                     return Ok(0);
 
-                if (filter.to != null && (filter.to.Eq == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
+                if (filter.to != null && (filter.to.Eq?.Item1 == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
                     return Ok(0);
 
-                if (filter.anyof != null && (filter.anyof.Eq == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
+                if (filter.anyof != null && (filter.anyof.Eq?.Item1 == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
                     return Ok(0);
                 #endregion
 
@@ -261,13 +264,13 @@ namespace Tzkt.Api.Controllers
             [FromQuery] Selection selection)
         {
             #region optimizations
-            if (filter.from != null && (filter.from.Eq == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
+            if (filter.from != null && (filter.from.Eq?.Item1 == -1 || filter.from.In?.Count == 0 && !filter.from.InHasNull))
                 return Ok(Enumerable.Empty<TokenTransfer>());
 
-            if (filter.to != null && (filter.to.Eq == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
+            if (filter.to != null && (filter.to.Eq?.Item1 == -1 || filter.to.In?.Count == 0 && !filter.to.InHasNull))
                 return Ok(Enumerable.Empty<TokenTransfer>());
 
-            if (filter.anyof != null && (filter.anyof.Eq == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
+            if (filter.anyof != null && (filter.anyof.Eq?.Item1 == -1 || filter.anyof.In?.Count == 0 && !filter.anyof.InHasNull))
                 return Ok(Enumerable.Empty<TokenTransfer>());
             #endregion
 
@@ -324,7 +327,7 @@ namespace Tzkt.Api.Controllers
                 return new BadRequest("query", "At least one of the filters (`account`, `token.id`, `token.contract` with `token.tokenId`) must be specified");
 
             #region optimizations
-            if (filter.account != null && (filter.account.Eq == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
+            if (filter.account != null && (filter.account.Eq?.Item1 == -1 || filter.account.In?.Count == 0 && !filter.account.InHasNull))
                 return Ok(Enumerable.Empty<TokenBalanceShort>());
             #endregion
 

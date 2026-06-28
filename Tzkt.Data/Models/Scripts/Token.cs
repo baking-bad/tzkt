@@ -23,6 +23,7 @@ namespace Tzkt.Data.Models
         public BigInteger TotalSupply { get; set; }
 
         public int? OwnerId { get; set; }
+        public byte[]? OwnerEntrypoint { get; set; }
         public int? IndexedAt { get; set; }
     }
 

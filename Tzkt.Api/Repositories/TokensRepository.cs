@@ -1,6 +1,7 @@
 ﻿using System.Data;
 using System.Numerics;
 using Dapper;
+using Netezos.Encoding;
 using Npgsql;
 using Tzkt.Api.Models;
 using Tzkt.Api.Services.Cache;
@@ -282,6 +283,7 @@ namespace Tzkt.Api.Repositories
             var select = @"
                 tb.""Id"",
                 tb.""AccountId"",
+                tb.""Entrypoint"",
                 tb.""Balance"",
                 (tb.""Balance"" * t.""Value"")::numeric(1000,0) as ""BalanceValue"",
                 tb.""FirstLevel"",
@@ -303,6 +305,7 @@ namespace Tzkt.Api.Repositories
                     {
                         case "id": columns.Add(@"tb.""Id"""); break;
                         case "account": columns.Add(@"tb.""AccountId"""); break;
+                        case "entrypoint": columns.Add(@"tb.""Entrypoint"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
                         case "balanceValue": columns.Add(@"(tb.""Balance"" * t.""Value"")::numeric(1000,0) as ""BalanceValue"""); break;
                         case "firstLevel": columns.Add(@"tb.""FirstLevel"""); break;
@@ -396,7 +399,8 @@ namespace Tzkt.Api.Repositories
                 SELECT {select} FROM ""TokenBalances"" as tb
                 INNER JOIN ""Tokens"" AS t ON t.""Id"" = tb.""TokenId""")
                 .FilterA(@"tb.""Id""", filter.id)
-                .FilterA(@"tb.""AccountId""", filter.account)
+                .FilterA(@"tb.""AccountId""", @"tb.""Entrypoint""", filter.account)
+                .FilterA(@"tb.""Entrypoint""", filter.entrypoint)
                 .FilterA(@"tb.""Balance""", filter.balance)
                 .FilterA(@"tb.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
@@ -429,7 +433,8 @@ namespace Tzkt.Api.Repositories
                 SELECT COUNT(*) FROM ""TokenBalances"" as tb
                 INNER JOIN ""Tokens"" AS t ON t.""Id"" = tb.""TokenId""")
                 .FilterA(@"tb.""Id""", filter.id)
-                .FilterA(@"tb.""AccountId""", filter.account)
+                .FilterA(@"tb.""AccountId""", @"tb.""Entrypoint""", filter.account)
+                .FilterA(@"tb.""Entrypoint""", filter.entrypoint)
                 .FilterA(@"tb.""Balance""", filter.balance)
                 .FilterA(@"tb.""FirstLevel""", filter.firstLevel)
                 .FilterA(@"tb.""FirstLevel""", filter.firstTime)
@@ -453,6 +458,7 @@ namespace Tzkt.Api.Repositories
             {
                 Id = row.Id,
                 Account = Accounts.GetAlias(row.AccountId),
+                Entrypoint = row.Entrypoint == null ? null : Utf8.Convert(row.Entrypoint),
                 Balance = row.Balance,
                 BalanceValue = row.BalanceValue == BigInteger.Zero ? null : row.BalanceValue,
                 FirstLevel = row.FirstLevel,
@@ -499,6 +505,10 @@ namespace Tzkt.Api.Repositories
                     case "account.address":
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.AccountId).Address;
+                        break;
+                    case "entrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Entrypoint == null ? null : Utf8.Convert(row.Entrypoint);
                         break;
                     case "balance":
                         foreach (var row in rows)
@@ -591,7 +601,9 @@ namespace Tzkt.Api.Repositories
                 tr.""Id"",
                 tr.""Level"",
                 tr.""FromId"",
+                tr.""FromEntrypoint"",
                 tr.""ToId"",
+                tr.""ToEntrypoint"",
                 tr.""Amount"",
                 tr.""TransactionId"",
                 tr.""OriginationId"",
@@ -615,7 +627,9 @@ namespace Tzkt.Api.Repositories
                         case "level": columns.Add(@"tr.""Level"""); break;
                         case "timestamp": columns.Add(@"tr.""Level"""); break;
                         case "from": columns.Add(@"tr.""FromId"""); break;
+                        case "fromEntrypoint": columns.Add(@"tr.""FromEntrypoint"""); break;
                         case "to": columns.Add(@"tr.""ToId"""); break;
+                        case "toEntrypoint": columns.Add(@"tr.""ToEntrypoint"""); break;
                         case "amount": columns.Add(@"tr.""Amount"""); break;
                         case "transactionId": columns.Add(@"tr.""TransactionId"""); break;
                         case "originationId": columns.Add(@"tr.""OriginationId"""); break;
@@ -681,9 +695,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
                 .FilterA(@"tr.""IndexedAt""", filter.indexedAt)
-                .FilterA(filter.anyof, x => x == "from" ? @"tr.""FromId""" : @"tr.""ToId""")
-                .FilterA(@"tr.""FromId""", filter.from)
-                .FilterA(@"tr.""ToId""", filter.to)
+                .FilterA(filter.anyof, x => x == "from" ? (@"tr.""FromId""", @"tr.""FromEntrypoint""") : (@"tr.""ToId""", @"tr.""ToEntrypoint"""))
+                .FilterA(@"tr.""FromId""", @"tr.""FromEntrypoint""", filter.from)
+                .FilterA(@"tr.""FromEntrypoint""", filter.fromEntrypoint)
+                .FilterA(@"tr.""ToId""", @"tr.""ToEntrypoint""", filter.to)
+                .FilterA(@"tr.""ToEntrypoint""", filter.toEntrypoint)
                 .FilterA(@"tr.""Amount""", filter.amount)
                 .FilterA(@"tr.""TransactionId""", filter.transactionId)
                 .FilterA(@"tr.""OriginationId""", filter.originationId)
@@ -758,7 +774,9 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = Times[row.Level],
                 From = row.FromId == null ? null : Accounts.GetAlias(row.FromId),
+                FromEntrypoint = row.FromEntrypoint == null ? null : Utf8.Convert(row.FromEntrypoint),
                 To = row.ToId == null ? null : Accounts.GetAlias(row.ToId),
+                ToEntrypoint = row.ToEntrypoint == null ? null : Utf8.Convert(row.ToEntrypoint),
                 Amount = row.Amount,
                 TransactionId = row.TransactionId,
                 OriginationId = row.OriginationId,
@@ -785,9 +803,11 @@ namespace Tzkt.Api.Repositories
                 .FilterA(@"tr.""Level""", filter.level)
                 .FilterA(@"tr.""Level""", filter.timestamp)
                 .FilterA(@"tr.""IndexedAt""", filter.indexedAt)
-                .FilterA(filter.anyof, x => x == "from" ? @"tr.""FromId""" : @"tr.""ToId""")
-                .FilterA(@"tr.""FromId""", filter.from)
-                .FilterA(@"tr.""ToId""", filter.to)
+                .FilterA(filter.anyof, x => x == "from" ? (@"tr.""FromId""", @"tr.""FromEntrypoint""") : (@"tr.""ToId""", @"tr.""ToEntrypoint"""))
+                .FilterA(@"tr.""FromId""", @"tr.""FromEntrypoint""", filter.from)
+                .FilterA(@"tr.""FromEntrypoint""", filter.fromEntrypoint)
+                .FilterA(@"tr.""ToId""", @"tr.""ToEntrypoint""", filter.to)
+                .FilterA(@"tr.""ToEntrypoint""", filter.toEntrypoint)
                 .FilterA(@"tr.""Amount""", filter.amount)
                 .FilterA(@"tr.""TransactionId""", filter.transactionId)
                 .FilterA(@"tr.""OriginationId""", filter.originationId)
@@ -811,7 +831,9 @@ namespace Tzkt.Api.Repositories
                 Level = row.Level,
                 Timestamp = Times[row.Level],
                 From = row.FromId == null ? null : Accounts.GetAlias(row.FromId),
+                FromEntrypoint = row.FromEntrypoint == null ? null : Utf8.Convert(row.FromEntrypoint),
                 To = row.ToId == null ? null : Accounts.GetAlias(row.ToId),
+                ToEntrypoint = row.ToEntrypoint == null ? null : Utf8.Convert(row.ToEntrypoint),
                 Amount = row.Amount,
                 TransactionId = row.TransactionId,
                 OriginationId = row.OriginationId,
@@ -864,6 +886,10 @@ namespace Tzkt.Api.Repositories
                         foreach (var row in rows)
                             result[j++][i] = row.FromId == null ? null : Accounts.GetAlias(row.FromId).Address;
                         break;
+                    case "fromEntrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.FromEntrypoint == null ? null : Utf8.Convert(row.FromEntrypoint);
+                        break;
                     case "to":
                         foreach (var row in rows)
                             result[j++][i] = row.ToId == null ? null : Accounts.GetAlias(row.ToId);
@@ -875,6 +901,10 @@ namespace Tzkt.Api.Repositories
                     case "to.address":
                         foreach (var row in rows)
                             result[j++][i] = row.ToId == null ? null : Accounts.GetAlias(row.ToId).Address;
+                        break;
+                    case "toEntrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.ToEntrypoint == null ? null : Utf8.Convert(row.ToEntrypoint);
                         break;
                     case "amount":
                         foreach (var row in rows)
@@ -953,6 +983,7 @@ namespace Tzkt.Api.Repositories
         {
             var select = @"
                 tb.""AccountId"",
+                tb.""Entrypoint"",
                 tb.""Balance"",
                 tb.""TokenId"" as ""tId"",
                 t.""ContractId"" as ""tContractId"",
@@ -968,6 +999,7 @@ namespace Tzkt.Api.Repositories
                     switch (field.Field)
                     {
                         case "account": columns.Add(@"tb.""AccountId"""); break;
+                        case "entrypoint": columns.Add(@"tb.""Entrypoint"""); break;
                         case "balance": columns.Add(@"tb.""Balance"""); break;
                         case "token":
                             if (field.Path == null)
@@ -1022,13 +1054,14 @@ namespace Tzkt.Api.Repositories
 
             var sql = new SqlBuilder()
                 .Append($@"SELECT {select} FROM (")
-                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"") as ""Id"", ""TokenId"", ""AccountId"", SUM(""Amount"") AS ""Balance"" FROM (")
+                    .Append(@"SELECT ROW_NUMBER() over (ORDER BY ""TokenId"", ""AccountId"", ""Entrypoint"" ASC NULLS FIRST) as ""Id"", ""TokenId"", ""AccountId"", ""Entrypoint"", SUM(""Amount"") AS ""Balance"" FROM (")
                         
-                        .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", -tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"SELECT tr.""TokenId"", tr.""FromId"" AS ""AccountId"", tr.""FromEntrypoint"" AS ""Entrypoint"", -tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
                         .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
                         .Filter($@"tr.""Level"" <= {level}")
                         .Filter($@"tr.""FromId"" IS NOT NULL")
-                        .FilterA(@"tr.""FromId""", filter.account)
+                        .FilterA(@"tr.""FromId""", @"tr.""FromEntrypoint""", filter.account)
+                        .FilterA(@"tr.""FromEntrypoint""", filter.entrypoint)
                         .FilterA(@"tr.""TokenId""", filter.token.id)
                         .FilterA(@"t.""ContractId""", filter.token.contract)
                         .FilterA(@"t.""TokenId""", filter.token.tokenId)
@@ -1038,11 +1071,12 @@ namespace Tzkt.Api.Repositories
 
                         .Append("UNION ALL")
 
-                        .Append(@"SELECT tr.""TokenId"", tr.""ToId"" AS ""AccountId"", tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
+                        .Append(@"SELECT tr.""TokenId"", tr.""ToId"" AS ""AccountId"", tr.""ToEntrypoint"" AS ""Entrypoint"", tr.""Amount"" AS ""Amount"" FROM ""TokenTransfers"" as tr")
                         .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tr.""TokenId""")
                         .Filter($@"tr.""Level"" <= {level}")
                         .Filter($@"tr.""ToId"" IS NOT NULL")
-                        .FilterA(@"tr.""ToId""", filter.account)
+                        .FilterA(@"tr.""ToId""", @"tr.""ToEntrypoint""", filter.account)
+                        .FilterA(@"tr.""ToEntrypoint""", filter.entrypoint)
                         .FilterA(@"tr.""TokenId""", filter.token.id)
                         .FilterA(@"t.""ContractId""", filter.token.contract)
                         .FilterA(@"t.""TokenId""", filter.token.tokenId)
@@ -1051,7 +1085,7 @@ namespace Tzkt.Api.Repositories
                         .ResetFilters()
 
                     .Append(") as tb")
-                    .Append(@"GROUP BY tb.""TokenId"", tb.""AccountId""")
+                    .Append(@"GROUP BY tb.""TokenId"", tb.""AccountId"", tb.""Entrypoint""")
                 .Append(") as tb")
                 .Append(@"INNER JOIN ""Tokens"" AS t ON t.""Id"" = tb.""TokenId""")
                 .FilterA(@"tb.""Balance""", filter.balance)
@@ -1072,6 +1106,7 @@ namespace Tzkt.Api.Repositories
             return rows.Select(row => new TokenBalanceShort
             {
                 Account = Accounts.GetAlias(row.AccountId),
+                Entrypoint = row.Entrypoint == null ? null : Utf8.Convert(row.Entrypoint),
                 Balance = row.Balance,
                 Token = new TokenInfoShort
                 {
@@ -1107,6 +1142,10 @@ namespace Tzkt.Api.Repositories
                     case "account.address":
                         foreach (var row in rows)
                             result[j++][i] = Accounts.GetAlias(row.AccountId).Address;
+                        break;
+                    case "entrypoint":
+                        foreach (var row in rows)
+                            result[j++][i] = row.Entrypoint == null ? null : Utf8.Convert(row.Entrypoint);
                         break;
                     case "balance":
                         foreach (var row in rows)

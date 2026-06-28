@@ -10,7 +10,7 @@ namespace Tzkt.Sync.Services.Cache
         #region static
         static int SoftCap = 0;
         static int TargetCap = 0;
-        static Dictionary<(int, long), TokenBalance> Cached = [];
+        static Dictionary<(int, HashableBytes?, long), TokenBalance> Cached = [];
 
         public static void Configure(CacheSize? size)
         {
@@ -43,49 +43,83 @@ namespace Tzkt.Sync.Services.Cache
 
         public void Add(TokenBalance tokenBalance)
         {
-            Cached[(tokenBalance.AccountId, tokenBalance.TokenId)] = tokenBalance;
+            Cached[(tokenBalance.AccountId, HashableBytes.From(tokenBalance.Entrypoint), tokenBalance.TokenId)] = tokenBalance;
         }
 
         public void Remove(TokenBalance tokenBalance)
         {
-            Cached.Remove((tokenBalance.AccountId, tokenBalance.TokenId));
+            Cached.Remove((tokenBalance.AccountId, HashableBytes.From(tokenBalance.Entrypoint), tokenBalance.TokenId));
         }
 
         public TokenBalance GetOrAdd(TokenBalance tokenBalance)
         {
-            if (Cached.TryGetValue((tokenBalance.AccountId, tokenBalance.TokenId), out var res))
+            if (Cached.TryGetValue((tokenBalance.AccountId, HashableBytes.From(tokenBalance.Entrypoint), tokenBalance.TokenId), out var res))
                 return res;
             Add(tokenBalance);
             return tokenBalance;
         }
 
-        public TokenBalance Get(int accountId, long tokenId)
+        public TokenBalance Get(int accountId, byte[]? entrypoint, long tokenId)
         {
-            if (!Cached.TryGetValue((accountId, tokenId), out var tokenBalance))
-                throw new Exception($"TokenBalance ({accountId}, {tokenId}) doesn't exist");
+            var _entrypoint = HashableBytes.From(entrypoint);
+            if (!Cached.TryGetValue((accountId, _entrypoint, tokenId), out var tokenBalance))
+                throw new Exception($"TokenBalance ({accountId}, {_entrypoint}, {tokenId}) doesn't exist");
             return tokenBalance;
         }
 
-        public bool TryGet(int accountId, long tokenId, [NotNullWhen(true)] out TokenBalance? tokenBalance)
+        public bool TryGet(int accountId, byte[]? entrypoint, long tokenId, [NotNullWhen(true)] out TokenBalance? tokenBalance)
         {
-            return Cached.TryGetValue((accountId, tokenId), out tokenBalance);
+            return Cached.TryGetValue((accountId, HashableBytes.From(entrypoint), tokenId), out tokenBalance);
         }
 
-        public async Task Preload(IEnumerable<(int, long)> ids)
+        public async Task Preload(IEnumerable<(int AccountId, HashableBytes? Entrypoint, long TokenId)> ids)
         {
             var missed = ids.Where(x => !Cached.ContainsKey(x)).ToHashSet();
             if (missed.Count != 0)
             {
                 for (int i = 0, n = 2048; i < missed.Count; i += n)
                 {
-                    var corteges = string.Join(',', missed.Skip(i).Take(n).Select(x => $"({x.Item1}, {x.Item2})"));
-#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
-                    var items = await Db.TokenBalances
-                        .FromSqlRaw($"""
+                    var corteges1 = string.Join(',', missed.Skip(i).Take(n).Where(x => x.Entrypoint == null).Select(x => $"({x.AccountId}, {x.TokenId})"));
+                    var corteges2 = string.Join(',', missed.Skip(i).Take(n).Where(x => x.Entrypoint != null).Select(x => $"({x.AccountId}, '\\x{x.Entrypoint}', {x.TokenId})"));
+                    string query;
+
+                    if (corteges1.Length != 0)
+                    {
+                        if (corteges2.Length != 0)
+                        {
+                            query = $"""
+                                SELECT *
+                                FROM "TokenBalances"
+                                WHERE ("AccountId", "TokenId") IN ({corteges1}) AND "Entrypoint" IS NULL
+                                    
+                                UNION ALL
+                                    
+                                SELECT *
+                                FROM "TokenBalances"
+                                WHERE ("AccountId", "Entrypoint", "TokenId") IN ({corteges2})
+                                """;
+                        }
+                        else
+                        {
+                            query = $"""
+                                SELECT *
+                                FROM "TokenBalances"
+                                WHERE ("AccountId", "TokenId") IN ({corteges1}) AND "Entrypoint" IS NULL
+                                """;
+                        }
+                    }
+                    else
+                    {
+                        query = $"""
                             SELECT *
                             FROM "TokenBalances"
-                            WHERE ("AccountId", "TokenId") IN ({corteges})
-                            """)
+                            WHERE ("AccountId", "Entrypoint", "TokenId") IN ({corteges2})
+                            """;
+                    }
+
+#pragma warning disable EF1002 // Risk of vulnerability to SQL injection.
+                    var items = await Db.TokenBalances
+                        .FromSqlRaw(query)
                         .ToListAsync();
 #pragma warning restore EF1002 // Risk of vulnerability to SQL injection.
 

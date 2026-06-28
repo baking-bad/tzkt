@@ -14,17 +14,19 @@ namespace Tzkt.Sync
         static readonly byte[] txr1 = [1, 128, 120, 31];
         static readonly byte[] sr1 = [6, 124, 117];
 
-        public static string ParseAddress(this IMicheline micheline)
+        public static (string, byte[]?) ParseAddressWithEntrypoint(this IMicheline micheline)
         {
             if (micheline is MichelineString s)
             {
                 if (s.Value.Length == 36)
-                    return s.Value;
+                    return (s.Value, null);
 
                 if (s.Value.StartsWith("txr1"))
-                    return s.Value.Length == 37 ? s.Value : s.Value[..37];
+                    return s.Value.Length == 37
+                        ? (s.Value, null)
+                        : (s.Value[..37], Utf8.Parse(s.Value[38..]));
 
-                return s.Value[..36];
+                return (s.Value[..36], Utf8.Parse(s.Value[37..]));
             }
 
             if (micheline is MichelineBytes b)
@@ -55,22 +57,40 @@ namespace Tzkt.Sync
                     };
                     bytes = value.GetBytes(1, 20);
                 }
-                return Base58.Convert(bytes, prefix);
+                var address = Base58.Convert(bytes, prefix);
+                return value.Length == 22 ? (address, null) : (address, value[22..]);
             }
 
             throw new Exception("Invalid micheline type");
         }
 
-        public static bool TryParseAddress(this IMicheline micheline, [NotNullWhen(true)] out string? res)
+        public static bool TryParseAddressWithEntrypoint(this IMicheline micheline, [NotNullWhen(true)] out string? address, out byte[]? entrypoint)
         {
             if (micheline is MichelineString s && s.Value.Length >= 36)
             {
                 if (s.Value.Length == 36)
-                    res = s.Value;
+                {
+                    address = s.Value;
+                    entrypoint = null;
+                }
                 else if (s.Value.StartsWith("txr1"))
-                    res = s.Value.Length == 37 ? s.Value : s.Value[..37];
+                {
+                    if (s.Value.Length == 37)
+                    {
+                        address = s.Value;
+                        entrypoint = null;
+                    }
+                    else
+                    {
+                        address = s.Value[..37];
+                        entrypoint = Utf8.Parse(s.Value[38..]);
+                    }
+                }
                 else
-                    res = s.Value[..36];
+                {
+                    address = s.Value[..36];
+                    entrypoint = Utf8.Parse(s.Value[37..]);
+                }
 
                 return true;
             }
@@ -78,47 +98,49 @@ namespace Tzkt.Sync
             if (micheline is MichelineBytes b && b.Value.Length >= 22)
             {
                 var value = b.Value;
+                entrypoint = value.Length == 22 ? null : value[22..];
                 if (value[0] == 0)
                 {
                     if (value[1] == 0)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz1);
+                        address = Base58.Convert(value.GetBytes(2, 20), tz1);
                         return true;
                     }
                     else if (value[1] == 1)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz2);
+                        address = Base58.Convert(value.GetBytes(2, 20), tz2);
                         return true;
                     }
                     else if (value[1] == 2)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz3);
+                        address = Base58.Convert(value.GetBytes(2, 20), tz3);
                         return true;
                     }
                     else if (value[1] == 3)
                     {
-                        res = Base58.Convert(value.GetBytes(2, 20), tz4);
+                        address = Base58.Convert(value.GetBytes(2, 20), tz4);
                         return true;
                     }
                 }
                 else if (value[0] == 1 && value[21] == 0)
                 {
-                    res = Base58.Convert(value.GetBytes(1, 20), KT1);
+                    address = Base58.Convert(value.GetBytes(1, 20), KT1);
                     return true;
                 }
                 else if (value[0] == 2 && value[21] == 0)
                 {
-                    res = Base58.Convert(value.GetBytes(1, 20), txr1);
+                    address = Base58.Convert(value.GetBytes(1, 20), txr1);
                     return true;
                 }
                 else if (value[0] == 3 && value[21] == 0)
                 {
-                    res = Base58.Convert(value.GetBytes(1, 20), sr1);
+                    address = Base58.Convert(value.GetBytes(1, 20), sr1);
                     return true;
                 }
             }
 
-            res = null;
+            address = null;
+            entrypoint = null;
             return false;
         }
 

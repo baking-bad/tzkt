@@ -697,6 +697,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                     {
                         Id = Cache.AppState.NextSubId(migration),
                         AccountId = NullAddress.Id,
+                        Entrypoint = null,
                         Balance = 100,
                         FirstLevel = migration.Level,
                         LastLevel = migration.Level,
@@ -711,6 +712,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                         Level = migration.Level,
                         MigrationId = migration.Id,
                         ToId = NullAddress.Id,
+                        ToEntrypoint = null,
                         TokenId = token.Id,
                         ContractId = token.ContractId
                     };

@@ -99,6 +99,54 @@ namespace Tzkt.Api
             return this;
         }
 
+        public SqlBuilder FilterA(AnyOfWithEntrypointParameter? anyof, Func<string, (string, string)> map)
+        {
+            if (anyof == null) return this;
+
+            if (anyof.Eq != null)
+            {
+                var (accountId, entrypoint) = anyof.Eq.Value;
+                if (entrypoint == null)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} = {accountId}"))})");
+                else if (entrypoint.Length == 0)
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} = {accountId} AND {map(x).Item2} IS NULL"))})");
+                else
+                    AppendFilter($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} = {accountId} AND {map(x).Item2} = {Param(entrypoint)}::bytea"))})");
+            }
+
+            if (anyof.In != null)
+            {
+                var withoutEp = anyof.In.Where(x => x.Item2 == null);
+                var withNullEp = anyof.In.Where(x => x.Item2?.Length == 0);
+                var withEp = anyof.In.Where(x => x.Item2?.Length > 0);
+
+                var subs = new List<string>(4);
+
+                if (anyof.InHasNull)
+                    subs.Add($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} IS NULL"))})");
+
+                if (withoutEp.Any())
+                    subs.Add($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} = ANY ({Param(withoutEp.Select(x => x.Item1).ToList())})"))})");
+
+                if (withNullEp.Any())
+                    subs.Add($"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} = ANY ({Param(withNullEp.Select(x => x.Item1).ToList())}) AND {map(x).Item2} IS NULL"))})");
+
+                if (withEp.Any())
+                    subs.Add($"({string.Join(" OR ", anyof.Fields.Select(x => $"({map(x).Item1}, {map(x).Item2}) IN (SELECT * FROM UNNEST({Param(withEp.Select(x => x.Item1).ToList())}, {Param(withEp.Select(x => x.Item2).ToList())}))"))})");
+
+                AppendFilter($"({string.Join(" OR ", subs)})");
+            }
+
+            if (anyof.Null != null)
+            {
+                AppendFilter(anyof.Null == true
+                    ? $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} IS NULL"))})"
+                    : $"({string.Join(" OR ", anyof.Fields.Select(x => $"{map(x).Item1} IS NOT NULL"))})");
+            }
+
+            return this;
+        }
+
         public SqlBuilder Filter(string column, int value)
         {
             AppendFilter($@"""{column}"" = {value}");
@@ -944,6 +992,114 @@ namespace Tzkt.Api
                 AppendFilter(address.Null == true
                     ? $@"""{column}"" IS NULL"
                     : $@"""{column}"" IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string accCol, string epCol, AccountWithEntrypointParameter? awe)
+        {
+            if (awe == null) return this;
+
+            if (awe.Eq != null)
+            {
+                var (accountId, entrypoint) = awe.Eq.Value;
+                if (entrypoint == null)
+                    AppendFilter($"{accCol} = {accountId}");
+                else if (entrypoint.Length == 0)
+                    AppendFilter($"{accCol} = {accountId} AND {epCol} IS NULL");
+                else
+                    AppendFilter($"{accCol} = {accountId} AND {epCol} = {Param(entrypoint)}::bytea");
+            }
+
+            if (awe.Ne != null)
+            {
+                var (accountId, entrypoint) = awe.Ne.Value;
+                if (entrypoint == null)
+                    AppendFilter($@"({accCol} IS NULL OR {accCol} != {accountId})");
+                else if (entrypoint.Length == 0)
+                    AppendFilter($@"({accCol} IS NULL OR {accCol} != {accountId} OR {epCol} IS NOT NULL)");
+                else
+                    AppendFilter($@"({accCol} IS NULL OR {accCol} != {accountId} OR {epCol} IS DISTINCT FROM {Param(entrypoint)}::bytea)");
+            }
+
+            if (awe.In != null)
+            {
+                var withoutEp = awe.In.Where(x => x.Item2 == null);
+                var withNullEp = awe.In.Where(x => x.Item2?.Length == 0);
+                var withEp = awe.In.Where(x => x.Item2?.Length > 0);
+
+                var subs = new List<string>(4);
+
+                if (awe.InHasNull)
+                    subs.Add($"{accCol} IS NULL");
+
+                if (withoutEp.Any())
+                    subs.Add($"{accCol} = ANY ({Param(withoutEp.Select(x => x.Item1).ToList())})");
+
+                if (withNullEp.Any())
+                    subs.Add($"{accCol} = ANY ({Param(withNullEp.Select(x => x.Item1).ToList())}) AND {epCol} IS NULL");
+
+                if (withEp.Any())
+                    subs.Add($"({accCol}, {epCol}) IN (SELECT * FROM UNNEST({Param(withEp.Select(x => x.Item1).ToList())}, {Param(withEp.Select(x => x.Item2).ToList())}))");
+
+                AppendFilter($"({string.Join(" OR ", subs)})");
+            }
+
+            if (awe.Ni != null)
+            {
+                var withoutEp = awe.Ni.Where(x => x.Item2 == null);
+                var withNullEp = awe.Ni.Where(x => x.Item2?.Length == 0);
+                var withEp = awe.Ni.Where(x => x.Item2?.Length > 0);
+
+                var subs = new List<string>(4);
+
+                if (awe.NiHasNull)
+                    subs.Add($"{accCol} IS NOT NULL");
+
+                if (withoutEp.Any())
+                    subs.Add($"({accCol} IS NULL OR NOT ({accCol} = ANY ({Param(withoutEp.Select(x => x.Item1).ToList())})))");
+
+                if (withNullEp.Any())
+                    subs.Add($"({accCol} IS NULL OR NOT ({accCol} = ANY ({Param(withNullEp.Select(x => x.Item1).ToList())})) OR {epCol} IS NOT NULL)");
+
+                if (withEp.Any())
+                    subs.Add($"({accCol} IS NULL OR {epCol} IS NULL OR NOT (({accCol}, {epCol}) IN (SELECT * FROM UNNEST({Param(withEp.Select(x => x.Item1).ToList())}, {Param(withEp.Select(x => x.Item2).ToList())}))))");
+
+                AppendFilter($"({string.Join(" AND ", subs)})");
+            }
+
+            if (awe.Null != null)
+            {
+                AppendFilter(awe.Null == true
+                    ? $"{accCol} IS NULL"
+                    : $"{accCol} IS NOT NULL");
+            }
+
+            return this;
+        }
+
+        public SqlBuilder FilterA(string column, Utf8BytesParameter? bytes)
+        {
+            if (bytes == null) return this;
+
+            if (bytes.Eq != null)
+                AppendFilter($"{column} = {Param(bytes.Eq)}::bytea");
+
+            if (bytes.Ne != null)
+                AppendFilter($"({column} IS NULL OR {column} != {Param(bytes.Ne)}::bytea)");
+
+            if (bytes.In != null)
+                AppendFilter($"{column} = ANY ({Param(bytes.In)}::bytea[])");
+
+            if (bytes.Ni != null)
+                AppendFilter($"({column} IS NULL OR NOT ({column} = ANY ({Param(bytes.Ni)}::bytea[])))");
+
+            if (bytes.Null != null)
+            {
+                AppendFilter(bytes.Null == true
+                    ? $"{column} IS NULL"
+                    : $"{column} IS NOT NULL");
             }
 
             return this;
