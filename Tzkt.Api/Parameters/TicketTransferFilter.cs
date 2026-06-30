@@ -1,4 +1,5 @@
-﻿using NSwag.Annotations;
+﻿using System.Text.Json.Serialization;
+using NSwag.Annotations;
 using Tzkt.Api.Services;
 
 namespace Tzkt.Api
@@ -73,6 +74,7 @@ namespace Tzkt.Api
         /// </summary>
         public Int64NullParameter? smartRollupExecuteId { get; set; }
 
+        [JsonIgnore]
         [OpenApiIgnore]
         public OrParameter? or { get; set; }
 

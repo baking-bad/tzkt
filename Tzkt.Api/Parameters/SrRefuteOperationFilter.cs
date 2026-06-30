@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -30,6 +31,7 @@ namespace Tzkt.Api
         /// </summary>
         public RefutationGameStatusParameter? gameStatus { get; set; }
 
+        [OpenApiIgnore]
         public override bool Empty =>
             base.Empty &&
             anyof == null &&

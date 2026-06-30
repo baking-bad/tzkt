@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -9,6 +10,7 @@ namespace Tzkt.Api
         /// </summary>
         public SrCommitmentInfoFilter commitment { get; set; } = new();
 
+        [OpenApiIgnore]
         public override bool Empty => base.Empty && commitment.Empty;
 
         public override string Normalize(string name)

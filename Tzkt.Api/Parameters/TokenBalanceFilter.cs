@@ -1,4 +1,5 @@
 ﻿using System.Text.Json.Serialization;
+using NSwag.Annotations;
 using Tzkt.Api.Services;
 
 namespace Tzkt.Api
@@ -60,6 +61,7 @@ namespace Tzkt.Api
         public TimestampParameter? lastTime { get; set; }
 
         [JsonIgnore]
+        [OpenApiIgnore]
         public Int32NullParameter? indexedAt { get; set; }
 
         public string Normalize(string name)

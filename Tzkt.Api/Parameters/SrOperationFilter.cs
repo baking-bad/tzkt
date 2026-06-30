@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -10,6 +11,7 @@ namespace Tzkt.Api
         /// </summary>
         public SmartRollupParameter? rollup { get; set; }
 
+        [OpenApiIgnore]
         public override bool Empty => base.Empty && rollup == null;
 
         public override string Normalize(string name)

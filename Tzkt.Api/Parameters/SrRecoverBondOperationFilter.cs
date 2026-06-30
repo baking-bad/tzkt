@@ -1,4 +1,5 @@
-﻿using Tzkt.Api.Services;
+﻿using NSwag.Annotations;
+using Tzkt.Api.Services;
 
 namespace Tzkt.Api
 {
@@ -18,6 +19,7 @@ namespace Tzkt.Api
         /// </summary>
         public AccountParameter? staker { get; set; }
 
+        [OpenApiIgnore]
         public override bool Empty => base.Empty && staker == null && anyof == null;
 
         public override string Normalize(string name)

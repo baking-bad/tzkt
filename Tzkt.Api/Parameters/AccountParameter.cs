@@ -1,6 +1,6 @@
 ﻿using System.Text;
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using NJsonSchema.Annotations;
 using Tzkt.Api.Services.Cache;
 

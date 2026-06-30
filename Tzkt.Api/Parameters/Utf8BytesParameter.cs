@@ -27,8 +27,7 @@ namespace Tzkt.Api
 
         /// <summary>
         /// **In list** (any of) filter mode. \
-        /// Specify a comma-separated list of UTF8 strings to get items where the specified field is equal to one of the specified values. \
-        /// Use `\,` as an escape symbol.
+        /// Specify a comma-separated list of UTF8 strings to get items where the specified field is equal to one of the specified values.
         /// 
         /// Example: `?entrypoint.in=bla,bal,abl`.
         /// </summary>
@@ -36,8 +35,7 @@ namespace Tzkt.Api
 
         /// <summary>
         /// **Not in list** (none of) filter mode. \
-        /// Specify a comma-separated list of UTF8 strings to get items where the specified field is not equal to all the specified values. \
-        /// Use `\,` as an escape symbol.
+        /// Specify a comma-separated list of UTF8 strings to get items where the specified field is not equal to all the specified values.
         /// 
         /// Example: `?entrypoint.ni=bla,bal,abl`.
         /// </summary>

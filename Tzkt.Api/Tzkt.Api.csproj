@@ -56,7 +56,7 @@
         <PackageReference Include="App.Metrics.Formatters.Prometheus" Version="4.3.0" />
         <PackageReference Include="Dapper" Version="2.1.66" />
         <PackageReference Include="Npgsql" Version="9.0.3" />
-        <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
+        <PackageReference Include="NSwag.AspNetCore" Version="14.7.1" />
     </ItemGroup>
 
     <ItemGroup>

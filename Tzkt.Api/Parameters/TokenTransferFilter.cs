@@ -86,10 +86,12 @@ namespace Tzkt.Api
         /// </summary>
         public Int64NullParameter? migrationId { get; set; }
 
+        [JsonIgnore]
         [OpenApiIgnore]
         public OrParameter? or { get; set; }
 
         [JsonIgnore]
+        [OpenApiIgnore]
         public Int32NullParameter? indexedAt { get; set; }
 
         public string Normalize(string name)

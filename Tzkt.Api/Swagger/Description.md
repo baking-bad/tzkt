@@ -38,8 +38,8 @@ It's available for the following Tezos networks with the following base URLs:
 
 - Mainnet: `https://api.tzkt.io/` or `https://api.mainnet.tzkt.io/` ([view docs](https://api.tzkt.io))
 - Shadownet: `https://api.shadownet.tzkt.io/` ([view docs](https://api.shadownet.tzkt.io))
-- Tallinnnet: `https://api.tallinnnet.tzkt.io/` ([view docs](https://api.tallinnnet.tzkt.io))
 - Ushuaianet: `https://api.ushuaianet.tzkt.io/` ([view docs](https://api.ushuaianet.tzkt.io))
+- Bakingnet: `https://api.bakingnet.tzkt.io/` ([view docs](https://api.bakingnet.tzkt.io))
 
 ### Sending Requests
 

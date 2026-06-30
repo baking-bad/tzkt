@@ -1,6 +1,7 @@
 ﻿using System.Text;
 using Microsoft.AspNetCore.Mvc;
 using NJsonSchema.Annotations;
+using NSwag.Annotations;
 
 namespace Tzkt.Api
 {
@@ -72,6 +73,7 @@ namespace Tzkt.Api
         /// </summary>
         public List<long>? Ni { get; set; }
 
+        [OpenApiIgnore]
         public bool Empty =>
             Eq == null &&
             Ne == null &&
