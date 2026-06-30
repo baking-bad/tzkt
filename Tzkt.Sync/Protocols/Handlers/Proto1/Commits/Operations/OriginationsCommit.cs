@@ -626,7 +626,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ContractId = contract.Id,
                 OriginationId = origination.Id,
                 RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
-                JsonValue = script.Schema.HumanizeStorage(storageValue),
+                JsonValue = Regexes.RestrictedUnicode().Replace(script.Schema.HumanizeStorage(storageValue), string.Empty),
                 Current = true
             };
 

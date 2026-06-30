@@ -186,7 +186,7 @@ namespace Tzkt.Sync.Protocols.Proto16
                     {
                         var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
-                        jsonContent = schema.Humanize(value);
+                        jsonContent = Regexes.RestrictedUnicode().Replace(schema.Humanize(value), string.Empty);
                     }
                     catch (Exception ex)
                     {

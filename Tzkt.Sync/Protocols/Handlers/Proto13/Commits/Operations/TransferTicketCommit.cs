@@ -60,7 +60,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                 var value = content.RequiredMicheline("ticket_contents");
                 operation.RawType = micheType.ToMicheline().ToBytes();
                 operation.RawContent = micheType.Optimize(value).ToBytes();
-                operation.JsonContent = micheType.Humanize(value);
+                operation.JsonContent = Regexes.RestrictedUnicode().Replace(micheType.Humanize(value), string.Empty);
             }
             catch (Exception ex)
             {
@@ -181,7 +181,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     {
                         var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
-                        jsonContent = schema.Humanize(value);
+                        jsonContent = Regexes.RestrictedUnicode().Replace(schema.Humanize(value), string.Empty);
                     }
                     catch (Exception ex)
                     {

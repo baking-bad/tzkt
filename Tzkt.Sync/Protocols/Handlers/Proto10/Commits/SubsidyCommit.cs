@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 ContractId = contract.Id,
                 MigrationId = op.Id,
                 RawValue = newStorageBytes,
-                JsonValue = schema.HumanizeStorage(newStorageMicheline),
+                JsonValue = Regexes.RestrictedUnicode().Replace(schema.HumanizeStorage(newStorageMicheline), string.Empty),
                 Current = true,
             };
 

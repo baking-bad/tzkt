@@ -376,7 +376,7 @@ namespace Tzkt.Sync.Services
                         if (any) sql.AppendLine(",");
                         else any = true;
                         var metadata = item.Metadata is JsonElement json
-                            ? Regexes.Metadata().Replace(
+                            ? Regexes.RestrictedUnicode().Replace(
                                 JsonSerializer.Serialize(json, MetadataSerializerOptions),
                                 string.Empty)
                             : null;

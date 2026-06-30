@@ -561,7 +561,7 @@ namespace Tzkt.Sync.Protocols.Proto10
                 Level = block.Level,
                 ContractId = contract.Id,
                 RawValue = script.Schema.OptimizeStorage(storageValue, false).ToBytes(),
-                JsonValue = script.Schema.HumanizeStorage(storageValue),
+                JsonValue = Regexes.RestrictedUnicode().Replace(script.Schema.HumanizeStorage(storageValue), string.Empty),
                 Current = true
             };
 
@@ -654,8 +654,8 @@ namespace Tzkt.Sync.Protocols.Proto10
                         BigMapPtr = ptr,
                         FirstLevel = block.Level,
                         LastLevel = block.Level,
-                        JsonKey = schema.Key.Humanize(rawKey),
-                        JsonValue = schema.Value.Humanize(rawValue),
+                        JsonKey = Regexes.RestrictedUnicode().Replace(schema.Key.Humanize(rawKey), string.Empty),
+                        JsonValue = Regexes.RestrictedUnicode().Replace(schema.Value.Humanize(rawValue), string.Empty),
                         RawKey = schema.Key.Optimize(rawKey).ToBytes(),
                         RawValue = schema.Value.Optimize(rawValue).ToBytes(),
                         KeyHash = schema.GetKeyHash(rawKey),

@@ -40,7 +40,7 @@ namespace Tzkt.Sync.Protocols.Proto14
 
                 var rawPayload = content.OptionalMicheline("payload") ?? new MichelinePrim { Prim = PrimType.Unit };
 
-                contractEvent.JsonPayload = schema.Humanize(rawPayload);
+                contractEvent.JsonPayload = Regexes.RestrictedUnicode().Replace(schema.Humanize(rawPayload), string.Empty);
                 contractEvent.RawPayload = schema.Optimize(rawPayload).ToBytes();
             }
             catch (Exception ex)

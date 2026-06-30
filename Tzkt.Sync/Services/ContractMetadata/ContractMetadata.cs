@@ -148,7 +148,7 @@ namespace Tzkt.Sync.Services
                     var item = items[i + j];
                     if (j > 0) sql.Append(",\n");
                     var metadata = item.Metadata is JsonElement json
-                        ? Regexes.Metadata().Replace(
+                        ? Regexes.RestrictedUnicode().Replace(
                             JsonSerializer.Serialize(json, MetadataSerializerOptions),
                             string.Empty)
                         : null;

@@ -378,7 +378,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                         transaction.Entrypoint = normEp;
                         transaction.RawParameters = schema.OptimizeParameter(normEp, normParam).ToBytes();
-                        transaction.JsonParameters = schema.HumanizeParameter(normEp, normParam);
+                        transaction.JsonParameters = Regexes.RestrictedUnicode().Replace(schema.HumanizeParameter(normEp, normParam), string.Empty);
                     }
                     catch (Exception ex)
                     {
@@ -425,7 +425,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                 ContractId = contract.Id,
                 TransactionId = transaction.Id,
                 RawValue = newStorageBytes,
-                JsonValue = schema.HumanizeStorage(newStorageMicheline),
+                JsonValue = Regexes.RestrictedUnicode().Replace(schema.HumanizeStorage(newStorageMicheline), string.Empty),
                 Current = true,
             };
 
@@ -561,7 +561,7 @@ namespace Tzkt.Sync.Protocols.Proto1
                     {
                         var schema = Schema.Create((type as MichelinePrim)!);
                         rawContent = schema.Optimize(value).ToBytes();
-                        jsonContent = schema.Humanize(value);
+                        jsonContent = Regexes.RestrictedUnicode().Replace(schema.Humanize(value), string.Empty);
                     }
                     catch (Exception ex)
                     {

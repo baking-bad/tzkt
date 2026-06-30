@@ -131,7 +131,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                         ContractId = contract.Id,
                         MigrationId = migration.Id,
                         RawValue = newRawStorageValue,
-                        JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
+                        JsonValue = Regexes.RestrictedUnicode().Replace(newScript.Schema.HumanizeStorage(newStorageValue), string.Empty),
                         Current = true
                     };
 

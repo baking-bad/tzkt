@@ -203,7 +203,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                         ContractId = contract.Id,
                         MigrationId = migration.Id,
                         RawValue = newRawStorageValue,
-                        JsonValue = newScript.Schema.HumanizeStorage(newStorageValue),
+                        JsonValue = Regexes.RestrictedUnicode().Replace(newScript.Schema.HumanizeStorage(newStorageValue), string.Empty),
                         Current = true
                     };
 
@@ -265,7 +265,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                             (prevBigmap.Value as MichelineInt)!.Value = newPtr;
 
                             prevStorage.RawValue = prevValue.ToBytes();
-                            prevStorage.JsonValue = script.Schema.HumanizeStorage(prevValue);
+                            prevStorage.JsonValue = Regexes.RestrictedUnicode().Replace(script.Schema.HumanizeStorage(prevValue), string.Empty);
                         }
                     }
                 }
@@ -397,7 +397,7 @@ namespace Tzkt.Sync.Protocols.Proto5
                             (prevBigmap.Value as MichelineInt)!.Value = contract.Id;
 
                             prevStorage.RawValue = prevValue.ToBytes();
-                            prevStorage.JsonValue = oldScript.Schema.HumanizeStorage(prevValue);
+                            prevStorage.JsonValue = Regexes.RestrictedUnicode().Replace(oldScript.Schema.HumanizeStorage(prevValue), string.Empty);
                         }
                     }
 

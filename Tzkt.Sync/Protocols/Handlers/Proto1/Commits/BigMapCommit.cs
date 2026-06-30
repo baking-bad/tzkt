@@ -193,8 +193,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     BigMapPtr = copy.Ptr,
                                     Active = true,
                                     KeyHash = kv.Key,
-                                    JsonKey = Regexes.Metadata().Replace(bigMapSchema.Key.Humanize(rawKey), string.Empty),
-                                    JsonValue = Regexes.Metadata().Replace(bigMapSchema.Value.Humanize(rawValue), string.Empty),
+                                    JsonKey = Regexes.RestrictedUnicode().Replace(bigMapSchema.Key.Humanize(rawKey), string.Empty),
+                                    JsonValue = Regexes.RestrictedUnicode().Replace(bigMapSchema.Value.Humanize(rawValue), string.Empty),
                                     RawKey = bigMapSchema.Key.Optimize(rawKey).ToBytes(),
                                     RawValue = bigMapSchema.Value.Optimize(rawValue).ToBytes(),
                                     FirstLevel = diff.op.Level,
@@ -285,7 +285,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                                     Db.TryAttach(key);
                                     key.Active = true;
-                                    key.JsonValue = Regexes.Metadata().Replace(bigMap.Schema.Value.Humanize(update.Value), string.Empty);
+                                    key.JsonValue = Regexes.RestrictedUnicode().Replace(bigMap.Schema.Value.Humanize(update.Value), string.Empty);
                                     key.RawValue = bigMap.Schema.Value.Optimize(update.Value).ToBytes();
                                     key.LastLevel = diff.op.Level;
                                     key.Updates++;
@@ -356,8 +356,8 @@ namespace Tzkt.Sync.Protocols.Proto1
                                     BigMapPtr = update.Ptr,
                                     FirstLevel = diff.op.Level,
                                     LastLevel = diff.op.Level,
-                                    JsonKey = Regexes.Metadata().Replace(bigMap.Schema.Key.Humanize(update.Key), string.Empty),
-                                    JsonValue = Regexes.Metadata().Replace(bigMap.Schema.Value.Humanize(update.Value), string.Empty),
+                                    JsonKey = Regexes.RestrictedUnicode().Replace(bigMap.Schema.Key.Humanize(update.Key), string.Empty),
+                                    JsonValue = Regexes.RestrictedUnicode().Replace(bigMap.Schema.Value.Humanize(update.Value), string.Empty),
                                     RawKey = bigMap.Schema.Key.Optimize(update.Key).ToBytes(),
                                     RawValue = bigMap.Schema.Value.Optimize(update.Value).ToBytes(),
                                     KeyHash = update.KeyHash,
