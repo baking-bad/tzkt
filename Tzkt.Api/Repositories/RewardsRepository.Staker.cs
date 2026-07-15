@@ -28,7 +28,7 @@ namespace Tzkt.Api.Repositories
                     switch (field.Field)
                     {
                         case "cycle": columns.Add(@"sc.""Cycle"""); break;
-                        case "bakerId": columns.Add(@"sc.""BakerId"""); break;
+                        case "baker": columns.Add(@"sc.""BakerId"""); break;
                         case "initialStake": columns.Add(@"sc.""InitialStake"""); break;
                         case "addedStake": columns.Add(@"sc.""AddedStake"""); break;
                         case "removedStake": columns.Add(@"sc.""RemovedStake"""); break;
