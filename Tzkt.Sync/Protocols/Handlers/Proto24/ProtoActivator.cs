@@ -39,7 +39,7 @@ namespace Tzkt.Sync.Protocols.Proto24
 
                 RampUpCycles = constants.OptionalInt32("security_deposit_ramp_up_cycles") ?? 0,
                 NoRewardCycles = constants.OptionalInt32("no_reward_cycles") ?? 0,
-                ByteCost = constants.OptionalInt32("cost_per_byte") ?? 250,
+                ByteCost = 1, // TODO: uncomment when fixed: constants.OptionalInt32("cost_per_byte") ?? 250,
                 HardOperationGasLimit = constants.OptionalInt32("hard_gas_limit_per_operation") ?? 1_040_000,
                 HardOperationStorageLimit = constants.OptionalInt32("hard_storage_limit_per_operation") ?? 60_000,
                 OriginationSize = constants.OptionalInt32("origination_size") ?? 257,
