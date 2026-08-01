@@ -15,6 +15,7 @@ namespace Tzkt.Sync
         public static void AddTezosProtocols(this IServiceCollection services)
         {
             services.AddScoped<Proto24Handler>();
+            services.AddScoped<Proto25Handler>();
         }
 
         public static ProtocolHandler GetNextBlockHandler(this IServiceProvider services, AppState state)
@@ -55,6 +56,7 @@ namespace Tzkt.Sync
                 "PrihK96nBAFSxVL1GLJTVhu9YnzkMFiBeuJRPA8NwuZVZCE1L6i" => services.GetRequiredService<Proto24Handler>(),
                 "Ps9mPmXaRzmzk35gbAYNCAw6UXdE2qoABTHbN2oEEc1qM7CwT9P" => services.GetRequiredService<Proto24Handler>(),
                 "PtTALLiNtPec7mE7yY4m3k26J8Qukef3E3ehzhfXgFZKGtDdAXu" => services.GetRequiredService<Proto24Handler>(),
+                "PsUshuai9QapM5TGj1JpuVGkdxz5GykdnEvS6Rh8SUVrARvZLCY" => services.GetRequiredService<Proto25Handler>(),
                 _ => null,
             };
         }
