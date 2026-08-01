@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'tezosx'
     tags:
       - 'v*.*.*'
   pull_request:
