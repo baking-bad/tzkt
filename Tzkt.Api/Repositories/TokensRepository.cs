@@ -353,6 +353,9 @@ namespace Tzkt.Api.Repositories
                 if (columns.Count == 0)
                     return [];
 
+                if (pagination.sort?.Asc == "balanceValue" || pagination.sort?.Desc == "balanceValue")
+                    columns.Add(@"(tb.""Balance"" * t.""Value"")::numeric(1000,0) as ""BalanceValue""");
+
                 select = string.Join(',', columns);
             }
 
