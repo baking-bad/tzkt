@@ -21,6 +21,12 @@ namespace Tzkt.Api.Services.Cache
             Protocols = protocols;
             Logger = logger;
 
+            Times = new List<DateTime>(state.Current.Level + 512_000);
+
+            var (firstLevel, firstTimestamp) = GetFirstBlock();
+            for (var i = 0; i < firstLevel; i++)
+                Times.Add(firstTimestamp.AddSeconds(-firstLevel));
+
             using var db = DataSource.OpenConnection();
             using var reader = db.BeginBinaryExport("""
                 COPY (
@@ -31,12 +37,24 @@ namespace Tzkt.Api.Services.Cache
                 TO STDOUT (FORMAT BINARY)
                 """);
 
-            Times = new List<DateTime>(state.Current.Level + 512_000);
 
             while (reader.StartRow() != -1)
                 Times.Add(DateTime.SpecifyKind(reader.Read<DateTime>(), DateTimeKind.Utc));
 
             logger.LogInformation("Loaded {cnt} timestamps", Times.Count);
+        }
+
+        (int, DateTime) GetFirstBlock()
+        {
+            using var db = DataSource.OpenConnection();
+            var row = db.QueryFirst("""
+                SELECT "Level", "Timestamp"
+                FROM "Blocks"
+                ORDER BY "Level"
+                LIMIT 1
+                """);
+
+            return ((int)row.Level, (DateTime)row.Timestamp);
         }
 
         public async Task UpdateAsync()
