@@ -1037,7 +1037,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "frozenDeposit":
                         foreach (var row in rows)
-                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance == null ? null : (row.OwnStakedBalance + row.ExternalStakedBalance);
                         break;
                     case "frozenDepositLimit":
                         foreach (var row in rows)
@@ -1261,7 +1261,7 @@ namespace Tzkt.Api.Repositories
                         break;
                     case "totalStakedBalance":
                         foreach (var row in rows)
-                            result[j++][i] = row.OwnStakedBalance + row.ExternalStakedBalance;
+                            result[j++][i] = row.OwnStakedBalance == null ? null : (row.OwnStakedBalance + row.ExternalStakedBalance);
                         break;
                     case "externalStakedBalance":
                         foreach (var row in rows)
@@ -1732,7 +1732,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "frozenDeposit":
                     foreach (var row in rows)
-                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
+                        result[j++] = row.OwnStakedBalance == null ? null : (row.OwnStakedBalance + row.ExternalStakedBalance);
                     break;
                 case "frozenDepositLimit":
                     foreach (var row in rows)
@@ -1956,7 +1956,7 @@ namespace Tzkt.Api.Repositories
                     break;
                 case "totalStakedBalance":
                     foreach (var row in rows)
-                        result[j++] = row.OwnStakedBalance + row.ExternalStakedBalance;
+                        result[j++] = row.OwnStakedBalance == null ? null : (row.OwnStakedBalance + row.ExternalStakedBalance);
                     break;
                 case "externalStakedBalance":
                     foreach (var row in rows)
