@@ -398,10 +398,10 @@ namespace Tzkt.Api.Repositories
                 return [];
 
             var or = new OrParameter(
-                ("SenderId", senderIds),
-                ("InitiatorId", initiatorIds),
-                ("DelegateId", delegateIds),
-                ("ContractId", contractIds));
+                (@"o.""SenderId""", senderIds),
+                (@"o.""InitiatorId""", initiatorIds),
+                (@"o.""DelegateId""", delegateIds),
+                (@"o.""ContractId""", contractIds));
 
             return await GetOriginations(
                 or,
@@ -460,25 +460,25 @@ namespace Tzkt.Api.Repositories
                 INNER JOIN  ""Blocks"" as b
                         ON  b.""Level"" = o.""Level""
                 {(typeHash != null || codeHash != null ? @"LEFT JOIN ""Accounts"" as c ON c.""Id"" = o.""ContractId""" : "")}")
-                .Filter(or)
-                .Filter(anyof, x => x switch
+                .FilterA(or)
+                .FilterA(anyof, x => x switch
                 {
-                    "initiator" => "InitiatorId",
-                    "sender" => "SenderId",
-                    "contractDelegate" => "DelegateId",
-                    _ => "ContractId"
+                    "initiator" => @"o.""InitiatorId""",
+                    "sender" => @"o.""SenderId""",
+                    "contractDelegate" => @"o.""DelegateId""",
+                    _ => @"o.""ContractId"""
                 })
-                .Filter("InitiatorId", initiator, x => "DelegateId")
-                .Filter("SenderId", sender, x => "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
-                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""InitiatorId""", initiator, x => @"o.""DelegateId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""DelegateId""")
+                .FilterA(@"o.""DelegateId""", contractDelegate, x => x == "initiator" ? @"o.""InitiatorId""" : @"o.""SenderId""")
+                .FilterA(@"o.""ContractId""", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
-                .Filter("Status", status)
+                .FilterA(@"o.""Status""", status)
                 .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -654,24 +654,24 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
-                .Filter(anyof, x => x switch
+                .FilterA(anyof, x => x switch
                 {
-                    "initiator" => "InitiatorId",
-                    "sender" => "SenderId",
-                    "contractDelegate" => "DelegateId",
-                    _ => "ContractId"
+                    "initiator" => @"o.""InitiatorId""",
+                    "sender" => @"o.""SenderId""",
+                    "contractDelegate" => @"o.""DelegateId""",
+                    _ => @"o.""ContractId"""
                 })
-                .Filter("InitiatorId", initiator, x => "DelegateId")
-                .Filter("SenderId", sender, x => "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
-                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""InitiatorId""", initiator, x => @"o.""DelegateId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""DelegateId""")
+                .FilterA(@"o.""DelegateId""", contractDelegate, x => x == "initiator" ? @"o.""InitiatorId""" : @"o.""SenderId""")
+                .FilterA(@"o.""ContractId""", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
-                .Filter("Status", status)
+                .FilterA(@"o.""Status""", status)
                 .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
@@ -936,24 +936,24 @@ namespace Tzkt.Api.Repositories
             #endregion
 
             var sql = new SqlBuilder($@"SELECT {string.Join(',', columns)} FROM ""OriginationOps"" as o {string.Join(' ', joins)}")
-                .Filter(anyof, x => x switch
+                .FilterA(anyof, x => x switch
                 {
-                    "initiator" => "InitiatorId",
-                    "sender" => "SenderId",
-                    "contractDelegate" => "DelegateId",
-                    _ => "ContractId"
+                    "initiator" => @"o.""InitiatorId""",
+                    "sender" => @"o.""SenderId""",
+                    "contractDelegate" => @"o.""DelegateId""",
+                    _ => @"o.""ContractId"""
                 })
-                .Filter("InitiatorId", initiator, x => "DelegateId")
-                .Filter("SenderId", sender, x => "DelegateId")
-                .Filter("DelegateId", contractDelegate, x => x == "initiator" ? "InitiatorId" : "SenderId")
-                .Filter("ContractId", originatedContract)
+                .FilterA(@"o.""InitiatorId""", initiator, x => @"o.""DelegateId""")
+                .FilterA(@"o.""SenderId""", sender, x => @"o.""DelegateId""")
+                .FilterA(@"o.""DelegateId""", contractDelegate, x => x == "initiator" ? @"o.""InitiatorId""" : @"o.""SenderId""")
+                .FilterA(@"o.""ContractId""", originatedContract)
                 .FilterA(@"o.""Id""", id)
                 .FilterA(@"c.""TypeHash""", typeHash)
                 .FilterA(@"o.""ContractCodeHash""", codeHash)
                 .FilterA(@"o.""Level""", level)
                 .FilterA(@"o.""Level""", timestamp)
                 .FilterA(@"o.""SenderCodeHash""", senderCodeHash)
-                .Filter("Status", status)
+                .FilterA(@"o.""Status""", status)
                 .FilterOrA([@"o.""SenderCodeHash""", @"o.""ContractCodeHash"""], anyCodeHash)
                 .Take(sort, offset, limit, x => x switch
                 {
