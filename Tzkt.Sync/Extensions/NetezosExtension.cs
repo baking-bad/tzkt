@@ -10,6 +10,7 @@ namespace Tzkt.Sync
         static readonly byte[] tz2 = [6, 161, 161];
         static readonly byte[] tz3 = [6, 161, 164];
         static readonly byte[] tz4 = [6, 161, 166];
+        static readonly byte[] tz5 = [6, 161, 169];
         static readonly byte[] KT1 = [2, 90, 121];
         static readonly byte[] txr1 = [1, 128, 120, 31];
         static readonly byte[] sr1 = [6, 124, 117];
@@ -40,6 +41,7 @@ namespace Tzkt.Sync
                         1 => tz2,
                         2 => tz3,
                         3 => tz4,
+                        4 => tz5,
                         _ => throw new Exception("Invalid address prefix"),
                     };
                     bytes = value.GetBytes(2, 20);
@@ -98,6 +100,11 @@ namespace Tzkt.Sync
                     else if (value[1] == 3)
                     {
                         res = Base58.Convert(value.GetBytes(2, 20), tz4);
+                        return true;
+                    }
+                    else if (value[1] == 4)
+                    {
+                        res = Base58.Convert(value.GetBytes(2, 20), tz5);
                         return true;
                     }
                 }
