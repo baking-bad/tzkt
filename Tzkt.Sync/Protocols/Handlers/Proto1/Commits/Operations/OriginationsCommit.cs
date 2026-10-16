@@ -496,7 +496,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         {
             if (code is not MichelineArray array)
             {
-                var constants = await Constants.Find(Db, [code]);
+                var constants = await Constants.Find(Db, Context.RegisterConstantOps, [code]);
                 if (constants.Count > 0)
                 {
                     contract.Tags |= ContractTags.Constants;
@@ -520,7 +520,7 @@ namespace Tzkt.Sync.Protocols.Proto1
         protected async Task ProcessScript(OriginationOperation origination, Contract contract, MichelineArray code, IMicheline storageValue)
         {
             #region expand top-level constants
-            var constants = await Constants.Find(Db, code);
+            var constants = await Constants.Find(Db, Context.RegisterConstantOps, code);
             if (constants.Count > 0)
             {
                 var depth = 0;
@@ -663,7 +663,7 @@ namespace Tzkt.Sync.Protocols.Proto1
 
                 // TODO: we're actually missing constants in parameter and storage,
                 // as they were expanded, so refs may be reverted inaccurately.
-                var constants = await Constants.Find(Db, code);
+                var constants = await Constants.Find(Db, Context.RegisterConstantOps, code);
                 foreach (var constant in constants)
                 {
                     Db.TryAttach(constant);
