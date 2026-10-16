@@ -50,6 +50,11 @@ namespace Tzkt.Sync.Services.Cache
             Cached.Remove(bigmap.Ptr);
         }
 
+        public bool Has(int ptr)
+        {
+            return Cached.ContainsKey(ptr);
+        }
+
         public async Task Prefetch(IEnumerable<int> ptrs)
         {
             var missed = ptrs.Where(x => !Cached.ContainsKey(x)).ToHashSet();

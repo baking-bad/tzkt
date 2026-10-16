@@ -58,32 +58,48 @@ namespace Tzkt.Sync.Protocols.Proto24
                 }
                 else if (diff.diff is CopyDiff copy)
                 {
+                    allocated.Add(diff.diff.Ptr);
                     var origin = GetOrigin(copy);
-                    if (origin < 0)
-                        allocated.Add(diff.diff.Ptr);
-                    else
+                    if (origin >= 0)
                         copiedFrom.Add(origin);
                 }
             }
 
             await Cache.BigMaps.Prefetch(Diffs
                 .Where(x => x.diff.Ptr >= 0 && !allocated.Contains(x.diff.Ptr))
-                .Select(x => x.diff.Ptr));
+                .Select(x => x.diff.Ptr)
+                .Concat(copiedFrom));
 
             await Cache.BigMapKeys.Prefetch(Diffs
                 .Where(x => x.diff.Ptr >= 0 && !allocated.Contains(x.diff.Ptr) && x.diff.Action == BigMapDiffAction.Update)
                 .Select(x => (x.diff.Ptr, (x.diff as UpdateDiff)!.KeyHash)));
 
-            var copiedKeys = copiedFrom.Count == 0 ? [] :
-                await Db.BigMapKeys
+            var images = new Dictionary<int, Dictionary<string, (byte[] RawKey, byte[] RawValue)>>();
+
+            // big_maps allocated in this block are not in the DB yet
+            copiedFrom.ExceptWith(allocated);
+            if (copiedFrom.Count != 0)
+            {
+                foreach (var ptr in copiedFrom)
+                {
+                    if (!Cache.BigMaps.Has(ptr))
+                        throw new Exception($"Copied big_map {ptr} doesn't exist");
+
+                    images.Add(ptr, []);
+                }
+
+                var copiedKeys = await Db.BigMapKeys
                     .AsNoTracking()
-                    .Where(x => copiedFrom.Contains(x.BigMapPtr))
+                    .Where(x => copiedFrom.Contains(x.BigMapPtr) && x.Active)
                     .ToListAsync();
+
+                foreach (var copiedKey in copiedKeys)
+                    images[copiedKey.BigMapPtr].Add(copiedKey.KeyHash, (copiedKey.RawKey, copiedKey.RawValue));
+            }
             #endregion
 
             BigMapUpdate bigMapUpdate;
             var bigMapUpdates = new List<BigMapUpdate>(Updates.Count);
-            var images = new Dictionary<int, Dictionary<string, (byte[] RawKey, byte[] RawValue)>>();
             foreach (var diff in Diffs)
             {
                 switch (diff.diff)
@@ -153,13 +169,12 @@ namespace Tzkt.Sync.Protocols.Proto24
                         }
                         break;
                     case CopyDiff copy:
-                        if (copy.SourcePtr >= 0 && !copiedFrom.Contains(copy.SourcePtr))
-                            break;
                         if (!images.TryGetValue(copy.SourcePtr, out var src))
                         {
-                            src = copiedKeys
-                                .Where(x => x.BigMapPtr == copy.SourcePtr)
-                                .ToDictionary(x => x.KeyHash, x => (x.RawKey, x.RawValue));
+                            if (copy.Ptr >= 0)
+                                throw new Exception($"Copied big_map {copy.Ptr} has unknown source big_map {copy.SourcePtr}");
+
+                            src = [];
                         }
                         if (copy.Ptr >= 0)
                         {
@@ -385,6 +400,10 @@ namespace Tzkt.Sync.Protocols.Proto24
                                 diff.op.BigMapUpdates = (diff.op.BigMapUpdates ?? 0) + 1;
                                 #endregion
                             }
+
+                            // keep the image in sync, in case the big_map is copied later in this block
+                            if (images.TryGetValue(update.Ptr, out var image))
+                                UpdateImage(image, update);
                         }
                         else
                         {
@@ -392,21 +411,7 @@ namespace Tzkt.Sync.Protocols.Proto24
                             if (!images.TryGetValue(update.Ptr, out var image))
                                 throw new Exception("Can't update non-existent temporary big_map");
 
-                            if (image.TryGetValue(update.KeyHash, out var key))
-                            {
-                                if (update.Value != null)
-                                {
-                                    image[update.KeyHash] = (key.RawKey, update.Value.ToBytes());
-                                }
-                                else
-                                {
-                                    image.Remove(update.KeyHash);
-                                }
-                            }
-                            else if (update.Value != null) // WTF: edo2net:34839 - non-existent key was removed
-                            {
-                                image.Add(update.KeyHash, (update.Key.ToBytes(), update.Value.ToBytes()));
-                            }
+                            UpdateImage(image, update);
                             #endregion
                         }
                         break;
@@ -449,6 +454,25 @@ namespace Tzkt.Sync.Protocols.Proto24
                 .FirstOrDefault(x => x.diff.Action == BigMapDiffAction.Copy && x.diff.Ptr == copy.SourcePtr).diff is CopyDiff prevCopy
                     ? GetOrigin(prevCopy)
                     : copy.SourcePtr;
+        }
+
+        static void UpdateImage(Dictionary<string, (byte[] RawKey, byte[] RawValue)> image, UpdateDiff update)
+        {
+            if (image.TryGetValue(update.KeyHash, out var key))
+            {
+                if (update.Value != null)
+                {
+                    image[update.KeyHash] = (key.RawKey, update.Value.ToBytes());
+                }
+                else
+                {
+                    image.Remove(update.KeyHash);
+                }
+            }
+            else if (update.Value != null) // WTF: edo2net:34839 - non-existent key was removed
+            {
+                image.Add(update.KeyHash, (update.Key.ToBytes(), update.Value.ToBytes()));
+            }
         }
 
         protected virtual BigMapTag GetTags(Contract contract, TreeView node) => BigMaps.GetTags(contract, node);
