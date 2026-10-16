@@ -107,6 +107,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             Cache.Schemas.Reset();
             Cache.Storages.Reset();
+            Cache.BigMaps.Reset();
+            Cache.BigMapKeys.Reset();
 
             foreach (var contract in contracts)
             {
@@ -323,6 +325,8 @@ namespace Tzkt.Sync.Protocols.Proto5
 
             Cache.Schemas.Reset();
             Cache.Storages.Reset();
+            Cache.BigMaps.Reset();
+            Cache.BigMapKeys.Reset();
 
             foreach (var change in codeChanges)
             {
