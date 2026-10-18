@@ -1,4 +1,6 @@
-﻿namespace Tzkt.Api.Utils
+﻿using System.Text.Json;
+
+namespace Tzkt.Api.Utils
 {
     public class JsonPath
     {
@@ -12,7 +14,7 @@
                 Type = JsonPathType.Field;
                 Value = value;
             }
-            else if (Regexes.Quoted().IsMatch(value))
+            else if (Regexes.Quoted().IsMatch(value) && IsValidText(value))
             {
                 Type = JsonPathType.Key;
                 Value = value[1..^1];
@@ -59,6 +61,22 @@
         public static string?[] Select(JsonPath[] path)
         {
             return path.Select(x => x.Value).ToArray();
+        }
+
+        static bool IsValidText(string json)
+        {
+            if (!json.IsValidText())
+                return false;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(json);
+                return doc.RootElement.ValueKind == JsonValueKind.String;
+            }
+            catch (JsonException)
+            {
+                return false;
+            }
         }
     }
 

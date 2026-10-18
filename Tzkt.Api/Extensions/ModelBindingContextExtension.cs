@@ -1963,6 +1963,11 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Value contains invalid characters.");
+                        return false;
+                    }
                     result = valueObject.FirstValue;
                     return true;
                 }
@@ -1979,6 +1984,11 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Value contains invalid characters.");
+                        return false;
+                    }
                     try
                     {
                         var json = NormalizeJson(valueObject.FirstValue);
@@ -2001,6 +2011,11 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List contains invalid characters.");
+                        return false;
+                    }
                     try
                     {
                         if (Regexes.CommaSeparatedWords().IsMatch(valueObject.FirstValue))
@@ -2114,6 +2129,12 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "Value contains invalid characters.");
+                        return false;
+                    }
+
                     hasValue = true;
                     result = valueObject.FirstValue;
                 }
@@ -2131,6 +2152,12 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List contains invalid characters.");
+                        return false;
+                    }
+
                     var rawValues = valueObject.FirstValue.Split(',', StringSplitOptions.RemoveEmptyEntries);
 
                     if (rawValues.Length == 0)
@@ -2156,6 +2183,12 @@ namespace Tzkt.Api
             {
                 if (!string.IsNullOrEmpty(valueObject.FirstValue))
                 {
+                    if (!valueObject.FirstValue.IsValidText())
+                    {
+                        bindingContext.ModelState.TryAddModelError(name, "List contains invalid characters.");
+                        return false;
+                    }
+
                     var rawValues = valueObject.FirstValue
                         .Replace("\\,", "ъуъ")
                         .Split(',', StringSplitOptions.RemoveEmptyEntries);

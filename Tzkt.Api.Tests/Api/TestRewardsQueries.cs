@@ -28,9 +28,9 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestBakerRewardsByCycle()
         {
-            var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}/{Settings.Cycle}");
+            var res = await Client.GetJsonAsync($"/v1/rewards/bakers/{Settings.Baker}?cycle={Settings.Cycle}");
 
-            Assert.True(res is DJsonObject);
+            Assert.True(res is DJsonArray);
         }
 
         [Fact]
@@ -52,9 +52,9 @@ namespace Tzkt.Api.Tests.Api
         [Fact]
         public async Task TestDelegatorRewardsByCycle()
         {
-            var res = await Client.GetJsonAsync($"/v1/rewards/delegators/{Settings.Delegator}/{Settings.Cycle}");
+            var res = await Client.GetJsonAsync($"/v1/rewards/delegators/{Settings.Delegator}?cycle={Settings.Cycle}");
 
-            Assert.True(res is DJsonObject);
+            Assert.True(res is DJsonArray);
         }
 
         [Fact]

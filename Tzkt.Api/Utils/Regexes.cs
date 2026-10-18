@@ -60,5 +60,11 @@ namespace Tzkt.Api
 
         [GeneratedRegex(@"(?:""(?:(?:\\"")|(?:[^""]))*"")|(?:[^"".]+)")]
         public static partial Regex JsonPathParser();
+
+        /// <summary>
+        /// What postgres rejects in jsonb and text: `\u0000` and unpaired surrogates.
+        /// </summary>
+        [GeneratedRegex(@"(?<=(^|[^\\])(\\\\)*)(?:\\u0000|\\u[dD][89abAB][0-9a-fA-F]{2}(?!\\u[dD][c-fC-F][0-9a-fA-F]{2})|(?<!(^|[^\\])(\\\\)*\\u[dD][89abAB][0-9a-fA-F]{2})\\u[dD][c-fC-F][0-9a-fA-F]{2})")]
+        public static partial Regex RestrictedUnicode();
     }
 }

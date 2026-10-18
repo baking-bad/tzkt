@@ -610,6 +610,9 @@ namespace Tzkt.Api.Controllers
 
         static string WrapKey(string key)
         {
+            if (!key.IsValidText())
+                throw new JsonException("Key contains invalid characters.");
+
             switch (key[0])
             {
                 case '{':
