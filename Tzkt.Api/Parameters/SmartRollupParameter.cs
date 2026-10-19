@@ -58,12 +58,12 @@ namespace Tzkt.Api
                 sb.Append($"{name}.ne={Ne}&");
             }
 
-            if (In?.Count > 0)
+            if (In != null)
             {
                 sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
             }
 
-            if (Ni?.Count > 0)
+            if (Ni != null)
             {
                 sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
             }

@@ -143,7 +143,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Eq)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.eq={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.eq={value.EscapeCacheKey()}&");
                 }
             }
 
@@ -151,7 +151,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Ne)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.ne={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.ne={value.EscapeCacheKey()}&");
                 }
             }
 
@@ -159,7 +159,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Gt)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.gt={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.gt={value.EscapeCacheKey()}&");
                 }
             }
 
@@ -167,7 +167,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Ge)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.ge={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.ge={value.EscapeCacheKey()}&");
                 }
             }
 
@@ -175,7 +175,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Lt)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.lt={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.lt={value.EscapeCacheKey()}&");
 
                 }
             }
@@ -184,7 +184,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Le)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.le={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.le={value.EscapeCacheKey()}&");
 
                 }
             }
@@ -193,7 +193,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in As)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.as={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.as={value.EscapeCacheKey()}&");
                 }
             }
 
@@ -201,7 +201,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, value) in Un)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.un={value}&");
+                    sb.Append($"{name}.{Normalize(path)}.un={value.EscapeCacheKey()}&");
 
                 }
             }
@@ -210,7 +210,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in In)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",", values.OrderBy(x => x))}&");
+                    sb.Append($"{name}.{Normalize(path)}.in={string.Join(",", values.Select(x => x.EscapeCacheKey()).OrderBy(x => x))}&");
                 }
             }
 
@@ -218,7 +218,7 @@ namespace Tzkt.Api
             {
                 foreach (var (path, values) in Ni)
                 {
-                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",", values.OrderBy(x => x))}&");
+                    sb.Append($"{name}.{Normalize(path)}.ni={string.Join(",", values.Select(x => x.EscapeCacheKey()).OrderBy(x => x))}&");
                 }
             }
 
@@ -235,7 +235,7 @@ namespace Tzkt.Api
 
         static string Normalize(JsonPath[] jsonPaths)
         {
-            return string.Join(".", jsonPaths.Select(x => x.Type > JsonPathType.Key ? $"[{x.Value ?? "*"}]" : x.Value));
+            return string.Join(".", jsonPaths.Select(x => x.Type > JsonPathType.Key ? $"[{x.Value ?? "*"}]" : x.Value!.EscapeCacheKey()));
         }
     }
 }

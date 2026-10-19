@@ -50,7 +50,7 @@ namespace Tzkt.Api
                 sb.Append($"{name}.{string.Join(".", Fields)}.eq={Eq}&");
             }
 
-            if (In?.Count > 0)
+            if (In != null)
             {
                 sb.Append($"{name}.{string.Join(".", Fields)}.in={string.Join(",", In.OrderBy(x => x))}&");
             }

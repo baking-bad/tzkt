@@ -78,42 +78,42 @@ namespace Tzkt.Api
 
             if (Eq != null)
             {
-                sb.Append($"{name}.eq={Eq}&");
+                sb.Append($"{name}.eq={Eq:O}&");
             }
 
             if (Ne != null)
             {
-                sb.Append($"{name}.ne={Ne}&");
+                sb.Append($"{name}.ne={Ne:O}&");
             }
 
             if (Gt != null)
             {
-                sb.Append($"{name}.gt={Gt}&");
+                sb.Append($"{name}.gt={Gt:O}&");
             }
 
             if (Ge != null)
             {
-                sb.Append($"{name}.ge={Ge}&");
+                sb.Append($"{name}.ge={Ge:O}&");
             }
 
             if (Lt != null)
             {
-                sb.Append($"{name}.lt={Lt}&");
+                sb.Append($"{name}.lt={Lt:O}&");
             }
 
             if (Le != null)
             {
-                sb.Append($"{name}.le={Le}&");
+                sb.Append($"{name}.le={Le:O}&");
             }
 
             if (In?.Count > 0)
             {
-                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x).Select(x => x.ToString("O")))}&");
             }
 
             if (Ni?.Count > 0)
             {
-                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x).Select(x => x.ToString("O")))}&");
             }
 
             return sb.ToString();

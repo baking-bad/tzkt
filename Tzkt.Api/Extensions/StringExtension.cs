@@ -9,5 +9,13 @@ namespace Tzkt.Api
         {
             return !value.Contains('\0') && !Regexes.RestrictedUnicode().IsMatch(value);
         }
+
+        /// <summary>
+        /// URL-encodes the value, including dots.
+        /// </summary>
+        public static string EscapeCacheKey(this string value)
+        {
+            return Uri.EscapeDataString(value).Replace(".", "%2E");
+        }
     }
 }

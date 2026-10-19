@@ -76,11 +76,16 @@ namespace Tzkt.Api.Services
 
         public static string BuildKey(string? path, params (string, object?)[] query)
         {
-            var sb = new StringBuilder(path);
+            var sb = new StringBuilder(path?.EscapeCacheKey()).Append('?');
 
             foreach (var (name, value) in query)
+            {
                 if (value != null)
-                    sb.Append(value is INormalizable normalizable ? normalizable.Normalize(name) : $"{name}={value}");
+                {
+                    var str = value is INormalizable normalizable ? normalizable.Normalize(name) : $"{value}";
+                    sb.Append($"{name}={str.EscapeCacheKey()}&");
+                }
+            }
 
             return sb.ToString();
         }

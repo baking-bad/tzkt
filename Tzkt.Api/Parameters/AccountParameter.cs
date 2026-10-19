@@ -94,24 +94,24 @@ namespace Tzkt.Api
                 sb.Append($"{name}.ne={Ne}&");
             }
 
-            if (In?.Count > 0)
+            if (In != null)
             {
                 sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
             }
 
-            if (Ni?.Count > 0)
+            if (Ni != null)
             {
                 sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
             }
 
             if (Eqx != null)
             {
-                sb.Append($"{name}.eqx={Eqx}&");
+                sb.Append($"{name}.eqx={Eqx.EscapeCacheKey()}&");
             }
 
             if (Nex != null)
             {
-                sb.Append($"{name}.nex={Nex}&");
+                sb.Append($"{name}.nex={Nex.EscapeCacheKey()}&");
             }
 
             if (Null != null)

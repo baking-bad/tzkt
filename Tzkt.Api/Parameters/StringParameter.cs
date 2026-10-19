@@ -74,32 +74,32 @@ namespace Tzkt.Api
 
             if (Eq != null)
             {
-                sb.Append($"{name}.eq={Eq}&");
+                sb.Append($"{name}.eq={Eq.EscapeCacheKey()}&");
             }
 
             if (Ne != null)
             {
-                sb.Append($"{name}.ne={Ne}&");
+                sb.Append($"{name}.ne={Ne.EscapeCacheKey()}&");
             }
 
             if (As != null)
             {
-                sb.Append($"{name}.as={As}&");
+                sb.Append($"{name}.as={As.EscapeCacheKey()}&");
             }
 
             if (Un != null)
             {
-                sb.Append($"{name}.un={Un}&");
+                sb.Append($"{name}.un={Un.EscapeCacheKey()}&");
             }
 
             if (In?.Count > 0)
             {
-                sb.Append($"{name}.in={string.Join(",", In.OrderBy(x => x))}&");
+                sb.Append($"{name}.in={string.Join(",", In.Select(x => x.EscapeCacheKey()).OrderBy(x => x))}&");
             }
 
             if (Ni?.Count > 0)
             {
-                sb.Append($"{name}.ni={string.Join(",", Ni.OrderBy(x => x))}&");
+                sb.Append($"{name}.ni={string.Join(",", Ni.Select(x => x.EscapeCacheKey()).OrderBy(x => x))}&");
             }
 
             if (Null != null)
