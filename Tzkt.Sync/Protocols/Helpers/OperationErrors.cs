@@ -15,8 +15,9 @@ namespace Tzkt.Sync.Protocols
             
             foreach (var error in errors.EnumerateArray())
             {
-                var id = error.RequiredString("id");
-                var type = id[(id.IndexOf('.', id.IndexOf('.') + 1) + 1)..];
+                var type = error.OptionalString("id") is string id
+                    ? id[(id.IndexOf('.', id.IndexOf('.') + 1) + 1)..]
+                    : "generic";
 
                 res.Add(type switch
                 {
