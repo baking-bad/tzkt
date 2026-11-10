@@ -63,6 +63,21 @@ namespace Tzkt.Sync
                 : throw new SerializationException($"Missed required string {name}");
         }
 
+        public static string RequiredUnistring(this JsonElement el, string name)
+        {
+            if (!el.TryGetProperty(name, out var res))
+                throw new SerializationException($"Missed required unistring {name}");
+
+            var value = res.ValueKind switch
+            {
+                JsonValueKind.String => res.GetString()!,
+                JsonValueKind.Object => System.Text.Encoding.UTF8.GetString([.. res.RequiredArray("invalid_utf8_string").EnumerateArray().Select(x => x.GetByte())]),
+                _ => throw new SerializationException($"Expected unistring but got {res.ValueKind}")
+            };
+
+            return value.Replace((char)0, Regexes.NullEscapeChar);
+        }
+
         public static string? OptionalString(this JsonElement el, string name)
         {
             if (!el.TryGetProperty(name, out var res) || res.ValueKind == JsonValueKind.Null)

@@ -40,13 +40,19 @@ namespace Tzkt.Sync.Protocols
                     "Expression_already_registered" => new
                     {
                         type,
-                        expression = ConstantSchema.GetGlobalAddress(content.RequiredMicheline("value"))
+                        expression = GetGlobalAddress(content)
                     },
                     _ => new { type }
                 });
             }
 
             return JsonSerializer.Serialize(res);
+        }
+
+        static string? GetGlobalAddress(JsonElement content)
+        {
+            try { return ConstantSchema.GetGlobalAddress(content.RequiredMicheline("value")); }
+            catch { return null; }
         }
     }
 }

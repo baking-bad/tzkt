@@ -256,7 +256,7 @@ namespace Tzkt.Api.Repositories
             return result;
         }
 
-        static object? FormatConstantValue(byte[] value, int format) => format switch
+        static object? FormatConstantValue(byte[]? value, int format) => value == null ? null : format switch
         {
             0 => Micheline.FromBytes(value),
             1 => Micheline.FromBytes(value).ToMichelson(),

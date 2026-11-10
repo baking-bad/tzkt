@@ -50,7 +50,7 @@ namespace Tzkt.Sync.Protocols.Proto13
                     : null,
                 Amount = BigInteger.Parse(content.RequiredString("ticket_amount")),
                 TicketerId = ticketer?.Id,
-                Entrypoint = content.RequiredString("entrypoint"),
+                Entrypoint = content.RequiredUnistring("entrypoint"),
                 TargetId = target?.Id
             };
 
