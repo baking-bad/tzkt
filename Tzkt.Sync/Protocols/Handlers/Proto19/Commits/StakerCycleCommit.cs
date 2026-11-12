@@ -67,6 +67,12 @@ namespace Tzkt.Sync.Protocols.Proto19
                 return;
 
             #region revert create
+            foreach (var entry in Db.ChangeTracker.Entries<StakerCycle>().ToList())
+                if (entry.Entity.Cycle == Context.Block.Cycle)
+                    entry.State = EntityState.Detached;
+
+            Cache.StakerCycles.Reset();
+
             await Db.Database.ExecuteSqlRawAsync("""
                 DELETE FROM "StakerCycles"
                 WHERE "Cycle" = {0}
