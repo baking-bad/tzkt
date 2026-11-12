@@ -102,9 +102,8 @@ public class AuthServiceTests
             expectedError = $"Nonce {headers.Nonce} has already been used";
             Assert.Equal(expectedError, error);
 
-            Task.Delay(10);
             string? json = null;
-            headers.Nonce = (long)(DateTime.UtcNow - DateTime.UnixEpoch).TotalMilliseconds;
+            headers.Nonce++;
             Assert.False(auth.TryAuthenticate(headers, rights, json, out error));
             expectedError = "Request body is empty";
             Assert.Equal(expectedError, error);

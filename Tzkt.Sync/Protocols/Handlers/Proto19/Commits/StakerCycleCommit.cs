@@ -17,9 +17,12 @@ namespace Tzkt.Sync.Protocols.Proto19
                 FROM (
                     SELECT
                         sc."Id" AS id,
-                        FLOOR(baker."ExternalStakedBalance"
-                            * COALESCE(staker."StakedPseudotokens", 0::numeric)
-                            / COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint AS stake
+                        CASE WHEN staker."DelegateId" = sc."BakerId"
+                            THEN div(baker."ExternalStakedBalance"
+                                * COALESCE(staker."StakedPseudotokens", 0::numeric),
+                                COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint
+                            ELSE 0
+                        END AS stake
                     FROM "StakerCycles" AS sc
                     INNER JOIN "Accounts" AS baker ON baker."Id" = sc."BakerId"
                     INNER JOIN "Accounts" AS staker ON staker."Id" = sc."StakerId"
@@ -53,6 +56,7 @@ namespace Tzkt.Sync.Protocols.Proto19
                 FROM "StakerCycles" AS sc
                 INNER JOIN "Accounts" AS staker ON staker."Id" = sc."StakerId"
                 WHERE sc."Cycle" = {1} AND staker."StakedPseudotokens" IS NOT NULL
+                AND staker."DelegateId" = sc."BakerId"
                 """, Context.Block.Cycle, Context.Block.Cycle - 1);
             #endregion
         }

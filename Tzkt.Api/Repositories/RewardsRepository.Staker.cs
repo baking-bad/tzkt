@@ -6,7 +6,7 @@ namespace Tzkt.Api.Repositories
     public partial class RewardsRepository
     {
         const string FinalStakeExpr = """
-                COALESCE(sc."FinalStake", FLOOR(baker."ExternalStakedBalance" * COALESCE(staker."StakedPseudotokens", 0::numeric) / COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint)
+                COALESCE(sc."FinalStake", CASE WHEN staker."DelegateId" = sc."BakerId" THEN div(baker."ExternalStakedBalance" * COALESCE(staker."StakedPseudotokens", 0::numeric), COALESCE(baker."IssuedPseudotokens", 1::numeric))::bigint ELSE 0 END)
                 """;
 
         const string FinalStakeColumn = $"""

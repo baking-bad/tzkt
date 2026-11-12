@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Numerics;
+using System.Text.Json;
 
 namespace Tzkt.Sync.Protocols.Proto21
 {
@@ -73,6 +74,11 @@ namespace Tzkt.Sync.Protocols.Proto21
         {
             var uncheckedVotingPower = delegat.TotalDelegated + delegat.TotalStaked;
             return uncheckedVotingPower == remote.RequiredInt64("current_voting_power");
+        }
+
+        protected override bool CheckStakingDenominator(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return remote.RequiredBigInteger("staking_denominator") == (delegat.IssuedPseudotokens ?? BigInteger.Zero);
         }
     }
 }

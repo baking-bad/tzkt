@@ -18,7 +18,7 @@ namespace Tzkt.Api.Repositories
     {
         #region static
         const string AliasQuery = @"""Extras""#>>'{profile,alias}'";
-        const string StakedBalanceQuery = @"FLOOR(baker.""ExternalStakedBalance""::numeric * acc.""StakedPseudotokens"" / baker.""IssuedPseudotokens"")::bigint";
+        const string StakedBalanceQuery = @"div(baker.""ExternalStakedBalance""::numeric * acc.""StakedPseudotokens"", baker.""IssuedPseudotokens"")::bigint";
         const string FullBalanceQuery = $@"(acc.""Balance"" + COALESCE({StakedBalanceQuery}, 0::bigint))";
         #endregion
 

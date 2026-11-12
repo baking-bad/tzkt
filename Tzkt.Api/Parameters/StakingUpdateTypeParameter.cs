@@ -6,7 +6,7 @@ namespace Tzkt.Api
 {
     [ModelBinder(BinderType = typeof(StakingUpdateTypeBinder))]
     [JsonSchemaExtensionData("x-tzkt-extension", "query-parameter")]
-    [JsonSchemaExtensionData("x-tzkt-query-parameter", "stake,unstake,restake,finalize,slash_staked,slash_unstaked")]
+    [JsonSchemaExtensionData("x-tzkt-query-parameter", "stake,unstake,restake,finalize,slash_staked,slash_unstaked,burn_pseudotokens")]
     public class StakingUpdateTypeParameter : INormalizable
     {
         /// <summary>

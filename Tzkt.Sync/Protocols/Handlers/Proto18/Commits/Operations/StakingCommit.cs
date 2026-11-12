@@ -343,13 +343,62 @@ namespace Tzkt.Sync.Protocols.Proto18
                         throw new Exception("Unexpected staking balance updates behavior");
                     }
                 }
-                else if (kind != "staking")
+                else if (kind == "staking" && nextKind == "staking")
+                {
+                    if (balanceUpdates.Count == 2)
+                    {
+                        #region burn pseudotokens
+                        if (operation.Action != StakingAction.Unstake ||
+                            category != "delegate_denominator" ||
+                            nextCategory != "delegator_numerator" ||
+                            update.RequiredString("change") != nextUpdate.RequiredString("change"))
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        var pseudotokens = -update.RequiredBigInteger("change");
+                        if (pseudotokens < BigInteger.Zero)
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        if (pseudotokens > BigInteger.Zero)
+                        {
+                            res.Add(new StakingUpdate
+                            {
+                                Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                                Level = block.Level,
+                                Cycle = block.Cycle,
+                                BakerId = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate")).Id,
+                                StakerId = (await Cache.Accounts.GetExistingAsync(nextUpdate.RequiredString("delegator"))).Id,
+                                Type = StakingUpdateType.BurnPseudotokens,
+                                Amount = 0,
+                                Pseudotokens = pseudotokens,
+                                StakingOpId = operation.Id,
+                            });
+                        }
+                        #endregion
+                    }
+                    else if (i + 2 >= balanceUpdates.Count || !ConsumesPseudotokens(balanceUpdates[i + 2], balanceUpdates[i + 3]))
+                    {
+                        throw new Exception("Unexpected staking balance updates behavior");
+                    }
+                }
+                else
                 {
                     throw new Exception("Unexpected staking balance updates behavior");
                 }
             }
 
             return res;
+        }
+
+        static bool ConsumesPseudotokens(JsonElement update, JsonElement nextUpdate)
+        {
+            var kind = update.RequiredString("kind");
+            var category = update.OptionalString("category");
+
+            return kind == "contract"
+                || (kind == "freezer" && category == "deposits")
+                || (kind == "freezer" && category == "unstaked_deposits"
+                    && nextUpdate.RequiredString("kind") == "freezer"
+                    && nextUpdate.OptionalString("category") == "deposits");
         }
 
         protected virtual string GetFreezerBaker(JsonElement update)

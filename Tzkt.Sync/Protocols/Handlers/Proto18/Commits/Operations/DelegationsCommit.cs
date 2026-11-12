@@ -127,7 +127,45 @@ namespace Tzkt.Sync.Protocols.Proto18
                         throw new Exception("Unexpected staking balance updates behavior");
                     }
                 }
-                else if (kind != "staking")
+                else if (kind == "staking" && nextKind == "staking")
+                {
+                    if (balanceUpdates.Count == 2)
+                    {
+                        #region burn pseudotokens
+                        if (category != "delegate_denominator" ||
+                            nextCategory != "delegator_numerator" ||
+                            update.RequiredString("change") != nextUpdate.RequiredString("change"))
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        var pseudotokens = -update.RequiredBigInteger("change");
+                        if (pseudotokens < BigInteger.Zero)
+                            throw new Exception("Unexpected staking balance updates behavior");
+
+                        if (pseudotokens > BigInteger.Zero)
+                        {
+                            res.Add(new StakingUpdate
+                            {
+                                Id = ++Cache.AppState.Get().StakingUpdatesCount,
+                                Level = operation.Level,
+                                Cycle = Context.Block.Cycle,
+                                BakerId = Cache.Accounts.GetExistingDelegate(update.RequiredString("delegate")).Id,
+                                StakerId = (await Cache.Accounts.GetExistingAsync(nextUpdate.RequiredString("delegator"))).Id,
+                                Type = StakingUpdateType.BurnPseudotokens,
+                                Amount = 0,
+                                Pseudotokens = pseudotokens,
+                                DelegationOpId = operation.Id,
+                            });
+                        }
+                        #endregion
+                    }
+                    else if (i + 2 >= balanceUpdates.Count ||
+                        balanceUpdates[i + 2].RequiredString("kind") != "freezer" ||
+                        balanceUpdates[i + 2].OptionalString("category") != "deposits")
+                    {
+                        throw new Exception("Unexpected staking balance updates behavior");
+                    }
+                }
+                else
                 {
                     throw new Exception("Unexpected staking balance updates behavior");
                 }

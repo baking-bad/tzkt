@@ -38,7 +38,7 @@ namespace Tzkt.Api.Models
         public required Alias Staker { get; set; }
 
         /// <summary>
-        /// Staking update type (`stake`, `unstake`, `restake`, `finalize`, `slash_staked`, `slash_unstaked`).
+        /// Staking update type (`stake`, `unstake`, `restake`, `finalize`, `slash_staked`, `slash_unstaked`, `burn_pseudotokens`).
         /// </summary>
         public required string Type { get; set; }
 

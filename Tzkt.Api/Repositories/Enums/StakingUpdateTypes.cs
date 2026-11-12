@@ -10,6 +10,7 @@ namespace Tzkt.Api
         public const string Finalize = "finalize";
         public const string SlashStaked = "slash_staked";
         public const string SlashUnstaked = "slash_unstaked";
+        public const string BurnPseudotokens = "burn_pseudotokens";
 
         public static bool TryParse(string value, out int res)
         {
@@ -21,6 +22,7 @@ namespace Tzkt.Api
                 Finalize => (int)StakingUpdateType.Finalize,
                 SlashStaked => (int)StakingUpdateType.SlashStaked,
                 SlashUnstaked => (int)StakingUpdateType.SlashUnstaked,
+                BurnPseudotokens => (int)StakingUpdateType.BurnPseudotokens,
                 _ => -1
             };
             return res != -1;
@@ -34,6 +36,7 @@ namespace Tzkt.Api
             (int)StakingUpdateType.Finalize => Finalize,
             (int)StakingUpdateType.SlashStaked => SlashStaked,
             (int)StakingUpdateType.SlashUnstaked => SlashUnstaked,
+            (int)StakingUpdateType.BurnPseudotokens => BurnPseudotokens,
             _ => throw new Exception("invalid staking action value")
         };
     }

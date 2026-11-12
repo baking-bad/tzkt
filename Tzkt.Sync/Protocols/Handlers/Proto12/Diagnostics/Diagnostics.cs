@@ -28,6 +28,9 @@ namespace Tzkt.Sync.Protocols.Proto12
             if (!CheckVotingPower(remote, delegat))
                 throw new Exception($"Diagnostics failed: wrong voting power {delegat.Address}");
 
+            if (!CheckStakingDenominator(remote, delegat))
+                throw new Exception($"Diagnostics failed: wrong staking denominator {delegat.Address}");
+
             if (remote.RequiredBool("deactivated") != !delegat.Staked)
                 throw new Exception($"Diagnostics failed: wrong deactivation state {delegat.Address}");
 
@@ -120,6 +123,11 @@ namespace Tzkt.Sync.Protocols.Proto12
         }
 
         protected virtual bool CheckVotingPower(JsonElement remote, Data.Models.Delegate delegat)
+        {
+            return true;
+        }
+
+        protected virtual bool CheckStakingDenominator(JsonElement remote, Data.Models.Delegate delegat)
         {
             return true;
         }

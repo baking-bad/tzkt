@@ -95,8 +95,9 @@ namespace Tzkt.Sync.Protocols.Proto1
                     if (prevDelegate != null)
                     {
                         #region reset current delegation
-                        if (result.TryGetProperty("balance_updates", out var updates))
-                            await Unstake(delegation, [.. updates.EnumerateArray()]);
+                        await Unstake(delegation, result.TryGetProperty("balance_updates", out var updates)
+                            ? [.. updates.EnumerateArray()]
+                            : []);
 
                         delegation.PrevDelegationLevel = sender.DelegationLevel;
 

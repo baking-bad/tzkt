@@ -8,7 +8,7 @@ namespace Tzkt.Api.Repositories
         async Task<IEnumerable<dynamic>> QueryDelegatorRewardsAsync(DelegatorRewardsFilter filter, Pagination pagination, List<SelectionField>? fields = null)
         {
             const string stakedBalanceCol = """
-                (bc."ExternalStakedBalance"::numeric * dc."StakedPseudotokens" / bc."IssuedPseudotokens")::bigint as "StakedBalance"
+                div(bc."ExternalStakedBalance"::numeric * dc."StakedPseudotokens", bc."IssuedPseudotokens")::bigint as "StakedBalance"
                 """;
 
             var select = $"""
