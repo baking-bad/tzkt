@@ -61,8 +61,8 @@ namespace Tzkt.Sync.Protocols.Proto18
                 StorageLimit = content.RequiredInt32("storage_limit"),
                 SenderId = sender.Id,
                 ActivationCycle = block.Cycle + Context.Protocol.DelegateParametersActivationDelay + 1,
-                LimitOfStakingOverBaking = limit.TrimToInt64(),
-                EdgeOfBakingOverStaking = (long)edge,
+                LimitOfStakingOverBaking = limit.TrimToInt32(), // the protocol caps the limit at int32
+                EdgeOfBakingOverStaking = edge.TrimToInt64(),
                 Status = status,
                 Errors = result.TryGetProperty("errors", out var errors)
                     ? OperationErrors.Parse(content, errors)

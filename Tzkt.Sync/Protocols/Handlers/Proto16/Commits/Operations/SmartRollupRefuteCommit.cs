@@ -100,8 +100,8 @@ namespace Tzkt.Sync.Protocols.Proto16
                 var steps = content.Required("refutation").RequiredArray("step").EnumerateArray();
                 if (steps.Any())
                 {
-                    operation.DissectionStart = steps.First().RequiredInt64("tick");
-                    operation.DissectionEnd = steps.Last().RequiredInt64("tick");
+                    operation.DissectionStart = steps.First().RequiredBigInteger("tick").TrimToInt64();
+                    operation.DissectionEnd = steps.Last().RequiredBigInteger("tick").TrimToInt64();
                     operation.DissectionSteps = steps.Count();
                 }
             }

@@ -33,8 +33,7 @@ namespace Tzkt.Sync.Protocols.Proto18
 
                 if (stakingParameters.TryGetProperty("active", out var active))
                 {
-                    if (active.RequiredInt64("limit_of_staking_over_baking_millionth") != delegat.LimitOfStakingOverBaking &&
-                        active.RequiredInt64("limit_of_staking_over_baking_millionth") != 2147483647)
+                    if (active.RequiredInt64("limit_of_staking_over_baking_millionth") != delegat.LimitOfStakingOverBaking)
                         throw new Exception($"Diagnostics failed: wrong limit_of_staking_over_baking_millionth for {delegat.Address}");
 
                     if (active.RequiredInt64("edge_of_baking_over_staking_billionth") != delegat.EdgeOfBakingOverStaking)
